@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<flow name="tibco_designdoc_genFlow" doc:id="08c2cfe2-5ac3-47d8-8a6b-258cadcfaedb" >
+		<http:listener doc:name="Listener" doc:id="ce274390-c1fa-4a93-871c-e7516cedbc7f" config-ref="HTTP_Listener_config" path="${gui.reviewerCodePath}" allowedMethods="GET,POST"/>
+		<ee:transform doc:name="Transform Message" doc:id="ce65b6e7-d4cb-4efd-9423-a146934706ba" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="earLocation" ><![CDATA[attributes.queryParams.directoryPath]]></ee:set-variable>
+				<ee:set-variable variableName="docLocation" ><![CDATA[attributes.queryParams.documentPath]]></ee:set-variable>
+				<ee:set-variable variableName="serviceName" ><![CDATA[attributes.queryParams.serviceName]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<file:list doc:name="List" doc:id="ea42ef41-23f9-4473-b256-1e9bdbc4d3b4" config-ref="File_Config" directoryPath="#[vars.earLocation]"/>
+		<ee:transform doc:name="Transform Message" doc:id="dafdd8c1-d1d3-4de6-b143-d1b807fd2111" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="earFilename" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+payload.attributes.fileName[0]]]></ee:set-variable>
+				<ee:set-variable variableName="DocName" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBeforeLast(payload.attributes.fileName[0],".ear") ++ "_DesignDoc_" ++ now() as String {format:"ddMMyyyyHHmmss"} ++ ".docx"]]></ee:set-variable>
+				<ee:set-variable variableName="earName" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBeforeLast(payload.attributes.fileName[0],".ear")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<java:new constructor="GenerateDesignDoc()" doc:name="Create Instance" doc:id="4691fb62-fe5f-4eb4-9a32-5d27a7252fca" class="com.tibcodocgen.GenerateDesignDoc">
+		</java:new>
+		<java:invoke doc:name="GenerateDesignDoc" doc:id="ddf8c881-15eb-431a-bb3b-6569f416958e" instance="#[payload]" class="com.tibcodocgen.GenerateDesignDoc" method="Gendoc(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
+			<java:args ><![CDATA[#[{
+	arg0 : "${mule.home}",
+	arg1 : "${app.name}",
+	arg2 : vars.earFilename,
+	arg3 : vars.DocName,
+	arg4 : vars.earLocation,
+	arg5 : vars.docLocation
+}]]]></java:args>
+		</java:invoke>
+		<file:list doc:name="List" doc:id="f8dd63ca-8ed5-41c1-be72-fbfa07865426" config-ref="File_Config" directoryPath="${gui.documentLocation}">
+			<file:matcher filenamePattern="*.docx" />
+		</file:list>
+		<choice doc:name="Choice" doc:id="3cde1865-11a3-4165-9f4e-3e85a4ee4a6b" >
+			<when expression="#[payload.attributes.fileName[0] contains (vars.earName)]">
+				<file:move doc:name="Move" doc:id="f72909b6-dd5b-4edf-803d-ca95f447e149" config-ref="File_Config" sourcePath="#[payload.attributes.path[0]]" targetPath='#["${gui.documentLocation}" ++ (vars.serviceName default "") ++ "//"]' />
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="6799ccd6-bc69-4eba-b31b-a8f871d174b8" message="Document not found"/>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="ad602734-0d4c-454e-91d0-f5e865df7a78" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+"Design doc generated"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
