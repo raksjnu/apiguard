@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns1="http://www.tibco.com/namespaces/tnt/plugins/file/v2">
+    <pd:name>Processes/SubProcesses/ServiceAgentBreakup.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="ProjectDetails">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="BasePath" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="ServiceAgentPath" type="xsd:string" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>68</pd:startX>
+    <pd:startY>118</pd:startY>
+    <pd:returnBindings>
+        <Operations>
+            <xsl:for-each select="$GetOperations/root/Operation">
+                <xsl:if test="string-length(tib:trim(.))>1">
+                    <Operations>
+                        <xsl:value-of select="tib:substring-after-last(substring-before(.,'&quot;/>'),'/')"/>
+                    </Operations>
+                </xsl:if>
+            </xsl:for-each>
+        </Operations>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType>
+        <xsd:element name="Operations">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="Operations" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:endType>
+    <pd:endX>421</pd:endX>
+    <pd:endY>124</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1668778892558</pd:targetNamespace>
+    <pd:activity name="GetOperations">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>298</pd:x>
+        <pd:y>122</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="Operation" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="tib:tokenize(substring-after(substring-before($ReadSAFile/ns:ReadActivityOutputTextClass/fileContent/textContent,&quot;&lt;/operations>&quot;),&quot;&lt;operations>&quot;), '&#xA;')">
+                    <Operation>
+                        <xsl:value-of select="."/>
+                    </Operation>
+                </xsl:for-each>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="ReadSAFile">
+        <pd:type>com.tibco.plugin.file.FileReadActivity</pd:type>
+        <pd:resourceType>ae.activities.FileReadActivity</pd:resourceType>
+        <pd:x>173</pd:x>
+        <pd:y>118</pd:y>
+        <config>
+            <encoding>text</encoding>
+        </config>
+        <pd:inputBindings>
+            <ns1:ReadActivityInputClass>
+                <fileName>
+                    <xsl:value-of select="$Start/ProjectDetails/ServiceAgentPath"/>
+                </fileName>
+            </ns1:ReadActivityInputClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>ReadSAFile</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ReadSAFile</pd:from>
+        <pd:to>GetOperations</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetOperations</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

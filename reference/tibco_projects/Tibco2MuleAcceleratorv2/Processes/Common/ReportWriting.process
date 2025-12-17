@@ -1,0 +1,1137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pfx="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" xmlns:pfx2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/LocationDetails.xsd" xmlns:ns="http://www.tibco.com/pe/DeployedVarsType" xmlns:pfx3="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" xmlns:pfx4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns2="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd" xmlns:ns1="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd" xmlns:ns4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/GVInfo.xsd" xmlns:ns3="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/FileInfo.xsd" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns6="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Conversion.xsd" xmlns:ns5="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/Conversion.xsd" xmlns:pd="http://xmlns.tibco.com/bw/process/2003">
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" schemaLocation="/Resources/Schema/Tibco/Report.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/LocationDetails.xsd" schemaLocation="/Resources/Schema/Tibco/LocationDetails.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" schemaLocation="/Resources/Schema/Tibco/All.xsd"/>
+    <pd:name>Processes/Common/ReportWriting.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="root">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element ref="pfx:RepositoryDetails" minOccurs="0" maxOccurs="unbounded"/>
+                    <xsd:element ref="pfx3:root" minOccurs="0"/>
+                    <xsd:element name="Append" type="xsd:boolean" minOccurs="0"/>
+                    <xsd:element name="Flag" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="MuleFlowXML" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="ProjectDetails" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="Service" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="Operation" type="xsd:string" minOccurs="0"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>28</pd:startX>
+    <pd:startY>137</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>797</pd:endX>
+    <pd:endY>121</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables>
+        <FileName>
+            <xsd:element name="root">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="FileName" type="xsd:string"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </FileName>
+    </pd:processVariables>
+    <pd:targetNamespace>http://ibm.com/raks/tibco2mule/accelerator/common/reportWriting</pd:targetNamespace>
+    <pd:activity name="Render Data">
+        <pd:type>com.tibco.plugin.parse.RenderActivity</pd:type>
+        <pd:resourceType>ae.activities.RenderActivity</pd:resourceType>
+        <pd:x>178</pd:x>
+        <pd:y>78</pd:y>
+        <config>
+            <ParseSharedConfig>/Resources/DataFormat/RepositoryFormat.sharedparse</ParseSharedConfig>
+        </config>
+        <pd:inputBindings>
+            <Rows>
+                <xsl:for-each select="$Start/root/pfx:RepositoryDetails">
+                    <pfx:RepositoryDetails>
+                        <xsl:if test="pfx:TibcoProject">
+                            <pfx:TibcoProject>
+                                <xsl:value-of select="pfx:TibcoProject"/>
+                            </pfx:TibcoProject>
+                        </xsl:if>
+                        <xsl:if test="pfx:MuleProject">
+                            <pfx:MuleProject>
+                                <xsl:value-of select="pfx:MuleProject"/>
+                            </pfx:MuleProject>
+                        </xsl:if>
+                        <xsl:if test="pfx:MigrationStatus">
+                            <pfx:MigrationStatus>
+                                <xsl:value-of select="pfx:MigrationStatus"/>
+                            </pfx:MigrationStatus>
+                        </xsl:if>
+                        <xsl:if test="pfx:Description">
+                            <pfx:Description>
+                                <xsl:value-of select="pfx:Description"/>
+                            </pfx:Description>
+                        </xsl:if>
+                        <xsl:if test="pfx:StartTime">
+                            <pfx:StartTime>
+                                <xsl:value-of select="pfx:StartTime"/>
+                            </pfx:StartTime>
+                        </xsl:if>
+                        <xsl:if test="pfx:EndTime">
+                            <pfx:EndTime>
+                                <xsl:value-of select="pfx:EndTime"/>
+                            </pfx:EndTime>
+                        </xsl:if>
+                        <xsl:if test="pfx:TotalTIme">
+                            <pfx:TotalTIme>
+                                <xsl:value-of select="pfx:TotalTIme"/>
+                            </pfx:TotalTIme>
+                        </xsl:if>
+                        <xsl:if test="pfx:Archives">
+                            <pfx:Archives>
+                                <xsl:value-of select="pfx:Archives"/>
+                            </pfx:Archives>
+                        </xsl:if>
+                        <xsl:if test="pfx:Processes">
+                            <pfx:Processes>
+                                <xsl:value-of select="pfx:Processes"/>
+                            </pfx:Processes>
+                        </xsl:if>
+                        <xsl:if test="pfx:SubProcesses">
+                            <pfx:SubProcesses>
+                                <xsl:value-of select="pfx:SubProcesses"/>
+                            </pfx:SubProcesses>
+                        </xsl:if>
+                        <xsl:if test="pfx:Starters">
+                            <pfx:Starters>
+                                <xsl:value-of select="pfx:Starters"/>
+                            </pfx:Starters>
+                        </xsl:if>
+                        <xsl:if test="pfx:OnStartup">
+                            <pfx:OnStartup>
+                                <xsl:value-of select="pfx:OnStartup"/>
+                            </pfx:OnStartup>
+                        </xsl:if>
+                        <xsl:if test="pfx:ServiceAgent">
+                            <pfx:ServiceAgent>
+                                <xsl:value-of select="pfx:ServiceAgent"/>
+                            </pfx:ServiceAgent>
+                        </xsl:if>
+                        <xsl:if test="pfx:ServiceAgentOperations">
+                            <pfx:ServiceAgentOperations>
+                                <xsl:value-of select="pfx:ServiceAgentOperations"/>
+                            </pfx:ServiceAgentOperations>
+                        </xsl:if>
+                        <xsl:if test="pfx:HTTPStarter">
+                            <pfx:HTTPStarter>
+                                <xsl:value-of select="pfx:HTTPStarter"/>
+                            </pfx:HTTPStarter>
+                        </xsl:if>
+                        <xsl:if test="pfx:RVStarters">
+                            <pfx:RVStarters>
+                                <xsl:value-of select="pfx:RVStarters"/>
+                            </pfx:RVStarters>
+                        </xsl:if>
+                        <xsl:if test="pfx:SOAPStarter">
+                            <pfx:SOAPStarter>
+                                <xsl:value-of select="pfx:SOAPStarter"/>
+                            </pfx:SOAPStarter>
+                        </xsl:if>
+                        <xsl:if test="pfx:RestStarter">
+                            <pfx:RestStarter>
+                                <xsl:value-of select="pfx:RestStarter"/>
+                            </pfx:RestStarter>
+                        </xsl:if>
+                        <xsl:if test="pfx:FileStarter">
+                            <pfx:FileStarter>
+                                <xsl:value-of select="pfx:FileStarter"/>
+                            </pfx:FileStarter>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSQStarter">
+                            <pfx:JMSQStarter>
+                                <xsl:value-of select="pfx:JMSQStarter"/>
+                            </pfx:JMSQStarter>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSTStarter">
+                            <pfx:JMSTStarter>
+                                <xsl:value-of select="pfx:JMSTStarter"/>
+                            </pfx:JMSTStarter>
+                        </xsl:if>
+                        <xsl:if test="pfx:TimerStarter">
+                            <pfx:TimerStarter>
+                                <xsl:value-of select="pfx:TimerStarter"/>
+                            </pfx:TimerStarter>
+                        </xsl:if>
+                        <xsl:if test="pfx:AEStarter">
+                            <pfx:AEStarter>
+                                <xsl:value-of select="pfx:AEStarter"/>
+                            </pfx:AEStarter>
+                        </xsl:if>
+                        <xsl:if test="pfx:JDBCQuery">
+                            <pfx:JDBCQuery>
+                                <xsl:value-of select="pfx:JDBCQuery"/>
+                            </pfx:JDBCQuery>
+                        </xsl:if>
+                        <xsl:if test="pfx:JDBCUpdate">
+                            <pfx:JDBCUpdate>
+                                <xsl:value-of select="pfx:JDBCUpdate"/>
+                            </pfx:JDBCUpdate>
+                        </xsl:if>
+                        <xsl:if test="pfx:SOAPCalls">
+                            <pfx:SOAPCalls>
+                                <xsl:value-of select="pfx:SOAPCalls"/>
+                            </pfx:SOAPCalls>
+                        </xsl:if>
+                        <xsl:if test="pfx:HTTPCalls">
+                            <pfx:HTTPCalls>
+                                <xsl:value-of select="pfx:HTTPCalls"/>
+                            </pfx:HTTPCalls>
+                        </xsl:if>
+                        <xsl:if test="pfx:RESTCalls">
+                            <pfx:RESTCalls>
+                                <xsl:value-of select="pfx:RESTCalls"/>
+                            </pfx:RESTCalls>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSCalls">
+                            <pfx:JMSCalls>
+                                <xsl:value-of select="pfx:JMSCalls"/>
+                            </pfx:JMSCalls>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSQueueSend">
+                            <pfx:JMSQueueSend>
+                                <xsl:value-of select="pfx:JMSQueueSend"/>
+                            </pfx:JMSQueueSend>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSQueueGetMessage">
+                            <pfx:JMSQueueGetMessage>
+                                <xsl:value-of select="pfx:JMSQueueGetMessage"/>
+                            </pfx:JMSQueueGetMessage>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSQueueRquestReply">
+                            <pfx:JMSQueueRquestReply>
+                                <xsl:value-of select="pfx:JMSQueueRquestReply"/>
+                            </pfx:JMSQueueRquestReply>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSTopicPublish">
+                            <pfx:JMSTopicPublish>
+                                <xsl:value-of select="pfx:JMSTopicPublish"/>
+                            </pfx:JMSTopicPublish>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSTopicRequestReply">
+                            <pfx:JMSTopicRequestReply>
+                                <xsl:value-of select="pfx:JMSTopicRequestReply"/>
+                            </pfx:JMSTopicRequestReply>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSReply">
+                            <pfx:JMSReply>
+                                <xsl:value-of select="pfx:JMSReply"/>
+                            </pfx:JMSReply>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSQueueSignal">
+                            <pfx:JMSQueueSignal>
+                                <xsl:value-of select="pfx:JMSQueueSignal"/>
+                            </pfx:JMSQueueSignal>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSTopicSignal">
+                            <pfx:JMSTopicSignal>
+                                <xsl:value-of select="pfx:JMSTopicSignal"/>
+                            </pfx:JMSTopicSignal>
+                        </xsl:if>
+                        <xsl:if test="pfx:FileWrite">
+                            <pfx:FileWrite>
+                                <xsl:value-of select="pfx:FileWrite"/>
+                            </pfx:FileWrite>
+                        </xsl:if>
+                        <xsl:if test="pfx:FileCreate">
+                            <pfx:FileCreate>
+                                <xsl:value-of select="pfx:FileCreate"/>
+                            </pfx:FileCreate>
+                        </xsl:if>
+                        <xsl:if test="pfx:FileRemove">
+                            <pfx:FileRemove>
+                                <xsl:value-of select="pfx:FileRemove"/>
+                            </pfx:FileRemove>
+                        </xsl:if>
+                        <xsl:if test="pfx:FileRead">
+                            <pfx:FileRead>
+                                <xsl:value-of select="pfx:FileRead"/>
+                            </pfx:FileRead>
+                        </xsl:if>
+                        <xsl:if test="pfx:FileCopy">
+                            <pfx:FileCopy>
+                                <xsl:value-of select="pfx:FileCopy"/>
+                            </pfx:FileCopy>
+                        </xsl:if>
+                        <xsl:if test="pfx:JavaActivities">
+                            <pfx:JavaActivities>
+                                <xsl:value-of select="pfx:JavaActivities"/>
+                            </pfx:JavaActivities>
+                        </xsl:if>
+                        <xsl:if test="pfx:Mappers">
+                            <pfx:Mappers>
+                                <xsl:value-of select="pfx:Mappers"/>
+                            </pfx:Mappers>
+                        </xsl:if>
+                        <xsl:if test="pfx:Renders">
+                            <pfx:Renders>
+                                <xsl:value-of select="pfx:Renders"/>
+                            </pfx:Renders>
+                        </xsl:if>
+                        <xsl:if test="pfx:Parsers">
+                            <pfx:Parsers>
+                                <xsl:value-of select="pfx:Parsers"/>
+                            </pfx:Parsers>
+                        </xsl:if>
+                        <xsl:if test="pfx:WSDLs">
+                            <pfx:WSDLs>
+                                <xsl:value-of select="pfx:WSDLs"/>
+                            </pfx:WSDLs>
+                        </xsl:if>
+                        <xsl:if test="pfx:WADLs">
+                            <pfx:WADLs>
+                                <xsl:value-of select="pfx:WADLs"/>
+                            </pfx:WADLs>
+                        </xsl:if>
+                        <xsl:if test="pfx:XSDs">
+                            <pfx:XSDs>
+                                <xsl:value-of select="pfx:XSDs"/>
+                            </pfx:XSDs>
+                        </xsl:if>
+                        <xsl:if test="pfx:CopyBooks">
+                            <pfx:CopyBooks>
+                                <xsl:value-of select="pfx:CopyBooks"/>
+                            </pfx:CopyBooks>
+                        </xsl:if>
+                        <xsl:if test="pfx:SharedVars">
+                            <pfx:SharedVars>
+                                <xsl:value-of select="pfx:SharedVars"/>
+                            </pfx:SharedVars>
+                        </xsl:if>
+                        <xsl:if test="pfx:Connections">
+                            <pfx:Connections>
+                                <xsl:value-of select="pfx:Connections"/>
+                            </pfx:Connections>
+                        </xsl:if>
+                        <xsl:if test="pfx:Certificates">
+                            <pfx:Certificates>
+                                <xsl:value-of select="pfx:Certificates"/>
+                            </pfx:Certificates>
+                        </xsl:if>
+                        <xsl:if test="pfx:AEActivities">
+                            <pfx:AEActivities>
+                                <xsl:value-of select="pfx:AEActivities"/>
+                            </pfx:AEActivities>
+                        </xsl:if>
+                        <xsl:if test="pfx:Assign">
+                            <pfx:Assign>
+                                <xsl:value-of select="pfx:Assign"/>
+                            </pfx:Assign>
+                        </xsl:if>
+                        <xsl:if test="pfx:Checkpoint">
+                            <pfx:Checkpoint>
+                                <xsl:value-of select="pfx:Checkpoint"/>
+                            </pfx:Checkpoint>
+                        </xsl:if>
+                        <xsl:if test="pfx:Catch">
+                            <pfx:Catch>
+                                <xsl:value-of select="pfx:Catch"/>
+                            </pfx:Catch>
+                        </xsl:if>
+                        <xsl:if test="pfx:GenerateError">
+                            <pfx:GenerateError>
+                                <xsl:value-of select="pfx:GenerateError"/>
+                            </pfx:GenerateError>
+                        </xsl:if>
+                        <xsl:if test="pfx:Confirm">
+                            <pfx:Confirm>
+                                <xsl:value-of select="pfx:Confirm"/>
+                            </pfx:Confirm>
+                        </xsl:if>
+                        <xsl:if test="pfx:ReceiveMail">
+                            <pfx:ReceiveMail>
+                                <xsl:value-of select="pfx:ReceiveMail"/>
+                            </pfx:ReceiveMail>
+                        </xsl:if>
+                        <xsl:if test="pfx:SendMail">
+                            <pfx:SendMail>
+                                <xsl:value-of select="pfx:SendMail"/>
+                            </pfx:SendMail>
+                        </xsl:if>
+                        <xsl:if test="pfx:Custom">
+                            <pfx:Custom>
+                                <xsl:value-of select="pfx:Custom"/>
+                            </pfx:Custom>
+                        </xsl:if>
+                        <xsl:if test="pfx:LockObject">
+                            <pfx:LockObject>
+                                <xsl:value-of select="pfx:LockObject"/>
+                            </pfx:LockObject>
+                        </xsl:if>
+                        <xsl:if test="pfx:NotifyConfiguration">
+                            <pfx:NotifyConfiguration>
+                                <xsl:value-of select="pfx:NotifyConfiguration"/>
+                            </pfx:NotifyConfiguration>
+                        </xsl:if>
+                        <xsl:if test="pfx:EngineCommand">
+                            <pfx:EngineCommand>
+                                <xsl:value-of select="pfx:EngineCommand"/>
+                            </pfx:EngineCommand>
+                        </xsl:if>
+                        <xsl:if test="pfx:ExternalCommand">
+                            <pfx:ExternalCommand>
+                                <xsl:value-of select="pfx:ExternalCommand"/>
+                            </pfx:ExternalCommand>
+                        </xsl:if>
+                        <xsl:if test="pfx:Notify">
+                            <pfx:Notify>
+                                <xsl:value-of select="pfx:Notify"/>
+                            </pfx:Notify>
+                        </xsl:if>
+                        <xsl:if test="pfx:OnError">
+                            <pfx:OnError>
+                                <xsl:value-of select="pfx:OnError"/>
+                            </pfx:OnError>
+                        </xsl:if>
+                        <xsl:if test="pfx:OnEventTimeout">
+                            <pfx:OnEventTimeout>
+                                <xsl:value-of select="pfx:OnEventTimeout"/>
+                            </pfx:OnEventTimeout>
+                        </xsl:if>
+                        <xsl:if test="pfx:OnNotificationTimeout">
+                            <pfx:OnNotificationTimeout>
+                                <xsl:value-of select="pfx:OnNotificationTimeout"/>
+                            </pfx:OnNotificationTimeout>
+                        </xsl:if>
+                        <xsl:if test="pfx:OnShutdown">
+                            <pfx:OnShutdown>
+                                <xsl:value-of select="pfx:OnShutdown"/>
+                            </pfx:OnShutdown>
+                        </xsl:if>
+                        <xsl:if test="pfx:ReceiveNotification">
+                            <pfx:ReceiveNotification>
+                                <xsl:value-of select="pfx:ReceiveNotification"/>
+                            </pfx:ReceiveNotification>
+                        </xsl:if>
+                        <xsl:if test="pfx:Rethrow">
+                            <pfx:Rethrow>
+                                <xsl:value-of select="pfx:Rethrow"/>
+                            </pfx:Rethrow>
+                        </xsl:if>
+                        <xsl:if test="pfx:Sleep">
+                            <pfx:Sleep>
+                                <xsl:value-of select="pfx:Sleep"/>
+                            </pfx:Sleep>
+                        </xsl:if>
+                        <xsl:if test="pfx:Wait">
+                            <pfx:Wait>
+                                <xsl:value-of select="pfx:Wait"/>
+                            </pfx:Wait>
+                        </xsl:if>
+                        <xsl:if test="pfx:WriteToLog">
+                            <pfx:WriteToLog>
+                                <xsl:value-of select="pfx:WriteToLog"/>
+                            </pfx:WriteToLog>
+                        </xsl:if>
+                        <xsl:if test="pfx:FilePoller">
+                            <pfx:FilePoller>
+                                <xsl:value-of select="pfx:FilePoller"/>
+                            </pfx:FilePoller>
+                        </xsl:if>
+                        <xsl:if test="pfx:ListFiles">
+                            <pfx:ListFiles>
+                                <xsl:value-of select="pfx:ListFiles"/>
+                            </pfx:ListFiles>
+                        </xsl:if>
+                        <xsl:if test="pfx:RenameFile">
+                            <pfx:RenameFile>
+                                <xsl:value-of select="pfx:RenameFile"/>
+                            </pfx:RenameFile>
+                        </xsl:if>
+                        <xsl:if test="pfx:WaitforFileChange">
+                            <pfx:WaitforFileChange>
+                                <xsl:value-of select="pfx:WaitforFileChange"/>
+                            </pfx:WaitforFileChange>
+                        </xsl:if>
+                        <xsl:if test="pfx:HTTPReceiver">
+                            <pfx:HTTPReceiver>
+                                <xsl:value-of select="pfx:HTTPReceiver"/>
+                            </pfx:HTTPReceiver>
+                        </xsl:if>
+                        <xsl:if test="pfx:SendHTTPRequest">
+                            <pfx:SendHTTPRequest>
+                                <xsl:value-of select="pfx:SendHTTPRequest"/>
+                            </pfx:SendHTTPRequest>
+                        </xsl:if>
+                        <xsl:if test="pfx:WaitForHTTPRequest">
+                            <pfx:WaitForHTTPRequest>
+                                <xsl:value-of select="pfx:WaitForHTTPRequest"/>
+                            </pfx:WaitForHTTPRequest>
+                        </xsl:if>
+                        <xsl:if test="pfx:JavaCustomFunction">
+                            <pfx:JavaCustomFunction>
+                                <xsl:value-of select="pfx:JavaCustomFunction"/>
+                            </pfx:JavaCustomFunction>
+                        </xsl:if>
+                        <xsl:if test="pfx:JavaGlobalInstance">
+                            <pfx:JavaGlobalInstance>
+                                <xsl:value-of select="pfx:JavaGlobalInstance"/>
+                            </pfx:JavaGlobalInstance>
+                        </xsl:if>
+                        <xsl:if test="pfx:JavaSchema">
+                            <pfx:JavaSchema>
+                                <xsl:value-of select="pfx:JavaSchema"/>
+                            </pfx:JavaSchema>
+                        </xsl:if>
+                        <xsl:if test="pfx:JavaCode">
+                            <pfx:JavaCode>
+                                <xsl:value-of select="pfx:JavaCode"/>
+                            </pfx:JavaCode>
+                        </xsl:if>
+                        <xsl:if test="pfx:JavaEventSource">
+                            <pfx:JavaEventSource>
+                                <xsl:value-of select="pfx:JavaEventSource"/>
+                            </pfx:JavaEventSource>
+                        </xsl:if>
+                        <xsl:if test="pfx:JavaMethod">
+                            <pfx:JavaMethod>
+                                <xsl:value-of select="pfx:JavaMethod"/>
+                            </pfx:JavaMethod>
+                        </xsl:if>
+                        <xsl:if test="pfx:JavaToXML">
+                            <pfx:JavaToXML>
+                                <xsl:value-of select="pfx:JavaToXML"/>
+                            </pfx:JavaToXML>
+                        </xsl:if>
+                        <xsl:if test="pfx:XMLToJava">
+                            <pfx:XMLToJava>
+                                <xsl:value-of select="pfx:XMLToJava"/>
+                            </pfx:XMLToJava>
+                        </xsl:if>
+                        <xsl:if test="pfx:JDBCConnection">
+                            <pfx:JDBCConnection>
+                                <xsl:value-of select="pfx:JDBCConnection"/>
+                            </pfx:JDBCConnection>
+                        </xsl:if>
+                        <xsl:if test="pfx:JDBCCallProcedure">
+                            <pfx:JDBCCallProcedure>
+                                <xsl:value-of select="pfx:JDBCCallProcedure"/>
+                            </pfx:JDBCCallProcedure>
+                        </xsl:if>
+                        <xsl:if test="pfx:SQLDirect">
+                            <pfx:SQLDirect>
+                                <xsl:value-of select="pfx:SQLDirect"/>
+                            </pfx:SQLDirect>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSApplicationProperties">
+                            <pfx:JMSApplicationProperties>
+                                <xsl:value-of select="pfx:JMSApplicationProperties"/>
+                            </pfx:JMSApplicationProperties>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSConnection">
+                            <pfx:JMSConnection>
+                                <xsl:value-of select="pfx:JMSConnection"/>
+                            </pfx:JMSConnection>
+                        </xsl:if>
+                        <xsl:if test="pfx:GetJMSQueueMessage">
+                            <pfx:GetJMSQueueMessage>
+                                <xsl:value-of select="pfx:GetJMSQueueMessage"/>
+                            </pfx:GetJMSQueueMessage>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSQueueReceiver">
+                            <pfx:JMSQueueReceiver>
+                                <xsl:value-of select="pfx:JMSQueueReceiver"/>
+                            </pfx:JMSQueueReceiver>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSQueueRequester">
+                            <pfx:JMSQueueRequester>
+                                <xsl:value-of select="pfx:JMSQueueRequester"/>
+                            </pfx:JMSQueueRequester>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSTopicRequestor">
+                            <pfx:JMSTopicRequestor>
+                                <xsl:value-of select="pfx:JMSTopicRequestor"/>
+                            </pfx:JMSTopicRequestor>
+                        </xsl:if>
+                        <xsl:if test="pfx:JMSTopicSubscriber">
+                            <pfx:JMSTopicSubscriber>
+                                <xsl:value-of select="pfx:JMSTopicSubscriber"/>
+                            </pfx:JMSTopicSubscriber>
+                        </xsl:if>
+                        <xsl:if test="pfx:ReplytoJMSMessage">
+                            <pfx:ReplytoJMSMessage>
+                                <xsl:value-of select="pfx:ReplytoJMSMessage"/>
+                            </pfx:ReplytoJMSMessage>
+                        </xsl:if>
+                        <xsl:if test="pfx:WaitforJMSQueueMessage">
+                            <pfx:WaitforJMSQueueMessage>
+                                <xsl:value-of select="pfx:WaitforJMSQueueMessage"/>
+                            </pfx:WaitforJMSQueueMessage>
+                        </xsl:if>
+                        <xsl:if test="pfx:WaitforJMSTopicMessage">
+                            <pfx:WaitforJMSTopicMessage>
+                                <xsl:value-of select="pfx:WaitforJMSTopicMessage"/>
+                            </pfx:WaitforJMSTopicMessage>
+                        </xsl:if>
+                        <xsl:if test="pfx:DataFormat">
+                            <pfx:DataFormat>
+                                <xsl:value-of select="pfx:DataFormat"/>
+                            </pfx:DataFormat>
+                        </xsl:if>
+                        <xsl:if test="pfx:ParseData">
+                            <pfx:ParseData>
+                                <xsl:value-of select="pfx:ParseData"/>
+                            </pfx:ParseData>
+                        </xsl:if>
+                        <xsl:if test="pfx:RenderData">
+                            <pfx:RenderData>
+                                <xsl:value-of select="pfx:RenderData"/>
+                            </pfx:RenderData>
+                        </xsl:if>
+                        <xsl:if test="pfx:SecurityPolicyAssociation">
+                            <pfx:SecurityPolicyAssociation>
+                                <xsl:value-of select="pfx:SecurityPolicyAssociation"/>
+                            </pfx:SecurityPolicyAssociation>
+                        </xsl:if>
+                        <xsl:if test="pfx:SecurityPolicy">
+                            <pfx:SecurityPolicy>
+                                <xsl:value-of select="pfx:SecurityPolicy"/>
+                            </pfx:SecurityPolicy>
+                        </xsl:if>
+                        <xsl:if test="pfx:InvokeRESTAPI">
+                            <pfx:InvokeRESTAPI>
+                                <xsl:value-of select="pfx:InvokeRESTAPI"/>
+                            </pfx:InvokeRESTAPI>
+                        </xsl:if>
+                        <xsl:if test="pfx:RESTDispatchandReply">
+                            <pfx:RESTDispatchandReply>
+                                <xsl:value-of select="pfx:RESTDispatchandReply"/>
+                            </pfx:RESTDispatchandReply>
+                        </xsl:if>
+                        <xsl:if test="pfx:XSLTFile">
+                            <pfx:XSLTFile>
+                                <xsl:value-of select="pfx:XSLTFile"/>
+                            </pfx:XSLTFile>
+                        </xsl:if>
+                        <xsl:if test="pfx:TransformXML">
+                            <pfx:TransformXML>
+                                <xsl:value-of select="pfx:TransformXML"/>
+                            </pfx:TransformXML>
+                        </xsl:if>
+                        <xsl:if test="pfx:SOAPEventSource">
+                            <pfx:SOAPEventSource>
+                                <xsl:value-of select="pfx:SOAPEventSource"/>
+                            </pfx:SOAPEventSource>
+                        </xsl:if>
+                        <xsl:if test="pfx:SOAPRequestReply">
+                            <pfx:SOAPRequestReply>
+                                <xsl:value-of select="pfx:SOAPRequestReply"/>
+                            </pfx:SOAPRequestReply>
+                        </xsl:if>
+                        <xsl:if test="pfx:SOAPSendReply">
+                            <pfx:SOAPSendReply>
+                                <xsl:value-of select="pfx:SOAPSendReply"/>
+                            </pfx:SOAPSendReply>
+                        </xsl:if>
+                    </pfx:RepositoryDetails>
+                </xsl:for-each>
+            </Rows>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="CreatingReportContent">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>518</pd:x>
+        <pd:y>119</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="param" minOccurs="0" maxOccurs="unbounded">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="ReportFileName" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="ReportContent" type="xsd:string" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:if test="$Start/root/Flag='repository'">
+                    <param>
+                        <ReportFileName>
+                            <xsl:value-of select="concat(substring-before($Start/root/pfx:RepositoryDetails[1]/pfx:MuleProject, 'MigrationOutput'), 'MigrationOutput', $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/migrationDetailFolder,&#xA;$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/migrationToken, '_', $GetVariableTimestamp/root/CurrentTimeStamp, '.csv')"/>
+                        </ReportFileName>
+                        <ReportContent>
+                            <xsl:value-of select="concat($_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/ReportWritingHeader, &quot;&#xD;&#xA;&quot;, $Render-Data/Text)"/>
+                        </ReportContent>
+                    </param>
+                    <param>
+                        <ReportFileName>
+                            <xsl:value-of select="concat(substring-before($Start/root/pfx:RepositoryDetails[1]/pfx:MuleProject, 'MigrationOutput'), 'MigrationOutput', $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/migrationDetailFolder,&#xA;&quot;MigratedProjectDetails&quot;, '_', $GetVariableTimestamp/root/CurrentTimeStamp, '.csv')"/>
+                        </ReportFileName>
+                        <ReportContent>
+                            <xsl:value-of select="concat(&quot;Service,Operation&quot;, &quot;&#xD;&#xA;&quot;, $Render-Data-1/Text)"/>
+                        </ReportContent>
+                    </param>
+                </xsl:if>
+                <xsl:if test="$Start/root/Flag='process'">
+                    <param>
+                        <ReportFileName>
+                            <xsl:value-of select="concat(substring-before($Start/root/pfx:RepositoryDetails[1]/pfx:MuleProject, 'MigrationOutput'), 'MigrationOutput', $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/migrationDetailFolder,&#xA;$Start/root/pfx3:root/ns2:ProjectInfo[1]/ns2:name, '_', $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/AnalyzerToken, $GetVariableTimestamp/root/CurrentTimeStamp, '.csv')"/>
+                        </ReportFileName>
+                        <ReportContent>
+                            <xsl:value-of select="concat($_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/ReportProcessHeader,&quot;&#xD;&#xA;&quot;, $Render-DataProcessInfo/Text)"/>
+                        </ReportContent>
+                    </param>
+                </xsl:if>
+                <xsl:if test="$Start/root/Flag='process' and count($Start/root/pfx3:root/pfx4:ChecklistValidation)>0">
+                    <param>
+                        <ReportFileName>
+                            <xsl:value-of select="concat(substring-before($Start/root/pfx:RepositoryDetails[1]/pfx:MuleProject, 'MigrationOutput'), 'MigrationOutput',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/migrationDetailFolder,&#xA;$Start/root/pfx3:root/ns2:ProjectInfo[1]/ns2:name,'_', $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/ChecklistToken, $GetVariableTimestamp/root/CurrentTimeStamp, '.csv')"/>
+                        </ReportFileName>
+                        <ReportContent>
+                            <xsl:value-of select="concat($_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/ReportChecklistHeader,&quot;&#xD;&#xA;&quot;, $Render-DataChecklistInfo/Text)"/>
+                        </ReportContent>
+                    </param>
+                </xsl:if>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Catch">
+        <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+        <pd:resourceType>ae.activities.catch</pd:resourceType>
+        <pd:x>516</pd:x>
+        <pd:y>293</pd:y>
+        <pd:handler>true</pd:handler>
+        <config>
+            <catchAll>true</catchAll>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="ExceptionLogging">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>794</pd:x>
+        <pd:y>293</pd:y>
+        <config>
+            <processName>/Processes/Common/ExceptionLogging.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <ExceptionLog>
+                    <xsl:value-of select="tib:render-xml($_error, 1, 1)"/>
+                </ExceptionLog>
+                <ProjectName>
+                    <xsl:value-of select="concat($Start/root/pfx3:root/ns2:ProjectInfo[1]/ns2:name, '_', $GetVariable-TImestampToken/root/CurrentTimeStamp)"/>
+                </ProjectName>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Render-DataProcessInfo">
+        <pd:type>com.tibco.plugin.parse.RenderActivity</pd:type>
+        <pd:resourceType>ae.activities.RenderActivity</pd:resourceType>
+        <pd:x>261</pd:x>
+        <pd:y>261</pd:y>
+        <config>
+            <ParseSharedConfig>/Resources/DataFormat/ProcessInfoFormat.sharedparse</ParseSharedConfig>
+        </config>
+        <pd:inputBindings>
+            <Rows>
+                <xsl:for-each select="$Start/root/pfx3:root/ns1:ProcessInfo/ns1:activity">
+                    <ns1:activity>
+                        <xsl:if test="ns1:processName">
+                            <ns1:processName>
+                                <xsl:value-of select="ns1:processName"/>
+                            </ns1:processName>
+                        </xsl:if>
+                        <xsl:if test="ns1:name">
+                            <ns1:name>
+                                <xsl:value-of select="ns1:name"/>
+                            </ns1:name>
+                        </xsl:if>
+                        <xsl:if test="ns1:type">
+                            <ns1:type>
+                                <xsl:value-of select="ns1:type"/>
+                            </ns1:type>
+                        </xsl:if>
+                        <xsl:if test="ns1:resourceType">
+                            <ns1:resourceType>
+                                <xsl:value-of select="ns1:resourceType"/>
+                            </ns1:resourceType>
+                        </xsl:if>
+                        <xsl:if test="ns1:config">
+                            <ns1:config>
+                                <xsl:value-of select="ns1:config"/>
+                            </ns1:config>
+                        </xsl:if>
+                        <xsl:if test="ns1:inputBinding">
+                            <ns1:inputBinding>
+                                <xsl:value-of select="ns1:inputBinding"/>
+                            </ns1:inputBinding>
+                        </xsl:if>
+                        <xsl:if test="ns1:starter">
+                            <ns1:starter>
+                                <xsl:value-of select="ns1:starter"/>
+                            </ns1:starter>
+                        </xsl:if>
+                        <xsl:if test="ns1:from">
+                            <ns1:from>
+                                <xsl:value-of select="ns1:from"/>
+                            </ns1:from>
+                        </xsl:if>
+                        <xsl:if test="ns1:to">
+                            <ns1:to>
+                                <xsl:value-of select="ns1:to"/>
+                            </ns1:to>
+                        </xsl:if>
+                        <xsl:if test="ns1:groupName">
+                            <ns1:groupName>
+                                <xsl:value-of select="ns1:groupName"/>
+                            </ns1:groupName>
+                        </xsl:if>
+                        <ns1:tibcoType>
+                            <xsl:value-of select="ns1:type"/>
+                        </ns1:tibcoType>
+                        <ns1:muleType>
+                            <xsl:value-of select="if(string-length($GetTib2MuleActivityConversion/ns6:ConversionInfo/ns6:conversion[ns6:tibcoType=current()/ns1:type]/ns6:muleType[1])>0) then&#xA;tib:trim($GetTib2MuleActivityConversion/ns6:ConversionInfo/ns6:conversion[ns6:tibcoType=current()/ns1:type]/ns6:muleType[1])&#xA;else if(string-length(current()/ns1:muleType)>0) then current()/ns1:muleType else&#xA;'N/A'"/>
+                        </ns1:muleType>
+                        <ns1:conversionImpl>
+                            <xsl:value-of select="if(string-length($GetTib2MuleActivityConversion/ns6:ConversionInfo/ns6:conversion[ns6:tibcoType=current()/ns1:type]/ns6:conversionImpl[1])>0) then&#xA;tib:trim($GetTib2MuleActivityConversion/ns6:ConversionInfo/ns6:conversion[ns6:tibcoType=current()/ns1:type]/ns6:conversionImpl[1])&#xA;else if(string-length(current()/ns1:conversionImpl)>0) then current()/ns1:conversionImpl else&#xA;'No'"/>
+                        </ns1:conversionImpl>
+                        <ns1:issueType>
+                            <xsl:value-of select="if(string-length($GetTib2MuleActivityConversion/ns6:ConversionInfo/ns6:conversion[ns6:tibcoType=current()/ns1:type]/ns6:issueType[1])>0) then&#xA;tib:trim($GetTib2MuleActivityConversion/ns6:ConversionInfo/ns6:conversion[ns6:tibcoType=current()/ns1:type]/ns6:issueType[1])&#xA;else if(string-length(current()/ns1:issueType)>0) then current()/ns1:issueType else&#xA;'NOT-IMPLEMENTED'"/>
+                        </ns1:issueType>
+                        <ns1:remarks>
+                            <xsl:value-of select="if(string-length($GetTib2MuleActivityConversion/ns6:ConversionInfo/ns6:conversion[ns6:tibcoType=current()/ns1:type]/ns6:remarks[1])>0) then&#xA;tib:trim($GetTib2MuleActivityConversion/ns6:ConversionInfo/ns6:conversion[ns6:tibcoType=current()/ns1:type]/ns6:remarks[1])&#xA;else if(string-length(current()/ns1:remarks)>0) then current()/ns1:remarks else&#xA;'This activity conversion is not implemented yet.'"/>
+                        </ns1:remarks>
+                    </ns1:activity>
+                </xsl:for-each>
+            </Rows>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="GetVariableTimestamp">
+        <pd:type>com.tibco.pe.core.GetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.getSharedVariable</pd:resourceType>
+        <pd:x>396</pd:x>
+        <pd:y>120</pd:y>
+        <config>
+            <variableConfig>/Resources/Schema/Tibco/CurrDateTimeStamp.sharedvariable</variableConfig>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="Null">
+        <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+        <pd:resourceType>ae.activities.null</pd:resourceType>
+        <pd:x>314</pd:x>
+        <pd:y>122</pd:y>
+        <config/>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="Render-DataChecklistInfo">
+        <pd:type>com.tibco.plugin.parse.RenderActivity</pd:type>
+        <pd:resourceType>ae.activities.RenderActivity</pd:resourceType>
+        <pd:x>392</pd:x>
+        <pd:y>262</pd:y>
+        <config>
+            <ParseSharedConfig>/Resources/DataFormat/ChecklistInfoFormat.sharedparse</ParseSharedConfig>
+        </config>
+        <pd:inputBindings>
+            <Rows>
+                <xsl:for-each select="$Start/root/pfx3:root/pfx4:ChecklistValidation">
+                    <pfx4:ChecklistValidation>
+                        <xsl:if test="pfx4:ChecklistNumber">
+                            <pfx4:ChecklistNumber>
+                                <xsl:value-of select="pfx4:ChecklistNumber"/>
+                            </pfx4:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="pfx4:ChecklistName">
+                            <pfx4:ChecklistName>
+                                <xsl:value-of select="pfx4:ChecklistName"/>
+                            </pfx4:ChecklistName>
+                        </xsl:if>
+                        <xsl:if test="pfx4:Checklist">
+                            <pfx4:Checklist>
+                                <xsl:value-of select="pfx4:Checklist"/>
+                            </pfx4:Checklist>
+                        </xsl:if>
+                        <xsl:if test="pfx4:Validation">
+                            <pfx4:Validation>
+                                <xsl:value-of select="pfx4:Validation"/>
+                            </pfx4:Validation>
+                        </xsl:if>
+                        <pfx4:Remarks>
+                            <xsl:value-of select="translate(pfx4:Remarks, ',', ' ')"/>
+                        </pfx4:Remarks>
+                        <xsl:if test="pfx4:Process">
+                            <pfx4:Process>
+                                <xsl:value-of select="pfx4:Process"/>
+                            </pfx4:Process>
+                        </xsl:if>
+                        <xsl:if test="pfx4:Activity">
+                            <pfx4:Activity>
+                                <xsl:value-of select="pfx4:Activity"/>
+                            </pfx4:Activity>
+                        </xsl:if>
+                        <xsl:if test="pfx4:ReviewAccepted">
+                            <pfx4:ReviewAccepted>
+                                <xsl:value-of select="pfx4:ReviewAccepted"/>
+                            </pfx4:ReviewAccepted>
+                        </xsl:if>
+                        <xsl:if test="pfx4:DeveloperComment">
+                            <pfx4:DeveloperComment>
+                                <xsl:value-of select="pfx4:DeveloperComment"/>
+                            </pfx4:DeveloperComment>
+                        </xsl:if>
+                    </pfx4:ChecklistValidation>
+                </xsl:for-each>
+            </Rows>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>584</pd:x>
+        <pd:y>44</pd:y>
+        <pd:width>173</pd:width>
+        <pd:height>140</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$CreatingReportContent/root/param</pd:over>
+            <pd:iterationElementSlot>currentReport</pd:iterationElementSlot>
+            <pd:indexSlot>i</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>FileWriting</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>FileWriting</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="FileWriting">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>673</pd:x>
+            <pd:y>120</pd:y>
+            <config>
+                <processName>/Processes/Common/FileWriting.process</processName>
+            </config>
+            <pd:inputBindings>
+                <root>
+                    <FilePath>
+                        <xsl:value-of select="$currentReport/param/ReportFileName"/>
+                    </FilePath>
+                    <FileContent>
+                        <xsl:value-of select="$currentReport/param/ReportContent"/>
+                    </FileContent>
+                </root>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="GetTib2MuleActivityConversion">
+        <pd:type>com.tibco.pe.core.GetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.getSharedVariable</pd:resourceType>
+        <pd:x>56</pd:x>
+        <pd:y>262</pd:y>
+        <config>
+            <variableConfig>/Resources/SharedVariables/ConversionSharedVariable.sharedvariable</variableConfig>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="GetVariable-TImestampToken">
+        <pd:type>com.tibco.pe.core.GetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.getSharedVariable</pd:resourceType>
+        <pd:x>650</pd:x>
+        <pd:y>294</pd:y>
+        <config>
+            <variableConfig>/Resources/Schema/Tibco/CurrDateTimeStamp.sharedvariable</variableConfig>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="Render-Data-1">
+        <pd:type>com.tibco.plugin.parse.RenderActivity</pd:type>
+        <pd:resourceType>ae.activities.RenderActivity</pd:resourceType>
+        <pd:x>167</pd:x>
+        <pd:y>191</pd:y>
+        <config>
+            <ParseSharedConfig>/Resources/DataFormat/MigratedProjectDetailsFormat.sharedparse</ParseSharedConfig>
+        </config>
+        <pd:inputBindings>
+            <Rows>
+                <xsl:for-each select="$Start/root/ProjectDetails">
+                    <ProjectDetails>
+                        <xsl:if test="Service">
+                            <Service>
+                                <xsl:value-of select="Service"/>
+                            </Service>
+                        </xsl:if>
+                        <xsl:if test="Operation">
+                            <Operation>
+                                <xsl:value-of select="Operation"/>
+                            </Operation>
+                        </xsl:if>
+                    </ProjectDetails>
+                </xsl:for-each>
+            </Rows>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Render Data</pd:to>
+        <pd:xpathDescription>RepositoryReporting</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>$Start/root/Flag='repository'</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Render Data</pd:from>
+        <pd:to>Null</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Catch</pd:from>
+        <pd:to>GetVariable-TImestampToken</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ExceptionLogging</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>GetTib2MuleActivityConversion</pd:to>
+        <pd:xpathDescription>ProcessReporting</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>$Start/root/Flag='process'</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Render-DataProcessInfo</pd:from>
+        <pd:to>Null</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null</pd:from>
+        <pd:to>GetVariableTimestamp</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetVariableTimestamp</pd:from>
+        <pd:to>CreatingReportContent</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Render-DataProcessInfo</pd:from>
+        <pd:to>Render-DataChecklistInfo</pd:to>
+        <pd:xpathDescription>Checklist exists</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>count($Start/root/pfx3:root/pfx4:ChecklistValidation)&gt;0</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Render-DataChecklistInfo</pd:from>
+        <pd:to>Null</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>CreatingReportContent</pd:from>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetTib2MuleActivityConversion</pd:from>
+        <pd:to>Render-DataProcessInfo</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetVariable-TImestampToken</pd:from>
+        <pd:to>ExceptionLogging</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Render-Data-1</pd:to>
+        <pd:xpathDescription>Services details</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>$Start/root/Flag='repository'</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Render-Data-1</pd:from>
+        <pd:to>CreatingReportContent</pd:to>
+        <pd:lineType>One Bend</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:label>
+        <pd:name>Label</pd:name>
+        <pd:description>common process to prepare and create reporting details in csv format.</pd:description>
+        <pd:x>360</pd:x>
+        <pd:y>26</pd:y>
+        <pd:width>701</pd:width>
+        <pd:height>33</pd:height>
+        <pd:fontColor>-16777216</pd:fontColor>
+        <pd:color>-205</pd:color>
+        <pd:type>solid</pd:type>
+        <pd:thickness>0</pd:thickness>
+        <pd:fade>true</pd:fade>
+    </pd:label>
+</pd:ProcessDefinition>

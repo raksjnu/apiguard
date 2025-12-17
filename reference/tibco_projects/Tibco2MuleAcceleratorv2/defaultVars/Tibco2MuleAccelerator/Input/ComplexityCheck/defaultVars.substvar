@@ -1,0 +1,21 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>FileName</name>
+			<value>ProjectComplexity_Report_</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1609348714151</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>Header</name>
+			<value>ProcessName,isStarter,StarterName,StarterType,TotalBackendCalls,ActivitiesCalled,MapperActivityCount,MapperActivityName,Complexity</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1609927749855</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

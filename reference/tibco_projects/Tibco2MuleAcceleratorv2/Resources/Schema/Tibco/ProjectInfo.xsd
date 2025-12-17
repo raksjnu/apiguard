@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd"
+	 targetNamespace="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="ProjectInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="name" minOccurs="0"/>
+				<xs:element ref="path" minOccurs="0"/>
+				<xs:element ref="mulePath" minOccurs="0"/>
+				<xs:element ref="ProjectType" minOccurs="0"/>
+				<xs:element ref="ServiceAgentName" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="name" type="xs:string"/>
+	<xs:element name="path" type="xs:string"/>
+	<xs:element name="mulePath" type="xs:string"/>
+	<xs:element name="ProjectType" type="xs:string"/>
+	<xs:element name="ServiceAgentName" type="xs:string"/>
+</xs:schema>

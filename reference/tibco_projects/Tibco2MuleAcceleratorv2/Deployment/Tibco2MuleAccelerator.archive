@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Repository:repository xmlns:Repository="http://www.tibco.com/xmlns/repo/types/2002">
+    <enterpriseArchive>
+        <sharedArchive name="Shared Archive">
+            <resourceType>shared.archive.resource</resourceType>
+            <authorProperty>Rakesh</authorProperty>
+        </sharedArchive>
+        <processArchive name="Process Archive">
+            <resourceType>process.archive.resource</resourceType>
+            <authorProperty>Rakesh</authorProperty>
+            <processProperty>/Processes/Starter/TibcoRepoReader.process</processProperty>
+        </processArchive>
+        <versionProperty>3</versionProperty>
+        <authorProperty>Rakesh</authorProperty>
+        <addServiceSettableGvars>true</addServiceSettableGvars>
+        <name>Tibco2MuleAccelerator</name>
+        <designer>
+            <lockedProperties/>
+            <fixedChildren/>
+            <resourceDescriptions/>
+        </designer>
+        <fileLocationProperty>C:\temp\Tibco2MuleAccelerator.ear</fileLocationProperty>
+    </enterpriseArchive>
+</Repository:repository>

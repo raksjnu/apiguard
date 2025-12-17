@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/MuleProject.xsd"
+	 targetNamespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/MuleProject.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="mule-project">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="name" minOccurs="0"/>
+				<xs:element ref="description" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="runtimeId" type="xs:string"/>
+			<xs:attribute name="schemaVersion" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="name" type="xs:string"/>
+	<xs:element name="description" type="xs:string"/>
+</xs:schema>

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd"
+	 targetNamespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="ProcessInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="name" minOccurs="0"/>
+				<xs:element ref="path" minOccurs="0"/>
+				<xs:element ref="content" minOccurs="0"/>
+				<xs:element ref="activity" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="transition" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="label" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="group" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="processVariables" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="name" type="xs:string"/>
+	<xs:element name="activity">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="processName" type="xs:string" minOccurs="0"/>
+				<xs:element ref="name" minOccurs="0"/>
+				<xs:element name="type" type="xs:string" minOccurs="0"/>
+				<xs:element name="resourceType" type="xs:string" minOccurs="0"/>
+				<xs:element name="config" type="xs:string" minOccurs="0"/>
+				<xs:element name="inputBinding" type="xs:string" minOccurs="0"/>
+				<xs:element name="starter" type="xs:string" minOccurs="0"/>
+				<xs:element name="from" type="xs:string" minOccurs="0"/>
+				<xs:element name="to" type="xs:string" minOccurs="0"/>
+				<xs:element name="groupName" type="xs:string" minOccurs="0"/>
+				<xs:element name="tibcoType" type="xs:string" minOccurs="0"/>
+				<xs:element name="muleType" type="xs:string" minOccurs="0"/>
+				<xs:element name="conversionImpl" type="xs:string" minOccurs="0"/>
+				<xs:element name="issueType" type="xs:string" minOccurs="0"/>
+				<xs:element name="remarks" type="xs:string" minOccurs="0"/>
+				<xs:element name="rawConfig" type="xs:string" minOccurs="0"/>
+				<xs:element name="rawInputBinding" type="xs:string" minOccurs="0"/>
+				<xs:element name="posX" type="xs:string" minOccurs="0"/>
+				<xs:element name="posY" type="xs:string" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="transition">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="from" type="xs:string" minOccurs="0"/>
+				<xs:element name="to" type="xs:string" minOccurs="0"/>
+				<xs:element name="conditionType" type="xs:string" minOccurs="0"/>
+				<xs:element name="xpath" type="xs:string" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="label">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="name" minOccurs="0"/>
+				<xs:element name="description" type="xs:string" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="path" type="xs:string"/>
+	<xs:element name="group">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="name" minOccurs="0"/>
+				<xs:element ref="activity" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="transition" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="processVariables" type="xs:string"/>
+	<xs:element name="content" type="xs:string"/>
+</xs:schema>

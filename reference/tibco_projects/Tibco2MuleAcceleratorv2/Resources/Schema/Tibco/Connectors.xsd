@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Connectors.xsd"
+	 targetNamespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Connectors.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="Connectors">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="info" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="info">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="tibcoConnector" minOccurs="0"/>
+				<xs:element ref="muleConnector" minOccurs="0"/>
+				<xs:element ref="type" minOccurs="0"/>
+				<xs:element ref="rawConfig" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="tibcoConnector" type="xs:string"/>
+	<xs:element name="muleConnector" type="xs:string"/>
+	<xs:element name="type" type="xs:string"/>
+	<xs:element name="MULE">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="HTTP" type="xs:string" minOccurs="0"/>
+				<xs:element name="HTTPREQUEST" type="xs:string" minOccurs="0"/>
+				<xs:element name="JMS" type="xs:string" minOccurs="0"/>
+				<xs:element name="ACTIVEMQ" type="xs:string" minOccurs="0"/>
+				<xs:element name="FILE" type="xs:string" minOccurs="0"/>
+				<xs:element name="FTP" type="xs:string" minOccurs="0"/>
+				<xs:element name="SOAPEVENTSOURCE" type="xs:string" minOccurs="0"/>
+				<xs:element name="WEBSERVICECONSUMER" type="xs:string" minOccurs="0"/>
+				<xs:element name="JDBC" type="xs:string" minOccurs="0"/>
+				<xs:element name="SAP" type="xs:string" minOccurs="0"/>
+				<xs:element ref="SALESFORCE" minOccurs="0"/>
+				<xs:element ref="EMAIL" minOccurs="0"/>
+				<xs:element ref="JAVA" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="SALESFORCE" type="xs:string"/>
+	<xs:element name="EMAIL" type="xs:string"/>
+	<xs:element name="JAVA" type="xs:string"/>
+	<xs:element name="rawConfig" type="xs:string"/>
+</xs:schema>

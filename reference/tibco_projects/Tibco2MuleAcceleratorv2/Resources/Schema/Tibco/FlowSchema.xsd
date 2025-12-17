@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://www.tibco.com/Resources/Schema/FlowSchema/FlowSchema.xsd"
+	 targetNamespace="http://www.tibco.com/Resources/Schema/FlowSchema/FlowSchema.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="root">
+		 <xs:complexType>
+        <xs:sequence>
+            <xs:element name="ActivityCount" type="xs:string" minOccurs="0"/>
+            <xs:element name="ActivityNames" type="xs:string" minOccurs="0"/>
+            <xs:element name="name" type="xs:string" minOccurs="0"/>
+            <xs:element name="startName" type="xs:string" minOccurs="0"/>
+            <xs:element name="Starter" minOccurs="0">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" type="xs:string" minOccurs="0"/>
+                        <xs:element name="type" type="xs:string" minOccurs="0"/>
+                        <xs:element name="resourceType" type="xs:string" minOccurs="0"/>
+                        <xs:element name="config" type="xs:string" minOccurs="0"/>
+                        <xs:element name="binding" type="xs:string" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+            <xs:element name="Activities" minOccurs="0" maxOccurs="unbounded">
+                <xs:complexType>
+                    <xs:sequence>
+                        <xs:element name="name" type="xs:string" minOccurs="0"/>
+                        <xs:element name="type" type="xs:string" minOccurs="0"/>
+                        <xs:element name="resourceType" type="xs:string" minOccurs="0"/>
+                        <xs:element name="config" type="xs:string" minOccurs="0"/>
+                        <xs:element name="binding" type="xs:string" minOccurs="0"/>
+                    </xs:sequence>
+                </xs:complexType>
+            </xs:element>
+        </xs:sequence>
+    </xs:complexType>
+	</xs:element>
+</xs:schema>

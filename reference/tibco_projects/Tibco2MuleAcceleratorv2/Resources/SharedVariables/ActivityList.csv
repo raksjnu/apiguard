@@ -1,0 +1,172 @@
+ActivityType,TibcoName,Tibco,Mule,Implementation,Type,Remarks
+Shared Configuration,Custom Activity,N/A,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,JNDI Configuration,JNDISharedConfiguration,jms:connector,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,Job Shared Variable,jobSharedVariable,[set-variable;remove-variable],Recycle,XPATH,Validate the xpath logic
+Shared Configuration,Lock Object,LockConfig,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,Notify Configuration,NotifySharedConfig,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Resource,Shared Variable,sharedVariable,[set-variable;remove-variable],Recycle,XPATH,Validate the xpath logic
+Regular Activity,Assign,AssignActivity,set-variable,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Call Process,CallProcessActivity,flow-ref,Recycle,CONFIG,1. pl reconfigure the referenced subprocess wrt. Mule project relative path
+Regular Activity,Catch,CatchActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Checkpoint,CheckpointActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Confirm,Confirm,jms:ack,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Engine Command,EngineCommandActivity,scripting:component,Recycle,COMMAND,Validate the command logic
+Regular Activity,External Command,CmdExecActivity,scripting:component,Recycle,COMMAND,Validate the command logic
+Regular Activity,Generate Error,GenerateErrorActivity,N/A,Recycle,NOT-FOUND,Compatible activity not found in mule
+Regular Activity,Get Shared Variable,GetSharedVariableActivity,[set-variable;remove-variable],Recycle,CONFIG,Validate the configuration details
+Regular Activity,Inspector,InspectorActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Diagram Notation,Label,Label,N/A,Recycle,NOT-FOUND,Compatible activity not found in mule
+Regular Activity,Mapper,MapperActivity,transform,Recycle,XPATH,1. revalidate the schema required for mapping; 2. remap the various elements/fields in the schema.
+Regular Activity,Notify,NotifyActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Null,NullActivity,N/A,Discard,NOT-REQUIRED,This does not require to implement as in mule.
+Process Starter Activity,On Error,,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,On Event Timeout,OnEventTimeoutEventSource,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,On Notification Timeout,OnNotificationTimeoutEventSource,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,On Shutdown,OnShutdownEventSource,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,On Startup,OnStartupEventSource,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,Receive Notification,WaitEventSource,poll ,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Rethrow,RethrowActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Set Shared Variable,SetSharedVariableActivity,[set-variable;remove-variable],Recycle,XPATH,Validate the xpath logic
+Regular Activity,Sleep,SleepActivity,expression-component,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Timer,TimerEventSource,scheduler,Recycle,CONFIG,Validate the configuration details
+Signal-In Activity,Wait,WaitActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Write To Log,WriteToLogActivity,Logger,Recycle,XPATH,Validate the xpath logic
+Process Starter Activity,Adapter Request-Response Server,AERPCServerActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,Adapter Subscriber,AESubscriberActivity,[sap:inbound-endpoint;file:inbound-endpoint],Recycle,CONFIG,1. Pl ensure to configure the three SAP related libraries (SAP native; sapjco3.jar; sapidoc3.jar) ; 2. manually validate the SAP connection details; 3. reconfigure the adapter service in mule.
+Request/Reply Activity,Invoke an Adapter Request response Service,AERPCRequestReplyActivity,[sap:outbound-endpoint;file:outbound-endpoint],Recycle,CONFIG,1. Pl ensure to configure the three SAP related libraries (SAP native; sapjco3.jar; sapidoc3.jar) ; 2. manually validate the SAP connection details; 3. reconfigure the adapter service in mule.
+Regular Activity,Publish to Adapter,AEPublisherActivity,[sap:outbound-endpoint;file:outbound-endpoint],Recycle,CONFIG,1. Pl ensure to configure the three SAP related libraries (SAP native; sapjco3.jar; sapidoc3.jar) ; 2. manually validate the SAP connection details; 3. reconfigure the adapter service in mule.
+Regular Activity,Respond to Adapter Request,AERPCServerReplyActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Send Exception to Adapter Request,AERPCServerFaultActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Signal-In Activity,Wait for Adapter Message,AESubscriberSignalInActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Signal-In Activity,Wait for Adapter Request,AERPCServerSignalInActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,Generic Adapter Configuration,GenericAdapterConfiguration,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Message Filter,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Adapter Archive,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Advisory,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Client,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Generic Log Sink,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Generic Transaction Control Pool,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Generic Session,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Load URL,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Log Sink Role,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Publication Service,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Publisher,,outbound,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Request-Response Invocation Service,,outbound,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Request-Response Service,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Server,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Subscriber,Subscriber,inbound,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Subscription Service,,N/A,Recycle,CONFIG,Validate the configuration details
+Adapter Specific Resource,Timer,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Copy File,FileCopyActivity,file:copy,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Create File,FileCreateActivity,file:write,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,File Poller,FileEventSource,file:listener,Recycle,CONFIG,Validate the configuration details
+Regular Activity,List Files,ListFile,file:list,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Read File,FileReadActivity,file:read,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Remove File,FileRemoveActivity,file:delete,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Rename File,FileRenameActivity,file:rename,Recycle,CONFIG,Validate the configuration details
+Signal-In Activity,Wait for File Change,FileSignalIn,file:listener,Recycle,CONFIG,Validate the configuration details
+Regular Activity,File Write,FileWriteActivity,file:write,Recycle,CONFIG,Validate the configuration details
+Shared Resource,FTP Connection,FTPuserChannel,ftp:connector,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Change Default Directory,FTPChangeDefaultDirActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Delete File,FTPDeleteFileActivity,ftp:delete,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Dir,FTPDirActivity,ftp:list,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Get Default Directory,FTPGetDefaultDirActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Get,FTPGetActivity,ftp:read,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Make Remote Directory,FTPMakeRemoteDirActivity,ftp:create-directory,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Put,FTPPutActivity,ftp:write,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Quote,FTPQuoteActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Remove Remote Directory,FTPRemoveRemoteDirActivity,ftp:delete,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Rename File,FTPRenameActivity,ftp:rename,Recycle,CONFIG,Validate the configuration details
+Regular Activity,FTP Sys Type,FTPSysTypeActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Resource,HTTP Connection,HTTPConnection,http:connector,Recycle,CONNECTION,Validate the connection details
+Shared Resource,Proxy Configuration,ProxyConnection,http:proxy,Recycle,CONNECTION,Validate the connection details
+Process Starter,HTTP Receiver,HTTPEventSource,http:listener,Recycle,CONFIG,1. validate the security policy configuration ; 2. validate the advance configuration if required.
+Regular Activity,Send HTTP Request,HttpRequestActivity,http:request,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Send HTTP Response,HTTPResponseActivity,N/A,Discard,NOT-REQUIRED,This does not require to implement as in mule HTTP listener itself handles the response.
+Signal-In Activity,Wait For HTTP Request,HTTPSignalInActivity,http:listener,Recycle,XPATH,Validate the xpath logic
+Shared Configuration,Java Custom Function,Java Custom Function,java:new,Recycle,CODE,Validate the custom code
+Shared Resource,Java Global Instance,JavaGlobalServiceAgent,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,Java Schema,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Java Code,JavaActivity,java:new,Recycle,CODE,Validate the custom code
+Process Starter Activity,Java Event Source,JavaEventSource,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Java Method,JavaMethodActivity,[custom-transformer;component],Recycle,CODE,Validate the custom code
+Regular Activity,Java To XML,JavaToXmlActivity,[custom-transformer;component],Recycle,CODE,Validate the custom code
+Regular Activity,XML To Java,XmlToJavaActivity,[custom-transformer;component],Recycle,CODE,Validate the custom code
+Shared Resource,JDBC Connection,JDBCSharedResource,db:connector,Recycle,CONNECTION,Validate the connection details
+Regular Activity,JDBC Call Procedure,JDBCCallActivity,db:stored-procedure,Recycle,XPATH,Validate the xpath logic
+Regular Activity,JDBC Get Connection,JDBCGetConnectionActivity,N/A,Recycle,XPATH,Validate the xpath logic
+Regular Activity,JDBC Query,JDBCQueryActivity,db:select,Recycle,CONFIG,1. validate the connector configuration wrt. Driver details ; 2. configure the parameterized details if applicable.
+Regular Activity,JDBC Update,JDBCUpdateActivity,db:update,Recycle,CONFIG,1. validate the connector configuration wrt. Driver details ; 2. configure the parameterized details if applicable.
+Regular Activity,SQL Direct,JDBCGeneralActivity,db:execute-ddl,Recycle,CONFIG,1. validate the connector configuration wrt. Driver details ; 2. configure the parameterized details if applicable.
+Shared Configuration,JMS Application Properties,JMSAppPropResource,spring:property,Recycle,CONFIG,Validate the configuration details
+Shared Resource,JMS Connection,JMSConnectionKey,jms:connector,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Get JMS Queue Message,JMSQueueGetMessageActivity,jms:listener,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,JMS Queue Receiver,JMSQueueEventSource,jms:listener,Recycle,CONFIG,Validate the configuration details
+Regular Activity,JMS Queue Sender,JMSQueueSendActivity,jms:publish,Recycle,CONFIG,1. revalidate the connection reference; 2. validate the configuration of JMS application properties
+Regular Activity,JMS Topic Publisher,JMSTopicPublishActivity,jms:publish,Recycle,CONFIG,1. revalidate the connection reference; 2. validate the configuration of JMS application properties
+Regular Activity,JMS Queue Requestor,JMSQueueRequestReplyActivity,jms:publish-consume,Recycle,CONFIG,Validate the configuration details
+Regular Activity,JMS Topic Requestor,JMSTopicRequestReplyActivity,jms:publish-consume,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,JMS Topic Subscriber,JMSTopicEventSource,jms:listener,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Reply to JMS Message,,N/A,Recycle,CONFIG,Validate the configuration details
+Signal-In Activity,Wait for JMS Queue Message,,jms:consume,Recycle,CONFIG,Validate the configuration details
+Signal-In Activity,Wait for JMS Topic Message,,jms:consume,Recycle,CONFIG,Validate the configuration details
+[,Receive Mail,MailEventSource,[email:listener-imap;email:listener-pop3],Recycle,CONFIG,Validate the configuration details
+Regular Activity,Send Mail,MailPubActivity,email:send,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,Data Format,ParseSharedResource,transform,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Parse Data,ParseActivity,transform,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Render Data,RenderActivity,transform,Recycle,XPATH,Validate the xpath logic
+Shared Configuration,Security Policy Association,,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,Security Policy,,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,Process Archive,,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Resource,Rendezvous Transport,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Publish Rendezvous Message,,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,Rendezvous Subscriber,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Reply To Rendezvous Request,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Send Rendezvous Request,,N/A,Recycle,CONFIG,Validate the configuration details
+Signal-In Activity,Wait for Rendezvous Message,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Invoke REST API,RestActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Parse JSON,JSONParserActivity,transform,Recycle,CONNECTION,Validate the connection details
+Regular Activity,Render JSON,JSONRenderActivity,transform,Recycle,CONNECTION,Validate the connection details
+Regular Activity,REST Dispatch and Reply,RestAdapterActivity,N/A,Recycle,CONFIG,Validate the configuration details
+.contextResource,Context Resource,,N/A,Recycle,CONFIG,Validate the configuration details
+.sharedpartner,Partner Link Configuration,,N/A,Recycle,CONFIG,Validate the configuration details
+.serviceagent,Service,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Get Context,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Invoke Partner,,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,Receive Partner Notification,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Set Context,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,MIME Parser,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Retrieve Resources,RetrieveResource,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,SOAP Event Source,SOAPEventSource,http:listener,Recycle,CONFIG,1. Validate the connection details ; 2. revalidate the required wsdl and security details.
+Regular Activity,SOAP Request Reply,SOAPSendReceiveActivity,wsc:consume,Recycle,CONFIG,1. Validate the connection details ; 2. revalidate the required wsdl and security details.
+Regular Activity,SOAP Send Fault,SOAPSendFaultActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,SOAP Send Reply,SOAPSendReplyActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Resource,TCP Connection,TCPSharedconnection,tcp:connector,Recycle,CONNECTION,Validate the connection details
+Regular Activity,Read TCP Data,TCPReadActivity,tcp:inbound-endpoint,Recycle,XPATH,Validate the xpath logic
+Regular Activity,TCP Close Connection,TCPCloseConnectionActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,TCP Open Connection,TCPOpenConnectionActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,TCP Receiver,TCPEventSource,tcp:inbound-endpoint,Recycle,XPATH,Validate the xpath logic
+Signal-In Activity,Wait for TCP Request,TCPSignalInActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Write TCP Data,TCPWriteActivity,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Resource,JTA User Transaction Configuration,,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Resource,XA Transaction Manager Configuration,,N/A,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Transaction State,TransactionGroup,N/A,Recycle,CONFIG,Validate the configuration details
+Shared Configuration,XSLT File,xslt,xml-module:xslt-transform,Recycle,CONFIG,Validate the configuration details
+Regular Activity,Parse XML,XMLParseActivity,transform,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Render XML,XMLRendererActivity,transform,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Transform XML,XMLTransformActivity,xml-module:xslt-transform,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Start Type,StartType,N/A,Discard,NOT-REQUIRED,This does not require to implement as in mule all flow or sub-flow has corresponding starter.
+Process Starter Activity,Salesforce Outbound Message Listener,SalesforceEventSource,salesforce:new-object-listener,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Salesforce Create All,SalesforceCreateAllActivity,salesforce:create,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Salesforce Update All,SalesforceUpdateAllActivity,salesforce:update,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Salesforce Delete All,SalesforceDeleteAllActivity,salesforce:delete,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Salesforce Retrieve All,SalesforceRetrieveAllActivity,salesforce:retrieve,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Salesforce Query All,SalesforceQueryAllActivity,salesforce:query-all,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Salesforce Upsert All,SalesforceUpsertAllActivity,salesforce:upsert,Recycle,XPATH,Validate the xpath logic
+Shared Configuration,Salesforce Connection,SalesforceSharedResource,salesforce:sfdc-config,Recycle,CONFIG,Validate the configuration details
+Process Starter Activity,File Adapter Subscriber activity,AESubscriberActivity,file:listener,Recycle,XPATH,Validate the xpath logic
+Regular Activity,File Adapter Publisher activity,AEPublisherActivity,file:write,Recycle,XPATH,Validate the xpath logic
+Process Starter Activity,SAP Adapter Subscriber activity,AESubscriberActivity,sap:document-listener,Recycle,XPATH,Validate the xpath logic
+Regular Activity,SAP Adapter Publisher activity,AEPublisherActivity,sap:send ,Recycle,XPATH,Validate the xpath logic
+Process Starter Activity,Database Adapter Subscriber activity,AESubscriberActivity,db:listener,Recycle,XPATH,Validate the xpath logic
+Regular Activity,Database Adapter Publisher activity,AEPublisherActivity,db:update,Recycle,XPATH,Validate the xpath logic

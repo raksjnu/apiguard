@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/FileInfo.xsd"
+	 targetNamespace="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/FileInfo.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="FileInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="filePath" minOccurs="0"/>
+				<xs:element ref="fileName" minOccurs="0"/>
+				<xs:element ref="fileContent" minOccurs="0"/>
+				<xs:element ref="fileType" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="fileName" type="xs:string"/>
+	<xs:element name="fileContent" type="xs:string"/>
+	<xs:element name="filePath" type="xs:string"/>
+	<xs:element name="fileType" type="xs:string"/>
+</xs:schema>

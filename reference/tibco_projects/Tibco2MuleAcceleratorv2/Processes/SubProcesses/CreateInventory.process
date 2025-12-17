@@ -1,0 +1,480 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pfx="http://www.tibco.com/pe/DeployedVarsType" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns1="http://www.tibco.com/namespaces/tnt/plugins/file/v2">
+    <pd:name>Processes/SubProcesses/CreateInventory.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="root">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="tibcoSchemas" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                    <xsd:element name="TibcoProjectName" type="xsd:string"/>
+                    <xsd:element name="ProjectName" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="MuleProjectPath" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>41</pd:startX>
+    <pd:startY>216</pd:startY>
+    <pd:returnBindings>
+        <ServiceAgentDetails>
+            <xsl:for-each select="$AccummulatedFileData/AccumulatedOutput/InventoryFileData/ServiceAgent">
+                <ServiceAgent>
+                    <ServiceAgent>
+                        <xsl:value-of select="ServiceAgent"/>
+                    </ServiceAgent>
+                    <xsl:if test="Operations">
+                        <Operations>
+                            <xsl:value-of select="Operations"/>
+                        </Operations>
+                    </xsl:if>
+                </ServiceAgent>
+            </xsl:for-each>
+        </ServiceAgentDetails>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType>
+        <xsd:element name="ServiceAgentDetails">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="ServiceAgent" minOccurs="0" maxOccurs="unbounded">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="ServiceAgent" type="xsd:string"/>
+                                <xsd:element name="Operations" type="xsd:string" minOccurs="0"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:endType>
+    <pd:endX>1191</pd:endX>
+    <pd:endY>213</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1593075507236</pd:targetNamespace>
+    <pd:activity name="Write File">
+        <pd:type>com.tibco.plugin.file.FileWriteActivity</pd:type>
+        <pd:resourceType>ae.activities.FileWriteActivity</pd:resourceType>
+        <pd:x>1057</pd:x>
+        <pd:y>215</pd:y>
+        <config>
+            <encoding>text</encoding>
+            <compressFile>None</compressFile>
+        </config>
+        <pd:inputBindings>
+            <ns:WriteActivityInputTextClass>
+                <fileName>
+                    <xsl:value-of select="concat(substring-before($Start/root/MuleProjectPath, 'MigrationOutput'), 'MigrationOutput', $_globalVariables/pfx:GlobalVariables/Tibco2MuleAccelerator/Input/migrationDetailFolder,&#xA;$Start/root/ProjectName,'_',$_globalVariables/pfx:GlobalVariables/Tibco2MuleAccelerator/Input/ProjectConfig, '_',$GetVariableTimestamp/root/CurrentTimeStamp,'.csv')"/>
+                </fileName>
+                <textContent>
+                    <xsl:value-of select="concat($_globalVariables/pfx:GlobalVariables/Tibco2MuleAccelerator/Messages/InventoryHeader,&quot;&#xA;&quot;,tib:concat-sequence-format($AccummulatedFileData/AccumulatedOutput/InventoryFileData/Data, &quot;&#xA;&quot;))"/>
+                </textContent>
+            </ns:WriteActivityInputTextClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>132</pd:x>
+        <pd:y>10</pd:y>
+        <pd:width>709</pd:width>
+        <pd:height>380</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$Start/root/tibcoSchemas</pd:over>
+            <pd:iterationElementSlot>CurrentFileName</pd:iterationElementSlot>
+            <pd:indexSlot>File</pd:indexSlot>
+            <pd:outSlot>AccummulatedFileData</pd:outSlot>
+            <pd:activityOutputName>MapOperationData</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>ReadArchive</pd:to>
+            <pd:xpathDescription>Valid File</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Null-1</pd:to>
+            <pd:xpathDescription>File can be ignored</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>contains($CurrentFileName/tibcoSchemas,"Output\Projects")</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>MapOperationData</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Null</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>One Bend</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ReadArchive</pd:from>
+            <pd:to>ArchiveMapping</pd:to>
+            <pd:xpathDescription>ArchiveFile</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>tib:substring-after-last($CurrentFileName/tibcoSchemas, ".")="archive"</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ReadArchive</pd:from>
+            <pd:to>GetOperations</pd:to>
+            <pd:xpathDescription>ServiceAgent</pd:xpathDescription>
+            <pd:lineType>Multiple Bends</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>tib:substring-after-last($CurrentFileName/tibcoSchemas,".")="serviceagent"</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>GetOperations</pd:from>
+            <pd:to>Map-Data-1</pd:to>
+            <pd:xpathDescription>Multiple operations</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>count($GetOperations/root/Operation)&gt;1</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ReadArchive</pd:from>
+            <pd:to>Null</pd:to>
+            <pd:xpathDescription>otherwise</pd:xpathDescription>
+            <pd:lineType>Multiple Bends</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Null-1</pd:from>
+            <pd:to>Null</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ArchiveMapping</pd:from>
+            <pd:to>Map-Data-1</pd:to>
+            <pd:xpathDescription>Multiple starters</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>contains($ArchiveMapping/root/process-Starters,",")</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Map-Data-1</pd:from>
+            <pd:to>MapOperationData</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ArchiveMapping</pd:from>
+            <pd:to>MapOperationData</pd:to>
+            <pd:xpathDescription>otherwise</pd:xpathDescription>
+            <pd:lineType>One Bend</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>GetOperations</pd:from>
+            <pd:to>MapOperationData</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="ReadArchive">
+            <pd:type>com.tibco.plugin.file.FileReadActivity</pd:type>
+            <pd:resourceType>ae.activities.FileReadActivity</pd:resourceType>
+            <pd:x>240</pd:x>
+            <pd:y>90</pd:y>
+            <config>
+                <encoding>text</encoding>
+            </config>
+            <pd:inputBindings>
+                <ns1:ReadActivityInputClass>
+                    <fileName>
+                        <xsl:value-of select="$CurrentFileName/tibcoSchemas"/>
+                    </fileName>
+                </ns1:ReadActivityInputClass>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="ArchiveMapping">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>458</pd:x>
+            <pd:y>90</pd:y>
+            <config>
+                <element>
+                    <xsd:element name="root">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="artifact-detail" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="process-Starters" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="SplitAdapters" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </element>
+            </config>
+            <pd:inputBindings>
+                <root>
+                    <artifact-detail>
+                        <xsl:value-of select="$CurrentFileName/tibcoSchemas"/>
+                    </artifact-detail>
+                    <process-Starters>
+                        <xsl:value-of select="substring-before(substring-after($ReadArchive/ns:ReadActivityOutputTextClass/fileContent/textContent, '&lt;processProperty>'),'&lt;/processProperty>')"/>
+                    </process-Starters>
+                    <xsl:variable name="var" select="tib:tokenize(tib:substring-before-last(substring-after($ReadArchive/ns:ReadActivityOutputTextClass/fileContent/textContent,&quot;&lt;adapterArchive name&quot;), &quot;&lt;/adapterArchive>&quot;),&quot;=&quot;)"/>
+                    <xsl:for-each select="$var">
+                        <SplitAdapters>
+                            <xsl:value-of select="concat($Start/root/TibcoProjectName,&quot;,&quot;,substring-before(substring-after(current(), '&quot;'), '&quot;'),&quot;,&quot;,substring-after(substring-before(current(), '&lt;/adapterReference>'), '&lt;adapterReference>'),&quot;,&quot;,&quot;NA&quot;,&quot;,&quot;,&quot;NA&quot;,&quot;,&quot;,&quot;NA&quot; )"/>
+                        </SplitAdapters>
+                    </xsl:for-each>
+                </root>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="GetOperations">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>457</pd:x>
+            <pd:y>215</pd:y>
+            <config>
+                <element>
+                    <xsd:element name="root">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="Operation" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </element>
+            </config>
+            <pd:inputBindings>
+                <xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="var" select="tib:tokenize(substring-after(substring-before($ReadArchive/ns:ReadActivityOutputTextClass/fileContent/textContent,&quot;&lt;/operations>&quot;), &quot;&lt;operations>&quot;), &quot;>&quot;)"/>
+                <root>
+                    <xsl:for-each select="$var">
+                        <Operation>
+                            <xsl:value-of select="if(string-length(concat(substring-before(substring-after(current(), 'opName=&quot;'), '&quot;'),&quot;,&quot;,substring-before(substring-after(current(), 'opImpl=&quot;'), '&quot;')))>1)then&#xA;concat(substring-before(substring-after(current(), 'opName=&quot;'), '&quot;'),&quot;,&quot;,substring-before(substring-after(current(), 'opImpl=&quot;'), '&quot;'))&#xA;else&#xA;&quot;&quot;"/>
+                        </Operation>
+                    </xsl:for-each>
+                </root>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="MapOperationData">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>741</pd:x>
+            <pd:y>214</pd:y>
+            <config>
+                <element>
+                    <xsd:element name="InventoryFileData">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="Data" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                                <xsd:element name="ServiceAgent" minOccurs="0" maxOccurs="unbounded">
+                                    <xsd:complexType>
+                                        <xsd:sequence>
+                                            <xsd:element name="ServiceAgent" type="xsd:string" minOccurs="0"/>
+                                            <xsd:element name="Operations" type="xsd:string" minOccurs="0"/>
+                                        </xsd:sequence>
+                                    </xsd:complexType>
+                                </xsd:element>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </element>
+            </config>
+            <pd:inputBindings>
+                <InventoryFileData>
+                    <Data>
+                        <xsl:value-of select="if(contains($ArchiveMapping/root/process-Starters,&quot;,&quot;)) then&#xA;tib:concat-sequence-format($Map-Data-1/SplitData/SplitArchiveData, &quot;&#xA;&quot;)&#xA;else if(count($GetOperations/root/Operation)>1) then&#xA;tib:concat-sequence-format($Map-Data-1/SplitData/SplitOperationData, &quot;&#xA;&quot;)&#xA;else if(string-length($ArchiveMapping/root/process-Starters)>0 and not (contains($ArchiveMapping/root/process-Starters,&quot;,&quot;))) then&#xA;concat($Start/root/TibcoProjectName,&quot;,&quot;,tib:substring-after-last(tib:substring-before-last($ArchiveMapping/root/artifact-detail, &quot;.archive&quot;), &quot;\&quot;),&quot;,&quot;,$ArchiveMapping/root/artifact-detail,&quot;,&quot;,tib:substring-after-last(tib:substring-before-last($ArchiveMapping/root/process-Starters, &quot;.process&quot;),&quot;/&quot;),&quot;,&quot;,$ArchiveMapping/root/process-Starters,&quot;,&quot;,&quot;NA&quot;)&#xA;else if(count($GetOperations/root/Operation)=1) then&#xA;concat($Start/root/TibcoProjectName,&quot;,&quot;,tib:substring-after-last(tib:substring-before-last($CurrentFileName/tibcoSchemas, &quot;.serviceagent&quot;), &quot;\&quot;),&quot;,&quot;,$CurrentFileName/tibcoSchemas,&quot;,&quot;,&quot;NA&quot;,&quot;,&quot;,$GetOperations/root/Operation[1])&#xA;else if(count($GetOperations/root/Operation)=0) then&#xA;concat($Start/root/TibcoProjectName,&quot;,&quot;,tib:substring-after-last(tib:substring-before-last($CurrentFileName/tibcoSchemas, &quot;.serviceagent&quot;), &quot;\&quot;),&quot;,&quot;,&quot;NA&quot;,&quot;,&quot;,&quot;NA&quot;,&quot;,&quot;,&quot;NA&quot;,&quot;,&quot;,&quot;NA&quot;)&#xA;else&#xA;&quot;&quot;"/>
+                    </Data>
+                    <xsl:if test="count($ArchiveMapping/root/SplitAdapters)>0">
+                        <Data>
+                            <xsl:value-of select="if(count($ArchiveMapping/root/SplitAdapters)>1) then&#xA;tib:concat-sequence-format($ArchiveMapping/root/SplitAdapters,&quot;&#xA;&quot;) else if&#xA;(count($ArchiveMapping/root/SplitAdapters)=1)then&#xA;$ArchiveMapping/root/SplitAdapters[1]&#xA;else&#xA;&quot;&quot;"/>
+                        </Data>
+                    </xsl:if>
+                    <xsl:if test="contains($ReadArchive/ns:ReadActivityOutputTextClass/fileInfo/fullName,&quot;serviceagent&quot;)">
+                        <ServiceAgent>
+                            <ServiceAgent>
+                                <xsl:value-of select="tib:substring-before-last($ReadArchive/ns:ReadActivityOutputTextClass/fileInfo/fileName,&quot;.&quot;)"/>
+                            </ServiceAgent>
+                            <Operations>
+                                <xsl:value-of select="count($Map-Data-1/SplitData/SplitOperationData)"/>
+                            </Operations>
+                        </ServiceAgent>
+                    </xsl:if>
+                </InventoryFileData>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Null">
+            <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+            <pd:resourceType>ae.activities.null</pd:resourceType>
+            <pd:x>457</pd:x>
+            <pd:y>314</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+        <pd:activity name="Null-1">
+            <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+            <pd:resourceType>ae.activities.null</pd:resourceType>
+            <pd:x>241</pd:x>
+            <pd:y>313</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+        <pd:activity name="Map-Data-1">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>608</pd:x>
+            <pd:y>159</pd:y>
+            <config>
+                <element>
+                    <xsd:element name="SplitData">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="SplitArchiveData" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                                <xsd:element name="SplitOperationData" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </element>
+            </config>
+            <pd:inputBindings>
+                <SplitData>
+                    <xsl:variable name="var1" select="tib:tokenize($ArchiveMapping/root/process-Starters, &quot;,&quot;)"/>
+                    <xsl:variable name="var2" select="tib:concat-sequence-format($GetOperations/root/Operation,&quot;$&quot;)"/>
+                    <xsl:variable name="var3" select="tib:tokenize($var2, &quot;$&quot;)"/>
+                    <xsl:for-each select="$var1">
+                        <SplitArchiveData>
+                            <xsl:value-of select="concat($Start/root/TibcoProjectName,&quot;,&quot;,tib:substring-after-last(tib:substring-before-last($ArchiveMapping/root/artifact-detail, &quot;.archive&quot;), &quot;\&quot;),&quot;,&quot;,$ArchiveMapping/root/artifact-detail,&quot;,&quot;,tib:substring-after-last(tib:substring-before-last(current(), &quot;.process&quot;), &quot;/&quot;),&quot;,&quot;,current(),&quot;,&quot;,&quot;NA&quot;)"/>
+                        </SplitArchiveData>
+                    </xsl:for-each>
+                    <xsl:for-each select="$var3">
+                        <SplitOperationData>
+                            <xsl:value-of select="concat($Start/root/TibcoProjectName,&quot;,&quot;,tib:substring-after-last(tib:substring-before-last($CurrentFileName/tibcoSchemas, &quot;.serviceagent&quot;), &quot;\&quot;),&quot;,&quot;,$CurrentFileName/tibcoSchemas,&quot;,&quot;,&quot;NA&quot;,&quot;,&quot;,current())"/>
+                        </SplitOperationData>
+                    </xsl:for-each>
+                </SplitData>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="GetVariableTimestamp">
+        <pd:type>com.tibco.pe.core.GetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.getSharedVariable</pd:resourceType>
+        <pd:x>931</pd:x>
+        <pd:y>214</pd:y>
+        <config>
+            <variableConfig>/Resources/Schema/Tibco/CurrDateTimeStamp.sharedvariable</variableConfig>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="Catch">
+        <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+        <pd:resourceType>ae.activities.catch</pd:resourceType>
+        <pd:x>981</pd:x>
+        <pd:y>414</pd:y>
+        <pd:handler>true</pd:handler>
+        <config>
+            <catchAll>true</catchAll>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="ExceptionLogging">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>1193</pd:x>
+        <pd:y>317</pd:y>
+        <config>
+            <processName>/Processes/Common/ExceptionLogging.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <ExceptionLog>
+                    <xsl:value-of select="tib:render-xml($_error, 1, 1)"/>
+                </ExceptionLog>
+                <ProjectName>
+                    <xsl:value-of select="concat($Start/root/ProjectName, '_', $GetVariable-TImestampToken/root/CurrentTimeStamp)"/>
+                </ProjectName>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="GetVariable-TImestampToken">
+        <pd:type>com.tibco.pe.core.GetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.getSharedVariable</pd:resourceType>
+        <pd:x>1194</pd:x>
+        <pd:y>412</pd:y>
+        <config>
+            <variableConfig>/Resources/Schema/Tibco/CurrDateTimeStamp.sharedvariable</variableConfig>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Write File</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>GetVariableTimestamp</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetVariableTimestamp</pd:from>
+        <pd:to>Write File</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Catch</pd:from>
+        <pd:to>GetVariable-TImestampToken</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetVariable-TImestampToken</pd:from>
+        <pd:to>ExceptionLogging</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ExceptionLogging</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

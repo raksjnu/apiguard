@@ -1,0 +1,45 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>GlobalConfigurationFileName</name>
+			<value>global.xml</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719717452</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>mule-projectHead</name>
+			<value>&lt;?xml version="1.0" encoding="UTF-8"?> &lt;mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd"></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1591264241981</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>mule-projectTail</name>
+			<value>&lt;/mule></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1591264242009</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>runtimeId</name>
+			<value>org.mule.tooling.server.3.9.3.ee</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719727124</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>schemaVersion</name>
+			<value>5.3.0.0</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719720921</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

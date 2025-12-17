@@ -1,0 +1,1943 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pfx="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/LocationDetails.xsd" xmlns:pfx2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" xmlns:ns="http://www.tibco.com/pe/DeployedVarsType" xmlns:pfx3="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/GVDetails.xsd" xmlns:pfx4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns0="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/NameValue.xsd" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns2="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd" xmlns:ns1="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:ns4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/GVInfo.xsd" xmlns:ns3="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/FileInfo.xsd" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns6="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" xmlns:ns5="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns12="http://www.tibco.com/namespaces/tnt/plugins/file/v2">
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/LocationDetails.xsd" schemaLocation="/Resources/Schema/Tibco/LocationDetails.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" schemaLocation="/Resources/Schema/Tibco/Report.xsd"/>
+    <xsd:import namespace="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/GVDetails.xsd" schemaLocation="/Resources/Schema/Tibco/GVDetails.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" schemaLocation="/Resources/Schema/Tibco/All.xsd"/>
+    <pd:name>Processes/Main/TibcoProjectFolderReader.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType ref="pfx4:root"/>
+    <pd:startX>27</pd:startX>
+    <pd:startY>114</pd:startY>
+    <pd:returnBindings>
+        <pfx2:root>
+            <pfx2:RepositoryDetails>
+                <xsl:choose>
+                    <xsl:when test="string-length(tib:trim($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:ServiceAgentName))>1">
+                        <pfx2:TibcoProject>
+                            <xsl:value-of select="concat($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:ServiceAgentName,'Operation - ',tib:substring-after-last(tib:substring-before-last($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:path,&quot;\&quot;),&quot;\&quot;),&quot;\&quot;)"/>
+                        </pfx2:TibcoProject>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:if test="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:path">
+                            <pfx2:TibcoProject>
+                                <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:path"/>
+                            </pfx2:TibcoProject>
+                        </xsl:if>
+                    </xsl:otherwise>
+                </xsl:choose>
+                <xsl:choose>
+                    <xsl:when test="string-length(tib:trim($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:ServiceAgentName))>1">
+                        <xsl:if test="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath">
+                            <pfx2:MuleProject>
+                                <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath"/>
+                            </pfx2:MuleProject>
+                        </xsl:if>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:if test="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath">
+                            <pfx2:MuleProject>
+                                <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath"/>
+                            </pfx2:MuleProject>
+                        </xsl:if>
+                    </xsl:otherwise>
+                </xsl:choose>
+                <pfx2:MigrationStatus>
+                    <xsl:value-of select="if(string-length($_error)>0) then&#xA;$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/RepoMigrationStatusError&#xA;else&#xA;$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/RepoMigrationStatus"/>
+                </pfx2:MigrationStatus>
+                <pfx2:Description>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/RepoMigrationMessage"/>
+                </pfx2:Description>
+                <pfx2:StartTime>
+                    <xsl:value-of select="if(string-length($GetVariable/root/CurrentTimeStamp)>0) then&#xA;$GetVariable/root/CurrentTimeStamp&#xA;else&#xA;current-dateTime()"/>
+                </pfx2:StartTime>
+                <pfx2:EndTime>
+                    <xsl:value-of select="current-dateTime()"/>
+                </pfx2:EndTime>
+                <pfx2:Archives>
+                    <xsl:value-of select="count($TibcoResources/root/tibcoSchemas[tib:substring-after-last(., '.')='archive'])"/>
+                </pfx2:Archives>
+                <pfx2:Processes>
+                    <xsl:value-of select="count($TibcoProcesses/root/tibcoProjectProcesses[tib:substring-after-last(., '.')='process'])"/>
+                </pfx2:Processes>
+                <pfx2:SubProcesses>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SubProcessCall,.)=true()])"/>
+                </pfx2:SubProcesses>
+                <pfx2:Starters>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:starter[.='Yes'])+count($TibcoResources/root/tibcoSchemas[contains($_globalVariables/ns:GlobalVariables/V2/ServiceAgents,tib:substring-after-last(., '.'))=true()])"/>
+                </pfx2:Starters>
+                <pfx2:OnStartup>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/OnStartup,.)=true()])"/>
+                </pfx2:OnStartup>
+                <pfx2:ServiceAgent>
+                    <xsl:value-of select="count($TibcoResources/root/tibcoSchemas[contains($_globalVariables/ns:GlobalVariables/V2/ServiceAgents,tib:substring-after-last(., '.'))=true()])"/>
+                </pfx2:ServiceAgent>
+                <xsl:if test="$StarterConfigReport/ServiceAgentDetails/ServiceAgent[1]/Operations">
+                    <pfx2:ServiceAgentOperations>
+                        <xsl:value-of select="$StarterConfigReport/ServiceAgentDetails/ServiceAgent[1]/Operations"/>
+                    </pfx2:ServiceAgentOperations>
+                </xsl:if>
+                <pfx2:HTTPStarter>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/HTTPStarter,.)=true()])"/>
+                </pfx2:HTTPStarter>
+                <pfx2:RVStarters>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/RVStarter,.)=true()])"/>
+                </pfx2:RVStarters>
+                <pfx2:SOAPStarter>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SOAPStarter,.)=true()])"/>
+                </pfx2:SOAPStarter>
+                <pfx2:RestStarter>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/RestStarter,.)=true()])"/>
+                </pfx2:RestStarter>
+                <pfx2:FileStarter>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/FileStarter,.)=true()])"/>
+                </pfx2:FileStarter>
+                <pfx2:JMSQStarter>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSQueueStarter,.)=true()])"/>
+                </pfx2:JMSQStarter>
+                <pfx2:JMSTStarter>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSTopicstarter,.)=true()])"/>
+                </pfx2:JMSTStarter>
+                <pfx2:TimerStarter>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/TimerStarter,.)=true()])"/>
+                </pfx2:TimerStarter>
+                <pfx2:AEStarter>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/AEStarters,.)=true()])"/>
+                </pfx2:AEStarter>
+                <pfx2:JDBCQuery>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JDBCQuery,.)=true()])"/>
+                </pfx2:JDBCQuery>
+                <pfx2:JDBCUpdate>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JDBCUpdate,.)=true()])"/>
+                </pfx2:JDBCUpdate>
+                <pfx2:SOAPCalls>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SOAPInvocations,.)=true()])"/>
+                </pfx2:SOAPCalls>
+                <pfx2:HTTPCalls>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/HTTPInvocations,.)=true()])"/>
+                </pfx2:HTTPCalls>
+                <pfx2:RESTCalls>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/RestInvocations,.)=true()])"/>
+                </pfx2:RESTCalls>
+                <pfx2:JMSCalls>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSInvocations,.)=true()])"/>
+                </pfx2:JMSCalls>
+                <pfx2:JMSQueueSend>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSQueueSend,.)=true()])"/>
+                </pfx2:JMSQueueSend>
+                <pfx2:JMSQueueGetMessage>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSQueueGetMessage,.)=true()])"/>
+                </pfx2:JMSQueueGetMessage>
+                <pfx2:JMSQueueRquestReply>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSQueueRequestReply,.)=true()])"/>
+                </pfx2:JMSQueueRquestReply>
+                <pfx2:JMSTopicPublish>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSTopicPublish,.)=true()])"/>
+                </pfx2:JMSTopicPublish>
+                <pfx2:JMSTopicRequestReply>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSTopicRequestReply,.)=true()])"/>
+                </pfx2:JMSTopicRequestReply>
+                <pfx2:JMSReply>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSReply,.)=true()])"/>
+                </pfx2:JMSReply>
+                <pfx2:JMSQueueSignal>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSQueueSignalIn,.)=true()])"/>
+                </pfx2:JMSQueueSignal>
+                <pfx2:JMSTopicSignal>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSTopicSignalIn,.)=true()])"/>
+                </pfx2:JMSTopicSignal>
+                <pfx2:FileWrite>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/FileWrite,.)=true()])"/>
+                </pfx2:FileWrite>
+                <pfx2:FileCreate>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/FileCreate,.)=true()])"/>
+                </pfx2:FileCreate>
+                <pfx2:FileRemove>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/FileRemove,.)=true()])"/>
+                </pfx2:FileRemove>
+                <pfx2:FileRead>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/FileRead,.)=true()])"/>
+                </pfx2:FileRead>
+                <pfx2:FileCopy>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/FileCopy,.)=true()])"/>
+                </pfx2:FileCopy>
+                <pfx2:JavaActivities>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JavaActivities,.)=true()])"/>
+                </pfx2:JavaActivities>
+                <pfx2:Mappers>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Mappers,.)=true()])"/>
+                </pfx2:Mappers>
+                <pfx2:Renders>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Render,.)=true()])"/>
+                </pfx2:Renders>
+                <pfx2:Parsers>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Parser,.)=true()])"/>
+                </pfx2:Parsers>
+                <pfx2:WSDLs>
+                    <xsl:value-of select="count($TibcoWsdl/root/tibcoWsdl)"/>
+                </pfx2:WSDLs>
+                <pfx2:WADLs>
+                    <xsl:value-of select="count($TibcoResources/root/tibcoSchemas[contains($_globalVariables/ns:GlobalVariables/V2/WADL,tib:substring-after-last(., '.'))=true()])"/>
+                </pfx2:WADLs>
+                <pfx2:XSDs>
+                    <xsl:value-of select="count($TibcoResources/root/tibcoSchemas[contains($_globalVariables/ns:GlobalVariables/V2/XSD,tib:substring-after-last(., '.'))=true()])"/>
+                </pfx2:XSDs>
+                <pfx2:CopyBooks>
+                    <xsl:value-of select="count($TibcoResources/root/tibcoSchemas[contains($_globalVariables/ns:GlobalVariables/V2/Copybook,tib:substring-after-last(., '.'))=true()])"/>
+                </pfx2:CopyBooks>
+                <pfx2:SharedVars>
+                    <xsl:value-of select="count($TibcoResources/root/tibcoSchemas[contains($_globalVariables/ns:GlobalVariables/V2/SharedVariables,tib:substring-after-last(., '.'))=true()])"/>
+                </pfx2:SharedVars>
+                <pfx2:Connections>
+                    <xsl:value-of select="count($TibcoResources/root/tibcoSchemas[contains($_globalVariables/ns:GlobalVariables/V2/Connections,tib:substring-after-last(., '.'))=true()])"/>
+                </pfx2:Connections>
+                <pfx2:Certificates>
+                    <xsl:value-of select="count($TibcoResources/root/tibcoSchemas[contains($_globalVariables/ns:GlobalVariables/V2/Certificates,tib:substring-after-last(., '.'))=true()])"/>
+                </pfx2:Certificates>
+                <pfx2:AEActivities>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/AEActivities,.)=true()])"/>
+                </pfx2:AEActivities>
+                <pfx2:Assign>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Assign,.)=true()])"/>
+                </pfx2:Assign>
+                <pfx2:Checkpoint>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/CheckPoint,.)=true()])"/>
+                </pfx2:Checkpoint>
+                <pfx2:Catch>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Catch,.)=true()])"/>
+                </pfx2:Catch>
+                <pfx2:GenerateError>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/GenerateError,.)=true()])"/>
+                </pfx2:GenerateError>
+                <pfx2:Confirm>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Confirm,.)=true()])"/>
+                </pfx2:Confirm>
+                <pfx2:ReceiveMail>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/ReceiveMail,.)=true()])"/>
+                </pfx2:ReceiveMail>
+                <pfx2:SendMail>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SendMail,.)=true()])"/>
+                </pfx2:SendMail>
+                <pfx2:Custom>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Custom,.)=true()])"/>
+                </pfx2:Custom>
+                <pfx2:LockObject>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/LockObject,.)=true()])"/>
+                </pfx2:LockObject>
+                <pfx2:NotifyConfiguration>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/NotifyConfiguration,.)=true()])"/>
+                </pfx2:NotifyConfiguration>
+                <pfx2:EngineCommand>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/EngineCommand,.)=true()])"/>
+                </pfx2:EngineCommand>
+                <pfx2:ExternalCommand>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/ExternalCommand,.)=true()])"/>
+                </pfx2:ExternalCommand>
+                <pfx2:Notify>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Notify,.)=true()])"/>
+                </pfx2:Notify>
+                <pfx2:OnError>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/OnError,.)=true()])"/>
+                </pfx2:OnError>
+                <pfx2:OnEventTimeout>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/OnEventTimeout,.)=true()])"/>
+                </pfx2:OnEventTimeout>
+                <pfx2:OnNotificationTimeout>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/OnNotificationTimeout,.)=true()])"/>
+                </pfx2:OnNotificationTimeout>
+                <pfx2:OnShutdown>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/OnShutdown,.)=true()])"/>
+                </pfx2:OnShutdown>
+                <pfx2:ReceiveNotification>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/ReceiveNotification,.)=true()])"/>
+                </pfx2:ReceiveNotification>
+                <pfx2:Rethrow>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Rethrow,.)=true()])"/>
+                </pfx2:Rethrow>
+                <pfx2:Sleep>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Sleep,.)=true()])"/>
+                </pfx2:Sleep>
+                <pfx2:Wait>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/Wait,.)=true()])"/>
+                </pfx2:Wait>
+                <pfx2:WriteToLog>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/WriteToLog,.)=true()])"/>
+                </pfx2:WriteToLog>
+                <pfx2:FilePoller>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/FilePoller,.)=true()])"/>
+                </pfx2:FilePoller>
+                <pfx2:ListFiles>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/ListFiles,.)=true()])"/>
+                </pfx2:ListFiles>
+                <pfx2:RenameFile>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/RenameFile,.)=true()])"/>
+                </pfx2:RenameFile>
+                <pfx2:WaitforFileChange>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/WaitforFileChange,.)=true()])"/>
+                </pfx2:WaitforFileChange>
+                <pfx2:HTTPReceiver>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/HTTPReceiver,.)=true()])"/>
+                </pfx2:HTTPReceiver>
+                <pfx2:SendHTTPRequest>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SendHTTPRequest,.)=true()])"/>
+                </pfx2:SendHTTPRequest>
+                <pfx2:WaitForHTTPRequest>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/WaitForHTTPRequest,.)=true()])"/>
+                </pfx2:WaitForHTTPRequest>
+                <pfx2:JavaCustomFunction>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JavaCustomFunction,.)=true()])"/>
+                </pfx2:JavaCustomFunction>
+                <pfx2:JavaGlobalInstance>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JavaGlobalInstance,.)=true()])"/>
+                </pfx2:JavaGlobalInstance>
+                <pfx2:JavaSchema>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JavaSchema,.)=true()])"/>
+                </pfx2:JavaSchema>
+                <pfx2:JavaCode>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JavaCode,.)=true()])"/>
+                </pfx2:JavaCode>
+                <pfx2:JavaEventSource>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JavaEventSource,.)=true()])"/>
+                </pfx2:JavaEventSource>
+                <pfx2:JavaMethod>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JavaMethod,.)=true()])"/>
+                </pfx2:JavaMethod>
+                <pfx2:JavaToXML>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JavaToXML,.)=true()])"/>
+                </pfx2:JavaToXML>
+                <pfx2:XMLToJava>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/XMLToJava,.)=true()])"/>
+                </pfx2:XMLToJava>
+                <pfx2:JDBCConnection>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JDBCConnection,.)=true()])"/>
+                </pfx2:JDBCConnection>
+                <pfx2:JDBCCallProcedure>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JDBCCallProcedure,.)=true()])"/>
+                </pfx2:JDBCCallProcedure>
+                <pfx2:SQLDirect>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SQLDirect,.)=true()])"/>
+                </pfx2:SQLDirect>
+                <pfx2:JMSApplicationProperties>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSApplicationProperties,.)=true()])"/>
+                </pfx2:JMSApplicationProperties>
+                <pfx2:JMSConnection>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSConnection,.)=true()])"/>
+                </pfx2:JMSConnection>
+                <pfx2:GetJMSQueueMessage>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/GetJMSQueueMessage,.)=true()])"/>
+                </pfx2:GetJMSQueueMessage>
+                <pfx2:JMSQueueReceiver>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSQueueReceiver,.)=true()])"/>
+                </pfx2:JMSQueueReceiver>
+                <pfx2:JMSQueueRequester>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSQueueRequester,.)=true()])"/>
+                </pfx2:JMSQueueRequester>
+                <pfx2:JMSTopicRequestor>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSTopicRequestor,.)=true()])"/>
+                </pfx2:JMSTopicRequestor>
+                <pfx2:JMSTopicSubscriber>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/JMSTopicSubscriber,.)=true()])"/>
+                </pfx2:JMSTopicSubscriber>
+                <pfx2:ReplytoJMSMessage>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/ReplytoJMSMessage,.)=true()])"/>
+                </pfx2:ReplytoJMSMessage>
+                <pfx2:WaitforJMSQueueMessage>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/WaitforJMSQueueMessage,.)=true()])"/>
+                </pfx2:WaitforJMSQueueMessage>
+                <pfx2:WaitforJMSTopicMessage>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/WaitforJMSTopicMessage,.)=true()])"/>
+                </pfx2:WaitforJMSTopicMessage>
+                <pfx2:DataFormat>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/DataFormat,.)=true()])"/>
+                </pfx2:DataFormat>
+                <pfx2:ParseData>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/ParseData,.)=true()])"/>
+                </pfx2:ParseData>
+                <pfx2:RenderData>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/RenderData,.)=true()])"/>
+                </pfx2:RenderData>
+                <pfx2:SecurityPolicyAssociation>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SecurityPolicyAssociation,.)=true()])"/>
+                </pfx2:SecurityPolicyAssociation>
+                <pfx2:SecurityPolicy>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SecurityPolicy,.)=true()])"/>
+                </pfx2:SecurityPolicy>
+                <pfx2:InvokeRESTAPI>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/InvokeRESTAPI,.)=true()])"/>
+                </pfx2:InvokeRESTAPI>
+                <pfx2:RESTDispatchandReply>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/RESTDispatchandReply,.)=true()])"/>
+                </pfx2:RESTDispatchandReply>
+                <pfx2:XSLTFile>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/XSLTFile,.)=true()])"/>
+                </pfx2:XSLTFile>
+                <pfx2:TransformXML>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/TransformXML,.)=true()])"/>
+                </pfx2:TransformXML>
+                <pfx2:SOAPEventSource>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SOAPEventSource,.)=true()])"/>
+                </pfx2:SOAPEventSource>
+                <pfx2:SOAPRequestReply>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SOAPRequestReply,.)=true()])"/>
+                </pfx2:SOAPRequestReply>
+                <pfx2:SOAPSendReply>
+                    <xsl:value-of select="count($ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo/ns5:activity/ns5:type[contains($_globalVariables/ns:GlobalVariables/V2/SOAPSendReply,.)=true()])"/>
+                </pfx2:SOAPSendReply>
+            </pfx2:RepositoryDetails>
+        </pfx2:root>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType ref="pfx2:root"/>
+    <pd:endX>1825</pd:endX>
+    <pd:endY>162</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://ibm.com/raks/tibco2mule/accelerator/TibcoProjectFolderReader</pd:targetNamespace>
+    <pd:group name="GVGroup">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:description/>
+        <pd:x>619</pd:x>
+        <pd:y>527</pd:y>
+        <pd:width>276</pd:width>
+        <pd:height>198</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$TibcoGVList/root/TibcoGVList</pd:over>
+            <pd:iterationElementSlot>GVFileName</pd:iterationElementSlot>
+            <pd:indexSlot>fileItr</pd:indexSlot>
+            <pd:outSlot>GVInfo</pd:outSlot>
+            <pd:activityOutputName>CallGVExtracterConverter</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>CallGVExtracterConverter</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Null-3</pd:to>
+            <pd:xpathDescription>Write Report</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/WriteReportOnly="Yes"  or $Start/pfx4:root/ns2:ProjectInfo/ns2:ProjectType='serviceagent'</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Null-3</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>CallGVExtracterConverter</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="CallGVExtracterConverter">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>760</pd:x>
+            <pd:y>589</pd:y>
+            <config>
+                <processName>/Processes/SubProcesses/Tibco2MuleGVConverter.process</processName>
+            </config>
+            <pd:inputBindings>
+                <pfx4:root>
+                    <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$Start/pfx4:root/ns2:ProjectInfo">
+                        <ns2:ProjectInfo>
+                            <xsl:if test="ns2:name">
+                                <ns2:name>
+                                    <xsl:value-of select="ns2:name"/>
+                                </ns2:name>
+                            </xsl:if>
+                            <xsl:if test="ns2:path">
+                                <ns2:path>
+                                    <xsl:value-of select="ns2:path"/>
+                                </ns2:path>
+                            </xsl:if>
+                            <xsl:if test="ns2:mulePath">
+                                <ns2:mulePath>
+                                    <xsl:value-of select="ns2:mulePath"/>
+                                </ns2:mulePath>
+                            </xsl:if>
+                        </ns2:ProjectInfo>
+                    </xsl:for-each>
+                    <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$TibcoGVList/root/TibcoGVList">
+                        <ns3:FileInfo>
+                            <ns3:filePath>
+                                <xsl:value-of select="$GVFileName/TibcoGVList"/>
+                            </ns3:filePath>
+                        </ns3:FileInfo>
+                    </xsl:for-each>
+                </pfx4:root>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Null-3">
+            <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+            <pd:resourceType>ae.activities.null</pd:resourceType>
+            <pd:x>757</pd:x>
+            <pd:y>663</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+    </pd:group>
+    <pd:group name="ProcessGroup">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>634</pd:x>
+        <pd:y>1</pd:y>
+        <pd:width>181</pd:width>
+        <pd:height>141</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$TibcoProcesses/root/tibcoProjectProcesses</pd:over>
+            <pd:iterationElementSlot>TibcoProcessName</pd:iterationElementSlot>
+            <pd:indexSlot>i</pd:indexSlot>
+            <pd:outSlot>ProcessActivityInfo</pd:outSlot>
+            <pd:activityOutputName>Process2FlowConvertor</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Process2FlowConvertor</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Process2FlowConvertor</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Process2FlowConvertor">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>712</pd:x>
+            <pd:y>65</pd:y>
+            <config>
+                <processName>/Processes/SubProcesses/Tibco2MuleFlowConverter.process</processName>
+            </config>
+            <pd:inputBindings>
+                <xsl:variable name="varpathAppend" select="substring-before(translate(substring-after($TibcoProcessName/tibcoProjectProcesses, concat($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:name,'\')) , '\', '_'), '.process')"/>
+                <pfx4:root>
+                    <xsl:for-each select="$Start/pfx4:root/ns2:ProjectInfo">
+                        <ns2:ProjectInfo>
+                            <xsl:if test="ns2:name">
+                                <ns2:name>
+                                    <xsl:value-of select="ns2:name"/>
+                                </ns2:name>
+                            </xsl:if>
+                            <xsl:if test="ns2:path">
+                                <ns2:path>
+                                    <xsl:value-of select="ns2:path"/>
+                                </ns2:path>
+                            </xsl:if>
+                            <xsl:if test="ns2:mulePath">
+                                <ns2:mulePath>
+                                    <xsl:value-of select="ns2:mulePath"/>
+                                </ns2:mulePath>
+                            </xsl:if>
+                        </ns2:ProjectInfo>
+                    </xsl:for-each>
+                    <ns5:ProcessInfo>
+                        <ns5:path>
+                            <xsl:value-of select="$TibcoProcessName/tibcoProjectProcesses"/>
+                        </ns5:path>
+                    </ns5:ProcessInfo>
+                    <ns0:NameValuePairs>
+                        <xsl:if test="$i=count($TibcoProcesses/root/tibcoProjectProcesses)">
+                            <ns0:Key>
+                                <ns0:Name>
+                                    <xsl:value-of select="'LastProcess'"/>
+                                </ns0:Name>
+                                <ns0:Value>
+                                    <xsl:value-of select="'Yes'"/>
+                                </ns0:Value>
+                            </ns0:Key>
+                        </xsl:if>
+                    </ns0:NameValuePairs>
+                </pfx4:root>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:group name="SchemaGroup">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>623</pd:x>
+        <pd:y>144</pd:y>
+        <pd:width>275</pd:width>
+        <pd:height>202</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$TibcoResources/root/tibcoSchemas</pd:over>
+            <pd:iterationElementSlot>TibcoSchemaNames</pd:iterationElementSlot>
+            <pd:indexSlot>j</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>FilesCopy</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Null-1</pd:to>
+            <pd:xpathDescription>Write Report</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/WriteReportOnly="Yes"  or $Start/pfx4:root/ns2:ProjectInfo/ns2:ProjectType='serviceagent'</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Null-1</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>FilesCopy</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="FilesCopy">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>756</pd:x>
+            <pd:y>205</pd:y>
+            <config>
+                <processName>/Processes/Common/FilesCopy.process</processName>
+            </config>
+            <pd:inputBindings>
+                <root>
+                    <FromFileName>
+                        <xsl:value-of select="$TibcoSchemaNames/tibcoSchemas"/>
+                    </FromFileName>
+                    <ToFileName>
+                        <xsl:value-of select="concat($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath,$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFolderResources,&#xA;tib:substring-after-last($TibcoSchemaNames/tibcoSchemas, '\'))"/>
+                    </ToFileName>
+                    <xsl:if test="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:name">
+                        <ProjectName>
+                            <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:name"/>
+                        </ProjectName>
+                    </xsl:if>
+                </root>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Null-1">
+            <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+            <pd:resourceType>ae.activities.null</pd:resourceType>
+            <pd:x>754</pd:x>
+            <pd:y>292</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+    </pd:group>
+    <pd:group name="WSDLGroup">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>631</pd:x>
+        <pd:y>338</pd:y>
+        <pd:width>266</pd:width>
+        <pd:height>187</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$TibcoWsdl/root/tibcoWsdl</pd:over>
+            <pd:iterationElementSlot>TibcoWsdlNames</pd:iterationElementSlot>
+            <pd:indexSlot>k</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Null-2</pd:to>
+            <pd:xpathDescription>Write Report</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/WriteReportOnly="Yes"  or $Start/pfx4:root/ns2:ProjectInfo/ns2:ProjectType='serviceagent'</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>WsdlCopy</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>WsdlCopy</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Null-2</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="WsdlCopy">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>766</pd:x>
+            <pd:y>402</pd:y>
+            <config>
+                <processName>/Processes/Common/FilesCopy.process</processName>
+            </config>
+            <pd:inputBindings>
+                <root>
+                    <FromFileName>
+                        <xsl:value-of select="$TibcoWsdlNames/tibcoWsdl"/>
+                    </FromFileName>
+                    <ToFileName>
+                        <xsl:value-of select="concat($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath,$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFolderWsdl, &#xA;tib:substring-after-last($TibcoWsdlNames/tibcoWsdl, '\'))"/>
+                    </ToFileName>
+                    <xsl:if test="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:name">
+                        <ProjectName>
+                            <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:name"/>
+                        </ProjectName>
+                    </xsl:if>
+                </root>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Null-2">
+            <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+            <pd:resourceType>ae.activities.null</pd:resourceType>
+            <pd:x>767</pd:x>
+            <pd:y>470</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="Catch">
+        <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+        <pd:resourceType>ae.activities.catch</pd:resourceType>
+        <pd:x>1522</pd:x>
+        <pd:y>305</pd:y>
+        <pd:handler>true</pd:handler>
+        <config>
+            <catchAll>true</catchAll>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="StarterConfigReport">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>1698</pd:x>
+        <pd:y>35</pd:y>
+        <config>
+            <processName>/Processes/SubProcesses/CreateInventory.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:for-each select="$TibcoResources/root/tibcoSchemas">
+                    <tibcoSchemas>
+                        <xsl:value-of select="."/>
+                    </tibcoSchemas>
+                </xsl:for-each>
+                <TibcoProjectName>
+                    <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:path"/>
+                </TibcoProjectName>
+                <ProjectName>
+                    <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:name"/>
+                </ProjectName>
+                <MuleProjectPath>
+                    <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath"/>
+                </MuleProjectPath>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="ExceptionLogging">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>1826</pd:x>
+        <pd:y>305</pd:y>
+        <config>
+            <processName>/Processes/Common/ExceptionLogging.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <ExceptionLog>
+                    <xsl:value-of select="tib:render-xml($_error, 1, 1)"/>
+                </ExceptionLog>
+                <ProjectName>
+                    <xsl:value-of select="concat($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:name, '_', $GetVariable-TImestampToken/root/CurrentTimeStamp)"/>
+                </ProjectName>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="External Command">
+        <pd:type>com.tibco.plugin.cmdexec.CmdExecActivity</pd:type>
+        <pd:resourceType>ae.activities.CmdExecActivity</pd:resourceType>
+        <pd:x>132</pd:x>
+        <pd:y>115</pd:y>
+        <config>
+            <outputToString>true</outputToString>
+            <lineSplit>At Specified Token</lineSplit>
+        </config>
+        <pd:inputBindings>
+            <CmdInput>
+                <command>
+                    <xsl:value-of select="concat('cmd /c dir /b /S ', $Start/pfx4:root/ns2:ProjectInfo[1]/ns2:path)"/>
+                </command>
+                <token>
+                    <xsl:value-of select="'\r\n'"/>
+                </token>
+            </CmdInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="GetVariable">
+        <pd:type>com.tibco.pe.core.GetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.getSharedVariable</pd:resourceType>
+        <pd:x>1619</pd:x>
+        <pd:y>161</pd:y>
+        <config>
+            <variableConfig>/Resources/Schema/Tibco/AppNoVar.sharedvariable</variableConfig>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="GetVariable-TImestampToken">
+        <pd:type>com.tibco.pe.core.GetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.getSharedVariable</pd:resourceType>
+        <pd:x>1686</pd:x>
+        <pd:y>305</pd:y>
+        <config>
+            <variableConfig>/Resources/Schema/Tibco/CurrDateTimeStamp.sharedvariable</variableConfig>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="MuleProjectWriting">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>266</pd:x>
+        <pd:y>169</pd:y>
+        <config>
+            <processName>/Processes/SubProcesses/MuleProjectWriting.process</processName>
+        </config>
+        <pd:inputBindings>
+            <xsl:for-each select="$Start/pfx4:root">
+                <pfx4:root>
+                    <xsl:for-each select="ns2:ProjectInfo">
+                        <ns2:ProjectInfo>
+                            <xsl:if test="ns2:name">
+                                <ns2:name>
+                                    <xsl:value-of select="ns2:name"/>
+                                </ns2:name>
+                            </xsl:if>
+                            <xsl:if test="ns2:path">
+                                <ns2:path>
+                                    <xsl:value-of select="ns2:path"/>
+                                </ns2:path>
+                            </xsl:if>
+                            <xsl:if test="ns2:mulePath">
+                                <ns2:mulePath>
+                                    <xsl:value-of select="ns2:mulePath"/>
+                                </ns2:mulePath>
+                            </xsl:if>
+                        </ns2:ProjectInfo>
+                    </xsl:for-each>
+                    <xsl:for-each select="ns3:FileInfo">
+                        <ns3:FileInfo>
+                            <xsl:if test="ns3:filePath">
+                                <ns3:filePath>
+                                    <xsl:value-of select="ns3:filePath"/>
+                                </ns3:filePath>
+                            </xsl:if>
+                            <xsl:if test="ns3:fileName">
+                                <ns3:fileName>
+                                    <xsl:value-of select="ns3:fileName"/>
+                                </ns3:fileName>
+                            </xsl:if>
+                            <xsl:if test="ns3:fileContent">
+                                <ns3:fileContent>
+                                    <xsl:value-of select="ns3:fileContent"/>
+                                </ns3:fileContent>
+                            </xsl:if>
+                            <xsl:if test="ns3:fileType">
+                                <ns3:fileType>
+                                    <xsl:value-of select="ns3:fileType"/>
+                                </ns3:fileType>
+                            </xsl:if>
+                        </ns3:FileInfo>
+                    </xsl:for-each>
+                    <xsl:for-each select="ns4:GVInfo">
+                        <ns4:GVInfo>
+                            <xsl:if test="ns4:name">
+                                <ns4:name>
+                                    <xsl:value-of select="ns4:name"/>
+                                </ns4:name>
+                            </xsl:if>
+                            <xsl:if test="ns4:value">
+                                <ns4:value>
+                                    <xsl:value-of select="ns4:value"/>
+                                </ns4:value>
+                            </xsl:if>
+                            <xsl:if test="ns4:deploymentSettable">
+                                <ns4:deploymentSettable>
+                                    <xsl:value-of select="ns4:deploymentSettable"/>
+                                </ns4:deploymentSettable>
+                            </xsl:if>
+                            <xsl:if test="ns4:serviceSettable">
+                                <ns4:serviceSettable>
+                                    <xsl:value-of select="ns4:serviceSettable"/>
+                                </ns4:serviceSettable>
+                            </xsl:if>
+                            <xsl:if test="ns4:type">
+                                <ns4:type>
+                                    <xsl:value-of select="ns4:type"/>
+                                </ns4:type>
+                            </xsl:if>
+                            <xsl:if test="ns4:modTime">
+                                <ns4:modTime>
+                                    <xsl:value-of select="ns4:modTime"/>
+                                </ns4:modTime>
+                            </xsl:if>
+                        </ns4:GVInfo>
+                    </xsl:for-each>
+                    <xsl:for-each select="ns5:ProcessInfo">
+                        <ns5:ProcessInfo>
+                            <xsl:if test="ns5:name">
+                                <ns5:name>
+                                    <xsl:value-of select="ns5:name"/>
+                                </ns5:name>
+                            </xsl:if>
+                            <xsl:if test="ns5:path">
+                                <ns5:path>
+                                    <xsl:value-of select="ns5:path"/>
+                                </ns5:path>
+                            </xsl:if>
+                            <xsl:if test="ns5:content">
+                                <ns5:content>
+                                    <xsl:value-of select="ns5:content"/>
+                                </ns5:content>
+                            </xsl:if>
+                            <xsl:for-each select="ns5:activity">
+                                <ns5:activity>
+                                    <xsl:if test="ns5:processName">
+                                        <ns5:processName>
+                                            <xsl:value-of select="ns5:processName"/>
+                                        </ns5:processName>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:name">
+                                        <ns5:name>
+                                            <xsl:value-of select="ns5:name"/>
+                                        </ns5:name>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:type">
+                                        <ns5:type>
+                                            <xsl:value-of select="ns5:type"/>
+                                        </ns5:type>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:resourceType">
+                                        <ns5:resourceType>
+                                            <xsl:value-of select="ns5:resourceType"/>
+                                        </ns5:resourceType>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:config">
+                                        <ns5:config>
+                                            <xsl:value-of select="ns5:config"/>
+                                        </ns5:config>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:inputBinding">
+                                        <ns5:inputBinding>
+                                            <xsl:value-of select="ns5:inputBinding"/>
+                                        </ns5:inputBinding>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:starter">
+                                        <ns5:starter>
+                                            <xsl:value-of select="ns5:starter"/>
+                                        </ns5:starter>
+                                    </xsl:if>
+                                </ns5:activity>
+                            </xsl:for-each>
+                            <xsl:for-each select="ns5:transition">
+                                <ns5:transition>
+                                    <xsl:if test="ns5:from">
+                                        <ns5:from>
+                                            <xsl:value-of select="ns5:from"/>
+                                        </ns5:from>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:to">
+                                        <ns5:to>
+                                            <xsl:value-of select="ns5:to"/>
+                                        </ns5:to>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:conditionType">
+                                        <ns5:conditionType>
+                                            <xsl:value-of select="ns5:conditionType"/>
+                                        </ns5:conditionType>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:xpath">
+                                        <ns5:xpath>
+                                            <xsl:value-of select="ns5:xpath"/>
+                                        </ns5:xpath>
+                                    </xsl:if>
+                                </ns5:transition>
+                            </xsl:for-each>
+                            <xsl:for-each select="ns5:label">
+                                <ns5:label>
+                                    <xsl:if test="ns5:name">
+                                        <ns5:name>
+                                            <xsl:value-of select="ns5:name"/>
+                                        </ns5:name>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:description">
+                                        <ns5:description>
+                                            <xsl:value-of select="ns5:description"/>
+                                        </ns5:description>
+                                    </xsl:if>
+                                </ns5:label>
+                            </xsl:for-each>
+                            <xsl:for-each select="ns5:group">
+                                <ns5:group>
+                                    <xsl:if test="ns5:name">
+                                        <ns5:name>
+                                            <xsl:value-of select="ns5:name"/>
+                                        </ns5:name>
+                                    </xsl:if>
+                                    <xsl:for-each select="ns5:activity">
+                                        <ns5:activity>
+                                            <xsl:if test="ns5:processName">
+                                                <ns5:processName>
+                                                    <xsl:value-of select="ns5:processName"/>
+                                                </ns5:processName>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:name">
+                                                <ns5:name>
+                                                    <xsl:value-of select="ns5:name"/>
+                                                </ns5:name>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:type">
+                                                <ns5:type>
+                                                    <xsl:value-of select="ns5:type"/>
+                                                </ns5:type>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:resourceType">
+                                                <ns5:resourceType>
+                                                    <xsl:value-of select="ns5:resourceType"/>
+                                                </ns5:resourceType>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:config">
+                                                <ns5:config>
+                                                    <xsl:value-of select="ns5:config"/>
+                                                </ns5:config>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:inputBinding">
+                                                <ns5:inputBinding>
+                                                    <xsl:value-of select="ns5:inputBinding"/>
+                                                </ns5:inputBinding>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:starter">
+                                                <ns5:starter>
+                                                    <xsl:value-of select="ns5:starter"/>
+                                                </ns5:starter>
+                                            </xsl:if>
+                                        </ns5:activity>
+                                    </xsl:for-each>
+                                    <xsl:for-each select="ns5:transition">
+                                        <ns5:transition>
+                                            <xsl:if test="ns5:from">
+                                                <ns5:from>
+                                                    <xsl:value-of select="ns5:from"/>
+                                                </ns5:from>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:to">
+                                                <ns5:to>
+                                                    <xsl:value-of select="ns5:to"/>
+                                                </ns5:to>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:conditionType">
+                                                <ns5:conditionType>
+                                                    <xsl:value-of select="ns5:conditionType"/>
+                                                </ns5:conditionType>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:xpath">
+                                                <ns5:xpath>
+                                                    <xsl:value-of select="ns5:xpath"/>
+                                                </ns5:xpath>
+                                            </xsl:if>
+                                        </ns5:transition>
+                                    </xsl:for-each>
+                                </ns5:group>
+                            </xsl:for-each>
+                            <xsl:if test="ns5:processVariables">
+                                <ns5:processVariables>
+                                    <xsl:value-of select="ns5:processVariables"/>
+                                </ns5:processVariables>
+                            </xsl:if>
+                        </ns5:ProcessInfo>
+                    </xsl:for-each>
+                </pfx4:root>
+            </xsl:for-each>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Null">
+        <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+        <pd:resourceType>ae.activities.null</pd:resourceType>
+        <pd:x>375</pd:x>
+        <pd:y>117</pd:y>
+        <config/>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="Null-Gather">
+        <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+        <pd:resourceType>ae.activities.null</pd:resourceType>
+        <pd:x>1118</pd:x>
+        <pd:y>161</pd:y>
+        <config/>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="AnalyzerAndChecklistReports">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>1527</pd:x>
+        <pd:y>36</pd:y>
+        <config>
+            <processName>/Processes/Common/ReportWriting.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <pfx2:RepositoryDetails>
+                    <xsl:if test="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:path">
+                        <pfx2:TibcoProject>
+                            <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:path"/>
+                        </pfx2:TibcoProject>
+                    </xsl:if>
+                    <xsl:if test="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath">
+                        <pfx2:MuleProject>
+                            <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath"/>
+                        </pfx2:MuleProject>
+                    </xsl:if>
+                    <pfx2:MigrationStatus>
+                        <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/RepoMigrationStatus"/>
+                    </pfx2:MigrationStatus>
+                    <pfx2:Description>
+                        <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/RepoMigrationMessage"/>
+                    </pfx2:Description>
+                </pfx2:RepositoryDetails>
+                <pfx4:root>
+                    <xsl:for-each select="$Start/pfx4:root/ns2:ProjectInfo">
+                        <ns2:ProjectInfo>
+                            <xsl:if test="ns2:name">
+                                <ns2:name>
+                                    <xsl:value-of select="ns2:name"/>
+                                </ns2:name>
+                            </xsl:if>
+                            <xsl:if test="ns2:path">
+                                <ns2:path>
+                                    <xsl:value-of select="ns2:path"/>
+                                </ns2:path>
+                            </xsl:if>
+                            <xsl:if test="ns2:mulePath">
+                                <ns2:mulePath>
+                                    <xsl:value-of select="ns2:mulePath"/>
+                                </ns2:mulePath>
+                            </xsl:if>
+                        </ns2:ProjectInfo>
+                    </xsl:for-each>
+                    <xsl:for-each select="$ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns5:ProcessInfo">
+                        <ns5:ProcessInfo>
+                            <xsl:if test="ns5:name">
+                                <ns5:name>
+                                    <xsl:value-of select="ns5:name"/>
+                                </ns5:name>
+                            </xsl:if>
+                            <xsl:if test="ns5:path">
+                                <ns5:path>
+                                    <xsl:value-of select="ns5:path"/>
+                                </ns5:path>
+                            </xsl:if>
+                            <xsl:if test="ns5:content">
+                                <ns5:content>
+                                    <xsl:value-of select="ns5:content"/>
+                                </ns5:content>
+                            </xsl:if>
+                            <xsl:for-each select="ns5:activity">
+                                <ns5:activity>
+                                    <xsl:if test="ns5:processName">
+                                        <ns5:processName>
+                                            <xsl:value-of select="ns5:processName"/>
+                                        </ns5:processName>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:name">
+                                        <ns5:name>
+                                            <xsl:value-of select="ns5:name"/>
+                                        </ns5:name>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:type">
+                                        <ns5:type>
+                                            <xsl:value-of select="ns5:type"/>
+                                        </ns5:type>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:resourceType">
+                                        <ns5:resourceType>
+                                            <xsl:value-of select="ns5:resourceType"/>
+                                        </ns5:resourceType>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:config">
+                                        <ns5:config>
+                                            <xsl:value-of select="ns5:config"/>
+                                        </ns5:config>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:inputBinding">
+                                        <ns5:inputBinding>
+                                            <xsl:value-of select="ns5:inputBinding"/>
+                                        </ns5:inputBinding>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:starter">
+                                        <ns5:starter>
+                                            <xsl:value-of select="ns5:starter"/>
+                                        </ns5:starter>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:from">
+                                        <ns5:from>
+                                            <xsl:value-of select="ns5:from"/>
+                                        </ns5:from>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:to">
+                                        <ns5:to>
+                                            <xsl:value-of select="ns5:to"/>
+                                        </ns5:to>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:groupName">
+                                        <ns5:groupName>
+                                            <xsl:value-of select="ns5:groupName"/>
+                                        </ns5:groupName>
+                                    </xsl:if>
+                                </ns5:activity>
+                            </xsl:for-each>
+                            <xsl:for-each select="ns5:transition">
+                                <ns5:transition>
+                                    <xsl:if test="ns5:from">
+                                        <ns5:from>
+                                            <xsl:value-of select="ns5:from"/>
+                                        </ns5:from>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:to">
+                                        <ns5:to>
+                                            <xsl:value-of select="ns5:to"/>
+                                        </ns5:to>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:conditionType">
+                                        <ns5:conditionType>
+                                            <xsl:value-of select="ns5:conditionType"/>
+                                        </ns5:conditionType>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:xpath">
+                                        <ns5:xpath>
+                                            <xsl:value-of select="ns5:xpath"/>
+                                        </ns5:xpath>
+                                    </xsl:if>
+                                </ns5:transition>
+                            </xsl:for-each>
+                            <xsl:for-each select="ns5:label">
+                                <ns5:label>
+                                    <xsl:if test="ns5:name">
+                                        <ns5:name>
+                                            <xsl:value-of select="ns5:name"/>
+                                        </ns5:name>
+                                    </xsl:if>
+                                    <xsl:if test="ns5:description">
+                                        <ns5:description>
+                                            <xsl:value-of select="ns5:description"/>
+                                        </ns5:description>
+                                    </xsl:if>
+                                </ns5:label>
+                            </xsl:for-each>
+                            <xsl:for-each select="ns5:group">
+                                <ns5:group>
+                                    <xsl:if test="ns5:name">
+                                        <ns5:name>
+                                            <xsl:value-of select="ns5:name"/>
+                                        </ns5:name>
+                                    </xsl:if>
+                                    <xsl:for-each select="ns5:activity">
+                                        <ns5:activity>
+                                            <xsl:if test="ns5:processName">
+                                                <ns5:processName>
+                                                    <xsl:value-of select="ns5:processName"/>
+                                                </ns5:processName>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:name">
+                                                <ns5:name>
+                                                    <xsl:value-of select="ns5:name"/>
+                                                </ns5:name>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:type">
+                                                <ns5:type>
+                                                    <xsl:value-of select="ns5:type"/>
+                                                </ns5:type>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:resourceType">
+                                                <ns5:resourceType>
+                                                    <xsl:value-of select="ns5:resourceType"/>
+                                                </ns5:resourceType>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:config">
+                                                <ns5:config>
+                                                    <xsl:value-of select="ns5:config"/>
+                                                </ns5:config>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:inputBinding">
+                                                <ns5:inputBinding>
+                                                    <xsl:value-of select="ns5:inputBinding"/>
+                                                </ns5:inputBinding>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:starter">
+                                                <ns5:starter>
+                                                    <xsl:value-of select="ns5:starter"/>
+                                                </ns5:starter>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:from">
+                                                <ns5:from>
+                                                    <xsl:value-of select="ns5:from"/>
+                                                </ns5:from>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:to">
+                                                <ns5:to>
+                                                    <xsl:value-of select="ns5:to"/>
+                                                </ns5:to>
+                                            </xsl:if>
+                                        </ns5:activity>
+                                    </xsl:for-each>
+                                    <xsl:for-each select="ns5:transition">
+                                        <ns5:transition>
+                                            <xsl:if test="ns5:from">
+                                                <ns5:from>
+                                                    <xsl:value-of select="ns5:from"/>
+                                                </ns5:from>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:to">
+                                                <ns5:to>
+                                                    <xsl:value-of select="ns5:to"/>
+                                                </ns5:to>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:conditionType">
+                                                <ns5:conditionType>
+                                                    <xsl:value-of select="ns5:conditionType"/>
+                                                </ns5:conditionType>
+                                            </xsl:if>
+                                            <xsl:if test="ns5:xpath">
+                                                <ns5:xpath>
+                                                    <xsl:value-of select="ns5:xpath"/>
+                                                </ns5:xpath>
+                                            </xsl:if>
+                                        </ns5:transition>
+                                    </xsl:for-each>
+                                </ns5:group>
+                            </xsl:for-each>
+                            <xsl:if test="ns5:processVariables">
+                                <ns5:processVariables>
+                                    <xsl:value-of select="ns5:processVariables"/>
+                                </ns5:processVariables>
+                            </xsl:if>
+                        </ns5:ProcessInfo>
+                    </xsl:for-each>
+                    <xsl:if test="count($TibcoResources/root/tibcoSchemas)>0">
+                        <ns5:ProcessInfo>
+                            <xsl:for-each select="$TibcoResources/root/tibcoSchemas">
+                                <ns5:activity>
+                                    <ns5:processName>
+                                        <xsl:value-of select="current()"/>
+                                    </ns5:processName>
+                                    <ns5:name>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '\')"/>
+                                    </ns5:name>
+                                    <ns5:type>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:type>
+                                    <ns5:resourceType>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:resourceType>
+                                    <ns5:config>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:config>
+                                    <ns5:inputBinding>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:inputBinding>
+                                    <ns5:starter>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:starter>
+                                    <ns5:from>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:from>
+                                    <ns5:to>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:to>
+                                    <ns5:groupName>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:groupName>
+                                    <ns5:tibcoType>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:tibcoType>
+                                    <ns5:muleType>
+                                        <xsl:value-of select="if (tib:substring-after-last(current(), '.')='xsd' or tib:substring-after-last(current(), '.')='dtd' or tib:substring-after-last(current(), '.')='aeschema' or tib:substring-after-last(current(), '.')='cpy' or tib:substring-after-last(current(), '.')='javaschema') then&#xA;&quot;Schema&quot;&#xA;else if (tib:substring-after-last(current(), '.')='jar' or tib:substring-after-last(current(), '.')='ear'  or  tib:substring-after-last(current(), '.')='lib' or  tib:substring-after-last(current(), '.')='aliaslib') then&#xA;&quot;3rd Party Libraries&quot;&#xA;else if (tib:substring-after-last(current(), '.')='adr3'   or tib:substring-after-last(current(), '.')='adapter' or  tib:substring-after-last(current(), '.')='adfiles') then&#xA;&quot;Connectors&quot;&#xA;else if (tib:substring-after-last(current(), '.')='sharedhttp' or tib:substring-after-last(current(), '.')='sharedjmscon' or tib:substring-after-last(current(), '.')='sharedjmsapp'  or tib:substring-after-last(current(), '.')='sharedjdbc'  or tib:substring-after-last(current(), '.')='sharedftp' &#xA;or tib:substring-after-last(current(), '.')='adr3Connections' or tib:substring-after-last(current(), '.')='sharedxatmconfig' or tib:substring-after-last(current(), '.')='sharedtcp' or tib:substring-after-last(current(), '.')='sharedsalesforce' &#xA;or tib:substring-after-last(current(), '.')='mftsharedconn' or tib:substring-after-last(current(), '.')='sharedjtatmconfig' or tib:substring-after-last(current(), '.')='sharedvariable'  or tib:substring-after-last(current(), '.')='sharedparse'&#xA; or tib:substring-after-last(current(), '.')='id' or tib:substring-after-last(current(), '.')='libbuilder' or  tib:substring-after-last(current(), '.')='archive' ) then&#xA;&quot;Properties&quot;&#xA;else&#xA;'N/A'&#xA;{--tib:substring-after-last(current(), '.')--}"/>
+                                    </ns5:muleType>
+                                    <ns5:conversionImpl>
+                                        <xsl:value-of select="'Reuse'"/>
+                                    </ns5:conversionImpl>
+                                    <ns5:issueType>
+                                        <xsl:value-of select="'NOT-REQUIRED'"/>
+                                    </ns5:issueType>
+                                    <ns5:remarks>
+                                        <xsl:value-of select="'This component is as-is reused'"/>
+                                    </ns5:remarks>
+                                </ns5:activity>
+                            </xsl:for-each>
+                        </ns5:ProcessInfo>
+                    </xsl:if>
+                    <xsl:if test="count($TibcoWsdl/root/tibcoWsdl)>0">
+                        <ns5:ProcessInfo>
+                            <xsl:for-each select="$TibcoWsdl/root/tibcoWsdl">
+                                <ns5:activity>
+                                    <ns5:processName>
+                                        <xsl:value-of select="current()"/>
+                                    </ns5:processName>
+                                    <ns5:name>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '\')"/>
+                                    </ns5:name>
+                                    <ns5:type>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:type>
+                                    <ns5:resourceType>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:resourceType>
+                                    <ns5:config>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:config>
+                                    <ns5:inputBinding>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:inputBinding>
+                                    <ns5:starter>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:starter>
+                                    <ns5:from>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:from>
+                                    <ns5:to>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:to>
+                                    <ns5:groupName>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:groupName>
+                                    <ns5:tibcoType>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:tibcoType>
+                                    <ns5:muleType>
+                                        <xsl:value-of select="'wsdl'"/>
+                                    </ns5:muleType>
+                                    <ns5:conversionImpl>
+                                        <xsl:value-of select="'Reuse'"/>
+                                    </ns5:conversionImpl>
+                                    <ns5:issueType>
+                                        <xsl:value-of select="'NOT-REQUIRED'"/>
+                                    </ns5:issueType>
+                                    <ns5:remarks>
+                                        <xsl:value-of select="'This component is as-is reused'"/>
+                                    </ns5:remarks>
+                                </ns5:activity>
+                            </xsl:for-each>
+                        </ns5:ProcessInfo>
+                    </xsl:if>
+                    <xsl:if test="count($TibcoGVList/root/TibcoGVList)>0">
+                        <ns5:ProcessInfo>
+                            <xsl:for-each select="$TibcoGVList/root/TibcoGVList">
+                                <ns5:activity>
+                                    <ns5:processName>
+                                        <xsl:value-of select="current()"/>
+                                    </ns5:processName>
+                                    <ns5:name>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '\')"/>
+                                    </ns5:name>
+                                    <ns5:type>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:type>
+                                    <ns5:resourceType>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:resourceType>
+                                    <ns5:config>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:config>
+                                    <ns5:inputBinding>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:inputBinding>
+                                    <ns5:starter>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:starter>
+                                    <ns5:from>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:from>
+                                    <ns5:to>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:to>
+                                    <ns5:groupName>
+                                        <xsl:value-of select="'N/A'"/>
+                                    </ns5:groupName>
+                                    <ns5:tibcoType>
+                                        <xsl:value-of select="tib:substring-after-last(current(), '.')"/>
+                                    </ns5:tibcoType>
+                                    <ns5:muleType>
+                                        <xsl:value-of select="'properties'"/>
+                                    </ns5:muleType>
+                                    <ns5:conversionImpl>
+                                        <xsl:value-of select="'Recycle'"/>
+                                    </ns5:conversionImpl>
+                                    <ns5:issueType>
+                                        <xsl:value-of select="'CONFIG'"/>
+                                    </ns5:issueType>
+                                    <ns5:remarks>
+                                        <xsl:value-of select="'Validate the configuration details in config.properties file'"/>
+                                    </ns5:remarks>
+                                </ns5:activity>
+                            </xsl:for-each>
+                        </ns5:ProcessInfo>
+                    </xsl:if>
+                    <xsl:for-each select="$ProcessActivityInfo/AccumulatedOutput/pfx4:root/ns6:ChecklistValidation">
+                        <xsl:sort select="ns6:Validation"/>
+                        <ns6:ChecklistValidation>
+                            <xsl:if test="ns6:ChecklistNumber">
+                                <ns6:ChecklistNumber>
+                                    <xsl:value-of select="ns6:ChecklistNumber"/>
+                                </ns6:ChecklistNumber>
+                            </xsl:if>
+                            <xsl:if test="ns6:ChecklistName">
+                                <ns6:ChecklistName>
+                                    <xsl:value-of select="ns6:ChecklistName"/>
+                                </ns6:ChecklistName>
+                            </xsl:if>
+                            <xsl:if test="ns6:Checklist">
+                                <ns6:Checklist>
+                                    <xsl:value-of select="ns6:Checklist"/>
+                                </ns6:Checklist>
+                            </xsl:if>
+                            <xsl:if test="ns6:Validation">
+                                <ns6:Validation>
+                                    <xsl:value-of select="ns6:Validation"/>
+                                </ns6:Validation>
+                            </xsl:if>
+                            <xsl:if test="ns6:Remarks">
+                                <ns6:Remarks>
+                                    <xsl:value-of select="ns6:Remarks"/>
+                                </ns6:Remarks>
+                            </xsl:if>
+                            <xsl:if test="ns6:Process">
+                                <ns6:Process>
+                                    <xsl:value-of select="ns6:Process"/>
+                                </ns6:Process>
+                            </xsl:if>
+                            <xsl:if test="ns6:Activity">
+                                <ns6:Activity>
+                                    <xsl:value-of select="ns6:Activity"/>
+                                </ns6:Activity>
+                            </xsl:if>
+                            <xsl:if test="ns6:ReviewAccepted">
+                                <ns6:ReviewAccepted>
+                                    <xsl:value-of select="ns6:ReviewAccepted"/>
+                                </ns6:ReviewAccepted>
+                            </xsl:if>
+                            <xsl:if test="ns6:DeveloperComment">
+                                <ns6:DeveloperComment>
+                                    <xsl:value-of select="ns6:DeveloperComment"/>
+                                </ns6:DeveloperComment>
+                            </xsl:if>
+                        </ns6:ChecklistValidation>
+                    </xsl:for-each>
+                </pfx4:root>
+                <Append>
+                    <xsl:value-of select="false()"/>
+                </Append>
+                <Flag>
+                    <xsl:value-of select="'process'"/>
+                </Flag>
+                <MuleFlowXML>
+                    <xsl:value-of select="$Process2FlowConvertor/pfx4:root/pfx4:MuleFlowXML"/>
+                </MuleFlowXML>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="TibcoGVList">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:description>filters all the resources/files within the given Tibco BW Project folder</pd:description>
+        <pd:x>570</pd:x>
+        <pd:y>634</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="TibcoGVList" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:for-each select="$External-Command/CmdOutputWithActivityOutput/output">
+                    <xsl:if test="contains(current(), '.substvar')">
+                        <TibcoGVList>
+                            <xsl:value-of select="."/>
+                        </TibcoGVList>
+                    </xsl:if>
+                </xsl:for-each>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="TibcoProcesses">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:description/>
+        <pd:x>571</pd:x>
+        <pd:y>79</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="tibcoProjectProcesses" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$External-Command/CmdOutputWithActivityOutput/output">
+                    <xsl:if test="contains(current(), '.process') or contains(current(), '.serviceagent') or contains(current(), '.sharedftp') or contains(current(), '.sharedjdbc') or  contains(current(), '.sharedjmscon') or contains(current(), '.xsd')">
+                        <tibcoProjectProcesses>
+                            <xsl:value-of select="."/>
+                        </tibcoProjectProcesses>
+                    </xsl:if>
+                </xsl:for-each>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="TibcoResources">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:description>filters all the resources/files within the given Tibco BW Project folder</pd:description>
+        <pd:x>566</pd:x>
+        <pd:y>255</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="tibcoSchemas" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$External-Command/CmdOutputWithActivityOutput/output">
+                    <xsl:if test="not(contains(current(), 'vcrepo.dat')) and not(contains(current(), '.process')) and not(contains(current(), '.wsdl')) and not( contains(current(), '.substvar')) and contains(current(), '.')&#xA;&#xA;{--contains(current(), '.xsd') or contains(current(), '.dtd')--}">
+                        <tibcoSchemas>
+                            <xsl:value-of select="."/>
+                        </tibcoSchemas>
+                    </xsl:if>
+                </xsl:for-each>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="TibcoWsdl">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:description>filters all the resources/files within the given Tibco BW Project folder</pd:description>
+        <pd:x>567</pd:x>
+        <pd:y>440</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="tibcoWsdl" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$External-Command/CmdOutputWithActivityOutput/output">
+                    <xsl:if test="contains(current(), '.wsdl')">
+                        <tibcoWsdl>
+                            <xsl:value-of select="."/>
+                        </tibcoWsdl>
+                    </xsl:if>
+                </xsl:for-each>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="CheckComplexity">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>1122</pd:x>
+        <pd:y>35</pd:y>
+        <config>
+            <processName>/Processes/SubProcesses/CheckComplexity.process</processName>
+        </config>
+        <pd:inputBindings>
+            <ProcessData>
+                <xsl:copy-of select="$ProcessActivityInfo/AccumulatedOutput/pfx4:root"/>
+                <MulePath>
+                    <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:mulePath"/>
+                </MulePath>
+                <ProjectName>
+                    <xsl:value-of select="$Start/pfx4:root/ns2:ProjectInfo[1]/ns2:name"/>
+                </ProjectName>
+            </ProcessData>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>External Command</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>External Command</pd:from>
+        <pd:to>MuleProjectWriting</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>AnalyzerAndChecklistReports</pd:from>
+        <pd:to>StarterConfigReport</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>MuleProjectWriting</pd:from>
+        <pd:to>Null</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>TibcoProcesses</pd:from>
+        <pd:to>ProcessGroup</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null</pd:from>
+        <pd:to>TibcoProcesses</pd:to>
+        <pd:xpathDescription>Processes</pd:xpathDescription>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null</pd:from>
+        <pd:to>TibcoResources</pd:to>
+        <pd:xpathDescription>Schemas And Others</pd:xpathDescription>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>TibcoResources</pd:from>
+        <pd:to>SchemaGroup</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>SchemaGroup</pd:from>
+        <pd:to>Null-Gather</pd:to>
+        <pd:lineType>Straight</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>WSDLGroup</pd:from>
+        <pd:to>Null-Gather</pd:to>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>TibcoWsdl</pd:from>
+        <pd:to>WSDLGroup</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null</pd:from>
+        <pd:to>TibcoWsdl</pd:to>
+        <pd:xpathDescription>WSDLs</pd:xpathDescription>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null</pd:from>
+        <pd:to>TibcoGVList</pd:to>
+        <pd:xpathDescription>GVFiles</pd:xpathDescription>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GVGroup</pd:from>
+        <pd:to>Null-Gather</pd:to>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>TibcoGVList</pd:from>
+        <pd:to>GVGroup</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Catch</pd:from>
+        <pd:to>GetVariable-TImestampToken</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ExceptionLogging</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetVariable-TImestampToken</pd:from>
+        <pd:to>ExceptionLogging</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>StarterConfigReport</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>One Bend</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>External Command</pd:from>
+        <pd:to>Null</pd:to>
+        <pd:xpathDescription>Write Report</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/WriteReportOnly="Yes"  or $Start/pfx4:root/ns2:ProjectInfo/ns2:ProjectType='serviceagent'</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null-Gather</pd:from>
+        <pd:to>GetVariable</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>CheckComplexity</pd:from>
+        <pd:to>AnalyzerAndChecklistReports</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ProcessGroup</pd:from>
+        <pd:to>Null-Gather</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetVariable</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null-Gather</pd:from>
+        <pd:to>AnalyzerAndChecklistReports</pd:to>
+        <pd:xpathDescription>WriteReport</pd:xpathDescription>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>($_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/WriteReportOnly="Yes" or $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/CodeMigrationAndReports='Yes' or $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/CodeMigrationOnly='No') and string-length($Start/pfx4:root/ns2:ProjectInfo[1]/ns2:ProjectType)=0</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ProcessGroup</pd:from>
+        <pd:to>CheckComplexity</pd:to>
+        <pd:xpathDescription>ComplexityReport</pd:xpathDescription>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/WriteComplexityReport='Yes'</pd:xpath>
+    </pd:transition>
+    <pd:label>
+        <pd:name>Label</pd:name>
+        <pd:description>Run for any TIBCO BW project folder for all the .process files to extract the activities details.</pd:description>
+        <pd:x>251</pd:x>
+        <pd:y>17</pd:y>
+        <pd:width>501</pd:width>
+        <pd:height>33</pd:height>
+        <pd:fontColor>-16777216</pd:fontColor>
+        <pd:color>-205</pd:color>
+        <pd:type>solid</pd:type>
+        <pd:thickness>0</pd:thickness>
+        <pd:fade>true</pd:fade>
+    </pd:label>
+</pd:ProcessDefinition>

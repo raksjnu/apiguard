@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BWSharedResource xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+    <name>CurrDateTimeStamp</name>
+    <resourceType>ae.shared.sharedVariable</resourceType>
+    <config xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <persistent>false</persistent>
+        <multi-engine>false</multi-engine>
+        <initialValue>none</initialValue>
+        <xsdString>
+            <xsd:element name="root">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="AppNo" type="xsd:int" minOccurs="0"/>
+                        <xsd:element name="CurrentTimeStamp" type="xsd:string" minOccurs="0"/>
+                        <xsd:element name="StartTime" type="xsd:dateTime" minOccurs="0"/>
+                        <xsd:element name="EndTime" type="xsd:dateTime" minOccurs="0"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </xsdString>
+    </config>
+</BWSharedResource>

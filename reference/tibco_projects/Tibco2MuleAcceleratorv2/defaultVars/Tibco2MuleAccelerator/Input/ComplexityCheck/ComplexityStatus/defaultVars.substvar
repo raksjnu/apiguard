@@ -1,0 +1,37 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>High</name>
+			<value>High</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1609500135968</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>Low</name>
+			<value>Low</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1609500136043</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>Medium</name>
+			<value>Medium</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1609500135863</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>VeryHigh</name>
+			<value>Very High</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1609500136124</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

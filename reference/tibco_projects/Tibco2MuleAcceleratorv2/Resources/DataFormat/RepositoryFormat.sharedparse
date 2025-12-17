@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BWSharedResource xmlns:pfx="http://www.tibco.com/schemas/EISCommonServices/BusinessProcesses/EISConfigUpdater/Resources/SchemaDefinitions/Schema/ConfigDBSchema.xsd" xmlns:pfx2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd">
+    <import namespace="http://www.tibco.com/schemas/EISCommonServices/BusinessProcesses/EISConfigUpdater/Resources/SchemaDefinitions/Schema/ConfigDBSchema.xsd" schemaLocation="/BusinessProcesses/EISConfigUpdater/Resources/SchemaDefinitions/Schema/ConfigDBSchema.xsd"/>
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" schemaLocation="/Resources/Schema/Tibco/Report.xsd"/>
+    <name>RepositoryFormat</name>
+    <resourceType>ae.shared.ParseSharedResource</resourceType>
+    <config xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <FormatType>Delimiter separated</FormatType>
+        <ColumnSeparator>,</ColumnSeparator>
+        <ColSeparatorRule>Treat all characters as entered as a single column separator string</ColSeparatorRule>
+        <LineSeparator>&#xD;
+</LineSeparator>
+        <FillCharacter>Space</FillCharacter>
+        <LineLength>4</LineLength>
+        <DataFormat ref="pfx2:RepositoryDetails"/>
+    </config>
+</BWSharedResource>

@@ -1,0 +1,251 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pfx="www.tibco.com/plugin/java/JavaMethodActivityInput" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/pe/DeployedVarsType" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns2="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns3="http://www.tibco.com/namespaces/tnt/plugins/file/v2">
+    <pd:name>Processes/SubProcesses/CreateTemplate.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="Input">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="MulePath" type="xsd:string"/>
+                    <xsd:element name="ProjectName" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>38</pd:startX>
+    <pd:startY>64</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>1162</pd:endX>
+    <pd:endY>67</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1597825977725</pd:targetNamespace>
+    <pd:activity name="CopyTemplateStructure">
+        <pd:type>com.tibco.plugin.file.FileCopyActivity</pd:type>
+        <pd:resourceType>ae.activities.FileCopyActivity</pd:resourceType>
+        <pd:x>981</pd:x>
+        <pd:y>188</pd:y>
+        <config>
+            <createMissingDirectories>true</createMissingDirectories>
+            <includeSubDirectories>true</includeSubDirectories>
+            <overwrite>true</overwrite>
+        </config>
+        <pd:inputBindings>
+            <ns2:CopyActivityConfig>
+                <fromFileName>
+                    <xsl:value-of select="concat($MulePathFiles/ns2:ListFilesActivityOutput/files/fileInfo[1]/fullName,&quot;\*&quot;)"/>
+                </fromFileName>
+                <toFileName>
+                    <xsl:value-of select="$Start/Input/MulePath"/>
+                </toFileName>
+            </ns2:CopyActivityConfig>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="CleanUpMulePath">
+        <pd:type>com.tibco.plugin.cmdexec.CmdExecActivity</pd:type>
+        <pd:resourceType>ae.activities.CmdExecActivity</pd:resourceType>
+        <pd:description>delete any non-empty previous folder for clean folder structure.</pd:description>
+        <pd:x>288</pd:x>
+        <pd:y>64</pd:y>
+        <config>
+            <outputToString>false</outputToString>
+            <lineSplit>None</lineSplit>
+        </config>
+        <pd:inputBindings>
+            <CmdInput>
+                <command>
+                    <xsl:value-of select="concat('cmd /c rmdir &quot;',tib:trim($Start/Input/MulePath),'&quot; /s /q')"/>
+                </command>
+            </CmdInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="DeleteFolder">
+        <pd:type>com.tibco.plugin.cmdexec.CmdExecActivity</pd:type>
+        <pd:resourceType>ae.activities.CmdExecActivity</pd:resourceType>
+        <pd:description>delete any non-empty previous folder for clean folder structure.</pd:description>
+        <pd:x>1103</pd:x>
+        <pd:y>188</pd:y>
+        <config>
+            <outputToString>false</outputToString>
+            <lineSplit>None</lineSplit>
+        </config>
+        <pd:inputBindings>
+            <CmdInput>
+                <command>
+                    <xsl:value-of select="concat('cmd /c rmdir ',$MulePathFiles/ns2:ListFilesActivityOutput/files/fileInfo[1]/fullName,&quot; /s /q&quot;)"/>
+                </command>
+            </CmdInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="ExtractTemplate">
+        <pd:type>com.tibco.plugin.java.JavaMethodActivity</pd:type>
+        <pd:resourceType>ae.activities.JavaMethodActivity</pd:resourceType>
+        <pd:x>562</pd:x>
+        <pd:y>64</pd:y>
+        <config>
+            <ConstructDeclaredClass>false</ConstructDeclaredClass>
+            <CacheConstructedClass>false</CacheConstructedClass>
+            <InvokeCleanupMethod>false</InvokeCleanupMethod>
+            <MethodInfo>
+                <classLocation>c:/users/narendranadhbabukila/desktop/github/tibco2muleacceleratorv2/resources/sharedvariables/jarextractor.jar</classLocation>
+                <classPath>/Resources/AliasLibrary.aliaslib</classPath>
+                <className>com.org.docgen.JarExtractor</className>
+                <methodName>extractArchive</methodName>
+                <methodReturn>void</methodReturn>
+                <methodParameter>java.lang.String</methodParameter>
+                <methodParameter>java.lang.String</methodParameter>
+            </MethodInfo>
+        </config>
+        <pd:inputBindings>
+            <pfx:JavaMethodActivityInput>
+                <MethodParameters>
+                    <Parameter1>
+                        <xsl:value-of select="$WriteTemplateFile/ns2:WriteActivityOutputClass/fileInfo/fullName"/>
+                    </Parameter1>
+                    <Parameter2>
+                        <xsl:value-of select="$Start/Input/MulePath"/>
+                    </Parameter2>
+                </MethodParameters>
+            </pfx:JavaMethodActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="MulePathFiles">
+        <pd:type>com.tibco.plugin.file.ListFilesActivity</pd:type>
+        <pd:resourceType>ae.activities.ListFilesActivity</pd:resourceType>
+        <pd:x>869</pd:x>
+        <pd:y>67</pd:y>
+        <config>
+            <mode>files-and-directories</mode>
+        </config>
+        <pd:inputBindings>
+            <ns2:ListFilesActivityConfig>
+                <fileName>
+                    <xsl:value-of select="concat($Start/Input/MulePath,&quot;\*&quot;)"/>
+                </fileName>
+            </ns2:ListFilesActivityConfig>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="RetrieveResourcesTemplate">
+        <pd:type>com.tibco.plugin.soap.urlaccess.RetrieveResource</pd:type>
+        <pd:resourceType>ae.activities.RetrieveResource</pd:resourceType>
+        <pd:x>153</pd:x>
+        <pd:y>64</pd:y>
+        <config/>
+        <pd:inputBindings>
+            <inputClass>
+                <resourcePath>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/FilePaths/MuleTemplate"/>
+                </resourcePath>
+            </inputClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="WriteTemplateFile">
+        <pd:type>com.tibco.plugin.file.FileWriteActivity</pd:type>
+        <pd:resourceType>ae.activities.FileWriteActivity</pd:resourceType>
+        <pd:x>428</pd:x>
+        <pd:y>64</pd:y>
+        <config>
+            <encoding>binary</encoding>
+            <compressFile>None</compressFile>
+            <createMissingDirectories>true</createMissingDirectories>
+        </config>
+        <pd:inputBindings>
+            <ns2:WriteActivityInputBinaryClass>
+                <fileName>
+                    <xsl:value-of select="concat($Start/Input/MulePath,tib:substring-after-last($_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/FilePaths/MuleTemplate, &quot;/&quot;))"/>
+                </fileName>
+                <binaryContent>
+                    <xsl:value-of select="$RetrieveResourcesTemplate/outputClass/resourceBytes"/>
+                </binaryContent>
+            </ns2:WriteActivityInputBinaryClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="RemoveTemplateFile">
+        <pd:type>com.tibco.plugin.file.FileRemoveActivity</pd:type>
+        <pd:resourceType>ae.activities.FileRemoveActivity</pd:resourceType>
+        <pd:x>716</pd:x>
+        <pd:y>66</pd:y>
+        <config/>
+        <pd:inputBindings>
+            <ns2:RemoveActivityInputClass>
+                <fileName>
+                    <xsl:value-of select="$WriteTemplateFile/ns2:WriteActivityOutputClass/fileInfo/fullName"/>
+                </fileName>
+            </ns2:RemoveActivityInputClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>ExtractTemplate</pd:from>
+        <pd:to>RemoveTemplateFile</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>MulePathFiles</pd:from>
+        <pd:to>CopyTemplateStructure</pd:to>
+        <pd:xpathDescription>Folder</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>MulePathFiles</pd:from>
+        <pd:to>End</pd:to>
+        <pd:xpathDescription>Mule folder structure</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>count($MulePathFiles/ns2:ListFilesActivityOutput/files/fileInfo)&gt;1</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>CleanUpMulePath</pd:from>
+        <pd:to>WriteTemplateFile</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>CopyTemplateStructure</pd:from>
+        <pd:to>DeleteFolder</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>DeleteFolder</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>RetrieveResourcesTemplate</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>WriteTemplateFile</pd:from>
+        <pd:to>ExtractTemplate</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>RemoveTemplateFile</pd:from>
+        <pd:to>MulePathFiles</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>RetrieveResourcesTemplate</pd:from>
+        <pd:to>CleanUpMulePath</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

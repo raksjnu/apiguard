@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<JavaSchemaResource>
+    <config>
+        <SchemaNamespace/>
+        <HasConstructor>true</HasConstructor>
+        <IsSerializable>true</IsSerializable>
+        <MultiSchemaMode>false</MultiSchemaMode>
+        <NamespacePrepend>http://xmlns.tibco.com/javaschema/</NamespacePrepend>
+        <NamespaceAppend/>
+    </config>
+</JavaSchemaResource>

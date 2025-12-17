@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pfx="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/namespaces/tnt/plugins/file/v2" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns1="http://www.tibco.com/pe/DeployedVarsType">
+    <pd:name>Processes/SubProcesses/FileConsolidation.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="ServiceName">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="ServiceName" type="xsd:string" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>77</pd:startX>
+    <pd:startY>66</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>881</pd:endX>
+    <pd:endY>204</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables>
+        <ContentCheck>
+            <xsd:element name="ContentCheck" type="xsd:string"/>
+        </ContentCheck>
+        <ServiceFileContent>
+            <xsd:element name="ServiceFileContent" type="xsd:string"/>
+        </ServiceFileContent>
+        <currentProject>
+            <xsd:element name="currentProject" type="xsd:string"/>
+        </currentProject>
+        <FilesList>
+            <xsd:element name="FilesList" type="xsd:string"/>
+        </FilesList>
+        <LeftFileContent>
+            <xsd:element name="LeftFileContent" type="xsd:string"/>
+        </LeftFileContent>
+        <SubProcessCheckCounter>
+            <xsd:element name="SubProcessCheckCounter" type="xsd:string"/>
+        </SubProcessCheckCounter>
+        <FileIterated>
+            <xsd:element name="FileIterated" type="xsd:string"/>
+        </FileIterated>
+        <ServiceName>
+            <xsd:element name="ServiceName" type="xsd:string"/>
+        </ServiceName>
+        <CopiedFiles>
+            <xsd:element name="CopiedFileList" type="xsd:string"/>
+        </CopiedFiles>
+        <RequiredFiles>
+            <xsd:element name="RequiredFiles" type="xsd:string"/>
+        </RequiredFiles>
+        <ProcessesIterated>
+            <xsd:element name="ProcessesIterated" type="xsd:string"/>
+        </ProcessesIterated>
+        <SubProcessesAvailable>
+            <xsd:element name="SubProcessesAvailable" type="xsd:string"/>
+        </SubProcessesAvailable>
+    </pd:processVariables>
+    <pd:targetNamespace>http://xmlns.example.com/1662092348652</pd:targetNamespace>
+    <pd:activity name="External Command">
+        <pd:type>com.tibco.plugin.cmdexec.CmdExecActivity</pd:type>
+        <pd:resourceType>ae.activities.CmdExecActivity</pd:resourceType>
+        <pd:x>71</pd:x>
+        <pd:y>402</pd:y>
+        <config>
+            <outputToString>true</outputToString>
+            <lineSplit>None</lineSplit>
+            <command/>
+        </config>
+        <pd:inputBindings>
+            <CmdInput>
+                <command>
+                    <xsl:value-of select="concat('cmd /c &quot;cd ',$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/TibcoRepoLocation,'&quot; ',$_globalVariables/ns1:GlobalVariables/V2/ProjectFilesNeeded)"/>
+                </command>
+            </CmdInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="IterationFiles">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>208</pd:x>
+        <pd:y>198</pd:y>
+        <config>
+            <element>
+                <xsd:element name="IterationFiles">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="IterationFiles" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <IterationFiles>
+                <xsl:for-each select="tib:tokenize(translate(tib:concat-sequence-format($External-Command/CmdOutputWithActivityOutput/output,&quot;,&quot;),&quot;&#xA;&quot;,&quot;,&quot;), &quot;,&quot;)">
+                    <IterationFiles>
+                        <xsl:value-of select="."/>
+                    </IterationFiles>
+                </xsl:for-each>
+            </IterationFiles>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="Group (3)">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>286</pd:x>
+        <pd:y>38</pd:y>
+        <pd:width>156</pd:width>
+        <pd:height>313</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$IterationFiles/IterationFiles/IterationFiles</pd:over>
+            <pd:iterationElementSlot>CurrentIterationFile</pd:iterationElementSlot>
+            <pd:indexSlot>IterateFiles</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>ReadServiceFileContent</pd:to>
+            <pd:xpathDescription>Service</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>contains($CurrentIterationFile/IterationFiles,".process") or contains($CurrentIterationFile/IterationFiles,".serviceagent")</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Null-1</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Null-1</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ReadServiceFileContent</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ServiceName</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>ReadServiceFileContent</pd:from>
+            <pd:to>ServiceName</pd:to>
+            <pd:xpathDescription>Service</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>contains($ReadServiceFileContent/pfx:ReadActivityOutputTextClass/fileContent/textContent,"soap.SOAPEventSource") or 
+contains($ReadServiceFileContent/pfx:ReadActivityOutputTextClass/fileContent/textContent,"bw.service.serviceAgent") or 
+contains($ReadServiceFileContent/pfx:ReadActivityOutputTextClass/fileContent/textContent,"http.HTTPEventSource") or 
+contains($ReadServiceFileContent/pfx:ReadActivityOutputTextClass/fileContent/textContent,"jms.JMSQueueEventSource") or 
+contains($ReadServiceFileContent/pfx:ReadActivityOutputTextClass/fileContent/textContent,"core.OnStartupEventSource") or
+contains($ReadServiceFileContent/pfx:ReadActivityOutputTextClass/fileContent/textContent,"pd:starter name=") or
+contains($ReadServiceFileContent/pfx:ReadActivityOutputTextClass/fileContent/textContent,"ae.AESubscriberActivity")</pd:xpath>
+        </pd:transition>
+        <pd:activity name="ReadServiceFileContent">
+            <pd:type>com.tibco.plugin.file.FileReadActivity</pd:type>
+            <pd:resourceType>ae.activities.FileReadActivity</pd:resourceType>
+            <pd:x>359</pd:x>
+            <pd:y>199</pd:y>
+            <config>
+                <encoding>text</encoding>
+            </config>
+            <pd:inputBindings>
+                <ns:ReadActivityInputClass>
+                    <fileName>
+                        <xsl:value-of select="tib:trim($CurrentIterationFile/IterationFiles)"/>
+                    </fileName>
+                </ns:ReadActivityInputClass>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="ServiceName">
+            <pd:type>com.tibco.pe.core.AssignActivity</pd:type>
+            <pd:resourceType>ae.activities.assignActivity</pd:resourceType>
+            <pd:x>364</pd:x>
+            <pd:y>97</pd:y>
+            <config>
+                <variableName>ServiceName</variableName>
+            </config>
+            <pd:inputBindings>
+                <ServiceName>
+                    <xsl:value-of select="if(string-length($ServiceName/ServiceName)&lt;1) then&#xA;tib:substring-after-last($CurrentIterationFile/IterationFiles,&quot;\&quot;)&#xA;else&#xA;concat($ServiceName/ServiceName,&quot;,&quot;,tib:substring-after-last($CurrentIterationFile/IterationFiles,&quot;\&quot;))"/>
+                </ServiceName>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Null-1">
+            <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+            <pd:resourceType>ae.activities.null</pd:resourceType>
+            <pd:x>363</pd:x>
+            <pd:y>283</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="GetServices">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>523</pd:x>
+        <pd:y>200</pd:y>
+        <config>
+            <element>
+                <xsd:element name="AvailableServices">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="AvailableServices" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <AvailableServices>
+                <xsl:choose>
+                    <xsl:when test="string-length($Start/ServiceName/ServiceName)>1">
+                        <xsl:if test="$Start/ServiceName/ServiceName">
+                            <AvailableServices>
+                                <xsl:value-of select="$Start/ServiceName/ServiceName"/>
+                            </AvailableServices>
+                        </xsl:if>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <xsl:for-each-group select="tib:tokenize($ServiceName/ServiceName,&quot;,&quot;)" group-by=".">
+                            <AvailableServices>
+                                <xsl:value-of select="."/>
+                            </AvailableServices>
+                        </xsl:for-each-group>
+                    </xsl:otherwise>
+                </xsl:choose>
+            </AvailableServices>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="DeleteSourceRepo">
+        <pd:type>com.tibco.plugin.cmdexec.CmdExecActivity</pd:type>
+        <pd:resourceType>ae.activities.CmdExecActivity</pd:resourceType>
+        <pd:x>772</pd:x>
+        <pd:y>203</pd:y>
+        <config>
+            <outputToString>true</outputToString>
+            <lineSplit>None</lineSplit>
+        </config>
+        <pd:inputBindings>
+            <CmdInput>
+                <command>
+                    <xsl:value-of select="concat(&quot;cmd /c rmdir /s /q &quot;,concat($_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/TibcoRepoLocation,&quot;\&quot;,substring-before(tib:substring-after-last($IterationFiles/IterationFiles/IterationFiles[1],concat(tib:trim($_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/TibcoRepoLocation),&quot;\&quot;)),&quot;\&quot;)))"/>
+                </command>
+            </CmdInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="CodeBreakUp">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>649</pd:x>
+        <pd:y>203</pd:y>
+        <config>
+            <processName>/Processes/SubProcesses/CodeBreakup.process</processName>
+        </config>
+        <pd:inputBindings>
+            <FileData>
+                <xsl:copy-of select="$GetServices/AvailableServices"/>
+                <xsl:copy-of select="$IterationFiles/IterationFiles"/>
+            </FileData>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>External Command</pd:to>
+        <pd:lineType>One Bend</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>External Command</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>One Bend</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>External Command</pd:from>
+        <pd:to>IterationFiles</pd:to>
+        <pd:xpathDescription>TibcoFolder</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>contains($External-Command/CmdOutputWithActivityOutput,'vcrepo.dat')</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group (3)</pd:from>
+        <pd:to>GetServices</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>DeleteSourceRepo</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>CodeBreakUp</pd:from>
+        <pd:to>DeleteSourceRepo</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>IterationFiles</pd:from>
+        <pd:to>Group (3)</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetServices</pd:from>
+        <pd:to>CodeBreakUp</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

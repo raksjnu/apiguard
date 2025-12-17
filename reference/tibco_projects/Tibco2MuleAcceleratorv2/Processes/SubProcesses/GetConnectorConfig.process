@@ -1,0 +1,262 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pfx="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Connectors.xsd" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns0="http://www.tibco.com/namespaces/tnt/plugins/file/v2" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions">
+    <pd:name>Processes/SubProcesses/GetConnectorConfig.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="SharedResources">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="Location" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>55</pd:startX>
+    <pd:startY>154</pd:startY>
+    <pd:returnBindings>
+        <root>
+            <xsl:copy-of select="$Map-Data-1/root/pfx:MULE"/>
+        </root>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType>
+        <xsd:element name="root">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element ref="pfx:MULE" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:endType>
+    <pd:endX>811</pd:endX>
+    <pd:endY>154</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1593501099448</pd:targetNamespace>
+    <pd:activity name="ListFiles">
+        <pd:type>com.tibco.plugin.cmdexec.CmdExecActivity</pd:type>
+        <pd:resourceType>ae.activities.CmdExecActivity</pd:resourceType>
+        <pd:x>161</pd:x>
+        <pd:y>155</pd:y>
+        <config>
+            <outputToString>true</outputToString>
+            <lineSplit>At Operating System Line End</lineSplit>
+            <command/>
+        </config>
+        <pd:inputBindings>
+            <CmdInput>
+                <command>
+                    <xsl:value-of select="concat(&quot;cmd /c dir /b /S  &quot;,$Start/SharedResources/Location,'*.shared*')"/>
+                </command>
+                <token>
+                    <xsl:value-of select="&quot;\r\n&quot;"/>
+                </token>
+            </CmdInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>243</pd:x>
+        <pd:y>9</pd:y>
+        <pd:width>326</pd:width>
+        <pd:height>271</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$ListFiles/CmdOutputWithActivityOutput/output</pd:over>
+            <pd:iterationElementSlot>CurrentFile</pd:iterationElementSlot>
+            <pd:indexSlot>Files</pd:indexSlot>
+            <pd:outSlot>AccummulatedConnectorConfig</pd:outSlot>
+            <pd:activityOutputName>Map Data</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Read File</pd:to>
+            <pd:xpathDescription>file</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>contains($CurrentFile/output,'.') and not ( contains($CurrentFile/output,'Output'))</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Null</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Map Data</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Null</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Read File</pd:from>
+            <pd:to>Map Data</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Map Data">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>459</pd:x>
+            <pd:y>113</pd:y>
+            <config>
+                <element ref="pfx:MULE"/>
+            </config>
+            <pd:inputBindings>
+                <pfx:MULE>
+                    <xsl:if test="contains(tib:substring-after-last($CurrentFile/output, '.'),'http')">
+                        <pfx:HTTP>
+                            <xsl:value-of select="concat('&lt;http:listener-config name=&quot;HTTP_Listener_config&quot; doc:name=&quot;HTTP Listener config&quot; config-ref=&quot;HTTP_Request_configuration&quot; >&lt;http:listener-connection host=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'Host>'),'&lt;/Host'),'&quot; port=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'Port>'),'&lt;/Port'),'&quot;/>&lt;/http:listener-config>')"/>
+                        </pfx:HTTP>
+                    </xsl:if>
+                    <xsl:if test="contains(tib:substring-after-last($CurrentFile/output, '.'),'http')">
+                        <pfx:HTTPREQUEST>
+                            <xsl:value-of select="concat('&lt;http:request-config name=&quot;HTTP_Request_configuration&quot; doc:name=&quot;HTTP Request configuration&quot;  config-ref=&quot;HTTP_Request_configuration&quot;>&lt;http:request-connection host=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'Host>'),'&lt;/Host'),'&quot; port=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'Port>'),'&lt;/Port'),'&quot; />&lt;/http:request-config>')"/>
+                        </pfx:HTTPREQUEST>
+                    </xsl:if>
+                    <xsl:if test="contains(tib:substring-after-last($CurrentFile/output, '.'),'jms')">
+                        <pfx:JMS>
+                            <xsl:value-of select="concat('&lt;jms:config name=&quot;JMS_Config&quot; doc:name=&quot;JMS Config&quot; config-ref=&quot;JMS_Config&quot;>&lt;jms:generic-connection username=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'username>'),'&lt;/username'),'&quot; password=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'password>'),'&lt;/password'),'&quot; />&lt;/jms:config>')"/>
+                        </pfx:JMS>
+                    </xsl:if>
+                    <xsl:if test="contains(tib:substring-after-last($CurrentFile/output, '.'),'ftp')">
+                        <pfx:FTP>
+                            <xsl:value-of select="concat('&lt;ftp:config name=&quot;FTP_Config&quot; doc:name=&quot;FTP Config&quot; >&lt;ftp:connection workingDir=&quot;/&quot; host=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'Host>'),'&lt;/Host'),'&quot; port=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'Port>'),'&lt;/Port'),'&quot; username=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'UserName>'),'&lt;/UserName'),'&quot; password=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'Password>'),'&lt;/Password'),'&quot; />&lt;/ftp:config>')"/>
+                        </pfx:FTP>
+                    </xsl:if>
+                    <pfx:SOAPEVENTSOURCE>
+                        <xsl:value-of select="concat('&lt;apikit-soap:config name=&quot;APIKit for SOAP Configuration&quot; doc:name=&quot;APIKit for SOAP Configuration&quot; config-ref=&quot;APIKit for SOAP Configuration&quot; soapVersion=&quot;SOAP12&quot; wsdlLocation=&quot;',$Start/SharedResources/Location,&quot;Output\Projects\src\main\wsdl\&quot;,'&quot; />')"/>
+                    </pfx:SOAPEVENTSOURCE>
+                    <xsl:if test="contains(tib:substring-after-last($CurrentFile/output, '.'),'jdbc')">
+                        <pfx:JDBC>
+                            <xsl:value-of select="concat('&lt;db:config name=&quot;Database_Config&quot; doc:name=&quot;Database Config&quot; config-ref=&quot;Database_Config&quot; >&lt;db:mssql-connection host=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'jdbc:sqlserver://'),':'),'&quot; port=&quot;',&#xA;substring-before(tib:substring-after-last($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, ':'),';'),'&quot; user=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'user>'),'&lt;/user'),'&quot; password=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'password>'),'&lt;/password>'),'&quot; databaseName=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'databaseName='),'&lt;/location>'),'&quot; />&lt;/db:config>')"/>
+                        </pfx:JDBC>
+                    </xsl:if>
+                    <xsl:if test="contains(tib:substring-after-last($CurrentFile/output, '.'),'salesforce')">
+                        <pfx:SALESFORCE>
+                            <xsl:value-of select="concat('&lt;salesforce:sfdc-config name=&quot;Salesforce_Config&quot; doc:name=&quot;Salesforce Config&quot;  >&lt;salesforce:basic-connection username=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'UserName>'),'&lt;/UserName'),'&quot; password=&quot;',&#xA;substring-before(substring-after($Read-File/ns:ReadActivityOutputTextClass/fileContent/textContent, 'Password>'),'&lt;/Password'),'&quot;/>&lt;/salesforce:sfdc-config>')"/>
+                        </pfx:SALESFORCE>
+                    </xsl:if>
+                </pfx:MULE>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Read File">
+            <pd:type>com.tibco.plugin.file.FileReadActivity</pd:type>
+            <pd:resourceType>ae.activities.FileReadActivity</pd:resourceType>
+            <pd:x>340</pd:x>
+            <pd:y>110</pd:y>
+            <config>
+                <encoding>text</encoding>
+            </config>
+            <pd:inputBindings>
+                <ns0:ReadActivityInputClass>
+                    <fileName>
+                        <xsl:value-of select="$CurrentFile/output"/>
+                    </fileName>
+                </ns0:ReadActivityInputClass>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Null">
+            <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+            <pd:resourceType>ae.activities.null</pd:resourceType>
+            <pd:x>383</pd:x>
+            <pd:y>213</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="Map-Data-1">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>667</pd:x>
+        <pd:y>152</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element ref="pfx:MULE" minOccurs="0"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <xsl:variable name="var" select="tib:concat-sequence-format($AccummulatedConnectorConfig/AccumulatedOutput/pfx:MULE,'$')"/>
+            <xsl:variable name="var1" select="tib:tokenize($var, '$')"/>
+            <root>
+                <pfx:MULE>
+                    <pfx:HTTP>
+                        <xsl:value-of select="concat('&lt;http:listener-config ',substring-before(substring-after($var, '&lt;http:listener-config'), '&lt;/http:listener-config>'),'&lt;/http:listener-config>')"/>
+                    </pfx:HTTP>
+                    <pfx:HTTPREQUEST>
+                        <xsl:value-of select="concat('&lt;http:request-config ',substring-before(substring-after($var, '&lt;http:request-config'), '&lt;/http:request-config>'),'&lt;/http:request-config>')"/>
+                    </pfx:HTTPREQUEST>
+                    <pfx:JMS>
+                        <xsl:value-of select="concat('&lt;jms:config name=&quot;JMS_Config&quot; doc:name=&quot;JMS Config&quot; config-ref=&quot;JMS_Config&quot;>&lt;jms:generic-connection username=&quot;',substring-before(substring-after($var, 'username=&quot;'), '&quot;'),'&quot; password=&quot;',substring-before(substring-after($var, 'password=&quot;'), '&quot;'),'&quot; />&lt;/jms:config>')"/>
+                    </pfx:JMS>
+                    <pfx:FTP>
+                        <xsl:value-of select="concat('&lt;ftp:config ',substring-before(substring-after($var, '&lt;ftp:config'), '&lt;/ftp:config>'),'&lt;/ftp:config>')"/>
+                    </pfx:FTP>
+                    <pfx:SOAPEVENTSOURCE>
+                        <xsl:value-of select="concat('&lt;apikit-soap:config ',substring-before(substring-after($var, '&lt;apikit-soap:config'), '/>'),'/>')"/>
+                    </pfx:SOAPEVENTSOURCE>
+                    <pfx:JDBC>
+                        <xsl:value-of select="concat('&lt;db:config ',substring-before(substring-after($var, '&lt;db:config'), '&lt;/db:config>'),'&lt;/db:config>')"/>
+                    </pfx:JDBC>
+                    <pfx:SALESFORCE>
+                        <xsl:value-of select="concat('&lt;salesforce:sfdc-config ',substring-before(substring-after($var, '&lt;salesforce:sfdc-config'), '&lt;/salesforce:sfdc-config'),'&lt;/salesforce:sfdc-config>')"/>
+                    </pfx:SALESFORCE>
+                </pfx:MULE>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>ListFiles</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>Map-Data-1</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>ListFiles</pd:from>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Map-Data-1</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

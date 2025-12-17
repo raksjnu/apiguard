@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BWSharedResource xmlns:pfx6="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd" xmlns:pfx="http://www.tibco.com/schemas/tibco2mulePOC/Raks/Extracter/schema/Schema.xsd" xmlns:pfx2="http://www.tibco.com/xmlns/repo/types/2002" xmlns:pfx3="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/GVDetails.xsd" xmlns:pfx4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Conversion.xsd" xmlns:pfx5="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd">
+    <import namespace="http://www.tibco.com/xmlns/repo/types/2002" schemaLocation="/Raks/Extracter/schema/Schema1.xsd"/>
+    <import namespace="http://www.tibco.com/schemas/tibco2mulePOC/Raks/Extracter/schema/Schema.xsd" schemaLocation="/Raks/Extracter/schema/Schema.xsd"/>
+    <import namespace="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/GVDetails.xsd" schemaLocation="/Resources/Schema/Tibco/GVDetails.xsd"/>
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Conversion.xsd" schemaLocation="/Resources/Schema/Tibco/Conversion.xsd"/>
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" schemaLocation="/Resources/Schema/Tibco/Checklist.xsd"/>
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd" schemaLocation="/Resources/Schema/Tibco/ChecklistSharedVar.xsd"/>
+    <name>Data-Format_CheckList</name>
+    <resourceType>ae.shared.ParseSharedResource</resourceType>
+    <config xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <FormatType>Delimiter separated</FormatType>
+        <ColumnSeparator>,</ColumnSeparator>
+        <ColSeparatorRule>Treat all characters as entered as a single column separator string</ColSeparatorRule>
+        <LineSeparator>
+</LineSeparator>
+        <FillCharacter>Space</FillCharacter>
+        <LineLength>6</LineLength>
+        <DataFormat ref="pfx6:Checklist"/>
+    </config>
+</BWSharedResource>

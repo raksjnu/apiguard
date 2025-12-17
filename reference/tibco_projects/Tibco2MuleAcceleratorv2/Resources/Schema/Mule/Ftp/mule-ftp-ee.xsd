@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+
+    (c) 2003-2010 MuleSoft, Inc. This software is protected under international copyright
+    law. All use of this software is subject to MuleSoft's Master Subscription Agreement
+    (or other master license agreement) separately entered into in writing between you and
+    MuleSoft. If such an agreement is not in place, you may not use the software.
+
+-->
+<xsd:schema xmlns="http://www.mulesoft.org/schema/mule/ee/ftp"
+	 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	 xmlns:mule="http://www.mulesoft.org/schema/mule/core"
+	 xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	 xmlns:schemadoc="http://www.mulesoft.org/schema/mule/schemadoc"
+	 targetNamespace="http://www.mulesoft.org/schema/mule/ee/ftp"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xsd:annotation>
+		<xsd:documentation>Extensions to the FTP transport only available as part of Mule Enterprise</xsd:documentation>
+		<xsd:appinfo>
+			<schemadoc:short-name>ftp-ee</schemadoc:short-name>
+			<schemadoc:page-title>Premium FTP Transport</schemadoc:page-title>
+			<schemadoc:transport-features receiveEvents="true" dispatchEvents="true" responseEvents="false" requestEvents="true" transactions="false" streaming="true">
+				<schemadoc:inboundMEPs in-only="true"/>
+				<schemadoc:outboundMEPs out-only="true"/>
+			</schemadoc:transport-features>
+		</xsd:appinfo>
+	</xsd:annotation>
+	<xsd:import namespace="http://www.w3.org/XML/1998/namespace"/>
+	<xsd:import namespace="http://www.mulesoft.org/schema/mule/ftp" schemaLocation="http://www.mulesoft.org/schema/mule/ftp/3.9/mule-ftp.xsd"/>
+	<xsd:import namespace="http://www.mulesoft.org/schema/mule/core" schemaLocation="../Common/mule.xsd"/>
+	<xsd:import namespace="http://www.mulesoft.org/schema/mule/schemadoc" schemaLocation="../Common/mule-schemadoc.xsd"/>
+	<xsd:element name="connector" type="eeFtpConnectorType" substitutionGroup="mule:abstract-connector"/>
+	<xsd:complexType name="eeFtpConnectorType">
+		<xsd:complexContent>
+			<xsd:extension base="ftp:ftpConnectorType">
+				<xsd:attribute name="fileAge" type="mule:substitutableLong">
+					<xsd:annotation>
+						<xsd:documentation>
+                            Miniumum age (ms) for a file to be processed.
+                        </xsd:documentation>
+					</xsd:annotation>
+				</xsd:attribute>
+				<xsd:attribute name="moveToPattern" type="xsd:string">
+					<xsd:annotation>
+						<xsd:documentation>
+                            The pattern to use when moving a read file to an new location determined by the
+                            moveToDirectory property.
+                            This can use the patterns supported by the filename-parser configured for this connector
+                        </xsd:documentation>
+					</xsd:annotation>
+				</xsd:attribute>
+				<xsd:attribute name="moveToDirectory" type="xsd:string">
+					<xsd:annotation>
+						<xsd:documentation>
+                            The directory path where the file should be written once it has been read.
+                            If this is not set the file read is deleted.
+                        </xsd:documentation>
+					</xsd:annotation>
+				</xsd:attribute>
+			</xsd:extension>
+		</xsd:complexContent>
+	</xsd:complexType>
+	<xsd:element name="inbound-endpoint" type="ftp:inboundEndpointType" substitutionGroup="mule:abstract-inbound-endpoint"/>
+	<xsd:element name="outbound-endpoint" type="ftp:outboundEndpointType" substitutionGroup="mule:abstract-outbound-endpoint"/>
+	<xsd:element name="endpoint" type="ftp:globalEndpointType" substitutionGroup="mule:abstract-global-endpoint"/>
+</xsd:schema>

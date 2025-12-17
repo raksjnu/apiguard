@@ -1,0 +1,157 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>ActiveMQ</name>
+			<value>&lt;jms:activemq-connector name="ACTIVEMQ_Configuration" username="admin" password="admin" brokerURL="tcp://localhost:61616" validateConnections="true" doc:name="Active MQ"/></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1592819431852</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>EmailPOP3</name>
+			<value>&lt;email:pop3-config name="Email_POP3" doc:name="Email POP3">&lt;email:pop3-connection />&lt;/email:pop3-config></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593418344236</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>EmailSMTP</name>
+			<value>&lt;email:smtp-config name="Email_SMTP" doc:name="Email SMTP" >&lt;email:smtp-connection />&lt;/email:smtp-config></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593417446629</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>FILE</name>
+			<value>&lt;file:config name="File_Config" outputPattern="${filePath}" autoDelete="true" streaming="true" validateConnections="true" doc:name="File Config"/></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1592818671924</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>FTP</name>
+			<value>&lt;ftp:config name="FTP_Config" doc:name="FTP Config"> 		&lt;ftp:connection /> 	&lt;/ftp:config></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593171951803</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>HTTP</name>
+			<value>&lt;http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="498bdd8e-9738-4ef2-8200-ba7278017662" > &lt;http:listener-connection host="0.0.0.0" port="8081" /> &lt;/http:listener-config></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1591963258484</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>HTTPREQUEST</name>
+			<value>&lt;http:request-config name="HTTP_Request_Configuration" host="localhost" port="8080" doc:name="HTTP Request Configuration"/></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719727405</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>JAVA</name>
+			<value>&lt;java:config name="Java_Config" doc:name="Java Config"/></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593002624450</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>JDBC</name>
+			<value>&lt;db:config name="Database_Config" url="jdbc:sqlserver://localhost:1433;databaseName=demo;user=sa;password=actualPwd" driverClassName="com.microsoft.sqlserver.jdbc.SQLServerDriver" doc:name="Database Config">&lt;db:data-source-connection /> 	&lt;/db:config></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1592818815474</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>JMS</name>
+			<value>&lt;jms:config name="JMS_Config" username="admin" password="admin" brokerURL="tcp://localhost:61616" validateConnections="true" doc:name="JMS Config"> 		&lt;jms:active-mq-connection > 			&lt;jms:caching-strategy > 				&lt;jms:no-caching /> 			&lt;/jms:caching-strategy> 		&lt;/jms:active-mq-connection> 	&lt;/jms:config></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1592819432083</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>SALESFORCE</name>
+			<value>&lt;salesforce:sfdc-config name="Salesforce_Config" doc:name="Salesforce Config">&lt;salesforce:basic-connection />&lt;/salesforce:sfdc-config></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593313209777</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>SAP</name>
+			<value>&lt;sap:sap-config name="SAP_Config" doc:name="SAP Config" config-ref="SAP_Config"> 		&lt;sap:certificate-connection /> 	&lt;/sap:sap-config></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593674714885</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>SOAPEVENTSOURCE</name>
+			<value>&lt;apikit-soap:config enableMuleSoapHeaders="true" initializeStaticBusInstance="true" name="APIKit_for_SOAP_Configuration" doc:name="APIKit for SOAP Configuration"/></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1592820061233</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>SchemaAtrribute</name>
+			<value>&lt;fileAttribute>xmlns:file="http://www.mulesoft.org/schema/mule/file"&lt;/fileAttribute>&lt;ftpAttribute>xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"&lt;/ftpAttribute>&lt;dbAttribute>xmlns:db="http://www.mulesoft.org/schema/mule/db"&lt;/dbAttribute>&lt;jmsAtrribute>xmlns:jms="http://www.mulesoft.org/schema/mule/jms"&lt;/jmsAtrribute>&lt;wsAttribute>xmlns:apikit-soap="http://www.mulesoft.org/schema/mule/apikit-soap" xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf" xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"&lt;/wsAttribute>&lt;httpAttribute>xmlns:http="http://www.mulesoft.org/schema/mule/http"&lt;/httpAttribute>&lt;sapAttribute>xmlns:sap="http://www.mulesoft.org/schema/mule/sap"&lt;/sapAttribute>&lt;jerseyAttribute>xmlns:jersey="http://www.mulesoft.org/schema/mule/jersey"&lt;/jerseyAttribute>&lt;springAttribute>xmlns:spring="http://www.springframework.org/schema/beans"&lt;/springAttribute>&lt;javaAttribute>xmlns:java="http://www.mulesoft.org/schema/mule/java"&lt;/javaAttribute>&lt;emailAttribute>xmlns:email="http://www.mulesoft.org/schema/mule/email"&lt;/emailAttribute>&lt;sfAttribute>xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce"&lt;/sfAttribute></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593277906194</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>SchemaHeader</name>
+			<value>&lt;mule xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593003836486</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>SchemaLocAttribute</name>
+			<value>&lt;fileSchemaAttribute>http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd&lt;/fileSchemaAttribute>&lt;ftpSchemaAttribute>http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd&lt;/ftpSchemaAttribute>&lt;dbSchemaAttribute>http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd&lt;/dbSchemaAttribute>&lt;jmsSchemaAtrribute>http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd&lt;/jmsSchemaAtrribute>&lt;wsSchemaAttribute>http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd http://www.mulesoft.org/schema/mule/apikit-soap http://www.mulesoft.org/schema/mule/apikit-soap/current/mule-apikit-soap.xsd http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/ws/current/mule-ws.xsd&lt;/wsSchemaAttribute>&lt;httpSchemaAttribute>http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd&lt;/httpSchemaAttribute>&lt;sapSchemaAttribute>http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd&lt;/sapSchemaAttribute>&lt;jerseySchemaAttribute>http://www.mulesoft.org/schema/mule/jersey http://www.mulesoft.org/schema/mule/jersey/current/mule-jersey.xsd&lt;/jerseySchemaAttribute>&lt;springSchemaAttribute>http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd&lt;/springSchemaAttribute>&lt;emailSchemaAttribute>http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd&lt;/emailSchemaAttribute>&lt;sfLocSchemaAttribute>http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd&lt;/sfLocSchemaAttribute></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593314770830</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>SchemaLocHeader</name>
+			<value>xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/ee/dw http://www.mulesoft.org/schema/mule/ee/dw/current/dw.xsd</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593003836645</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>WEBSERVICECONSUMER</name>
+			<value>&lt;wsc:config name="Web_Service_Consumer_Config" service="testservice" port="testport" serviceAddress="" wsdlLocation="/src/main/resources" doc:name="Web Service Consumer Config" config-ref="Web_Service_Consumer_Config"/></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593774417816</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>header</name>
+			<value>&lt;?xml version="1.0" encoding="UTF-8"?>  &lt;mule xmlns:file="http://www.mulesoft.org/schema/mule/file"   xmlns:db="http://www.mulesoft.org/schema/mule/db"  xmlns:http="http://www.mulesoft.org/schema/mule/http"  xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"  xmlns:jms="http://www.mulesoft.org/schema/mule/jms"  xmlns="http://www.mulesoft.org/schema/mule/core"   xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"   xmlns:spring="http://www.springframework.org/schema/beans"  xmlns:sap="http://www.mulesoft.org/schema/mule/sap"  xmlns:apikit-soap="http://www.mulesoft.org/schema/mule/apikit-soap"  xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf"  xmlns:jersey="http://www.mulesoft.org/schema/mule/jersey"  xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"   xmlns:salesforce="http://www.mulesoft.org/schema/mule/salesforce" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"  xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-current.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd http://www.mulesoft.org/schema/mule/ftp http://www.mulesoft.org/schema/mule/ftp/current/mule-ftp.xsd http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd http://www.mulesoft.org/schema/mule/cxf http://www.mulesoft.org/schema/mule/cxf/current/mule-cxf.xsd   http://www.mulesoft.org/schema/mule/sap http://www.mulesoft.org/schema/mule/sap/current/mule-sap.xsd  http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/ws/current/mule-ws.xsd http://www.mulesoft.org/schema/mule/jersey http://www.mulesoft.org/schema/mule/jersey/current/mule-jersey.xsd http://www.mulesoft.org/schema/mule/salesforce http://www.mulesoft.org/schema/mule/salesforce/current/mule-salesforce.xsd http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd http://www.mulesoft.org/schema/mule/apikit-soap http://www.mulesoft.org/schema/mule/apikit-soap/current/mule-apikit-soap.xsd"></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593425118086</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

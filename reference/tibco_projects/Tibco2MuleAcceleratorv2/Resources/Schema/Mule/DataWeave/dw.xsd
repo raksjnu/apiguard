@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	 xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	 targetNamespace="http://www.mulesoft.org/schema/mule/ee/core"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/ee/core" schemaLocation="./Mule/DataWeave/dw.xsd"/>
+
+	<!--	<xs:import namespace="http://www.mulesoft.org/schema/mule/documentation" schemaLocation="doc.xsd"/>-->
+	<xs:element name="transform">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="ee:message" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="type" type="xs:string"/>
+			<xs:attribute name="posX" type="xs:int"/>
+			<xs:attribute name="posY" type="xs:int"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="message">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="ee:set-payload" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="set-payload" type="xs:string"/>
+</xs:schema>

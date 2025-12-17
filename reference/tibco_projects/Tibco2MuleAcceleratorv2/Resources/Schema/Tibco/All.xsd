@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd"
+	 xmlns:ns0="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd"
+	 xmlns:ns1="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/FileInfo.xsd"
+	 xmlns:ns2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/GVInfo.xsd"
+	 xmlns:ns3="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd"
+	 xmlns:ns4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd"
+	 xmlns:ns5="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/NameValue.xsd"
+	 targetNamespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:import namespace="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd" schemaLocation="ProjectInfo.xsd"/>
+	<xs:import namespace="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/FileInfo.xsd" schemaLocation="FileInfo.xsd"/>
+	<xs:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/GVInfo.xsd" schemaLocation="GVInfo.xsd"/>
+	<xs:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd" schemaLocation="ProcessInfo.xsd"/>
+	<xs:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" schemaLocation="Checklist.xsd"/>
+	<xs:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/NameValue.xsd" schemaLocation="NameValue.xsd"/>
+	<xs:element name="root">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="ns0:ProjectInfo" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="ns1:FileInfo" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="ns2:GVInfo" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="ns3:ProcessInfo" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="ns4:ChecklistValidation" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="MuleFlowXML" type="xs:string" minOccurs="0"/>
+				<xs:element ref="ns5:NameValuePairs" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

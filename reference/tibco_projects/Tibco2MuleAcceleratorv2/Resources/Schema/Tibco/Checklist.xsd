@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd"
+	 targetNamespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="ChecklistValidation">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="ChecklistNumber" type="xs:string" minOccurs="0"/>
+				<xs:element name="ChecklistName" type="xs:string" minOccurs="0"/>
+				<xs:element name="Checklist" type="xs:string" minOccurs="0"/>
+				<xs:element name="Validation" type="xs:string" minOccurs="0"/>
+				<xs:element name="Remarks" type="xs:string" minOccurs="0"/>
+				<xs:element name="Process" type="xs:string" minOccurs="0"/>
+				<xs:element name="Activity" type="xs:string" minOccurs="0"/>
+				<xs:element ref="ReviewAccepted" minOccurs="0"/>
+				<xs:element ref="DeveloperComment" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="ReviewAccepted" type="xs:string"/>
+	<xs:element name="DeveloperComment" type="xs:string"/>
+</xs:schema>

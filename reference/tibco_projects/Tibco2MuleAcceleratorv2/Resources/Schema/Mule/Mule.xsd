@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://www.mulesoft.org/schema/mule/core"
+	 xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	 xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	 xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	 xmlns:spring="http://www.springframework.org/schema/beans"
+	 xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	 xmlns:sap="http://www.mulesoft.org/schema/mule/sap"
+	 xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	 xmlns:ftp="http://www.mulesoft.org/schema/mule/ftp"
+	 xmlns:cxf="http://www.mulesoft.org/schema/mule/cxf"
+	 xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc"
+	 xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	 xmlns:ns0="http://www.mulesoft.org/schema/mule/ee/core"
+	 targetNamespace="http://www.mulesoft.org/schema/mule/core"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/http" schemaLocation="./Mule/Http/mule-http.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/db" schemaLocation="./Mule/DB/mule-db.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/documentation" schemaLocation="doc.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/ee/core" schemaLocation="./Mule/DataWeave/dw.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/sap" schemaLocation="./Mule/Sap/mule-sap.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/file" schemaLocation="./Mule/File/mule-file.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/ftp" schemaLocation="./Mule/Ftp/mule-ftp.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/cxf" schemaLocation="./Mule/Cxf/mule-cxf.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/jms" schemaLocation="./Mule/Jms/mule-jms.xsd"/>
+	<xs:import namespace="http://www.mulesoft.org/schema/mule/wsc" schemaLocation="./Mule/SoapConsumer/mule-ws.xsd"/>
+	<xs:element name="mule">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="marker" type="xs:string" minOccurs="0"/>
+				<xs:element ref="http:listener-config" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="db:generic-config" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="sap:connector" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="file:connector" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="ftp:connector" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="cxf:configuration" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="jms:connector" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="wsc:consume-config" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element name="flow" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="http:listener" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="set-payload" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="jms:listener" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="jms:publish" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="cxf:proxy-service" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="set-session-variable" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="message-properties-transformer" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="choice" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="db:select" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="ns0:transform" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="db:update" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="logger" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="flow-ref" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="sap:outbound-endpoint" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="sap:inbound-endpoint" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="file:outbound-endpoint" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="file:inbound-endpoint" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="ftp:FTPOutbound" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="wsc:consume" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="javaConfig" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="SFConfig" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="generalActivities" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element name="any" minOccurs="0" maxOccurs="unbounded"/>
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="sub-flow" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="db:select" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="db:update" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="logger" minOccurs="0" maxOccurs="unbounded"/>
+							<xs:element ref="ns0:transform" minOccurs="0" maxOccurs="unbounded"/>
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="any" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="set-session-variable">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="variableName" type="xs:string"/>
+			<xs:attribute name="value" type="xs:string"/>
+			<xs:attribute name="posX" type="xs:int"/>
+			<xs:attribute name="posY" type="xs:int"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="set-payload">
+		<xs:complexType>
+			<xs:attribute name="value" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="message-properties-transformer">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="add-message-property" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:attribute name="key" type="xs:string"/>
+						<xs:attribute name="value" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="scope" type="xs:string"/>
+			<xs:attribute name="name" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="logger">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="level" type="xs:string"/>
+			<xs:attribute name="message" type="xs:string"/>
+			<xs:attribute name="posX" type="xs:int"/>
+			<xs:attribute name="posY" type="xs:int"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="choice">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="when" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="flow-ref" minOccurs="0"/>
+						</xs:sequence>
+						<xs:attribute name="name" type="xs:string"/>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="otherwise" minOccurs="0">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element ref="flow-ref" minOccurs="0"/>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="expression" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="flow-ref">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute ref="doc:name"/>
+			<xs:attribute name="posX" type="xs:int"/>
+			<xs:attribute name="posY" type="xs:int"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="generalActivities">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="type" type="xs:string"/>
+			<xs:attribute name="value" type="xs:string"/>
+			<xs:attribute name="posX" type="xs:string"/>
+			<xs:attribute name="posY" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="javaConfig">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="type" type="xs:string"/>
+			<xs:attribute name="value" type="xs:string"/>
+			<xs:attribute name="config-ref" type="xs:string"/>
+			<xs:attribute name="posX" type="xs:string"/>
+			<xs:attribute name="posY" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="SFConfig">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="type" type="xs:string"/>
+			<xs:attribute name="value" type="xs:string"/>
+			<xs:attribute name="config-ref" type="xs:string"/>
+			<xs:attribute name="posX" type="xs:string"/>
+			<xs:attribute name="posY" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

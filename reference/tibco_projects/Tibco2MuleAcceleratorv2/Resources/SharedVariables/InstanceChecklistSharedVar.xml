@@ -1,0 +1,353 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<root xmlns = "http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd" xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation = "http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd ../Schema/Tibco/ChecklistSharedVar.xsd">
+	<Checklist>
+		<ChecklistNumber>CheckList1</ChecklistNumber>
+		<ChecklistName>Checklist_GenerateError</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for individually handled generate error activity in process</ChecklistDetail>
+		<Severity>MEDIUM</Severity>
+		<Remarks>Please validate the generate error activities which are implemented for individual activities</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList2</ChecklistNumber>
+		<ChecklistName>Checklist_ProcessVariable</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for usage of costly process variables</ChecklistDetail>
+		<Severity>MEDIUM</Severity>
+		<Remarks>please validate if process variable can be removed by other variable</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList3</ChecklistNumber>
+		<ChecklistName>Checklist_JMSHeaderProperty</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for missing usage of header properties in JMS Queue/Topic sender</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>please validate if header level properties can be created and used</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList4</ChecklistNumber>
+		<ChecklistName>Checklist_JMSPreserveProperty</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for missing JMS_TIBCO_PRESERVE_UNDELIVERED property in JMS Queue/Topic sender</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>please validate for business critical messages JMS_TIBCO_PRESERVE_UNDELIVERED property should be configured</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList5</ChecklistNumber>
+		<ChecklistName>Checklist_DurableTopicSubscriber</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for durable topic subscriber</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>please validate the durable topic subscriber</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList6</ChecklistNumber>
+		<ChecklistName>Checklist_ConfirmActivity</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for absence of confirm activity for subscriber client acknowledgment mode</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>please validate to use confirm activity for client acknowledged subscriber</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList7</ChecklistNumber>
+		<ChecklistName>Checklist_JMSHardcodedTimeout</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for hardcoded/default timeout in JMS Queue/Topic receivers</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>please validate hardcoded/default timeout value in JMS Queue/Topic receivers</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList8</ChecklistNumber>
+		<ChecklistName>Checklist_JMSHardcodedDestination</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for hardcoded destination in JMS Queue/Topic receivers</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>please validate hardcoded destination in JMS Queue/Topic receivers</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList9</ChecklistNumber>
+		<ChecklistName>Checklist_JMSHardcodedMaxSession</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for hardcoded/default maxSession in JMS Queue/Topic receivers</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>please validate hardcoded/default maxSession in JMS Queue/Topic receivers</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList10</ChecklistNumber>
+		<ChecklistName>Checklist_JMSPermittedmessagetype</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for PermittedMessageType set other than Text type in JMS Queue/Topic receivers</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>please validate whether permitted message type could be set as Text</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList11</ChecklistNumber>
+		<ChecklistName>Checklist_SpawnedCheck</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for spawned sub-process usage</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>please validate the spawned sub-process call</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList12</ChecklistNumber>
+		<ChecklistName>Checklist_CustomeJavaCode</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for custom java code activity usage</ChecklistDetail>
+		<Severity>MEDIUM</Severity>
+		<Remarks>please validate the custom java code activity configuration</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList13</ChecklistNumber>
+		<ChecklistName>Checklist_MapperCount</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether more than two mapper activity is used</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>please try to use appropriate number of mapper in any given process</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList14</ChecklistNumber>
+		<ChecklistName>Checklist_ComplexeMapperActivity</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether complex mapper activity is used</ChecklistDetail>
+		<Severity>MEDIUM</Severity>
+		<Remarks>Please validate the activity as it as large or complex mapping used</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList15</ChecklistNumber>
+		<ChecklistName>Checklist_LocalVaribale</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether local variables created and used in mapping</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>please validate if local variables are created and used properly</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList16</ChecklistNumber>
+		<ChecklistName>Checklist_BlankXpath</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether any xpath is null/blank or missing</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>activity has missing xpath logic</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList17</ChecklistNumber>
+		<ChecklistName>Checklist_NoMatchingTransition</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for probable No-Matching-Transition (missing otherwise transition)</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>activity has Success-with-Condition with xpath</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList18</ChecklistNumber>
+		<ChecklistName>Checklist_ActivityNotConnected</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for activity which is not connected through any transition</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>activity has missing transition</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList19</ChecklistNumber>
+		<ChecklistName>Checklist_ActivityCount</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for process where it has more than 20 activities</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>any process should not have more than 20 activities so that it can be easily readable and easier to debug</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList20</ChecklistNumber>
+		<ChecklistName>Checklist_ReadAndParseFileInsteadOfParseData</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for two Read-file followed by parse-xml activities instead of one parse-data activity usage</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>validate if the two Read-file and parse-xml activities can be replaced with one parse-data activity</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList21</ChecklistNumber>
+		<ChecklistName>Checklist_SchemaVerification</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check all schemas are in the appropriate folder</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>Please make sure all the schemas are in appropriate folder</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>         
+	<Checklist>
+		<ChecklistNumber>CheckList22</ChecklistNumber>
+		<ChecklistName>Checklist_TransitionCondition</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check all the Transition activities conditioned accordingly</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please make sure all the Transition activities conditioned accordingly such as: Success, Success with condition, Success if no matching condition, and Error</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList23</ChecklistNumber>
+		<ChecklistName>Checklist_TransitionLabel</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check all the major transition has a label</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>Please validate Major Transition has a label.  Especially the ones that has two or more transition from one activity or going to one activity</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>         
+	<Checklist>
+		<ChecklistNumber>CheckList24</ChecklistNumber>
+		<ChecklistName>Checklist_Encryption</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check all the username and passwords are encrypted</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please make sure usernames and passwords are defined using global variables and passwords should be encrypted</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>         
+	<Checklist>
+		<ChecklistNumber>CheckList25</ChecklistNumber>
+		<ChecklistName>Checklist_JavaLogging</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Checkwhether any java code has sysout statements</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Java parts shall not use System.out logging</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList33</ChecklistNumber>
+		<ChecklistName>Checklist_SchemaValidation</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check all the schemas follow standard</ChecklistDetail>
+		<Severity>LOW</Severity>
+		<Remarks>Please make sure schema file is following all the standard like namesace, imported schema loation etc and and not defaulted ones</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>          
+	<Checklist>
+		<ChecklistNumber>CheckList26</ChecklistNumber>
+		<ChecklistName>Checklist_CommonLoggingCalls</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether all calls to common-logging and exception-handling implemented correctly</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please use UTF-8 for all encoding in the project unless any specific requirement to use another encoding.</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList27</ChecklistNumber>
+		<ChecklistName>Checklist_ErrorLogging</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether errors are logged with error (or warning) level</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please check all errors are logged with error (or warning) level</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList28</ChecklistNumber>
+		<ChecklistName>Checklist_JMSMessagingStandards</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for naming standards for JMS</ChecklistDetail>
+		<Severity>MEDIUM</Severity>
+		<Remarks>Please follow naming standards for Subject, Topic and Queue names</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList29</ChecklistNumber>
+		<ChecklistName>Checklist_PublishSubject</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether Publishers not using wildcards in subject names</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please avoid wildcards in subject names.</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList30</ChecklistNumber>
+		<ChecklistName>Checklist_QueueReaderSubject</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether Queue readers not using wildcards in subject names</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please avoid wildcards in subject names.</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList31</ChecklistNumber>
+		<ChecklistName>Checklist_EMSConnectionFactory</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether appropriate connection factories are being used for connecting to EMS</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please validate connection factories are being used for connecting to EMS</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList32</ChecklistNumber>
+		<ChecklistName>Checklist_EMSAcknowledgementMode</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check all Queue and Topic receiver activities "Acknowledge mode is set to Client or Tibco Explicit EMS</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please check all Queue and Topic receiver activities "Acknowledge mode is set to Client or Tibco Explicit EMS</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>          
+	<Checklist>
+		<ChecklistNumber>CheckList33</ChecklistNumber>
+		<ChecklistName>Checklist_Logging</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check whether log has entire process path</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please validate logging Event/Component name has the entire process path</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+	<Checklist>
+		<ChecklistNumber>CheckList34</ChecklistNumber>
+		<ChecklistName>Checklist_GlobalVariables</ChecklistName>
+		<Enabled>Yes</Enabled>
+		<ChecklistDetail>Check for appropriate GV value</ChecklistDetail>
+		<Severity>HIGH</Severity>
+		<Remarks>Please validate appropriate GV value (no 'zero' for max rows, timeout etc or Blank GVs), as per standard</Remarks>
+		<ReviewAccepted/>
+		<DeveloperComment/>
+	</Checklist>
+</root>

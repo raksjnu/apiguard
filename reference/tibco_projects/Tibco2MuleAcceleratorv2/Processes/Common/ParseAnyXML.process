@@ -1,0 +1,2363 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pfx="http://www.mulesoft.org/schema/mule/core" xmlns:sap="http://www.mulesoft.org/schema/mule/sap" xmlns:pfx2="http://www.tibco.com/schemas/tibco2mulePOC/Raks/report.xsd" xmlns:ns="http://www.tibco.com/pe/WriteToLogActivitySchema" xmlns:pfx3="http://www.tibco.com/Resources/Schema/FlowSchema/FlowSchema.xsd" xmlns:pfx4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns2="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:ns1="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/FileInfo.xsd" xmlns:ns4="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd" xmlns:ns3="http://www.tibco.com/pe/DeployedVarsType" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns6="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" xmlns:ns5="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd" xmlns:ns8="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd" xmlns:dw="http://www.mulesoft.org/schema/mule/ee/dw" xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ns7="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/GVInfo.xsd" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns9="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/NameValue.xsd" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:db="http://www.mulesoft.org/schema/mule/db">
+    <xsd:import namespace="http://www.w3.org/2001/XMLSchema" schemaLocation="/ProcessDefinitionParsing/Schema.xsd"/>
+    <xsd:import namespace="http://www.mulesoft.org/schema/mule/core" schemaLocation="/Raks/Mule.xsd"/>
+    <xsd:import namespace="http://www.tibco.com/schemas/tibco2mulePOC/Raks/report.xsd" schemaLocation="/Raks/report.xsd"/>
+    <xsd:import namespace="http://www.mulesoft.org/schema/mule/sap" schemaLocation="/Raks/sap/mule-sap.xsd"/>
+    <xsd:import namespace="http://www.tibco.com/Resources/Schema/FlowSchema/FlowSchema.xsd" schemaLocation="/Resources/Schema/Tibco/FlowSchema.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" schemaLocation="/Resources/Schema/Tibco/All.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/NameValue.xsd" schemaLocation="/Resources/Schema/Tibco/NameValue.xsd"/>
+    <pd:name>Processes/Common/ParseAnyXML.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType ref="pfx4:root"/>
+    <pd:startX>27</pd:startX>
+    <pd:startY>71</pd:startY>
+    <pd:returnBindings>
+        <pfx4:root>
+            <xsl:if test="$Start/pfx4:root/ns1:FileInfo/ns1:fileType='substvar'">
+                <xsl:for-each select="$TIBCO_XML/child::*/child::*/*">
+                    <ns7:GVInfo>
+                        <xsl:if test="current()/*[1]">
+                            <ns7:name>
+                                <xsl:value-of select="current()/*[1]"/>
+                            </ns7:name>
+                        </xsl:if>
+                        <xsl:if test="current()/*[2]">
+                            <ns7:value>
+                                <xsl:value-of select="current()/*[2]"/>
+                            </ns7:value>
+                        </xsl:if>
+                        <xsl:if test="current()/*[3]">
+                            <ns7:deploymentSettable>
+                                <xsl:value-of select="current()/*[3]"/>
+                            </ns7:deploymentSettable>
+                        </xsl:if>
+                        <xsl:if test="current()/*[4]">
+                            <ns7:serviceSettable>
+                                <xsl:value-of select="current()/*[4]"/>
+                            </ns7:serviceSettable>
+                        </xsl:if>
+                        <xsl:if test="current()/*[5]">
+                            <ns7:type>
+                                <xsl:value-of select="current()/*[5]"/>
+                            </ns7:type>
+                        </xsl:if>
+                        <xsl:if test="current()/*[6]">
+                            <ns7:modTime>
+                                <xsl:value-of select="current()/*[6]"/>
+                            </ns7:modTime>
+                        </xsl:if>
+                    </ns7:GVInfo>
+                </xsl:for-each>
+            </xsl:if>
+            <ns5:ProcessInfo>
+                <xsl:for-each select="$TIBCO_ActivityDetails-Final/root/Activities">
+                    <ns5:activity>
+                        <xsl:if test="process">
+                            <ns5:processName>
+                                <xsl:value-of select="process"/>
+                            </ns5:processName>
+                        </xsl:if>
+                        <xsl:if test="name">
+                            <ns5:name>
+                                <xsl:value-of select="name"/>
+                            </ns5:name>
+                        </xsl:if>
+                        <xsl:if test="type">
+                            <ns5:type>
+                                <xsl:value-of select="type"/>
+                            </ns5:type>
+                        </xsl:if>
+                        <xsl:if test="resourceType">
+                            <ns5:resourceType>
+                                <xsl:value-of select="resourceType"/>
+                            </ns5:resourceType>
+                        </xsl:if>
+                        <xsl:if test="config">
+                            <ns5:config>
+                                <xsl:value-of select="config"/>
+                            </ns5:config>
+                        </xsl:if>
+                        <xsl:if test="InputBinding">
+                            <ns5:inputBinding>
+                                <xsl:value-of select="InputBinding"/>
+                            </ns5:inputBinding>
+                        </xsl:if>
+                        <xsl:if test="Starter">
+                            <ns5:starter>
+                                <xsl:value-of select="Starter"/>
+                            </ns5:starter>
+                        </xsl:if>
+                        <ns5:from>
+                            <xsl:value-of select="from"/>
+                        </ns5:from>
+                        <ns5:to>
+                            <xsl:value-of select="to"/>
+                        </ns5:to>
+                        <xsl:if test="groupName">
+                            <ns5:groupName>
+                                <xsl:value-of select="groupName"/>
+                            </ns5:groupName>
+                        </xsl:if>
+                        <xsl:if test="rawConfig">
+                            <ns5:rawConfig>
+                                <xsl:value-of select="rawConfig"/>
+                            </ns5:rawConfig>
+                        </xsl:if>
+                        <xsl:if test="rawInputBinding">
+                            <ns5:rawInputBinding>
+                                <xsl:value-of select="rawInputBinding"/>
+                            </ns5:rawInputBinding>
+                        </xsl:if>
+                        <xsl:if test="current()/PosX">
+                            <ns5:posX>
+                                <xsl:value-of select="current()/PosX"/>
+                            </ns5:posX>
+                        </xsl:if>
+                        <xsl:if test="current()/PosY">
+                            <ns5:posY>
+                                <xsl:value-of select="current()/PosY"/>
+                            </ns5:posY>
+                        </xsl:if>
+                    </ns5:activity>
+                </xsl:for-each>
+            </ns5:ProcessInfo>
+            <xsl:if test="{--CheckList1&#x9;Checklist_GenerateError--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='1']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[type='GenerateErrorActivity']">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='1']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='1']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='1']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='1']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='1']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='1']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='1']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="concat(../Transitions[to=current()/name]/from, '-->', current()/name)"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList2&#x9;Checklist_ProcessVariable--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='2']/ns8:Enabled= 'Yes'&#xA;and $TIBCO_ActivityDetails/root/Activities[type='AssignActivity']&#xA;and &#xA;contains(tib:render-xml($TIBCO_ActivityDetails/root/processVariables[1], 1,0), substring-before(substring-after($TIBCO_ActivityDetails/root/Activities[type='AssignActivity']/rawConfig, '&lt;variableName>'), '&lt;/variableName>'))">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[type='AssignActivity']">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='2']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='2']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='2']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='2']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='2']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='2']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='2']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList3&#x9;Checklist_JMSHeaderProperty--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='3']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[(type='JMSQueueSendActivity' or type='JMSTopicPublishActivity' or type='JMSTopicRequestReplyActivity') and&#xA;( not(contains(rawInputBinding, 'DynamicProperties')) or not(contains(rawConfig, 'ApplicationProperties')))&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='3']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='3']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='3']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='3']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='3']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='3']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='3']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList4&#x9;Checklist_JMSPreserveProperty--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='4']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[(type='JMSQueueSendActivity' or type='JMSTopicPublishActivity' or type='JMSTopicRequestReplyActivity') and&#xA;( not(contains(rawInputBinding, 'JMS_TIBCO_PRESERVE_UNDELIVERED')))&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='4']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='4']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='4']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='4']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='4']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='4']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='4']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList5&#x9;Checklist_DurableTopicSubscriber--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='5']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Starter[type='JMSTopicEventSource'  and&#xA;contains(rawConfig, '&lt;durable>true&lt;/durable>')&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='5']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='5']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='5']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='5']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='5']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='5']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='5']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList6&#x9;Checklist_ConfirmActivity--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='6']/ns8:Enabled= 'Yes'&#xA;and&#xA;$TIBCO_ActivityDetails/root/Starter[(type='JMSQueueEventSource' or type='JMSTopicEventSource') and&#xA;(contains(rawConfig, '&lt;acknowledgeMode>2&lt;/acknowledgeMode>') or contains(rawConfig, '&lt;acknowledgeMode>23&lt;/acknowledgeMode>') or contains(rawConfig, '&lt;acknowledgeMode>24&lt;/acknowledgeMode>'))&#xA;] and&#xA;not($TIBCO_ActivityDetails/root/Activities[type='ConfirmActivity'])">
+                <ns6:ChecklistValidation>
+                    <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='6']/ns8:ChecklistNumber">
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='6']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                    </xsl:if>
+                    <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='6']/ns8:ChecklistName">
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='6']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                    </xsl:if>
+                    <ns6:Checklist>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='6']/ns8:ChecklistDetail"/>
+                    </ns6:Checklist>
+                    <ns6:Validation>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='6']/ns8:Severity"/>
+                    </ns6:Validation>
+                    <ns6:Remarks>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='6']/ns8:Remarks"/>
+                    </ns6:Remarks>
+                    <ns6:Process>
+                        <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                    </ns6:Process>
+                    <ns6:Activity>
+                        <xsl:value-of select="$TIBCO_ActivityDetails/root/Starter[($TIBCO_ActivityDetails/root/Starter/type='JMSQueueEventSource' or $TIBCO_ActivityDetails/root/Starter/type='JMSTopicEventSource')]/name"/>
+                    </ns6:Activity>
+                    <ns6:ReviewAccepted>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:ReviewAccepted>
+                    <ns6:DeveloperComment>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:DeveloperComment>
+                </ns6:ChecklistValidation>
+            </xsl:if>
+            <xsl:if test="{--CheckList7&#x9;Checklist_JMSHardcodedTimeout--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='7']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Starter[(type='JMSQueueEventSource' or type='JMSTopicEventSource') and&#xA;not(contains(rawConfig, '&lt;receiverTimeout>%%'))&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='7']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='7']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='7']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='7']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='7']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='7']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='7']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList8&#x9;Checklist_JMSHardcodedDestination--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='8']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Starter[(type='JMSQueueEventSource' or type='JMSTopicEventSource') and&#xA;not(contains(rawConfig, '&lt;destination>%%'))&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='8']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='8']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='8']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='8']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='8']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='8']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='8']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList9&#x9;Checklist_JMSHardcodedMaxSession--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='9']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Starter[(type='JMSQueueEventSource' or type='JMSTopicEventSource') and&#xA;contains(rawConfig, '&lt;maxSessions>1&lt;/maxSessions>')&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='9']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='9']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='9']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='9']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='9']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='9']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='9']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList10&#x9;Checklist_JMSPermittedmessagetype--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='10']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Starter[(type='JMSQueueEventSource' or type='JMSTopicEventSource') and&#xA;not(contains(rawConfig, '&lt;PermittedMessageType>Text'))&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='10']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='10']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='10']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='10']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='10']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='10']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='10']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList11&#x9;Checklist_SpawnedCheck--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='11']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[type='CallProcessActivity' and&#xA;contains(config, 'Spawn=true')&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='11']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='11']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='11']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='11']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='11']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='11']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='11']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList12&#x9;Checklist_CustomeJavaCode--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='12']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails-Final/root/Activities[type='JavaActivity']">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='12']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='12']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='12']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='12']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='12']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='12']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='12']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList13&#x9;Checklist_MapperCount--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='13']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails-Final/root/report[activityType='MapperActivity' and activityCount>2]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='13']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='13']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='13']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='13']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='13']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='13']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="concat($GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='13']/ns8:Remarks,&quot; Currently there are &quot;, $TIBCO_ActivityDetails-Final/root/report[activityType='MapperActivity']/activityCount, ' mapper activities')"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="tib:concat-sequence-format(../Activities[type='MapperActivity']/name, ' ; ', 0)"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList14&#x9;Checklist_ComplexeMapperActivity--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='14']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[type='MapperActivity' and string-length(InputBinding)>$_globalVariables/ns3:GlobalVariables/Tibco2MuleAccelerator/Messages/xpathLength]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='14']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='14']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='14']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='14']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='14']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='14']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='14']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList15&#x9;Checklist_LocalVaribale--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='15']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[type='MapperActivity' and contains(InputBinding,'xsl:variable')]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='15']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='15']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='15']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='15']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='15']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='15']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='15']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/name"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList16&#x9;Checklist_BlankXpath--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='16']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Transitions[conditionType='xpath' and string-length(xpath)=0]">
+                    <ns6:ChecklistValidation>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='16']/ns8:ChecklistNumber">
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='16']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='16']/ns8:ChecklistName">
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='16']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                        </xsl:if>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='16']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='16']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="concat($GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistName='16']/ns8:Remarks, ' ', current()/from,&quot; activity has missing xpath logic [&quot;,current()/xpath, ']')"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="current()/from"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList17&#x9;Checklist_NoMatchingTransition--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='17']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities">
+                    <xsl:if test="exists($TIBCO_ActivityDetails/root/Transitions[from=current()/name and conditionType='xpath']) and&#xA;not(exists($TIBCO_ActivityDetails/root/Transitions[from=current()/name and conditionType='otherwise']))">
+                        <ns6:ChecklistValidation>
+                            <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='17']/ns8:ChecklistNumber">
+                                <ns6:ChecklistNumber>
+                                    <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='17']/ns8:ChecklistNumber"/>
+                                </ns6:ChecklistNumber>
+                            </xsl:if>
+                            <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='17']/ns8:ChecklistName">
+                                <ns6:ChecklistName>
+                                    <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='17']/ns8:ChecklistName"/>
+                                </ns6:ChecklistName>
+                            </xsl:if>
+                            <ns6:Checklist>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='17']/ns8:ChecklistDetail"/>
+                            </ns6:Checklist>
+                            <ns6:Validation>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='17']/ns8:Severity"/>
+                            </ns6:Validation>
+                            <ns6:Remarks>
+                                <xsl:value-of select="concat($GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistName='17']/ns8:Remarks, ' ', current()/name,&quot; activity has Success-with-Condition with xpath[&quot;,&#xA;translate(translate($TIBCO_ActivityDetails/root/Transitions[from=current()/name and conditionType='xpath']/xpath, &quot;,&quot;, &quot;;&quot;), &quot;&#xA;&quot;, '~'),&#xA;&quot;] but missing  Success-with-No-Matching-Condition i.e. otherwise transition&quot;)"/>
+                            </ns6:Remarks>
+                            <ns6:Process>
+                                <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                            </ns6:Process>
+                            <ns6:Activity>
+                                <xsl:value-of select="concat(current()/name, ' ---> ', tib:concat-sequence-format($TIBCO_ActivityDetails/root/Transitions[current()/name=from]/to, ' ; ', 0))"/>
+                            </ns6:Activity>
+                            <ns6:ReviewAccepted>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:ReviewAccepted>
+                            <ns6:DeveloperComment>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:DeveloperComment>
+                        </ns6:ChecklistValidation>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList18&#x9;Checklist_ActivityNotConnected--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='18']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[ not(contains(type,&quot;CatchActivity&quot;) or contains(type,&quot;RethrowActivity&quot;) or contains(type,&quot;GenerateErrorActivity&quot;))]">
+                    <xsl:if test="(exists($TIBCO_ActivityDetails/root/Transitions[from=current()/name])=true() and &#xA;exists($TIBCO_ActivityDetails/root/Transitions[to=current()/name])=false())&#xA;or&#xA;(exists($TIBCO_ActivityDetails/root/Transitions[from=current()/name])=false())">
+                        <ns6:ChecklistValidation>
+                            <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='18']/ns8:ChecklistNumber">
+                                <ns6:ChecklistNumber>
+                                    <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='18']/ns8:ChecklistNumber"/>
+                                </ns6:ChecklistNumber>
+                            </xsl:if>
+                            <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='18']/ns8:ChecklistName">
+                                <ns6:ChecklistName>
+                                    <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='18']/ns8:ChecklistName"/>
+                                </ns6:ChecklistName>
+                            </xsl:if>
+                            <ns6:Checklist>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='18']/ns8:ChecklistDetail"/>
+                            </ns6:Checklist>
+                            <ns6:Validation>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='18']/ns8:Severity"/>
+                            </ns6:Validation>
+                            <ns6:Remarks>
+                                <xsl:value-of select="concat($GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='17']/ns8:Remarks, ' ', current()/name,&quot; activity has missing transition&quot;)"/>
+                            </ns6:Remarks>
+                            <ns6:Process>
+                                <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                            </ns6:Process>
+                            <ns6:Activity>
+                                <xsl:value-of select="current()/name"/>
+                            </ns6:Activity>
+                            <ns6:ReviewAccepted>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:ReviewAccepted>
+                            <ns6:DeveloperComment>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:DeveloperComment>
+                        </ns6:ChecklistValidation>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList19&#x9;Checklist_ActivityCount--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='19']/ns8:Enabled= 'Yes' and&#xA;$TIBCO_ActivityDetails/root/ActivityCount>20">
+                <ns6:ChecklistValidation>
+                    <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='19']/ns8:ChecklistNumber">
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='19']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                    </xsl:if>
+                    <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='19']/ns8:ChecklistName">
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='19']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                    </xsl:if>
+                    <ns6:Checklist>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='19']/ns8:ChecklistDetail"/>
+                    </ns6:Checklist>
+                    <ns6:Validation>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='19']/ns8:Severity"/>
+                    </ns6:Validation>
+                    <ns6:Remarks>
+                        <xsl:value-of select="concat($GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='19']/ns8:Remarks, &quot; There are total &quot;, $TIBCO_ActivityDetails/root/ActivityCount, &quot; activities. Any process should not have more than 20 activities so that it can be easily readable and easier to debug.&quot;)"/>
+                    </ns6:Remarks>
+                    <ns6:Process>
+                        <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                    </ns6:Process>
+                    <ns6:Activity>
+                        <xsl:value-of select="'N/A'"/>
+                    </ns6:Activity>
+                    <ns6:ReviewAccepted>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:ReviewAccepted>
+                    <ns6:DeveloperComment>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:DeveloperComment>
+                </ns6:ChecklistValidation>
+            </xsl:if>
+            <xsl:if test="{--CheckList20&#x9;Checklist_ReadAndParseFileInsteadOfParseData--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='20']/ns8:Enabled= 'Yes' and&#xA;$TIBCO_ActivityDetails-Final/root/Activities[type='XMLParseActivity'] &#xA;and&#xA;$TIBCO_ActivityDetails-Final/root/Activities[type='FileReadActivity']">
+                <ns6:ChecklistValidation>
+                    <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='20']/ns8:ChecklistNumber">
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='20']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                    </xsl:if>
+                    <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='20']/ns8:ChecklistName">
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='20']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                    </xsl:if>
+                    <ns6:Checklist>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='20']/ns8:ChecklistDetail"/>
+                    </ns6:Checklist>
+                    <ns6:Validation>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='20']/ns8:Severity"/>
+                    </ns6:Validation>
+                    <ns6:Remarks>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='20']/ns8:Remarks"/>
+                    </ns6:Remarks>
+                    <ns6:Process>
+                        <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                    </ns6:Process>
+                    <ns6:Activity>
+                        <xsl:value-of select="concat($TIBCO_ActivityDetails-Final/root/Activities[type='XMLParseActivity']/name, ' ; ', $TIBCO_ActivityDetails-Final/root/Activities[type='FileReadActivity']/name)"/>
+                    </ns6:Activity>
+                    <ns6:ReviewAccepted>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:ReviewAccepted>
+                    <ns6:DeveloperComment>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:DeveloperComment>
+                </ns6:ChecklistValidation>
+            </xsl:if>
+            <xsl:if test="{--CheckList21&#x9;Checklist_SchemaVerification--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='21']/ns8:Enabled= 'Yes'">
+                <ns6:ChecklistValidation>
+                    <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='21']/ns8:ChecklistNumber">
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='21']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                    </xsl:if>
+                    <xsl:if test="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='21']/ns8:ChecklistName">
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='21']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                    </xsl:if>
+                    <ns6:Checklist>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='21']/ns8:ChecklistDetail"/>
+                    </ns6:Checklist>
+                    <ns6:Validation>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='21']/ns8:Severity"/>
+                    </ns6:Validation>
+                    <ns6:Remarks>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='21']/ns8:Remarks"/>
+                    </ns6:Remarks>
+                    <ns6:Process>
+                        <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                    </ns6:Process>
+                    <xsl:choose>
+                        <xsl:when test="not(contains($Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;\Resources\Schema&quot;))">
+                            <ns6:Activity>
+                                <xsl:value-of select="tib:substring-after-last($Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;\&quot;)"/>
+                            </ns6:Activity>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <ns6:Activity>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:Activity>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    <ns6:ReviewAccepted>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:ReviewAccepted>
+                    <ns6:DeveloperComment>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:DeveloperComment>
+                </ns6:ChecklistValidation>
+            </xsl:if>
+            <xsl:if test="{--CheckList22&#x9;Checklist_TransitionCondition--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='22']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Transitions">
+                    <ns6:ChecklistValidation>
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='22']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='22']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='22']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='22']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='22']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="&quot;N/A&quot;"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList23&#x9;Checklist_TransitionLabel--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='23']/ns8:Enabled= 'Yes' and 1=2">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities">
+                    <xsl:variable name="var12" select="current()/name "/>
+                    <xsl:variable name="var13" select="current()/name "/>
+                    <xsl:variable name="var14" select="current()/name "/>
+                    <xsl:if test="exists($TIBCO_ActivityDetails/root/Transitions[from=$var12 and conditionType='xpath']) or&#xA;exists($TIBCO_ActivityDetails/root/Transitions[from=$var13 and conditionType='otherwise']) or&#xA;exists($TIBCO_ActivityDetails/root/Transitions[from=$var14 and conditionType='always'])">
+                        <ns6:ChecklistValidation>
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='23']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='23']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                            <ns6:Checklist>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='23']/ns8:ChecklistDetail"/>
+                            </ns6:Checklist>
+                            <ns6:Validation>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='23']/ns8:Severity"/>
+                            </ns6:Validation>
+                            <ns6:Remarks>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='23']/ns8:Remarks"/>
+                            </ns6:Remarks>
+                            <ns6:Process>
+                                <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                            </ns6:Process>
+                            <ns6:Activity>
+                                <xsl:value-of select="&quot;N/A&quot;"/>
+                            </ns6:Activity>
+                            <ns6:ReviewAccepted>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:ReviewAccepted>
+                            <ns6:DeveloperComment>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:DeveloperComment>
+                        </ns6:ChecklistValidation>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList24&#x9;Checklist_Encryption--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='24']/ns8:Enabled= 'Yes'&#xA;and&#xA;(contains(substring-before(substring-after($Start/pfx4:root/ns1:FileInfo[1]/ns1:fileContent,&quot;&lt;UserName>&quot;),&quot;&lt;/UserName>&quot;),&quot;%&quot;)&#xA;and&#xA;contains(substring-before(substring-after($Start/pfx4:root/ns1:FileInfo[1]/ns1:fileContent,&quot;&lt;Password>&quot;),&quot;&lt;/Password>&quot;),&quot;%&quot;))&#xA;and&#xA;(contains(substring-before(substring-after($Start/pfx4:root/ns1:FileInfo[1]/ns1:fileContent,&quot;&lt;user>&quot;),&quot;&lt;/user>&quot;),&quot;%&quot;)&#xA;and&#xA;contains(substring-before(substring-after($Start/pfx4:root/ns1:FileInfo[1]/ns1:fileContent,&quot;&lt;password>&quot;),&quot;&lt;/password>&quot;),&quot;%&quot;))&#xA;or&#xA;(contains(substring-before(substring-after($Start/pfx4:root/ns1:FileInfo[1]/ns1:fileContent,&quot;&lt;username>&quot;),&quot;&lt;/username>&quot;),&quot;%&quot;)&#xA;and&#xA;contains(substring-before(substring-after($Start/pfx4:root/ns1:FileInfo[1]/ns1:fileContent,&quot;&lt;password>&quot;),&quot;&lt;/password>&quot;),&quot;%&quot;))">
+                <xsl:for-each select="($TIBCO_ActivityDetails/root/Starter[(type='StartType') and&#xA;$TIBCO_ActivityDetails/root/name =&quot;FTP Connection&quot;])&#xA;or&#xA;($TIBCO_ActivityDetails/root/Starter[(type='StartType') and&#xA;$TIBCO_ActivityDetails/root/name =&quot;JDBCConnection&quot;])&#xA;or&#xA;($TIBCO_ActivityDetails/root/Starter[(type='StartType') and&#xA;$TIBCO_ActivityDetails/root/name =&quot;JMS Connection&quot;])">
+                    <ns6:ChecklistValidation>
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='24']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='24']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='24']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='24']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='24']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <ns6:Activity>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:Activity>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList25&#x9;Checklist_JavaLogging--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='25']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails-Final/root/Activities[type='JavaActivity']">
+                    <xsl:if test="$TIBCO_ActivityDetails-Final/root/Activities[type='JavaActivity' and contains(rawConfig, 'System.out.println')]">
+                        <ns6:ChecklistValidation>
+                            <ns6:ChecklistNumber>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='25']/ns8:ChecklistNumber"/>
+                            </ns6:ChecklistNumber>
+                            <ns6:ChecklistName>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='25']/ns8:ChecklistName"/>
+                            </ns6:ChecklistName>
+                            <ns6:Checklist>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='25']/ns8:ChecklistDetail"/>
+                            </ns6:Checklist>
+                            <ns6:Validation>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='25']/ns8:Severity"/>
+                            </ns6:Validation>
+                            <ns6:Remarks>
+                                <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='25']/ns8:Remarks"/>
+                            </ns6:Remarks>
+                            <ns6:Process>
+                                <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                            </ns6:Process>
+                            <xsl:if test="current()/name">
+                                <ns6:Activity>
+                                    <xsl:value-of select="current()/name"/>
+                                </ns6:Activity>
+                            </xsl:if>
+                            <ns6:ReviewAccepted>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:ReviewAccepted>
+                            <ns6:DeveloperComment>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:DeveloperComment>
+                        </ns6:ChecklistValidation>
+                    </xsl:if>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList26&#x9;Checklist_CommonLoggingCalls--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='26']/ns8:Enabled= 'Yes'&#xA;and&#xA;(contains($Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;LogException.process&quot;)&#xA;or&#xA;contains($Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;ErrorHandler.process&quot;))">
+                <ns6:ChecklistValidation>
+                    <ns6:ChecklistNumber>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='26']/ns8:ChecklistNumber"/>
+                    </ns6:ChecklistNumber>
+                    <ns6:ChecklistName>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='26']/ns8:ChecklistName"/>
+                    </ns6:ChecklistName>
+                    <ns6:Checklist>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='26']/ns8:ChecklistDetail"/>
+                    </ns6:Checklist>
+                    <ns6:Validation>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='26']/ns8:Severity"/>
+                    </ns6:Validation>
+                    <ns6:Remarks>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='26']/ns8:Remarks"/>
+                    </ns6:Remarks>
+                    <ns6:Process>
+                        <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                    </ns6:Process>
+                    <xsl:choose>
+                        <xsl:when test="$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, '&lt;System>'))&#xA;]&#xA;or &#xA;$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, '&lt;SystemVersion>'))&#xA;]&#xA;or&#xA;$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, '&lt;Component>'))&#xA;]&#xA;or&#xA;$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, '&lt;EventCode>'))&#xA;]&#xA;or&#xA;$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, '&lt;EventType>'))&#xA;]&#xA;or&#xA;$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, '&lt;EventMessage>'))&#xA;]&#xA;or&#xA;$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, '&lt;Severity>'))&#xA;]&#xA;or&#xA;$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, '&lt;SupportingData>'))&#xA;]">
+                            <ns6:Activity>
+                                <xsl:value-of select="concat(&quot;Exception handling in the process-&quot;,$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;does not have all relevant meta data filled in&quot;)"/>
+                            </ns6:Activity>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <ns6:Activity>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:Activity>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    <ns6:ReviewAccepted>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:ReviewAccepted>
+                    <ns6:DeveloperComment>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:DeveloperComment>
+                </ns6:ChecklistValidation>
+            </xsl:if>
+            <xsl:if test="{--CheckList27&#x9;Checklist_ErrorLogging--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='27']/ns8:Enabled= 'Yes'&#xA;and&#xA;(contains($Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;LogException.process&quot;)&#xA;or&#xA;contains($Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;ErrorHandler.process&quot;))">
+                <ns6:ChecklistValidation>
+                    <ns6:ChecklistNumber>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='27']/ns8:ChecklistNumber"/>
+                    </ns6:ChecklistNumber>
+                    <ns6:ChecklistName>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='27']/ns8:ChecklistName"/>
+                    </ns6:ChecklistName>
+                    <ns6:Checklist>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='27']/ns8:ChecklistDetail"/>
+                    </ns6:Checklist>
+                    <ns6:Validation>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='27']/ns8:Severity"/>
+                    </ns6:Validation>
+                    <ns6:Remarks>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='27']/ns8:Remarks"/>
+                    </ns6:Remarks>
+                    <ns6:Process>
+                        <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                    </ns6:Process>
+                    <xsl:choose>
+                        <xsl:when test="$TIBCO_ActivityDetails/root/Activities[(name='LogException') and&#xA;not(contains(InputBinding, 'ERROR'))]">
+                            <ns6:Activity>
+                                <xsl:value-of select="concat(&quot;Error in the process-&quot;,$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;is not logged with Error level&quot;)"/>
+                            </ns6:Activity>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <ns6:Activity>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:Activity>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    <ns6:ReviewAccepted>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:ReviewAccepted>
+                    <ns6:DeveloperComment>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:DeveloperComment>
+                </ns6:ChecklistValidation>
+            </xsl:if>
+            <xsl:if test="{--CheckList28&#x9;Checklist_JMSMessagingStandards--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='28']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Starter[(type='JMSTopicEventSource' or type='JMSTopicPublisher' or type='JMSQueueEventSource' or type='JMSQueueReceiver') and&#xA;not(contains(tib:trim(substring-before(substring-after(config, 'destination='),';')),'>')) and not(contains(tib:trim(substring-before(substring-after(config, 'destination='),';')),'*')) and contains(tib:trim(substring-before(substring-after(config, 'destination='),';')),'.')&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='28']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='28']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='28']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='28']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='28']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <xsl:if test="current()/name">
+                            <ns6:Activity>
+                                <xsl:value-of select="current()/name"/>
+                            </ns6:Activity>
+                        </xsl:if>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList29&#x9;Checklist_PublishSubject--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='29']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Starter[(type='JMSTopicEventSource' or type='JMSTopicPublisher' or type = 'JMSTopicSubscriber' or type = 'JMSTopicRequestor' or type ='WaitForTopicMessage') and&#xA;not(contains(tib:trim(substring-before(substring-after(config, 'destination='),';')),'>')) and not(contains(tib:trim(substring-before(substring-after(config, 'destination='),';')),'*'))]">
+                    <ns6:ChecklistValidation>
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='29']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='29']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='29']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='29']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='29']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <xsl:if test="current()/name">
+                            <ns6:Activity>
+                                <xsl:value-of select="current()/name"/>
+                            </ns6:Activity>
+                        </xsl:if>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList30&#x9;Checklist_QueueReaderSubject--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='30']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Starter[(type='JMSQueueEventSource' or type='JMSQueueReceiver' or type = 'JMSQueueSender' or type ='GetJMSQueueMessage' or type = 'WaitForJMSQueueMessage') and&#xA;not(contains(tib:trim(substring-before(substring-after(config, 'destination='),';')),'>')) and not(contains(tib:trim(substring-before(substring-after(config, 'destination='),';')),'*'))]">
+                    <ns6:ChecklistValidation>
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='30']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='30']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='30']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='30']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='30']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <xsl:if test="current()/name">
+                            <ns6:Activity>
+                                <xsl:value-of select="current()/name"/>
+                            </ns6:Activity>
+                        </xsl:if>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList31&#x9;Checklist_EMSConnectionFactory--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='31']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="($TIBCO_ActivityDetails/root/Starter[(type='StartType') and&#xA;$TIBCO_ActivityDetails/root/name =&quot;JMS Connection&quot;])">
+                    <ns6:ChecklistValidation>
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='31']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='31']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='31']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='31']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='31']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <xsl:choose>
+                            <xsl:when test="contains(substring-before(substring-after($Start/pfx4:root/ns1:FileInfo[1]/ns1:fileContent,&quot;&lt;UseJNDI>&quot;),&quot;&lt;/UseJNDI>&quot;),&quot;true&quot;)">
+                                <ns6:Activity>
+                                    <xsl:value-of select="&quot;&quot;"/>
+                                </ns6:Activity>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <ns6:Activity>
+                                    <xsl:value-of select="&quot;EMS JNDI Connection factory not implemented&quot;"/>
+                                </ns6:Activity>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="{--CheckList32&#x9;Checklist_EMSAcknowledgementMode--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='32']/ns8:Enabled= 'Yes' and&#xA;$TIBCO_ActivityDetails/root/Starter[(type='JMSQueueEventSource' or type='JMSTopicEventSource') and&#xA;(not(contains(rawConfig, '&lt;acknowledgeMode>2&lt;/acknowledgeMode>') or contains(rawConfig, '&lt;acknowledgeMode>23&lt;/acknowledgeMode>') or contains(rawConfig, '&lt;acknowledgeMode>24&lt;/acknowledgeMode>')))&#xA;]">
+                <ns6:ChecklistValidation>
+                    <ns6:ChecklistNumber>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='32']/ns8:ChecklistNumber"/>
+                    </ns6:ChecklistNumber>
+                    <ns6:ChecklistName>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='32']/ns8:ChecklistName"/>
+                    </ns6:ChecklistName>
+                    <ns6:Checklist>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='32']/ns8:ChecklistDetail"/>
+                    </ns6:Checklist>
+                    <ns6:Validation>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='32']/ns8:Severity"/>
+                    </ns6:Validation>
+                    <ns6:Remarks>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='32']/ns8:Remarks"/>
+                    </ns6:Remarks>
+                    <ns6:Process>
+                        <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                    </ns6:Process>
+                    <xsl:if test="$TIBCO_ActivityDetails/root/Starter[($TIBCO_ActivityDetails/root/Starter/type='JMSQueueEventSource' or $TIBCO_ActivityDetails/root/Starter/type='JMSTopicEventSource')]/name">
+                        <ns6:Activity>
+                            <xsl:value-of select="$TIBCO_ActivityDetails/root/Starter[($TIBCO_ActivityDetails/root/Starter/type='JMSQueueEventSource' or $TIBCO_ActivityDetails/root/Starter/type='JMSTopicEventSource')]/name"/>
+                        </ns6:Activity>
+                    </xsl:if>
+                    <ns6:ReviewAccepted>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:ReviewAccepted>
+                    <ns6:DeveloperComment>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:DeveloperComment>
+                </ns6:ChecklistValidation>
+            </xsl:if>
+            <xsl:if test="{--CheckList33&#x9;Checklist_Logging--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='33']/ns8:Enabled= 'Yes'&#xA;and&#xA;(contains($Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;LogException.process&quot;)&#xA;or&#xA;contains($Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath,&quot;ErrorHandler.process&quot;))">
+                <ns6:ChecklistValidation>
+                    <ns6:ChecklistNumber>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='33']/ns8:ChecklistNumber"/>
+                    </ns6:ChecklistNumber>
+                    <ns6:ChecklistName>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='33']/ns8:ChecklistName"/>
+                    </ns6:ChecklistName>
+                    <ns6:Checklist>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='33']/ns8:ChecklistDetail"/>
+                    </ns6:Checklist>
+                    <ns6:Validation>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='33']/ns8:Severity"/>
+                    </ns6:Validation>
+                    <ns6:Remarks>
+                        <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='33']/ns8:Remarks"/>
+                    </ns6:Remarks>
+                    <ns6:Process>
+                        <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                    </ns6:Process>
+                    <xsl:choose>
+                        <xsl:when test="contains($TIBCO_ActivityDetails/root/Activities[name='LogException']/InputBinding,$TIBCO_ActivityDetails/root/name)">
+                            <ns6:Activity>
+                                <xsl:value-of select="&quot;&quot;"/>
+                            </ns6:Activity>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <ns6:Activity>
+                                <xsl:value-of select="&quot;Logging event component does have the entire process path&quot;"/>
+                            </ns6:Activity>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    <ns6:ReviewAccepted>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:ReviewAccepted>
+                    <ns6:DeveloperComment>
+                        <xsl:value-of select="&quot;&quot;"/>
+                    </ns6:DeveloperComment>
+                </ns6:ChecklistValidation>
+            </xsl:if>
+            <xsl:if test="{--CheckList34&#x9;Checklist_GlobalVariables--}&#xA;$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='34']/ns8:Enabled= 'Yes'">
+                <xsl:for-each select="$TIBCO_ActivityDetails/root/Activities[(type='JDBCCallActivity' or type='JDBCQueryActivity') and&#xA;not(contains(rawConfig, '&lt;maxRows>%%')) and not(contains(rawConfig, '&lt;timeout>%%'))&#xA;]">
+                    <ns6:ChecklistValidation>
+                        <ns6:ChecklistNumber>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='34']/ns8:ChecklistNumber"/>
+                        </ns6:ChecklistNumber>
+                        <ns6:ChecklistName>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='34']/ns8:ChecklistName"/>
+                        </ns6:ChecklistName>
+                        <ns6:Checklist>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='34']/ns8:ChecklistDetail"/>
+                        </ns6:Checklist>
+                        <ns6:Validation>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='34']/ns8:Severity"/>
+                        </ns6:Validation>
+                        <ns6:Remarks>
+                            <xsl:value-of select="$GetVariable/ns8:root/ns8:Checklist[ns8:ChecklistNumber='34']/ns8:Remarks"/>
+                        </ns6:Remarks>
+                        <ns6:Process>
+                            <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                        </ns6:Process>
+                        <xsl:if test="current()/name">
+                            <ns6:Activity>
+                                <xsl:value-of select="current()/name"/>
+                            </ns6:Activity>
+                        </xsl:if>
+                        <ns6:ReviewAccepted>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:ReviewAccepted>
+                        <ns6:DeveloperComment>
+                            <xsl:value-of select="&quot;&quot;"/>
+                        </ns6:DeveloperComment>
+                    </ns6:ChecklistValidation>
+                </xsl:for-each>
+            </xsl:if>
+            <xsl:if test="count($consolidatedVars/AccumulatedOutput/ns9:NameValuePairs)>0">
+                <xsl:for-each select="$consolidatedVars/AccumulatedOutput/ns9:NameValuePairs">
+                    <ns9:NameValuePairs>
+                        <xsl:if test="current()/@name">
+                            <xsl:attribute name="name">
+                                <xsl:value-of select="current()/@name"/>
+                            </xsl:attribute>
+                        </xsl:if>
+                        <xsl:for-each select="ns9:Key">
+                            <ns9:Key>
+                                <xsl:if test="ns9:Name">
+                                    <ns9:Name>
+                                        <xsl:value-of select="ns9:Name"/>
+                                    </ns9:Name>
+                                </xsl:if>
+                                <xsl:if test="ns9:Value">
+                                    <ns9:Value>
+                                        <xsl:value-of select="ns9:Value"/>
+                                    </ns9:Value>
+                                </xsl:if>
+                            </ns9:Key>
+                        </xsl:for-each>
+                    </ns9:NameValuePairs>
+                </xsl:for-each>
+            </xsl:if>
+        </pfx4:root>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType ref="pfx4:root"/>
+    <pd:endX>1024</pd:endX>
+    <pd:endY>69</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables>
+        <Variable0>
+            <xsd:element name="root">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="param" type="xsd:string" minOccurs="0"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </Variable0>
+    </pd:processVariables>
+    <pd:targetNamespace>http://ibm.com/raks/tibco2mule/accelerator/ParseAnyXML</pd:targetNamespace>
+    <pd:activity name="TIBCO_XML">
+        <pd:type>com.tibco.plugin.xml.XMLParseActivity</pd:type>
+        <pd:resourceType>ae.activities.XMLParseActivity</pd:resourceType>
+        <pd:x>120</pd:x>
+        <pd:y>70</pd:y>
+        <config>
+            <inputStyle>text</inputStyle>
+            <xsdVersion>default</xsdVersion>
+            <validateOutput>false</validateOutput>
+            <term>
+                <xsd:any processContents="lax"/>
+            </term>
+        </config>
+        <pd:inputBindings>
+            <xmlString>
+                <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:fileContent"/>
+            </xmlString>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="TIBCO_ActivityDetails">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>218</pd:x>
+        <pd:y>75</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="startName" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="endName" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="Starter" minOccurs="0">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="type" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="resourceType" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="Starter" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="config" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="InputBinding" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="rawConfig" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="rawInputBinding" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="PosX" type="xsd:int" minOccurs="0"/>
+                                        <xsd:element name="PosY" type="xsd:int" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                            <xsd:element name="Activities" minOccurs="0" maxOccurs="unbounded">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="type" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="resourceType" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="starter" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="config" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="InputBinding" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="Validations" minOccurs="0">
+                                            <xsd:complexType>
+                                                <xsd:sequence>
+                                                    <xsd:element name="MapperCount" type="xsd:string" minOccurs="0"/>
+                                                    <xsd:element name="ReadFileActivityValidation" type="xsd:string" minOccurs="0"/>
+                                                </xsd:sequence>
+                                            </xsd:complexType>
+                                        </xsd:element>
+                                        <xsd:element name="groupName" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="rawConfig" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="rawInputBinding" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="PosX" type="xsd:int" minOccurs="0"/>
+                                        <xsd:element name="PosY" type="xsd:int" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                            <xsd:element name="ActivityCount" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="report" minOccurs="0" maxOccurs="unbounded">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="activityType" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="activityCount" type="xsd:string" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                            <xsd:element name="Transitions" minOccurs="0" maxOccurs="unbounded">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="from" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="to" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="conditionType" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="xpath" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="xpathDescription" type="xsd:string" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                            <xsd:element name="label" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="processVariables" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:variable name="var1" select="$TIBCO_XML/child::*/*"/>
+                <xsl:variable name="varGroupDetail" select="$var1[local-name(.)='group']/child::*"/>
+                <xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="varActivityCount" select="if(exists($var1[local-name(.)='starter']) )&#xA;then&#xA;count($var1[local-name(.)='activity'])+count($varGroupDetail[local-name(.)='activity'])+1&#xA;else&#xA;count($var1[local-name(.)='activity'])+count($varGroupDetail[local-name(.)='activity'])"/>
+                <name>
+                    <xsl:value-of select="$var1[local-name(.)='name']"/>
+                </name>
+                <xsl:if test="$var1[local-name(.)='startName']">
+                    <startName>
+                        <xsl:value-of select="$var1[local-name(.)='startName']"/>
+                    </startName>
+                </xsl:if>
+                <xsl:if test="$var1[local-name(.)='endName']">
+                    <endName>
+                        <xsl:value-of select="$var1[local-name(.)='endName']"/>
+                    </endName>
+                </xsl:if>
+                <xsl:choose xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
+                    <xsl:when test="$var1[local-name(.)='starter']">
+                        <Starter>
+                            <xsl:if test="$var1[local-name(.)='starter']/attribute::name[1]&#xA;{--$TIBC_XML/child::*/*[local-name(.)='starter']/child::*/*[local-name(.)='name']--}">
+                                <name>
+                                    <xsl:value-of select="$var1[local-name(.)='starter']/attribute::name[1]&#xA;{--$TIBC_XML/child::*/*[local-name(.)='starter']/child::*/*[local-name(.)='name']--}"/>
+                                </name>
+                            </xsl:if>
+                            <type>
+                                <xsl:value-of select="tib:substring-after-last($var1[local-name(.)='starter']/child::pd:type,'.')"/>
+                            </type>
+                            <resourceType>
+                                <xsl:value-of select="tib:substring-after-last($TIBCO_XML/child::*/child::pd:starter/child::pd:resourceType,'.')"/>
+                            </resourceType>
+                            <Starter>
+                                <xsl:value-of select="'Yes'"/>
+                            </Starter>
+                            <xsl:choose>
+                                <xsl:when test="tib:substring-after-last($var1[local-name(.)='starter']/child::pd:type,'.')='JMSQueueEventSource' or&#xA;tib:substring-after-last($var1[local-name(.)='starter']/child::pd:type,'.')='JMSTopicEventSource'">
+                                    <config>
+                                        <xsl:value-of select="concat(&quot;destination=&quot;,substring-before(substring-after(tib:render-xml($var1[local-name(.)='starter']/config), &quot;&lt;destination>&quot;), &quot;&lt;/destination>&quot;),&quot; ; &quot;,&#xA;&quot;ConnectionReference=&quot;,&#xA;substring-before(substring-after(tib:render-xml($var1[local-name(.)='starter']/config), &quot;&lt;ConnectionReference>&quot;), &quot;&lt;/ConnectionReference>&quot;),&quot; ; &quot;,&#xA;&quot;ApplicationProperties=&quot;,&#xA;&#xA;substring-before(substring-after(tib:render-xml($var1[local-name(.)='starter']/config), &quot;&lt;ApplicationProperties>&quot;), &quot;&lt;/ApplicationProperties>&quot;)&#xA;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                    </config>
+                                </xsl:when>
+                                <xsl:when test="tib:substring-after-last($var1[local-name(.)='starter']/child::pd:type,'.')='SOAPEventSource'">
+                                    <config>
+                                        <xsl:value-of select="concat(&quot;Service=&quot;,translate(substring-before(substring-after(tib:render-xml($var1[local-name(.)='starter']/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;), &quot;&#xD;&#xA;&quot;,&quot;,&quot;))"/>
+                                    </config>
+                                </xsl:when>
+                                <xsl:when test="contains($var1[local-name(.)='starter']/config, &quot;sharedChannel&quot;)">
+                                    <config>
+                                        <xsl:value-of select="substring-before(substring-after(tib:render-xml($var1[local-name(.)='starter']/config), &quot;&lt;sharedChannel>&quot;), &quot;&lt;/sharedChannel>&quot;)"/>
+                                    </config>
+                                </xsl:when>
+                            </xsl:choose>
+                            <InputBinding>
+                                <xsl:value-of select="tib:render-xml($var1[local-name(.)='starter']/pd:inputBindings)"/>
+                            </InputBinding>
+                            <rawConfig>
+                                <xsl:value-of select="tib:render-xml($var1[local-name(.)='starter']/config)"/>
+                            </rawConfig>
+                            <rawInputBinding>
+                                <xsl:value-of select="tib:render-xml($var1[local-name(.)='starter']/pd:inputBindings)"/>
+                            </rawInputBinding>
+                            <xsl:if test="$var1[local-name(.)='starter']/pd:x">
+                                <PosX>
+                                    <xsl:value-of select="$var1[local-name(.)='starter']/pd:x"/>
+                                </PosX>
+                            </xsl:if>
+                            <xsl:if test="$var1[local-name(.)='starter']/pd:y">
+                                <PosY>
+                                    <xsl:value-of select="$var1[local-name(.)='starter']/pd:y"/>
+                                </PosY>
+                            </xsl:if>
+                        </Starter>
+                    </xsl:when>
+                    <xsl:otherwise>
+                        <Starter>
+                            <name>
+                                <xsl:value-of select="'Start'"/>
+                            </name>
+                            <type>
+                                <xsl:value-of select="'StartType'"/>
+                            </type>
+                            <resourceType>
+                                <xsl:value-of select="'DefaultStartType'"/>
+                            </resourceType>
+                            <Starter>
+                                <xsl:value-of select="'No'"/>
+                            </Starter>
+                            <config>
+                                <xsl:value-of select="'N/A'"/>
+                            </config>
+                            <InputBinding>
+                                <xsl:value-of select="'N/A'"/>
+                            </InputBinding>
+                        </Starter>
+                    </xsl:otherwise>
+                </xsl:choose>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$var1[local-name(.)='activity']">
+                    <Activities>
+                        <name>
+                            <xsl:value-of select="current()/attribute::name[1]"/>
+                        </name>
+                        <type>
+                            <xsl:value-of select="tib:substring-after-last(current()/child::pd:type, '.')"/>
+                        </type>
+                        <resourceType>
+                            <xsl:value-of select="tib:substring-after-last(current()/child::pd:resourceType, '.')"/>
+                        </resourceType>
+                        <starter>
+                            <xsl:value-of select="if(compare(current()/attribute::name[1], $var1[local-name(.)='name']) =0 ) then&#xA;'Yes'&#xA;else&#xA;'No'"/>
+                        </starter>
+                        <xsl:choose>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'CallProcessActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;calledProcessName=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;processName>&quot;), &quot;&lt;/processName>&quot;),&#xA;&quot; ; Spawn=&quot;,&#xA; if(string-length(substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;spawn>&quot;), &quot;&lt;/spawn>&quot;))>0) then &#xA;&#x9;substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;spawn>&quot;), &quot;&lt;/spawn>&quot;)&#xA;else&#xA;&#x9; 'False'&#xA;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JDBCQueryActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JDBCUpdateActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JDBCGeneralActivity')">
+                                <xsl:choose>
+                                    <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JDBCGeneralActivity')">
+                                        <config>
+                                            <xsl:value-of select="translate(translate(concat(&quot;jdbcSharedConfig=&quot;, tib:substring-after-last(substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;jdbcSharedConfig>&quot;), &quot;&lt;/jdbcSharedConfig>&quot;), &quot;/&quot;),&quot;;&quot;,substring-before(substring-after(tib:render-xml(current()/pd:inputBindings), &quot;select=&quot;), &quot;/>&quot;)),&quot;&#xA;&quot;,&quot;,&quot;), &quot;,&quot;, &quot;;&quot;)"/>
+                                        </config>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <config>
+                                            <xsl:value-of select="{--translate(translate(concat(&quot;jdbcSharedConfig=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;)),&quot;&amp;cr;&quot;,&quot;,&quot;), &quot;,&quot;, &quot;;&quot;)--}&#xA;translate(translate(concat(&quot;jdbcSharedConfig=&quot;,tib:substring-after-last( substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;jdbcSharedConfig>/&quot;), &quot;&lt;/jdbcSharedConfig>&quot;), &quot;/&quot;),&quot;;&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;statement>&quot;), &quot;&lt;/statement>&quot;)),&quot;&#xA;&quot;,&quot;,&quot;), &quot;,&quot;, &quot;;&quot;)"/>
+                                        </config>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'HTTPResponseActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;eventSource=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;eventSource>&quot;), &quot;&lt;/eventSource>&quot;))&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'HttpRequestActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;Host=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;serverhost>&quot;), &quot;&lt;/serverhost>&quot;),&quot;;Port=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;serverport>&quot;), &quot;&lt;/serverport>&quot;),&#xA;&quot;;RequestURI=&quot;,translate(substring-before(substring-after(tib:render-xml(current()/pd:inputBindings/child::*/child::*), 'select=&quot;'), '&quot;/>'),'&quot;',&quot;&quot;)&#xA;)"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'HTTPSignalInActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;Host=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;serverhost>&quot;), &quot;&lt;/serverhost>&quot;),&quot;;Port=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;serverport>&quot;), &quot;&lt;/serverport>&quot;),&#xA;&quot;;RequestURI=&quot;,translate(substring-before(substring-after(tib:render-xml(current()/pd:inputBindings/child::*/child::*), 'select=&quot;'), '&quot;/>'),'&quot;',&quot;&quot;),&#xA;&quot;;Connection=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;sharedChannel>&quot;), &quot;&lt;/sharedChannel>&quot;)&#xA;)"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'CatchActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;fault=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;fault>&quot;), &quot;&lt;/fault>&quot;))&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'GenerateErrorActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;faultName=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;faultName>&quot;), &quot;&lt;/faultName>&quot;))&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'AssignActivity')">
+                                <config>
+                                    <xsl:value-of select="translate(substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;), &quot;&#xA;&quot;, &quot;~&quot;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueSendActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSTopicPublishActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueGetMessageActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSTopicRequestReplyActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueRequestReplyActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueSignalInActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueSendActivity')">
+                                <config>
+                                    <xsl:value-of select="{--concat(substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;ConnectionReference>&quot;), &quot;&lt;/ConnectionReference>&quot;),&quot; ; &quot;,--}&#xA;{--substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;ApplicationProperties>&quot;), &quot;&lt;/ApplicationProperties>&quot;)--}&#xA;{--)--}&#xA;concat(&quot;destination=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;destination>&quot;), &quot;&lt;/destination>&quot;),&quot; ; &quot;,&#xA;&quot;ConnectionReference=&quot;,&#xA;substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;ConnectionReference>&quot;), &quot;&lt;/ConnectionReference>&quot;),&quot; ; &quot;,&#xA;&quot;ApplicationProperties=&quot;,&#xA;&#xA;substring-before(substring-after(tib:render-xml($var1[local-name(.)='starter']/config), &quot;&lt;ApplicationProperties>&quot;), &quot;&lt;/ApplicationProperties>&quot;)&#xA;)"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FileWriteActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;fileName=&quot;, &#xA;translate(translate(substring-before(substring-after(tib:render-xml(current()/pd:inputBindings), &quot;select&quot;), &quot;/>&quot;), &quot;,&quot;, &quot;;&quot;), &quot;&#xA;&quot;, &quot;~&quot;),&quot; ; &quot;,&#xA;&quot;encoding=&quot;, &#xA;substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;encoding>&quot;), &quot;&lt;/encoding>&quot;),&quot; ; &quot;,&#xA;&quot;append=&quot;,&#xA;substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;append>&quot;), &quot;&lt;/append>&quot;)&#xA;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FileReadActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;fileName=&quot;, &#xA;translate(translate(substring-before(substring-after(tib:render-xml(current()/pd:inputBindings), &quot;select&quot;), &quot;/>&quot;), &quot;,&quot;, &quot;;&quot;), &quot;&#xA;&quot;, &quot;~&quot;),&quot; ; &quot;,&#xA;&quot;encoding=&quot;, &#xA;translate(substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;encoding>&quot;), &quot;&lt;/encoding>&quot;), &quot;&#xA;&quot;, &quot;~&quot;)&#xA;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'WriteToLogActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;LogMessage=&quot;,substring-before(substring-after( tib:render-xml(current()/pd:inputBindings), &quot;select&quot;), &quot;&lt;/message>&quot;))"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FTPPutActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FTPGetActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;FileConfig=&quot;,translate(substring-before(substring-after( tib:render-xml(current()/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;),&quot;&#xD;&#xA;&quot;,&quot;,&quot;))"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <config>
+                                    <xsl:value-of select="tib:render-xml(current()/config)"/>
+                                </config>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                        <InputBinding>
+                            <xsl:value-of select="translate(substring-after(tib:render-xml(current()/pd:inputBindings),&quot;inputBindings&quot;), &quot;&#xA;&quot;,&quot;&quot;)"/>
+                        </InputBinding>
+                        <Validations>
+                            <xsl:choose>
+                                <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FileReadActivity')">
+                                    <ReadFileActivityValidation>
+                                        <xsl:value-of select="&quot;There is FileReadActivity in the process. please check if the fiel read can be done by ParseData activity&quot;"/>
+                                    </ReadFileActivityValidation>
+                                </xsl:when>
+                            </xsl:choose>
+                        </Validations>
+                        <groupName>
+                            <xsl:value-of select="'N/A'"/>
+                        </groupName>
+                        <rawConfig>
+                            <xsl:value-of select="tib:render-xml(current()/config)"/>
+                        </rawConfig>
+                        <rawInputBinding>
+                            <xsl:value-of select="tib:render-xml(current()/pd:inputBindings)"/>
+                        </rawInputBinding>
+                        <PosX>
+                            <xsl:value-of select="current()/pd:x"/>
+                        </PosX>
+                        <PosY>
+                            <xsl:value-of select="current()/pd:y"/>
+                        </PosY>
+                    </Activities>
+                </xsl:for-each>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$varGroupDetail[local-name(.)='activity']&#xA;{--something like this...pl implement ; $var1[local-name(.)='group']/child::*/*--}">
+                    <xsl:variable name="varGroupName" select="current()/../attribute::name&#xA;{--$var1[local-name(.)='group']/attribute::name--}"/>
+                    <Activities>
+                        <name>
+                            <xsl:value-of select="current()/attribute::name[1]"/>
+                        </name>
+                        <type>
+                            <xsl:value-of select="tib:substring-after-last(current()/child::pd:type, '.')"/>
+                        </type>
+                        <resourceType>
+                            <xsl:value-of select="tib:substring-after-last(current()/child::pd:resourceType, '.')"/>
+                        </resourceType>
+                        <starter>
+                            <xsl:value-of select="if(compare(current()/attribute::name[1], $var1[local-name(.)='name']) =0 ) then&#xA;'Yes'&#xA;else&#xA;'No'"/>
+                        </starter>
+                        <xsl:choose>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'CallProcessActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;calledProcessName=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;processName>&quot;), &quot;&lt;/processName>&quot;),&#xA;&quot; ; Spawn=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;spawn>&quot;), &quot;&lt;/spawn>&quot;))&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JDBCQueryActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JDBCUpdateActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JDBCGeneralActivity')">
+                                <xsl:choose>
+                                    <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JDBCGeneralActivity')">
+                                        <config>
+                                            <xsl:value-of select="{--translate(translate(concat(&quot;jdbcSharedConfig=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;)),&quot;&amp;crlf;&quot;,&quot;,&quot;), &quot;,&quot;, &quot;;&quot;)--}&#xA;translate(translate(concat(&quot;jdbcSharedConfig=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;jdbcSharedConfig>/&quot;), &quot;&lt;/jdbcSharedConfig>&quot;),&quot;;&quot;,substring-before(substring-after(tib:render-xml(current()/pd:inputBindings), &quot;select=&quot;), &quot;/>&quot;)),&quot;&#xA;&quot;,&quot;,&quot;), &quot;,&quot;, &quot;;&quot;)"/>
+                                        </config>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <config>
+                                            <xsl:value-of select="{--translate(translate(concat(&quot;jdbcSharedConfig=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;)),&quot;&amp;crlf;&quot;,&quot;,&quot;), &quot;,&quot;, &quot;;&quot;)--}&#xA;translate(translate(concat(&quot;jdbcSharedConfig=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;)),&quot;&#xD;&quot;,&quot;,&quot;), &quot;,&quot;, &quot;;&quot;)"/>
+                                        </config>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'HTTPResponseActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;eventSource=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;eventSource>&quot;), &quot;&lt;/eventSource>&quot;))&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'HttpRequestActivity')">
+                                <config>
+                                    <xsl:value-of select="{--concat(&quot;eventSource=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;eventSource>&quot;), &quot;&lt;/eventSource>&quot;))--}&#xA;concat(&quot;Host=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;serverhost>&quot;), &quot;&lt;/serverhost>&quot;),&quot;;Port=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;serverport>&quot;), &quot;&lt;/serverport>&quot;),&#xA;&quot;;RequestURI=&quot;,translate(substring-before(substring-after(tib:render-xml(current()/pd:inputBindings/child::*/child::*), 'select=&quot;'), '&quot;/>'),'&quot;',&quot;&quot;)&#xA;)"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'HTTPSignalInActivity')">
+                                <config>
+                                    <xsl:value-of select="{--concat(&quot;eventSource=&quot;, substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;eventSource>&quot;), &quot;&lt;/eventSource>&quot;))--}&#xA;concat(&quot;Host=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;serverhost>&quot;), &quot;&lt;/serverhost>&quot;),&quot;;Port=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;serverport>&quot;), &quot;&lt;/serverport>&quot;),&#xA;&quot;;RequestURI=&quot;,translate(substring-before(substring-after(tib:render-xml(current()/pd:inputBindings/child::*/child::*), 'select=&quot;'), '&quot;/>'),'&quot;',&quot;&quot;),&#xA;&quot;;Connection=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;sharedChannel>&quot;), &quot;&lt;/sharedChannel>&quot;)&#xA;)"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'CatchActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;fault=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;fault>&quot;), &quot;&lt;/fault>&quot;))&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'GenerateErrorActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;faultName=&quot;,substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;faultName>&quot;), &quot;&lt;/faultName>&quot;))&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'AssignActivity')">
+                                <config>
+                                    <xsl:value-of select="translate(substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;), &quot;&#xA;&quot;, &quot;~&quot;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueSendActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSTopicPublishActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueGetMessageActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSTopicRequestReplyActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueRequestReplyActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueSignalInActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'JMSQueueSendActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;ConnectionReference>&quot;), &quot;&lt;/ConnectionReference>&quot;),&quot; ; &quot;,&#xA;substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;ApplicationProperties>&quot;), &quot;&lt;/ApplicationProperties>&quot;)&#xA;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FileWriteActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;fileName=&quot;, &#xA;translate(translate(substring-before(substring-after(tib:render-xml(current()/pd:inputBindings), &quot;select&quot;), &quot;/>&quot;), &quot;,&quot;, &quot;;&quot;), &quot;&#xA;&quot;, &quot;~&quot;),&quot; ; &quot;,&#xA;&quot;encoding=&quot;, &#xA;substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;encoding>&quot;), &quot;&lt;/encoding>&quot;),&quot; ; &quot;,&#xA;&quot;append=&quot;,&#xA;substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;append>&quot;), &quot;&lt;/append>&quot;)&#xA;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FileReadActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;fileName=&quot;, &#xA;translate(translate(substring-before(substring-after(tib:render-xml(current()/pd:inputBindings), &quot;select&quot;), &quot;/>&quot;), &quot;,&quot;, &quot;;&quot;), &quot;&#xA;&quot;, &quot;~&quot;),&quot; ; &quot;,&#xA;&quot;encoding=&quot;, &#xA;translate(substring-before(substring-after(tib:render-xml(current()/config), &quot;&lt;encoding>&quot;), &quot;&lt;/encoding>&quot;), &quot;&#xA;&quot;, &quot;~&quot;)&#xA;)&#xA;{--tib:render-xml(current()/config)--}"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'WriteToLogActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;LogMessage=&quot;,substring-before(substring-after( tib:render-xml(current()/pd:inputBindings), &quot;select&quot;), &quot;&lt;/message>&quot;))"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FTPPutActivity') or&#xA;contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FTPGetActivity')">
+                                <config>
+                                    <xsl:value-of select="concat(&quot;FileConfig=&quot;,translate(substring-before(substring-after( tib:render-xml(current()/config), &quot;&lt;config>&quot;), &quot;&lt;/config>&quot;),&quot;&#xA;&#xA;&quot;,&quot;,&quot;))"/>
+                                </config>
+                            </xsl:when>
+                            <xsl:otherwise>
+                                <config>
+                                    <xsl:value-of select="tib:render-xml(current()/config)"/>
+                                </config>
+                            </xsl:otherwise>
+                        </xsl:choose>
+                        <InputBinding>
+                            <xsl:value-of select="translate(substring-after(tib:render-xml(current()/pd:inputBindings),&quot;inputBindings&quot;), &quot;&#xA;&quot;,&quot;&quot;)"/>
+                        </InputBinding>
+                        <Validations>
+                            <xsl:choose>
+                                <xsl:when test="contains(tib:substring-after-last(current()/child::pd:type, '.'), 'FileReadActivity')">
+                                    <ReadFileActivityValidation>
+                                        <xsl:value-of select="&quot;There is FileReadActivity in the process. please check if the fiel read can be done by ParseData activity&quot;"/>
+                                    </ReadFileActivityValidation>
+                                </xsl:when>
+                            </xsl:choose>
+                        </Validations>
+                        <xsl:if test="$varGroupName">
+                            <groupName>
+                                <xsl:value-of select="$varGroupName[1]"/>
+                            </groupName>
+                        </xsl:if>
+                        <rawConfig>
+                            <xsl:value-of select="tib:render-xml(current()/config)"/>
+                        </rawConfig>
+                        <rawInputBinding>
+                            <xsl:value-of select="tib:render-xml(current()/pd:inputBindings)"/>
+                        </rawInputBinding>
+                        <xsl:if test="current()/pd:x">
+                            <PosX>
+                                <xsl:value-of select="current()/pd:x"/>
+                            </PosX>
+                        </xsl:if>
+                        <xsl:if test="current()/pd:x">
+                            <PosY>
+                                <xsl:value-of select="current()/pd:x"/>
+                            </PosY>
+                        </xsl:if>
+                    </Activities>
+                </xsl:for-each>
+                <ActivityCount>
+                    <xsl:value-of select="$varActivityCount"/>
+                </ActivityCount>
+                <xsl:for-each-group select="$var1[local-name(.)='activity']" group-by="current()/child::pd:type">
+                    <report>
+                        <activityType>
+                            <xsl:value-of select="tib:substring-after-last(current-group()/child::pd:type, '.')"/>
+                        </activityType>
+                        <activityCount>
+                            <xsl:value-of select="count(tib:substring-after-last(current-group()/child::pd:type, '.'))"/>
+                        </activityCount>
+                    </report>
+                </xsl:for-each-group>
+                <xsl:for-each select="$var1[local-name(.)='transition']">
+                    <Transitions>
+                        <from>
+                            <xsl:value-of select="current()/child::pd:from"/>
+                        </from>
+                        <xsl:if test="current()/child::pd:to">
+                            <to>
+                                <xsl:value-of select="current()/child::pd:to"/>
+                            </to>
+                        </xsl:if>
+                        <xsl:if test="current()/child::pd:conditionType">
+                            <conditionType>
+                                <xsl:value-of select="current()/child::pd:conditionType"/>
+                            </conditionType>
+                        </xsl:if>
+                        <xsl:if test="current()/child::pd:xpath">
+                            <xpath>
+                                <xsl:value-of select="current()/child::pd:xpath"/>
+                            </xpath>
+                        </xsl:if>
+                        <xsl:if test="current()/child::pd:xpathDescription">
+                            <xpathDescription>
+                                <xsl:value-of select="current()/child::pd:xpathDescription"/>
+                            </xpathDescription>
+                        </xsl:if>
+                    </Transitions>
+                </xsl:for-each>
+                <xsl:for-each select="$varGroupDetail[local-name(.)='transition']">
+                    <Transitions>
+                        <xsl:if test="current()/child::pd:from">
+                            <from>
+                                <xsl:value-of select="current()/child::pd:from"/>
+                            </from>
+                        </xsl:if>
+                        <xsl:if test="current()/child::pd:to">
+                            <to>
+                                <xsl:value-of select="current()/child::pd:to"/>
+                            </to>
+                        </xsl:if>
+                        <xsl:if test="current()/child::pd:conditionType">
+                            <conditionType>
+                                <xsl:value-of select="current()/child::pd:conditionType"/>
+                            </conditionType>
+                        </xsl:if>
+                        <xsl:if test="current()/child::pd:xpath">
+                            <xpath>
+                                <xsl:value-of select="current()/child::pd:xpath"/>
+                            </xpath>
+                        </xsl:if>
+                    </Transitions>
+                </xsl:for-each>
+                <label>
+                    <xsl:value-of select="concat(tib:concat-sequence-format($var1[local-name(.)='group']/attribute::name, '#', 1),&#xA;&quot;=====&quot;,&#xA;tib:concat-sequence-format($varGroupDetail[local-name(.)='activity']/attribute::name, '#', 1)&#xA;)"/>
+                </label>
+                <xsl:if test="string-length($var1[local-name(.)='processVariables'])>0">
+                    <xsl:for-each select="$var1[local-name(.)='processVariables']">
+                        <processVariables>
+                            <xsl:value-of select="tib:render-xml(current())"/>
+                        </processVariables>
+                    </xsl:for-each>
+                </xsl:if>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="TIBCO_ActivityDetails-Final">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>333</pd:x>
+        <pd:y>78</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="startName" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="endName" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="Starter" minOccurs="0">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="process" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="type" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="ActivityTypeCount" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="resourceType" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="Starter" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="config" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="from" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="to" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="PosX" type="xsd:int" minOccurs="0"/>
+                                        <xsd:element name="PosY" type="xsd:int" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                            <xsd:element name="Activities" minOccurs="0" maxOccurs="unbounded">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="process" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="name" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="type" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="ActivityTypeCount" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="resourceType" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="Starter" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="config" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="InputBinding" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="from" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="to" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="groupName" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="rawConfig" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="rawInputBinding" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="PosX" type="xsd:int" minOccurs="0"/>
+                                        <xsd:element name="PosY" type="xsd:int" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                            <xsd:element name="report" minOccurs="0" maxOccurs="unbounded">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="activityType" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="activityCount" type="xsd:string" minOccurs="0"/>
+                                        <xsd:element name="validationMsg" type="xsd:string" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <xsl:if test="$TIBCO_ActivityDetails/root/startName">
+                    <startName>
+                        <xsl:value-of select="$TIBCO_ActivityDetails/root/startName"/>
+                    </startName>
+                </xsl:if>
+                <xsl:if test="$TIBCO_ActivityDetails/root/endName">
+                    <endName>
+                        <xsl:value-of select="$TIBCO_ActivityDetails/root/endName"/>
+                    </endName>
+                </xsl:if>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$TIBCO_ActivityDetails/root/Starter">
+                    <Activities>
+                        <xsl:if test="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath">
+                            <process>
+                                <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                            </process>
+                        </xsl:if>
+                        <xsl:if test="name">
+                            <name>
+                                <xsl:value-of select="name"/>
+                            </name>
+                        </xsl:if>
+                        <xsl:if test="type">
+                            <type>
+                                <xsl:value-of select="type"/>
+                            </type>
+                        </xsl:if>
+                        <ActivityTypeCount>
+                            <xsl:value-of select="1"/>
+                        </ActivityTypeCount>
+                        <xsl:if test="resourceType">
+                            <resourceType>
+                                <xsl:value-of select="resourceType"/>
+                            </resourceType>
+                        </xsl:if>
+                        <xsl:if test="Starter">
+                            <Starter>
+                                <xsl:value-of select="Starter"/>
+                            </Starter>
+                        </xsl:if>
+                        <xsl:if test="config">
+                            <config>
+                                <xsl:value-of select="config"/>
+                            </config>
+                        </xsl:if>
+                        <xsl:if test="InputBinding">
+                            <InputBinding>
+                                <xsl:value-of select="InputBinding"/>
+                            </InputBinding>
+                        </xsl:if>
+                        <from>
+                            <xsl:value-of select="tib:concat-sequence-format($TIBCO_ActivityDetails/root/Transitions[to=current()/name]/from, ' ; ', 0)"/>
+                        </from>
+                        <to>
+                            <xsl:value-of select="tib:concat-sequence-format($TIBCO_ActivityDetails/root/Transitions[from=current()/name]/to, ' ; ', 0)"/>
+                        </to>
+                        <groupName>
+                            <xsl:value-of select="'N/A'"/>
+                        </groupName>
+                        <xsl:if test="rawConfig">
+                            <rawConfig>
+                                <xsl:value-of select="rawConfig"/>
+                            </rawConfig>
+                        </xsl:if>
+                        <xsl:if test="rawInputBinding">
+                            <rawInputBinding>
+                                <xsl:value-of select="rawInputBinding"/>
+                            </rawInputBinding>
+                        </xsl:if>
+                        <xsl:if test="current()/PosX">
+                            <PosX>
+                                <xsl:value-of select="current()/PosX"/>
+                            </PosX>
+                        </xsl:if>
+                        <xsl:if test="current()/PosY">
+                            <PosY>
+                                <xsl:value-of select="current()/PosY"/>
+                            </PosY>
+                        </xsl:if>
+                    </Activities>
+                </xsl:for-each>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$TIBCO_ActivityDetails/root/Activities">
+                    <Activities>
+                        <xsl:if test="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath">
+                            <process>
+                                <xsl:value-of select="$Start/pfx4:root/ns1:FileInfo[1]/ns1:filePath"/>
+                            </process>
+                        </xsl:if>
+                        <xsl:if test="name">
+                            <name>
+                                <xsl:value-of select="name"/>
+                            </name>
+                        </xsl:if>
+                        <xsl:if test="type">
+                            <type>
+                                <xsl:value-of select="type"/>
+                            </type>
+                        </xsl:if>
+                        <ActivityTypeCount>
+                            <xsl:value-of select="count($TIBCO_ActivityDetails/root/Activities[type=current()/type])"/>
+                        </ActivityTypeCount>
+                        <xsl:if test="resourceType">
+                            <resourceType>
+                                <xsl:value-of select="resourceType"/>
+                            </resourceType>
+                        </xsl:if>
+                        <xsl:if test="starter">
+                            <Starter>
+                                <xsl:value-of select="starter"/>
+                            </Starter>
+                        </xsl:if>
+                        <xsl:if test="config">
+                            <config>
+                                <xsl:value-of select="config"/>
+                            </config>
+                        </xsl:if>
+                        <InputBinding>
+                            <xsl:value-of select="InputBinding"/>
+                        </InputBinding>
+                        <from>
+                            <xsl:value-of select="tib:concat-sequence-format($TIBCO_ActivityDetails/root/Transitions[to=current()/name]/from, ' ; ', 0)"/>
+                        </from>
+                        <to>
+                            <xsl:value-of select="tib:concat-sequence-format($TIBCO_ActivityDetails/root/Transitions[from=current()/name]/to, ' ; ', 0)"/>
+                        </to>
+                        <xsl:if test="current()/groupName">
+                            <groupName>
+                                <xsl:value-of select="current()/groupName"/>
+                            </groupName>
+                        </xsl:if>
+                        <xsl:if test="rawConfig">
+                            <rawConfig>
+                                <xsl:value-of select="rawConfig"/>
+                            </rawConfig>
+                        </xsl:if>
+                        <xsl:if test="rawInputBinding">
+                            <rawInputBinding>
+                                <xsl:value-of select="rawInputBinding"/>
+                            </rawInputBinding>
+                        </xsl:if>
+                        <xsl:if test="current()/PosX">
+                            <PosX>
+                                <xsl:value-of select="current()/PosX"/>
+                            </PosX>
+                        </xsl:if>
+                        <xsl:if test="current()/PosY">
+                            <PosY>
+                                <xsl:value-of select="current()/PosY"/>
+                            </PosY>
+                        </xsl:if>
+                    </Activities>
+                </xsl:for-each>
+                <xsl:for-each-group select="$TIBCO_ActivityDetails/root/Activities" group-by="type">
+                    <report>
+                        <xsl:if test="type">
+                            <activityType>
+                                <xsl:value-of select="type"/>
+                            </activityType>
+                        </xsl:if>
+                        <activityCount>
+                            <xsl:value-of select="count($TIBCO_ActivityDetails/root/Activities[type=current-group()/type]/type)"/>
+                        </activityCount>
+                    </report>
+                </xsl:for-each-group>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="GetVariable">
+        <pd:type>com.tibco.pe.core.GetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.getSharedVariable</pd:resourceType>
+        <pd:description>This is used to get checklist related input from checklist.csv file</pd:description>
+        <pd:x>426</pd:x>
+        <pd:y>73</pd:y>
+        <config>
+            <variableConfig>/Resources/SharedVariables/ChecklistSharedVariable.sharedvariable</variableConfig>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:group name="GetProcessVars">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>576</pd:x>
+        <pd:y>95</pd:y>
+        <pd:width>301</pd:width>
+        <pd:height>203</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$TIBCO_ActivityDetails-Final/root/Activities[type="AssignActivity"|'SetSharedVariableActivity']</pd:over>
+            <pd:iterationElementSlot>assignActivityDetails</pd:iterationElementSlot>
+            <pd:indexSlot>itrVar</pd:indexSlot>
+            <pd:outSlot>consolidatedVars</pd:outSlot>
+            <pd:activityOutputName>PrepareAssignActivityData</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Parse AssignActivityData</pd:to>
+            <pd:lineType>Multiple Bends</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Catch</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Multiple Bends</pd:lineType>
+            <pd:lineColor>-52480</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>PrepareAssignActivityData</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Multiple Bends</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Parse AssignActivityData</pd:from>
+            <pd:to>PrepareAssignActivityData</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Parse AssignActivityData">
+            <pd:type>com.tibco.plugin.xml.XMLParseActivity</pd:type>
+            <pd:resourceType>ae.activities.XMLParseActivity</pd:resourceType>
+            <pd:x>657</pd:x>
+            <pd:y>147</pd:y>
+            <config>
+                <inputStyle>text</inputStyle>
+                <xsdVersion>default</xsdVersion>
+                <validateOutput>true</validateOutput>
+                <term>
+                    <xsd:any processContents="lax"/>
+                </term>
+            </config>
+            <pd:inputBindings>
+                <xmlString>
+                    <xsl:value-of select="$assignActivityDetails/Activities/rawInputBinding"/>
+                </xmlString>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="PrepareAssignActivityData">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>775</pd:x>
+            <pd:y>148</pd:y>
+            <config>
+                <element ref="ns9:NameValuePairs"/>
+            </config>
+            <pd:inputBindings>
+                <ns9:NameValuePairs>
+                    <xsl:variable xmlns:xsl="http://www.w3.org/1999/XSL/Transform" name="var" select="$Parse-AssignActivityData/child::*/child::*/*"/>
+                    <xsl:if test="$assignActivityDetails/Activities/config">
+                        <xsl:attribute name="name">
+                            <xsl:value-of select="$assignActivityDetails/Activities/config"/>
+                        </xsl:attribute>
+                    </xsl:if>
+                    <xsl:for-each select="$var">
+                        <xsl:variable name="val" select="$assignActivityDetails/Activities/rawInputBinding"/>
+                        <ns9:Key>
+                            <ns9:Name>
+                                <xsl:value-of select="local-name()"/>
+                            </ns9:Name>
+                            <ns9:Value>
+                                <xsl:value-of select="translate(substring-before(substring-after($val, 'select='), '/>'),'&quot;',&quot;&quot;)"/>
+                            </ns9:Value>
+                        </ns9:Key>
+                    </xsl:for-each>
+                </ns9:NameValuePairs>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Catch">
+            <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+            <pd:resourceType>ae.activities.catch</pd:resourceType>
+            <pd:x>774</pd:x>
+            <pd:y>231</pd:y>
+            <pd:handler>true</pd:handler>
+            <config>
+                <catchAll>true</catchAll>
+            </config>
+            <pd:inputBindings/>
+        </pd:activity>
+    </pd:group>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>TIBCO_XML</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>TIBCO_XML</pd:from>
+        <pd:to>TIBCO_ActivityDetails</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>TIBCO_ActivityDetails</pd:from>
+        <pd:to>TIBCO_ActivityDetails-Final</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>TIBCO_ActivityDetails-Final</pd:from>
+        <pd:to>GetVariable</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetVariable</pd:from>
+        <pd:to>GetProcessVars</pd:to>
+        <pd:xpathDescription>AssignOrSetVariableExists</pd:xpathDescription>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>exists($TIBCO_ActivityDetails-Final/root/Activities[type="AssignActivity"|'SetSharedVariableActivity'])</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetProcessVars</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Multiple Bends</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GetVariable</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

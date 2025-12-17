@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/LocationDetails.xsd"
+	 targetNamespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/LocationDetails.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="root">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="tibcoProjectLocation" minOccurs="0"/>
+				<xs:element ref="muleProjectLocation" minOccurs="0"/>
+				<xs:element ref="tibcoProjectName" minOccurs="0"/>
+				<xs:element ref="muleProjectName" minOccurs="0"/>
+				<xs:element ref="tibcoProcessName" minOccurs="0"/>
+				<xs:element ref="muleProcessName" minOccurs="0"/>
+				<xs:element ref="project" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="process" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="GV" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="schema" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="wsdl" minOccurs="0" maxOccurs="unbounded"/>
+				<xs:element ref="detail" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="tibcoProjectLocation" type="xs:string"/>
+	<xs:element name="muleProjectLocation" type="xs:string"/>
+	<xs:element name="tibcoProjectName" type="xs:string"/>
+	<xs:element name="muleProjectName" type="xs:string"/>
+	<xs:element name="tibcoProcessName" type="xs:string"/>
+	<xs:element name="muleProcessName" type="xs:string"/>
+	<xs:element name="project" type="xs:string"/>
+	<xs:element name="process">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="detail"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="GV">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="detail"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="schema">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="detail"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="wsdl">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="detail"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="detail">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="path" type="xs:string" minOccurs="0"/>
+				<xs:element name="content" type="xs:string" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

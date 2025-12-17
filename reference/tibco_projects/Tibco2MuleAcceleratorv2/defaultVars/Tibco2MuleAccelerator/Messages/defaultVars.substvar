@@ -1,0 +1,109 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>ActiveMQMessage</name>
+			<value>&lt;jms:activemq-connector name="Active_MQ" username="admin" password="admin" brokerURL="tcp://localhost:61616" validateConnections="true" doc:name="Active MQ"/></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719723045</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>InventoryHeader</name>
+			<value>Tibco Project,Artifact Name,Artifact Details,Starter Process Name, Starter Process/Operations,Process implementation</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593408639155</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>MuleProjectDescription</name>
+			<value>Mule project created by IBM tibco2mule accelerator</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719720655</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>RepoMigrationMessage</name>
+			<value>Project migrated</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719720373</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>RepoMigrationStatus</name>
+			<value>Success</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719723295</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>RepoMigrationStatusError</name>
+			<value>Error</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719726061</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>ReportChecklistHeader</name>
+			<value>ChecklistNumber,ChecklistName,ChecklistDetail,Severity,Remarks,Process,Activity,ReviewAccepted,DeveloperComment</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1613030460191</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>ReportProcessHeader</name>
+			<value>ComponentName,Name,Type,ResourceType,Config,InputBinding,Starter,From,To,GroupName,TibcoType,MuleType,ConversionImpl,IssueType,Remarks</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719721295</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>ReportWritingHeader</name>
+			<value>Tibco Project, Mule Project,Migration Status, Migration Description, Start Time, End Time, Total time (in sec), Archives, Processes, SubProcesses, Starters, OnStartup, Service Agent,ServiceAgentOperations, HTTP Starter, RV Starters, SOAP Starter, Rest Adapter, File Starter, JMSQ Starter, JMST Starter, Timer Starter, AE Starter, JDBC Query, JDBC Update, SOAP Calls, HTTP Calls, REST Calls, JMS Calls, JMSQueueSend Activities, JMSQueueGetMessage Activities, JMSQueue RequestReply, JMSTopicPublish Activities, JMSTopicRequestReply, JMS Reply, JMSQueueSignalInActivity, JMSTopicSignalInActivity, FileWriteActivity, FileCreateActivity, FileRemoveActivity, FileReadActivity, FileCopyActivity, Java Activities, Mappers, Renders, Parsers, WSDLs, WADLs, XSDs, Copy Books, Shared Variables, Connections, Certificates, AE Activities, Assign, Checkpoint, Catch, GenerateError, Confirm,ReceiveMail,SendMail,Custom,LockObject,NotifyConfiguration,Engine Command,ExternalCommand,Notify,OnError,OnEventTimeout,OnNotificationTimeout,OnShutdown,ReceiveNotification,Rethrow,Sleep,Wait,WriteToLog,FilePoller,ListFiles,RenameFile,WaitforFile Change,HTTPReceiver,SendHTTPRequest,WaitForHTTPRequest,JavaCustomFunction,JavaGlobalInstance,JavaSchema,JavaCode,JavaEventSource,JavaMethod,JavaToXML,XMLToJava,JDBCConnection,JDBCCallProcedure,SQLDirect,JMSApplicationProperties,JMSConnection,GetJMSQueueMessage,JMSQueueReceiver,JMSQueueRequester,JMSTopicRequestor,JMSTopicSubscriber,ReplytoJMSMessage,WaitforJMSQueue Message,WaitforJMSTopicMessage,DataFormat,ParseData,RenderData,SecurityPolicyAssociation,SecurityPolicy,InvokeRESTAPI,RESTDispatchandReply,XSLTFile,TransformXML,SOAPEventSource,SOAPRequestReply,SOAPSendReply</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1668788975327</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>pomXML_part1</name>
+			<value>&lt;?xml version="1.0" encoding="UTF-8" standalone="no"?> &lt;project xmlns="http://maven.apache.org/POM/4.0.0" 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd"> 	&lt;modelVersion>4.0.0&lt;/modelVersion> 	&lt;groupId>com.mycompany&lt;/groupId> 	&lt;artifactId></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1592207170417</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>pomXML_part2</name>
+			<value>&lt;/artifactId> 	&lt;version>1.0.0-SNAPSHOT&lt;/version> 	&lt;packaging>mule-application&lt;/packaging> 	&lt;name></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1592207170496</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>pomXML_part3</name>
+			<value>&lt;/name> &lt;properties> 	&lt;project.build.sourceEncoding>UTF-8&lt;/project.build.sourceEncoding> 	&lt;project.reporting.outputEncoding>UTF-8&lt;/project.reporting.outputEncoding> 	&lt;app.runtime>4.3.0&lt;/app.runtime> 	&lt;mule.maven.plugin.version>3.3.5&lt;/mule.maven.plugin.version> &lt;/properties> &lt;build> 	&lt;plugins> 		&lt;plugin> 			&lt;groupId>org.apache.maven.plugins&lt;/groupId> 			&lt;artifactId>maven-clean-plugin&lt;/artifactId> 			&lt;version>3.0.0&lt;/version> 		&lt;/plugin> 		&lt;plugin> 			&lt;groupId>org.mule.tools.maven&lt;/groupId> 			&lt;artifactId>mule-maven-plugin&lt;/artifactId> 			&lt;version>${mule.maven.plugin.version}&lt;/version> 			&lt;extensions>true&lt;/extensions> 			&lt;configuration> 				&lt;/configuration> 		&lt;/plugin> 	&lt;/plugins> &lt;/build> &lt;dependencies> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-wsc-connector&lt;/artifactId> 		&lt;version>1.5.8&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-http-connector&lt;/artifactId> 		&lt;version>1.5.17&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-db-connector&lt;/artifactId> 		&lt;version>1.8.0&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-sockets-connector&lt;/artifactId> 		&lt;version>1.1.6&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-file-connector&lt;/artifactId> 		&lt;version>1.3.2&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.modules&lt;/groupId> 		&lt;artifactId>mule-soapkit-module&lt;/artifactId> 		&lt;version>1.2.6&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-ftp-connector&lt;/artifactId> 		&lt;version>1.5.1&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-sftp-connector&lt;/artifactId> 		&lt;version>1.3.7&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-jms-connector&lt;/artifactId> 		&lt;version>1.6.3&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.module&lt;/groupId> 		&lt;artifactId>mule-java-module&lt;/artifactId> 		&lt;version>1.2.6&lt;/version> 		&lt;!-- or newer --> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>org.mule.connectors&lt;/groupId> 		&lt;artifactId>mule-email-connector&lt;/artifactId> 		&lt;version>1.2.1&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>com.mulesoft.connectors&lt;/groupId> 		&lt;artifactId>mule-salesforce-connector&lt;/artifactId> 		&lt;version>10.1.0&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> 	&lt;dependency> 		&lt;groupId>com.mulesoft.connectors&lt;/groupId> 		&lt;artifactId>mule-sap-connector&lt;/artifactId> 		&lt;version>5.1.7&lt;/version> 		&lt;classifier>mule-plugin&lt;/classifier> 	&lt;/dependency> &lt;/dependencies> &lt;repositories> 	&lt;repository> 		&lt;id>anypoint-exchange-v2&lt;/id> 		&lt;name>Anypoint Exchange&lt;/name> 		&lt;url>https://maven.anypoint.mulesoft.com/api/v2/maven&lt;/url> 		&lt;layout>default&lt;/layout> 	&lt;/repository> 	&lt;repository> 		&lt;id>mulesoft-releases&lt;/id> 		&lt;name>MuleSoft Releases Repository&lt;/name> 		&lt;url>https://repository.mulesoft.org/releases/&lt;/url> 		&lt;layout>default&lt;/layout> 	&lt;/repository> &lt;/repositories> &lt;pluginRepositories> 	&lt;pluginRepository> 		&lt;id>mulesoft-releases&lt;/id> 		&lt;name>mulesoft release repository&lt;/name> 		&lt;layout>default&lt;/layout> 		&lt;url>https://repository.mulesoft.org/releases/&lt;/url> 		&lt;snapshots> 			&lt;enabled>false&lt;/enabled> 		&lt;/snapshots> 	&lt;/pluginRepository> &lt;/pluginRepositories> &lt;/project> </value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1593674147477</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>xpathLength</name>
+			<value>10000</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719725170</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

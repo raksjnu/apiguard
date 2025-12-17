@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="784a3e5a-8940-40b6-8222-6eaeff9d9d8a" >
+		<http:listener-connection host="${gui.requestor.host}" port="${gui.requestor.port}" />
+	</http:listener-config>
+	<file:config name="File_Config1" doc:name="File Config" doc:id="92d12894-1b91-4b28-aa56-c67bf29c9a04" >
+		<file:connection workingDir="${app.home}" />
+	</file:config>
+		<http:request-config name="HTTP_Request_configuration1" doc:name="HTTP Request configuration" doc:id="4f57fe7a-75ca-41cf-acf0-25beb6532b51">
+		<http:request-connection host="${gui.requestor.host}" port="${gui.requestor.port}" />
+	</http:request-config>
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="8595d62b-b7b0-488b-857e-bf3123131bb9" >
+		<http:listener-connection host="0.0.0.0" port="${http.gui.port}" />
+	</http:listener-config>
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="ea2ce790-0475-4925-b33c-8e5b316fe7f1" >
+		<email:smtp-connection host="${smtp.hostname}" user="${smtp.username}" password="${smtp.password}" port="${smtp.port}" connectionTimeout="50" readTimeout="50" writeTimeout="50">
+			<email:properties >
+				<email:property key="mail.smtp.starttls.enable" value="true" />
+			</email:properties>
+		</email:smtp-connection>
+	</email:smtp-config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="eb0f4145-5a99-44cd-95bc-2f31215e4ce2" >
+		<file:connection workingDir="${app.home}"/>
+	</file:config>
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="70d73f87-da6b-4a4b-8b5d-e8e83d7e3302" >
+		<http:request-connection host="${http.gui.host}" port="${http.gui.port}" />
+	</http:request-config>
+	<configuration-properties doc:name="Configuration properties" doc:id="b785d045-c7a9-4082-b3ef-7f5595d51ac4" file="gui-app.properties" />
+</mule>

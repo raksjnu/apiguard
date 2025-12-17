@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	 xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	 targetNamespace="http://www.mulesoft.org/schema/mule/db"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+
+	<!--	<xs:import namespace="http://www.mulesoft.org/schema/mule/documentation" schemaLocation="doc.xsd"/>-->
+	<xs:element name="oracle-config">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="host" type="xs:string"/>
+			<xs:attribute name="port" type="xs:string"/>
+			<xs:attribute name="user" type="xs:string"/>
+			<xs:attribute name="password" type="xs:string"/>
+			<xs:attribute name="database" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="select">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="db:sql" minOccurs="0"/>
+			</xs:sequence>
+			<xs:attribute name="config-ref" type="xs:string"/>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="posX" type="xs:int"/>
+			<xs:attribute name="posY" type="xs:int"/>
+			<xs:attribute name="type" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="generic-config">
+		<xs:complexType>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="url" type="xs:string"/>
+			<xs:attribute name="driverClassName" type="xs:string"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="update">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="db:parameterized-query"/>
+			</xs:sequence>
+			<xs:attribute name="config-ref" type="xs:string"/>
+			<xs:attribute name="name" type="xs:string"/>
+			<xs:attribute name="posX" type="xs:int"/>
+			<xs:attribute name="posY" type="xs:int"/>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="parameterized-query" type="xs:string"/>
+	<xs:element name="sql" type="xs:string"/>
+</xs:schema>

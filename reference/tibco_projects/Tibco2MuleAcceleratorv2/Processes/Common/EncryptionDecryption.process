@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/pe/WriteToLogActivitySchema" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions">
+    <pd:name>Processes/Common/EncryptionDecryption.process</pd:name>
+    <pd:description>Created for Encryption or Decyption of any value.</pd:description>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="root">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="StringToEncrypt" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="StringToDecrypt" type="xsd:string" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>27</pd:startX>
+    <pd:startY>179</pd:startY>
+    <pd:returnBindings>
+        <root>
+            <xsl:if test="$Java_Encryption/javaCodeActivityOutput/EncryptedValue">
+                <EncryptedValue>
+                    <xsl:value-of select="$Java_Encryption/javaCodeActivityOutput/EncryptedValue"/>
+                </EncryptedValue>
+            </xsl:if>
+            <xsl:if test="$Java_Decryption/javaCodeActivityOutput/DecryptedValue">
+                <DecryptedValue>
+                    <xsl:value-of select="$Java_Decryption/javaCodeActivityOutput/DecryptedValue"/>
+                </DecryptedValue>
+            </xsl:if>
+        </root>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType>
+        <xsd:element name="root">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="EncryptedValue" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="DecryptedValue" type="xsd:string" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:endType>
+    <pd:endX>519</pd:endX>
+    <pd:endY>180</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://ibm.com/raks/tibco2mule/accelerator/common/EncryptionDecryption</pd:targetNamespace>
+    <pd:activity name="Java_Encryption">
+        <pd:type>com.tibco.plugin.java.JavaActivity</pd:type>
+        <pd:resourceType>ae.javapalette.javaActivity</pd:resourceType>
+        <pd:x>266</pd:x>
+        <pd:y>70</pd:y>
+        <config>
+            <fileName>EncryptionDecryptionJava_Encryption</fileName>
+            <packageName>Processes.Common.EncryptionDecryption</packageName>
+            <fullsource>package Processes.Common.EncryptionDecryption;
+import java.util.*;
+import java.io.*;
+import com.tibco.security.ObfuscationEngine; 
+public class EncryptionDecryptionJava_Encryption{
+/****** START SET/GET METHOD, DO NOT MODIFY *****/
+	protected String StringToEncrypt = "";
+	protected String EncryptedValue = "";
+	public String getStringToEncrypt() {
+		return StringToEncrypt;
+	}
+	public void setStringToEncrypt(String val) {
+		StringToEncrypt = val;
+	}
+	public String getEncryptedValue() {
+		return EncryptedValue;
+	}
+	public void setEncryptedValue(String val) {
+		EncryptedValue = val;
+	}
+/****** END SET/GET METHOD, DO NOT MODIFY *****/
+	public EncryptionDecryptionJava_Encryption() {
+	}
+	public void invoke() throws Exception {
+/* Available Variables: DO NOT MODIFY
+	In  : String StringToEncrypt
+	Out : String EncryptedValue
+* Available Variables: DO NOT MODIFY *****/
+EncryptedValue = new String(ObfuscationEngine.encrypt(StringToEncrypt.toCharArray()));
+
+}
+}
+</fullsource>
+            <outputData>
+                <row>
+                    <fieldName>EncryptedValue</fieldName>
+                    <fieldType>string</fieldType>
+                    <fieldRequired>optional</fieldRequired>
+                </row>
+            </outputData>
+            <inputData>
+                <row>
+                    <fieldName>StringToEncrypt</fieldName>
+                    <fieldType>string</fieldType>
+                    <fieldRequired>optional</fieldRequired>
+                </row>
+            </inputData>
+            <byteCode>
+                <class>
+                    <name>EncryptionDecryptionJava_Encryption</name>
+                    <byteCode>yv66vgAAADQALgkACQAdCQAJAB4KAAoAHwgAIAcAIQoABQAiCgAjACQKAAUAJQcAJgcAJwEAD1N0cmluZ1RvRW5jcnlwdAEAEkxqYXZhL2xhbmcvU3RyaW5nOwEADkVuY3J5cHRlZFZhbHVlAQASZ2V0U3RyaW5nVG9FbmNyeXB0AQAUKClMamF2YS9sYW5nL1N0cmluZzsBAARDb2RlAQAPTGluZU51bWJlclRhYmxlAQASc2V0U3RyaW5nVG9FbmNyeXB0AQAVKExqYXZhL2xhbmcvU3RyaW5nOylWAQARZ2V0RW5jcnlwdGVkVmFsdWUBABFzZXRFbmNyeXB0ZWRWYWx1ZQEABjxpbml0PgEAAygpVgEABmludm9rZQEACkV4Y2VwdGlvbnMHACgBAApTb3VyY2VGaWxlAQAoRW5jcnlwdGlvbkRlY3J5cHRpb25KYXZhX0VuY3J5cHRpb24uamF2YQwACwAMDAANAAwMABYAFwEAAAEAEGphdmEvbGFuZy9TdHJpbmcMACkAKgcAKwwALAAtDAAWABMBAElQcm9jZXNzZXMvQ29tbW9uL0VuY3J5cHRpb25EZWNyeXB0aW9uL0VuY3J5cHRpb25EZWNyeXB0aW9uSmF2YV9FbmNyeXB0aW9uAQAQamF2YS9sYW5nL09iamVjdAEAE2phdmEvbGFuZy9FeGNlcHRpb24BAAt0b0NoYXJBcnJheQEABCgpW0MBACRjb20vdGliY28vc2VjdXJpdHkvT2JmdXNjYXRpb25FbmdpbmUBAAdlbmNyeXB0AQAWKFtDKUxqYXZhL2xhbmcvU3RyaW5nOwAhAAkACgAAAAIABAALAAwAAAAEAA0ADAAAAAYAAQAOAA8AAQAQAAAAHQABAAEAAAAFKrQAAbAAAAABABEAAAAGAAEAAAAKAAEAEgATAAEAEAAAACIAAgACAAAABiortQABsQAAAAEAEQAAAAoAAgAAAA0ABQAOAAEAFAAPAAEAEAAAAB0AAQABAAAABSq0AAKwAAAAAQARAAAABgABAAAAEAABABUAEwABABAAAAAiAAIAAgAAAAYqK7UAArEAAAABABEAAAAKAAIAAAATAAUAFAABABYAFwABABAAAAA1AAIAAQAAABEqtwADKhIEtQABKhIEtQACsQAAAAEAEQAAABIABAAAABYABAAHAAoACAAQABcAAQAYABcAAgAQAAAAMgAEAAEAAAAWKrsABVkqtAABtgAGuAAHtwAItQACsQAAAAEAEQAAAAoAAgAAAB0AFQAfABkAAAAEAAEAGgABABsAAAACABw=</byteCode>
+                </class>
+            </byteCode>
+        </config>
+        <pd:inputBindings>
+            <javaCodeActivityInput>
+                <xsl:if test="$Start/root/StringToEncrypt">
+                    <StringToEncrypt>
+                        <xsl:value-of select="$Start/root/StringToEncrypt"/>
+                    </StringToEncrypt>
+                </xsl:if>
+            </javaCodeActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Java_Decryption">
+        <pd:type>com.tibco.plugin.java.JavaActivity</pd:type>
+        <pd:resourceType>ae.javapalette.javaActivity</pd:resourceType>
+        <pd:x>266</pd:x>
+        <pd:y>176</pd:y>
+        <config>
+            <fileName>EncryptionDecryptionJava_Decryption</fileName>
+            <packageName>Processes.Common.EncryptionDecryption</packageName>
+            <fullsource>package Processes.Common.EncryptionDecryption;
+import java.util.*;
+import java.io.*;
+import com.tibco.security.ObfuscationEngine; 
+public class EncryptionDecryptionJava_Decryption{
+/****** START SET/GET METHOD, DO NOT MODIFY *****/
+	protected String StringToDecrypt = "";
+	protected String DecryptedValue = "";
+	public String getStringToDecrypt() {
+		return StringToDecrypt;
+	}
+	public void setStringToDecrypt(String val) {
+		StringToDecrypt = val;
+	}
+	public String getDecryptedValue() {
+		return DecryptedValue;
+	}
+	public void setDecryptedValue(String val) {
+		DecryptedValue = val;
+	}
+/****** END SET/GET METHOD, DO NOT MODIFY *****/
+	public EncryptionDecryptionJava_Decryption() {
+	}
+	public void invoke() throws Exception {
+/* Available Variables: DO NOT MODIFY
+	In  : String StringToDecrypt
+	Out : String DecryptedValue
+* Available Variables: DO NOT MODIFY *****/
+DecryptedValue = new String(ObfuscationEngine.decrypt(StringToDecrypt));}
+}
+</fullsource>
+            <inputData>
+                <row>
+                    <fieldName>StringToDecrypt</fieldName>
+                    <fieldType>string</fieldType>
+                    <fieldRequired>optional</fieldRequired>
+                </row>
+            </inputData>
+            <outputData>
+                <row>
+                    <fieldName>DecryptedValue</fieldName>
+                    <fieldType>string</fieldType>
+                    <fieldRequired>optional</fieldRequired>
+                </row>
+            </outputData>
+            <byteCode>
+                <class>
+                    <name>EncryptionDecryptionJava_Decryption</name>
+                    <byteCode>yv66vgAAADQAKwkACAAcCQAIAB0KAAkAHggAHwcAIAoAIQAiCgAFACMHACQHACUBAA9TdHJpbmdUb0RlY3J5cHQBABJMamF2YS9sYW5nL1N0cmluZzsBAA5EZWNyeXB0ZWRWYWx1ZQEAEmdldFN0cmluZ1RvRGVjcnlwdAEAFCgpTGphdmEvbGFuZy9TdHJpbmc7AQAEQ29kZQEAD0xpbmVOdW1iZXJUYWJsZQEAEnNldFN0cmluZ1RvRGVjcnlwdAEAFShMamF2YS9sYW5nL1N0cmluZzspVgEAEWdldERlY3J5cHRlZFZhbHVlAQARc2V0RGVjcnlwdGVkVmFsdWUBAAY8aW5pdD4BAAMoKVYBAAZpbnZva2UBAApFeGNlcHRpb25zBwAmAQAKU291cmNlRmlsZQEAKEVuY3J5cHRpb25EZWNyeXB0aW9uSmF2YV9EZWNyeXB0aW9uLmphdmEMAAoACwwADAALDAAVABYBAAABABBqYXZhL2xhbmcvU3RyaW5nBwAnDAAoACkMABUAKgEASVByb2Nlc3Nlcy9Db21tb24vRW5jcnlwdGlvbkRlY3J5cHRpb24vRW5jcnlwdGlvbkRlY3J5cHRpb25KYXZhX0RlY3J5cHRpb24BABBqYXZhL2xhbmcvT2JqZWN0AQATamF2YS9sYW5nL0V4Y2VwdGlvbgEAJGNvbS90aWJjby9zZWN1cml0eS9PYmZ1c2NhdGlvbkVuZ2luZQEAB2RlY3J5cHQBABYoTGphdmEvbGFuZy9TdHJpbmc7KVtDAQAFKFtDKVYAIQAIAAkAAAACAAQACgALAAAABAAMAAsAAAAGAAEADQAOAAEADwAAAB0AAQABAAAABSq0AAGwAAAAAQAQAAAABgABAAAACgABABEAEgABAA8AAAAiAAIAAgAAAAYqK7UAAbEAAAABABAAAAAKAAIAAAANAAUADgABABMADgABAA8AAAAdAAEAAQAAAAUqtAACsAAAAAEAEAAAAAYAAQAAABAAAQAUABIAAQAPAAAAIgACAAIAAAAGKiu1AAKxAAAAAQAQAAAACgACAAAAEwAFABQAAQAVABYAAQAPAAAANQACAAEAAAARKrcAAyoSBLUAASoSBLUAArEAAAABABAAAAASAAQAAAAWAAQABwAKAAgAEAAXAAEAFwAWAAIADwAAACsABAABAAAAEyq7AAVZKrQAAbgABrcAB7UAArEAAAABABAAAAAGAAEAAAAdABgAAAAEAAEAGQABABoAAAACABs=</byteCode>
+                </class>
+            </byteCode>
+        </config>
+        <pd:inputBindings>
+            <javaCodeActivityInput>
+                <xsl:if test="$Start/root/StringToDecrypt">
+                    <StringToDecrypt>
+                        <xsl:value-of select="$Start/root/StringToDecrypt"/>
+                    </StringToDecrypt>
+                </xsl:if>
+            </javaCodeActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Null">
+        <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
+        <pd:resourceType>ae.activities.null</pd:resourceType>
+        <pd:x>272</pd:x>
+        <pd:y>290</pd:y>
+        <config/>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Java_Encryption</pd:to>
+        <pd:xpathDescription>Encryption</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>string-length(tib:trim($Start/root/StringToEncrypt))&gt;0</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Java_Decryption</pd:to>
+        <pd:xpathDescription>Decryption</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>string-length(tib:trim($Start/root/StringToDecrypt))&gt;0</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java_Encryption</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java_Decryption</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Null</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:label>
+        <pd:name>Label</pd:name>
+        <pd:description>Encrypt and Decrypt the values using java code</pd:description>
+        <pd:x>242</pd:x>
+        <pd:y>26</pd:y>
+        <pd:width>465</pd:width>
+        <pd:height>33</pd:height>
+        <pd:fontColor>-16777216</pd:fontColor>
+        <pd:color>-6710785</pd:color>
+        <pd:type>solid</pd:type>
+        <pd:thickness>0</pd:thickness>
+        <pd:fade>true</pd:fade>
+    </pd:label>
+</pd:ProcessDefinition>

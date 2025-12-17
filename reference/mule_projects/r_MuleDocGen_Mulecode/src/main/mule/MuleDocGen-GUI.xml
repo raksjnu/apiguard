@@ -1,0 +1,1125 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:compression="http://www.mulesoft.org/schema/mule/compression"
+	xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	  xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	  xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" 
+	  xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	  xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	  xmlns="http://www.mulesoft.org/schema/mule/core" 
+	  xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+			http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+			http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd 
+			http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+			http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/mule/compression/current/mule-compression.xsd">
+	<flow name="MuleDocumentGen" doc:id="8dbb54fd-a2a6-4520-90ec-776c4326d083" >
+<http:listener doc:name="Listener" doc:id="741258f5-bfbf-44a9-be50-3a9be86f8bf0" path="${gui.codereview}" allowedMethods="GET,POST" outputMimeType="multipart/form-data" config-ref="HTTP_Listener_config1"/>
+		<ee:transform doc:name="Transform Message" doc:id="51cb1618-aafb-4b77-a1d0-87f8f912fdaa">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="generate_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="generate_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${generate_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="generate_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="generate_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo"><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="daf1cb4f-2dc4-4ada-9af4-b06be5fe3935">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="serviceName"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBeforeLast((payload.parts.file1.headers."Content-Disposition".filename),".zip")]]></ee:set-variable>
+				<ee:set-variable variableName="fileName1" ><![CDATA[payload.parts.file1.headers."Content-Disposition".filename]]></ee:set-variable>
+				<ee:set-variable variableName="fileContent1" ><![CDATA[payload.parts.file1.content]]></ee:set-variable>
+				<ee:set-variable variableName="fileName2" ><![CDATA[payload.parts.file2.headers."Content-Disposition".filename]]></ee:set-variable>
+				<ee:set-variable variableName="fileContent2" ><![CDATA[payload.parts.file2.content]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="343eeffa-c532-444c-82f1-bc241789c946" >
+			<route >
+				<compression:extract doc:name="Extract" doc:id="d67b4602-4d26-410d-b7b2-05fb4197f49d">
+			<compression:compressed><![CDATA[#[vars.fileContent1]]]></compression:compressed>
+			<compression:extractor>
+				<compression:zip-extractor />
+			</compression:extractor>
+		</compression:extract>
+				<ee:transform doc:name="Transform Message" doc:id="b36c0082-d629-487d-9ed2-d79b1c1a42fe">
+			<ee:message>
+				<ee:set-payload><![CDATA[dw::core::Objects::entrySet(payload) orderBy $.key]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+						<ee:set-variable variableName="fileType" ><![CDATA["code"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<flow-ref doc:name="Flow Reference" doc:id="15ed5520-7d88-4589-9ae3-cb88ee3251d0" name="FileExtract" />
+			</route>
+			<route >
+				<choice doc:name="Choice" doc:id="350b00a5-415c-4be7-9065-8cd37b944dfb" >
+					<when expression='#[sizeOf(vars.fileContent2 default "")&gt;1]'>
+						<compression:extract doc:name="Extract" doc:id="2a623e9b-9de0-4660-86be-4b27491d81fa">
+			<compression:compressed><![CDATA[#[vars.fileContent2]]]></compression:compressed>
+			<compression:extractor>
+				<compression:zip-extractor />
+			</compression:extractor>
+		</compression:extract>
+						<ee:transform doc:name="Transform Message" doc:id="7d008b5b-1a32-48a0-9c6e-d0566b766701">
+			<ee:message>
+				<ee:set-payload><![CDATA[dw::core::Objects::entrySet(payload) orderBy $.key]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+			</ee:variables>
+		</ee:transform>
+						<flow-ref doc:name="Flow Reference" doc:id="4f5015bb-84ed-4193-b595-18e30387f4ab" name="FileExtract" />
+					</when>
+					<otherwise >
+						<logger level="INFO" doc:name="Logger" doc:id="3608b5be-c049-48ee-8d5d-f273b206890e" message="Flow images not selected"/>
+					</otherwise>
+				</choice>
+			</route>
+		</scatter-gather>
+		<file:list doc:name="List" doc:id="ec54bd8d-35bd-47c8-85d1-ff8fd775191b" config-ref="File_Config" directoryPath='#["${gui.inputLocation}" ++ (vars.serviceName default "") ++ "//"]'>
+			<file:matcher regularFiles="EXCLUDE" symLinks="EXCLUDE" />
+		</file:list>
+		<foreach doc:name="For Each" doc:id="74243c0e-f84d-4d35-b7c2-3b11825a8e8f" collection="#[payload.attributes.path default []]">
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="514466dc-facf-4aa5-a14d-32fbd50174a2" variableName="currentPayload"/>
+			<file:move doc:name="Move" doc:id="5e022d6d-629a-4f8e-ba53-cfe721217c00" config-ref="File_Config1" sourcePath="#[vars.currentPayload]" targetPath='#[%dw 2.0
+import * from dw::core::Strings
+---
+vars.currentPayload default "" ++ "_zip" ++ "//"]' overwrite="true"/>
+			<set-variable value='#[%dw 2.0
+import * from dw::core::Strings
+var fileSeparator = if((vars.currentPayload default "") contains ("/")) "/" else "\\"
+---
+vars.currentPayload default "" ++ "_zip" ++ "//" ++ (substringAfterLast(vars.currentPayload default "",fileSeparator))]' doc:name="Set Variable" doc:id="931865d5-9e4a-4832-8677-bae561296a53" variableName="NewFolderLocation"/>
+			<file:list doc:name="List" doc:id="bf1ce959-023b-410d-b0c1-5ee29092d3e9" config-ref="File_Config" directoryPath='#[(vars.newFolderLocation default "")  ++ "//src//main//"]' recursive="true">
+				<file:matcher symLinks="EXCLUDE" directories="EXCLUDE"/>
+			</file:list>
+			<ee:transform doc:name="Transform Message" doc:id="f8fb2dbc-e726-4f8b-8617-6560ec633b22" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+((payload.attributes.path) joinBy (",")) as String]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<choice doc:name="Choice" doc:id="b088a9cc-93c8-4381-b062-1d1f770013e3" >
+			<when expression='#[payload contains ("deploy.properties")]'>
+				<logger level="INFO" doc:name="Logger" doc:id="25130faa-9cc5-4dde-96af-0608248154ef" message="config file exist"/>
+			</when>
+			<otherwise >
+				<choice doc:name="Choice" doc:id="b6f12f20-c55b-4b4c-a247-6ff8d73ea1ee" >
+					<when expression='#[(payload contains ("/src/main/mule")) or (payload contains ("\src\main\mule"))]'>
+						<file:list doc:name="List" doc:id="31b0cc1d-0974-426e-8d8d-37e5098863ec" config-ref="File_Config" directoryPath='#[(vars.newFolderLocation default "") ++ "//src//main//mule//"]'/>
+						<set-payload value='#[%dw 2.0
+input payload application/json
+output application/json
+---
+
+"items": (payload.attributes.fileName default []) joinBy ","]' doc:name="Set Payload" doc:id="6f5524e1-8f16-4203-bd69-9b0920ab100e" />
+						<file:write doc:name="Write" doc:id="2797fe77-44c7-438f-8661-a2a7fad07480" path='#[(vars.newFolderLocation default "") ++ "//src//main//mule//" ++ "mule-deploy.properties"]' config-ref="File_Config">
+								<file:content ><![CDATA[#[%dw 2.0
+output text/plain
+---
+"config.resources=" ++ payload.items]]]></file:content>
+							</file:write>
+					</when>
+					<otherwise >
+						<file:list doc:name="List" doc:id="9350156e-e05e-4c08-9780-fbef3765f7b8" config-ref="File_Config" directoryPath='#[(vars.newFolderLocation default "") ++ "//src//main//app//"]'/>
+						<set-payload value='#[%dw 2.0
+input payload application/json
+output application/json
+---
+
+"items": (payload.attributes.fileName default []) joinBy ","]' doc:name="Set Payload" doc:id="ab088b93-c033-4773-8b45-b5d09e9c2d97" />
+						<file:write doc:name="Write" doc:id="42b55510-1c92-4b82-9e58-2bd83b9dcc7e" config-ref="File_Config" path='#[(vars.newFolderLocation default "") ++ "//src//main//app//" ++ "mule-deploy.properties"]'>
+							<file:content ><![CDATA[#[%dw 2.0
+output text/plain
+---
+"config.resources=" ++ payload.items]]]></file:content>
+						</file:write>
+					</otherwise>
+				</choice>
+			</otherwise>
+		</choice>
+			<java:invoke-static method="main(java.lang.String,java.lang.String)" doc:name="Invoke static" doc:id="3b1960d9-5917-41fa-9ecb-b2ee10fa2f93" class="com.muledocgen.ZipFiles">
+			<java:args ><![CDATA[#[{
+	arg0 : (vars.currentPayload default "") ++ "_zip" ++ "//",
+	arg1 :  (vars.newFolderLocation default "") ++ ".zip"
+}]]]></java:args>
+		</java:invoke-static>
+			<file:delete doc:name="Delete" doc:id="a949ac55-2900-4f79-82c8-6afbeebf8297" config-ref="File_Config" path='#[(vars.newFolderLocation default "")]'/>
+			<java:invoke-static doc:name="Invoke static" doc:id="d95b984b-0402-4e8b-b869-89becc1383bb" class="com.muledocgen.FileSeparator" method="FileSeperatorMethod(java.lang.String,java.lang.String,java.lang.String)">
+			<java:args ><![CDATA[#[{
+	arg0 : (vars.currentPayload default "") ++ "_zip" ++ "//",
+	arg1 : "${gui.documentLocation}" ++ (vars.serviceName default "") ++ "//",
+	arg2 : "${gui.imageLocation}" ++ (vars.serviceName default "") ++ "//"
+	
+}]]]></java:args>
+		</java:invoke-static>
+		<ee:transform doc:name="Transform Message" doc:id="c338b5b1-fc9d-4a0e-858d-9139efbd6b38" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="zipLocation" ><![CDATA[%dw 2.0
+---
+(payload splitBy ",")[0]]]></ee:set-variable>
+				<ee:set-variable variableName="documentLocation" ><![CDATA[%dw 2.0
+---
+(payload splitBy ",")[1]]]></ee:set-variable>
+				<ee:set-variable variableName="imageLocation" ><![CDATA[%dw 2.0
+---
+(payload splitBy ",")[2]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="b3a36376-cbd8-49ce-999f-a53a8ffffbfc" config-ref="HTTP_Request_configuration1" path="${gui.reviewerCodePath}" responseTimeout="300000">
+			<http:query-params ><![CDATA[#[output application/java
+---
+{
+	"imagePath" : vars.imageLocation,
+	"serviceName" : vars.serviceName,
+	"documentPath" : vars.documentLocation,
+	"directoryPath" : vars.zipLocation
+}]]]></http:query-params>
+		</http:request>
+		</foreach>
+		<file:list doc:name="List" doc:id="8ea7a887-47ea-47ec-ba17-9128074439b4" config-ref="File_Config" directoryPath='#["${gui.documentLocation}" ++ (vars.serviceName default "") ++ "//"]'/>
+		<choice doc:name="Choice" doc:id="4490ef20-cd40-40f9-b62b-9e202eb11618" >
+			<when expression="#[sizeOf(payload) &gt; 1]">
+				<ee:transform doc:name="Transform Message" doc:id="cbd034fd-e59a-40f0-91e4-4f2d8d60cc5e">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+
+output application/java
+
+---
+
+{
+
+(payload map {
+
+($.attributes.fileName): $.payload
+
+})
+
+}
+
+ ]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+				<compression:archive doc:name="Archive" doc:id="98f54601-caa5-4238-b72e-f25350d3442e">
+			<compression:archiver>
+				<compression:zip-archiver />
+			</compression:archiver>
+		</compression:archive>
+				<file:write doc:name="Write" doc:id="133f66fb-aecb-4236-94e0-9f3925701440" config-ref="File_Config" path='#[%dw 2.0
+import * from dw::core::Strings
+---
+"${gui.documentLocation}" ++ vars.serviceName ++ "//" ++ vars.serviceName ++".zip"]'>
+		</file:write>
+			</when>
+			<otherwise >
+				<logger level="INFO" doc:name="Logger" doc:id="6a0fc2b5-2b52-4fd9-9eb7-25e05c484829" message="Single Document exists"/>
+			</otherwise>
+		</choice>
+		<parse-template doc:name="Parse Template" doc:id="d6b6e9df-4900-4019-bd57-417d41992a5c" location="web\generate.html"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c794500a-31bf-4d77-a069-941ce3acffbe" >
+				<logger level="INFO" doc:name="Logger" doc:id="d64be7b6-d932-4f7f-8fe0-5cd0baf739f6" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="f26950c0-ec04-49f9-85f9-2dddac019340">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_description" ><![CDATA[%dw 2.0
+output application/java
+---
+"${error_description}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="64f55d61-9f86-4f3e-81e7-8a838fd03235" location="web\error_Review.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="FileExtract" doc:id="9ea68983-1d85-4dfd-b13b-10192dbce4d2" >
+		<foreach doc:name="For Each" doc:id="64cbf2aa-bab9-45a1-a592-f87d22193e4c" collection='#[payload default []]'>
+			<try doc:name="Try" doc:id="f82b17d3-65a6-4d68-9f2a-bc6cc4059615" >
+				<choice doc:name="Choice" doc:id="6ed51eef-9098-4901-aa22-c101e92c6097" >
+					<when expression="#[%dw 2.0
+import * from dw::core::Strings
+
+---
+(contains((substringAfterLast(payload.key,'/')) default &quot; &quot;,&quot;.&quot;)) or (contains((substringAfterLast(payload.key,'\\')) default &quot; &quot;,&quot;.&quot;))]">
+						<file:write doc:name="Write" doc:id="6408ec31-bde7-482e-9199-af3082ff0877" config-ref="File_Config" path='#[if(vars.fileType=="code") ("${gui.inputLocation}" ++ (vars.serviceName default "") ++ "//" ++ (payload.key default "")) else ("${gui.imageLocation}" ++ (payload.key default ""))]'>
+							<file:content><![CDATA[#[payload.value]]]></file:content>
+						</file:write>
+					</when>
+					<otherwise>
+						<choice doc:name="Choice" doc:id="1bc59885-9f6b-4af5-a869-86aaf1339647" >
+							<when expression='#[(payload.key contains ("/")) or (payload.key contains ("\\"))]'>
+								<file:create-directory doc:name="Create directory" doc:id="ff3473d3-e05f-4de0-8f36-f6d996830361" config-ref="File_Config" directoryPath='#[if(vars.fileType=="code") ("${gui.inputLocation}" ++ (vars.serviceName default "") ++ "//" ++ (payload.key default "")) else ("${gui.imageLocation}" ++ (payload.key default ""))]' />
+							</when>
+							<otherwise >
+								<file:write doc:name="Write" doc:id="73713c79-4d99-4c20-be10-e244d809a27b" config-ref="File_Config" path='#[if(vars.fileType=="code") ("${gui.inputLocation}" ++ (vars.serviceName default "")  ++ "//" ++ (payload.key default "")) else ("${gui.imageLocation}" ++ (payload.key default ""))]'>
+							<file:content><![CDATA[#[payload.value]]]></file:content>
+						</file:write>
+							</otherwise>
+						</choice>
+					</otherwise>
+				</choice>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="235e29df-b35e-4e9c-b146-94a689c39953" >
+						<logger level="INFO" doc:name="Logger" doc:id="b1cc4f60-9e5f-4735-9f28-852a1ee6fc00" message="on error"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		</foreach>
+	</flow>
+	<flow name="Cleanup" doc:id="18076f2f-7ce6-4cd0-8c90-b5fa1912911b" >
+		<set-variable value="${gui.apphome}" doc:name="Set Variable" doc:id="e2bad557-7839-4e69-a8fc-4e6d0900d1ae" variableName="cleanupPath"/>
+		<file:list doc:name="List" doc:id="9fa4a23e-2d59-4a7e-9cc1-859e8ce86c68" directoryPath="#[vars.cleanupPath]" config-ref="File_Config" recursive="true">
+			<file:matcher regularFiles="EXCLUDE" symLinks="EXCLUDE"/>
+		</file:list>
+		<ee:transform doc:name="Transform Message" doc:id="24a31eac-f728-44e2-b25a-c55ff7aa7da7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.attributes.path]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="1755ff37-c385-4a4a-b570-b0a3153d4972" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+---
+payload reduce ($$ ++ $)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="08c5bac2-ef2e-4ec8-a588-d997ecd5cfc7">
+			<when expression='#[((vars.ProcessName == "WelcomePage") and ((payload default "") contains ("Document")) and ((payload default "") contains ("Images"))) or (vars.cleanupTrigger == "cleanup")]'>
+				<choice doc:name="Choice" doc:id="659be7ea-66ab-4849-90ba-0860d4ff7278" >
+					<when expression='#[sizeOf(vars.serviceName default "") &gt; 0]'>
+						<file:delete doc:name="Delete" doc:id="d531c2ab-b3d2-45f1-93b7-b0dabd22e12f" config-ref="File_Config" path='#["${gui.documentLocation}" ++ (vars.serviceName default "")]'/>
+						<file:delete doc:name="Delete" doc:id="3ccba9f0-e17c-45dc-8a34-0f9e7b405b04" config-ref="File_Config" path='#["${gui.imageLocation}" ++ "img"]'/>
+					</when>
+					<otherwise >
+						<logger level="INFO" doc:name="Logger" doc:id="f2fad8b5-29ce-46e5-9caa-eb188d295bab" message="Workspace is clean"/>
+					</otherwise>
+				</choice>
+			</when>
+			<when expression='#[vars.cleanupTriger == "workspacecleanup"]'>
+				<file:list doc:name="List" doc:id="834a00e7-cff0-4ca2-b05d-727112425d50" config-ref="File_Config" directoryPath="${gui.workingdirectory}"/>
+			</when>
+			<when expression='#[payload contains ("${gui.inputDirectory.name}")]'>
+				<file:list doc:name="List" doc:id="0893ee42-7692-4b4b-986a-bd7bc3a282ce" config-ref="File_Config" directoryPath="${gui.inputLocation}"/>
+				<choice doc:name="Choice" doc:id="951fe89a-1064-49fc-bb0e-fdb5f2ea7b80" >
+					<when expression='#[(payload.attributes.fileName default "") contains (vars.serviceName default "")]'>
+						<file:delete doc:name="Delete" doc:id="58e91c7c-718d-4127-a54f-2977c60f29ec" config-ref="File_Config" path='#["${gui.inputLocation}" ++ vars.serviceName default ""]' />
+					</when>
+					<otherwise >
+						<logger level="INFO" doc:name="Logger" doc:id="a72e6b08-47ae-4bca-9c72-3caf61917852" message="Code has been deleted already"/>
+					</otherwise>
+				</choice>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="d4ae64e3-b6a9-4361-9d18-70b1fbe2e041" message="workspace is clean"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="5755bcc8-2e81-4a16-bdfb-cf25cf02549f" >
+				<logger level="INFO" doc:name="Logger" doc:id="e30ada52-5e2d-44f0-8801-3c32cc6865a8" message="Folder not exist"/>
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="WelcomePage" doc:id="91393e32-4c27-4403-83fc-2d4f60326c5b" >
+		<http:listener doc:name="Listener" doc:id="c60bffa5-8f0f-4dd8-98eb-78d3709a4165" path="${welcome.page}" config-ref="HTTP_Listener_config1">
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="44775063-2cd3-41f2-afeb-7c7ab89e7d9d" message="#[message.attributes.requestUri]" />
+		<ee:transform doc:name="Transform Message" doc:id="f8582e9e-a733-476e-b7d9-efa29243c033" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="welcome_page_title" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="welcome_page_header" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="welcome_page_background_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="files_supported" ><![CDATA[%dw 2.0
+output application/java
+---
+"${welcome_page_files_supported}"]]></ee:set-variable>
+				<ee:set-variable variableName="version_supported" ><![CDATA[%dw 2.0
+output application/java
+---
+"${version_supported}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="ProcessName" ><![CDATA[%dw 2.0
+output application/java
+---
+"WelcomePage"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="serviceName" ><![CDATA[if(sizeOf(attributes.queryParams.serviceName default "")>0) (attributes.queryParams.serviceName default "") else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="b2e4864a-41e2-4ccd-b5a9-2b0eaceb6da6" name="Cleanup"/>
+		<parse-template doc:name="Parse Template" doc:id="8bcca9f4-8071-4560-84c6-1b3ea73756ac" location="web\welcome.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="d263601a-0041-4751-8abf-dcaced5404fb" >
+				<logger level="INFO" doc:name="Logger" doc:id="dfdd59cd-a503-4f7d-94a5-14af4d171ec3" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="59cbff58-b75a-4359-a082-120d5d1080a8">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="94e9a658-8abb-473a-b263-601787b686a8" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Send-Document-Over-Email" doc:id="2997ffbf-4f2d-4e23-a98e-d780cd1091ed" >
+		<http:listener doc:name="SendEmail" doc:id="65477c8a-e7a2-4d70-82be-c2e15435e634" path="${gui.email}" allowedMethods="GET" config-ref="HTTP_Listener_config1"/>
+		<ee:transform doc:name="Transform Message" doc:id="3ef0d094-dd36-4561-b1e3-738c9248db2d">
+			<ee:message>
+				<ee:set-payload><![CDATA[payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="email_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${email_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo"><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_alternate_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_alternate_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${email_page_alternate_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_message"><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+				<ee:set-variable variableName="emailId" ><![CDATA[attributes.queryParams]]></ee:set-variable>
+				<ee:set-variable variableName="DocumentLocation" ><![CDATA["${gui.documentLocation}" ++ (attributes.uriParams.serviceName default "") ++ "//"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="serviceName" ><![CDATA[attributes.uriParams.serviceName default ""]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="b8c42fbd-62bd-493c-8585-3cf237ec0899" >
+			<when expression='#[attributes.requestUri contains ".zip"]'>
+				<set-variable doc:name="Set Variable" doc:id="8266293a-928d-47d3-a71a-07073db19ca8" variableName="filename" value="#[attributes.uriParams.name]" />
+				<file:read doc:name="Read" doc:id="5ad82cbf-31ab-42ac-811b-364cf0f1a4e1" path='#[vars.DocumentLocation ++ vars.filename]' config-ref="File_Config" />
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="53c78f50-4868-47aa-9564-713aee072dbc"/>
+		<ee:transform doc:name="Transform Message" doc:id="0ac8588d-61d4-4487-9ac2-939d3307034a">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="email_details"><![CDATA[%dw 2.0
+output application/java
+---
+vars.emailId['email']]]></ee:set-variable>
+				<ee:set-variable variableName="attachment" ><![CDATA[payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<email:send doc:name="Send" doc:id="8cc5b6b2-fef7-4e75-af20-c0e7de776e79" subject='#[%dw 2.0
+import * from dw::core::Strings
+---
+"${email.subject}"++ substringBeforeLast(vars.filename,".zip")]' fromAddress="${smtp.from}" config-ref="Email_SMTP" toAddresses="#[vars.emailId['email'] default &quot; &quot; splitBy &quot;,&quot;]">
+					<email:body contentType="text/html" encoding="UTF-8">
+						<email:content><![CDATA[#[%dw 2.0
+output text/plain
+---
+"${email.body.multiproject}" ++ "${email.signature}"]]]></email:content>
+					</email:body>
+					<email:attachments><![CDATA[#[%dw 2.0
+output text/plain
+---
+{'$(vars.filename)' : vars.attachment }]]]></email:attachments>	
+												 		
+				</email:send>
+			</when>
+			<otherwise >
+				<file:list doc:name="List" doc:id="762efb65-d22d-4125-8668-255f68449eec" config-ref="File_Config" directoryPath="#[vars.DocumentLocation]" />
+				<set-variable doc:name="Set Variable" doc:id="ce5d50e1-2e0e-4ba2-852c-27778a5db1d2" variableName="filename" value="#[payload.attributes.fileName[0]]" />
+				<file:read doc:name="Read" doc:id="dd9126c1-e266-4446-a024-1cded216b5cf" path="#[vars.DocumentLocation ++ vars.filename]" config-ref="File_Config" outputMimeType="application/xlsx"/>
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="b6e697b8-91fe-429e-92cf-b46b8f4ad5fe"/>
+		<ee:transform doc:name="Transform Message" doc:id="b1b2ac6e-ba8d-490a-8ab5-a634945f3e52">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="email_details"><![CDATA[%dw 2.0
+output application/java
+---
+vars.emailId['email']]]></ee:set-variable>
+				<ee:set-variable variableName="attachment" ><![CDATA[payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<email:send doc:name="Send" doc:id="913038f5-253d-48de-9ef1-3e9453051a8e" subject='#[%dw 2.0
+import * from dw::core::Strings
+---
+"${email.subject}"++ substringBefore(vars.filename,"_Design")]' fromAddress="${smtp.from}" config-ref="Email_SMTP" toAddresses="#[vars.emailId['email'] default &quot; &quot; splitBy &quot;,&quot;]">
+					<email:body contentType="text/html" encoding="UTF-8">
+						<email:content><![CDATA[#[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+
+---
+"${email.body}" ++ "${email.signature}"]]]></email:content>
+					</email:body>
+					<email:attachments><![CDATA[#[%dw 2.0
+output text/plain
+---
+{'$(vars.filename)' : vars.attachment }]]]></email:attachments>	
+												 		
+				</email:send>
+			</otherwise>
+		</choice>
+		<logger level="INFO" doc:name="Logger" doc:id="24ed4e8e-67b7-4ad3-96ad-b4732210e245" message='"Email sent"' />
+		<parse-template doc:name="Parse Template" doc:id="a9a7d50d-b674-4a03-876f-180502c85bb9" location="web\emailSent.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="dfc7e316-d30f-418b-a991-b1c03439b9b1" >
+				<logger level="INFO" doc:name="Logger" doc:id="3811ac04-25d9-45c3-aa31-43c943ea380d" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="1771fa63-97d0-41a9-bab0-f4fac9459aa6">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="51614081-7f29-47ce-8ff6-cfa80b14ce0b" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Document-Download" doc:id="5be905af-7d3c-40a2-962a-79647b4f6786" >
+		<http:listener doc:name="Listener" doc:id="2a545e4d-8912-4417-a9e0-a818bf896575" path="${gui.document}" outputMimeType="application/xlsx" config-ref="HTTP_Listener_config1">
+		</http:listener>
+		<set-variable value='#["${gui.documentLocation}" ++ (attributes.uriParams.serviceName default "") ++ "//"]' doc:name="Set Variable" doc:id="ffd6be4f-3008-407e-b8be-22b915aa999f" variableName="DocumentDirectory"/>
+		<choice doc:name="Choice" doc:id="b20f2d0b-a497-423c-bbd0-844a58c377b9" >
+			<when expression='#[attributes.requestUri contains ".zip"]'>
+				<set-variable doc:name="Set Variable" doc:id="8d75911d-b02f-4651-ad50-8b76ea910d9f" variableName="filename" value="#[attributes.uriParams.name]" />
+				<file:read doc:name="Read" doc:id="41b3e3b1-85b1-4bda-b7fb-aff044be0261" path='#[vars.DocumentDirectory ++ vars.filename]' outputMimeType="application/xlsx" config-ref="File_Config" />
+			</when>
+			<otherwise >
+				<file:list doc:name="List" doc:id="659e60f8-9bac-4a81-9a25-797e3eb8f31a" config-ref="File_Config" directoryPath="#[vars.DocumentDirectory]" />
+				<set-variable doc:name="Set Variable" doc:id="37e19830-7ae5-4a67-ad97-56c594017b62" variableName="filename" value="#[payload.attributes.fileName[0]]" />
+				<file:read doc:name="Read" doc:id="5eb238c5-6255-40f0-ba53-67080bfcff9c" path="#[vars.DocumentDirectory ++ vars.filename]" outputMimeType="application/xlsx" config-ref="File_Config" />
+			</otherwise>
+		</choice>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="ef37e866-61e2-4eb5-aa4a-36dd47386e8b" mimeType="application/xlsx"/>
+		
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="9e8a0b6b-9f89-4470-aadb-7859666fa00e" >
+				<logger level="INFO" doc:name="Logger" doc:id="6936c2cc-ee6b-46cf-938b-5c61f8667086" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="91143da2-93f1-4ebb-86f3-b71974d8a679">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="d0aa8ee6-9889-4f84-b376-3fbdbd7691af" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Email-Details-Page" doc:id="a84f37ed-6909-4294-a48b-0d15963895e9" >
+		<http:listener doc:name="Listener" doc:id="839eee31-dede-4017-9b43-10cec61bcc6f" path="${gui.sendEmail}" config-ref="HTTP_Listener_config1"/>
+		<set-variable value="#[attributes.uriParams[0]]" doc:name="Set Variable" doc:id="a0fcce02-be53-4d92-b7a2-6390ed273005" variableName="serviceName"/>
+		<file:list doc:name="List" doc:id="1c2e068e-b3f5-44a1-be41-e23fc3454218" directoryPath='#["${gui.documentLocation}" ++ (vars.serviceName default "") ++ "//"]' config-ref="File_Config"/>
+		<choice doc:name="Choice" doc:id="1486e4fc-fc47-4bf1-a9c7-67ee3c6d3fb4">
+			<when expression='#[sizeOf(payload) &gt; 1]'>
+					<foreach doc:name="For Each" doc:id="353bc4aa-25a8-4313-967c-d3775b6dac46" collection="#[payload.attributes.fileName]">
+					<choice doc:name="Choice" doc:id="cd3bb819-5ea9-425a-8982-c65d98e4fab9" >
+						<when expression='#[payload contains ".zip"]'>
+							<set-variable value="#[payload]" doc:name="Set Variable" doc:id="fb837b9c-6823-48a9-a375-b0f8a145b7f4" variableName="filename" />
+						</when>
+						<otherwise >
+							<logger level="INFO" doc:name="Logger" doc:id="703d2559-0bd6-4204-9143-8bc0bfb2d1b6" message="Document file"/>
+						</otherwise>
+					</choice>
+				</foreach>
+			</when>
+			<otherwise >
+				<set-variable value="#[payload.attributes.fileName[0]]" doc:name="Set Variable" doc:id="c63f0133-3349-4263-b6ed-d5e2b85a4c27" variableName="filename" />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="e2ba34d2-a06c-4bea-a3fb-f427e0f8018d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="email_page_header" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_background_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_title" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="send_button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${send_button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="c4460a19-2783-4bae-9a42-1edc42ca2512" name="Cleanup" />
+		<parse-template doc:name="Parse Template" doc:id="36b2e7b6-0b72-4c23-809b-387ea4929948" location="web\email.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="7a2a693d-74f3-4db9-8f44-c787a48617ca" >
+				<logger level="INFO" doc:name="Logger" doc:id="b15656fe-3e4e-481a-a13a-f575c8a54451" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="c7ad80df-5af4-424e-9e52-294edb7eb478">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="b9b90c5a-b690-4072-8a34-677b5774d418" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Download-Success" doc:id="cb61e371-add6-47cb-b673-301a5254919e" >
+		<http:listener doc:name="Listener" doc:id="a4a46691-60df-49b0-b1a2-7ec181624a94" path="${gui.download}" config-ref="HTTP_Listener_config1"/>
+		<set-variable value="#[attributes.uriParams[0]]" doc:name="Set Variable" doc:id="363abb08-7e0a-4e09-a04d-0f4e6ba9d5f9" variableName="serviceName"/>
+		<file:list doc:name="List" doc:id="56cea81c-17bf-4d4f-8d40-416789f43cb1" directoryPath='#["${gui.documentLocation}" ++ (vars.serviceName default "") ++ "//"]' config-ref="File_Config"/>
+		<choice doc:name="Choice" doc:id="38d89cad-72fa-4854-8910-b10af8e3a0d1">
+			<when expression='#[sizeOf(payload) &gt; 1]'>
+					<foreach doc:name="For Each" doc:id="6e3ed735-d3f1-416e-ace5-367afc0f4023" collection="#[payload.attributes.fileName]">
+					<choice doc:name="Choice" doc:id="24fdb24a-8397-447d-ae40-59f52f56de92" >
+						<when expression='#[payload contains ".zip"]'>
+							<set-variable value="#[payload]" doc:name="Set Variable" doc:id="ef32ee01-24ed-4e1c-add8-e35e15a83d0e" variableName="filename" />
+						</when>
+						<otherwise >
+							<logger level="INFO" doc:name="Logger" doc:id="1de0104b-fa52-4cd9-b947-a639b28d0e9b" message="Document file"/>
+						</otherwise>
+					</choice>
+				</foreach>
+			</when>
+			<otherwise >
+				<set-variable value="#[payload.attributes.fileName[0]]" doc:name="Set Variable" doc:id="c794b3c6-b53c-4d8e-ba8f-6bc1d0bd400b" variableName="filename" />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="fd74d56c-ff8e-4d47-8aba-45c12177eab0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="success_page_title" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="success_page_header" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="success_page_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${success_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="success_page_background_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="success_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${success_page_alternate_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="c38ccb05-67c2-4b34-96d2-38c310054d23" name="Cleanup"/>
+		<parse-template doc:name="Parse Template" doc:id="1b38ecd7-e874-4a4a-a8e3-a3c31ca559f3" location="web\success.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b2cecba7-0151-41e7-96af-7d3cc638b72c" >
+				<logger level="INFO" doc:name="Logger" doc:id="2830e225-d91f-4412-afee-4c86f5255c81" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="a2a430f4-650a-48e1-970f-8b22a33d7627">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="5ed0acd3-6411-48d6-a204-fb15bf4ff688" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Workspace-Cleanup_Scheduler" doc:id="4cf36e44-366e-4c0b-856a-e80d682ba62b" >
+		<scheduler doc:name="Scheduler" doc:id="14bf84be-cb42-4f72-8f86-b8067d75563e" >
+			<scheduling-strategy >
+				<cron expression="0 0 0/12 1/1 * ? *" timeZone="server.timeZone"/>
+			</scheduling-strategy>
+		</scheduler>
+		<set-variable doc:name="Set Variable" doc:id="432a71e4-18af-4071-8c2c-a4eeadc213f2" variableName="cleanupTrigger" value="workspacecleanup"/>
+		<flow-ref doc:name="Flow Reference" doc:id="95e8447e-31a4-41f3-a612-2f01e405050d" name="Cleanup"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="f3082fd0-dbc6-4183-99ed-eba0750c284e" >
+				<logger level="INFO" doc:name="Logger" doc:id="fae56a7d-40ee-47f6-a931-21e1246ddc56" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="613ec2aa-1af7-4f7c-bd9c-31e8c55cdff4">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="cb3f9472-9ff2-43c2-a12d-55606279272b" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Workspace-Cleanup_Trigger" doc:id="2ace4f58-6a7f-4603-afb7-eae30c614368" >
+		<http:listener doc:name="Listener" doc:id="474b297e-129c-46ed-9c6d-3af774c9e5d1" config-ref="HTTP_Listener_config1" path="${gui.cleanup}"/>
+		<set-variable doc:name="Set Variable" doc:id="f1ecddcc-f4ec-4bd4-b6bf-fc81b918c673" variableName="cleanupTrigger" value="cleanup"/>
+		<ee:transform doc:name="Transform Message" doc:id="ca27750f-4fdb-4906-8646-9c2a4f76585d">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="cleanup_page_title" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_page_header" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_page_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_page_background_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="72a83b6d-ce86-406d-9ee8-7887b4d3f717" name="Cleanup"/>
+		<parse-template doc:name="Parse Template" doc:id="802b2f72-3da7-4e2f-99c6-5f47f7594267" location="web\cleanup.html"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="e7b86fa7-c53a-4ae1-a022-abda7ae5ece4" >
+				<logger level="INFO" doc:name="Logger" doc:id="96277f8e-686a-4bfc-95e0-f93edc07372e" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="51246aa6-b1ee-4e1f-bb5d-eeb1be59e27e">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="b624a004-c86e-4885-9930-b0fcc8dc8a77" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+</mule>

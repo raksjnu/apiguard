@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BWSharedResource xmlns:pfx="http://www.tibco.com/schemas/tibco2mulePOC/Raks/Extracter/schema/Schema.xsd" xmlns:pfx2="http://www.tibco.com/xmlns/repo/types/2002" xmlns:pfx3="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/GVDetails.xsd">
+    <import namespace="http://www.tibco.com/xmlns/repo/types/2002" schemaLocation="/Raks/Extracter/schema/Schema1.xsd"/>
+    <import namespace="http://www.tibco.com/schemas/tibco2mulePOC/Raks/Extracter/schema/Schema.xsd" schemaLocation="/Raks/Extracter/schema/Schema.xsd"/>
+    <import namespace="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/GVDetails.xsd" schemaLocation="/Resources/Schema/Tibco/GVDetails.xsd"/>
+    <name>Data Format</name>
+    <resourceType>ae.shared.ParseSharedResource</resourceType>
+    <config xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <FormatType>Delimiter separated</FormatType>
+        <ColumnSeparator>,</ColumnSeparator>
+        <ColSeparatorRule>Treat all characters as entered as a single column separator string</ColSeparatorRule>
+        <LineSeparator>&#xD;
+</LineSeparator>
+        <FillCharacter>Space</FillCharacter>
+        <LineLength>2</LineLength>
+        <DataFormat ref="pfx3:globalVariable"/>
+    </config>
+</BWSharedResource>

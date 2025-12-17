@@ -1,0 +1,13 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>Tib2MuleActivity</name>
+			<value>MapperActivity|transform-message,FileReadActivity~FileCreateActivity~FileWriteActivity~FileRemoveActivity|File,AssignActivity|variable-transformer,WriteToLogActivity|logger,GenerateErrorActivity|NULL,JavaActivity|custom-transformer~component,JDBCQueryActivity~JDBCUpdateActivity|generic-config,HTTPEventSource|listener-config</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719718827</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

@@ -1,0 +1,332 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/pe/DeployedVarsType" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions">
+    <pd:name>Processes/SubProcesses/ReplaceNamespace.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="root">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="MuleString" type="xsd:string"/>
+                    <xsd:element name="ProjectLocation" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>27</pd:startX>
+    <pd:startY>93</pd:startY>
+    <pd:returnBindings>
+        <root>
+            <FinalMuleString>
+                <xsl:value-of select="tib:concat-sequence($finalStr/AccumulatedOutput/root)"/>
+            </FinalMuleString>
+        </root>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType>
+        <xsd:element name="root">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element name="FinalMuleString" type="xsd:string"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:endType>
+    <pd:endX>681</pd:endX>
+    <pd:endY>88</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1580891642173</pd:targetNamespace>
+    <pd:activity name="Map Data">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>147</pd:x>
+        <pd:y>92</pd:y>
+        <config>
+            <element>
+                <xsd:element name="Lines">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="Line" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <Lines>
+                <xsl:for-each xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="tib:tokenize($Start/root/MuleString, &quot;~&quot;)">
+                    <Line>
+                        <xsl:value-of select="current()"/>
+                    </Line>
+                </xsl:for-each>
+            </Lines>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>239</pd:x>
+        <pd:y>22</pd:y>
+        <pd:width>352</pd:width>
+        <pd:height>122</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$Map-Data/Lines/Line</pd:over>
+            <pd:iterationElementSlot>itrLines</pd:iterationElementSlot>
+            <pd:indexSlot>i</pd:indexSlot>
+            <pd:outSlot>finalStr</pd:outSlot>
+            <pd:activityOutputName>Map-Data-1</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>removingNamespace</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Map-Data-1</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>removingNamespace</pd:from>
+            <pd:to>Map-Data-1</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="removingNamespace">
+            <pd:type>com.tibco.plugin.java.JavaActivity</pd:type>
+            <pd:resourceType>ae.javapalette.javaActivity</pd:resourceType>
+            <pd:x>338</pd:x>
+            <pd:y>90</pd:y>
+            <config>
+                <fullsource>package Processes.SubProcesses.ReplaceNamespace;
+import java.util.*;
+import java.io.*;
+public class ReplaceNamespaceremovingNamespace{
+/****** START SET/GET METHOD, DO NOT MODIFY *****/
+	protected String in_var_1 = "";
+	protected String out_var_1 = "";
+	public String getin_var_1() {
+		return in_var_1;
+	}
+	public void setin_var_1(String val) {
+		in_var_1 = val;
+	}
+	public String getout_var_1() {
+		return out_var_1;
+	}
+	public void setout_var_1(String val) {
+		out_var_1 = val;
+	}
+/****** END SET/GET METHOD, DO NOT MODIFY *****/
+	public ReplaceNamespaceremovingNamespace() {
+	}
+	public void invoke() throws Exception {
+/* Available Variables: DO NOT MODIFY
+	In  : String in_var_1
+	Out : String out_var_1
+* Available Variables: DO NOT MODIFY *****/
+if(in_var_1.contains("schema/mule/http")){
+out_var_1=in_var_1.replaceAll("ns1:","http:");
+}
+else if(in_var_1.contains("schema/mule/file")){
+out_var_1=in_var_1.replaceAll("ns1:","file:");
+}
+else if(in_var_1.contains("schema/mule/ee/core")){
+out_var_1=in_var_1.replaceAll("ns1:","ee:");
+}
+else if(in_var_1.contains("schema/mule/cxf")){
+out_var_1=in_var_1.replaceAll("ns1:","cxf:");
+}
+else if(in_var_1.contains("schema/mule/sap")){
+out_var_1=in_var_1.replaceAll("ns1:","sap:");
+}
+else if(in_var_1.contains("schema/mule/jms")){
+out_var_1=in_var_1.replaceAll("ns1:","jms:");
+}
+else if(in_var_1.contains("schema/mule/db")){
+out_var_1=in_var_1.replaceAll("ns1:","db:");
+}
+else if(in_var_1.contains("ns0:logger")){
+out_var_1=in_var_1.replaceAll("ns0:logger","logger");
+}
+else if(in_var_1.contains("ns0:set-payload")){
+out_var_1=in_var_1.replaceAll("ns0:set-payload","set-payload");
+}
+else if(in_var_1.contains("ns0:flow-ref")){
+out_var_1=in_var_1.replaceAll("ns0:flow-ref","flow-ref");
+}
+else if(in_var_1.contains("schema/mule/wsc")){
+out_var_1=in_var_1.replaceAll("ns1:","wsc:");
+}
+else if(in_var_1.contains("schema/mule/ftp")){
+out_var_1=in_var_1.replaceAll("ns1:","ftp:");
+}
+else if(in_var_1.contains("schema/mule/core")){
+out_var_1=in_var_1.replaceAll("ns0:","");
+}
+
+else
+{
+out_var_1=in_var_1.replaceAll("ns1:","");
+}
+
+
+}
+}
+</fullsource>
+                <fileName>ReplaceNamespaceremovingNamespace</fileName>
+                <packageName>Processes.SubProcesses.ReplaceNamespace</packageName>
+                <inputData>
+                    <row>
+                        <fieldName>in_var_1</fieldName>
+                        <fieldType>string</fieldType>
+                        <fieldRequired>optional</fieldRequired>
+                    </row>
+                </inputData>
+                <outputData>
+                    <row>
+                        <fieldName>out_var_1</fieldName>
+                        <fieldType>string</fieldType>
+                        <fieldRequired>optional</fieldRequired>
+                    </row>
+                </outputData>
+                <byteCode>
+                    <class>
+                        <name>ReplaceNamespaceremovingNamespace</name>
+                        <byteCode>yv66vgAAADQAYQkAIgA3CQAiADgKACMAOQgAOggAOwoAPAA9CAA+CAA/CgA8AEAIAEEIAEIIAEMIAEQIAEUIAEYIAEcIAEgIAEkIAEoIAEsIAEwIAE0IAE4IAE8IAFAIAFEIAFIIAFMIAFQIAFUIAFYIAFcIAFgHAFkHAFoBAAhpbl92YXJfMQEAEkxqYXZhL2xhbmcvU3RyaW5nOwEACW91dF92YXJfMQEAC2dldGluX3Zhcl8xAQAUKClMamF2YS9sYW5nL1N0cmluZzsBAARDb2RlAQAPTGluZU51bWJlclRhYmxlAQALc2V0aW5fdmFyXzEBABUoTGphdmEvbGFuZy9TdHJpbmc7KVYBAAxnZXRvdXRfdmFyXzEBAAxzZXRvdXRfdmFyXzEBAAY8aW5pdD4BAAMoKVYBAAZpbnZva2UBAA1TdGFja01hcFRhYmxlAQAKRXhjZXB0aW9ucwcAWwEAClNvdXJjZUZpbGUBACZSZXBsYWNlTmFtZXNwYWNlcmVtb3ZpbmdOYW1lc3BhY2UuamF2YQwAJAAlDAAmACUMAC8AMAEAAAEAEHNjaGVtYS9tdWxlL2h0dHAHAFwMAF0AXgEABG5zMToBAAVodHRwOgwAXwBgAQAQc2NoZW1hL211bGUvZmlsZQEABWZpbGU6AQATc2NoZW1hL211bGUvZWUvY29yZQEAA2VlOgEAD3NjaGVtYS9tdWxlL2N4ZgEABGN4ZjoBAA9zY2hlbWEvbXVsZS9zYXABAARzYXA6AQAPc2NoZW1hL211bGUvam1zAQAEam1zOgEADnNjaGVtYS9tdWxlL2RiAQADZGI6AQAKbnMwOmxvZ2dlcgEABmxvZ2dlcgEAD25zMDpzZXQtcGF5bG9hZAEAC3NldC1wYXlsb2FkAQAMbnMwOmZsb3ctcmVmAQAIZmxvdy1yZWYBAA9zY2hlbWEvbXVsZS93c2MBAAR3c2M6AQAPc2NoZW1hL211bGUvZnRwAQAEZnRwOgEAEHNjaGVtYS9tdWxlL2NvcmUBAARuczA6AQBJUHJvY2Vzc2VzL1N1YlByb2Nlc3Nlcy9SZXBsYWNlTmFtZXNwYWNlL1JlcGxhY2VOYW1lc3BhY2VyZW1vdmluZ05hbWVzcGFjZQEAEGphdmEvbGFuZy9PYmplY3QBABNqYXZhL2xhbmcvRXhjZXB0aW9uAQAQamF2YS9sYW5nL1N0cmluZwEACGNvbnRhaW5zAQAbKExqYXZhL2xhbmcvQ2hhclNlcXVlbmNlOylaAQAKcmVwbGFjZUFsbAEAOChMamF2YS9sYW5nL1N0cmluZztMamF2YS9sYW5nL1N0cmluZzspTGphdmEvbGFuZy9TdHJpbmc7ACEAIgAjAAAAAgAEACQAJQAAAAQAJgAlAAAABgABACcAKAABACkAAAAdAAEAAQAAAAUqtAABsAAAAAEAKgAAAAYAAQAAAAkAAQArACwAAQApAAAAIgACAAIAAAAGKiu1AAGxAAAAAQAqAAAACgACAAAADAAFAA0AAQAtACgAAQApAAAAHQABAAEAAAAFKrQAArAAAAABACoAAAAGAAEAAAAPAAEALgAsAAEAKQAAACIAAgACAAAABiortQACsQAAAAEAKgAAAAoAAgAAABIABQATAAEALwAwAAEAKQAAADUAAgABAAAAESq3AAMqEgS1AAEqEgS1AAKxAAAAAQAqAAAAEgAEAAAAFQAEAAYACgAHABAAFgABADEAMAACACkAAAIwAAQAAQAAAZYqtAABEgW2AAaZABUqKrQAARIHEgi2AAm1AAKnAXoqtAABEgq2AAaZABUqKrQAARIHEgu2AAm1AAKnAVwqtAABEgy2AAaZABUqKrQAARIHEg22AAm1AAKnAT4qtAABEg62AAaZABUqKrQAARIHEg+2AAm1AAKnASAqtAABEhC2AAaZABUqKrQAARIHEhG2AAm1AAKnAQIqtAABEhK2AAaZABUqKrQAARIHEhO2AAm1AAKnAOQqtAABEhS2AAaZABUqKrQAARIHEhW2AAm1AAKnAMYqtAABEha2AAaZABUqKrQAARIWEhe2AAm1AAKnAKgqtAABEhi2AAaZABUqKrQAARIYEhm2AAm1AAKnAIoqtAABEhq2AAaZABUqKrQAARIaEhu2AAm1AAKnAGwqtAABEhy2AAaZABUqKrQAARIHEh22AAm1AAKnAE4qtAABEh62AAaZABUqKrQAARIHEh+2AAm1AAKnADAqtAABEiC2AAaZABUqKrQAARIhEgS2AAm1AAKnABIqKrQAARIHEgS2AAm1AAKxAAAAAgAqAAAAcgAcAAAAHAAMAB0AHgAfACoAIAA8ACIASAAjAFoAJQBmACYAeAAoAIQAKQCWACsAogAsALQALgDAAC8A0gAxAN4AMgDwADQA/AA1AQ4ANwEaADgBLAA6ATgAOwFKAD0BVgA+AWgAQAF0AEEBhgBGAZUASgAyAAAAEAAOHh0dHR0dHR0dHR0dHQ4AMwAAAAQAAQA0AAEANQAAAAIANg==</byteCode>
+                    </class>
+                </byteCode>
+            </config>
+            <pd:inputBindings>
+                <javaCodeActivityInput>
+                    <in_var_1>
+                        <xsl:value-of select="$itrLines/Line"/>
+                    </in_var_1>
+                </javaCodeActivityInput>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Map-Data-1">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>480</pd:x>
+            <pd:y>90</pd:y>
+            <config>
+                <element>
+                    <xsd:element name="root">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="param" type="xsd:string"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </element>
+            </config>
+            <pd:inputBindings>
+                <root>
+                    <xsl:choose>
+                        <xsl:when test="starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;&lt;jms:&quot;) or starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;&lt;wsc:&quot;) or starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, '&lt;http:') or  starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;&lt;ee:transform&quot;)">
+                            <param>
+                                <xsl:value-of select="if((substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'type=&quot;'), '&quot;')=&quot;RestAdapterActivity&quot;) and (not(contains($removingNamespace/javaCodeActivityOutput/out_var_1,'ee:transform'))))&#xA;then concat('&lt;flow-ref doc:name=&quot;Flow Reference&quot; name=&quot;',substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'Binding process='),'/>'),'&quot;/>')&#xA;else if(((substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'type=&quot;'), '&quot;')=&quot;RestActivity&quot;) or (substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'config-ref=&quot;'), '&quot;')=&quot;HTTP_Request_configuration&quot;))  and (not(contains($removingNamespace/javaCodeActivityOutput/out_var_1,'ee:transform')))) then&#xA;concat('&lt;http:request method=&quot;GET&quot; doc:name=&quot;Request&quot; config-ref=&quot;HTTP_Request_configuration&quot;',' path=&quot;',(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'value=&quot;'),'&quot;/>')),' &quot;/>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'value=&quot;'), '&quot;')=&quot;serviceagent&quot; or substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'value=&quot;'), '&quot;')=&quot;SOAPEventSource&quot;) then &#xA;concat( $removingNamespace/javaCodeActivityOutput/out_var_1,'&lt;apikit-soap:router doc:name=&quot;SOAP Router&quot; config-ref=&quot;APIKit for SOAP Configuration&quot; soapVersion=&quot;SOAP12&quot; wsdlLocation=&quot;',$Start/root/ProjectLocation,'Output\Projects\src\main\wsdl\','&quot;/>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'consumer-type=&quot;'), '&quot;')=&quot;Queue consumer&quot;)&#xA;then concat( substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'consumer-type'),'&lt;jms:consumer-type >&lt;jms:queue-consumer />&lt;/jms:consumer-type>',substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'Queue consumer&quot;'),'&lt;/jms:listener>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'consumer-type=&quot;'), '&quot;')=&quot;Topic consumer&quot;)&#xA;then concat( substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'consumer-type'),'&lt;jms:consumer-type >&lt;jms:topic-consumer />&#x9;&lt;/jms:consumer-type>',substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'Topic consumer&quot;'),'&lt;/jms:listener>')&#xA;else&#xA; $removingNamespace/javaCodeActivityOutput/out_var_1"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, '&lt;db:select')">
+                            <param>
+                                <xsl:value-of select="if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'type=&quot;'), '&quot;')=&quot;JDBCUpdateActivity&quot;)&#xA;then concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'),'update ',substring-after(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, '/db:select>'),'&lt;db:select'), '/db:update>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'type=&quot;'), '&quot;')=&quot;JDBCCallActivity&quot;)&#xA;then concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'),'stored-procedure config-ref=&quot;Database_Config&quot; ',tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'), '/db:'),'/db:stored-procedure>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'type=&quot;'), '&quot;')=&quot;JDBCGeneralActivity&quot;)&#xA;then concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'),'execute-ddl config-ref=&quot;Database_Config&quot; ',tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'), '/db:'),'/db:execute-ddl>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'type=&quot;'), '&quot;')='AESubscriberActivity' )&#xA;then  concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'),'listener doc:name=&quot;On Table Row&quot; config-ref=&quot;Database_Config&quot; table=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot;',tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'), '/db:'),'&quot;>&lt;scheduling-strategy>&lt;cron expression=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot; />&lt;/scheduling-strategy>','&lt;/db:listener>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'type=&quot;'), '&quot;')='AEPublisherActivity' )&#xA;then  concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'),'update  config-ref=&quot;Database_Config&quot; ',tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'), '/db:'),'config-ref=&quot;Database_Config&quot; ','&lt;/db:update>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'type=&quot;'), '&quot;')='AERPCRequestReplyActivity' )&#xA;then  concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'),'execute-script doc:name=&quot;Execute script&quot; config-ref=&quot;Database_Config&quot;  ',tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'select'), '/db:'),'config-ref=&quot;Database_Config&quot; ','&lt;/db:execute-script>')&#xA;else&#xA;$removingNamespace/javaCodeActivityOutput/out_var_1"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;&lt;logger&quot;)">
+                            <param>
+                                <xsl:value-of select="concat(substring-before(concat(&#xA;substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,'xmlns:ns0'),&#xA;substring-after(tib:substring-after-last($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;mule&quot;), '&quot;')&#xA;), &quot;posX&quot;),&quot;/>&quot;)"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;&lt;set-payload&quot;)">
+                            <param>
+                                <xsl:value-of select="concat(&#xA;substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,'xmlns:ns0'),&#xA;substring-after(tib:substring-after-last($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;mule&quot;), '&quot;')&#xA;)"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;&lt;flow-ref&quot;)">
+                            <param>
+                                <xsl:value-of select="concat(substring-before(concat(substring-before(concat(&#xA;tib:tokenize($removingNamespace/javaCodeActivityOutput/out_var_1,&quot; &quot;)[1],&quot; &quot;,&#xA;tib:tokenize($removingNamespace/javaCodeActivityOutput/out_var_1,&quot; &quot;)[4],&quot; &quot;,&#xA;tib:tokenize($removingNamespace/javaCodeActivityOutput/out_var_1,&quot; &quot;)[5],&quot; />&quot;&#xA;), &quot;ns1:&quot;),&quot; doc:&quot;,&#xA;substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;ns1:&quot;)&#xA;), &quot;posX&quot;),&quot; />&quot;)"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;&lt;file&quot;)">
+                            <param>
+                                <xsl:value-of select="if(starts-with($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;&lt;file:inbound-endpoint&quot;)) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;inbound-endpoint&quot;),'listener directory=&quot;/&quot; config-ref=&quot;File_Config&quot; path=&quot;/&quot;',&quot; &quot;,substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;inbound-endpoint&quot;),'&lt;/file'),'&lt;scheduling-strategy >&lt;cron expression=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot; />&lt;/scheduling-strategy>&lt;/file:listener>')&#xA;else if(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), '&quot;/')=&quot;ListFilesActivity&quot;) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;outbound-endpoint&quot;),'list config-ref=&quot;File_Config&quot; path=&quot;/&quot;',&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;outbound-endpoint&quot;))&#xA;else if(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), '&quot;/')=&quot;FileRemoveActivity&quot;) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;outbound-endpoint&quot;),'delete config-ref=&quot;File_Config&quot; path=&quot;/&quot;',&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;outbound-endpoint&quot;))&#xA;else if((tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), '&quot;/')='FileCreateActivity') or (tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), '&quot;/')='AEPublisherActivity')) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;outbound-endpoint&quot;),'write config-ref=&quot;File_Config&quot; path=&quot;/&quot;',&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;outbound-endpoint&quot;))&#xA;else&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;outbound-endpoint&quot;),lower-case(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;File'), 'Activity&quot;/')),&quot; &quot;,'config-ref=&quot;File_Config&quot; path=&quot;/&quot; ',substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;outbound-endpoint&quot;))"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="contains($removingNamespace/javaCodeActivityOutput/out_var_1, 'set-session-variable')">
+                            <param>
+                                <xsl:value-of select="concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;set-session-variable&quot;),&quot;set-variable&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;set-session-variable&quot;))"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="starts-with($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;&lt;ftp:&quot;)">
+                            <param>
+                                <xsl:value-of select="if(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;/>')='FTPGetActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;),'read path=&quot;/&quot; ',&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;))&#xA;else if(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;/>')='FTPDeleteFileActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;),'delete path=&quot;/&quot; ',&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;))&#xA;else if(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;/>')='FTPDirActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;),'list path=&quot;/&quot; ',&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;))&#xA;else if(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;/>')='FTPPutActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;),'write path=&quot;/&quot; ',&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;))&#xA;else if(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;/>')='FTPMakeRemoteDirActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;),'create-directory path=&quot;/&quot; ',&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;))&#xA;else if(tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;/>')='FTPRenameActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;),'rename path=&quot;/&quot; ',&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;FTPOutbound&quot;))&#xA;else&#xA;&quot;&quot;"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="contains($removingNamespace/javaCodeActivityOutput/out_var_1, 'generalActivities')">
+                            <param>
+                                <xsl:value-of select="if((tib:left(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), 16)=&quot;TimerEventSource&quot;)) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;generalActivities&quot;),&quot;scheduler&quot;,&quot; &quot;,substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;generalActivities&quot;), &quot;value=&quot;),&quot;>&lt;scheduling-strategy>&lt;fixed-frequency>&quot;,tib:left(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;StartTime>&quot;), 13),&quot;&lt;fixed-frequency/>&lt;/scheduling-strategy>&lt;/scheduler>&quot;)&#xA;else if(tib:left(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), 15)=&quot;MailEventSource&quot;) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;generalActivities&quot;),&quot;email:listener-pop3&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;generalActivities&quot;))&#xA;else if(tib:left(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), 15)=&quot;MailPubActivity&quot;) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;generalActivities&quot;),'email:send name=&quot;Send Mail&quot; type=&quot;MailPubActivity&quot; fromAddress=&quot;',substring-before(substring-after(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'from>'),'/from>'),'select='), '/>'),'&quot;  subject=&quot;',&#xA;substring-before(substring-after(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'subject>'),'/subject>'),'select='), '/>'),'&quot;>&lt;email:to-addresses >&lt;email:to-address value=&quot;',substring-before(substring-after(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, 'to>'),'/to>'),'select='), '/>')&#xA;,'&quot; />&lt;/email:to-addresses>&#x9;&lt;/email:send>')&#xA;else if(contains($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;OnStartupEventSource&quot;)) then&#xA;'&lt;scheduler doc:name=&quot;Scheduler&quot;>&lt;scheduling-strategy >&lt;fixed-frequency frequency=&quot;1&quot;/>&#x9;&lt;/scheduling-strategy>&lt;/scheduler>'&#xA;else&#xA;&quot;&quot;"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="contains($removingNamespace/javaCodeActivityOutput/out_var_1, 'javaConfig')">
+                            <param>
+                                <xsl:value-of select="if(tib:left(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), 12)=&quot;JavaActivity&quot;) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;javaConfig&quot;),'java:new  constructor=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot; class=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot; method=&quot;',substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'methodName>'), '/methodName>'),tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;javaConfig&quot;),'&quot;'),'&quot; >&lt;java:args >&lt;![CDATA[',substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;config>&quot;),'/config>'),']]>&lt;/java:args>&lt;/java:new>&lt;java:invoke doc:name=&quot;Invoke&quot; instance=&quot;#[payload]&quot; class=&quot;migration-default&quot; method=&quot;migration-default&quot;/>')&#xA;else if(tib:left(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), 18)=&quot;JavaMethodActivity&quot;) then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;javaConfig&quot;),&quot;java:invoke&quot;,tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;javaConfig&quot;),'&quot;'),'&quot; instance=&quot;',substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'JavaGlobalInstance>'), '&lt;/JavaGlobalInstance>'),'&quot; class=&quot;',substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'className>'), '&lt;/className>'),'&quot; method=&quot;',substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'methodName>'), '&lt;/methodName>'),'&quot;>&lt;java:args >&lt;![CDATA[',concat(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'methodParameter>'), '&lt;/methodParameter>'),substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'MethodParameters>'), '&lt;/MethodParameters>')),']]>&lt;/java:args>&lt;/java:invoke>')&#xA;else&#xA;&quot;&quot;"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="contains($removingNamespace/javaCodeActivityOutput/out_var_1, 'SFConfig')">
+                            <param>
+                                <xsl:value-of select="if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;')='SalesforceEventSourceActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;),&quot;salesforce:new-object-listener&quot;,&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;))&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;')='SalesforceQueryAllActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;),&quot;salesforce:query-all&quot;,&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;))&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;')='SalesforceCreateAllActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;),&quot;salesforce:create&quot;,&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;))&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;')='SalesforceUpdateAllActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;),&quot;salesforce:update&quot;,&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;))&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;')='SalesforceUpsertAllActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;),&quot;salesforce:upsert&quot;,&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;))&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;')='SalesforceRetrieveAllActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;),&quot;salesforce:retrieve&quot;,&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;))&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'),'&quot;')='SalesforceDeleteAllActivity') then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;),&quot;salesforce:delete&quot;,&quot;&quot;,&quot; &quot;,substring-after($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;SFConfig&quot;))&#xA;else&#xA;&quot;&quot;"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:when test="contains($removingNamespace/javaCodeActivityOutput/out_var_1, 'sap')">
+                            <param>
+                                <xsl:value-of select="if(starts-with($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;&lt;sap:inbound-endpoint&quot;))&#xA;then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'inbound-endpoint'),'document-listener',tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'inbound-endpoint'), '&quot;/>'),'config-ref=&quot;SAP_Config&quot; gatewayHost=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot; gatewayService=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot; programID=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot;/>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), '&quot;')='idoc')&#xA;then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'outbound-endpoint'),'send',tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'outbound-endpoint'), '&quot;/>'),'config-ref=&quot;SAP_Config&quot; key=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot;/>')&#xA;else if(substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'type=&quot;'), '&quot;')='function')&#xA;then&#xA;concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, 'outbound-endpoint'),'retrieve-idoc ',tib:substring-before-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'outbound-endpoint'), '&quot;/>'),'config-ref=&quot;SAP_Config&quot; key=&quot;',$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/MigrationDefaultValue,'&quot;/>')&#xA;else&#xA;''"/>
+                            </param>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <param>
+                                <xsl:value-of select="{--concat(substring-before($removingNamespace/javaCodeActivityOutput/out_var_1, &quot; &quot;),&quot; name&quot;,substring-before(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;name&quot;), &quot;posX&quot;),&quot;/>&quot;)--}&#xA;if(contains($removingNamespace/javaCodeActivityOutput/out_var_1,&quot;posX&quot;)) then&#xA;concat(substring-before(concat(&#xA;substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,'xmlns:ns0'),&#xA;substring-after(tib:substring-after-last(substring-after($removingNamespace/javaCodeActivityOutput/out_var_1,'xmlns:ns1'), &quot;mule&quot;), '&quot;')&#xA;), &quot;posX&quot;),&quot; />&quot;)&#xA;else&#xA;concat(&#xA;substring-before($removingNamespace/javaCodeActivityOutput/out_var_1,'xmlns:ns0'),&#xA;substring-after(tib:substring-after-last($removingNamespace/javaCodeActivityOutput/out_var_1, &quot;core&quot;), '&quot;')&#xA;)"/>
+                            </param>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </root>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Map Data</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Map Data</pd:from>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

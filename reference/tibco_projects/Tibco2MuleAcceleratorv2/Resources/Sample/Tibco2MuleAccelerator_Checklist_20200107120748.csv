@@ -1,0 +1,2 @@
+Checklist,Validation,Remarks,Process,Activity
+Check whether more than two mapper activity is used,YES,please try to use appropriate number of mapper in any given process. Currently there are 4 mapper activities,C:\temp\test\Tibco2MuleAccelerator\Processes\Main\TibcoProjectFolderReader.process,TibcoProcesses ; TibcoResources ; TibcoWsdl ; TibcoGVList

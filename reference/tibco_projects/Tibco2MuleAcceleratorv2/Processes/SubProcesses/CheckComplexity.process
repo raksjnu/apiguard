@@ -1,0 +1,1008 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pfx="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" xmlns:pfx2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd" xmlns:ns="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd" xmlns:pfx3="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns2="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/FileInfo.xsd" xmlns:ns1="http://www.tibco.com/pe/DeployedVarsType" xmlns:ns4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/NameValue.xsd" xmlns:ns3="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/GVInfo.xsd" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns5="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" xmlns:pd="http://xmlns.tibco.com/bw/process/2003">
+    <pd:name>Processes/SubProcesses/CheckComplexity.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType>
+        <xsd:element name="ProcessData">
+            <xsd:complexType>
+                <xsd:sequence>
+                    <xsd:element ref="pfx:root" minOccurs="0" maxOccurs="unbounded"/>
+                    <xsd:element name="MulePath" type="xsd:string" minOccurs="0"/>
+                    <xsd:element name="ProjectName" type="xsd:string" minOccurs="0"/>
+                </xsd:sequence>
+            </xsd:complexType>
+        </xsd:element>
+    </pd:startType>
+    <pd:startX>86</pd:startX>
+    <pd:startY>220</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>1862</pd:endX>
+    <pd:endY>276</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables>
+        <CallProcessIterate>
+            <xsd:element name="root">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="Count" type="xsd:string" minOccurs="0"/>
+                        <xsd:element name="MultiLevelCalledProcesses" type="xsd:string" minOccurs="0"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </CallProcessIterate>
+        <Count>
+            <xsd:element name="Count">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="Count" type="xsd:string" minOccurs="0"/>
+                        <xsd:element name="CounterChanged" type="xsd:string" minOccurs="0"/>
+                        <xsd:element name="HeaderFlag" type="xsd:string" minOccurs="0"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </Count>
+        <BackendCalls>
+            <xsd:element name="Data">
+                <xsd:complexType>
+                    <xsd:sequence>
+                        <xsd:element name="BackendCallCounter" type="xsd:string" minOccurs="0"/>
+                        <xsd:element name="BackendCalls" type="xsd:string" minOccurs="0"/>
+                        <xsd:element name="MapperCount" type="xsd:string" minOccurs="0"/>
+                        <xsd:element name="MapperName" type="xsd:string" minOccurs="0"/>
+                    </xsd:sequence>
+                </xsd:complexType>
+            </xsd:element>
+        </BackendCalls>
+    </pd:processVariables>
+    <pd:targetNamespace>http://xmlns.example.com/1609230967137</pd:targetNamespace>
+    <pd:activity name="Write File">
+        <pd:type>com.tibco.plugin.file.FileWriteActivity</pd:type>
+        <pd:resourceType>ae.activities.FileWriteActivity</pd:resourceType>
+        <pd:x>1776</pd:x>
+        <pd:y>276</pd:y>
+        <config>
+            <encoding>text</encoding>
+            <compressFile>None</compressFile>
+            <append>true</append>
+            <createMissingDirectories>true</createMissingDirectories>
+        </config>
+        <pd:inputBindings>
+            <pfx3:WriteActivityInputTextClass>
+                <fileName>
+                    <xsl:value-of select="concat(substring-before($Start/ProcessData/MulePath, 'MigrationOutput'), 'MigrationOutput', $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/migrationDetailFolder,&#xA;$Start/ProcessData/ProjectName, '_', $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/FileName,tib:format-dateTime('ddMMyyyyHHmmss', current-dateTime()) ,'.csv')"/>
+                </fileName>
+                <textContent>
+                    <xsl:value-of select="concat($_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/Header,&quot;&#xD;&#xA;&quot;, tib:concat-sequence($AccumulatedRowData/AccumulatedOutput/FinalRowData/FinalRowData/RowData))"/>
+                </textContent>
+            </pfx3:WriteActivityInputTextClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="Group (1)">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>172</pd:x>
+        <pd:y>51</pd:y>
+        <pd:width>749</pd:width>
+        <pd:height>311</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$Start/ProcessData/pfx:root</pd:over>
+            <pd:iterationElementSlot>CurrentRoot</pd:iterationElementSlot>
+            <pd:indexSlot>Index1</pd:indexSlot>
+            <pd:outSlot>FinalProcessData</pd:outSlot>
+            <pd:activityOutputName>Map-Data-1</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Group</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Map-Data-1</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>One Bend</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Map-Data-2</pd:from>
+            <pd:to>Map-Data-1</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Group</pd:from>
+            <pd:to>Map-Data-2</pd:to>
+            <pd:lineType>Multiple Bends</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Map-Data-2</pd:from>
+            <pd:to>Group (5)</pd:to>
+            <pd:xpathDescription>ServiceAgent</pd:xpathDescription>
+            <pd:lineType>One Bend</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>contains($CurrentData/pfx2:activity/pfx2:processName,'.serviceagent')</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Group (5)</pd:from>
+            <pd:to>Map-Data-1</pd:to>
+            <pd:lineType>One Bend</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:group name="Group">
+            <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+            <pd:resourceType>ae.process.group</pd:resourceType>
+            <pd:x>220</pd:x>
+            <pd:y>117</pd:y>
+            <pd:width>327</pd:width>
+            <pd:height>183</pd:height>
+            <pd:collapsedWidth>57</pd:collapsedWidth>
+            <pd:collapsedHeight>70</pd:collapsedHeight>
+            <pd:groupVariables/>
+            <pd:joinToggle>inherit</pd:joinToggle>
+            <config>
+                <pd:groupType>inputLoop</pd:groupType>
+                <pd:serializable>false</pd:serializable>
+                <pd:over>$CurrentRoot/pfx:root/pfx2:ProcessInfo/pfx2:activity</pd:over>
+                <pd:iterationElementSlot>CurrentData</pd:iterationElementSlot>
+                <pd:indexSlot>index2</pd:indexSlot>
+                <pd:outSlot>FinalActivityData</pd:outSlot>
+                <pd:activityOutputName>Map Data</pd:activityOutputName>
+                <pd:accumulateOutput>true</pd:accumulateOutput>
+            </config>
+            <pd:inputBindings/>
+            <pd:expanded>true</pd:expanded>
+            <pd:transition>
+                <pd:from>start</pd:from>
+                <pd:to>BackendCallsCounter</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:transition>
+                <pd:from>Map Data</pd:from>
+                <pd:to>end</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:transition>
+                <pd:from>BackendCallsCounter</pd:from>
+                <pd:to>Map Data</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:activity name="Map Data">
+                <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+                <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+                <pd:x>437</pd:x>
+                <pd:y>212</pd:y>
+                <config>
+                    <element>
+                        <xsd:element name="ActivityData">
+                            <xsd:complexType>
+                                <xsd:sequence>
+                                    <xsd:element name="ProcessName" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="StarterFlag" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="StarterName" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="ActivityName" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="BackendCallFlag" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="CallProcessFlag" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="CalledProcess" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="StarterType" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="ServiceAgentCallCount" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="ActivityType" type="xsd:string" minOccurs="0"/>
+                                </xsd:sequence>
+                            </xsd:complexType>
+                        </xsd:element>
+                    </element>
+                </config>
+                <pd:inputBindings>
+                    <ActivityData>
+                        <ProcessName>
+                            <xsl:value-of select="$CurrentData/pfx2:activity/pfx2:processName"/>
+                        </ProcessName>
+                        <StarterFlag>
+                            <xsl:value-of select="if($CurrentData/pfx2:activity/pfx2:starter='Yes') then&#xA;&quot;Yes&quot;&#xA;else&#xA;&quot;No&quot;"/>
+                        </StarterFlag>
+                        <StarterName>
+                            <xsl:value-of select="if($CurrentData/pfx2:activity/pfx2:starter='Yes') then&#xA;$CurrentData/pfx2:activity/pfx2:name&#xA;else&#xA;&quot;&quot;"/>
+                        </StarterName>
+                        <ActivityName>
+                            <xsl:value-of select="$CurrentData/pfx2:activity/pfx2:name"/>
+                        </ActivityName>
+                        <BackendCallFlag>
+                            <xsl:value-of select="if($Count/Count/CounterChanged='true')&#xA;then&#xA;'Yes'&#xA;else&#xA;'No'"/>
+                        </BackendCallFlag>
+                        <xsl:if test="$CurrentData/pfx2:activity/pfx2:type='CallProcessActivity'">
+                            <CallProcessFlag>
+                                <xsl:value-of select="'Yes'"/>
+                            </CallProcessFlag>
+                        </xsl:if>
+                        <CalledProcess>
+                            <xsl:value-of select="substring-before(tib:substring-after-last($CurrentData/pfx2:activity/pfx2:config,'/'),';')"/>
+                        </CalledProcess>
+                        <StarterType>
+                            <xsl:value-of select="if(contains($CurrentData/pfx2:activity/pfx2:processName,'.serviceagent')) then&#xA;'Serviceagent'&#xA;else if(contains($CurrentData/pfx2:activity/pfx2:type,'StartType')) then&#xA;''&#xA;else&#xA;$CurrentData/pfx2:activity/pfx2:type"/>
+                        </StarterType>
+                        <ServiceAgentCallCount>
+                            <xsl:value-of select="if(contains($CurrentData/pfx2:activity/pfx2:processName,'.serviceagent')) then&#xA;count(contains($CurrentRoot/pfx:root/pfx:MuleFlowXML,'row opName='))&#xA;else&#xA;''"/>
+                        </ServiceAgentCallCount>
+                        <xsl:if test="$CurrentData/pfx2:activity/pfx2:type">
+                            <ActivityType>
+                                <xsl:value-of select="$CurrentData/pfx2:activity/pfx2:type"/>
+                            </ActivityType>
+                        </xsl:if>
+                    </ActivityData>
+                </pd:inputBindings>
+            </pd:activity>
+            <pd:activity name="BackendCallsCounter">
+                <pd:type>com.tibco.pe.core.AssignActivity</pd:type>
+                <pd:resourceType>ae.activities.assignActivity</pd:resourceType>
+                <pd:x>297</pd:x>
+                <pd:y>207</pd:y>
+                <config>
+                    <variableName>Count</variableName>
+                </config>
+                <pd:inputBindings>
+                    <Count>
+                        <Count>
+                            <xsl:value-of select="if(contains($CurrentData/pfx2:activity/pfx2:type,'JDBC') or contains($CurrentData/pfx2:activity/pfx2:type,'File') or (contains($CurrentData/pfx2:activity/pfx2:type,'HTTP') and not(contains($CurrentData/pfx2:activity/pfx2:type,'HTTPResponseActivity'))) or (contains($CurrentData/pfx2:activity/pfx2:type,'SOAP') and not(contains($CurrentData/pfx2:activity/pfx2:type,'SOAPSendReplyActivity'))) or contains($CurrentData/pfx2:activity/pfx2:type,'REST') or contains($CurrentData/pfx2:activity/pfx2:type,'JMS') or contains($CurrentData/pfx2:activity/pfx2:type,'Pub') or contains($CurrentData/pfx2:activity/pfx2:type,'Sub') or contains($CurrentData/pfx2:activity/pfx2:type,'Java')) then&#xA;$Count/Count/Count + 1&#xA;else&#xA;$Count/Count/Count"/>
+                        </Count>
+                        <CounterChanged>
+                            <xsl:value-of select="if(contains($CurrentData/pfx2:activity/pfx2:type,'JDBC') or contains($CurrentData/pfx2:activity/pfx2:type,'File') or (contains($CurrentData/pfx2:activity/pfx2:type,'HTTP') and not(contains($CurrentData/pfx2:activity/pfx2:type,'HTTPResponseActivity'))) or (contains($CurrentData/pfx2:activity/pfx2:type,'SOAP') and not(contains($CurrentData/pfx2:activity/pfx2:type,'SOAPSendReplyActivity'))) or contains($CurrentData/pfx2:activity/pfx2:type,'REST')  or contains($CurrentData/pfx2:activity/pfx2:type,'CallProcessActivity')  or  contains($CurrentData/pfx2:activity/pfx2:type,'JMS') or contains($CurrentData/pfx2:activity/pfx2:type,'Pub') or contains($CurrentData/pfx2:activity/pfx2:type,'Sub') or contains($CurrentData/pfx2:activity/pfx2:type,'Java')) then&#xA;'true'&#xA;else&#xA;'false'"/>
+                        </CounterChanged>
+                        <HeaderFlag>
+                            <xsl:value-of select="if($Count/Count/HeaderFlag='true') then&#xA;'true'&#xA;else&#xA;'false'"/>
+                        </HeaderFlag>
+                    </Count>
+                </pd:inputBindings>
+            </pd:activity>
+        </pd:group>
+        <pd:activity name="Map-Data-1">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>827</pd:x>
+            <pd:y>123</pd:y>
+            <config>
+                <element>
+                    <xsd:element name="Status">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="RowData" type="xsd:string"/>
+                                <xsd:element name="ProcessName" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="CalledProcess" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="NumberOfBackendCalls" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="StarterFlag" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="BackendActivities" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="StarterName" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="StarterType" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="MapperCount" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="MapperName" type="xsd:string" minOccurs="0"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </element>
+            </config>
+            <pd:inputBindings>
+                <Status>
+                    <RowData>
+                        <xsl:value-of select="concat($Map-Data-2/Data/ProcessName,',',$Map-Data-2/Data/Starter,',',$Map-Data-2/Data/StarterName)"/>
+                    </RowData>
+                    <ProcessName>
+                        <xsl:value-of select="$Map-Data-2/Data/ProcessName"/>
+                    </ProcessName>
+                    <CalledProcess>
+                        <xsl:value-of select="if(contains($CurrentData/pfx2:activity/pfx2:processName,'.serviceagent')) then&#xA;tib:concat-sequence-format($ServiceCallProcesses/AccumulatedOutput/root/ServiceCalledProcess,',')&#xA;else&#xA;tib:concat-sequence-format($FinalActivityData/AccumulatedOutput/ActivityData[CallProcessFlag='Yes']/CalledProcess,',')"/>
+                    </CalledProcess>
+                    <NumberOfBackendCalls>
+                        <xsl:value-of select="if(contains($CurrentData/pfx2:activity/pfx2:processName,'.serviceagent')) then&#xA;count(tib:tokenize(tib:concat-sequence-format($ServiceCallProcesses/AccumulatedOutput/root/ServiceCalledProcess,','), ','))&#xA;else&#xA;$Map-Data-2/Data/NumberOfBackendCalls"/>
+                    </NumberOfBackendCalls>
+                    <xsl:if test="$Map-Data-2/Data/Starter">
+                        <StarterFlag>
+                            <xsl:value-of select="$Map-Data-2/Data/Starter"/>
+                        </StarterFlag>
+                    </xsl:if>
+                    <xsl:if test="$Map-Data-2/Data/BackendActivities">
+                        <BackendActivities>
+                            <xsl:value-of select="$Map-Data-2/Data/BackendActivities"/>
+                        </BackendActivities>
+                    </xsl:if>
+                    <xsl:if test="$Map-Data-2/Data/StarterName">
+                        <StarterName>
+                            <xsl:value-of select="$Map-Data-2/Data/StarterName"/>
+                        </StarterName>
+                    </xsl:if>
+                    <xsl:if test="$Map-Data-2/Data/StarterType">
+                        <StarterType>
+                            <xsl:value-of select="$Map-Data-2/Data/StarterType"/>
+                        </StarterType>
+                    </xsl:if>
+                    <MapperCount>
+                        <xsl:value-of select="$Map-Data-2/Data/MapperCount"/>
+                    </MapperCount>
+                    <MapperName>
+                        <xsl:value-of select="$Map-Data-2/Data/MapperName"/>
+                    </MapperName>
+                </Status>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Map-Data-2">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>635</pd:x>
+            <pd:y>123</pd:y>
+            <config>
+                <element>
+                    <xsd:element name="Data">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="ProcessName" type="xsd:string"/>
+                                <xsd:element name="Starter" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="StarterName" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="NumberOfBackendCalls" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="BackendActivities" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="StarterType" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="MapperCount" type="xsd:string" minOccurs="0"/>
+                                <xsd:element name="MapperName" type="xsd:string" minOccurs="0"/>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </element>
+            </config>
+            <pd:inputBindings>
+                <Data>
+                    <ProcessName>
+                        <xsl:value-of select="$CurrentData/pfx2:activity/pfx2:processName"/>
+                    </ProcessName>
+                    <xsl:choose>
+                        <xsl:when test="$FinalActivityData/AccumulatedOutput/ActivityData/StarterFlag='Yes'">
+                            <Starter>
+                                <xsl:value-of select="'Yes'"/>
+                            </Starter>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <Starter>
+                                <xsl:value-of select="'No'"/>
+                            </Starter>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                    <StarterName>
+                        <xsl:value-of select="$FinalActivityData/AccumulatedOutput/ActivityData[StarterFlag='Yes']/StarterName"/>
+                    </StarterName>
+                    <NumberOfBackendCalls>
+                        <xsl:value-of select="count($FinalActivityData/AccumulatedOutput/ActivityData[BackendCallFlag='Yes' and not(ActivityType='CallProcessActivity')])"/>
+                    </NumberOfBackendCalls>
+                    <BackendActivities>
+                        <xsl:value-of select="tib:concat-sequence-format($FinalActivityData/AccumulatedOutput/ActivityData[BackendCallFlag='Yes']/ActivityType,' ~ ')"/>
+                    </BackendActivities>
+                    <xsl:if test="$FinalActivityData/AccumulatedOutput/ActivityData[1]/StarterType">
+                        <StarterType>
+                            <xsl:value-of select="$FinalActivityData/AccumulatedOutput/ActivityData[1]/StarterType"/>
+                        </StarterType>
+                    </xsl:if>
+                    <MapperCount>
+                        <xsl:value-of select="count($FinalActivityData/AccumulatedOutput/ActivityData[ActivityType='MapperActivity']/ActivityName)"/>
+                    </MapperCount>
+                    <MapperName>
+                        <xsl:value-of select="tib:concat-sequence-format($FinalActivityData/AccumulatedOutput/ActivityData[ActivityType='MapperActivity']/ActivityName,'~')"/>
+                    </MapperName>
+                </Data>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:group name="Group (5)">
+            <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+            <pd:resourceType>ae.process.group</pd:resourceType>
+            <pd:x>646</pd:x>
+            <pd:y>200</pd:y>
+            <pd:width>138</pd:width>
+            <pd:height>140</pd:height>
+            <pd:collapsedWidth>57</pd:collapsedWidth>
+            <pd:collapsedHeight>70</pd:collapsedHeight>
+            <pd:groupVariables/>
+            <pd:joinToggle>inherit</pd:joinToggle>
+            <config>
+                <pd:groupType>repeat</pd:groupType>
+                <pd:serializable>false</pd:serializable>
+                <pd:indexSlot>OpsCounter</pd:indexSlot>
+                <pd:outSlot>ServiceCallProcesses</pd:outSlot>
+                <pd:activityOutputName>Map-Data-5</pd:activityOutputName>
+                <pd:repeatCondition>$OpsCounter&gt;count(tib:tokenize(substring-before(substring-after($CurrentRoot/pfx:root/pfx:MuleFlowXML, 'row opName="'),'/config&gt;'), '.'))</pd:repeatCondition>
+                <pd:accumulateOutput>true</pd:accumulateOutput>
+            </config>
+            <pd:inputBindings/>
+            <pd:expanded>true</pd:expanded>
+            <pd:transition>
+                <pd:from>start</pd:from>
+                <pd:to>Map-Data-5</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:transition>
+                <pd:from>Map-Data-5</pd:from>
+                <pd:to>end</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:activity name="Map-Data-5">
+                <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+                <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+                <pd:x>714</pd:x>
+                <pd:y>274</pd:y>
+                <config>
+                    <element>
+                        <xsd:element name="root">
+                            <xsd:complexType>
+                                <xsd:sequence>
+                                    <xsd:element name="ServiceCalledProcess" type="xsd:string" minOccurs="0"/>
+                                </xsd:sequence>
+                            </xsd:complexType>
+                        </xsd:element>
+                    </element>
+                </config>
+                <pd:inputBindings>
+                    <root>
+                        <ServiceCalledProcess>
+                            <xsl:value-of select="if(string-length(tib:substring-after-last(tib:tokenize(substring-before(substring-after($CurrentRoot/pfx:root/pfx:MuleFlowXML, 'row opName=&quot;'),'/config>'), '.')[$OpsCounter], 'opImpl=&quot;'))>1) then&#xA;concat(tib:substring-after-last(tib:tokenize(substring-before(substring-after($CurrentRoot/pfx:root/pfx:MuleFlowXML, 'row opName=&quot;'),'/config>'), '.')[$OpsCounter], 'opImpl=&quot;'),'.process')&#xA;else&#xA;''"/>
+                        </ServiceCalledProcess>
+                    </root>
+                </pd:inputBindings>
+            </pd:activity>
+        </pd:group>
+    </pd:group>
+    <pd:group name="Group (2)">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>658</pd:x>
+        <pd:y>373</pd:y>
+        <pd:width>1097</pd:width>
+        <pd:height>454</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$FinalProcessData/AccumulatedOutput/Status</pd:over>
+            <pd:iterationElementSlot>CurrentCounterData</pd:iterationElementSlot>
+            <pd:indexSlot>SplitCounter</pd:indexSlot>
+            <pd:outSlot>AccumulatedRowData</pd:outSlot>
+            <pd:activityOutputName>Map-Data-3</pd:activityOutputName>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Group (6)</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Map-Data-3</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Group (4)</pd:from>
+            <pd:to>Map-Data-3</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Group (6)</pd:from>
+            <pd:to>Group (4)</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:group name="Group (4)">
+            <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+            <pd:resourceType>ae.process.group</pd:resourceType>
+            <pd:x>1242</pd:x>
+            <pd:y>516</pd:y>
+            <pd:width>278</pd:width>
+            <pd:height>145</pd:height>
+            <pd:collapsedWidth>57</pd:collapsedWidth>
+            <pd:collapsedHeight>70</pd:collapsedHeight>
+            <pd:groupVariables/>
+            <pd:joinToggle>inherit</pd:joinToggle>
+            <config>
+                <pd:groupType>inputLoop</pd:groupType>
+                <pd:serializable>false</pd:serializable>
+                <pd:over>$AllCalledProcesses/AccumulatedOutput/CalledProcesses/CalledProcess</pd:over>
+                <pd:iterationElementSlot>PresentCounterData</pd:iterationElementSlot>
+                <pd:indexSlot>TotalCounter</pd:indexSlot>
+                <pd:outSlot>ConsolidatedCounterData</pd:outSlot>
+                <pd:activityOutputName>TotalBackendCallsData</pd:activityOutputName>
+                <pd:accumulateOutput>true</pd:accumulateOutput>
+            </config>
+            <pd:inputBindings/>
+            <pd:expanded>true</pd:expanded>
+            <pd:transition>
+                <pd:from>start</pd:from>
+                <pd:to>BackendCallCounter</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:transition>
+                <pd:from>TotalBackendCallsData</pd:from>
+                <pd:to>end</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:transition>
+                <pd:from>BackendCallCounter</pd:from>
+                <pd:to>TotalBackendCallsData</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:activity name="TotalBackendCallsData">
+                <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+                <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+                <pd:x>1444</pd:x>
+                <pd:y>582</pd:y>
+                <config>
+                    <element>
+                        <xsd:element name="ProcessData">
+                            <xsd:complexType>
+                                <xsd:sequence>
+                                    <xsd:element name="TotalCounter" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="Processname" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="BackendActivities" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="MapperCount" type="xsd:string" minOccurs="0"/>
+                                    <xsd:element name="MapperName" type="xsd:string" minOccurs="0"/>
+                                </xsd:sequence>
+                            </xsd:complexType>
+                        </xsd:element>
+                    </element>
+                </config>
+                <pd:inputBindings>
+                    <ProcessData>
+                        <TotalCounter>
+                            <xsl:value-of select="$BackendCalls/Data/BackendCallCounter"/>
+                        </TotalCounter>
+                        <xsl:if test="$CurrentCounterData/Status/ProcessName">
+                            <Processname>
+                                <xsl:value-of select="$CurrentCounterData/Status/ProcessName"/>
+                            </Processname>
+                        </xsl:if>
+                        <BackendActivities>
+                            <xsl:value-of select="$BackendCalls/Data/BackendCalls"/>
+                        </BackendActivities>
+                        <xsl:if test="$BackendCalls/Data/MapperCount">
+                            <MapperCount>
+                                <xsl:value-of select="$BackendCalls/Data/MapperCount"/>
+                            </MapperCount>
+                        </xsl:if>
+                        <xsl:if test="$BackendCalls/Data/MapperName">
+                            <MapperName>
+                                <xsl:value-of select="$BackendCalls/Data/MapperName"/>
+                            </MapperName>
+                        </xsl:if>
+                    </ProcessData>
+                </pd:inputBindings>
+            </pd:activity>
+            <pd:activity name="BackendCallCounter">
+                <pd:type>com.tibco.pe.core.AssignActivity</pd:type>
+                <pd:resourceType>ae.activities.assignActivity</pd:resourceType>
+                <pd:x>1322</pd:x>
+                <pd:y>583</pd:y>
+                <config>
+                    <variableName>BackendCalls</variableName>
+                </config>
+                <pd:inputBindings>
+                    <Data>
+                        <BackendCallCounter>
+                            <xsl:value-of select="if($TotalCounter=1) then&#xA;$CurrentCounterData/Status/NumberOfBackendCalls + $FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/NumberOfBackendCalls&#xA;else&#xA;$BackendCalls/Data/BackendCallCounter + $FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/NumberOfBackendCalls"/>
+                        </BackendCallCounter>
+                        <BackendCalls>
+                            <xsl:value-of select="if($TotalCounter=1) then&#xA;concat($CurrentCounterData/Status/BackendActivities, ' ~ [calls from Sub process ',$PresentCounterData/CalledProcess,' are [',(if(string-length($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/BackendActivities)>1) then ($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/BackendActivities) else 'No backend calls'),']]')&#xA;else&#xA;concat($BackendCalls/Data/BackendCalls,' ~ [calls from Sub process ',$PresentCounterData/CalledProcess,' are [',(if(string-length($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/BackendActivities)>1) then ($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/BackendActivities) else 'No backend calls'),']]')"/>
+                        </BackendCalls>
+                        <MapperCount>
+                            <xsl:value-of select="if($TotalCounter=1) then&#xA;$CurrentCounterData/Status/MapperCount + (if(string-length($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/MapperCount)>0) then ($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/MapperCount) else 0)&#xA;else&#xA;$BackendCalls/Data/MapperCount + (if(string-length($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/MapperCount)>0) then ($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/MapperCount) else 0)"/>
+                        </MapperCount>
+                        <MapperName>
+                            <xsl:value-of select="if($TotalCounter=1) then&#xA;concat((if(string-length($CurrentCounterData/Status/MapperName)>1) then ($CurrentCounterData/Status/MapperName) else 'No Mapper Activities in current process'), ' ~ [Mapper activities from Sub process ',$PresentCounterData/CalledProcess,' are [',(if(string-length($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/MapperName)>1) then ($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/MapperName) else 'No Mapper Activities'),']]')&#xA;else&#xA;concat((if(string-length($BackendCalls/Data/MapperName)>1) then ($BackendCalls/Data/MapperName) else 'No Mapper Activities in current process'),' ~ [Mapper activities from Sub process ',$PresentCounterData/CalledProcess,' are [',(if(string-length($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/MapperName)>1) then ($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($PresentCounterData/CalledProcess))]/MapperName) else 'No Mapper Activities'),']]')"/>
+                        </MapperName>
+                    </Data>
+                </pd:inputBindings>
+            </pd:activity>
+        </pd:group>
+        <pd:activity name="Map-Data-3">
+            <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+            <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+            <pd:x>1639</pd:x>
+            <pd:y>602</pd:y>
+            <config>
+                <element>
+                    <xsd:element name="FinalRowData">
+                        <xsd:complexType>
+                            <xsd:sequence>
+                                <xsd:element name="FinalRowData" minOccurs="0" maxOccurs="unbounded">
+                                    <xsd:complexType>
+                                        <xsd:sequence>
+                                            <xsd:element name="TotalCounter" type="xsd:string" minOccurs="0"/>
+                                            <xsd:element name="Processname" type="xsd:string" minOccurs="0"/>
+                                            <xsd:element name="BackendActivities" type="xsd:string" minOccurs="0"/>
+                                            <xsd:element name="StarterFlag" type="xsd:string" minOccurs="0"/>
+                                            <xsd:element name="Complexity" type="xsd:string" minOccurs="0"/>
+                                            <xsd:element name="RowData" type="xsd:string" minOccurs="0"/>
+                                            <xsd:element name="StarterName" type="xsd:string" minOccurs="0"/>
+                                            <xsd:element name="StarterType" type="xsd:string" minOccurs="0"/>
+                                        </xsd:sequence>
+                                    </xsd:complexType>
+                                </xsd:element>
+                            </xsd:sequence>
+                        </xsd:complexType>
+                    </xsd:element>
+                </element>
+            </config>
+            <pd:inputBindings>
+                <FinalRowData>
+                    <xsl:choose>
+                        <xsl:when test="$BackendCalls/Data/BackendCallCounter='NaN' or (string-length($CurrentCounterData/Status/CalledProcess)&lt;1)">
+                            <FinalRowData>
+                                <xsl:if test="$CurrentCounterData/Status/NumberOfBackendCalls">
+                                    <TotalCounter>
+                                        <xsl:value-of select="$CurrentCounterData/Status/NumberOfBackendCalls"/>
+                                    </TotalCounter>
+                                </xsl:if>
+                                <xsl:if test="$CurrentCounterData/Status/ProcessName">
+                                    <Processname>
+                                        <xsl:value-of select="$CurrentCounterData/Status/ProcessName"/>
+                                    </Processname>
+                                </xsl:if>
+                                <xsl:if test="$CurrentCounterData/Status/BackendActivities">
+                                    <BackendActivities>
+                                        <xsl:value-of select="$CurrentCounterData/Status/BackendActivities"/>
+                                    </BackendActivities>
+                                </xsl:if>
+                                <xsl:choose>
+                                    <xsl:when test="contains($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,'.serviceagent')]/CalledProcess,(tib:substring-after-last($CurrentCounterData/Status/ProcessName,'\')))">
+                                        <StarterFlag>
+                                            <xsl:value-of select="'Yes'"/>
+                                        </StarterFlag>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <StarterFlag>
+                                            <xsl:value-of select="$CurrentCounterData/Status/StarterFlag"/>
+                                        </StarterFlag>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                                <Complexity>
+                                    <xsl:value-of select="if($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumVeryHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/VeryHigh&#xA;else if($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/High &#xA;else if(($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumMedium) and ($CurrentCounterData/Status/NumberOfBackendCalls&lt;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh)) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Medium&#xA;else&#xA;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Low"/>
+                                </Complexity>
+                                <xsl:choose>
+                                    <xsl:when test="contains($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,'.serviceagent')]/CalledProcess,(tib:substring-after-last($CurrentCounterData/Status/ProcessName,'\')))">
+                                        <RowData>
+                                            <xsl:value-of select="concat($CurrentCounterData/Status/ProcessName,',','Yes',',','Serviceagent-Operation',',','Serviceagent',',',$CurrentCounterData/Status/NumberOfBackendCalls,',',$CurrentCounterData/Status/BackendActivities,',',$BackendCalls/Data/MapperCount,',',$BackendCalls/Data/MapperName,',',(if($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumVeryHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/VeryHigh&#xA;else if($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/High &#xA;else if(($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumMedium) and ($CurrentCounterData/Status/NumberOfBackendCalls&lt;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh)) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Medium&#xA;else&#xA;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Low),&quot;&#xD;&#xA;&quot;)"/>
+                                        </RowData>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <RowData>
+                                            <xsl:value-of select="concat($CurrentCounterData/Status/ProcessName,',',$CurrentCounterData/Status/StarterFlag,',',$CurrentCounterData/Status/StarterName,',',$CurrentCounterData/Status/StarterType,',',$CurrentCounterData/Status/NumberOfBackendCalls,',',$CurrentCounterData/Status/BackendActivities,',',$BackendCalls/Data/MapperCount,',',$BackendCalls/Data/MapperName,',',(if($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumVeryHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/VeryHigh&#xA;else if($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/High &#xA;else if(($CurrentCounterData/Status/NumberOfBackendCalls>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumMedium) and ($CurrentCounterData/Status/NumberOfBackendCalls&lt;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh)) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Medium&#xA;else&#xA;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Low),&quot;&#xD;&#xA;&quot;)"/>
+                                        </RowData>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                                <xsl:choose>
+                                    <xsl:when test="contains($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,'.serviceagent')]/CalledProcess,(tib:substring-after-last($CurrentCounterData/Status/ProcessName,'\')))">
+                                        <StarterName>
+                                            <xsl:value-of select="'Serviceagent-Operation'"/>
+                                        </StarterName>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:if test="$CurrentCounterData/Status/StarterName">
+                                            <StarterName>
+                                                <xsl:value-of select="$CurrentCounterData/Status/StarterName"/>
+                                            </StarterName>
+                                        </xsl:if>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                                <xsl:choose>
+                                    <xsl:when test="contains($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,'.serviceagent')]/CalledProcess,(tib:substring-after-last($CurrentCounterData/Status/ProcessName,'\')))">
+                                        <StarterType>
+                                            <xsl:value-of select="'Serviceagent'"/>
+                                        </StarterType>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:if test="$CurrentCounterData/Status/StarterType">
+                                            <StarterType>
+                                                <xsl:value-of select="$CurrentCounterData/Status/StarterType"/>
+                                            </StarterType>
+                                        </xsl:if>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </FinalRowData>
+                        </xsl:when>
+                        <xsl:otherwise>
+                            <FinalRowData>
+                                <xsl:if test="$TotalBackendCallsData/ProcessData/TotalCounter">
+                                    <TotalCounter>
+                                        <xsl:value-of select="$TotalBackendCallsData/ProcessData/TotalCounter"/>
+                                    </TotalCounter>
+                                </xsl:if>
+                                <xsl:if test="$TotalBackendCallsData/ProcessData/Processname">
+                                    <Processname>
+                                        <xsl:value-of select="$TotalBackendCallsData/ProcessData/Processname"/>
+                                    </Processname>
+                                </xsl:if>
+                                <xsl:if test="$TotalBackendCallsData/ProcessData/BackendActivities">
+                                    <BackendActivities>
+                                        <xsl:value-of select="$TotalBackendCallsData/ProcessData/BackendActivities"/>
+                                    </BackendActivities>
+                                </xsl:if>
+                                <xsl:choose>
+                                    <xsl:when test="contains($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,'.serviceagent')]/CalledProcess,(tib:substring-after-last($CurrentCounterData/Status/ProcessName,'\')))">
+                                        <StarterFlag>
+                                            <xsl:value-of select="'Yes'"/>
+                                        </StarterFlag>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <StarterFlag>
+                                            <xsl:value-of select="$CurrentCounterData/Status/StarterFlag"/>
+                                        </StarterFlag>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                                <Complexity>
+                                    <xsl:value-of select="$TotalBackendCallsData/ProcessData/TotalCounter"/>
+                                </Complexity>
+                                <xsl:choose>
+                                    <xsl:when test="contains($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,'.serviceagent')]/CalledProcess,(tib:substring-after-last($CurrentCounterData/Status/ProcessName,'\')))">
+                                        <RowData>
+                                            <xsl:value-of select="concat($TotalBackendCallsData/ProcessData/Processname,',','Yes',',','Serviceagent-Operation',',','Serviceagent',',',$TotalBackendCallsData/ProcessData/TotalCounter,',',$TotalBackendCallsData/ProcessData/BackendActivities,',',$BackendCalls/Data/MapperCount,',',$BackendCalls/Data/MapperName,',',(if($TotalBackendCallsData/ProcessData/TotalCounter>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumVeryHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/VeryHigh&#xA;else if($TotalBackendCallsData/ProcessData/TotalCounter>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/High &#xA;else if(($TotalBackendCallsData/ProcessData/TotalCounter>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumMedium) and ($CurrentCounterData/Status/NumberOfBackendCalls&lt;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh)) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Medium&#xA;else&#xA;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Low),&quot;&#xD;&#xA;&quot;)"/>
+                                        </RowData>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <RowData>
+                                            <xsl:value-of select="concat($TotalBackendCallsData/ProcessData/Processname,',',$CurrentCounterData/Status/StarterFlag,',',$CurrentCounterData/Status/StarterName,',',$CurrentCounterData/Status/StarterType,',',$TotalBackendCallsData/ProcessData/TotalCounter,',',$TotalBackendCallsData/ProcessData/BackendActivities,',',$BackendCalls/Data/MapperCount,',',$BackendCalls/Data/MapperName,',',(if($TotalBackendCallsData/ProcessData/TotalCounter>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumVeryHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/VeryHigh&#xA;else if($TotalBackendCallsData/ProcessData/TotalCounter>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/High &#xA;else if(($TotalBackendCallsData/ProcessData/TotalCounter>$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumMedium) and ($CurrentCounterData/Status/NumberOfBackendCalls&lt;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityLimit/NumHigh)) then $_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Medium&#xA;else&#xA;$_globalVariables/ns1:GlobalVariables/Tibco2MuleAccelerator/Input/ComplexityCheck/ComplexityStatus/Low),&quot;&#xD;&#xA;&quot;)"/>
+                                        </RowData>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                                <xsl:choose>
+                                    <xsl:when test="contains($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,'.serviceagent')]/CalledProcess,(tib:substring-after-last($CurrentCounterData/Status/ProcessName,'\')))">
+                                        <StarterName>
+                                            <xsl:value-of select="'Serviceagent-Operation'"/>
+                                        </StarterName>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:if test="$CurrentCounterData/Status/StarterName">
+                                            <StarterName>
+                                                <xsl:value-of select="$CurrentCounterData/Status/StarterName"/>
+                                            </StarterName>
+                                        </xsl:if>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                                <xsl:choose>
+                                    <xsl:when test="contains($FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,'.serviceagent')]/CalledProcess,(tib:substring-after-last($CurrentCounterData/Status/ProcessName,'\')))">
+                                        <StarterType>
+                                            <xsl:value-of select="'Serviceagent'"/>
+                                        </StarterType>
+                                    </xsl:when>
+                                    <xsl:otherwise>
+                                        <xsl:if test="$CurrentCounterData/Status/StarterType">
+                                            <StarterType>
+                                                <xsl:value-of select="$CurrentCounterData/Status/StarterType"/>
+                                            </StarterType>
+                                        </xsl:if>
+                                    </xsl:otherwise>
+                                </xsl:choose>
+                            </FinalRowData>
+                        </xsl:otherwise>
+                    </xsl:choose>
+                </FinalRowData>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:group name="Group (6)">
+            <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+            <pd:resourceType>ae.process.group</pd:resourceType>
+            <pd:x>694</pd:x>
+            <pd:y>396</pd:y>
+            <pd:width>469</pd:width>
+            <pd:height>377</pd:height>
+            <pd:collapsedWidth>57</pd:collapsedWidth>
+            <pd:collapsedHeight>70</pd:collapsedHeight>
+            <pd:groupVariables/>
+            <pd:joinToggle>inherit</pd:joinToggle>
+            <config>
+                <pd:groupType>repeat</pd:groupType>
+                <pd:serializable>false</pd:serializable>
+                <pd:indexSlot>counter1</pd:indexSlot>
+                <pd:activityOutputName/>
+                <pd:repeatCondition>$counter1&gt;count(tib:tokenize($CurrentCounterData/Status/CalledProcess, ','))</pd:repeatCondition>
+                <pd:accumulateOutput>false</pd:accumulateOutput>
+            </config>
+            <pd:inputBindings/>
+            <pd:expanded>true</pd:expanded>
+            <pd:transition>
+                <pd:from>start</pd:from>
+                <pd:to>Assign</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:transition>
+                <pd:from>Group (3)</pd:from>
+                <pd:to>end</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:transition>
+                <pd:from>Assign</pd:from>
+                <pd:to>Group (3)</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:group name="Group (3)">
+                <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+                <pd:resourceType>ae.process.group</pd:resourceType>
+                <pd:x>819</pd:x>
+                <pd:y>439</pd:y>
+                <pd:width>250</pd:width>
+                <pd:height>281</pd:height>
+                <pd:collapsedWidth>57</pd:collapsedWidth>
+                <pd:collapsedHeight>70</pd:collapsedHeight>
+                <pd:groupVariables/>
+                <pd:joinToggle>inherit</pd:joinToggle>
+                <config>
+                    <pd:groupType>inputLoop</pd:groupType>
+                    <pd:serializable>false</pd:serializable>
+                    <pd:over>tib:tokenize($CallProcessIterate/root/MultiLevelCalledProcesses, ',')</pd:over>
+                    <pd:iterationElementSlot>CurrentCalledProcess</pd:iterationElementSlot>
+                    <pd:indexSlot>Index3</pd:indexSlot>
+                    <pd:outSlot>AllCalledProcesses</pd:outSlot>
+                    <pd:activityOutputName>SplitCalledProcesses</pd:activityOutputName>
+                    <pd:accumulateOutput>true</pd:accumulateOutput>
+                </config>
+                <pd:inputBindings/>
+                <pd:expanded>true</pd:expanded>
+                <pd:transition>
+                    <pd:from>start</pd:from>
+                    <pd:to>SplitCalledProcesses</pd:to>
+                    <pd:lineType>Default</pd:lineType>
+                    <pd:lineColor>-16777216</pd:lineColor>
+                    <pd:conditionType>always</pd:conditionType>
+                </pd:transition>
+                <pd:transition>
+                    <pd:from>GetInnerCalledProcesses</pd:from>
+                    <pd:to>end</pd:to>
+                    <pd:lineType>One Bend</pd:lineType>
+                    <pd:lineColor>-16777216</pd:lineColor>
+                    <pd:conditionType>always</pd:conditionType>
+                </pd:transition>
+                <pd:transition>
+                    <pd:from>SplitCalledProcesses</pd:from>
+                    <pd:to>end</pd:to>
+                    <pd:xpathDescription>Called</pd:xpathDescription>
+                    <pd:lineType>One Bend</pd:lineType>
+                    <pd:lineColor>-16777216</pd:lineColor>
+                    <pd:conditionType>xpath</pd:conditionType>
+                    <pd:xpath>contains($CallProcessIterate/root/MultiLevelCalledProcesses,tib:trim($SplitCalledProcesses/CalledProcesses/CalledProcess))</pd:xpath>
+                </pd:transition>
+                <pd:transition>
+                    <pd:from>SplitCalledProcesses</pd:from>
+                    <pd:to>GetInnerCalledProcesses</pd:to>
+                    <pd:xpathDescription>Subprocess calls exist</pd:xpathDescription>
+                    <pd:lineType>Default</pd:lineType>
+                    <pd:lineColor>-16777216</pd:lineColor>
+                    <pd:conditionType>otherwise</pd:conditionType>
+                </pd:transition>
+                <pd:activity name="SplitCalledProcesses">
+                    <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+                    <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+                    <pd:x>908</pd:x>
+                    <pd:y>512</pd:y>
+                    <config>
+                        <element>
+                            <xsd:element name="CalledProcesses">
+                                <xsd:complexType>
+                                    <xsd:sequence>
+                                        <xsd:element name="CalledProcess" type="xsd:string" minOccurs="0"/>
+                                    </xsd:sequence>
+                                </xsd:complexType>
+                            </xsd:element>
+                        </element>
+                    </config>
+                    <pd:inputBindings>
+                        <CalledProcesses>
+                            <xsl:if test="tib:tokenize($CallProcessIterate/root/MultiLevelCalledProcesses,',')[$Index3]">
+                                <CalledProcess>
+                                    <xsl:value-of select="tib:tokenize($CallProcessIterate/root/MultiLevelCalledProcesses,',')[$Index3]"/>
+                                </CalledProcess>
+                            </xsl:if>
+                        </CalledProcesses>
+                    </pd:inputBindings>
+                </pd:activity>
+                <pd:activity name="GetInnerCalledProcesses">
+                    <pd:type>com.tibco.pe.core.AssignActivity</pd:type>
+                    <pd:resourceType>ae.activities.assignActivity</pd:resourceType>
+                    <pd:x>912</pd:x>
+                    <pd:y>642</pd:y>
+                    <config>
+                        <variableName>CallProcessIterate</variableName>
+                    </config>
+                    <pd:inputBindings>
+                        <root>
+                            <MultiLevelCalledProcesses>
+                                <xsl:value-of select="if(string-length(tib:trim($SplitCalledProcesses/CalledProcesses/CalledProcess)>1)) then&#xA;concat($CallProcessIterate/root/MultiLevelCalledProcesses,',',$FinalProcessData/AccumulatedOutput/Status[contains(ProcessName,tib:trim($SplitCalledProcesses/CalledProcesses/CalledProcess))]/CalledProcess)&#xA;else&#xA;''"/>
+                            </MultiLevelCalledProcesses>
+                        </root>
+                    </pd:inputBindings>
+                </pd:activity>
+            </pd:group>
+            <pd:activity name="Assign">
+                <pd:type>com.tibco.pe.core.AssignActivity</pd:type>
+                <pd:resourceType>ae.activities.assignActivity</pd:resourceType>
+                <pd:x>763</pd:x>
+                <pd:y>600</pd:y>
+                <config>
+                    <variableName>CallProcessIterate</variableName>
+                </config>
+                <pd:inputBindings>
+                    <root>
+                        <MultiLevelCalledProcesses>
+                            <xsl:value-of select="tib:trim($CurrentCounterData/Status/CalledProcess)"/>
+                        </MultiLevelCalledProcesses>
+                    </root>
+                </pd:inputBindings>
+            </pd:activity>
+        </pd:group>
+    </pd:group>
+    <pd:transition>
+        <pd:from>Write File</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Group (1)</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group (2)</pd:from>
+        <pd:to>Write File</pd:to>
+        <pd:lineType>One Bend</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group (1)</pd:from>
+        <pd:to>Group (2)</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

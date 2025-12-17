@@ -1,0 +1,21 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>name1</name>
+			<value>no value</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719724530</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>path</name>
+			<value>C:\temp\tibco2mulePOC\ProcessDefinitionDetailPOC</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719727531</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

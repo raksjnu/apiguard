@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ReportInfo.xsd"
+	 targetNamespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ReportInfo.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="ReportInfo">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="reportType" minOccurs="0"/>
+				<xs:element ref="reportContent" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="reportType" type="xs:string"/>
+	<xs:element name="reportContent" type="xs:anyType"/>
+</xs:schema>

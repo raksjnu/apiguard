@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BWSharedResource xmlns:pfx="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" xmlns:pfx2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd">
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" schemaLocation="/Resources/Schema/Tibco/Checklist.xsd"/>
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd" schemaLocation="/Resources/Schema/Tibco/ChecklistSharedVar.xsd"/>
+    <name>ChecklistSharedVariable</name>
+    <resourceType>ae.shared.sharedVariable</resourceType>
+    <config xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <persistent>true</persistent>
+        <multi-engine>false</multi-engine>
+        <initialValue>byRef</initialValue>
+        <initialValueRef>/Resources/SharedVariables/InstanceChecklistSharedVar.xml</initialValueRef>
+        <xsdString ref="pfx2:root"/>
+    </config>
+</BWSharedResource>

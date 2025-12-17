@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<xs:schema xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	 xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 targetNamespace="http://www.tibco.com/xmlns/repo/types/2002"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="repository">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="globalVariables">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="globalVariable" maxOccurs="unbounded">
+								<xs:complexType>
+									<xs:sequence>
+										<xs:element name="name" type="xs:string"/>
+										<xs:element name="value" type="xs:string"/>
+										<xs:element name="description" type="xs:string" minOccurs="0"/>
+										<xs:element name="deploymentSettable" type="xs:boolean" minOccurs="0"/>
+										<xs:element name="serviceSettable" type="xs:boolean" minOccurs="0"/>
+										<xs:element name="type" type="xs:string" minOccurs="0"/>
+										<xs:element name="modTime" type="xs:unsignedLong" minOccurs="0"/>
+									</xs:sequence>
+								</xs:complexType>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>

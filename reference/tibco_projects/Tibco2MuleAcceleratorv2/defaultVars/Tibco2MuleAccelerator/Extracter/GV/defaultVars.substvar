@@ -1,0 +1,21 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>DecryptPassword</name>
+			<value>No</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719724405</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>GVFileHeader</name>
+			<value>&lt;?xml version = "1.0" encoding = "UTF-8"?>&lt;globalVariables xmlns:rk="http://rakesh.com/schema.xsd"></value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1590719724170</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

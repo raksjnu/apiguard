@@ -1,0 +1,391 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pfx="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/Conversion.xsd" xmlns:pfx2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Conversion.xsd" xmlns:ns="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:pfx3="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" xmlns:pfx4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns2="http://www.tibco.com/pe/DeployedVarsType" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns1="http://www.tibco.com/pe/EngineTypes" xmlns:ns3="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Connectors.xsd" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:BW="java://com.tibco.pe.core.JavaCustomXPATHFunctions">
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Conversion.xsd" schemaLocation="/Resources/Schema/Tibco/Conversion.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Checklist.xsd" schemaLocation="/Resources/Schema/Tibco/Checklist.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd" schemaLocation="/Resources/Schema/Tibco/ChecklistSharedVar.xsd"/>
+    <pd:name>Processes/Common/SharedVariableCreator.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startX>27</pd:startX>
+    <pd:startY>155</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>717</pd:endX>
+    <pd:endY>151</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1577975059991</pd:targetNamespace>
+    <pd:activity name="Map Data">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>422</pd:x>
+        <pd:y>98</pd:y>
+        <config>
+            <element ref="pfx2:ConversionInfo"/>
+        </config>
+        <pd:inputBindings>
+            <pfx2:ConversionInfo>
+                <xsl:for-each select="$Parse-Data/Output/Rows/pfx2:list">
+                    <xsl:if test="string-length(pfx2:Tibco)>0">
+                        <pfx2:conversion>
+                            <xsl:if test="pfx2:Tibco">
+                                <pfx2:tibcoType>
+                                    <xsl:value-of select="pfx2:Tibco"/>
+                                </pfx2:tibcoType>
+                            </xsl:if>
+                            <xsl:if test="pfx2:Mule">
+                                <pfx2:muleType>
+                                    <xsl:value-of select="pfx2:Mule"/>
+                                </pfx2:muleType>
+                            </xsl:if>
+                            <xsl:if test="pfx2:Implementation">
+                                <pfx2:conversionImpl>
+                                    <xsl:value-of select="pfx2:Implementation"/>
+                                </pfx2:conversionImpl>
+                            </xsl:if>
+                            <pfx2:issueType>
+                                <xsl:value-of select="if(string-length(pfx2:Type)>0) then&#xA;pfx2:Type&#xA;else&#xA;&quot;&quot;"/>
+                            </pfx2:issueType>
+                            <pfx2:remarks>
+                                <xsl:value-of select="if(string-length(pfx2:Remarks)>0) then&#xA;pfx2:Remarks&#xA;else&#xA;&quot;&quot;"/>
+                            </pfx2:remarks>
+                        </pfx2:conversion>
+                    </xsl:if>
+                </xsl:for-each>
+            </pfx2:ConversionInfo>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Parse Data">
+        <pd:type>com.tibco.plugin.parse.ParseActivity</pd:type>
+        <pd:resourceType>ae.activities.ParseActivity</pd:resourceType>
+        <pd:x>323</pd:x>
+        <pd:y>98</pd:y>
+        <config>
+            <InputType>String</InputType>
+            <Encoding>ASCII</Encoding>
+            <SkipBlankLines>true</SkipBlankLines>
+            <SpecifyStartRecord>true</SpecifyStartRecord>
+            <ContinueonError>true</ContinueonError>
+            <ParseSharedConfig>/Resources/DataFormat/Data-Format_ListActivities.sharedparse</ParseSharedConfig>
+            <StrictValidation>true</StrictValidation>
+        </config>
+        <pd:inputBindings>
+            <Input>
+                <text>
+                    <xsl:value-of select="tib:base64-to-string($RetrieveResources/outputClass/resourceBytes)"/>
+                </text>
+                <startRecord>
+                    <xsl:value-of select="2"/>
+                </startRecord>
+                <noOfRecords>
+                    <xsl:value-of select="-1"/>
+                </noOfRecords>
+            </Input>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="SetVariable">
+        <pd:type>com.tibco.pe.core.SetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.setSharedVariable</pd:resourceType>
+        <pd:x>516</pd:x>
+        <pd:y>99</pd:y>
+        <config>
+            <variableConfig>/Resources/SharedVariables/ConversionSharedVariable.sharedvariable</variableConfig>
+            <showResult>true</showResult>
+        </config>
+        <pd:inputBindings>
+            <pfx2:ConversionInfo>
+                <xsl:for-each select="$Map-Data/pfx2:ConversionInfo/pfx2:conversion">
+                    <pfx2:conversion>
+                        <xsl:if test="pfx2:tibcoType">
+                            <pfx2:tibcoType>
+                                <xsl:value-of select="pfx2:tibcoType"/>
+                            </pfx2:tibcoType>
+                        </xsl:if>
+                        <xsl:if test="pfx2:muleType">
+                            <pfx2:muleType>
+                                <xsl:value-of select="pfx2:muleType"/>
+                            </pfx2:muleType>
+                        </xsl:if>
+                        <xsl:if test="pfx2:conversionImpl">
+                            <pfx2:conversionImpl>
+                                <xsl:value-of select="pfx2:conversionImpl"/>
+                            </pfx2:conversionImpl>
+                        </xsl:if>
+                        <xsl:if test="pfx2:issueType">
+                            <pfx2:issueType>
+                                <xsl:value-of select="pfx2:issueType"/>
+                            </pfx2:issueType>
+                        </xsl:if>
+                        <xsl:if test="pfx2:remarks">
+                            <pfx2:remarks>
+                                <xsl:value-of select="pfx2:remarks"/>
+                            </pfx2:remarks>
+                        </xsl:if>
+                    </pfx2:conversion>
+                </xsl:for-each>
+            </pfx2:ConversionInfo>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="RetrieveResources">
+        <pd:type>com.tibco.plugin.soap.urlaccess.RetrieveResource</pd:type>
+        <pd:resourceType>ae.activities.RetrieveResource</pd:resourceType>
+        <pd:x>218</pd:x>
+        <pd:y>97</pd:y>
+        <config/>
+        <pd:inputBindings>
+            <inputClass>
+                <resourcePath>
+                    <xsl:value-of xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="$_globalVariables/ns2:GlobalVariables/Tibco2MuleAccelerator/FilePaths/ActivityListFileLocation"/>
+                </resourcePath>
+            </inputClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Map-DataChecklist">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>431</pd:x>
+        <pd:y>239</pd:y>
+        <config>
+            <element ref="pfx4:root"/>
+        </config>
+        <pd:inputBindings>
+            <pfx4:root>
+                <xsl:for-each select="$Parse-DataChecklist/Output/Rows/pfx4:Checklist">
+                    <pfx4:Checklist>
+                        <pfx4:ChecklistNumber>
+                            <xsl:value-of select="translate(pfx4:ChecklistNumber, &quot;&#xA;&quot;, '')"/>
+                        </pfx4:ChecklistNumber>
+                        <pfx4:ChecklistName>
+                            <xsl:value-of select="translate(pfx4:ChecklistName, &quot;&#xA;&quot;, '')"/>
+                        </pfx4:ChecklistName>
+                        <pfx4:Enabled>
+                            <xsl:value-of select="translate(pfx4:Enabled, &quot;&#xA;&quot;, '')"/>
+                        </pfx4:Enabled>
+                        <pfx4:ChecklistDetail>
+                            <xsl:value-of select="translate(pfx4:ChecklistDetail, &quot;&#xA;&quot;, '')"/>
+                        </pfx4:ChecklistDetail>
+                        <pfx4:Severity>
+                            <xsl:value-of select="translate(pfx4:Severity, &quot;&#xA;&quot;, '')"/>
+                        </pfx4:Severity>
+                        <pfx4:Remarks>
+                            <xsl:value-of select="translate(translate(pfx4:Remarks, &quot;&#xA;&quot;, ''), &quot;&#xD;&#xA;&quot;, '')"/>
+                        </pfx4:Remarks>
+                    </pfx4:Checklist>
+                </xsl:for-each>
+            </pfx4:root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Parse-DataChecklist">
+        <pd:type>com.tibco.plugin.parse.ParseActivity</pd:type>
+        <pd:resourceType>ae.activities.ParseActivity</pd:resourceType>
+        <pd:x>311</pd:x>
+        <pd:y>237</pd:y>
+        <config>
+            <InputType>String</InputType>
+            <Encoding>ASCII</Encoding>
+            <SkipBlankLines>true</SkipBlankLines>
+            <SpecifyStartRecord>true</SpecifyStartRecord>
+            <ContinueonError>true</ContinueonError>
+            <ParseSharedConfig>/Resources/DataFormat/Data-Format_CheckList.sharedparse</ParseSharedConfig>
+            <StrictValidation>true</StrictValidation>
+        </config>
+        <pd:inputBindings>
+            <Input>
+                <text>
+                    <xsl:value-of select="tib:base64-to-string($RetrieveResourcesChecklist/outputClass/resourceBytes)"/>
+                </text>
+                <startRecord>
+                    <xsl:value-of select="2"/>
+                </startRecord>
+                <noOfRecords>
+                    <xsl:value-of select="-1"/>
+                </noOfRecords>
+            </Input>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="SetVariableChecklist">
+        <pd:type>com.tibco.pe.core.SetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.setSharedVariable</pd:resourceType>
+        <pd:x>551</pd:x>
+        <pd:y>240</pd:y>
+        <config>
+            <variableConfig>/Resources/SharedVariables/ChecklistSharedVariable.sharedvariable</variableConfig>
+            <showResult>true</showResult>
+        </config>
+        <pd:inputBindings>
+            <pfx4:root>
+                <xsl:for-each select="$Map-DataChecklist/pfx4:root/pfx4:Checklist">
+                    <pfx4:Checklist>
+                        <xsl:if test="pfx4:ChecklistNumber">
+                            <pfx4:ChecklistNumber>
+                                <xsl:value-of select="pfx4:ChecklistNumber"/>
+                            </pfx4:ChecklistNumber>
+                        </xsl:if>
+                        <xsl:if test="pfx4:ChecklistName">
+                            <pfx4:ChecklistName>
+                                <xsl:value-of select="pfx4:ChecklistName"/>
+                            </pfx4:ChecklistName>
+                        </xsl:if>
+                        <xsl:if test="pfx4:Enabled">
+                            <pfx4:Enabled>
+                                <xsl:value-of select="pfx4:Enabled"/>
+                            </pfx4:Enabled>
+                        </xsl:if>
+                        <xsl:if test="pfx4:ChecklistDetail">
+                            <pfx4:ChecklistDetail>
+                                <xsl:value-of select="pfx4:ChecklistDetail"/>
+                            </pfx4:ChecklistDetail>
+                        </xsl:if>
+                        <xsl:if test="pfx4:Severity">
+                            <pfx4:Severity>
+                                <xsl:value-of select="pfx4:Severity"/>
+                            </pfx4:Severity>
+                        </xsl:if>
+                        <xsl:if test="pfx4:Remarks">
+                            <pfx4:Remarks>
+                                <xsl:value-of select="pfx4:Remarks"/>
+                            </pfx4:Remarks>
+                        </xsl:if>
+                    </pfx4:Checklist>
+                </xsl:for-each>
+            </pfx4:root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="RetrieveResourcesChecklist">
+        <pd:type>com.tibco.plugin.soap.urlaccess.RetrieveResource</pd:type>
+        <pd:resourceType>ae.activities.RetrieveResource</pd:resourceType>
+        <pd:x>195</pd:x>
+        <pd:y>237</pd:y>
+        <config/>
+        <pd:inputBindings>
+            <inputClass>
+                <resourcePath>
+                    <xsl:value-of select="$_globalVariables/ns2:GlobalVariables/Tibco2MuleAccelerator/FilePaths/CheckListFileLocation"/>
+                </resourcePath>
+            </inputClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="SetVariable-Connectors">
+        <pd:type>com.tibco.pe.core.SetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.setSharedVariable</pd:resourceType>
+        <pd:x>373</pd:x>
+        <pd:y>154</pd:y>
+        <config>
+            <variableConfig>/Resources/SharedVariables/Connectors.sharedvariable</variableConfig>
+            <showResult>true</showResult>
+        </config>
+        <pd:inputBindings>
+            <ns3:Connectors>
+                <ns3:info>
+                    <ns3:tibcoConnector>
+                        <xsl:value-of select="'dummy'"/>
+                    </ns3:tibcoConnector>
+                    <ns3:muleConnector>
+                        <xsl:value-of select="'dummy'"/>
+                    </ns3:muleConnector>
+                    <ns3:type>
+                        <xsl:value-of select="'dummy'"/>
+                    </ns3:type>
+                </ns3:info>
+            </ns3:Connectors>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Map Data</pd:from>
+        <pd:to>SetVariable</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Parse Data</pd:from>
+        <pd:to>Map Data</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>RetrieveResources</pd:to>
+        <pd:xpathDescription>ActivityList</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>SetVariable</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>RetrieveResources</pd:from>
+        <pd:to>Parse Data</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>RetrieveResourcesChecklist</pd:to>
+        <pd:xpathDescription>CheckList</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>RetrieveResourcesChecklist</pd:from>
+        <pd:to>Parse-DataChecklist</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Parse-DataChecklist</pd:from>
+        <pd:to>Map-DataChecklist</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Map-DataChecklist</pd:from>
+        <pd:to>SetVariableChecklist</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>SetVariableChecklist</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>SetVariable-Connectors</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>SetVariable-Connectors</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:label>
+        <pd:name>Label</pd:name>
+        <pd:description>Update the file placed in /Resources/SharedVaribales/ActivityList.csv and  /Resources/SharedVaribales/Checklist.csv</pd:description>
+        <pd:x>415</pd:x>
+        <pd:y>22</pd:y>
+        <pd:width>810</pd:width>
+        <pd:height>42</pd:height>
+        <pd:fontColor>-16777216</pd:fontColor>
+        <pd:color>-256</pd:color>
+        <pd:type>solid</pd:type>
+        <pd:thickness>0</pd:thickness>
+        <pd:fade>true</pd:fade>
+    </pd:label>
+</pd:ProcessDefinition>

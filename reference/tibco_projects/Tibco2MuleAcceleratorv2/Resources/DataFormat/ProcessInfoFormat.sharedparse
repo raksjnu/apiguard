@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<BWSharedResource xmlns:pfx="http://www.tibco.com/schemas/EISCommonServices/BusinessProcesses/EISConfigUpdater/Resources/SchemaDefinitions/Schema/ConfigDBSchema.xsd" xmlns:pfx2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" xmlns:pfx3="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" xmlns:pfx4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd">
+    <import namespace="http://www.tibco.com/schemas/EISCommonServices/BusinessProcesses/EISConfigUpdater/Resources/SchemaDefinitions/Schema/ConfigDBSchema.xsd" schemaLocation="/BusinessProcesses/EISConfigUpdater/Resources/SchemaDefinitions/Schema/ConfigDBSchema.xsd"/>
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" schemaLocation="/Resources/Schema/Tibco/Report.xsd"/>
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" schemaLocation="/Resources/Schema/Tibco/All.xsd"/>
+    <import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/ProcessInfo.xsd" schemaLocation="/Resources/Schema/Tibco/ProcessInfo.xsd"/>
+    <name>ProcessInfoFormat</name>
+    <resourceType>ae.shared.ParseSharedResource</resourceType>
+    <config xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        <FormatType>Delimiter separated</FormatType>
+        <ColumnSeparator>,</ColumnSeparator>
+        <ColSeparatorRule>Treat all characters as entered as a single column separator string</ColSeparatorRule>
+        <LineSeparator>
+</LineSeparator>
+        <FillCharacter>Space</FillCharacter>
+        <LineLength>12</LineLength>
+        <DataFormat ref="pfx4:activity"/>
+    </config>
+</BWSharedResource>

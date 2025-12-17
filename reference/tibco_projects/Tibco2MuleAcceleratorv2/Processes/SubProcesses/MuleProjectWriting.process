@@ -1,0 +1,435 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pfx="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:pfx2="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/LocationDetails.xsd" xmlns:pfx3="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/MuleProject.xsd" xmlns:ns="http://www.tibco.com/pe/DeployedVarsType" xmlns:pfx4="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns2="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:ns1="http://www.tibco.com/schemas/Tibco2MuleAccelerator/Resources/Schema/Tibco/ProjectInfo.xsd">
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/Report.xsd" schemaLocation="/Resources/Schema/Tibco/Report.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/LocationDetails.xsd" schemaLocation="/Resources/Schema/Tibco/LocationDetails.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/MuleProject.xsd" schemaLocation="/Resources/Schema/Tibco/MuleProject.xsd"/>
+    <xsd:import namespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/Tibco/All.xsd" schemaLocation="/Resources/Schema/Tibco/All.xsd"/>
+    <pd:name>Processes/SubProcesses/MuleProjectWriting.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType ref="pfx4:root"/>
+    <pd:startX>27</pd:startX>
+    <pd:startY>119</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>936</pd:endX>
+    <pd:endY>120</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://ibm.com/raks/tibco2mule/accelerator/common/muleProjectWriting</pd:targetNamespace>
+    <pd:group name="FileCreation Group">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>683</pd:x>
+        <pd:y>182</pd:y>
+        <pd:width>133</pd:width>
+        <pd:height>140</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$Map-Data/root/projectfile</pd:over>
+            <pd:iterationElementSlot>file</pd:iterationElementSlot>
+            <pd:indexSlot>j</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>FileWriting</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>FileWriting</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="FileWriting">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>751</pd:x>
+            <pd:y>259</pd:y>
+            <config>
+                <processName>/Processes/Common/FileWriting.process</processName>
+            </config>
+            <pd:inputBindings>
+                <root>
+                    <FilePath>
+                        <xsl:value-of select="concat($Start/pfx4:root/ns1:ProjectInfo[1]/ns1:mulePath, $file/projectfile)"/>
+                    </FilePath>
+                    <FileContent>
+                        <xsl:value-of select="if ($file/projectfile='.project'  )&#xA;then &#xA;concat($_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFileproject_part1,$Start/pfx4:root/ns1:ProjectInfo[1]/ns1:name, $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFileproject_part2)&#xA; else (&#xA;if ($file/projectfile='.classpath'  )&#xA;then &#xA;$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFileclasspath&#xA; else &#xA;if ($file/projectfile='mule-artifact.json'  )&#xA;then &#xA;$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFileartifact&#xA; else &quot;&quot;&#xA;)"/>
+                    </FileContent>
+                </root>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>444</pd:x>
+        <pd:y>42</pd:y>
+        <pd:width>155</pd:width>
+        <pd:height>140</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$CreateFolderList/root/folders</pd:over>
+            <pd:iterationElementSlot>folder</pd:iterationElementSlot>
+            <pd:indexSlot>i</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Create File</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Create File</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Create File">
+            <pd:type>com.tibco.plugin.file.FileCreateActivity</pd:type>
+            <pd:resourceType>ae.activities.FileCreateActivity</pd:resourceType>
+            <pd:x>520</pd:x>
+            <pd:y>123</pd:y>
+            <config>
+                <overwrite>true</overwrite>
+                <createDirectory>true</createDirectory>
+                <createMissingDirectories>true</createMissingDirectories>
+            </config>
+            <pd:inputBindings>
+                <ns2:CreateActivityInputClass>
+                    <fileName>
+                        <xsl:value-of select="concat($Start/pfx4:root/ns1:ProjectInfo[1]/ns1:mulePath, $folder/folders)"/>
+                    </fileName>
+                </ns2:CreateActivityInputClass>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="create_mule-projectXML">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:description/>
+        <pd:x>134</pd:x>
+        <pd:y>120</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="mule-projectXML" type="xsd:string" minOccurs="0"/>
+                            <xsd:element name="pomXML" type="xsd:string" minOccurs="0"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <xsl:variable name="varHead" select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/MuleVaribales/mule-projectHead"/>
+            <xsl:variable name="varTail" select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/MuleVaribales/mule-projectTail"/>
+            <xsl:variable name="varName" select="$Start/pfx4:root/ns1:ProjectInfo[1]/ns1:name"/>
+            <xsl:variable name="varDescription" select="concat( $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/MuleProjectDescription, &quot; for Tibco project &quot;, $Start/pfx4:root/ns1:ProjectInfo[1]/ns1:path)"/>
+            <root>
+                <mule-projectXML>
+                    <xsl:value-of select="concat($varHead, &quot;&lt;name>&quot;, $varName, &quot;&lt;/name>&quot;, &quot;&lt;description>&quot;, $varDescription, &quot;&lt;/description>&quot;, $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/MuleVaribales/mule-projectTail)"/>
+                </mule-projectXML>
+                <pomXML>
+                    <xsl:value-of select="concat($_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/pomXML_part1, $varName,$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/pomXML_part2,$varName, $_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Messages/pomXML_part3)"/>
+                </pomXML>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="CreateFolderList">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>245</pd:x>
+        <pd:y>120</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="folders" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <folders>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFolderApi"/>
+                </folders>
+                <folders>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFolderJava"/>
+                </folders>
+                <folders>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFolderWsdl"/>
+                </folders>
+                <folders>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFolderResources"/>
+                </folders>
+                <folders>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/MuleFlowLocation"/>
+                </folders>
+                <folders>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFoldertestJava"/>
+                </folders>
+                <folders>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFoldertestMunit"/>
+                </folders>
+                <folders>
+                    <xsl:value-of select="$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Output/muleFolderTestResources"/>
+                </folders>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="External Command">
+        <pd:type>com.tibco.plugin.cmdexec.CmdExecActivity</pd:type>
+        <pd:resourceType>ae.activities.CmdExecActivity</pd:resourceType>
+        <pd:description>delete any non-empty previous folder for clean folder structure.</pd:description>
+        <pd:x>359</pd:x>
+        <pd:y>121</pd:y>
+        <config>
+            <outputToString>false</outputToString>
+            <lineSplit>None</lineSplit>
+        </config>
+        <pd:inputBindings>
+            <CmdInput>
+                <command>
+                    <xsl:value-of select="concat('cmd /c rmdir /S /Q ', $Start/pfx4:root/ns1:ProjectInfo[1]/ns1:mulePath)"/>
+                </command>
+            </CmdInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="FileWriting-mule-project.xml">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>740</pd:x>
+        <pd:y>35</pd:y>
+        <config>
+            <processName>/Processes/Common/FileWriting.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <FilePath>
+                    <xsl:value-of select="concat($Start/pfx4:root/ns1:ProjectInfo[1]/ns1:mulePath,'mule-project.xml')"/>
+                </FilePath>
+                <FileContent>
+                    <xsl:value-of select="$create_mule-projectXML/root/mule-projectXML"/>
+                </FileContent>
+                <Append>
+                    <xsl:value-of select="true()"/>
+                </Append>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="FileWriting-pomXML">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>739</pd:x>
+        <pd:y>117</pd:y>
+        <config>
+            <processName>/Processes/Common/FileWriting.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <FilePath>
+                    <xsl:value-of select="concat($Start/pfx4:root/ns1:ProjectInfo[1]/ns1:mulePath,'pom.xml')"/>
+                </FilePath>
+                <FileContent>
+                    <xsl:value-of select="$create_mule-projectXML/root/pomXML"/>
+                </FileContent>
+                <Append>
+                    <xsl:value-of select="if($_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/TemplateEnabled=&quot;Yes&quot;)&#xA;then&#xA;false()&#xA;else&#xA;true()"/>
+                </Append>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Map Data">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>525</pd:x>
+        <pd:y>263</pd:y>
+        <config>
+            <element>
+                <xsd:element name="root">
+                    <xsd:complexType>
+                        <xsd:sequence>
+                            <xsd:element name="projectfile" type="xsd:string" minOccurs="0" maxOccurs="unbounded"/>
+                        </xsd:sequence>
+                    </xsd:complexType>
+                </xsd:element>
+            </element>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <projectfile>
+                    <xsl:value-of select="'.project'"/>
+                </projectfile>
+                <projectfile>
+                    <xsl:value-of select="'.classpath'"/>
+                </projectfile>
+                <projectfile>
+                    <xsl:value-of select="'mule-artifact.json'"/>
+                </projectfile>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Template">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>135</pd:x>
+        <pd:y>261</pd:y>
+        <config>
+            <processName>/Processes/SubProcesses/CreateTemplate.process</processName>
+        </config>
+        <pd:inputBindings>
+            <Input>
+                <MulePath>
+                    <xsl:value-of select="$Start/pfx4:root/ns1:ProjectInfo[1]/ns1:mulePath"/>
+                </MulePath>
+                <ProjectName>
+                    <xsl:value-of select="$Start/pfx4:root/ns1:ProjectInfo[1]/ns1:name"/>
+                </ProjectName>
+            </Input>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>create_mule-projectXML</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>FileWriting-mule-project.xml</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>create_mule-projectXML</pd:from>
+        <pd:to>CreateFolderList</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>FileWriting-mule-project.xml</pd:to>
+        <pd:xpathDescription>otherwise</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>otherwise</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>CreateFolderList</pd:from>
+        <pd:to>External Command</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>External Command</pd:from>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>FileWriting-pomXML</pd:to>
+        <pd:xpathDescription>Maven Project pom xml</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Filters/WritePomXml='Yes'</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>FileWriting-pomXML</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>Map Data</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>FileCreation Group</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Map Data</pd:from>
+        <pd:to>FileCreation Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Template</pd:from>
+        <pd:to>Map Data</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Map Data</pd:from>
+        <pd:to>FileWriting-pomXML</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>create_mule-projectXML</pd:from>
+        <pd:to>Template</pd:to>
+        <pd:xpathDescription>TemplateExists</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>$_globalVariables/ns:GlobalVariables/Tibco2MuleAccelerator/Input/TemplateEnabled="Yes"</pd:xpath>
+    </pd:transition>
+    <pd:label>
+        <pd:name>Label</pd:name>
+        <pd:description>this process creates all the pre required Mule project folders and mule-project.xml file too.</pd:description>
+        <pd:x>414</pd:x>
+        <pd:y>17</pd:y>
+        <pd:width>827</pd:width>
+        <pd:height>33</pd:height>
+        <pd:fontColor>-16777216</pd:fontColor>
+        <pd:color>-205</pd:color>
+        <pd:type>solid</pd:type>
+        <pd:thickness>0</pd:thickness>
+        <pd:fade>true</pd:fade>
+    </pd:label>
+</pd:ProcessDefinition>

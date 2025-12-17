@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	 xmlns="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd"
+	 targetNamespace="http://ibm.com/raks/tibco2mule/accelerator/Resources/Schema/ChecklistSharedVar.xsd"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xs:element name="root">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element ref="Checklist" minOccurs="0" maxOccurs="unbounded"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+	<xs:element name="Checklist">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="ChecklistNumber" type="xs:string" minOccurs="0"/>
+				<xs:element name="ChecklistName" type="xs:string" minOccurs="0"/>
+				<xs:element name="Enabled" type="xs:string" minOccurs="0"/>
+				<xs:element name="ChecklistDetail" type="xs:string" minOccurs="0"/>
+				<xs:element name="Severity" type="xs:string" minOccurs="0"/>
+				<xs:element name="Remarks" type="xs:string" minOccurs="0"/>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
