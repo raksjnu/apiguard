@@ -1,0 +1,30 @@
+ChecklistItem,ChecklistType,RuleId
+Generic Code Check which scans configured files for any configured tokens in code folder; Fails if tokens are found., Code, RULE-000
+The Parent POM details should be having groupId='com.raks.eapi'; artifactId ='MuleParentPom'; version='LATEST'.,Code,RULE-001
+The property 'mule.maven.plugin.version' should be set to '4.9.0' in pom.xml.,Code,RULE-002
+The plugin 'maven-clean-plugin' should be removed from pom.xml.,Code,RULE-003
+The plugin 'maven-surefire-plugin:2.22.0' should be removed from pom.xml.,Code,RULE-003
+The dependency 'org.springframework.security:spring-security-ldap' should be removed from pom.xml.,Code,RULE-004
+The dependency 'org.springframework.security:spring-security-web' should be removed from pom.xml.,Code,RULE-004
+The dependency 'org.mule.modules:mule-module-spring-config' should be removed from pom.xml.,Code,RULE-004
+The dependency 'com.ibm.db2:db2jcc_license_cu' should be removed from pom.xml.,Code,RULE-004
+The dependency 'com.mulesoft.mule.core:mule-core-ee' should be removed from pom.xml.,Code,RULE-004
+The dependency 'com.mulesoft.mule.runtime.modules:mule-module-spring-config-ee' should be removed from pom.xml.,Code,RULE-004
+The IBM MQ connector's 'cipherSuite' attribute must be 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'.,Code,RULE-005
+The dependency 'com.raks.eapi:apimuleutilities' should be added to pom.xml.,Code,RULE-006
+The 'minMuleVersion' in mule-artifact.json must be at least '4.9.0'.,Code,RULE-007
+The 'javaSpecificationVersions' in mule-artifact.json must be '17'.,Code,RULE-007
+The 'secureProperties' element must be present in mule-artifact.json.,Code,RULE-007
+The autodiscovery element should be enabled in a Mule configuration file.,Code,RULE-008
+The unsupported error expressions (error.errorType;error.muleMessage;error.exception;error.errors;derivatives of any of these too) should be removed.,Code,RULE-009
+The property fromApplicationCode or toApplicationCode in the module-loggingconnector:* should be removed.,Code,RULE-010
+The DLP related property north.bound.dlp.flag or south.bound.dlp.flag from all the mule xml files and properties files should be removed.,Code,RULE-011
+The DLP request queue property (wmq.dlp.requestqueue) from all the mule xml files and properties files should be removed.,Code,RULE-011
+The module crypto:jce-encrypt-pbe (also having hard coded default value PBEWithHmacSHA256AndAES_256) implementation in logging flow should be removed.,Code,RULE-012
+The module configuration crypto:jce-config should have "type" attribute defines as mandatory.,Code,RULE-013
+The token tobase64 from set-variable node in any mule xml file should be removed.,Code,RULE-014
+Generic Config Check which Scans configured files for configured tokens in config folder. Fails if tokens are found., Config, RULE-100
+The property 'LogJsonFormat' must be present in all environment .properties files.,Config,RULE-101
+The policy property 'rakspolicyproperty2.policypropname' and 'rakspolicyproperty' must be present in all environment .policy files.,Config,RULE-102
+The Secure encrypted properties must follow the pattern: secure::<name>=^{<encrypted-value>=}.,Config,RULE-104
+The authorization policy client ID mappings must follow the pattern: truist.authz.policy.clientIDmap.<METHOD>:/<path>=<id>:<name>;<id>:<name>;...,Config,RULE-104

@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:email="http://www.mulesoft.org/schema/mule/email"
+      xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+          http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+          http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+
+    <!-- Email SMTP Configuration -->
+    <email:smtp-config name="Email_SMTP_Registration">
+        <email:smtp-connection 
+            host="${smtp.host}" 
+            port="${smtp.port}" 
+            user="${smtp.user}" 
+            password="${smtp.password}"
+            connectionTimeout="${smtp.connectionTimeout}"
+            readTimeout="${smtp.readTimeout}"
+            writeTimeout="${smtp.writeTimeout}">
+            <email:properties>
+                <email:property key="mail.smtp.starttls.enable" value="${smtp.tls.enabled}"/>
+            </email:properties>
+        </email:smtp-connection>
+    </email:smtp-config>
+
+    <!-- Reusable Flow: Send Registration Notification Email -->
+    <flow name="send-registration-notification-flow">
+        <choice>
+            <when expression="#['${notification.registration.email.enabled}' == 'true']">
+                <logger level="INFO" message="Sending registration notification email..."/>
+                
+                <set-payload value="#[%dw 2.0
+output text/plain
+---
+&quot;&lt;html&gt;
+&lt;head&gt;
+    &lt;style&gt;
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { background: linear-gradient(135deg, #f9f4ff 0%, #e6d9f5 100%); color: ${email.header.color}; padding: 10px; text-align: center; border-bottom: 3px solid #663399; }
+        .header img { height: 60px; margin-bottom: 10px; }
+        .section { padding: 25px; border-bottom: 1px solid #e0e0e0; }
+        .label { font-weight: bold; color: ${email.header.color}; width: 140px; display: inline-block; }
+        table { border-collapse: collapse; width: 100%; }
+        td { padding: 12px 5px; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        .footer { background: linear-gradient(135deg, #f9f4ff 0%, #e6d9f5 100%); padding: 15px; text-align: center; font-size: 12px; color: ${email.footer.color}; border-top: 3px solid #663399; }
+    &lt;/style&gt;
+&lt;/head&gt;
+&lt;body&gt;
+    &lt;div class='container'&gt;
+        &lt;div class='header'&gt;
+            &lt;div style='background: #663399; color: white; width: 60px; height: 60px; border-radius: 8px; display: inline-block; text-align: center; line-height: 60px; font-size: 20px; font-weight: bold; margin: 5px auto;'&gt;RAKS&lt;/div&gt;
+            &lt;h2 style='margin: 5px 0;'&gt;New User Registration&lt;/h2&gt;
+        &lt;/div&gt;
+        
+        &lt;div class='section'&gt;
+            &lt;p&gt;A new user has registered to use the ${app.name}.&lt;/p&gt;
+            &lt;table&gt;
+                &lt;tr&gt;&lt;td class='label'&gt;Name:&lt;/td&gt;&lt;td&gt;&quot; ++ vars.userName ++ &quot;&lt;/td&gt;&lt;/tr&gt;
+                &lt;tr&gt;&lt;td class='label'&gt;Email:&lt;/td&gt;&lt;td&gt;&quot; ++ vars.userEmail ++ &quot;&lt;/td&gt;&lt;/tr&gt;
+                &lt;tr&gt;&lt;td class='label'&gt;Company:&lt;/td&gt;&lt;td&gt;&quot; ++ vars.userCompany ++ &quot;&lt;/td&gt;&lt;/tr&gt;
+                &lt;tr&gt;&lt;td class='label'&gt;IP Address:&lt;/td&gt;&lt;td&gt;&quot; ++ vars.userIpAddress ++ &quot;&lt;/td&gt;&lt;/tr&gt;
+                &lt;tr&gt;&lt;td class='label'&gt;Session Start:&lt;/td&gt;&lt;td&gt;&quot; ++ (vars.sessionStartTime as String {format: &quot;yyyy-MM-dd'T'HH:mm:ss.SSS z&quot;}) ++ &quot;&lt;/td&gt;&lt;/tr&gt;
+            &lt;/table&gt;
+        &lt;/div&gt;
+        
+        &lt;div class='footer'&gt;
+             &lt;p style='margin: 0;'&gt;${email.footer.text}&lt;/p&gt;
+        &lt;/div&gt;
+    &lt;/div&gt;
+&lt;/body&gt;
+&lt;/html&gt;&quot;]" mimeType="text/html"/>
+
+                <email:send config-ref="Email_SMTP_Registration" fromAddress="${notification.registration.email.from}" 
+                            subject="#['${notification.registration.email.subject}' replace '{name}' with vars.userName replace '{email}' with vars.userEmail replace '{company}' with vars.userCompany]" 
+                            toAddresses="#['${notification.registration.email.to}' splitBy ',']">
+                    <email:body contentType="text/html"/>
+                </email:send>
+                <logger level="INFO" message="Registration notification sent."/>
+            </when>
+            <otherwise>
+                <logger level="DEBUG" message="Registration email disabled."/>
+            </otherwise>
+        </choice>
+        <error-handler>
+            <on-error-continue>
+                <logger level="WARN" message="#['Failed to send registration email: ' ++ error.description]"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+</mule>

@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns="http://xmlns.example.com/unique/default/namespace/1134438639123"
+	 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	 targetNamespace="http://xmlns.example.com/unique/default/namespace/1134438639123"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xsd:element name="order">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="orderid" type="xsd:string"/>
+				<xsd:element name="customerid" type="xsd:string"/>
+				<xsd:element name="firstname" type="xsd:string"/>
+				<xsd:element name="lastname" type="xsd:string"/>
+				<xsd:element name="productcode" type="xsd:string"/>
+				<xsd:element name="price" type="xsd:string"/>
+				<xsd:element name="discountstatus" type="xsd:string"/>
+				<xsd:element name="orderdatetime" type="xsd:string"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>

@@ -1,0 +1,29 @@
+﻿# ============================================
+# BASELINE TESTING CONFIGURATION (Optional)
+# ============================================
+# Comparison mode: "LIVE" (default - compare API1 vs API2) or "BASELINE" (compare against saved baseline)
+comparisonMode: "BASELINE"
+
+# Baseline configuration (only used when comparisonMode: "BASELINE")
+baseline:
+  # Operation: "CAPTURE" (save new baseline) or "COMPARE" (compare against existing baseline)
+  operation: "CAPTURE"
+  
+  # Directory where baselines are stored (can be relative or absolute path)
+  storageDir: "C:/muleguard-fixed/tmp/in/baselines"
+  
+  # Service name (used for folder organization: baselines/{serviceName}/{date}/{run})
+  serviceName: "AccountService"
+  
+  # Description for this baseline capture (optional)
+  description: "Pre-upgrade baseline v1.0.0"
+  
+  # Tags for easy identification (optional)
+  tags:
+    - "v1.0.0"
+    - "pre-upgrade"
+  
+  # For COMPARE operation only: specify which baseline to compare against
+  compareDate: "20251208"      # YYYYMMDD format
+  compareRunId: "run-001"      # Which run to compare (run-001, run-002, etc.)
+

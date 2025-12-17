@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Repository:repository xmlns:Repository="http://www.tibco.com/xmlns/repo/types/2002">
+    <enterpriseArchive>
+        <sharedArchive name="Shared Archive">
+            <resourceType>shared.archive.resource</resourceType>
+            <authorProperty>0016SR744</authorProperty>
+        </sharedArchive>
+        <processArchive name="Process Archive">
+            <resourceType>process.archive.resource</resourceType>
+            <authorProperty>Rakesh.Kumar@ibm.com</authorProperty>
+            <processProperty>/Service/orderService.serviceagent,/Service/orderServiceFILE.process,/Service/orderServiceJMS.process,/Service/orderServiceREST.process,/Service/orderServiceSCHEDULER.process,/Service/Initialization_onstartup.process</processProperty>
+        </processArchive>
+        <versionProperty>3</versionProperty>
+        <authorProperty>Rakesh.Kumar@ibm.com</authorProperty>
+        <addServiceSettableGvars>true</addServiceSettableGvars>
+        <name>customerOrder</name>
+        <designer>
+            <lockedProperties/>
+            <fixedChildren/>
+            <resourceDescriptions/>
+        </designer>
+        <fileLocationProperty>C:\Users\raksj\Documents\IBM\tmp\customerOrder.ear</fileLocationProperty>
+    </enterpriseArchive>
+</Repository:repository>

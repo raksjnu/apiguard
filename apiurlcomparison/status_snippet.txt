@@ -1,0 +1,14 @@
+                writer.println("<tr class=\"summary-row \" + result.getStatus().toLowerCase() + \"\">");
+                writer.println("<td>" + iteration + "</td>");
+                writer.println("<td>" + escapeHtml(result.getOperationName()) + "</td>");
+                
+                // Show CAPTURED status with run ID in capture mode
+                String statusText = result.getStatus();
+                if (result.getBaselineServiceName() != null && result.getBaselineRunId() != null && "MATCH".equals(statusText) && result.getApi2() == null) {
+                    statusText = "CAPTURED - " + result.getBaselineRunId();
+                }
+                writer.println("<td><span class=\"status\">" + statusText + "</span></td>");
+                writer.println("<td>" + escapeHtml(result.getIterationTokens().toString()) + "</td>");
+                writer.println("<td><button onclick=\"toggleDetails('details-" + iteration
+                        + "')\">Toggle Details</button></td>");
+                writer.println("</tr>");

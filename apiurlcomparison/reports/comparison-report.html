@@ -1,0 +1,1778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+     <title>API Comparison Report</title>
+    <style>
+       :root {
+            --truist-purple: #2F1A4B;
+            --truist-light-purple: #6F2D91;
+            --background-gray: #F5F5F5;
+            --border-color: #E0E0E0;
+            --text-color: #333;
+            --pass-color: #28a745;
+            --fail-color: #dc3545;
+            --fail-light-bg: #f8d7da; /* Light red for mismatch background */
+            --pass-light-bg: #d4edda; /* Light green for match background */
+        }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: var(--background-gray); color: var(--text-color); }
+        h1, h2, h3, h4 { color: var(--truist-purple); }
+        header { background-color: var(--truist-purple); color: white; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        header h1 { margin: 0; }
+        main { padding: 30px 40px; }
+        .summary-panel { background-color: #fff; border: 1px solid var(--border-color); border-radius: 8px; margin-bottom: 40px; box-shadow: 0 4px 8px rgba(0,0,0,0.05); }
+        .summary-header { background-color: var(--truist-purple); color: white; padding: 20px; border-top-left-radius: 8px; border-top-right-radius: 8px; }
+        .summary-header h2 { color: white; margin: 0; }
+        .summary-body { padding: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .summary-item { text-align: center; }
+        .summary-item .label { font-size: 0.9em; color: #666; }
+        .summary-item .value { font-size: 2em; font-weight: bold; color: var(--truist-purple); }
+        .summary-item .status { font-size: 2.5em; font-weight: bold; padding: 10px; border-radius: 8px; }
+        .status-pass { color: var(--pass-color); }
+        .status-fail { color: var(--fail-color); }
+        .summary-apis { grid-column: 1 / -1; font-size: 0.9em; color: #555; word-break: break-all; padding-top: 10px; border-top: 1px solid var(--border-color); }
+        .iteration-block { background-color: #fff; border: 2px solid var(--truist-light-purple); border-radius: 8px; margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); overflow: hidden; }
+        .iteration-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #f8f8f8; border-bottom: 1px solid var(--border-color); }
+        .iteration-header h2 { margin: 0; font-size: 1.5em; }
+        .status-badge { padding: 5px 12px; border-radius: 15px; color: white; font-weight: bold; }
+        .status-badge.pass { background-color: var(--pass-color); }
+        .status-badge.fail { background-color: var(--fail-color); }
+        .tokens { font-size: 0.9em; color: #6c757d; margin-top: 5px; }
+        .token { display: inline-block; background-color: #e9ecef; padding: 3px 10px; border-radius: 12px; margin-right: 8px; font-size: 0.85em; }
+        .summary-table { width: 100%; border-collapse: collapse; margin-bottom: 40px; background-color: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.05); border-radius: 8px; overflow: hidden; }
+        .back-link { display: block; padding: 10px 20px; background-color: #f8f9fa; text-align: right; font-weight: bold; color: var(--truist-light-purple); text-decoration: none; border-bottom: 1px solid var(--border-color); }
+        .summary-table th, .summary-table td { padding: 12px 15px; border-bottom: 1px solid var(--border-color); text-align: left; }
+        .summary-table th { background-color: var(--truist-light-purple); color: white; font-weight: bold; }
+        .summary-table tr:last-child td { border-bottom: none; }
+        .comparison-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background-color: var(--border-color); }
+        .api-column { background-color: #fff; padding: 20px; }
+        .api-column h3 { margin-top: 0; border-bottom: 2px solid var(--truist-light-purple); padding-bottom: 8px; }
+        .api-details { font-size: 0.85em; color: #495057; background-color: #f8f9fa; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; margin-bottom: 15px; word-break: break-all; }
+        pre { background-color: #f1f1f1; padding: 15px; border-radius: 4px; white-space: pre-wrap; word-wrap: break-word; font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace; font-size: 0.875em; border: 1px solid #ddd; }
+        .comparison-result { padding: 20px; border-top: 1px solid var(--border-color); background-color: #fdfdfd; }
+        .comparison-result h3 { margin-top: 0; }
+        .comparison-result.mismatch { background-color: var(--fail-light-bg); }
+        .comparison-result.match { background-color: var(--pass-light-bg); }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Endpoint Comparison Tool</h1>
+</header>
+
+<main>
+    <div class="summary-panel">
+        <div class="summary-header">
+            <h2>Execution Summary</h2>
+        </div>
+        <div class="summary-body">
+            <div class="summary-item">
+                <div class="label">Overall Status</div>
+                <div class="value status status-pass">PASS</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Total Iterations</div>
+                <div class="value">20</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Passed</div>
+                <div class="value status-pass">20</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Failed</div>
+                <div class="value status-fail">0</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Total Time Taken</div>
+                <div class="value">315 ms</div>
+            </div>
+            <div class="summary-item">
+                <div class="label">Generated On</div>
+                <div class="value" style="font-size: 1.2em; padding-top: 10px;">2025-12-02 18:50:04 CST</div>
+            </div>
+            <div class="summary-apis">
+                <p><strong>API 1:</strong> http://localhost:8083/ws/AccountService</p>
+                <p><strong>API 2:</strong> http://localhost:8084/ws/AccountService</p>
+            </div>
+        </div>
+    </div>
+    <h2>Comparison Summary</h2>
+    <table id="comparison-summary" class="summary-table">
+        <thead>
+            <tr>
+                <th>Iteration #</th>
+                <th>Tokens Used</th>
+                <th>Status</th>
+                <th>Details</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>1</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 12345</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-1">View Details</a></td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 12345</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-2">View Details</a></td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 12345</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-3">View Details</a></td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 12345</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-4">View Details</a></td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 999</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-5">View Details</a></td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 999</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-6">View Details</a></td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 999</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-7">View Details</a></td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 999</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-8">View Details</a></td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 0</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-9">View Details</a></td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 0</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-10">View Details</a></td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 0</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-11">View Details</a></td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 0</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-12">View Details</a></td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> -123456</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-13">View Details</a></td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> -123456</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-14">View Details</a></td>
+            </tr>
+            <tr>
+                <td>15</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> -123456</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-15">View Details</a></td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> -123456</span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-16">View Details</a></td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> </span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-17">View Details</a></td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> </span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-18">View Details</a></td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> </span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-19">View Details</a></td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> </span></td>
+                <td><span class="status-badge pass">MATCH</span></td>
+                <td><a href="#iteration-20">View Details</a></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div id="iteration-1" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #1</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 12345</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;12345&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;12345&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-2" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #2</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 12345</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;12345&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;12345&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-3" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #3</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 12345</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;12345&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;12345&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-4" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #4</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 12345</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;12345&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;12345&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-5" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #5</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 999</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;999&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;999&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-6" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #6</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 999</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;999&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;999&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-7" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #7</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 999</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;999&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;999&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-8" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #8</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 999</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;999&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;999&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-9" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #9</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 0</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;0&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;0&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-10" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #10</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 0</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;0&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;0&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-11" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #11</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> 0</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;0&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;0&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-12" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #12</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> 0</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;0&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;0&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-13" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #13</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> -123456</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;-123456&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;-123456&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-14" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #14</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> -123456</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;-123456&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;-123456&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-15" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #15</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> -123456</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;-123456&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;-123456&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-16" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #16</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> -123456</span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;-123456&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber&gt;-123456&lt;/AccountNumber&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-17" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #17</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> </span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber/&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber/&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-18" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #18</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> a1b2c3d4-e5f6-7890-1234-567890abcdef</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> </span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber/&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber/&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-19" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #19</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> True</span> <span class="token"><strong>account:</strong> </span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber/&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber/&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+    <div id="iteration-20" class="iteration-block">
+        <a href="#comparison-summary" class="back-link">Back to Comparison Summary &uarr;</a>
+        <div class="iteration-header">
+           <div>
+                <h2>Iteration #20</h2>
+                <div class="tokens"><span class="token"><strong>uuid:</strong> f0e9d8c7-b6a5-4321-fedc-ba0987654321</span> <span class="token"><strong>param:</strong> False</span> <span class="token"><strong>account:</strong> </span></div>
+            </div>
+            <span class="status-badge pass">MATCH</span>
+        </div>
+
+        <div class="comparison-grid">
+            <div class="api-column">
+                <h3>API 1 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8083/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber/&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+            <div class="api-column">
+                <h3>API 2 Details</h3>
+                <div class="api-details">
+                    <strong>URL:</strong> http://localhost:8084/ws/AccountService<br>
+                    <strong>Headers:</strong>
+                    <ul>
+                        <li><strong>Content-Type:</strong> text/xml;charset&#x3D;UTF-8</li><li><strong>SOAPAction:</strong> getAccountDetails</li>
+                    </ul>
+                </div>
+                <h4>Payload</h4>
+                <pre>&lt;?xml version&#x3D;&quot;1.0&quot; encoding&#x3D;&quot;UTF-8&quot;?&gt;&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:xsd&#x3D;&quot;http://www.w3.org/2001/XMLSchema&quot; xmlns:xsi&#x3D;&quot;http://www.w3.org/2001/XMLSchema-instance&quot;&gt;
+    
+  &lt;soap:Body&gt;
+        
+    &lt;Add xmlns&#x3D;&quot;http://tempuri.org/&quot;&gt;
+            
+      &lt;AccountNumber/&gt;
+            
+      &lt;intB&gt;10&lt;/intB&gt;
+          
+    &lt;/Add&gt;
+      
+  &lt;/soap:Body&gt;
+  
+&lt;/soap:Envelope&gt;
+</pre>
+                <h4>Response</h4>
+                <pre>&lt;soap:Envelope xmlns:soap&#x3D;&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;&lt;soap:Body&gt;&lt;ns2:getAccountDetailsResponse xmlns:ns2&#x3D;&quot;http://service.ws.myorg.com/&quot;&gt;&lt;return&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;transactionId&gt;shared-soap-id-12345&lt;/transactionId&gt;&lt;timestamp&gt;2025-12-01T10:00:00Z&lt;/timestamp&gt;&lt;/return&gt;&lt;/ns2:getAccountDetailsResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;</pre>
+            </div>
+        </div>
+        <div class="comparison-result match">
+            <h3>Comparison Result</h3>
+            <pre>Status: MATCH
+Difference: None
+</pre>
+        </div>
+    </div>
+
+</main>
+
+</body>
+</html>

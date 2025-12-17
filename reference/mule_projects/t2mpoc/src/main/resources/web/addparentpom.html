@@ -1,0 +1,170 @@
+<html>
+<head>
+  <script>
+
+    number = 0;
+    var animations = ['https://i.gifer.com/7YkR.gif'
+    ];
+    
+    
+     var refreshIntervalId = setInterval(function() {
+      image = document.getElementById('hiddenimageid').style.visibility="hidden";
+      image.src = animations[number];
+    },1)
+    
+    
+    function character() {
+    clearInterval(refreshIntervalId);
+      image = document.getElementById('hiddenimageid').style.visibility="visible";
+      image.src = animations[number];
+    
+      console.log(number);
+      number++;
+    
+    
+    }
+    
+    
+    </script>
+<style>
+body{
+	background-color:#f3f2ed;
+}
+.header{
+	background-size: cover;
+}
+
+.header{
+  text-align:center;
+  padding:2px 2px;
+  padding-right:10px;
+  font-family: Roboto Slab;
+  font-size: 30px;
+  text-transform: uppercase;
+  text-rendering: optimizeLegibility;
+  color: #131313;
+  letter-spacing: .15em;
+ text-shadow:
+    -1px -1px 0 #767676,
+    -1px 1px 1px #737272;
+}          
+
+.pomheader{
+font-family:Roboto Slab;
+text-shadow:none;
+letter-spacing:0em;
+padding-top:0px;
+font-weight: normal;
+font-size:20px;
+margin-left:7%;
+
+}
+
+td{
+  padding:5px;
+  border:none;
+  outline:none;
+}
+
+.mqinputs{
+  width:350px;
+  height:50px;
+  border:none;
+  outline:none;
+  border-radius:18px;
+  text-align:center;
+  font-family: Roboto Slab;
+  font-size:17px;
+}
+.pomtable{
+  margin-top:50px;
+}
+
+.sendbutton{
+	width:250px;
+  height:70px;
+	text-align:center;
+	margin-top:20px;
+	border-radius:18px;
+	font-family:Roboto Slab;
+	font-size:20px;
+	background-color:#13b67d;
+	box-shadow: 0px 12px 16px 0px rgba(0,0,0,0.2);
+	border:none;
+	outline:none;
+	color:white;	
+
+}		
+
+.sendbutton:hover{
+	box-shadow: 0px 16px 16px 0px rgba(0,0,0,0.2);
+	background-color:#13b67d;
+}
+
+.sendbutton:active{
+	border:none;
+}
+
+
+.board {
+  position: absolute;
+  top: 4.3vh;
+  left: 10vw;
+  cursor: pointer;
+  left:86%;
+  top:85%;
+  background-color: transparent;
+
+}
+
+.board img {
+  width: 200px;
+  height:100px;
+  border-radius: 15%;
+  
+
+}
+
+
+
+* {
+  box-sizing: border-box;
+  
+}
+
+.parentpomclass{
+  width:800px;
+  height:600px;
+  border:none;
+  outline:none;
+  border-radius:18px;
+  text-align:justify;
+  font-family: Roboto Slab;
+  font-size:17px;
+}
+
+</style>
+ <title>Add Parent POM</title>
+<link href="https://fonts.googleapis.com/css?family=Pridi:300|Quattrocento|Quicksand|Roboto+Slab&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+<div class="header">
+<p>ADD PARENT POM</p>
+<br/>
+</div>
+<h4 class="pomheader">Please provide POM XML Content</h4>
+<form action="/t2mpoc-eapi01-sbx/addparentpomconfig" enctype="multipart/form-data" method="POST">
+<table align="center" class="pomtable">    
+  <tr><td><textarea type="text" name="pomcontent" class="parentpomclass" placeholder="POM XML Content"></textarea></td></tr>
+  <tr align="center"><td><button type="submit" value="submit" onclick="character();" class="sendbutton">Add Parent POM</button></td></tr>
+</table>
+</form>
+<br/>
+<div class="board">
+<img src="https://www.launchpads.com.au/assets/css/icons/animated/rocket/animat-rocket-color.gif" id="hiddenimageid" />
+</div>
+</div>
+  </body>
+  </html>

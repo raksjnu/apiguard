@@ -1,0 +1,8 @@
+/* Page-specific styles for RaksAnalyzer */
+/* Imports the main Raks theme */
+
+/* Additional page-specific styles can be added here */
+h3 {
+    color: #663399;
+    margin-top: 2rem;
+}

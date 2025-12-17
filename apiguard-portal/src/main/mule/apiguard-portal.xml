@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:file="http://www.mulesoft.org/schema/mule/file" 
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd">
+	
+	<configuration-properties file="mule-app.properties" doc:name="Configuration properties" />
+	
+	<!-- Secure Configuration Properties (for encrypted SMTP password) -->
+	<!-- Uncomment when using encrypted passwords -->
+	<!--
+	<secure-properties:config name="Secure_Properties_Config" 
+	                          file="mule-app-secure.properties" 
+	                          key="${encryption.key}">
+		<secure-properties:encrypt algorithm="Blowfish" mode="CBC"/>
+	</secure-properties:config>
+	-->
+	
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="12345678-1234-1234-1234-1234567890ab" basePath="${http.listener.basePath}">
+		<http:listener-connection host="${http.listener.host}" port="${http.listener.port}" />
+	</http:listener-config>
+	
+	<!-- Object Store Configuration for User Sessions -->
+	<os:config name="ObjectStore_Config"/>
+	
+	<os:object-store name="User_Session_Store" 
+	                  persistent="true"
+	                  entryTtl="30" 
+	                  entryTtlUnit="MINUTES"
+	                  config-ref="ObjectStore_Config"/>
+	
+	<!-- Flow for start page - routes to registration or portal based on config -->
+	<flow name="start-page-flow" doc:id="start-page-flow-id">
+		<http:listener doc:name="Listener" doc:id="start-listener-id" config-ref="HTTP_Listener_config" path="${http.listener.startPath}" />
+		<choice>
+			<when expression="#['${registration.enabled}' == 'true']">
+				<!-- Registration enabled - serve registration page -->
+				<file:read doc:name="Read registration template" path="${mule.home}/apps/apiguard-portal/templates/registration.template.html" />
+				<set-payload value="#[%dw 2.0&#10;output text/plain&#10;---&#10;payload replace '{{registration.page.title}}' with p('registration.page.title') replace '{{registration.page.header}}' with p('registration.page.header') replace '{{registration.page.subtitle}}' with p('registration.page.subtitle') replace '{{registration.button.text}}' with p('registration.button.text') replace '{{registration.button.processing}}' with p('registration.button.processing') replace '{{registration.field.1.name}}' with p('registration.field.1.name') replace '{{registration.field.1.label}}' with p('registration.field.1.label') replace '{{registration.field.1.type}}' with p('registration.field.1.type') replace '{{registration.field.1.required}}' with p('registration.field.1.required') replace '{{registration.field.1.placeholder}}' with p('registration.field.1.placeholder') replace '{{registration.field.2.name}}' with p('registration.field.2.name') replace '{{registration.field.2.label}}' with p('registration.field.2.label') replace '{{registration.field.2.type}}' with p('registration.field.2.type') replace '{{registration.field.2.required}}' with p('registration.field.2.required') replace '{{registration.field.2.placeholder}}' with p('registration.field.2.placeholder') replace '{{registration.field.3.name}}' with p('registration.field.3.name') replace '{{registration.field.3.label}}' with p('registration.field.3.label') replace '{{registration.field.3.type}}' with p('registration.field.3.type') replace '{{registration.field.3.required}}' with p('registration.field.3.required') replace '{{registration.field.3.placeholder}}' with p('registration.field.3.placeholder') replace '{{registration.page.footer}}' with p('registration.page.footer')]" doc:name="Replace placeholders" mimeType="text/html"/>
+			</when>
+			<otherwise>
+				<!-- Registration disabled - serve portal directly -->
+				<file:read doc:name="Read portal template" path="${mule.home}/apps/apiguard-portal/templates/index.template.html" />
+				<set-payload value="#[%dw 2.0&#10;output text/plain&#10;---&#10;payload replace '{{portal.page.title}}' with p('portal.page.title') replace '{{portal.page.header}}' with p('portal.page.header') replace '{{portal.page.subtitle}}' with p('portal.page.subtitle') replace '{{portal.page.footer}}' with p('portal.page.footer') replace '{{tool.1.name}}' with p('tool.1.name') replace '{{tool.1.description}}' with p('tool.1.description') replace '{{tool.1.url}}' with p('tool.1.url') replace '{{tool.2.name}}' with p('tool.2.name') replace '{{tool.2.description}}' with p('tool.2.description') replace '{{tool.2.url}}' with p('tool.2.url') replace '{{tool.3.name}}' with p('tool.3.name') replace '{{tool.3.description}}' with p('tool.3.description') replace '{{tool.3.url}}' with p('tool.3.url') replace '{{tool.4.name}}' with p('tool.4.name') replace '{{tool.4.description}}' with p('tool.4.description') replace '{{tool.4.url}}' with p('tool.4.url')]" doc:name="Replace placeholders" mimeType="text/html"/>
+			</otherwise>
+		</choice>
+	</flow>
+	
+	<!-- Flow for index page - always serves portal (bypasses registration) -->
+	<flow name="index-page-flow" doc:id="index-page-flow-id">
+		<http:listener doc:name="Listener" doc:id="index-listener-id" config-ref="HTTP_Listener_config" path="/index" />
+		<file:read doc:name="Read portal template" path="${mule.home}/apps/apiguard-portal/templates/index.template.html" />
+		<set-payload value="#[%dw 2.0&#10;output text/plain&#10;---&#10;payload replace '{{portal.page.title}}' with p('portal.page.title') replace '{{portal.page.header}}' with p('portal.page.header') replace '{{portal.page.subtitle}}' with p('portal.page.subtitle') replace '{{portal.page.footer}}' with p('portal.page.footer') replace '{{tool.1.name}}' with p('tool.1.name') replace '{{tool.1.description}}' with p('tool.1.description') replace '{{tool.1.url}}' with p('tool.1.url') replace '{{tool.2.name}}' with p('tool.2.name') replace '{{tool.2.description}}' with p('tool.2.description') replace '{{tool.2.url}}' with p('tool.2.url') replace '{{tool.3.name}}' with p('tool.3.name') replace '{{tool.3.description}}' with p('tool.3.description') replace '{{tool.3.url}}' with p('tool.3.url') replace '{{tool.4.name}}' with p('tool.4.name') replace '{{tool.4.description}}' with p('tool.4.description') replace '{{tool.4.url}}' with p('tool.4.url')]" doc:name="Replace placeholders" mimeType="text/html"/>
+	</flow>
+	
+	<!-- Flow for user registration submission -->
+	<flow name="user-registration-flow">
+		<http:listener path="/register" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
+		
+		<!-- Capture user metadata -->
+		<set-variable variableName="userName" value="#[payload.name]"/>
+		<set-variable variableName="userEmail" value="#[payload.email]"/>
+		<set-variable variableName="userCompany" value="#[payload.company default 'N/A']"/>
+		<set-variable variableName="userIpAddress" value="#[attributes.headers['x-forwarded-for'] default attributes.remoteAddress]"/>
+		<set-variable variableName="userAgent" value="#[attributes.headers['user-agent']]"/>
+		<set-variable variableName="sessionStartTime" value="#[now()]"/>
+		
+		<!-- Store in Object Store for later retrieval -->
+		<set-variable variableName="sessionId" value="#[uuid()]"/>
+		<os:store key="#[vars.sessionId]" objectStore="User_Session_Store">
+			<os:value><![CDATA[#[output application/java --- {
+				name: vars.userName,
+				email: vars.userEmail,
+				company: vars.userCompany,
+				ipAddress: vars.userIpAddress,
+				userAgent: vars.userAgent,
+				startTime: vars.sessionStartTime
+			}]]]></os:value>
+		</os:store>
+		
+		<!-- Async Notification Trigger -->
+		<async>
+			<flow-ref name="send-registration-notification-flow"/>
+		</async>
+
+		<!-- Return success with redirect URL -->
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json indent=false
+---
+{status: "success", message: "Registration successful", redirectUrl: "/apiguardportal/registration-success"}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	
+	<!-- Flow for registration success page -->
+	<flow name="registration-success-flow">
+		<http:listener path="/registration-success" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+		<file:read doc:name="Read success template" path="${mule.home}/apps/apiguard-portal/templates/registration-success.template.html" />
+		<set-payload value="#[%dw 2.0&#10;output text/plain&#10;---&#10;payload replace '{{registration.success.page.title}}' with p('registration.success.page.title') replace '{{registration.success.page.header}}' with p('registration.success.page.header') replace '{{registration.success.message}}' with p('registration.success.message') replace '{{registration.success.redirect.text}}' with p('registration.success.redirect.text') replace '{{registration.success.redirect.delay}}' with p('registration.success.redirect.delay') replace '{{registration.button.text}}' with p('registration.button.text') replace '{{registration.success.page.footer}}' with p('registration.success.page.footer')]" doc:name="Replace placeholders" mimeType="text/html"/>
+	</flow>
+	
+	<!-- Flow for static resources (CSS, JS, images, etc.) -->
+	<flow name="static-resources-flow" doc:id="static-resources-flow-id">
+		<http:listener doc:name="Listener" doc:id="static-listener-id" config-ref="HTTP_Listener_config" path="${http.listener.staticResourcesPath}"/>
+		<http:load-static-resource doc:name="Load static resource" doc:id="load-static-id" resourceBasePath="${app.home}/web/"/>
+	</flow>
+</mule>

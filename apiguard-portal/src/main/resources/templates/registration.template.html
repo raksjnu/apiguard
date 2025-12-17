@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>{{registration.page.title}}</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background: white;
+            border: 5px solid #663399;
+            border-radius: 8px;
+            padding: 0;
+            margin: 50px auto;
+            max-width: 600px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header {
+            background: linear-gradient(135deg, #f9f4ff 0%, #e6d9f5 100%);
+            padding: 5px 30px;
+            text-align: center;
+            border-bottom: 3px solid #663399;
+        }
+
+        .header img {
+            height: 80px;
+            margin-bottom: 2px;
+        }
+
+        .header h1 {
+            color: #663399;
+            margin: 2px 0;
+            font-size: 32px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .form-group {
+            margin: 20px 0;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-group label .required {
+            color: #d32f2f;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #663399;
+        }
+
+        button {
+            background: #663399;
+            color: white;
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        button:hover:not(:disabled) {
+            background: #7d4fb2;
+        }
+
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .footer {
+            background: linear-gradient(135deg, #f9f4ff 0%, #e6d9f5 100%);
+            padding: 20px;
+            text-align: center;
+            border-top: 3px solid #663399;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .error {
+            color: #d32f2f;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj4KICA8cGF0aCBkPSJNIDE1IDIwIEwgNDAgMTAgTCA2NSAyMCBMIDY1IDQ1IFEgNjUgNjAgNDAgNzUgUSAxNSA2MCAxNSA0NSBaIiBmaWxsPSIjNjYzMzk5IiBzdHJva2U9IiM2NjMzOTkiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjQwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlJBS1M8L3RleHQ+Cjwvc3ZnPg=="
+                alt="RAKS Logo">
+            <h1>{{registration.page.header}}</h1>
+        </div>
+
+        <div class="content">
+            <p class="subtitle">{{registration.page.subtitle}}</p>
+
+            <form id="registrationForm">
+                <div class="form-group">
+                    <label>{{registration.field.1.label}} <span class="required">*</span></label>
+                    <input type="{{registration.field.1.type}}" id="name"
+                        placeholder="{{registration.field.1.placeholder}}" required>
+                    <div id="nameError" class="error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>{{registration.field.2.label}} <span class="required">*</span></label>
+                    <input type="{{registration.field.2.type}}" id="email"
+                        placeholder="{{registration.field.2.placeholder}}" required>
+                    <div id="emailError" class="error"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>{{registration.field.3.label}}</label>
+                    <input type="{{registration.field.3.type}}" id="company"
+                        placeholder="{{registration.field.3.placeholder}}">
+                </div>
+
+                <button type="submit" id="submitBtn" disabled>{{registration.button.text}}</button>
+            </form>
+        </div>
+
+        <div class="footer">
+            {{registration.page.footer}}
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('registrationForm');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const submitBtn = document.getElementById('submitBtn');
+
+        // Enable button when required fields are filled
+        function validateForm() {
+            const nameValid = nameInput.value.trim().length > 0;
+            const emailValid = emailInput.value.trim().length > 0 &&
+                /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput.value);
+
+            submitBtn.disabled = !(nameValid && emailValid);
+        }
+
+        nameInput.addEventListener('input', validateForm);
+        emailInput.addEventListener('input', validateForm);
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const data = {
+                name: nameInput.value.trim(),
+                email: emailInput.value.trim(),
+                company: document.getElementById('company').value.trim()
+            };
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = '{{registration.button.processing}}';
+
+            fetch('/apiguardportal/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        window.location.href = data.redirectUrl;
+                    } else {
+                        alert('Error: ' + data.message);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = '{{registration.button.text}}';
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = '{{registration.button.text}}';
+                });
+        });
+    </script>
+</body>
+
+</html>

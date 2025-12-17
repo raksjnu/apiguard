@@ -1,0 +1,3 @@
+rakspolicyproperty=test1
+rakspolicyproperty2.policypropname=test2
+truist.authz.policy.clientIDmap.GET:/getaccount/.*=abc123:raks;xyz321:kumar:987ext:town;

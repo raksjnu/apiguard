@@ -1,0 +1,243 @@
+<html>
+<head>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(drawChart);
+
+function drawChart() {
+
+// Set Data
+const data = google.visualization.arrayToDataTable([
+  ['Status', 'Count'],
+  ['Passed',#[vars.passcount]],
+  ['Failed', #[vars.failcount]]
+]);
+
+// Set Options
+const options = {
+  is3D: true,
+  colors: ['green', 'red'],
+ backgroundColor: 'transparent',
+ legend: { position : 'none' },
+pieSliceText: 'value'
+};
+
+// Draw
+const chart = new google.visualization.PieChart(document.getElementById('myChart'));
+chart.draw(data, options);
+
+}
+</script>
+<style>
+body{
+	background-color:#f3f2ed;
+}
+
+.container{
+	width:100%;
+	height:100%;
+}
+
+.header{
+	background-size: cover;
+
+}
+
+
+.header{
+  text-align:center;
+  padding:2px 2px;
+  padding-right:10px;
+  font-family: Roboto Slab;
+  font-size: 30px;
+  text-transform: uppercase;
+  text-rendering: optimizeLegibility;
+  color: white;
+  letter-spacing: .10em;
+ text-shadow:
+    -1px -1px 0 #767676,
+    -1px 2px 1px #737272;
+	background: linear-gradient(to right, #135 0%, #9BD 100%);
+}
+
+td{
+  padding:5px;
+  font-size:17px;
+  padding-left:50px;
+  font-family: Roboto Slab;
+  word-break:break-word;
+   max-width:1000px;
+}
+
+
+.failed{
+color:red;
+}
+
+.overallstatus{
+font-family:Roboto Slab;
+text-shadow:none;
+text-transform:lowercase;
+ letter-spacing: .05em;
+}
+
+.passed{
+color:#03fe86;
+}
+.unusedproperty{
+word-break: break-all;
+width:700px;
+}
+.developer {
+color:white;
+letter-spacing: 0em;
+text-shadow:none;
+text-transform:lowercase;
+align:left;
+}
+.branch {
+color:white;
+letter-spacing: 0em;
+text-shadow:none;
+text-transform:lowercase;
+align:center;
+}
+.timestamp {
+color:white;
+letter-spacing: 0em;
+text-shadow:none;
+text-transform:capitalize;
+align:right;
+}
+
+.warning{
+color:#CC5500;
+background-color:yellow;
+}
+.chart{
+  position: absolute;
+    top: -125px;
+	right:-100px;
+    transform: translate(-50%,-50%);
+	margin-top:220px;
+	text-shadow:none;
+	 letter-spacing: .05em;
+	 text-transform:capitalize;
+	 font-weight:bold;
+	 
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+    margin-top:3px;
+  }
+  .dropdown:hover  .dropdowntracker {
+    display: block;
+    margin-top:3px;
+  }
+  
+  .right_side:hover{
+    -webkit-transform: perspective(1px) translateZ(0);
+    transform: perspective(1px) translateZ(0);
+    box-shadow: 0 0 1px rgba(0, 0, 0, 0);
+    -webkit-transition-duration: 0.3s;
+    transition-duration: 0.3s;
+  }
+  
+  .dropbtn {
+    border: none;
+  }
+  
+  .dropdown-content {
+    display: none;
+    position: absolute;
+    background-color: #e6d7cd;
+    box-shadow: 0px 8px 16px 0px rgba(241, 229, 229, 0.966);
+    border-radius: 16px;
+    align-items: justify;
+    width:700px;
+    height:300px;
+    padding:8px;
+    font-family: Roboto Slab;
+    font-size:14px;
+	margin-left:100px;
+  }
+</style>
+ <title>API Config Review</title>
+<link href="https://fonts.googleapis.com/css?family=Pridi:300|Quattrocento|Quicksand|Roboto+Slab&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+
+<div class="header">
+
+<p>API Config Review    ->  <span class="overallstatus">#[vars.currentapiname] : </span>#[vars.overallstatus]</p> 
+<p><table align="center"><tr><td class="developer">Developer : #[vars.developer]</td><td class="branch">  Branch : #[vars.branch] </td><td class="timestamp">Timestamp : #[vars.timestamp]</td></tr></table></p>
+</div>
+<table align="right" class="chart"><tr><td><div id="myChart"  style="width:100%; max-width:250px; height:250px;"></div></td></tr></table>
+<table>
+      <tr><td>Naming convention should be followed for api-autodeploy-flow-name and should be same across all environments</td><td class="unusedproperty">#[vars.autodeployflownamecheck]</td></tr>
+	  <tr><td>DB2/CICS creds properties should follow the defined naming convention (*cics.userid|password|host|port, *db.userid|password|url|driver )</td><td class="unusedproperty">#[vars.cicsdbnamingconventioncheck]</td></tr>
+      <tr><td>DEBUG Logger properties should be there in property files</td><td class="unusedproperty">#[vars.logpropertiescheck]</td></tr>
+      <tr><td>Datapower endpoints should not be used for backend calls</td><td class="unusedproperty">#[vars.datapowerendpointcheck]</td></tr>
+	  <tr><td>AssetType should not be empty in property files</td><td class="unusedproperty">#[vars.assettypecheck]</td></tr>
+	  <tr><td>http.private.port should always be 8081</td><td class="unusedproperty">#[vars.privateportcheck]</td></tr>
+	  <tr><td>http.path should be same as api name and should be same in all property files</td><td class="unusedproperty">#[vars.httppathcheck]</td></tr>
+	  <tr><td>All property files should have same number of property entries</td><td class="unusedproperty">#[vars.propertycountcheck]</td></tr>
+	  <tr><td>Environment specific host name should be used for CICS backend calls</td><td class="unusedproperty">#[vars.bkndhostnamecheck]</td></tr>
+	  <tr><td>Environment specific port number should be used for CICS backend calls</td><td class="unusedproperty">#[vars.bkndportnumbercheck]</td></tr>
+	  <tr><td>DNS names should be used instead of IP addresses in all property files</td><td class="unusedproperty">#[vars.ipaddresscheck]</td></tr>
+	  <tr><td>Inbound validation should be enabled(true) for soapkit configuration</td><td class="unusedproperty">#[vars.inboundvalidationcheck]</td></tr>
+	  <tr><td>Persistance connections should be false for all connectors except objectstore</td><td class="unusedproperty">#[vars.persistenceconnectioncheck]</td></tr>
+	  <tr><td>HTTP protocols should be externalized in all property files</td><td class="unusedproperty">#[vars.httpprotocolcheck]</td></tr>
+	  <tr><td>Ratelimits should be updated in policy files across all environments</td><td class="unusedproperty">#[vars.ratelimitscheck]</td></tr>
+	  <tr><td>vault.app.name should be updated as per the environment and cluster type</td><td class="unusedproperty">#[vars.vaultappnamecheck]</td></tr>
+	  <tr><td>Secure property count should be matching across all environments</td><td class="unusedproperty">#[vars.securepropertycountcheck]</td></tr>
+	  <tr><td>All secure properties should have secure:: before the property name</td><td class="unusedproperty">#[vars.securepropertyvalidationcheck]</td></tr>
+	  <tr><td>Environment specific connection details should be used for DB2 database</td><td class="unusedproperty">#[vars.dbconnectioncheck]</td></tr>
+	   <tr><td>Tibco credential should not be used for backend connections</td><td class="unusedproperty">#[vars.tibcocredsusagecheck]</td></tr>
+	  <tr><td>Environment specific Tibco user should be used like Q user for PREP, P user for PROD etc.</td><td class="unusedproperty">#[vars.useridregexcheck]</td></tr>
+	  <tr><td>Environment specific region should be used like TESTU for ITE, TESTX for PITE</td><td class="unusedproperty">#[vars.environmentstringcheck]</td></tr>
+	  <tr><td>All encrypted properties must be present in master credential file</td><td class="unusedproperty">#[vars.encryptedpropertyvalidationcheck]</td></tr>
+	  <tr><td>Every encrypted password value must be a match from one of the entries from the master cred file</td><td class="unusedproperty">#[vars.usercredsvalidationcheck]</td></tr>
+	  <tr><td>Property file should contain correct keystore path and keystore alias</td><td class="unusedproperty">#[vars.keystorepathandaliascheck]</td></tr>
+	  <tr><td>Property file should contain correct lastmile key password and log encryption password</td><td class="unusedproperty">#[vars.lastmileandlogencpwdcheck]</td></tr>
+	  <tr><td>Secure vault client id and client secret should be a match from master cred file</td><td class="unusedproperty">#[vars.securevaultclientcheck]</td></tr>
+	  <tr><td>Environment specific vault should be used in property files</td><td class="unusedproperty">#[vars.vaultstorelocationcheck]</td></tr>
+	  <tr><td>Database pooling should be configured as per standard<span><span class="container_right">
+        <span class="right_side dropdown">
+          <span class="dropbtn">....<u>#more info</u></span>
+          <span class="dropdown-content">
+		  <p>
+		  <b>Database pooling configuration standard</b><br/>
+		  <br/>
+		  minPoolSize should be greater than or equal to <b>3</b>.<br/>
+		  maxPoolSize should be greater than the API's <b>tps</b>.<br/>
+		  acquireIncrement should be greater than or equal to <b>5</b><br/>
+		  preparedStatementCacheSize should be greater than <b>the number of database queries/statements in the code</b><br/>
+		  maxStatementsPerConnection and maxStatementsPerConnection values should be <b>same</b><br/>
+		  testConnectionOnCheckout should be <b>false</b><br/>
+		  testConnectionOnCheckin should be <b>true</b><br/>
+		  maxIdleTimeExcessConnections and idleConnectionTestPeriod should be <b>119</b> for Non-PROD environments<br/>
+		  maxIdleTimeExcessConnections and idleConnectionTestPeriod should be <b>299</b> for PROD and DR environments<br/>
+		  </p>
+		</span></span></span>
+
+	  </td><td class="unusedproperty">#[vars.dbminpoolsizecheck]</td></tr>
+	  <tr><td>Unused properties should not be there in property files</td><td class="unusedproperty">#[vars.unusedpropertycheck]</td></tr>
+	  <tr><td>Targetconfig file in deployment folder should have both 1way and 2way ingress url</td><td class="unusedproperty">#[vars.targetconfigendpointcheck]</td></tr>
+	  <tr><td>Valid SOAP UI project should be uploaded to Git with proper naming convention(apiname_soapui_project.xml)</td><td class="unusedproperty">#[vars.soapuinamingconventioncheck]</td></tr>
+	  <tr><td>Internal domain should have bbtnet.com in the domain name</td><td class="unusedproperty">#[vars.internaldomaincheck]</td></tr>
+	  <tr><td>All the policies added in policy files should be enabled</td><td class="unusedproperty">#[vars.policyenabledcheck]</td></tr>
+	  <tr><td>Policy files should have the contracts enabled</td><td class="unusedproperty">#[vars.policycontractscheck]</td></tr>
+	  <tr><td>Policy files should have HC(PROD) or HC_NonProd(Non-PROD) contract applied</td><td class="unusedproperty">#[vars.policyhcclientcheck]</td></tr>
+	  <tr><td>Latest version of AuthZ policy(1.0.5) should be used, with asset type</td><td class="unusedproperty">#[vars.authzpolversioncheck]</td></tr>
+	  <tr><td>SDD should be uploaded to git in respective API document folder</td><td class="unusedproperty">#[vars.apisddcheck]</td></tr>
+	</table>
+      <br/>
+        <br/>
+
+  </body>
+  </html>

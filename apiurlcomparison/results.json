@@ -1,0 +1,178 @@
+[ {
+  "operationName" : "getAccountDetails (Original Input Payload)",
+  "iterationTokens" : { },
+  "status" : "MATCH",
+  "differences" : [ ],
+  "timestamp" : "2025-12-09 09:20:52",
+  "baselineServiceName" : "AccountService",
+  "baselineDate" : "20251208",
+  "baselineRunId" : "run-001",
+  "baselinePath" : "baselines\\AccountService\\20251208\\run-001",
+  "baselineDescription" : "Pre-upgrade baseline v1.0.0",
+  "baselineTags" : [ "v1.0.0", "pre-upgrade" ],
+  "baselineCaptureTimestamp" : "2025-12-08T17:40:21.8124949-06:00",
+  "api1" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestHeaders" : {
+      "Content-Type" : "text/xml;charset=UTF-8",
+      "SOAPAction" : "getAccountDetails"
+    },
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>15</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId><timestamp>2025-12-01T10:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 201
+  },
+  "api2" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>15</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId><timestamp>2025-12-01T10:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 422
+  }
+}, {
+  "operationName" : "getAccountDetails",
+  "iterationTokens" : {
+    "uuid" : "id1",
+    "account" : "999"
+  },
+  "status" : "MISMATCH",
+  "differences" : [ "Expected text value 'soap-api1-specific-id-for-999' but was 'soap-api1-specific-id-for-990' - comparing <transactionId ...>soap-api1-specific-id-for-999</transactionId> at /Envelope[1]/Body[1]/getAccountDetailsResponse[1]/return[1]/transactionId[1]/text()[1] to <transactionId ...>soap-api1-specific-id-for-990</transactionId> at /Envelope[1]/Body[1]/getAccountDetailsResponse[1]/return[1]/transactionId[1]/text()[1] (DIFFERENT)" ],
+  "timestamp" : "2025-12-09 09:20:53",
+  "baselineServiceName" : "AccountService",
+  "baselineDate" : "20251208",
+  "baselineRunId" : "run-001",
+  "baselinePath" : "baselines\\AccountService\\20251208\\run-001",
+  "baselineDescription" : "Pre-upgrade baseline v1.0.0",
+  "baselineTags" : [ "v1.0.0", "pre-upgrade" ],
+  "baselineCaptureTimestamp" : "2025-12-08T17:40:21.8124949-06:00",
+  "api1" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestHeaders" : {
+      "Content-Type" : "text/xml;charset=UTF-8",
+      "SOAPAction" : "getAccountDetails"
+    },
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>999</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>soap-api1-specific-id-for-999</transactionId><timestamp>2025-12-01T11:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 5
+  },
+  "api2" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>999</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>soap-api1-specific-id-for-990</transactionId><timestamp>2025-12-01T11:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 7
+  }
+}, {
+  "operationName" : "getAccountDetails",
+  "iterationTokens" : {
+    "uuid" : "id1",
+    "account" : "1000"
+  },
+  "status" : "MATCH",
+  "differences" : [ ],
+  "timestamp" : "2025-12-09 09:20:53",
+  "baselineServiceName" : "AccountService",
+  "baselineDate" : "20251208",
+  "baselineRunId" : "run-001",
+  "baselinePath" : "baselines\\AccountService\\20251208\\run-001",
+  "baselineDescription" : "Pre-upgrade baseline v1.0.0",
+  "baselineTags" : [ "v1.0.0", "pre-upgrade" ],
+  "baselineCaptureTimestamp" : "2025-12-08T17:40:21.8124949-06:00",
+  "api1" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestHeaders" : {
+      "Content-Type" : "text/xml;charset=UTF-8",
+      "SOAPAction" : "getAccountDetails"
+    },
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>1000</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId><timestamp>2025-12-01T10:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 5
+  },
+  "api2" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>1000</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId><timestamp>2025-12-01T10:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 5
+  }
+}, {
+  "operationName" : "getAccountDetails",
+  "iterationTokens" : {
+    "uuid" : "id1",
+    "account" : "1001"
+  },
+  "status" : "MATCH",
+  "differences" : [ ],
+  "timestamp" : "2025-12-09 09:20:53",
+  "baselineServiceName" : "AccountService",
+  "baselineDate" : "20251208",
+  "baselineRunId" : "run-001",
+  "baselinePath" : "baselines\\AccountService\\20251208\\run-001",
+  "baselineDescription" : "Pre-upgrade baseline v1.0.0",
+  "baselineTags" : [ "v1.0.0", "pre-upgrade" ],
+  "baselineCaptureTimestamp" : "2025-12-08T17:40:21.8124949-06:00",
+  "api1" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestHeaders" : {
+      "Content-Type" : "text/xml;charset=UTF-8",
+      "SOAPAction" : "getAccountDetails"
+    },
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>1001</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId><timestamp>2025-12-01T10:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 6
+  },
+  "api2" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>1001</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId><timestamp>2025-12-01T10:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 6
+  }
+}, {
+  "operationName" : "getAccountDetails",
+  "iterationTokens" : {
+    "uuid" : "id2",
+    "account" : "999"
+  },
+  "status" : "MISMATCH",
+  "differences" : [ "Expected text value 'SUCCESS' but was 'OK1' - comparing <status ...>SUCCESS</status> at /Envelope[1]/Body[1]/getAccountDetailsResponse[1]/return[1]/status[1]/text()[1] to <status ...>OK1</status> at /Envelope[1]/Body[1]/getAccountDetailsResponse[1]/return[1]/status[1]/text()[1] (DIFFERENT)" ],
+  "timestamp" : "2025-12-09 09:20:53",
+  "baselineServiceName" : "AccountService",
+  "baselineDate" : "20251208",
+  "baselineRunId" : "run-001",
+  "baselinePath" : "baselines\\AccountService\\20251208\\run-001",
+  "baselineDescription" : "Pre-upgrade baseline v1.0.0",
+  "baselineTags" : [ "v1.0.0", "pre-upgrade" ],
+  "baselineCaptureTimestamp" : "2025-12-08T17:40:21.8124949-06:00",
+  "api1" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestHeaders" : {
+      "Content-Type" : "text/xml;charset=UTF-8",
+      "SOAPAction" : "getAccountDetails"
+    },
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>999</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>SUCCESS</status><transactionId>soap-api1-specific-id-for-999</transactionId><timestamp>2025-12-01T11:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 4
+  },
+  "api2" : {
+    "url" : "http://localhost:8083/ws/AccountService",
+    "method" : "POST",
+    "requestPayload" : "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?><soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\" xmlns:xsd=\"http://www.w3.org/2001/XMLSchema\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">\r\n  <soap:Body>\r\n    <Add xmlns=\"http://tempuri.org/\">\r\n      <AccountNumber>999</AccountNumber>\r\n      <intB>10</intB>\r\n    </Add>\r\n  </soap:Body>\r\n</soap:Envelope>",
+    "statusCode" : 200,
+    "responsePayload" : "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\"><return><status>OK1</status><transactionId>soap-api1-specific-id-for-999</transactionId><timestamp>2025-12-01T11:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>",
+    "duration" : 4
+  }
+} ]

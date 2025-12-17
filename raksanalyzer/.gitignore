@@ -1,0 +1,30 @@
+# Build outputs
+target/
+*.jar
+!*-sources.jar
+!*-javadoc.jar
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*~
+
+# Custom config (user overrides)
+custom-config.properties

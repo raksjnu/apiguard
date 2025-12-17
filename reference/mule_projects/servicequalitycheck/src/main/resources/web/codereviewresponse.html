@@ -1,0 +1,411 @@
+<html>
+<head>
+<script src="https://www.gstatic.com/charts/loader.js"></script>
+<script>
+  number = 0;
+var animations = ['https://cdn.edu.buncee.com/assets/864ea935940063b8b3b7501e4b6599d1/animation-writing-062819.gif'];
+
+
+ var refreshIntervalId = setInterval(function() {
+  image = document.getElementById('hiddenimageid').style.visibility="hidden";
+  image.src = animations[number];
+},1)
+
+
+function character() {
+clearInterval(refreshIntervalId);
+  image = document.getElementById('hiddenimageid').style.visibility="visible";
+  image.src = animations[number];
+
+  console.log(number);
+  number++;
+
+}
+
+function myFunction() {
+
+                var btn = document.getElementById("myButton");
+
+                if (btn.value == "Create Config Files") {
+                    btn.value = "In progress";
+                    btn.innerHTML = "In progress";
+                }
+                else {
+                    btn.value = "Create Config Files";
+                    btn.innerHTML = "Create Config Files";
+                }
+
+            }
+</script>
+<script>
+google.charts.load('current', {'packages':['corechart']});
+google.charts.setOnLoadCallback(drawChart);
+
+function drawChart() {
+
+// Set Data
+const data = google.visualization.arrayToDataTable([
+  ['Status', 'Count'],
+  ['Passed',#[vars.passcount]],
+  ['Failed', #[vars.failcount]]
+]);
+
+// Set Options
+const options = {
+  is3D: true,
+  colors: ['green', 'red'],
+ backgroundColor: 'transparent',
+ legend: { position : 'none' },
+pieSliceText: 'value'
+};
+
+// Draw
+const chart = new google.visualization.PieChart(document.getElementById('myChart'));
+chart.draw(data, options);
+
+}
+
+
+</script>
+<style>
+body{
+	background-color:#f3f2ed;
+}
+.container{
+	width:100%;
+	height:100%;
+}
+
+.header{
+  background-size: cover;
+  text-align:center;
+  padding:2px 2px;
+  padding-right:10px;
+  font-family: Roboto Slab;
+  font-size: 30px;
+  text-transform: uppercase;
+  text-rendering: optimizeLegibility;
+  color: white;
+  letter-spacing: .10em;
+ text-shadow:
+    -1px -1px 0 #767676,
+    -1px 2px 1px #737272;
+	background: linear-gradient(to right, #135 0%, #9BD 100%);
+}
+
+td{
+  padding:5px;
+  font-size:17px;
+  padding-left:50px;
+  font-family: Roboto Slab;
+  word-break:break-all;
+}
+
+
+.failed{
+color:red;
+}
+.warning{
+color:#CC5500;
+background-color:yellow;
+}
+.overallstatus{
+font-family:Roboto Slab;
+text-shadow:none;
+text-transform:lowercase;
+ letter-spacing: .05em;
+}
+
+.passed{
+color:#03fe86;
+}
+.unusedproperty{
+word-break: break-all;
+width:600px;
+}
+.developer {
+color:white;
+letter-spacing: 0em;
+text-shadow:none;
+text-transform:lowercase;
+align:left;
+}
+.branch {
+color:white;
+letter-spacing: 0em;
+text-shadow:none;
+text-transform:lowercase;
+align:center;
+}
+.timestamp {
+color:white;
+letter-spacing: 0em;
+text-shadow:none;
+text-transform:capitalize;
+align:right;
+}
+.chart{
+  position: absolute;
+    top: -125px;
+	right:-100px;
+    transform: translate(-50%,-50%);
+	margin-top:220px;
+	text-shadow:none;
+	 letter-spacing: .05em;
+	 text-transform:capitalize;
+	 font-weight:bold;
+	 
+}
+.configform a{
+position: absolute;
+    top: -125px;
+	left:170px;
+    transform: translate(-50%,-50%);
+	margin-top:220px;
+	text-shadow:none;
+	 letter-spacing: .05em;
+	 text-transform:capitalize;
+	 color:white;
+	 text-decoration:none;
+	 background-color:green;
+	 padding:10px;
+	 border-radius:18px;
+}
+.property{
+	width:150px;
+	text-align:center;
+	border-radius:10px;
+	padding:8px;
+	font-size:16px;
+	border:none;
+	outline:none;
+}
+
+h4{
+	font-size:60px;
+	font-family:Quattrocento;
+	text-transform: lower;
+	font-weight:bold;
+	margin-top:200px;
+}
+.button{
+  border-radius: 18px;
+  padding:12px;
+  font-size: 20px;
+  width:220px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  font-family: Roboto Slab;
+  background-color:#00887a;
+  border:none;
+  outline:none;
+  color:white;
+   position:absolute;
+  top:2450px;
+  left:650px;
+}
+.button:active{
+	border:none;
+	background:#00887a;;   
+}
+.button:focus{
+	border:none;
+	background:#00887a;;   
+}
+.button:visited{
+	border:none;
+	background:#00887a;;   
+}
+.button:hover{
+	box-shadow: 0px 14px 16px 0px rgba(0,0,0,0.2);
+	background-color:#00887a;;
+}
+
+.policylabel {
+  display: inline-block;
+  position: relative;
+  padding-left: 30px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  font-size: 18px;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  margin:8px;
+}
+
+/* Hide the browser's default checkbox */
+.policylabel input {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+  height: 0;
+  width: 0;
+}
+
+/* Create a custom checkbox */
+.checkmark {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 25px;
+  width: 25px;
+  background-color: white;
+}
+
+/* On mouse-over, add a grey background color */
+.policylabel:hover input ~ .checkmark {
+  background-color: #2196F3;
+}
+
+/* When the checkbox is checked, add a blue background */
+.policylabel input:checked ~ .checkmark {
+  background-color: #2196F3;
+}
+
+/* Create the checkmark/indicator (hidden when not checked) */
+.checkmark:after {
+  content: "";
+  position: absolute;
+  display: none;
+}
+
+/* Show the checkmark when checked */
+.policylabel input:checked ~ .checkmark:after {
+  display: inline-block;
+}
+
+/* Style the checkmark/indicator */
+.policylabel .checkmark:after {
+  left: 9px;
+  top: 5px;
+  width: 5px;
+  height: 10px;
+  border: solid white;
+  border-width: 0 3px 3px 0;
+  -webkit-transform: rotate(45deg);
+  -ms-transform: rotate(45deg);
+  transform: rotate(45deg);
+}
+  .formfields{
+	font-size:20px;
+	margin:30px;
+	font-family:Roboto Slab;
+	text-transform: lower;
+	font-weight:bold;
+  }
+
+html{
+scroll-behavior: smooth;
+}
+
+.dropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.dropdown-content {
+  display: none;
+  position: absolute;
+  background-color: #f15e1500;
+  min-width: 450px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  padding: 12px 16px;
+  z-index: 1;
+}
+
+.dropdown:hover .dropdown-content {
+  display: block;
+}
+
+ol li{
+  list-style-type: none;
+  color: black;
+  font-family:Pridi;
+  font-size:18px;
+}
+
+input[type=radio] {
+    border: 0px;
+    height: 1em;
+}
+
+.board {
+  position: absolute;
+  top: 4.3vh;
+  left: 10vw;
+  cursor: pointer;
+  left:85%;
+  top:2430px;
+
+}
+
+.board img {
+  width: 200px;
+  height:100px;
+  border-radius: 15%;
+
+}
+
+</style>
+ <title>Code Quality Check</title>
+<link href="https://fonts.googleapis.com/css?family=Pridi:300|Quattrocento|Quicksand|Roboto+Slab&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+
+<div class="header">
+
+<p>Code quality check    ->  <span class="overallstatus">#[vars.currentapiname] : </span>#[vars.overallstatus]</p> 
+<table align="left" class="chart"><tr><td><div id="myChart"  style="width:100%; max-width:250px; height:250px;"><a href="#1"></div></td></tr></table>
+<table align="right" class="chart"><tr><td><div style="width:100%; max-width:250px; height:250px;"></div></td></tr></table>
+<p><table align="center"><tr><td class="developer">Developer : #[vars.developer]</td><td class="branch">  Branch : #[vars.branch] </td><td class="timestamp">Timestamp : #[vars.timestamp]</td></tr></table></p>
+</div>
+<table>
+      <tr><td>Autodiscovery code block should be enabled</td><td>#[vars.apiautodiscovery]</td></tr>
+      <tr><td>Database connection pooling if used, should be configured properly for database connections</td><td>#[vars.databasepoolingcheck]</td></tr>
+      <tr><td>Database connection pooling attribute 'test connection on checkout' config should be 'false' with externalization</td><td>#[vars.databasetestconnectioncheckout]</td></tr>
+      <tr><td>For all connectors, connection idle timeout should not be used</td><td>#[vars.configidletimeouts]</td></tr>
+      <tr><td>Except for database connector, no where 'reconnection' should be used and enabled unless explicitly mandated</td><td>#[vars.reconnectioncheck]</td></tr>
+      <tr><td>Soap-router-kit should be enabled with 'Inbound validation enabled' check</td><td>#[vars.soapkitinboundvalidation]</td></tr>
+      <tr><td>GlobalErrorHandler configuration should not have 'defaultResponseTimeout'</td><td>#[vars.defaultresponsetimeout]</td></tr>
+      <tr><td>In HTTP Listener/requester config, usePersistentConnections should be externalized with value as 'false'</td><td>#[vars.httplistenerpersistance]</td></tr>
+      <tr><td>Main flow property (api-autodeploy-flow-name) should contain correct main flow name</td><td>#[vars.autodeployflownamecheck]</td></tr>
+      <tr><td>In mule-app.properties, any property related to hostname should not have IP address (instead it should be having dns name)</td><td>#[vars.ipaddresspropertycheck]</td></tr>
+      <tr><td>In mule-app.properties, vault config should be defined for keystore.path and, keystore.alias</td><td>#[vars.vaultandkeystore]</td></tr>
+      <tr><td>log4j2.xml should have repo entry for the apiname like: '<Property name="appname">repoName</Property>'</td><td>#[vars.log4japiname]</td></tr>
+      <tr><td>Mule-artifact.json should have entries for all the secure::properties</td><td>#[vars.muleartifactsecureproperties]</td></tr>
+      <tr><td>One of the mule xml files should have same name as repoName i.e. apiname.xml</td><td>#[vars.apimainfileexist]</td></tr>
+      <tr><td>One of the mule xml files should have the name as repoName-config i.e. apiname-config.xml</td><td>#[vars.apiconfigfile]</td></tr>
+      <tr><td>Mule xml files should not contain any connector configuration elements</td><td>#[vars.globalfileconnectors]</td></tr>
+      <tr><td>src/test/munit folder should contain atleast one munit file</td><td>#[vars.munitfile]</td></tr>
+      <tr><td>Soap-router-kit should be having 'Namespace prefixes' checked to match Tibco existing namespaces</td><td>#[vars.soapkitnamespaceprefixes]</td></tr>
+      <tr><td>Connector versions in pom.xml should be latest versions</td><td>#[vars.outdatedconnectors]</td></tr>
+      <tr><td>Un-used connector/modules should not be present in code/pom.xml</td><td>#[vars.unusedmodulecheck]</td></tr>
+      <tr><td>In pom.xml, for mulesoft-releases in repository elements, it should refer to artifactory.bbtnet.com instead of repository.mulesoft.org</td><td>#[vars.muleartifactrepositoryurls]</td></tr>
+      <tr><td>HTTP protocols for both listener/requester should be externalized</td><td>#[vars.httplistenerprotocol]</td></tr>
+      <tr><td>http.path from mule-app.properties should be same as mule api name</td><td>#[vars.httppath]</td></tr>
+	<tr><td>Un-used namespaces should not be there in serviceName.xml or operationName.xml files</td><td>#[vars.unusednamespaces]</td></tr>
+	 <tr><td>The decimal/amount related fields mapping handling needs proper validation and confirmation</td><td>#[vars.dataweaveamounts]</td></tr>
+	 <tr><td>Logger activities should not have default values for sequece, providername and providerprogramname</td><td>#[vars.logsequencecheck]</td></tr>
+	 <tr><td>Every 'Transform Message' processor logic should be referenced through one of the dwl file</td><td>#[vars.dwlreference]</td></tr>
+	 <tr><td>Unused properties should not be there in mule-app.properties</td><td class="unusedproperty">#[vars.unusedpropertiescheck]</td></tr>
+	 <tr><td>Soap error mapping from error-handling-subflow.xml should be referenced from dwl file</td><td>#[vars.errorhandlingflowdwl]</td></tr>
+	 <tr><td>Database processors which are in loop, should be put in try block</td><td>#[vars.dblooptryblock]</td></tr>
+	 <tr><td>project file should have the correct api name(.project file in mule project root folder)</td><td>#[vars.projectfileapinamecheck]</td></tr>
+	 <tr><td>Commented code blocks should not be there in mule xml files</td><td>#[vars.commentedcodeblockcheck]</td></tr>
+	 <tr><td>DB2/CICS creds properties should follow the defined naming convention (*cics.userid|password|host|port, *db.userid|password|url|driver )</td><td>#[vars.cicsdbnamingconventioncheck]</td></tr>
+	 <tr><td>MUNIT test cases should not have MunitTools::notNullValue() or SizeOf(payload)>0 in assertion</td><td>#[vars.munitnotnullcheck]</td></tr>
+	<tr><td>now() function should have the timezone convertion to EST</td><td class="unusedproperty">#[vars.nowfunctioncheck]</td></tr>
+	<tr><td>All MQ connection related properties should be externalized</td><td class="unusedproperty">#[vars.mqconnectioncheck]</td></tr>
+	<tr><td>Parent pom configuration should be added in pom xml</td><td class="unusedproperty">#[vars.parentpomcheck]</td></tr>
+  	<tr><td>Secure Properties should not have Tibco credentials</td><td class="unusedproperty">#[vars.tibcoencryptedsecurepropertycheck]</td></tr>
+  	<tr><td>transform with flatfile schema parsing/rendering should have "trimValues=true" to avoid parse errors</td><td class="unusedproperty">#[vars.flatfiletrimvaluecheck]</td></tr>
+	</table>
+      <br/>
+        <br/>
+	#[vars.createconfightml]
+  
+  </body>
+  </html>

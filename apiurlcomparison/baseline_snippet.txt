@@ -1,0 +1,32 @@
+                // Show baseline metadata if present
+                if (result.getBaselineServiceName() != null) {
+                    boolean isCaptureMode = (result.getApi2() == null);
+                    writer.println("<div class=\"baseline-info\">");
+                    
+                    if (isCaptureMode) {
+                        writer.println("<h4>📦 Baseline Capture Information</h4>");
+                        writer.println("<p><strong>Service:</strong> " + escapeHtml(result.getBaselineServiceName()) + "</p>");
+                        writer.println("<p><strong>Date:</strong> " + escapeHtml(result.getBaselineDate()) + "</p>");
+                        writer.println("<p><strong>Run ID:</strong> " + escapeHtml(result.getBaselineRunId()) + "</p>");
+                        if (result.getBaselineDescription() != null) {
+                            writer.println("<p><strong>Saved to:</strong> " + escapeHtml(result.getBaselineDescription()) + "</p>");
+                        }
+                        if (result.getBaselineTags() != null && !result.getBaselineTags().isEmpty()) {
+                            writer.println("<p><strong>Tags:</strong> " + escapeHtml(String.join(", ", result.getBaselineTags())) + "</p>");
+                        }
+                        writer.println("<p><strong>Captured At:</strong> " + escapeHtml(result.getBaselineCaptureTimestamp()) + "</p>");
+                    } else {
+                        writer.println("<h4>📊 Baseline Comparison Information</h4>");
+                        writer.println("<p><strong>Service:</strong> " + escapeHtml(result.getBaselineServiceName()) + "</p>");
+                        writer.println("<p><strong>Date:</strong> " + escapeHtml(result.getBaselineDate()) + "</p>");
+                        writer.println("<p><strong>Run ID:</strong> " + escapeHtml(result.getBaselineRunId()) + "</p>");
+                        if (result.getBaselineDescription() != null) {
+                            writer.println("<p><strong>Description:</strong> " + escapeHtml(result.getBaselineDescription()) + "</p>");
+                        }
+                        if (result.getBaselineTags() != null && !result.getBaselineTags().isEmpty()) {
+                            writer.println("<p><strong>Tags:</strong> " + escapeHtml(String.join(", ", result.getBaselineTags())) + "</p>");
+                        }
+                        writer.println("<p><strong>Baseline Captured:</strong> " + escapeHtml(result.getBaselineCaptureTimestamp()) + "</p>");
+                        writer.println("<p class=\"comparison-note\"><em>API1 = Current Live API | API2 = Baseline from " + escapeHtml(result.getBaselineDate()) + "/" + escapeHtml(result.getBaselineRunId()) + "</em></p>");
+                    }
+                    writer.println("</div>");

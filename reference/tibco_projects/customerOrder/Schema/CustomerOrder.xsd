@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<xsd:schema xmlns="http://xmlns.example.com/unique/default/namespace/1134438639123"
+	 xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+	 targetNamespace="http://xmlns.example.com/unique/default/namespace/1134438639123"
+	 elementFormDefault="qualified"
+	 attributeFormDefault="unqualified">
+	<xsd:element name="customer">
+		<xsd:complexType>
+			<xsd:sequence>
+				<xsd:element name="customerid" type="xsd:string"/>
+				<xsd:element name="firstname" type="xsd:string"/>
+				<xsd:element name="lastname" type="xsd:string"/>
+				<xsd:element name="age" type="xsd:string"/>
+				<xsd:element name="email" type="xsd:string"/>
+				<xsd:element name="city" type="xsd:string"/>
+				<xsd:element name="zipcode" type="xsd:string"/>
+				<xsd:element name="transactionstatus" type="xsd:string"/>
+			</xsd:sequence>
+		</xsd:complexType>
+	</xsd:element>
+</xsd:schema>

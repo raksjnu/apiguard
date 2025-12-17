@@ -1,0 +1,347 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pfx="http://xmlns.example.com/1628143989205" xmlns:pfx2="http://xmlns.example.com/1628144235184" xmlns:ns="http://xmlns.example.com/unique/default/namespace/1134438639123" xmlns:ns0="http://www.tibco.com/pe/WriteToLogActivitySchema" xmlns:ns2="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns1="http://schemas.tibco.com/bw/plugins/xml/5.0/xmlExceptions" xmlns:ns4="http://www.tibco.com/schemas/customerOrder/Schema/Schema1.xsd" xmlns:ns3="http://www.tibco.com/pe/EngineTypes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns6="http://www.tibco.com/xmlns/ae2xsd/2002/05/ae/FileAdapter/wire/FileAdapterConfiguration" xmlns:ns5="http://www.tibco.com/pe/DeployedVarsType" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:pd="http://xmlns.tibco.com/bw/process/2003">
+    <xs:import xmlns:xs="http://www.w3.org/2001/XMLSchema" namespace="http://xmlns.example.com/unique/default/namespace/1134438639123"/>
+    <xs:import xmlns:xs="http://www.w3.org/2001/XMLSchema" namespace="http://xmlns.example.com/unique/default/namespace/1134438639123" schemaLocation="/Schema/OrderStatus.xsd"/>
+    <wsdl:import namespace="http://xmlns.example.com/1628144235184" location="/TestService/ConcreteOrderService.wsdl"/>
+    <wsdl:import namespace="http://xmlns.example.com/1628143989205" location="/WSDL/customerorder.wsdl"/>
+    <pd:name>BusinessProcess/createOrderAdapterPublisher.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType wsMsgRef="pfx:orderRequest"/>
+    <pd:startX>85</pd:startX>
+    <pd:startY>103</pd:startY>
+    <pd:returnBindings>
+        <pfx:orderResponse>
+            <order>
+                <ns:customer>
+                    <ns:customerid>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:customerid"/>
+                    </ns:customerid>
+                    <ns:firstname>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:firstname"/>
+                    </ns:firstname>
+                    <ns:lastname>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:lastname"/>
+                    </ns:lastname>
+                    <ns:age>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:age"/>
+                    </ns:age>
+                    <ns:email>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:email"/>
+                    </ns:email>
+                    <ns:city>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:city"/>
+                    </ns:city>
+                    <ns:zipcode>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:zipcode"/>
+                    </ns:zipcode>
+                    <ns:transactionstatus>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:transactionstatus"/>
+                    </ns:transactionstatus>
+                </ns:customer>
+            </order>
+        </pfx:orderResponse>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType wsMsgRef="pfx:orderResponse"/>
+    <pd:endX>676</pd:endX>
+    <pd:endY>100</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1628144346800</pd:targetNamespace>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.TransactionGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>164</pd:x>
+        <pd:y>20</pd:y>
+        <pd:width>179</pd:width>
+        <pd:height>144</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>transactionGroup</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:transactionType>JDBCTransaction</pd:transactionType>
+            <pd:includeCheckpoint>false</pd:includeCheckpoint>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Log</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Log</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Log">
+            <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+            <pd:resourceType>ae.activities.log</pd:resourceType>
+            <pd:x>261</pd:x>
+            <pd:y>83</pd:y>
+            <config>
+                <role>User</role>
+            </config>
+            <pd:inputBindings>
+                <ns0:ActivityInput>
+                    <message>
+                        <xsl:value-of select="concat(&quot;Order created by AdapterPublisher: &quot;, $Start/pfx:orderRequest/order/ns:customer/ns:customerid,&quot;-&quot;, $Start/pfx:orderRequest/order/ns:customer/ns:firstname, &quot;-ProcessId-&quot;, $_processContext/ns3:ProcessContext/ProcessId)"/>
+                    </message>
+                    <msgCode>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:customerid"/>
+                    </msgCode>
+                </ns0:ActivityInput>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="Map Data">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>412</pd:x>
+        <pd:y>99</pd:y>
+        <config>
+            <element ref="ns:order"/>
+        </config>
+        <pd:inputBindings>
+            <ns:order>
+                <ns:orderid>
+                    <xsl:value-of select="&quot;&quot;"/>
+                </ns:orderid>
+                <ns:customerid>
+                    <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:customerid"/>
+                </ns:customerid>
+                <ns:firstname>
+                    <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:firstname"/>
+                </ns:firstname>
+                <ns:lastname>
+                    <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:lastname"/>
+                </ns:lastname>
+                <ns:productcode>
+                    <xsl:value-of select="&quot;UPS00&quot;"/>
+                </ns:productcode>
+                <ns:price>
+                    <xsl:value-of select="&quot;1000&quot;"/>
+                </ns:price>
+                <ns:discountstatus>
+                    <xsl:value-of select="if ($Start/pfx:orderRequest/order/ns:customer/ns:age>40) then &quot;Discount applied&quot; else &quot;Discount not eligible&quot;"/>
+                </ns:discountstatus>
+                <ns:orderdatetime>
+                    <xsl:value-of select="current-dateTime()"/>
+                </ns:orderdatetime>
+            </ns:order>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="GlobalCatch">
+        <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+        <pd:resourceType>ae.activities.catch</pd:resourceType>
+        <pd:x>907</pd:x>
+        <pd:y>99</pd:y>
+        <pd:handler>true</pd:handler>
+        <config>
+            <catchAll>true</catchAll>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="Errorhandler">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>794</pd:x>
+        <pd:y>102</pd:y>
+        <config>
+            <processName>/BusinessProcess/LogandErrorHandlerDummy.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <ns:logLevel>
+                    <xsl:value-of select="$_globalVariables/ns5:GlobalVariables/LogLevels/LOG_ERROR"/>
+                </ns:logLevel>
+                <ns:processCtx>
+                    <ns:processId>
+                        <xsl:value-of select="$_processContext/ns3:ProcessContext/ProcessId"/>
+                    </ns:processId>
+                    <ns:projectName>
+                        <xsl:value-of select="$_processContext/ns3:ProcessContext/ProjectName"/>
+                    </ns:projectName>
+                    <ns:ProcessName>
+                        <xsl:value-of select="'/Common/RetryProcessErrors'"/>
+                    </ns:ProcessName>
+                </ns:processCtx>
+                <ns:description>
+                    <xsl:value-of select="'Error in Retyrprocess to update records'"/>
+                </ns:description>
+                <ns:ExceptionData>
+                    <ns:Message>
+                        <xsl:value-of select="$_error/ns3:ErrorReport/Msg"/>
+                    </ns:Message>
+                    <ns:StackTrace>
+                        <xsl:value-of select="$_error/ns3:ErrorReport/StackTrace"/>
+                    </ns:StackTrace>
+                    <ns:ErrorData>
+                        <xsl:value-of select="$GlobalCatch/exceptiondata/*"/>
+                    </ns:ErrorData>
+                </ns:ExceptionData>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="UpdateOrderDetails">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>551</pd:x>
+        <pd:y>99</pd:y>
+        <config>
+            <processName>/BusinessProcess/UpdatePaymentDummy.process</processName>
+        </config>
+        <pd:inputBindings>
+            <ns:order>
+                <ns:orderid>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:orderid"/>
+                </ns:orderid>
+                <ns:customerid>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:customerid"/>
+                </ns:customerid>
+                <ns:firstname>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:firstname"/>
+                </ns:firstname>
+                <ns:lastname>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:lastname"/>
+                </ns:lastname>
+                <ns:productcode>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:productcode"/>
+                </ns:productcode>
+                <ns:price>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:price"/>
+                </ns:price>
+                <ns:discountstatus>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:discountstatus"/>
+                </ns:discountstatus>
+                <ns:orderdatetime>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:orderdatetime"/>
+                </ns:orderdatetime>
+            </ns:order>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Publish to Adapter">
+        <pd:type>com.tibco.plugin.ae.AEPublisherActivity</pd:type>
+        <pd:resourceType>ae.aepalette.aePubActivity</pd:resourceType>
+        <pd:x>535</pd:x>
+        <pd:y>205</pd:y>
+        <config>
+            <ae.aepalette.sharedProperties.transportChoice>default</ae.aepalette.sharedProperties.transportChoice>
+            <ae.aepalette.sharedProperties.useRequestReply>false</ae.aepalette.sharedProperties.useRequestReply>
+            <ae.aepalette.sharedProperties.adapterService>/Adapters/File/FileAdapterConfiguration.adfiles#adapterService.SubscriptionService</ae.aepalette.sharedProperties.adapterService>
+            <tpPluginEndpointName>SubscriptionServiceEndPoint</tpPluginEndpointName>
+            <ae.aepalette.sharedProperties.transportType>rvcm</ae.aepalette.sharedProperties.transportType>
+            <ae.aepalette.sharedProperties.rvSubject>%%Domain%%.%%Deployment%%.FileAdapter.FileAdapterConfiguration.SubscriptionService</ae.aepalette.sharedProperties.rvSubject>
+            <ae.aepalette.sharedProperties.rvSessionService>%%RvService%%</ae.aepalette.sharedProperties.rvSessionService>
+            <ae.aepalette.sharedProperties.rvSessionNetwork>%%RvNetwork%%</ae.aepalette.sharedProperties.rvSessionNetwork>
+            <ae.aepalette.sharedProperties.rvSessionDaemon>%%RvDaemon%%</ae.aepalette.sharedProperties.rvSessionDaemon>
+            <ae.aepalette.sharedProperties.msgFormat>aeRvMsg</ae.aepalette.sharedProperties.msgFormat>
+            <ae.aepalette.sharedProperties.rvCmSessionDefaultTimeLimit>0</ae.aepalette.sharedProperties.rvCmSessionDefaultTimeLimit>
+            <ae.aepalette.sharedProperties.rvCmSessionSyncLedger>true</ae.aepalette.sharedProperties.rvCmSessionSyncLedger>
+            <ae.aepalette.sharedProperties.rvCmSessionLedgerFile>%%DirLedger%%/bw%%Domain%%.%%Deployment%%.%%AppName%%.%%InstanceId%%.ldg</ae.aepalette.sharedProperties.rvCmSessionLedgerFile>
+            <ae.aepalette.sharedProperties.rvCmSessionName>bw%%Domain%%.%%Deployment%%.%%AppName%%.%%InstanceId%%.CM</ae.aepalette.sharedProperties.rvCmSessionName>
+            <ae.aepalette.sharedProperties.rvCmSessionRelayAgent/>
+            <ae.aepalette.sharedProperties.rvCmSessionRequireOldMessages>true</ae.aepalette.sharedProperties.rvCmSessionRequireOldMessages>
+            <ae.aepalette.sharedProperties.outputMeta>
+                <aeMeta>/AESchemas/ae/FileAdapter/wire/FileAdapterConfiguration.aeschema#class.WriterFileRecord</aeMeta>
+            </ae.aepalette.sharedProperties.outputMeta>
+        </config>
+        <pd:inputBindings>
+            <aePubInputType>
+                <body>
+                    <xsl:for-each select="$Map-Data/ns:order">
+                        <ns6:WriterFileRecord>
+                            <customerid_verbar_>
+                                <xsl:value-of select="ns:customerid"/>
+                            </customerid_verbar_>
+                            <firstname>
+                                <xsl:value-of select="ns:firstname"/>
+                            </firstname>
+                            <lastname>
+                                <xsl:value-of select="ns:lastname"/>
+                            </lastname>
+                            <age>
+                                <xsl:value-of select="'99'"/>
+                            </age>
+                            <email>
+                                <xsl:value-of select="'dummy@test.com'"/>
+                            </email>
+                            <city>
+                                <xsl:value-of select="'default'"/>
+                            </city>
+                            <zipcode>
+                                <xsl:value-of select="'12345'"/>
+                            </zipcode>
+                            <transactionstatus>
+                                <xsl:value-of select="'Processed'"/>
+                            </transactionstatus>
+                        </ns6:WriterFileRecord>
+                    </xsl:for-each>
+                </body>
+            </aePubInputType>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>Map Data</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GlobalCatch</pd:from>
+        <pd:to>Errorhandler</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Errorhandler</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>UpdateOrderDetails</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Map Data</pd:from>
+        <pd:to>UpdateOrderDetails</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Map Data</pd:from>
+        <pd:to>Publish to Adapter</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Publish to Adapter</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

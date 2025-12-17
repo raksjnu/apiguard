@@ -1,0 +1,3171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:compression="http://www.mulesoft.org/schema/mule/compression"
+	  xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	  xmlns:email="http://www.mulesoft.org/schema/mule/email" 
+	  xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	  xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	  xmlns:file="http://www.mulesoft.org/schema/mule/file" 
+	  xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+			http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+			http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd 
+			http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+			http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/mule/compression/current/mule-compression.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<flow name="Cleanup" doc:id="d4debac6-f557-49a9-9ba4-a217404ae480" >
+		<set-variable doc:name="Set Variable" doc:id="1e92868e-8e8d-4585-84a0-326d6a4e15ab" variableName="cleanupPath" value="${gui.apphome}"/>
+		<file:list doc:name="List" doc:id="6c8db19d-ecd7-48d7-aeae-1ba310a2472e" directoryPath="#[vars.cleanupPath]" recursive="true">
+			<file:matcher regularFiles="EXCLUDE" symLinks="EXCLUDE"/>
+		</file:list>
+		<ee:transform doc:name="Transform Message" doc:id="f4a484fe-52ad-459d-a77c-59c9cbb27646" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.attributes.path]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="26666dd9-5c1a-476e-a9f7-c76c9fc8a47e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+---
+payload reduce ($$ ++ $)]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="c0f5dc56-d8d7-47a5-ba7f-c78d562dc47f">
+				<when expression='#[((vars.processName == "WelcomePage") and (payload contains ("${gui.reportDirectory.name}"))) or (sizeOf(vars.cleanup default "")&gt;0)]'>
+				<choice doc:name="Choice" doc:id="99d91535-5890-4289-aaef-8d58430367ea">
+					<when expression='#[(sizeOf(vars.cleanup default "")&gt;0)  or (vars.Folder==null)]'>
+						<choice doc:name="Choice" doc:id="b0e2ba3e-6c59-4a5d-8146-065f744fd99e" >
+							<when expression='#[payload contains ("${gui.reportDirectory.name}")]'>
+								<file:list doc:name="List" doc:id="b785b65f-41da-4e0b-b7a6-3fa6192d214b" directoryPath="${gui.reportLocation}"/>
+								<choice doc:name="Choice" doc:id="17cfbd7f-68b8-4094-9025-cd44094e31ca" >
+									<when expression='#[(payload.attributes.fileName default "") contains (vars.cleanup default "")]'>
+										<file:delete doc:name="Delete" doc:id="24025c9e-df2c-421c-a421-4e7a69d0e665" path='#["${gui.reportLocation}" ++ (vars.cleanup default "")]' />
+									</when>
+									<otherwise >
+										<logger level="INFO" doc:name="Logger" doc:id="5ad82a07-344b-445c-af17-4441ecb292a3" message="Workspace is clean"/>
+									</otherwise>
+								</choice>
+							</when>
+							<otherwise>
+								<logger level="INFO" doc:name="Logger" doc:id="06ff9b9f-6f30-4737-b816-2f610c55b5c2" message="Workspace is clean" />
+							</otherwise>
+						</choice>
+					</when>
+					<otherwise>
+						<choice doc:name="Choice" doc:id="6b88c21a-b0ab-43af-91d7-7ddd42191450" >
+							<when expression='#[payload contains (vars.Folder)]'>
+								<file:delete doc:name="Delete" doc:id="13d2710e-bf0b-4228-8851-4a3ef3a28b4d" path='#["${gui.reportLocation}" ++ (vars.Folder default "")]' />
+								<logger level="INFO" doc:name="Logger" doc:id="be60fec4-c4c7-415f-afa0-63ba1c9209db" message='#[("Report(s) of ") ++ (vars.Folder default "") ++ "has been deleted"]'/>
+							</when>
+							<otherwise >
+								<logger level="INFO" doc:name="Logger" doc:id="49a95cfb-107f-4355-b5ef-4aadc1cbee37" message="Workspace is clean"/>
+							</otherwise>
+						</choice>
+					</otherwise>
+				</choice>
+			</when>
+			<when expression='#[vars.cleanuptrigger == "workspacecleanup"]'>
+				<file:delete doc:name="Delete" doc:id="6af4b1aa-abb5-4e0e-b8b8-e5c2b52119b7" path="${gui.workingdirectory}"/>
+				<logger level="INFO" doc:name="Logger" doc:id="e4df1cc7-b65d-4210-a2a9-595dca5f0588" message="Working directory cleaned up"/>
+			</when>
+			<otherwise>
+				<logger level="INFO" doc:name="Logger" doc:id="03a0d22b-9f95-45de-b7d2-79b977914efa" message="workspace is clean" />
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="1a2d7286-2e58-47ce-826c-27dbf8107067" >
+				<logger level="INFO" doc:name="Logger" doc:id="aaaf3a83-c004-454c-9bb0-3bc789c04e8c" message="Error while deleting code folder"/>
+			</on-error-continue>
+		</error-handler>
+		
+	</flow>
+	<flow name="workspacecleanupnew" doc:id="385ca077-4ee3-426a-88bc-0fd9eead9dab" >
+		<try doc:name="Try" doc:id="da7d7da8-4a06-4cb0-b66d-bfe067fec055" >
+			<file:delete doc:name="Delete" doc:id="b105a615-e7e8-4805-85e4-eafc02e2057f" config-ref="File_Config" path="${gui.workingdirectory}" />
+			<error-handler >
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="4ab698fb-1aae-4e42-8476-b35940b54bd6" >
+					<logger level="INFO" doc:name="Logger" doc:id="03e12abb-2295-4e42-a63f-7a752cbe5a4a" message="Workspace is clean"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+	</flow>
+	<flow name="WelcomePage" doc:id="62923888-76a5-4e3f-a842-b384722555cc" >
+		<http:listener doc:name="Listener" doc:id="d5a6fb57-a113-4af5-9988-90983d2a3f43" path="${welcome.page}" config-ref="HTTP_GUIListener_config" allowedMethods="GET,POST">
+		</http:listener>
+		<logger level="INFO" doc:name="Logger" doc:id="98ffefbf-fe06-4682-a666-e5d606e4de39" message='#["Host : " ++ (attributes.headers.host default "") ++ "~request URI : " ++ message.attributes.requestUri ++ "~Request Path : " ++ attributes.rawRequestPath ++ "~Listener path : " ++ attributes.listenerPath]' />
+		<ee:transform doc:name="Transform Message" doc:id="37498182-1676-4e53-a461-73a198a77b24" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="welcome_page_title" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="welcome_page_header" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="welcome_page_background_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="ProcessName" ><![CDATA[%dw 2.0
+output application/java
+---
+"WelcomePage"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="Folder" ><![CDATA[attributes.queryParams.name]]></ee:set-variable>
+				<ee:set-variable variableName="propertyFileFolder" ><![CDATA[%dw 2.0
+output application/java
+---
+"${propertyFileFolder}"]]></ee:set-variable>
+				<ee:set-variable variableName="actionURI" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+if(attributes.headers.host default "" contains "api") ("/" ++ "${web.uri}") else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="b1af974a-6549-4c0d-a109-a431741d41da" message='#[(vars.actionURI default "")]'/>
+		<flow-ref doc:name="Flow Reference" doc:id="67bb4df1-7775-4ef2-80c2-458f23b95136" name="workspacecleanupnew"/>
+		<parse-template doc:name="Parse Template" doc:id="056922ce-0822-4273-91b5-3cecf18bf2c4" location="web\welcome.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="3963e6c0-e689-4650-8f4d-1c0890c74c17" >
+				<logger level="INFO" doc:name="Logger" doc:id="ac3da9f3-c45d-45e9-a53f-b61bf30b0729" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="05747ec2-dc80-4d70-bf1a-d075922ef839">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="bd65f771-c276-4daa-9326-f67dac50fc42" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Send-Report-Over-Email" doc:id="0f0eaa64-604e-4731-99df-c14e3889cd72" >
+		<http:listener doc:name="SendEmail" doc:id="f801eccf-134d-411a-a86e-c257ee0dba12" path="${gui.email}" allowedMethods="GET" config-ref="HTTP_GUIListener_config"/>
+		<set-variable value="#[attributes.uriParams[0]]" doc:name="Set Variable" doc:id="5a16e224-7ee5-4810-ab14-15bb2f3bc8ee" variableName="Folder"/>
+		<ee:transform doc:name="Transform Message" doc:id="23320b39-2e84-4a2c-a1d3-35b11f66c176">
+			<ee:message>
+				<ee:set-payload><![CDATA[payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="email_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${email_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo"><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="error_page_alternate_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_alternate_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${email_page_alternate_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_message"><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+				<ee:set-variable variableName="emailId" ><![CDATA[attributes.queryParams]]></ee:set-variable>
+				<ee:set-variable variableName="ReportLocation" ><![CDATA["${gui.reportLocation}" ++ vars.Folder ++ "//"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="actionURI" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+if(attributes.headers.host default "" contains "api") ("/" ++ "${web.uri}") else ""]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="548ca245-20bd-4516-99e4-3d779afd7825" >
+			<when expression='#[attributes.requestUri contains ".zip"]'>
+				<set-variable doc:name="Set Variable" doc:id="1c61b94f-7ee8-41a3-94c4-fcab9d2aae52" variableName="filename" value="#[attributes.uriParams.name]" />
+				<file:read doc:name="Read" doc:id="78491a7b-f332-4a18-9fb0-a537f3359cb1" path='#["${gui.reportLocation}" ++ vars.filename]' config-ref="File_Config"/>
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="aeb61e6c-2169-4029-b1d3-27974959c347"/>
+		<ee:transform doc:name="Transform Message" doc:id="617854a9-eda4-4c87-8d62-37e0f595b012">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="email_details"><![CDATA[%dw 2.0
+output application/java
+---
+vars.emailId['email']]]></ee:set-variable>
+				<ee:set-variable variableName="attachment" ><![CDATA[payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<email:send doc:name="Send" doc:id="26c0905d-169e-4004-8b1c-2f38613e61da" subject='#[%dw 2.0
+import * from dw::core::Strings
+---
+"${email.subject}"++ substringBeforeLast(vars.filename,".zip")]' fromAddress="${smtp.from}" config-ref="Email_SMTP" toAddresses="#[vars.emailId['email'] default &quot; &quot; splitBy &quot;,&quot;]">
+					<email:body contentType="text/html" encoding="UTF-8">
+						<email:content><![CDATA[#[%dw 2.0
+output text/plain
+---
+"${email.body.multiproject}" ++ "${email.signature}"]]]></email:content>
+					</email:body>
+					<email:attachments><![CDATA[#[%dw 2.0
+output text/plain
+---
+{'$(vars.filename)' : vars.attachment }]]]></email:attachments>	
+												 		
+				</email:send>
+			</when>
+			<otherwise >
+				<file:list doc:name="List" doc:id="77f36da9-a0f7-4186-82d2-622f3445e00f" directoryPath='#["${gui.reportLocation}"]' config-ref="File_Config"/>
+				<set-variable doc:name="Set Variable" doc:id="2419c130-ea1b-41bb-a891-742c79d6a93e" variableName="filename" value="#[payload.attributes.fileName[0]]" />
+				<file:read doc:name="Read" doc:id="257876f3-a94e-4301-9d6e-1cb441e0018f" path='#["${gui.reportLocation}" ++ vars.filename]' outputMimeType="application/xlsx" config-ref="File_Config"/>
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="09d46b17-cc3d-4e1f-88d7-860a8c0baca8"/>
+		<ee:transform doc:name="Transform Message" doc:id="a7c6004a-2d13-451e-a7e8-39e6bdc58e86">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="email_details"><![CDATA[%dw 2.0
+output application/java
+---
+vars.emailId['email']]]></ee:set-variable>
+				<ee:set-variable variableName="attachment" ><![CDATA[payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<email:send doc:name="Send" doc:id="2d0925fd-cd73-458b-b820-af2075665246" subject='#[%dw 2.0
+import * from dw::core::Strings
+---
+"${email.subject}"++ substringBefore(vars.filename,"_Code")]' fromAddress="${smtp.from}" config-ref="Email_SMTP" toAddresses="#[vars.emailId['email'] default &quot; &quot; splitBy &quot;,&quot;]">
+					<email:body contentType="text/html" encoding="UTF-8">
+						<email:content><![CDATA[#[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+
+---
+"${email.body}" ++ "${email.signature}"]]]></email:content>
+					</email:body>
+					<email:attachments><![CDATA[#[%dw 2.0
+output text/plain
+---
+{'$(vars.filename)' : vars.attachment }]]]></email:attachments>	
+												 		
+				</email:send>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="14e880b7-06cf-48bb-b7d5-a3e2c7bed394" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="notNeeded" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+if(attributes.headers.host default "" contains "tfc") ("/" ++ (attributes.headers.host default "" splitBy ".")[0]) else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="5f1abe37-45f2-47b2-8e9e-f2fd3fd867bf" message='"Email sent"' />
+		<parse-template doc:name="Parse Template" doc:id="d56895f3-0d61-4c40-aff4-66c641f2a23d" location="web\emailSent.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="6c2bed26-3b78-4bf4-9832-6de3d62cb0fe" >
+				<logger level="INFO" doc:name="Logger" doc:id="bd339bf8-e9ad-490c-91c0-1e2113b4e644" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="7b194332-fceb-4adc-a1ee-d72f4e935536">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="48019330-6d88-4564-9ba2-af44675440fd" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Report-Download" doc:id="3a304d26-d943-4a20-9671-903eff55bf5f" >
+		<http:listener doc:name="Listener" doc:id="2791ec4e-8bc3-46d0-9d74-2ece230771af" path="${gui.report}" outputMimeType="application/xlsx" config-ref="HTTP_GUIListener_config">
+		</http:listener>
+		<set-variable value='#[var fileseparator=if(attributes.requestUri contains ("/")) "//" else "\\"
+---
+("${gui.reportLocation}") ++ attributes.uriParams.folder ++ fileseparator]' doc:name="Set Variable" doc:id="d27a8f8d-9be2-43df-978c-b12ef08e2124" variableName="ReportDirectory"/>
+		<ee:transform doc:name="Transform Message" doc:id="903b675a-3f1f-4a46-ba97-65b35cbac0dc" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="actionURI" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+if(attributes.headers.host default "" contains "api") ("/" ++ "${web.uri}") else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="c193a65d-0830-4dfb-bd65-efeb6388bb81" >
+			<when expression='#[attributes.requestUri contains ".zip"]'>
+				<set-variable doc:name="Set Variable" doc:id="966a750e-71d6-44c3-b57c-7a64697a7495" variableName="filename" value="#[attributes.uriParams.name]" />
+				<file:read doc:name="Read" doc:id="1ca659d3-7f8e-478f-b9ef-de7f924e817f" path='#["${gui.reportLocation}" ++ vars.filename]' outputMimeType="application/xlsx" config-ref="File_Config"/>
+			</when>
+			<otherwise >
+				<file:list doc:name="List" doc:id="01178c1e-0998-4c0c-880a-13ea41370897" directoryPath='#["${gui.reportLocation}"]' config-ref="File_Config"/>
+				<set-variable doc:name="Set Variable" doc:id="6fd13486-08d7-4379-8a1a-ab73d3c7fa99" variableName="filename" value="#[payload.attributes.fileName[0]]" />
+				<file:read doc:name="Read" doc:id="b1ca11ae-e1cb-4d94-b231-8660c842faa0" path='#["${gui.reportLocation}" ++ (vars.filename default "")]' outputMimeType="application/xlsx"/>
+			</otherwise>
+		</choice>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="16a6373b-e613-4963-83d7-3112281c5f57" mimeType="application/xlsx"/>
+		
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="943489f3-597b-4f43-a9d7-ae71b349c602" >
+				<logger level="INFO" doc:name="Logger" doc:id="d75268e5-1f12-4094-98c4-13f3c1e99d79" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="14d5d4d3-3600-47a8-a387-34128a0c4bb0">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="b5315ad9-7bd9-44e6-a951-6777777dd1c3" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Email-Details-Page" doc:id="c70abd52-cc29-4229-ac5b-eb1975646acf" >
+		<http:listener doc:name="Listener" doc:id="b6b23b61-a10e-4ad9-9cf7-b2bd2ad97e6e" path="${gui.sendEmail}" config-ref="HTTP_GUIListener_config"/>
+		<ee:transform doc:name="Transform Message" doc:id="b790e104-cd1f-4bf9-9945-384bbe44c8a3" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="fileseparator" ><![CDATA[if(attributes.requestUri contains ("/")) "//" else "\\"]]></ee:set-variable>
+				<ee:set-variable variableName="Folder" ><![CDATA[attributes.uriParams.name]]></ee:set-variable>
+				<ee:set-variable variableName="actionURI" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+if(attributes.headers.host default "" contains "api") ("/" ++ "${web.uri}") else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<file:list doc:name="List" doc:id="ae07fe4f-85b5-411a-8e96-5d0bb35d5671" directoryPath='#["${gui.reportLocation}"]' config-ref="File_Config">
+		</file:list>
+		<choice doc:name="Choice" doc:id="8de101c7-5bf7-42a4-bc22-595faec0c374">
+			<when expression='#[sizeOf(payload) &gt; 1]'>
+					<foreach doc:name="For Each" doc:id="9a7226c1-24a7-4c8e-a814-3cf0e0fc9c1f" collection="#[payload.attributes.fileName]">
+					<choice doc:name="Choice" doc:id="81fe6f73-82ce-4578-a22f-a50413603de3" >
+						<when expression='#[payload contains ".zip"]'>
+							<set-variable value="#[payload]" doc:name="Set Variable" doc:id="06471f49-a195-4e9a-9b0e-60fe04a79c0d" variableName="filename" />
+						</when>
+						<otherwise >
+							<logger level="INFO" doc:name="Logger" doc:id="d01685d8-4e85-4738-85f6-f0ec90244d29" message="Report file"/>
+						</otherwise>
+					</choice>
+				</foreach>
+			</when>
+			<otherwise >
+				<set-variable value="#[payload.attributes.fileName[0]]" doc:name="Set Variable" doc:id="76c963f1-91b0-4948-8663-fd8bbced95ab" variableName="filename" />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="4e418915-afa9-4ef3-be74-a06dfd182e2d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="email_page_header" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_background_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="email_page_title" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="send_button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${send_button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parse-template doc:name="Parse Template" doc:id="36f45fcb-9b77-4b00-9805-89f3d9dcdaf4" location="web\email.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="a66eae67-6b6c-4dba-a9ed-8b48ba3477f0" >
+				<logger level="INFO" doc:name="Logger" doc:id="167245fa-285f-4683-8d78-ae084df78a05" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="9ebb3e31-9f47-4912-9e2d-dce7c5dff0bd">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="a64f79fa-0153-4c26-a307-87f90ab8687f" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Download-Success" doc:id="1e3d2dc8-cbf0-4625-a856-9894610957e4" >
+		<http:listener doc:name="Listener" doc:id="909f32be-909b-4cf1-8aa3-89a326478950" path="${gui.download}" config-ref="HTTP_GUIListener_config"/>
+		<ee:transform doc:name="Transform Message" doc:id="59445833-e42b-4dbe-9620-ebffb2df677d" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="fileseparator" ><![CDATA[if(attributes.requestUri contains ("/")) "//" else "\\"]]></ee:set-variable>
+				<ee:set-variable variableName="Folder" ><![CDATA[attributes.uriParams.name]]></ee:set-variable>
+				<ee:set-variable variableName="actionURI" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+if(attributes.headers.host default "" contains "api") ("/" ++ "${web.uri}") else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<file:list doc:name="List" doc:id="cf383f67-9e15-4dce-9944-f8fed12e678e" directoryPath='#["${gui.reportLocation}"]' config-ref="File_Config">
+		</file:list>
+		<choice doc:name="Choice" doc:id="6a9ada80-14e5-4145-b57d-e2387eed9ea1">
+			<when expression='#[sizeOf(payload) &gt; 1]'>
+					<foreach doc:name="For Each" doc:id="c5461a2e-0caa-4a6e-9aa7-5bffe106e581" collection="#[payload.attributes.fileName]">
+					<choice doc:name="Choice" doc:id="5ebc5999-8538-4fc9-b9fa-0ca906214af8" >
+						<when expression='#[payload contains ".zip"]'>
+							<set-variable value="#[payload]" doc:name="Set Variable" doc:id="26bd2c27-4bf8-477f-b040-03c425179bc5" variableName="filename" />
+						</when>
+						<otherwise >
+							<logger level="INFO" doc:name="Logger" doc:id="967a7e72-4b92-4eeb-a65f-0261dd170e0d" message="Report file"/>
+						</otherwise>
+					</choice>
+				</foreach>
+			</when>
+			<otherwise >
+				<set-variable value="#[payload.attributes.fileName[0]]" doc:name="Set Variable" doc:id="0fc673ff-9bac-4d14-820c-0136f83df7aa" variableName="filename" />
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="aa021cfd-acd1-435b-ab85-d5b9635b7f41" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="success_page_title" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="success_page_header" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="success_page_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${success_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="success_page_background_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="success_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${success_page_alternate_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parse-template doc:name="Parse Template" doc:id="b71350ff-c4df-4ab3-8f31-0f8267ff529f" location="web\success.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="2ff56912-ba3c-4faf-b032-358bf94f7616" >
+				<logger level="INFO" doc:name="Logger" doc:id="50ee42ba-84c0-45a8-bfa2-20d2e08e98f5" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="e33034f0-0140-4af8-a538-90ba712f7a1c">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="643a4237-301c-474b-ad12-62950b6e55e8" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Workspace-Cleanup_Scheduler" doc:id="efac1705-59d5-454a-a1df-ec851cae219b" >
+		<scheduler doc:name="Scheduler" doc:id="65b32eec-c8be-4cd9-ab22-4e28e8e737d5" >
+			<scheduling-strategy >
+				<cron expression="0 0 0 ? * * *" timeZone="server.timeZone" />
+			</scheduling-strategy>
+		</scheduler>
+		<ee:transform doc:name="Transform Message" doc:id="6b4c9285-e81c-4c22-9607-d046859d887c" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="cleanuptrigger" ><![CDATA["workspacecleanup"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="a5582ca4-33a4-484f-91c6-2fb746008ec2" name="workspacecleanupnew"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="992bfbe9-0faa-427a-a75c-3102658ce764" >
+				<logger level="INFO" doc:name="Logger" doc:id="f4c22309-fd45-450d-8fdb-bce38fc2e3e6" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="2ccf0399-05ca-46a5-bdfb-025fb252c6bb">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable><ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="5a1a89da-6536-490b-906c-0b7f3312623d" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="Workspace-Cleanup_Trigger" doc:id="532a601c-4618-43a0-baa2-c12074777e29" >
+		<http:listener doc:name="Listener" doc:id="a3778b4a-8af8-4b4f-a829-45a5921b6054" config-ref="HTTP_GUIListener_config" path="${gui.cleanup}"/>
+		<ee:transform doc:name="Transform Message" doc:id="aaabcb8c-8320-411e-a7ff-ea48e44e2cba">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="cleanup_page_title" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_page_header" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_page_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_page_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup_page_background_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+				<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+				<ee:set-variable variableName="cleanup" ><![CDATA[attributes.queryParams.name]]></ee:set-variable>
+				<ee:set-variable variableName="cleanuptrigger" ><![CDATA[attributes.queryParams.name]]></ee:set-variable>
+				<ee:set-variable variableName="Folder" ><![CDATA["cleanup"]]></ee:set-variable>
+				<ee:set-variable variableName="actionURI" ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+if(attributes.headers.host default "" contains "tfc") ("/" ++ (attributes.headers.host default "" splitBy ".")[0]) else ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<flow-ref doc:name="Flow Reference" doc:id="cc867146-0363-4f9c-9ee7-dfac315f75f8" name="workspacecleanupnew"/>
+		<parse-template doc:name="Parse Template" doc:id="55c6ba82-e72c-4314-9c54-5da5341e6ad2" location="web\cleanup.html"/>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="8791b393-d81d-44e5-8e11-7da4d8c5c868" >
+				<logger level="INFO" doc:name="Logger" doc:id="043467d0-ad89-468a-870f-bac315c9957b" message="Error occured in processing"/>
+				<ee:transform doc:name="Transform Message" doc:id="52b79c5a-23fb-4497-af3d-825ed7f814da">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="error_page_background_color"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_background_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_title"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_title}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_header"><![CDATA[%dw 2.0
+output application/java
+---
+"${page_header}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_status"><![CDATA[%dw 2.0
+output application/java
+---
+"${error_page_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="client_logo" ><![CDATA[%dw 2.0
+output application/java
+---
+"${client_logo}"]]></ee:set-variable>
+						<ee:set-variable variableName="error_page_alternate_status" ><![CDATA[%dw 2.0
+output application/java
+---
+"${review_alternate_status}"]]></ee:set-variable>
+						<ee:set-variable variableName="cleanup_message" ><![CDATA[%dw 2.0
+output application/java
+---
+"${cleanup_message}"]]></ee:set-variable>
+						<ee:set-variable variableName="button_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${button_color}"]]></ee:set-variable>
+						<ee:set-variable variableName="font_color" ><![CDATA[%dw 2.0
+output application/java
+---
+"${font_color}"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="8f71217f-ac31-4d70-9070-b277b289300b" location="web\error.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="codequalitycheckFlow" doc:id="a5436bb3-ecee-4c37-ae6d-77197c08ec7a" >
+		<http:listener doc:name="Listener" doc:id="55422db9-24c4-464f-b63f-76742d883398" config-ref="HTTP_GUIListener_config" path="/cqc"/>
+		<ee:transform doc:name="Transform Message" doc:id="91dcf7b9-094c-42f6-b79b-85ab1918efdb" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+var apiname = payload.parts.apiname.content
+---
+trim(apiname) splitBy(",")]]></ee:set-variable>
+				<ee:set-variable variableName="serviceName" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.apiname.content]]></ee:set-variable>
+				<ee:set-variable variableName="reponame" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.reponame.content]]></ee:set-variable>
+				<ee:set-variable variableName="developer" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.developer.content]]></ee:set-variable>
+				<ee:set-variable variableName="branch" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.branch.content]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="038571a1-c6fa-472c-947b-f3a263445820" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+vars.apiname]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="883510b7-47f7-4198-9589-dccd52951ae8" collection="#[payload]">
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="14559086-d3f9-4245-b2e1-46b99a2c819c" variableName="currentapiname"/>
+			<java:new doc:name="CreateGitBranchInstance" doc:id="edc33644-d715-40d5-b639-9fe0189c9d98" class="com.org.propertyutil.GitCloneBranch" constructor="GitCloneBranch()" />
+			<java:invoke doc:name="Git Clone" doc:id="3bcbf3ab-6a88-41d4-99d0-78034dffef95" instance="#[payload]" class="com.org.propertyutil.GitCloneBranch" method="GitCloneRepo(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
+			<java:args><![CDATA[#[var repo = vars.reponame default "EAPI02"
+var datetime = now() as String {format: "yMMddhhm"}
+---
+
+{
+	arg0 : Mule::p('repo.eapi01') ++ repo ++ "//" ++ vars.currentapiname ++ ".git",
+	arg1 : Mule::p('username.gitlab'),
+	arg2 : Mule::p('password.gitlab'),
+	arg3 : vars.branch default "alt-release",
+	arg4 : "${gui.inputLocation}" ++ vars.currentapiname ++ "_" ++ vars.branch ++ datetime ++ "//",
+	arg5 : "${gui.inputLocation}" ++ vars.currentapiname ++ "_" ++ vars.branch ++ datetime ++ "//"
+}]]]></java:args>
+		</java:invoke>
+			<file:list doc:name="List" doc:id="6e045afe-2384-45e5-828a-91e02d950ce6" config-ref="File_Config" directoryPath='#[import * from dw::core::Strings&#10;---&#10;substringAfter(payload,",")]' recursive="true">
+			<file:matcher filenamePattern="*.{xml,json,properties,dwl,project}" directories="EXCLUDE" />
+		</file:list>
+			<ee:transform doc:name="Transform Message" doc:id="8647c036-7b95-4094-8c41-1b196446e7af">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload.attributes.path filter(v,i) -> (!(v contains ("target")))]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="listedfiles"><![CDATA[%dw 2.0
+output application/json
+---
+payload.attributes.path filter(v,i) -> (!(v contains ("target")))]]></ee:set-variable>
+					<ee:set-variable variableName="apiautodiscovery" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="databasepoolingcheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="databasetestconnectioncheckout" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="configidletimeouts" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="reconnectioncheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="soapkitinboundvalidation" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="defaultresponsetimeout" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="httplistenerpersistance" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="autodeployflownamecheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="ipaddresspropertycheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="vaultandkeystore" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="log4japiname" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="muleartifactsecureproperties" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="apimainfileexist" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="apiconfigfile" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="globalfileconnectors" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="munitfile" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="soapkitnamespaceprefixes" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="outdatedconnectors" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="unusedmodulecheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="muleartifactrepositoryurls" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="httplistenerprotocol" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="httppath" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="unusednamespaces" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="dataweaveamounts" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="unusedpropertiescheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="dwlreference" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="errorhandlingflowdwl" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="dblooptryblock" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="logsequencecheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="projectfileapinamecheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="commentedcodeblockcheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="cicsdbnamingconventioncheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="munitnotnullcheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="pomxmlrawcontent" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="pomfiltereddependencies" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="mulexmlfilescontent" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="moduleversions" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="mainxmlflowname" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="muleapppropertiescontent" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="muleapppropertyarray" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="httplistenerconfig" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="dependencies" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="ipaddressproperties" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="httprequestconfig" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="currentlogfilename" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="currentfilename" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="currentfilerawcontent" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="currentconnector" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="allmulefilenamespaces" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="allmulexmlfilescontent" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="apikitsoapconfig" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="apiautodeployflowname" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="apitlsconfiguration" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="autodiscoveryconfig" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="commentedcodeblock" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="commentfilecontent" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="configfilecontent" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="configfilenamespacearray" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="configfilenamespaces" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="nowfunctioncheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="mqconnectioncheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="parentpomcheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="tibcosecurepropertycheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="tibcosecurepropcheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					<ee:set-variable variableName="flatfiletrimvaluecheck" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+			<try doc:name="Try" doc:id="3f72141a-bd61-45db-ace3-6fa4b6e542a1">
+			<foreach doc:name="For Each" doc:id="5ed3c0d2-28fc-4f7e-9236-ce211d57a10c" collection="#[payload]">
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="48d93958-82ad-4022-a8ad-b45a405a1fe5" variableName="currentfilename" />
+			<choice doc:name="Choice" doc:id="d71234b0-5f40-47ca-b671-958e4623b6fa">
+				<when expression='#[(payload contains("datasource.xml")) and (!(payload contains("target")))]'>
+							<file:read doc:name="Read" doc:id="06362ee2-b411-44dd-916a-06404c73e9d6" config-ref="File_Config" path="#[payload]" />
+							<ee:transform doc:name="Transform Message" doc:id="47d2759f-5d56-4a8d-bc24-2e4a289ff831">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(write(payload, 'application/xml'))]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+							<set-variable value="#[payload]" doc:name="Set Variable" doc:id="c377c7c2-5c92-48c7-96cb-3886a1e28105" variableName="btitxnmgrvar"/>
+				</when>
+				<when expression='#[(payload contains("-config")) and (!(payload contains("target")))]'>
+					<file:read doc:name="Read" doc:id="52a487ed-d02e-433e-888c-f44cbafec3ef" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="33c2b06a-bb3f-4402-87c9-9fdd4b152d01">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(substringAfter(write(payload, 'application/xml'),'">'))]]></ee:set-payload>
+				</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="configfilecontent"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(substringAfter(write(payload, 'application/xml'),'">'))]]></ee:set-variable>
+							<ee:set-variable variableName="configfilenamespaces"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(substringAfter(substringBefore(write(payload, 'application/xml'),'">'),'schemaLocation="'))]]></ee:set-variable>
+						</ee:variables>
+			</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="49c5d199-c4cd-4f92-bf58-18b9ed94c9b5">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload splitBy('<')]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="configfilenamespacearray"><![CDATA[%dw 2.0
+output application/java
+---
+vars.configfilenamespaces splitBy(' ') filter(v,i) -> sizeOf(v)>1 and (!(v contains("xsd"))) and (!(v contains("gateway"))) and (!(v contains("core"))) and (!(v contains("tls"))) and (!(v contains("spring"))) and (!(v contains("secure")))]]></ee:set-variable>
+							<ee:set-variable variableName="httplistenerconfig"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'http:listener-config'),'</http:listener-config')]]></ee:set-variable>
+							<ee:set-variable variableName="apikitsoapconfig"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'apikit-soap:config'),'/>')]]></ee:set-variable>
+							<ee:set-variable variableName="dbconfig"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var dbconfig = substringBefore(substringAfter(payload,'db:config'),'</db:config')
+var datasourceincluded = substringBefore(substringAfter(payload,'data-source-pool'),'</db:config')
+---
+if(dbconfig contains("data-source-connection")) datasourceincluded else dbconfig]]></ee:set-variable>
+							<ee:set-variable variableName="autodiscoveryconfig"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+substringBefore(substringAfter(payload,'api-gateway:autodiscovery'),'>')]]></ee:set-variable>
+							<ee:set-variable variableName="globalerrorhandlerconfig"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+substringBefore(substringAfter(payload,'defaultErrorHandler-ref'),'>')]]></ee:set-variable>
+							<ee:set-variable variableName="httprequestconfig"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'http:request'),'</http:request')]]></ee:set-variable>
+									<ee:set-variable variableName="mqconnectioncheck"><![CDATA[%dw 2.0
+output application/java
+var mqconcheck = payload contains('mq:config')
+var quemancheck = payload contains('queueManager="')
+var connamelistcheck = payload contains('connectionNameList="')
+var channelcheck = payload contains('channel="')
+var hostcheck = payload contains('host="')
+var portcheck = payload contains('port="')
+var cachesizecheck = payload contains('sessionCacheSize="')
+var usernamecheck = payload contains('username="')
+var ciphercheck = payload contains('cipherSuite="')
+var TLScheck = payload contains('tlsContext="')
+var reconcountcheck = payload contains('reconnect count="')
+var reconfreqcheck = payload contains('frequency="')
+var reconnectionforever = payload contains('<reconnect-forever')
+
+---
+if(mqconcheck)
+	if(quemancheck and connamelistcheck and channelcheck and hostcheck and portcheck and cachesizecheck and usernamecheck and ciphercheck and TLScheck and ((reconcountcheck and reconfreqcheck) or (reconnectionforever))) 'Pass' else '<span class=failed>Fail - MQ connection properties are missing or not externalized</span>'
+else
+	"N/A"]]></ee:set-variable>
+									<ee:set-variable variableName="commentedcodeblock"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var commentcheck = ((vars.commentfilecontent contains("<!--")) and (!(substringBefore(substringAfter(vars.commentfilecontent,"<!--"),"-->") contains("flow"))) and (!(substringBefore(substringAfter(vars.commentfilecontent,"<!--"),"-->") contains("Start"))) and (!(substringBefore(substringAfter(vars.commentfilecontent,"<!--"),"-->") contains("End")))) 
+var filename = substringAfterLast(vars.currentfilename,"\\")
+---
+if(commentcheck) (if(sizeOf(vars.commentedcodeblock default "")>1) (vars.commentedcodeblock default "") ++ "," ++ (filename default "") else (filename)) else ""
+]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="ec559b95-245e-4806-9b6b-c997e3c1ff41">
+							<ee:message>
+								<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{}]]></ee:set-payload>
+							</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="apiautodiscovery"><![CDATA[%dw 2.0
+output application/java
+---
+if(vars.autodiscoveryconfig contains("api-gateway")) (if(vars.autodiscoveryconfig contains("--")) '<p class="failed">Fail</p>' else "Pass") else '<p class="failed">Fail - Please add apiautodiscovery configuration</p>']]></ee:set-variable>
+<ee:set-variable variableName="httplistenerpersistance"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var httprequestpersistance = if(sizeOf(vars.httprequestconfig default "")>1) (vars.httprequestconfig contains('usePersistentConnections=')) else true
+---
+if(sizeOf(vars.httplistenerconfig default "")>1)
+if((vars.httplistenerconfig contains("http:listener-connection"))) (if((vars.httplistenerconfig contains("usePersistentConnections")) and httprequestpersistance) (if(substringBefore(substringAfter(vars.httplistenerconfig,'usePersistentConnections="'),'"') contains("{")) "Pass" else '<p class="failed">Fail - Please externalize http-listener persistance connections and make it false</p>') else '<p class="failed">Fail - Please externalize http-listener/requester persistance connections and make it false</p>') else 'N/A'
+else
+if(sizeOf(vars.httprequestconfig default "")>1) if(httprequestpersistance) "Pass" else '<p class="failed">Fail - Please externalize http-request persistance connections and make it false</p>' else "N/A"]]></ee:set-variable>
+<ee:set-variable variableName="httplistenerprotocol"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(vars.httplistenerconfig contains("http")) (if(vars.httplistenerconfig contains("protocol=")) (if(substringBefore(substringAfter(vars.httplistenerconfig,'protocol="'),'"') contains("{")) "Pass" else '<p class="failed">Fail - Please externalize http-listener protocol</p>') else '<p class="failed">Fail - Please externalize http-listener protocol</p>') else 'N/A']]></ee:set-variable>
+<ee:set-variable variableName="soapkitnamespaceprefixes"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(upper(vars.apikitsoapconfig) contains('SOAP'))
+if(vars.apikitsoapconfig contains("apikit-soap")) 
+	(if((vars.apikitsoapconfig contains("key=")) and (vars.apikitsoapconfig contains("value="))) "Pass" 
+	else '<p class="failed">Fail - Please add SOAP-ENV namespaces in soapkit configuration</p>') 
+else '<p class="failed">Fail - SOAP Kit configuration is not found</p>'
+else
+'N/A']]></ee:set-variable>
+<ee:set-variable variableName="configidletimeouts"><![CDATA[%dw 2.0
+output application/java
+---
+if(vars.configfilecontent default "" contains("idletimeout")) '<p class="failed">Fail - Please remove idletimouts for all the connectors</p>' else "Pass"]]></ee:set-variable>
+<ee:set-variable variableName="soapkitinboundvalidation"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var value=substringBefore(substringAfter(vars.apikitsoapconfig,'inboundValidationEnabled="'),'"')
+---
+if(upper(vars.apikitsoapconfig) contains("SOAP"))
+if(sizeOf(value default "")>1)  
+	if(value contains("{")) "Pass" else '<p class="failed">Fail - Please externalize soap-kit inbound validation</p>'
+ else '<p class="failed">Fail - Please enable inbound validation in soapkit config</p>'
+else
+'N/A']]></ee:set-variable>
+								<ee:set-variable variableName="defaultresponsetimeout"><![CDATA[%dw 2.0
+output application/java
+---
+if(vars.globalerrorhandlerconfig contains("defaultResponseTimeout")) '<p class="failed">Fail - Please remove defaultResponseTimeout from global-error-handler configuration</p>' else "Pass"]]></ee:set-variable>
+								<ee:set-variable variableName="reconnectioncheck"><![CDATA[%dw 2.0
+output application/java
+var http = vars.httplistenerconfig
+var db = vars.dbconfig
+var httprequest = vars.httprequestconfig
+var httpreconnection = if((http contains("reconnection"))) "Fail" else "Pass"
+var httprequestreconnection = if(sizeOf(httprequest)>1) if(httprequest contains("reconnection")) "Fail" else "Pass" else "Pass"
+var dbreconnection = if(sizeOf(db)>1) if(db contains("reconnection")) "Pass" else "Fail" else "Pass"
+---
+if(httpreconnection=="Pass" and dbreconnection=="Pass" and httprequestreconnection=="Pass") "Pass" else '<p class="failed">Fail - Please remove reconnection for all connectors except database</p>'
+]]></ee:set-variable>
+								<ee:set-variable variableName="databasepoolingcheck"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var poolvalue = substringBefore(substringAfter(vars.dbconfig,'minPoolSize="'),'"')
+var keycheck = (vars.dbconfig contains("maxPoolSize=")) and (vars.dbconfig contains("minPoolSize=")) and (vars.dbconfig contains("acquireIncrement=")) and (vars.dbconfig contains("preparedStatementCacheSize=")) and (vars.dbconfig contains("testConnectionOnCheckout=")) and (vars.dbconfig contains("testConnectionOnCheckin")) and (vars.dbconfig contains("idleConnectionTestPeriod")) and (vars.dbconfig contains("maxIdleTimeExcessConnections")) and (vars.dbconfig contains("maxStatementsPerConnection")) and (vars.dbconfig contains("value="))
+---
+if(vars.dbconfig contains("db:")) 
+
+	if(keycheck) "Pass" else ('<p class="failed">Fail - Please add database pooling with additional properties and externalize them</p>')
+	
+else "N/A"]]></ee:set-variable>
+							<ee:set-variable variableName="databasetestconnectioncheckout"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var poolvalue = substringBefore(substringAfter(vars.dbconfig,'testConnectionOnCheckout="'),'"')
+var bticonfig = vars.btitxnmgrvar default ""
+---
+if((vars.dbconfig contains("db:")) and (!(sizeOf(trim(bticonfig))>5))) (if(vars.dbconfig contains("testConnectionOnCheckout")) (if(poolvalue contains("{")) "Pass" else '<p class="failed">Fail - Please externalize database testConnectionOnCheckout configuration</p>') else '<p class="failed">Fail - Please externalize testConnectionOnCheckout for database and make it false</p>') else "N/A"]]></ee:set-variable>
+</ee:variables>
+						</ee:transform>
+				</when>
+				<when expression='#[(payload contains("mule-artifact")) and (!(payload contains("target")))]'>
+					<file:read doc:name="Read" doc:id="b0d4588f-ae98-411c-98c5-41fbd1108050" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="56c90687-2321-491d-bf7d-5ec4e8bc6675">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(write(payload, 'application/json'))]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+						</ee:variables>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="c755d637-8b3b-4d08-ab01-9f27c995934a">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="minmuleversion"><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains("4.4.0")) "Pass" else "Fail - Please correct mule version in mule-artifact.json file"]]></ee:set-variable>
+							<ee:set-variable variableName="countofsecureproperties"><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+---
+payload countMatches "secure::"]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<when expression='#[(payload contains("pom.xml")) and (!(payload contains("target")))]'>
+					<file:read doc:name="Read" doc:id="4f381a68-79ed-4eb9-916c-0c78a0093c18" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="82c5a6b1-6bd4-49fd-a15a-fae7e4ea3b1c">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(write(payload, 'application/xml'))]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="configfilecontent"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(substringAfter(write(payload, 'application/xml'),'">'))]]></ee:set-variable>
+							<ee:set-variable variableName="pomxmlrawcontent"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<set-variable value='#[%dw 2.0&#10;output text/plain&#10;import * from dw::core::Strings&#10;var prefilecontent = (trim(vars.allmulexmlfilescontent) default "")&#10;---&#10;if(sizeOf(prefilecontent)&gt;1) prefilecontent ++ payload else payload]' doc:name="Set Variable" doc:id="1a9a5705-e07f-441a-a7c4-a522383065fb" variableName="allmulexmlfilescontent" />
+					<ee:transform doc:name="Transform Message" doc:id="c34e20c7-026b-46f0-ad2c-285d156737fe">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="muleartifactrepositoryurls"><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/java
+var mulerepourlcount = payload countMatches "https://artifactory.bbtnet.com/artifactory/mulesoft-releases"
+---
+if(mulerepourlcount < 2) '<p class="failed">Fail - Please update Mule artifact repository urls in pom file</p>' else "Pass"]]></ee:set-variable>
+							<ee:set-variable variableName="dependencies"><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+(substringBefore(substringAfter(payload,"<dependencies>"),"</dependencies>")) splitBy("</dependency>")]]></ee:set-variable>
+							<ee:set-variable variableName="apitlsconfiguration"><![CDATA[%dw 2.0
+output application/json
+var artifactids = vars.pomxmlrawcontent.project.dependencies.*dependency.artifactId
+---
+artifactids filter(v,i)-> ((v contains("spring")))]]></ee:set-variable>
+							<ee:set-variable variableName="pomfiltereddependencies"><![CDATA[%dw 2.0
+output application/json
+var artifactids = vars.pomxmlrawcontent.project.dependencies.*dependency.artifactId
+---
+artifactids filter(v,i)-> (!(v contains("spring"))) and (!(v contains("secure"))) and (!(v contains("munit"))) and (!(v contains("vault")))]]></ee:set-variable>
+									<ee:set-variable variableName="parentpomcheck"><![CDATA[output application/java
+var parentpom1 = payload contains('<parent>')
+var parentpom2 = payload contains('<artifactId>MuleParentPom</artifactId>')
+var parentpom3 = payload contains('</cicd.mule.version>')
+---
+if(parentpom1 and parentpom2 and parentpom3) "Pass" else '<span class="failed">Fail - pom xml should contain parent pom configuration<span>']]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="4ad1cf2f-deb6-4222-b721-f8c2008e632b">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="apitlconfigcheck"><![CDATA[%dw 2.0
+output application/java
+var spring = vars.apitlsconfiguration
+---
+if(sizeOf(spring)>1) "Pass" else '<p class="failed">Fail - Please add TLS configuration in the api</p>']]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<when expression='#[(payload contains("global.xml")) and (!(payload contains("target")))]'>
+					<file:read doc:name="Read" doc:id="8f30be80-836d-4095-87e4-0892bdd21c03" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="f10c6a89-259d-4bc5-8b5e-9d911c966140">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(substringBefore(substringAfter(write(payload, 'application/xml'),'">'),'<error-handler'))]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="1283f68a-1ca3-44ef-a884-aa2ed4d95dbd">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="globalfileconnectors"><![CDATA[%dw 2.0
+output application/java
+---
+if(sizeOf(payload default "")>1) '<p class="failed">Fail - Please move all the connectors from Global.xml to apiname-config.xml file</p>' else "Pass"]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<when expression='#[(payload contains("mule-app.properties")) and (!(payload contains("target")))]'>
+					<file:read doc:name="Read" doc:id="e7b1df47-d391-42bd-9648-5aeadc64e2c8" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="fb0c1ae6-88be-4f7d-a6b6-eebd3a6dfa45">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="vaultandkeystore"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var httpapi = (trim(substringAfter(substringAfter(payload,'assetType'),'=')) == 'soap') or (trim(substringAfter(substringAfter(payload,'assetType'),'='))=='rest')
+var vault = (payload contains("eapi-mule-lastmile.truist-tst.com.jks")) and (payload contains("vault.app.name"))
+var keystore = (payload contains("keystore.path")) and (payload contains("keystore.alias"))
+---
+if(httpapi)
+if((vault==true) and (keystore==true)) "Pass" else '<p class="failed">Fail - Please add TLS configuration in api</p>'
+else 
+'N/A']]></ee:set-variable>
+							<ee:set-variable variableName="httppath"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var httpapi = payload contains('http.path')
+var path = trim(substringBefore(substringAfter(substringAfterLast(payload,'http.path'),'/'),'\n'))
+---
+if(httpapi)
+if((path == trim(vars.currentapiname default "")) or (path contains("*"))) "Pass" else '<p class="failed">Fail - http.path should be same as API name'
+else
+'N/A']]></ee:set-variable>
+							<ee:set-variable variableName="ipaddressproperties"><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+var propertyarray = payload splitBy("\n")
+var ipaddress = propertyarray map(data,index)->{
+	"ipaddress" : if(isNumeric(substringAfterLast(data,"."))) "Pass" else '<p class="failed">Fail</p>'
+}
+---
+ipaddress]]></ee:set-variable>
+							<ee:set-variable variableName="apiautodeployflowname"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+"flow" ++ trim(substringBefore(substringAfter(substringAfterLast(payload,'api-autodeploy-flow-name'),'flow'),'\n'))]]></ee:set-variable>
+							<ee:set-variable variableName="muleapppropertyarray"><![CDATA[output application/json
+---
+payload splitBy("\n")]]></ee:set-variable>
+									<ee:set-variable variableName="muleapppropertiescontent"><![CDATA[%dw 2.0
+output text/plain
+---
+payload]]></ee:set-variable>
+									<ee:set-variable variableName="cicsdbnamingconventioncheck"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var currentpropertyfile = substringAfterLast(vars.currentfilename,"\\")
+var cicsdbcheck = ((payload contains("cics")) or (payload contains("jdbc")) or (payload contains("sql")))
+var namingcheck = ((payload contains("cics.host")) and (payload contains("cics.port"))) or ((payload contains("db.url")) or (payload contains("db.host")) or (payload contains("db.servername"))) or ((payload contains("cics.userid")) or (payload contains("db.userid")))
+--- 
+if(cicsdbcheck)
+
+if(namingcheck) (vars.cicsdbnamingconventioncheck default "") else
+if(sizeOf((vars.cicsdbnamingconventioncheck default ""))>1)
+(vars.cicsdbnamingconventioncheck default "") ++ "," ++ (currentpropertyfile default "")
+else
+(currentpropertyfile default "")
+
+else  (vars.cicsdbnamingconventioncheck default "")]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="61fe1ddb-e310-4f96-a6b9-1e44f2bdaace">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(write(vars.ipaddressproperties, 'application/json'))]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="826d0d29-c6d9-4a48-8dff-160c65f67884">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="ipaddresspropertycheck"><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains("true")) '<p class="failed">Fail - Please remove IP addresses from mule-app.properties</p>' else "Pass"]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<when expression='#[(payload contains("secure.properties")) and (!(payload contains("target")))]'>
+					<file:read doc:name="Read" doc:id="f0f848e0-36e8-498c-9801-d0b4f181d968" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="13b920e5-fdf1-49c3-90f1-287c06346a6b">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload splitBy("\n")]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="securepropertycheck"><![CDATA[output text/plain
+var securepropertycheck = (payload contains("lastmile.keypassword=![")) and (payload contains("vault.clientid=![")) and (payload contains("vault.clientsecret=!["))
+---
+securepropertycheck]]></ee:set-variable>
+									<ee:set-variable variableName="cicsdbnamingconventioncheck"><![CDATA[
+output application/java
+import * from dw::core::Strings
+var currentpropertyfile = substringAfterLast(vars.currentfilename,"\\")
+var cicsdbcheck = ((payload contains("cics")) or (payload contains("jdbc")) or (payload contains("sql")))
+var namingcheck = ((payload contains("cics.userid")) and (payload contains("cics.password"))) or ((payload contains("db.userid")) and (payload contains("db.password"))) or
+				   ((!(payload contains("cics.userid"))) and (payload contains("cics.password"))) or ((!(payload contains("db.userid"))) and (payload contains("db.password")))
+--- 
+if(cicsdbcheck)
+
+if(namingcheck) (vars.cicsdbnamingconventioncheck default "") else 
+if(sizeOf((vars.cicsdbnamingconventioncheck default ""))>1)
+(vars.cicsdbnamingconventioncheck default "") ++ "," ++ (currentpropertyfile default "")
+else
+(currentpropertyfile default "")
+
+else (vars.cicsdbnamingconventioncheck default "")
+
+]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="bb5af33b-a0f1-41db-bbea-cba3a6af5d23">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="numberofsecureproperties"><![CDATA[%dw 2.0
+output application/java
+---
+sizeOf(payload filter (v,i)-> sizeOf(v)>1 and (!(v contains ("#"))))]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+							<ee:transform doc:name="Transform Message" doc:id="d053fd49-a770-45e0-9045-6164da4a06d3">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload filter(v,i)-> (!(v contains("vault"))) and (!(v contains("lastmile"))) and (!(v contains("log.encryption.pwd"))) and (!(v contains("#"))) and (sizeOf(v default "")>1)]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+							<foreach doc:name="For Each" doc:id="beadbf60-08bb-4b67-92ea-94681a877453" collection="#[payload]">
+								<try doc:name="Try" doc:id="99915083-73e5-4faa-aff7-c55267746e64">
+								<set-variable value="#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;---&#10;trim(substringAfter(payload,'=') default &quot;&quot;)]" doc:name="Set Variable" doc:id="cb3391a1-2989-4b3c-8127-b2e36a094e56" variableName="encpwd" />
+								<set-payload value='#[%dw 2.0&#10;output application/x-www-form-urlencoded&#10;---&#10;{&#10;"encryptionkey" : "A2Sgd@gamgdTV@ms",&#10;"password":vars.encpwd,&#10;"mode":"decrypt",&#10;"algType":"aes"&#10;}]' doc:name="Set Payload" doc:id="08006dca-a06c-4fa9-b0cd-3dc078f020a3" />
+								<http:request method="POST" doc:name="Request" doc:id="8ae52dd2-5ad1-4db5-953a-0b230a3a7dc2" config-ref="PWDDecrypt" path="/encryption-utility-np/home/studio/convert">
+									<http:headers><![CDATA[#[{
+	"Content-Type" : "application/x-www-form-urlencoded",
+	"Accept" : "*/*",
+	"Accept-Encoding" : "gzip, deflate, br",
+	"Connection" : "keep-alive"
+}]]]></http:headers>
+								</http:request>
+								<set-variable value="#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;var currentvar = vars.tibcoencryptedsecurepropcheck default &quot;&quot;&#10;var encpwd = vars.encpwd default &quot;&quot;&#10;---&#10;if(payload contains('CTIB')) &#10;	if(sizeOf(currentvar)&gt;1) currentvar ++ &quot;, &quot; ++ encpwd ++ &quot; : &quot; ++ payload else encpwd ++ &quot; : &quot; ++ payload&#10;else&#10;	currentvar]" doc:name="Set Variable" doc:id="ec62451a-e201-428a-bbae-3ed5a9dde868" variableName="tibcoencryptedsecurepropcheck" />
+									<error-handler>
+									<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="02a699b1-29fa-4629-9aaa-bad6cbd0f25e">
+										<set-payload value="#[%dw 2.0&#10;output application/java&#10;---&#10;vars.encpwd]" doc:name="Set Payload" doc:id="98538e98-2c6f-4a07-8397-1e9885c3aa94" />
+									</on-error-continue>
+								</error-handler>
+							</try>
+							</foreach>
+				</when>
+				<when expression='#[(payload contains("log4j2.xml")) and (!(payload contains("target")))]'>
+					<file:read doc:name="Read" doc:id="8dbe3830-436e-41e7-a73a-6667d4baa454" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="46291d51-10c9-4afe-9693-405f5fe1c793">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var log4jreponame = trim(substringBefore(substringAfter(write(payload, 'application/xml'),'<Property name="appname">'),'</Property>'))
+---
+if(log4jreponame contains("mule4generictemplate")) "Fail" else "Pass"]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="log4japiname"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var log4jreponame = trim(substringBefore(substringAfter(write(payload, 'application/xml'),'<Property name="appname">'),'</Property>'))
+---
+if(log4jreponame contains("mule4generictemplate")) '<p class="failed">Fail - Please correct flow name in log4j file' else "Pass"]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<when expression='#[(payload contains((vars.currentapiname default "") ++ ".xml"))]'>
+					<file:read doc:name="Read" doc:id="81d190f8-8ec1-404b-8749-aec6a466720c" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="349ac165-f878-4d0d-aa46-434426b01caf">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(write(payload, 'application/xml'))]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="6c3074de-ef4f-436d-9fd6-709c395aaf51">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="mainxmlflowname"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var flowname = trim(substringBefore(substringAfter(substringAfter(payload,'flow'),'name="'),'"'))
+var mainflowname = ("flow-" ++ trim((vars.currentapiname default "")) ++ "-main")
+---
+if(flowname contains(mainflowname)) mainflowname else flowname
+]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</when>
+				<when expression='#[payload contains(".dwl")]'>
+					<file:read doc:name="Read" doc:id="c59bf703-769e-4f4a-93e4-e5f6166a8921" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="40d11a38-5b2d-40fa-80a4-f330c3032b9a">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="dataweaveamounts"><![CDATA[%dw 2.0
+output application/java
+var searchstring = (upper(payload) contains("AMOUNT")) or (upper(payload) contains("AMT")) or (upper(payload) contains("BALANCE")) or (upper(payload) contains("BAL"))
+---
+if(searchstring == 'true') 
+if(sizeOf(vars.dataweaveamounts default "")>1) 
+vars.dataweaveamounts default "" ++ "," ++ vars.currentfilename else
+vars.currentfilename
+else ""]]></ee:set-variable>
+									<ee:set-variable variableName="flatfiletrimvaluecheck" ><![CDATA[output application/java
+import * from dw::core::Strings
+var flatfile = payload contains('output application/flatfile')
+var flatfiletrimvaluecheck = vars.flatfiletrimvaluecheck default ""
+var trimvalues = trim(substringBefore(substringAfter(substringAfter(payload,'trimValues'),'='),"---") default "")
+var trimvaluescheck = (if(trimvalues contains('true')) "true" else "false")
+var currentfilename = substringAfterLast(vars.currentfilename,'\\')
+---
+if(flatfile) 
+	if(trimvaluescheck) flatfiletrimvaluecheck else 
+	if(sizeOf(trim(flatfiletrimvaluecheck))>1)
+	(flatfiletrimvaluecheck ++ "," ++ currentfilename )
+	else
+	currentfilename
+else flatfiletrimvaluecheck
+
+]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+					<set-variable value='#[%dw 2.0&#10;output text/plain&#10;import * from dw::core::Strings&#10;var prefilecontent = (trim(vars.allmulexmlfilescontent) default "")&#10;---&#10;if(sizeOf(prefilecontent)&gt;1) prefilecontent ++ payload else payload]' doc:name="Set Variable" doc:id="d3906f54-a47a-4bd9-9473-2dbc5540bdf9" variableName="allmulexmlfilescontent" />
+				</when>
+				<when expression='#[payload contains(".project")]'>
+							<file:read doc:name="Read" doc:id="3cb50531-9aea-42b6-95f0-872b7abb878e" config-ref="File_Config" path="#[payload]" />
+							<ee:transform doc:name="Transform Message" doc:id="1c62d17b-18da-46b9-89cd-783be3024705">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+if(upper(payload) contains(upper(trim(vars.currentapiname)))) "Pass" else '<span class="failed">Fail - Please correct api name in .project file</span>']]></ee:set-payload>
+								</ee:message>
+								<ee:variables>
+									<ee:set-variable variableName="projectfileapinamecheck"><![CDATA[%dw 2.0
+output application/java
+---
+if(upper(payload) contains(upper(trim(vars.currentapiname)))) "Pass" else '<span class="failed">Fail - Please correct api name in .project file</span>']]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+						</when>
+						<when expression='#[(payload contains("src\main\mule")) and (!(payload contains("target")))]'>
+							<file:read doc:name="Read" doc:id="528a7be9-971a-47b1-acbc-dec131c0f05d" config-ref="File_Config" path="#[payload]" target="commentfilecontent" outputMimeType="text/plain" />
+							<ee:transform doc:name="Transform Message" doc:id="9d15a039-6a18-4c3c-a812-18a86345d33b">
+								<ee:message>
+								</ee:message>
+								<ee:variables>
+									<ee:set-variable variableName="commentedcodeblock"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var commentcheck = ((vars.commentfilecontent contains("<!--")) and (!(substringBefore(substringAfter(vars.commentfilecontent,"<!--"),"-->") contains("flow"))) and (!(substringBefore(substringAfter(vars.commentfilecontent,"<!--"),"-->") contains("Start"))) and (!(substringBefore(substringAfter(vars.commentfilecontent,"<!--"),"-->") contains("End"))))
+var filename = substringAfterLast(vars.currentfilename,"\\")
+---
+if(commentcheck) (if(sizeOf(vars.commentedcodeblock default "")>1) (vars.commentedcodeblock default "") ++ "," ++ (filename) else (filename)) else ""
+]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+						</when>
+						<when expression='#[payload contains("test-suite")]'>
+							<file:read doc:name="Read" doc:id="176b1afe-b954-4294-b745-990ed74c9eb5" config-ref="File_Config" path="#[payload]" />
+							<ee:transform doc:name="Transform Message" doc:id="aafcaccc-4709-49ac-9fcf-8272010ded45">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+write(payload,"application/xml")]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+							<ee:transform doc:name="Transform Message" doc:id="e6732493-e976-4f36-a8ad-2502797f46f0">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload splitBy("<munit:validation>")]]></ee:set-payload>
+								</ee:message>
+							</ee:transform>
+							<foreach doc:name="For Each" doc:id="a78e90cc-f685-41b2-a73d-31a2acddbe48" collection="#[payload]">
+								<choice doc:name="Choice" doc:id="0d6f4ebd-ef19-4001-b97e-0321954e1204">
+									<when expression='#[payload contains("munit:validation")]'>
+										<ee:transform doc:name="Transform Message" doc:id="ed28c190-8a7c-4c5d-9172-41b38d67a67f">
+								<ee:message>
+								</ee:message>
+								<ee:variables>
+									<ee:set-variable variableName="munitnotnullcheck"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var notnullcheck = ((substringBefore(payload,"</munit:validation>")) contains("MunitTools::notNullValue()")) or ((substringBefore(payload,"</munit:validation>")) contains("sizeOf(payload)>"))
+var currentfile = substringAfterLast(vars.currentfilename,"\\")
+---
+if(notnullcheck) 
+if(sizeOf(vars.munitnotnullcheck default "")>1 and (!(vars.munitnotnullcheck contains(currentfile)))) (vars.munitnotnullcheck default "") ++ "," ++ currentfile else currentfile
+else
+(vars.munitnotnullcheck default "")]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+									</when>
+								</choice>
+							</foreach>
+						</when>
+						
+						<otherwise>
+					<ee:transform doc:name="Transform Message" doc:id="11bc3bf4-233f-4271-bf41-a35bca1989cb">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(write(vars.listedfiles, 'application/json'))]]></ee:set-payload>
+						</ee:message>
+						<ee:variables>
+						</ee:variables>
+					</ee:transform>
+					<ee:transform doc:name="Transform Message" doc:id="b52708ed-7c59-4b55-9491-dcd8f5f26457">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="munitfile"><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains("munit")) "Pass" else '<p class="failed">Fail - Please add MUNIT test cases</p>']]></ee:set-variable>
+<ee:set-variable variableName="apimainfileexist"><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains((vars.currentapiname default "") ++ ".xml")) "Pass" else '<p class="failed">Fail - src/main/mule folder should have api.xml file'    ]]></ee:set-variable>
+							<ee:set-variable variableName="apiconfigfile"><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains((vars.currentapiname default "") ++ "-config.xml")) "Pass" else '<p class="failed">Fail - src/main/mule folder should contains api-config.xml file</p>']]></ee:set-variable>
+							
+						</ee:variables>
+					</ee:transform>
+				</otherwise>
+			</choice>
+		</foreach>
+			<foreach doc:name="For Each" doc:id="52143b8d-6b2d-40f2-9da2-17955669702d" collection="#[vars.listedfiles]">
+			<choice doc:name="Choice" doc:id="4b07e4a1-8e02-40af-8882-1c1c4e5e34c8">
+						<when expression='#[(payload contains("src\main\mule")) and (!(payload contains("-config"))) &#10;and (!(payload contains("error-handling"))) and (!(payload contains("global.xml")))]'>
+							<file:read doc:name="Read" doc:id="0f77f5f6-19de-42ba-9c4c-04f17ca6456a" config-ref="File_Config" path="#[payload]" />
+							<ee:transform doc:name="Transform Message" doc:id="c07aee97-2757-4efd-823f-929a603d4630">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(write(payload, 'application/xml'))]]></ee:set-payload>
+						</ee:message>
+								<ee:variables>
+									<ee:set-variable variableName="currentfilerawcontent"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(write(payload, 'application/xml'))]]></ee:set-variable>
+								</ee:variables>
+					</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="e86d30c5-88c0-4e8f-8644-717ad0f81c92">
+							<ee:message>
+							</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="allmulexmlfilescontent"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var prefilecontent = (trim(vars.allmulexmlfilescontent) default "")
+---
+if(sizeOf(prefilecontent)>1) prefilecontent ++ payload else payload]]></ee:set-variable>
+								<ee:set-variable variableName="mulexmlfilescontent"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var prefilecontent = (vars.mulexmlfilescontent default "")
+---
+if(sizeOf(prefilecontent)>1) prefilecontent ++ substringAfter(payload,'">') else substringAfter(payload,'">')]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+							<choice doc:name="Choice" doc:id="50888af4-79c1-4e02-86e6-6397f69955e1">
+								<when expression="#[(!(attributes.fileName contains(vars.currentapiname)))]">
+									<ee:transform doc:name="Transform Message" doc:id="51f89f4e-4596-4255-8c2e-f143736376eb">
+										<ee:message>
+											<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+vars.currentfilerawcontent splitBy("ee:transform")]]></ee:set-payload>
+										</ee:message>
+									</ee:transform>
+									<foreach doc:name="For Each" doc:id="1b1b5d76-f80b-43da-b06e-2e84b2e50793" collection="#[payload]">
+										<choice doc:name="Choice" doc:id="0eb909ae-7b0c-4d8a-ad31-3dccfb2cf9c6">
+											<when expression='#[payload contains("ee:message")]'>
+												<ee:transform doc:name="Transform Message" doc:id="05aa4eb7-0300-411c-9d27-d79ff857a8cf">
+													<ee:message>
+													</ee:message>
+													<ee:variables>
+														<ee:set-variable variableName="dwlreference"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var dwl=substringAfter(payload,'resource="dataweave')
+var currenttransformname = substringBefore(substringAfter(payload,'name="'),'"')
+var dwlvarcontent = vars.dwlreference default ""
+---
+if(sizeOf(dwl)>1) dwlvarcontent else (if(sizeOf(dwlvarcontent)>1) dwlvarcontent ++ "," ++ currenttransformname else currenttransformname)]]></ee:set-variable>
+														<ee:set-variable variableName="flatfiletrimvaluecheck" ><![CDATA[output application/java
+import * from dw::core::Strings
+var flatfile = payload contains('output application/flatfile')
+var flatfiletrimvaluecheck = vars.flatfiletrimvaluecheck default ""
+var trimvalues = trim(substringBefore(substringAfter(substringAfter(payload,'trimValues'),'='),"---") default "")
+var trimvaluescheck = if(trimvalues contains(',')) (if(trimvalues contains('true')) "true" else "false") else (if(trimvalues=='true') "true" else "false")
+var currentfilename = substringAfterLast(vars.currentfilename,'\\')
+---
+if(flatfile) 
+	if(trimvaluescheck) flatfiletrimvaluecheck else 
+	if(sizeOf(trim(flatfiletrimvaluecheck))>1)
+	(flatfiletrimvaluecheck ++ "," ++ currentfilename )
+	else
+	currentfilename
+else flatfiletrimvaluecheck
+]]></ee:set-variable>
+													</ee:variables>
+												</ee:transform>
+											</when>
+										</choice>
+									</foreach>
+									<ee:transform doc:name="Transform Message" doc:id="9eb78322-52e4-4ca1-afb9-35fc5484de20">
+										<ee:message>
+											<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+vars.currentfilerawcontent splitBy("</db:")]]></ee:set-payload>
+										</ee:message>
+									</ee:transform>
+									<foreach doc:name="For Each" doc:id="f7af4825-7f2d-459c-a57a-a1dc56de2139">
+										<choice doc:name="Choice" doc:id="26a6a059-239a-4e1e-86d2-ae4aefddd5d1">
+											<when expression='#[payload contains("db:")]'>
+												<ee:transform doc:name="Transform Message" doc:id="235767e7-09bb-47f1-84f9-f2db9e91dc04">
+													<ee:message>
+													</ee:message>
+													<ee:variables>
+														<ee:set-variable variableName="dblooptryblock"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var dbforeach = payload contains("<foreach>")
+var dbtry = payload contains("<try>")
+var dblooptry = vars.dblooptryblock
+var processorname = substringBefore(substringAfter(payload,'doc:name="'),'"')
+---
+if(dbforeach) (if(!(dbtry)) processorname else dblooptry) else dblooptry]]></ee:set-variable>
+													</ee:variables>
+												</ee:transform>
+											</when>
+										</choice>
+									</foreach>
+									<ee:transform doc:name="Transform Message" doc:id="5dda1087-f759-4a52-8e08-956ce59143c3">
+										<ee:message>
+											<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+vars.currentfilerawcontent splitBy("<module-loggingconnector")]]></ee:set-payload>
+										</ee:message>
+										<ee:variables>
+											<ee:set-variable variableName="currentlogfilename"><![CDATA[output application/java
+---
+attributes.fileName default "NoFileName"]]></ee:set-variable>
+										</ee:variables>
+									</ee:transform>
+									<set-variable value="#[sizeOf(payload) - 1]" doc:name="Set Variable" doc:id="436a17f2-8121-4349-b0f1-759457435e40" variableName="loggerscount" />
+									<foreach doc:name="For Each" doc:id="f14cbcca-cec5-42ad-aa96-d9096fc05051" collection="#[payload default []]">
+										<choice doc:name="Choice" doc:id="5c1b449d-f6f6-4a04-991b-fe5c0294a8d9">
+											<when expression="#[(payload contains(&quot;LoggingConnector_Config&quot;)) and (!(payload contains('name=&quot;Error&quot;')))]">
+												<ee:transform doc:name="Transform Message" doc:id="78df4a23-d395-4988-b6bb-c888cb8e89ea">
+													<ee:message>
+													</ee:message>
+													<ee:variables>
+														<ee:set-variable variableName="logsequencevar"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var logseq = if(sizeOf(trim((substringBefore(substringAfter(payload,'logSequence="'),'"')) default "1"))>0) trim((substringBefore(substringAfter(payload,'logSequence="'),'"')) default "1") else "1"
+var countflag = vars.loggerscount
+var seqcheck = if(countflag>2) "" else ""
+var whencheck = if((payload contains("</when>")) or (payload contains("</otherwise>"))) "when" else ""
+var providername = payload contains('providerName')
+var providerprogramname = payload contains('providerProgramName')
+var programcheck = if(providername and providerprogramname) 'true' else 'false'
+---
+
+if(sizeOf(vars.logsequencevar default "")>1) 
+if(!(vars.logsequencevar contains(vars.currentlogfilename)))
+(vars.logsequencevar default "") ++ "~" ++ vars.currentlogfilename ++ "," ++ countflag ++ "," ++ logseq ++ whencheck ++ programcheck
+else
+(vars.logsequencevar default "") ++ "," ++ logseq ++ whencheck ++ programcheck
+
+else vars.currentlogfilename ++ "," ++ countflag ++ "," ++ logseq ++ whencheck ++ programcheck
+]]></ee:set-variable>
+													</ee:variables>
+												</ee:transform>
+											</when>
+										</choice>
+									</foreach>
+								</when>
+							</choice>
+						</when>
+				<when expression='#[(payload contains("src\main\mule"))]'>
+					<file:read doc:name="Read" doc:id="90467355-7ad8-4fa0-bf60-ca17510cab37" config-ref="File_Config" path="#[payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="0ce79456-2ed8-48c0-9f1e-2eb94ba6f64e">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(write(payload, 'application/xml'))]]></ee:set-payload>
+						</ee:message>
+								<ee:variables>
+									<ee:set-variable variableName="currentfilerawcontent"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+ 
+trim(write(payload, 'application/xml'))]]></ee:set-variable>
+								</ee:variables>
+					</ee:transform>
+							<ee:transform doc:name="Transform Message" doc:id="68f49461-eb37-4dda-9304-400788dfb75f">
+							<ee:message>
+							</ee:message>
+							<ee:variables>
+								<ee:set-variable variableName="allmulexmlfilescontent"><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var prefilecontent = (trim(vars.allmulexmlfilescontent) default "")
+---
+if(sizeOf(prefilecontent)>1) prefilecontent ++ payload else payload]]></ee:set-variable>
+								<ee:set-variable variableName="allmulefilenamespaces"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var currentfilecontent = substringBefore(payload,'">')
+//var namespacearray = currentfilecontent splitBy(' ') filter(v,i) -> sizeOf(v)>1 and (!(v contains("xsd"))) and (!(v contains("gateway"))) and (!(v contains("core"))) and (!(v contains("tls"))) and (!(v contains("spring"))) and (!(v contains("secure")))
+var namespacearray = trim(substringAfter(substringBefore(payload,'">'),'schemaLocation="'))
+---
+if(sizeOf(vars.allmulefilenamespaces default "")>1) (vars.allmulefilenamespaces default "") ++ (namespacearray default "") else (namespacearray default "")
+]]></ee:set-variable>
+							</ee:variables>
+						</ee:transform>
+							<ee:transform doc:name="Transform Message" doc:id="7aa31eda-8788-4172-93ee-0513866f2b50">
+								<ee:message>
+								</ee:message>
+								<ee:variables>
+									<ee:set-variable variableName="nowfunctioncheck"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var content = vars.allmulexmlfilescontent default ""
+var nowfun = content contains('now()')
+var aftercontent = substringAfter(substringAfter(content,'now()'),'>>')
+---
+if(nowfun)
+	if(sizeOf(aftercontent)>1) "Pass" else '<span class="failed">Fail - Timezone format is not added for now()<span>'
+else
+	"Pass"
+]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+							<choice doc:name="Choice" doc:id="acd0aebc-8f17-4e84-84b1-fc30c6372d6b">
+								<when expression='#[attributes.fileName contains("error-handling")]'>
+									<ee:transform doc:name="Transform Message" doc:id="0410efa8-f006-42f4-bb5b-ea1fd1b19142">
+										<ee:message>
+										</ee:message>
+										<ee:variables>
+											<ee:set-variable variableName="errorhandlingflowdwl"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var content = vars.currentfilerawcontent
+var errortransform=substringBefore(substringAfterLast(content,'soap-error-response"'),'</ee:transform>')
+var payloadreference = substringBefore(substringAfter(errortransform,'ee:set-payload'),'</ee:message>')
+---
+if((upper(vars.apikitsoapconfig)) contains('SOAP')) 
+ if(payloadreference contains("resource=")) 'Pass' else '<span class="failed">Fail - Please create dwl file for soap response from error-handling-subflow.xml</span>'
+else
+	'N/A'
+]]></ee:set-variable>
+										</ee:variables>
+									</ee:transform>
+								</when>
+							</choice>
+				</when>
+					</choice>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="4c0ac9ea-ec23-4502-ade9-8db53b2eb871">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+vars.logsequencevar splitBy("~")]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<foreach doc:name="For Each" doc:id="d9337414-5516-4218-9e6c-dd0ca22b367b" collection="#[payload default []]">
+					<ee:transform doc:name="Transform Message" doc:id="8df4d310-8633-4256-ad60-11506aa62035">
+						<ee:message>
+						</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="logsequencecheck"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var logcontent = substringAfter(substringAfter(payload,","),",")
+var onecount = logcontent countMatches "1"
+var onecountsize = onecount==2
+var twocount = logcontent countMatches "2"
+var twocountsize = twocount==2 and onecountsize
+var threecount = logcontent countMatches "3"
+var threecountsize = threecount==2 and onecountsize and twocountsize
+var fourcount = logcontent countMatches "4"
+var fourcountsize = fourcount==2 and onecountsize and twocountsize and threecountsize
+var fivecount = logcontent countMatches "5"
+var fivecountsize = fivecount==2 and onecountsize and twocountsize and threecountsize and fourcountsize
+var sixcount = logcontent countMatches "6"
+var sixcountsize = sixcount==2 and onecountsize and twocountsize and threecountsize and fourcountsize and fivecountsize 
+var flag=onecountsize or twocountsize or threecountsize or fourcountsize or fivecountsize or sixcountsize
+var whencount = payload countMatches "when"
+var providercount = payload countMatches "false" 
+---
+if((!(flag)) and providercount>0) 
+
+if((whencount>1)) (vars.logsequencecheck default "") else
+if(sizeOf(vars.logsequencecheck default "")>1)
+(vars.logsequencecheck default "") ++ "," ++ substringBefore(payload,",") 
+else
+substringBefore(payload,",")
+
+else (vars.logsequencecheck default "")]]></ee:set-variable>
+							<ee:set-variable variableName="logsequencevar"><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+						</ee:variables>
+					</ee:transform>
+				</foreach>
+				<ee:transform doc:name="Transform Message" doc:id="cdce0c2d-69c2-47f7-a4dc-d0126c02a837">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+var allmulefilenamespacesarray = vars.allmulefilenamespaces splitBy(' ') filter(v,i) -> sizeOf(v)>1 and (!(v contains("xsd"))) and (!(v contains("gateway"))) and (!(v contains("core"))) and (!(v contains("tls"))) and (!(v contains("spring"))) and (!(v contains("secure")))
+var arrayofarrays = [vars.configfilenamespacearray,vars.allmulefilenamespacesarray]
+var combinednamespaces = flatten(arrayofarrays)
+
+---
+(combinednamespaces distinctBy($)) filter(v,i)-> (!(v contains("soap"))) and (!(v contains("logging"))) and (!(v contains("mule/http"))) and (sizeOf(trim(v default ""))>0) ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="dfa120b5-0e9f-4077-ada9-7a9912a4b72c" collection="#[payload default []]">
+			<ee:transform doc:name="Transform Message" doc:id="c2ac6197-5892-4e71-94ff-7452047ca41a">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var bticonfig = vars.btitxnmgrvar default ""
+var btiused = sizeOf(trim(vars.btitxnmgrvar default ""))>5
+var namespace = substringAfterLast(payload,"/")
+---
+if(namespace contains('bti')) (if(btiused) "" else namespace) else namespace]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<set-variable value="#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;var mulefilecontent = trim(vars.mulexmlfilescontent)&#10;var currentnamespace = if(trim(payload) contains('mule-')) substringAfter(trim(payload),'mule-') else trim(payload)&#10;---&#10;if(mulefilecontent contains((currentnamespace) ++ &quot;:&quot;)) (vars.unusednamespaces default &quot;&quot;) else &#10;if(sizeOf(vars.unusednamespaces default &quot;&quot;)&gt;1)&#10;(vars.unusednamespaces default &quot;&quot;) ++ &quot;, &quot; ++ (payload default &quot;&quot;)&#10;else&#10;payload]" doc:name="Set Variable" doc:id="dc374b81-f650-4adc-b804-0649964b03a8" variableName="unusednamespaces" />
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="89c1805f-6097-4803-bfb0-e4b3e0a8d611">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+vars.muleapppropertyarray filter(v,i) -> (sizeOf(v)>1) and (!(v contains("vault"))) and (!(v contains("#"))) and (!(v contains("anypoint.platform.config.analytics.agent.enabled"))) and (!(v contains("logging.level"))) and (!(v contains("log.encryption.feature"))) and (!(v contains("sendDebugPayloadtoLogger")))]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="2dc12daf-b129-4dea-8939-ca5856c0efb3" collection="#[payload default []]">
+			<ee:transform doc:name="Transform Message" doc:id="57b4ff4e-4746-4f97-a1a6-e98efbda9560">
+				<ee:message>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="unusedpropertiescheck"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var currentproperty = trim(substringBefore(payload,"="))
+var muleapppropertycount = vars.muleapppropertiescontent countMatches currentproperty
+---
+if((vars.allmulexmlfilescontent contains(currentproperty)) or (muleapppropertycount>1) or (vars.btitxnmgrvar contains(currentproperty))) (vars.unusedpropertiescheck default "") else 
+if(sizeOf(vars.unusedpropertiescheck default "")>1)
+(vars.unusedpropertiescheck default "") ++ ", " ++ currentproperty
+else
+currentproperty]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="40d583d7-b50a-40ab-af0f-45030e9b142e">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(write(vars.dependencies, 'application/json'))]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="85cdd1f7-8523-4fcd-b503-5bec4ce57fa1">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload splitBy("<dependency>")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="21bcf6e4-ec51-4f2b-ac3a-685af9ef0811">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload filter(v,i)-> (sizeOf(v)>1) and (!(v contains('spring'))) and (!(v contains('logging'))) and (!(v contains('secure'))) and (!(v contains('munit'))) and (!(v contains('assertions'))) and (!(v contains('soapkit'))) and (!(v contains('http'))) and (!(v contains('vault')))and (!(v contains('cryptography')))]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="moduleversions"><![CDATA[%dw 2.0
+output application/json
+import * from dw::core::Strings
+---
+(payload filter(v,i)-> (sizeOf(trim(v))>10)) map(data,index) -> {
+	"connector" : substringBefore(substringAfter(data,"<artifactId>"),"</artifactId>"),
+	"version" : substringBefore(substringAfter(data,'<version>'),'</version>')
+	
+}]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="5c09032a-2b4d-4fae-973d-75406898a3de" collection="#[vars.moduleversions default []]">
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="4d6ec064-70bb-429a-b0c3-b24fff3a14b2" variableName="currentconnector" />
+			<choice doc:name="Choice" doc:id="b5af362d-f805-4b76-903c-fa9b337722dd">
+				<when expression="#[(!(payload.connector contains('spring'))) and (!(payload.connector contains('logging'))) and (!(payload.connector contains('secure'))) and (!(payload.connector contains('munit'))) and (!(payload.connector contains('assertions'))) and (!(payload.connector contains('soapkit'))) and (!(payload.connector contains('http'))) and (!(payload.connector contains('vault')))]">
+					<set-variable value="#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;var currentdep = substringBefore(substringAfter(trim(vars.currentconnector.connector),'mule-'),'-')&#10;var filtereddep = (!(currentdep contains('spring'))) and (!(currentdep contains('logging'))) and (!(currentdep contains('secure'))) and (!(currentdep contains('munit'))) and (!(currentdep contains('assertions'))) and (!(currentdep contains('soapkit'))) and (!(currentdep contains('http'))) and (!(currentdep contains('vault')))and (!(currentdep contains('cryptography')))&#10;var depvalue = if(filtereddep=='true') currentdep else &quot;&quot;&#10;---&#10;if(trim(vars.mulexmlfilescontent) contains(depvalue)) (vars.unusedmodulecheck default &quot;&quot;) else &#10;if(sizeOf(vars.unusedmodulecheck default &quot;&quot;)&gt;1)&#10;((vars.unusedmodulecheck default &quot;&quot;) ++ &quot;, &quot; ++ depvalue)&#10;else&#10;depvalue]" doc:name="Set Variable" doc:id="c32182df-6fad-4d7e-8a8b-6d781128e3d5" variableName="unusedmodulecheck" />
+				</when>
+			</choice>
+			<http:request method="GET" doc:name="Request" doc:id="71607022-dba9-4676-ae6c-8dceda7ce7a0" config-ref="GetCredential" path='#["/api/v4/projects/10779/repository/files/approved_dependencies_versions.json/raw?ref=master&amp;private_token=" ++ "${password.gitlab}"]' />
+			<ee:transform doc:name="Transform Message" doc:id="4cc9f6d3-4355-447f-9a43-f72142cd3e4e">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(write(payload, 'application/json'))]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<ee:transform doc:name="Transform Message" doc:id="a7026715-7b94-4264-9ad9-1c8c9a11f990">
+						<ee:message>
+							<ee:set-payload><![CDATA[output application/java
+import * from dw::core::Strings
+var currentconnector = vars.currentconnector.connector
+var currentconnectorversion = vars.currentconnector.version
+var approvedversion = trim(substringAfter(substringBefore(substringAfter(substringAfter(trim(payload),currentconnector),'versions'),']'),'['))
+---
+approvedversion contains(currentconnectorversion)]]></ee:set-payload>
+						</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="outdatedconnectors"><![CDATA[output application/java
+import * from dw::core::Strings
+var currentconnector = vars.currentconnector.connector
+var currentconnectorversion = vars.currentconnector.version
+var approvedversion = trim(substringAfter(substringBefore(substringAfter(substringAfter(trim(payload),currentconnector),'versions'),']'),'['))
+var exceptionformat = trim(substringBefore(substringAfter((substringAfter(trim(payload),currentconnector)),":"),"}"))
+---
+if(sizeOf(approvedversion)>1)
+if(approvedversion contains(currentconnectorversion)) "Pass" else 
+if(trim(payload) contains(currentconnector))
+if(sizeOf(vars.outdatedconnectors default "")>1)
+((vars.outdatedconnectors default "") ++ ", " ++ currentconnector ++ " : " ++ currentconnectorversion)
+else
+(currentconnector ++ " : " ++ currentconnectorversion)
+else
+vars.outdatedconnectors
+
+else
+if(exceptionformat contains(currentconnectorversion)) "Pass" else 
+if(trim(payload) contains(currentconnector))
+if(sizeOf(vars.outdatedconnectors default "")>1)
+((vars.outdatedconnectors default "") ++ ", " ++ currentconnector ++ " : " ++ currentconnectorversion)
+else
+(currentconnector ++ " : " ++ currentconnectorversion)
+else
+vars.outdatedconnectors]]></ee:set-variable>
+				</ee:variables>
+					</ee:transform>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="ca374469-55ed-48c7-9641-0f9361396947">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="autodeployflownamecheck"><![CDATA[%dw 2.0
+output application/java
+var autodeployflowname = trim(vars.apiautodeployflowname default "")
+var mainflowname = trim(vars.mainxmlflowname default "")
+---
+if(autodeployflowname == mainflowname) (if((mainflowname contains("flow")) and (mainflowname contains("main"))) "Pass" else '<p class="failed">Fail - Please correct API main flow name</p>') else '<p class="failed">Fail - Please correct API autodeploy flow name</p>'
+]]></ee:set-variable>
+				<ee:set-variable variableName="muleartifactsecureproperties"><![CDATA[%dw 2.0
+output application/java
+var artifactdata = vars.countofsecureproperties
+var securepropertydata = vars.numberofsecureproperties
+---
+if(artifactdata==securepropertydata) "Pass" else '<p class="failed">Fail - Please add all secure properties in mule-artifact.json file</p>']]></ee:set-variable>
+				<ee:set-variable variableName="unusednamespaces"><![CDATA[%dw 2.0
+output application/java
+var namespaces = vars.unusednamespaces default ""
+---
+if(sizeOf(namespaces)>1) ('<p class="failed">Fail - Please remove unused namespaces from mule xml files : ' ++ namespaces ++ '</p>') else "Pass"]]></ee:set-variable>
+				<ee:set-variable variableName="dataweaveamounts"><![CDATA[%dw 2.0
+output application/java
+var da = vars.dataweaveamounts default ""
+---
+if(sizeOf(da)>1) 'Please validate amount field mappings in ' ++ da else "Pass"]]></ee:set-variable>
+				<ee:set-variable variableName="outdatedconnectors"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(sizeOf(vars.outdatedconnectors default "")>5) '<p class="failed">Fail - ' ++ trim(substringAfter((vars.outdatedconnectors default ""),",")) ++ ' - Please use approved versions</p>' else "Pass"]]></ee:set-variable>
+				<ee:set-variable variableName="unusedmodulecheck"><![CDATA[%dw 2.0
+output application/java
+---
+if(sizeOf(vars.unusedmodulecheck default "")>1) '<span class="failed">Fail - ' ++ (vars.unusedmodulecheck default "") ++ ' - please remove unused dependencies from pom.xml</span>' else "Pass"]]></ee:set-variable>
+				<ee:set-variable variableName="unusedpropertiescheck"><![CDATA[%dw 2.0
+output application/java
+---
+if(sizeOf(vars.unusedpropertiescheck default "")>1) '<span class="failed">Fail - ' ++ (vars.unusedpropertiescheck default "") ++ ' - Please remove unused properties from mule-app.properties</span>' else 'Pass']]></ee:set-variable>
+						<ee:set-variable variableName="timestamp"><![CDATA[%dw 2.0
+output application/json
+fun format(d: DateTime) = d as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSS"}
+---
+format(now() >> "EST")]]></ee:set-variable>
+						<ee:set-variable variableName="dwlreference"><![CDATA[%dw 2.0
+output application/java
+---
+if(sizeOf(vars.dwlreference)>1) '<span class="failed">Fail - ' ++ (vars.dwlreference default "") ++ ' - Please create dwl reference for dataweave mapping</span>' else 'Pass']]></ee:set-variable>
+						<ee:set-variable variableName="dblooptryblock"><![CDATA[%dw 2.0
+output application/java
+---
+if(sizeOf(vars.dblooptryblock default "")>1) '<span class="failed">Fail - ' ++ (vars.dblooptryblock default "") ++ ' - Please put database processors which are in multiple iterations, in try block</span>' else "Pass"]]></ee:set-variable>
+						<ee:set-variable variableName="logsequencecheck"><![CDATA[%dw 2.0
+output application/java
+---
+if(sizeOf(vars.logsequencecheck)>1) '<span class="warning">Warning - Please correct log sequence/providername/providerprogramname in - ' ++ (vars.logsequencecheck default "") ++ '</span>' else 'Pass']]></ee:set-variable>
+						<ee:set-variable variableName="commentedcodeblockcheck"><![CDATA[%dw 2.0
+output application/java
+var commentcheck = (sizeOf(vars.commentedcodeblock default "")>1)
+---
+if(commentcheck) '<span class="failed">Fail - please remove commented code blocks in ' ++ (vars.commentedcodeblock default "") ++ '. Please add flow keyword in the comment block if it is flow related comment</span>' else "Pass"]]></ee:set-variable>
+						<ee:set-variable variableName="cicsdbnamingconventioncheck"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(sizeOf(vars.cicsdbnamingconventioncheck)>1) '<span class="failed">Fail - CICS/DB naming conventions not followed in - ' ++ (vars.cicsdbnamingconventioncheck default "") ++ '</span>' else "Pass"]]></ee:set-variable>
+						<ee:set-variable variableName="munitnotnullcheck"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(sizeOf(vars.munitnotnullcheck default "")>1) '<span class="failed">Fail - Found notNull check in Munit assertions in - ' ++ (vars.munitnotnullcheck default "") ++ '</span>' else "Pass"]]></ee:set-variable>
+						<ee:set-variable variableName="projectfileapinamecheck"><![CDATA[%dw 2.0
+output application/java
+var check = vars.projectfileapinamecheck
+---
+if(check==null) '<span class="failed">Fail - .project file not found in the repo<span>' else check
+]]></ee:set-variable>
+						<ee:set-variable variableName="globalfileconnectors"><![CDATA[%dw 2.0
+output application/java
+var globalcon = sizeOf(vars.globalfileconnectors default "")>5
+var mulefilecontent = vars.mulexmlfilescontent default ""
+var configcheck = mulefilecontent contains(':config')
+---
+if(globalcon or configcheck) '<span class="failed">Fail - please move connector configurations from mule xml files to api-config.xml file<span>' else 'Pass']]></ee:set-variable>
+						<ee:set-variable variableName="tibcoencryptedsecurepropertycheck"><![CDATA[%dw 2.0
+output application/java
+---
+if(sizeOf(trim(vars.tibcoencryptedsecurepropcheck default ""))>1) '<span class="failed">Fail - Secure Property file is having Tibco credentials - <span>' ++ (vars.tibcoencryptedsecurepropcheck default "") else 'Pass']]></ee:set-variable>
+						<ee:set-variable variableName="databasetestconnectioncheckout" ><![CDATA[%dw 2.0
+output application/java
+var dtc = vars.databasetestconnectioncheckout default ""
+var btivar = vars.btitxnmgrvar default ""
+---
+if(sizeOf(btivar)>5) "Pass" else dtc]]></ee:set-variable>
+						<ee:set-variable variableName="flatfiletrimvaluecheck" ><![CDATA[%dw 2.0
+output application/java
+---
+if(sizeOf(trim(vars.flatfiletrimvaluecheck default ""))>1) '<span class="warning">Warning - "trimValues=true" is not used in - <span>' ++ (vars.flatfiletrimvaluecheck default "") else 'Pass']]></ee:set-variable>
+			</ee:variables>
+		</ee:transform> 
+				<try doc:name="Try" doc:id="8fba53bd-8d1b-4160-bffc-27393c6bd6b9" >
+					<db:select doc:name="Select" doc:id="dc85e44e-cf9c-4600-a64a-9d7f8b730f6e" config-ref="Database-Connection">
+					<db:sql><![CDATA[SELECT INDEX_ID, FAIL_COUNT, LAST_UPDATED, REVIEW_FAILURE_EXCEPTION FROM EAPI_MULE_T2M_REPORT WHERE SERVICE_NAME = :servicename and TOOL_NAME = :reviewtool ORDER BY LAST_UPDATED DESC]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	servicename : vars.currentapiname default "",
+	reviewtool : "Service Code Quality Check"
+}]]]></db:input-parameters>
+				</db:select>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="475e1603-c0a5-43e7-aa30-e150c559b1bf" >
+							<logger level="INFO" doc:name="Logger" doc:id="61d8c2b2-3392-4285-beec-d4f982df7726" message="Error while fetching exception data from Database"/>
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<ee:transform doc:name="Transform Message" doc:id="246e9318-24ce-49d5-b0a8-727654fbc3cc">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+
+'<tr><td>Developer : </td><td>' ++ vars.developer ++ '</td></tr>
+<tr><td>Branch : </td><td>' ++ vars.branch ++ '</td></tr>
+<br/><table>
+	  
+      <tr><td>Autodiscovery code block should be enabled</td><td>' ++ (vars.apiautodiscovery default "") ++ '</td></tr>
+      <tr><td>Database connection pooling if used, should be confnigured properly for database connections</td><td>' ++ (vars.databasepoolingcheck default "") ++ '</td></tr>
+      <tr><td>Database connection pooling attribute "test connection on checkout" config should be false, with externalization</td><td>' ++ (vars.databasetestconnectioncheckout default "") ++ '</td></tr>
+      <tr><td>For all connectors, connection idle timeout should not be used</td><td>' ++ (vars.configidletimeouts default "") ++ '</td></tr>
+      <tr><td>Except for database connector no where "reconnection" should be used and enabled unless explicitly mandated</td><td>' ++ (vars.reconnectioncheck default "") ++ '</td></tr>
+      <tr><td>Soap-router-kit should be enabled with "Inbound validation enabled" check</td><td>' ++ (vars.soapkitinboundvalidation default "") ++ '</td></tr>
+      <tr><td>Configuration config element should not have "defaultResponseTimeout"</td><td>' ++ (vars.defaultresponsetimeout default "") ++ '</td></tr>
+      <tr><td>In HTTP Listener config, usePersistentConnections should be externalize with value as false</td><td>' ++ (vars.httplistenerpersistance default "") ++ '</td></tr>
+      <tr><td>Main flow property (api-autodeploy-flow-name) should contain correct main flow name</td><td>' ++ (vars.autodeployflownamecheck default "") ++ '</td></tr>
+      <tr><td>In mule-app.properties, any property related to hostname should not have IP address (instead it should be having dns name)</td><td>' ++ (vars.ipaddresspropertycheck default "") ++ '</td></tr>
+      <tr><td>In mule-app.properties, vault config should be defined for keystore.path and, keystore.alias</td><td>' ++ (vars.vaultandkeystore default "") ++ '</td></tr>
+      <tr><td>log4j2.xml should have repo entry for the serviceName like: "<Property name="appname">repoName</Property>"</td><td>' ++ (vars.log4japiname default "") ++ '</td></tr>
+      <tr><td>Mule-artifact.json should have entries for all the secure::propertienames</td><td>' ++ (vars.muleartifactsecureproperties default "") ++ '</td></tr>
+      
+      <tr><td>One of the mule xml files should have same name as repoName i.e. serviceName.xml</td><td>' ++ (vars.apimainfileexist default "") ++ '</td></tr>
+      <tr><td>One of the mule xml files should have same name as repoName-config i.e. serviceName-config.xml</td><td>' ++ (vars.apiconfigfile default "") ++ '</td></tr>
+      <tr><td>Global.xml should not contian any connector config elements</td><td>' ++ (vars.globalfileconnectors default "") ++ '</td></tr>
+      <tr><td>Every "Transform Message" processor logic should be referenced through one of the dwl file</td><td>' ++ (vars.dwlreference default "") ++ '</td></tr>
+      <tr><td>src/test/munit folder should contain atleast one xml file</td><td>' ++ (vars.munitfile default "") ++ '</td></tr>
+      <tr><td>Soap-router-kit should be having "Namespace prefixes" checked to match Tibco existing namespaces</td><td>' ++ (vars.soapkitnamespaceprefixes default "") ++ '</td></tr>
+      <tr><td>Connector versions in pom.xml should be latest versions</td><td>' ++ (vars.outdatedconnectors default "") ++'</td></tr>
+      <tr><td>Un-used connector/modules should not be present in code/pom.xml</td><td>' ++ (vars.unusedmodulecheck default "") ++ '</td></tr>
+      <tr><td>In pom.xml, for mulesoft-releases in repository elements, it should refer to artifactory.bbtnet.com instead of repository.mulesoft.org</td><td>' ++ (vars.muleartifactrepositoryurls default "") ++ '</td></tr>
+      <tr><td>The decimal/amount related fields mapping handling needs proper validation and confirmation</td><td>' ++ (vars.dataweaveamounts default "") ++ '</td></tr>
+      <tr><td>HTTP protocols for both listener/requester should be externalized</td><td>' ++ (vars.httplistenerprotocol default "") ++ '</td></tr>
+      <tr><td>Log sequence value is not correct in loggers</td><td>' ++ (vars.logsequencecheck default "") ++ '</td></tr>
+      <tr><td>http.path from mule-app.properties should be same as mule api name</td><td>' ++  (vars.httppath default "") ++ '</td></tr>
+	<tr><td>Un-used namespaces should not be there in serviceName.xml or operationName.xml files</td><td>' ++ (vars.unusednamespaces default "") ++ '</td></tr>
+	<tr><td>Unused properties should not be there in mule-app.properties</td><td class="unusedproperty">' ++ (vars.unusedpropertiescheck default "") ++ '</td></tr>
+	<tr><td>Soap error mapping from error-handling-subflow.xml should be referenced from dwl file</td><td>' ++ (vars.errorhandlingflowdwl default  "") ++ '</td></tr>
+<tr><td>Database processors which are in loop, should be put in try block</td><td>' ++ (vars.dblooptryblock default "") ++'</td></tr>
+	  <tr><td>project file should have the correct api name(.project file in mule project root folder)</td><td>' ++ (vars.projectfileapinamecheck default ".project file not found") ++ '</td></tr>
+	 <tr><td>Commented code blocks should not be there in mule xml files</td><td>' ++ (vars.commentedcodeblockcheck default "") ++ '</td></tr>
+	 <tr><td>DB2/CICS creds properties should follow the defined naming convention (*cics.userid|password|host|port, *db.userid|password|url|driver )</td><td>' ++ (vars.cicsdbnamingconventioncheck default "") ++ '</td></tr>
+	 <tr><td>MUNIT test cases should not have MunitTools::notNullValue() or SizeOf(payload)>0 in assertion</td><td>' ++ (vars.munitnotnullcheck default "") ++ '</td></tr>
+	<tr><td>now() function should have the timezone convertion to EST</td><td class="unusedproperty">' ++ (vars.nowfunctioncheck default "") ++ '</td></tr>
+	<tr><td>All MQ connection related properties should be externalized</td><td class="unusedproperty">' ++ (vars.mqconnectioncheck default "") ++ '</td></tr>
+	<tr><td>Parent pom configuration should be added in pom xml</td><td class="unusedproperty">' ++ (vars.parentpomcheck default "") ++ '</td></tr>
+	<tr><td>Secure Properties should not have Tibco credentials</td><td class="unusedproperty">' ++ (vars.tibcoencryptedsecurepropertycheck default "") ++ '</td></tr>
+	<tr><td>transform with flatfile schema parsing/rendering should have "trimValues=true" to avoid parse errors</td><td class="unusedproperty">' ++ (vars.flatfiletrimvaluecheck default "") ++ '</td></tr>
+      </table>
+<br/>
+        <br/>
+
+']]></ee:set-payload>
+			</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="exceptionsadded" ><![CDATA[%dw 2.0
+output application/java
+var exceptionsadded = payload."REVIEW_FAILURE_EXCEPTION" filter(v,i)-> (!(v==null))
+---
+exceptionsadded[0] default ""]]></ee:set-variable>
+					</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="f48c7350-4062-4c7d-aa02-8bbad75f0f32">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="toolname"><![CDATA["Service Code Quality Check"]]></ee:set-variable>
+					<ee:set-variable variableName="overallstatusdb"><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains("Fail")) 'Fail' else 'Pass']]></ee:set-variable>
+					<ee:set-variable variableName="failcount"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+payload countMatches("Fail")]]></ee:set-variable>
+					<ee:set-variable variableName="passcount"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var pass = payload countMatches("Pass") 
+var na = payload countMatches("N/A") 
+var warning = payload countMatches("Warning") 
+---
+pass + na + warning]]></ee:set-variable>
+						<ee:set-variable variableName="createconfightml"><![CDATA[output text/plain
+var overallstatus = if(payload contains("Fail")) '<span class="failed">Fail</span>' else '<span class="passed">Pass</span>'
+---
+if((overallstatus contains('Pass')) or (sizeOf(trim(vars.exceptionsadded))>1))
+'<table align="left" class="configform"><tr><td><a href="#configinputform">Create Config Files</a></div></td></tr></table>
+<form action="/createconfig/' ++ (vars.currentapiname default "") ++ "/" ++ (vars.reponame default "") ++ '" enctype="multipart/form-data" method="POST">
+<div class="container" id="configinputform">
+      <div class="button-wrap">
+		<h4 align="center"> Create Config Files </h4>
+		<table align="left">
+        <tr><td><span class="formfields">API Name : </span></td><td>' ++ (vars.currentapiname default "") ++ '</td></tr>
+		<tr><td><span class="formfields">Developer : </span></td><td><input type="text" name="developer" value="' ++ (vars.developer default '') ++  '" class="property"/></td></tr>
+		<tr><td><span class="formfields">Branch : </span></td><td><input type="text" name="branch" placeholder="mjr-feature" value="' ++ (vars.branch default 'mjr-feature') ++  '" class="property"/></td></tr>
+		<tr><td><span class="formfields">RateLimit : </span></td><td><input type="text" name="ratelimitvalue" placeholder="RateLimit" value="25" class="property"/></td></tr>
+		<tr><td><span class="formfields">Cluster Type : </span></td><td><input type="text" name="cluster" placeholder="Cluster Type" value="1x" class="property"/></td></tr>
+		<tr><td><span class="formfields">API-Type : </span></td><td><input type="text" name="apitype" placeholder="api-type" value="realtime" class="property"/></td></tr>
+		<tr><td><span class="formfields">Policies to be added : </span></td><td>
+		<label class="policylabel">Header Injection<input type="checkbox" name="headerinjection" checked="checked" onclick="return false"><span class="checkmark"></span></label>
+		<label class="policylabel">Rate Limit<input type="checkbox" name="ratelimit" checked="checked" onclick="return false"><span class="checkmark"></span></label>
+		<span class="dropdown">
+      	<label class="policylabel">Composite<input type="checkbox" name="headerinjection" checked="checked" onclick="return false"><img src="https://media3.giphy.com/media/v1.Y2lkPTc5MGI3NjExdG96amptYW5heXM5ZWV4Z3l2ODIxNmpwNTM1dG96cGRibGx6cDBsMCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9cw/cUiieLhU6Gv8LgP8Ff/giphy.gif" width="20px" height="20px"><span class="checkmark"></span></label>
+      	<span class="dropdown-content">
+        <ol>
+        <li><input type="radio" id="composite1" name="comp" value="comp1" onclick="return false"><label for="composite1">x509 + Basic Auth</label><br></li>
+        <li><input type="radio" id="composite3" name="comp" value="comp3" checked="checked" onclick="return false"><label for="composite3">x509 + MTLS + Basic Auth</label></li>
+		<li><input type="radio" id="composite4" name="comp" value="comp4" onclick="return false"><label for="composite4">MTLS + Basic Auth</label></li>
+        </ol>       
+     	</span>
+    	</span>
+		<label class="policylabel">ClientIDEnforcement<input type="checkbox" name="clientidenf" checked="checked" onclick="return false"><span class="checkmark"></span></label>
+		<label class="policylabel">TruistAuthz<input type="checkbox" name="authz" onclick="return false" checked="checked"><span class="checkmark"></span></label>			
+		<tr><td><span class="formfields">Contracts to be added : </span></td><td><label class="policylabel">HC<input type="checkbox" name="healthcheckcon" checked="checked" onclick="return false"><span class="checkmark"></span></label>
+		<label class="policylabel">EAPI_PLT<input type="checkbox" name="eapipltcon"><span class="checkmark"></span></label></td></tr>
+		</table>
+		<table class="buttontable" align="center" onclick="character()"><tr><td><button class="button" type="submit" onclick="myFunction()" value="Create Config Files" id="myButton">Create Config Files</button></form></td></tr></table>
+      </form>
+      <div class="board">
+      <img src="https://cdn.edu.buncee.com/assets/864ea935940063b8b3b7501e4b6599d1/animation-writing-062819.gif" id="hiddenimageid" />
+      </div>		
+	</div>
+    </div>
+</form>'
+else
+""]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<choice doc:name="Choice" doc:id="2cc26c52-3540-4008-bc20-290187d33c11">
+			<when expression="#[sizeOf(vars.apiname)&gt;1]">
+						<file:write doc:name="Write" doc:id="154bb998-f15f-4c2f-a216-af042f50f7c4" config-ref="File_Config" path='#["${gui.inputLocation}" ++ "//multipleapis//" ++ vars.currentapiname ++ ".txt"]' />
+						<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;if(payload contains(&quot;Fail&quot;)) '&lt;span class=&quot;failed&quot;&gt;Fail&lt;/span&gt;' else '&lt;span class=&quot;passed&quot;&gt;Pass&lt;/span&gt;']" doc:name="Set Variable" doc:id="9bf712c9-9507-4751-a5fa-d64c6e4e4b2e" variableName="overallstatus" />
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var varsize = sizeOf(trim(vars.apilevelstatus default ""))&#10;var apilevel = vars.currentapiname ++ " - " ++ vars.overallstatus&#10;---&#10;if(varsize&gt;0) (vars.apilevelstatus default "") ++ " , " ++ (apilevel) else apilevel]' doc:name="Set Variable" doc:id="039a0d43-7f19-4a9a-b405-73f336bfce19" variableName="apilevelstatus" />
+						<try doc:name="Try" doc:id="12a2533d-7aac-41b5-9f88-3b5f166eeb4b">
+							<db:insert doc:name="Insert" doc:id="d30e7946-3c58-4b81-b6a6-8136d2a409b7" config-ref="Database-Connection">
+								<db:sql><![CDATA[INSERT INTO EAPI_MULE_T2M_REPORT (TOOL_NAME, SERVICE_NAME, BRANCH_NAME, USAGE_STATUS, FAIL_COUNT, PASS_COUNT, USED_BY, LAST_UPDATED)
+VALUES (:toolname, :servicename, :branchname, :usagestatus, :failcount, :passcount, :usedby, :lastupdated)]]></db:sql>
+								<db:input-parameters><![CDATA[#[{
+	'toolname' : vars.toolname,
+	'servicename' : vars.currentapiname,
+	'branchname' : vars.branch,
+	'usagestatus' : vars.overallstatusdb,
+	'failcount' : vars.failcount,
+	'passcount': vars.passcount,
+	'usedby' : vars.developer,
+	'lastupdated' : (now() >> "America/New_York") as String {format: "y-MM-dd HH:m:s"}
+}]]]></db:input-parameters>
+							</db:insert>
+							<error-handler>
+								<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="982176b2-35ae-4f2b-85c4-eafa577655b6">
+									<logger level="INFO" doc:name="Logger" doc:id="fab66c25-c5f0-4ed1-a188-7a138a3ddd22" message="Error inserting in to database" />
+								</on-error-continue>
+							</error-handler>
+						</try>
+			</when>
+			<otherwise>
+						<ee:transform doc:name="Transform Message" doc:id="6da50563-6325-48e2-99b4-de59115a24af">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="email_details"><![CDATA[%dw 2.0
+output application/java
+---
+'narendranadh.kilari@truist.com']]></ee:set-variable>
+				<ee:set-variable variableName="attachment"><![CDATA[payload]]></ee:set-variable>
+				<ee:set-variable variableName="emailsubject"><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output text/plain
+---
+"API review report for - " ++ (vars.currentapiname default "")]]></ee:set-variable>
+				<ee:set-variable variableName="overallstatus"><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains("Fail")) '<span class="failed">Fail</span>' else '<span class="passed">Pass</span>']]></ee:set-variable>
+			
+			
+		
+			</ee:variables>
+			</ee:transform>
+						<try doc:name="Try" doc:id="aabe8296-f283-452e-bac1-f6627819ad8b">
+			<email:send doc:name="Send" doc:id="d4a9f411-a995-496c-82ab-679f45957305" subject='#["Service Code Quality Check - " ++ (vars.currentapiname default "") ++ ", Status : " ++ (if(vars.overallstatus contains("Fail")) "Fail" else "Pass") ++ ", Branch : " ++ (vars.branch default "")]' fromAddress="${smtp.from}" config-ref="Email_SMTP">
+					<email:to-addresses>
+				<email:to-address value="narendranadh.kilari@truist.com" />
+				<email:to-address value="Rakesh.Y.Kumar@truist.com" />
+									<email:to-address value="#[vars.developer]" />
+			</email:to-addresses>
+			<email:cc-addresses>
+									<email:cc-address value="DL.API.T2M@truist.com" />
+								</email:cc-addresses>
+								<email:body contentType="text/html" encoding="UTF-8">
+						<email:content><![CDATA[#[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+
+---
+"${email.cqc.body}"  ++ substringAfter(payload,'<br/>') ++ "${email.cqc.signature}"]]]></email:content>
+					</email:body>	
+												 		
+				</email:send>
+							<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="287588c3-00db-4246-ad99-8f83ce0c7df3">
+					<logger level="INFO" doc:name="Logger" doc:id="11c0463c-3986-4af0-ab08-74dbe6481835" message="Error sending email" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+						<try doc:name="Try" doc:id="24b0353e-165e-44f1-a350-760dbf620223">
+				<db:insert doc:name="Insert" doc:id="115051df-6f18-49ab-9b1b-7da86ca6753d" config-ref="Database-Connection">
+					<db:sql><![CDATA[INSERT INTO EAPI_MULE_T2M_REPORT (TOOL_NAME, SERVICE_NAME, BRANCH_NAME, USAGE_STATUS, FAIL_COUNT, PASS_COUNT, USED_BY, LAST_UPDATED)
+VALUES (:toolname, :servicename, :branchname, :usagestatus, :failcount, :passcount, :usedby, :lastupdated)]]></db:sql>
+					<db:input-parameters><![CDATA[#[{
+	'toolname' : vars.toolname,
+	'servicename' : vars.currentapiname,
+	'branchname' : vars.branch,
+	'usagestatus' : vars.overallstatusdb,
+	'failcount' : vars.failcount,
+	'passcount': vars.passcount,
+	'usedby' : vars.developer,
+	'lastupdated' : (now() >> "America/New_York") as String {format: "y-MM-dd HH:m:s"}
+}]]]></db:input-parameters>
+				</db:insert>
+							<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="b8fd95e5-78c9-4ace-817e-3bd4dac28d5b">
+						<logger level="INFO" doc:name="Logger" doc:id="c47229cc-7f8f-43a3-baee-44a6ad0b2eab" message="Error inserting in to database" />
+					</on-error-continue>
+				</error-handler>
+			</try>
+			</otherwise>
+		</choice>
+				<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="4661f6bd-39e8-4d54-965e-704c45e975ff">
+						<set-variable value='#[output application/java&#10;var failedservice = vars.failedservice default ""&#10;var currentapi = vars.currentapiname default ""&#10;---&#10;if(sizeOf(failedservice)&gt;1) failedservice ++ ", " ++ currentapi else currentapi]' doc:name="Set Variable" doc:id="744df8bc-4cf7-46d8-8e6c-df93ecd95824" variableName="failedservice" />
+					</on-error-continue>
+			</error-handler>
+		</try>
+		</foreach>
+		<choice doc:name="Choice" doc:id="ffc3a053-f9f4-42d3-b419-36d8ac894cb5" >
+			<when expression="#[sizeOf(vars.allmulexmlfilescontent)&gt;0]">
+				<choice doc:name="Choice" doc:id="602f958d-a0a7-4074-8c69-f44d33f4d99b">
+				<when expression="#[sizeOf(vars.apiname)&gt;1]">
+				<ee:transform doc:name="Transform Message" doc:id="f2703de5-8dc3-4060-9eca-0134d9dd2a4f">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/xml
+var apiarray = vars.apilevelstatus splitBy(",") default []
+---
+
+		table @(class:'charts',align:'center'):
+		{
+			tr: apiarray map 
+			{
+				form @(action:'/summary' ++ '/' ++ trim(substringBefore($," -"))):{
+						
+						td : {
+						
+						button @(class:'button'): substringBefore($,"-") ++ "- " ++ substringBefore(substringAfter($,">"),"<")
+						
+					}
+					
+				}
+				
+			
+			}
+			
+		}]]></ee:set-payload>
+			</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="failedservices"><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/xml
+var apiarray = vars.failedservice splitBy(",") default []
+---
+
+		table @(class:'charts',align:'center'):
+		{
+			tr: apiarray map 
+			{
+				form @(action:'#'):{
+						
+						td : {
+						
+						button @(class:'button'):trim($)
+						
+					}
+					
+				}
+				
+			
+			}
+			
+		}]]></ee:set-variable>
+					</ee:variables>
+		</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="9e1b080d-4382-4073-b7e4-a8131bdd2813">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, "application/xml")]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+						<ee:set-variable variableName="failedservices"><![CDATA[%dw 2.0
+output application/java
+---
+write(vars.failedservices, "application/xml")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+<ee:transform doc:name="Transform Message" doc:id="61e69e02-4e2a-41e5-a5df-1cf0581fa665">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="chartTable"><![CDATA[%dw 2.0
+import * from dw::core::Strings
+---
+substringAfter(payload,">")]]></ee:set-variable>
+						<ee:set-variable variableName="failedservice"><![CDATA[%dw 2.0
+import * from dw::core::Strings
+var fs = substringAfter(vars.failedservices,">")
+var concheck = fs contains('<tr/>')
+var fsfront = '<h4>Review failed for below apis</h4><br/><div>'
+var fsend = '</div>'
+---
+if(concheck) " " else (fsfront ++ fs ++ fsend)]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="043d8c75-73af-4c2b-97c5-c0168c340d20">
+			<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+
+trim(replaceAll(replaceAll(replaceAll(trim(vars.apilevelstatus default ""), "," , "\t\t"),'<span class="failed">',""),'</span>',''))]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="email_details"><![CDATA[%dw 2.0
+output application/java
+---
+'narendranadh.kilari@truist.com']]></ee:set-variable>
+				<ee:set-variable variableName="attachment"><![CDATA[payload]]></ee:set-variable>
+				<ee:set-variable variableName="emailsubject"><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output text/plain
+---
+"API review report for - " ++ (vars.currentapiname default "")]]></ee:set-variable>
+				<ee:set-variable variableName="overallstatus"><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains("Fail")) '<span class="failed">Fail</span>' else '<span class="passed">Pass</span>']]></ee:set-variable>
+						<ee:set-variable variableName="passcount"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+(payload countMatches "Pass") default 0]]></ee:set-variable>
+						<ee:set-variable variableName="failcount"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+(payload countMatches "Fail") default 0]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<try doc:name="Try" doc:id="98c3443c-970e-4eb0-af1e-9554321f8be5">
+			<email:send doc:name="Send" doc:id="bdafc87b-b095-47f7-977e-b72a3bfcd972" subject='#["Service code quality check" ++ ", status : " ++ if(payload contains("Fail")) "Fail" else "Pass"]' fromAddress="${smtp.from}" config-ref="Email_SMTP">
+					<email:to-addresses>
+				<email:to-address value="narendranadh.kilari@truist.com" />
+							<email:to-address value="#[vars.developer]" />
+							<email:to-address value="Rakesh.Y.Kumar@truist.com" />
+			</email:to-addresses>
+			<email:body contentType="text/html" encoding="UTF-8">
+						<email:content><![CDATA[#[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+
+---
+"${email.cqc.body}"  ++ payload ++ "${email.cqc.signature}"]]]></email:content>
+					</email:body>	
+												 		
+				</email:send>
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="c44e2ffd-e671-4237-870d-cb71a1c30d0f">
+					<logger level="INFO" doc:name="Logger" doc:id="a5d2d95e-aaf7-4bfd-b1bd-06dc60b5d72b" message="Error sending email" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+				<parse-template doc:name="Parse Template" doc:id="5c0833f7-080e-467e-a8f7-51c7be26d47f" location="web/ChartsAvailable.html" />
+			</when>
+			<otherwise>
+				<parse-template doc:name="Parse Template" doc:id="f3f5373a-a3ae-4449-a903-1c5df51980a0" location="web\codereviewresponse.html" />
+			</otherwise>
+			</choice>
+			</when>
+			<otherwise >
+				<parse-template doc:name="Parse Template" doc:id="db0fed14-9473-426b-9086-54efe5f43b6a" location="web\cloningerror.html"/>
+			</otherwise>
+		</choice>
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="66769f4a-2bfa-4e25-8fd4-ab020f19ae65">
+					<parse-template doc:name="Parse Template" doc:id="e30850fa-4fd5-4e88-b9a0-12ccee9bd071" location="web\cloningerror.html" />
+				</on-error-continue>
+		</error-handler>
+		
+	</flow>
+	<flow name="configdatafileextractguiFlow" doc:id="8f002f5e-2298-434f-b5ed-0aadfdc936b5" >
+		<http:listener doc:name="Listener" doc:id="b3fa1576-8ff7-462e-bf16-99700e95eb9b" config-ref="HTTP_GUIListener_config" path="${gui.qualitycheck}"/>
+		<parse-template doc:name="Parse Template" doc:id="6069ea56-e39c-444c-bf04-707edf8e8b5a" location="web\cqc.html"/>
+	</flow>
+	<flow name="configdatafileextractguiFlow1" doc:id="92977809-9d58-4143-b189-9565ae73fe1b" >
+		<http:listener doc:name="Listener" doc:id="5a0f79cd-e4cd-4fe2-9e74-f6c51dfdcfeb" config-ref="HTTP_GUIListener_config" path="${load.connectorversions}"/>
+		<parse-template doc:name="Parse Template" doc:id="0ea8922c-721e-4f21-9d32-d3ab0052a6b7" location="web\connectorversionsload.html"/>
+	</flow>
+	<flow name="loadconnectorversionfile" doc:id="45295fd1-6e80-4468-80b1-0c0d54bf5f03" >
+		<http:listener doc:name="Listener" doc:id="69c8d063-8f34-401d-bf3a-2ea64dbac771" config-ref="HTTP_GUIListener_config" path="${update.connectorversions}"/>
+		<ee:transform doc:name="Transform Message" doc:id="0d449eb3-974c-4750-a820-078f54d47bca" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.parts.file.content]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<file:write doc:name="Write" doc:id="f1b93599-06df-4f8e-aa6c-2ac77cd46bac" config-ref="File_Config" path="approved_dependencies_versions.json"/>
+		<parse-template doc:name="Parse Template" doc:id="595897ac-a4b4-4c7f-92d5-ec70a826e99f" location="web\connectorversionsloaded.html"/>
+	</flow>
+	<flow name="configdatafileextractguiFlow2" doc:id="b692ea01-0694-496c-99f6-339e95c8b055" >
+		<http:listener doc:name="Listener" doc:id="57d686f4-078b-44fd-92ab-bdae518583fb" config-ref="HTTP_GUIListener_config" path="${gui.summary}"/>
+		<ee:transform doc:name="Transform Message" doc:id="090c5f71-c1e6-4d8e-8dc7-7fa1a2c5d1c7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="currentapiname" ><![CDATA[output text/plain
+---
+trim(attributes.uriParams.name)]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<file:read doc:name="Read" doc:id="b8163745-80dc-46b4-9d70-ac3dc66de1e1" config-ref="File_Config" path='#["${gui.inputLocation}" ++ "//multipleapis//" ++ vars.currentapiname ++ ".txt"]' outputMimeType="text/plain"/>
+		<ee:transform doc:name="Transform Message" doc:id="b4246537-5e72-4efd-a34e-a86740e7748e" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="apiautodiscovery" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,"Autodiscovery code block should be enabled</td><td>"),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="databasepoolingcheck" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,"should be confnigured properly for database connections</td><td>"),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="databasetestconnectioncheckout" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'"test connection on checkout" config should be false, with externalization</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="configidletimeouts" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'connection idle timeout should not be used</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="reconnectioncheck" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'no where "reconnection" should be used and enabled unless explicitly mandated</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="soapkitinboundvalidation" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'"Inbound validation enabled" check</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="defaultresponsetimeout" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'config element should not have "defaultResponseTimeout"</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="httplistenerpersistance" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'usePersistentConnections should be externalize with value as false</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="autodeployflownamecheck" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'(api-autodeploy-flow-name) should contain correct main flow name</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="ipaddresspropertycheck" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'should not have IP address (instead it should be having dns name)</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="vaultandkeystore" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'vault config should be defined for keystore.path and, keystore.alias</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="log4japiname" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'repo entry for the serviceName like: "<Property name="appname">repoName</Property>"</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="muleartifactsecureproperties" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'entries for all the secure::propertienames</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="apimainfileexist" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'should have same name as repoName i.e. serviceName.xml</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="apiconfigfile" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'should have same name as repoName-config i.e. serviceName-config.xml</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="globalfileconnectors" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'Global.xml should not contian any connector config elements</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="munitfile" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'folder should contain atleast one xml file</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="soapkitnamespaceprefixes" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'should be having "Namespace prefixes" checked to match Tibco existing namespaces</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="outdatedconnectors" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'Connector versions in pom.xml should be latest versions</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="unusedmodulecheck" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'connector/modules should not be present in code/pom.xml</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="muleartifactrepositoryurls" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'artifactory.bbtnet.com instead of repository.mulesoft.org</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="dataweaveamounts" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'fields mapping handling needs proper validation and confirmation</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="httplistenerprotocol" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'protocols for both listener/requester should be externalized</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="httppath" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'http.path from mule-app.properties should be same as mule api name</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="unusednamespaces" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'Un-used namespaces should not be there in serviceName.xml or operationName.xml files</td><td>'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="unusedpropertiescheck" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+trim(substringBefore(substringAfter(payload,'Unused properties should not be there in mule-app.properties</td><td class="unusedproperty">'),"</td>"))]]></ee:set-variable>
+				<ee:set-variable variableName="overallstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+if(payload contains("Fail")) '<span class="failed">Fail</span>' else '<span class="passed">Pass</span>']]></ee:set-variable>
+				<ee:set-variable variableName="timestamp" ><![CDATA[%dw 2.0
+output application/json
+fun format(d: DateTime) = d as String {format: "yyyy-MM-dd'T'HH:mm:ss.SSS"}
+---
+format(now() >> "EST")]]></ee:set-variable>
+				<ee:set-variable variableName="developer" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'Developer : </td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="branch" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'Branch : </td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="dwlreference" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'processor logic should be referenced through one of the dwl file</td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="errorhandlingflowdwl" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'error-handling-subflow.xml should be referenced from dwl file</td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="dblooptryblock" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'Database processors which are in loop, should be put in try block</td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="logsequencecheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'Log sequence value is not correct in loggers</td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="projectfileapinamecheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'project file should have the correct api name(.project file in mule project root folder)</td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="commentedcodeblockcheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'Commented code blocks should not be there in mule xml files</td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="cicsdbnamingconventioncheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'(*cics.userid|password|host|port, *db.userid|password|url|driver )</td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="munitnotnullcheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'MunitTools::notNullValue() or SizeOf(payload)>0 in assertion</td><td>'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="passcount" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var pass = payload countMatches("Pass") 
+var na = payload countMatches("N/A") 
+var warning = payload countMatches("Warning") 
+---
+pass + na + warning]]></ee:set-variable>
+				<ee:set-variable variableName="failcount" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var fail = payload countMatches("Fail") 
+---
+fail]]></ee:set-variable>
+				<ee:set-variable variableName="nowfunctioncheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'now() function should have the timezone convertion to EST</td><td class="unusedproperty">'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="mqconnectioncheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'All MQ connection related properties should be externalized</td><td class="unusedproperty">'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="parentpomcheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'Parent pom configuration should be added in pom xml</td><td class="unusedproperty">'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="tibcosecurepropertycheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'Secure Properties should not have Tibco credentials</td><td class="unusedproperty">'),'</td>')]]></ee:set-variable>
+				<ee:set-variable variableName="flatfiletrimvaluecheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(payload,'transform with flatfile schema parsing/rendering should have "trimValues=true" to avoid parse errors</td><td class="unusedproperty">'),'</td>')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parse-template doc:name="Parse Template" doc:id="40f37e7f-7786-49d1-ac0d-d8b72f3603dd" location="web\codereviewresponse.html"/>
+	</flow>
+</mule>

@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:spring="http://www.mulesoft.org/schema/mule/spring"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:secure-properties="http://www.mulesoft.org/schema/mule/secure-properties"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	  xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+	  xmlns:email="http://www.mulesoft.org/schema/mule/email" 
+	  xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	  xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	  xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd 
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd 
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd 
+		http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd 
+		http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd 
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/schema/mule/secure-properties/current/mule-secure-properties.xsd
+http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd">
+	
+	<http:listener-config name="HTTP_RouterListener_config" doc:name="HTTP Listener config" doc:id="21698aa0-3663-42e0-bdab-25ae25cae63d" >
+		<http:listener-connection host="0.0.0.0" port="${http.routing.port}"/>
+	</http:listener-config>
+	
+	<file:config name="File_Config_Write" doc:name="File Config" doc:id="da1dfce2-9073-40cd-8902-f225e835e405" >
+	</file:config>
+	<file:config name="File_Config" doc:name="File Config" doc:id="6cd82a4e-aa42-4114-b35a-280eb4b10b31" >
+		<file:connection workingDir="${app.home}"/>
+	</file:config>
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="0e9b6488-662b-405d-b5f5-7efeedcd154c" >
+		<email:smtp-connection host="${smtp.hostname}" port="${smtp.port}" connectionTimeout="50" readTimeout="50" writeTimeout="50">
+		</email:smtp-connection>
+	</email:smtp-config>
+		<http:request-config name="HTTP_GUIRequest_config" doc:name="HTTP Request configuration" doc:id="8cb90216-6aed-4f2f-9432-cc5edb5756a8" >
+		<http:request-connection host="${http.gui.host}" port="${http.gui.port}" usePersistentConnections="false"/>
+	</http:request-config>
+	<http:request-config name="HTTP_RouterRequest_config" doc:name="HTTP Request configuration" doc:id="369cc534-2996-4ef8-a299-0a0a8d66a77d">
+		<http:request-connection host="${gui.requestor.host}" port="${gui.requestor.port}" usePersistentConnections="false"/>
+	</http:request-config>
+	<http:listener-config name="HTTP_GUIListener_config" doc:name="HTTP Listener config" doc:id="91a61394-9520-478f-a489-d400b7e87c49" >
+		<http:listener-connection host="0.0.0.0" port="${http.private.port}" usePersistentConnections="false"/>
+	</http:listener-config>
+		<configuration-properties doc:name="Configuration properties" 
+							  doc:id="4c36a8de-cb01-455a-a38f-913a5084fa4f" 
+							  file="mule-app.properties" />
+	<configuration-properties doc:name="Configuration properties" doc:id="dab661af-cccc-4761-a605-b90b56440316" file="gui-app.properties" />
+	<!-- <api-gateway:autodiscovery apiId="18986264" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="8a6180e7-931b-44c2-b2fc-c367bacb8c0b" flowRef="WelcomePage" /> -->	
+	
+	<db:config name="Database-Connection"
+		doc:name="Database Config"
+		doc:id="cb58c7b8-3c6a-48d3-8b71-61a27350e345">
+		<db:mssql-connection host="wil-sqltst05.bbtnet.com" port="1433" user="SV-MULEAPIUTILSDB" password="sql5678" databaseName="EAPIUTILSDB" />
+	</db:config>
+	<global-property doc:name="Global Property"
+		doc:id="c9cf2695-7c20-4093-b6cf-5ed11bab1fce" name="secure.key"
+		value="A2Sgd@gamgdTV@ms" />
+	
+	<!-- Secure properties configuration to declare security key to all secure 
+		properties for api -->
+	<secure-properties:config
+		name="Secure_Properties_Config" doc:name="Secure Properties Config"
+		doc:id="19156e41-f98a-4cd8-9577-a4d56360a97a" file="secure.properties"
+		key="${secure.key}" />
+		
+	<!-- <tls:context name="TLS_Context" doc:name="TLS Context"
+		doc:id="9fbb1509-ae5c-4a33-8f07-bef2d8d69310">
+		<tls:key-store type="jks" path="${keystore.path}" alias="${keystore.alias}" keyPassword="${secure::keystore.keypassword}" password="${secure::keystore.password}" />
+	</tls:context> -->
+</mule>

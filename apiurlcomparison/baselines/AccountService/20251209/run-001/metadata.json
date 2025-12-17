@@ -1,0 +1,17 @@
+{
+  "runId" : "run-001",
+  "serviceName" : "AccountService",
+  "captureDate" : "20251209",
+  "captureTimestamp" : "2025-12-09T09:38:58.6720139-06:00",
+  "testType" : "SOAP",
+  "endpoint" : "http://localhost:8083/ws/AccountService",
+  "operation" : "getAccountDetails",
+  "totalIterations" : 5,
+  "description" : "PreRuntimeUpgrade-20251209",
+  "tags" : [ "rakesh-DEV" ],
+  "configUsed" : {
+    "maxIterations" : 100,
+    "iterationController" : "ONE_BY_ONE",
+    "testType" : "SOAP"
+  }
+}

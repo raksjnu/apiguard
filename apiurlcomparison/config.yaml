@@ -1,0 +1,116 @@
+# Configuration for the API Comparison Tool
+
+# Set the type of test to run: "REST" or "SOAP"
+testType:  "SOAP" #"SOAP" #"REST" # 
+
+# Configuration block for REST APIs
+rest:
+  api1:
+    baseUrl: "http://localhost:8081/api/resource"
+    authentication:
+      tokenUrl: null
+      clientId: rakesh
+      clientSecret: kumar
+    operations:
+      - name: "createResource"
+        path: "/resource"
+        methods: ["POST", "GET"]
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        payloadTemplatePath: "C:\\muleguard-fixed\\tmp\\in\\api1\\payload.json"
+      
+  api2:
+    baseUrl: "http://localhost:8082/api/resource"
+    authentication:
+      tokenUrl: null
+      clientId: rakesh
+      clientSecret: kumar
+    operations:
+      - name: "createResource"
+        path: "/resource"
+        methods: ["POST", "GET"]
+        headers:
+          Content-Type: "application/json"
+          Accept: "application/json"
+        payloadTemplatePath: "C:\\muleguard-fixed\\tmp\\in\\api2\\payload.json"
+      
+# Configuration block for SOAP APIs
+soap:
+  api1:
+    baseUrl: "http://localhost:8083/ws/AccountService"
+    authentication:
+      tokenUrl: null
+      clientId: rakesh
+      clientSecret: kumar
+    operations:
+      - name: "getAccountDetails"
+        methods: ["POST"]
+        headers:
+          Content-Type: "text/xml;charset=UTF-8"
+          SOAPAction: "getAccountDetails"
+        payloadTemplatePath: "C:\\muleguard-fixed\\tmp\\in\\api1\\payload.xml"
+      
+  api2:
+    baseUrl: "http://localhost:8084/ws/AccountService"
+    authentication:
+      tokenUrl: null
+      clientId:   rakesh
+      clientSecret: kumar
+    operations:
+      - name: "getAccountDetails"
+        methods: ["POST"]
+        headers:
+          Content-Type: "text/xml;charset=UTF-8"
+          SOAPAction: "getAccountDetails"
+        payloadTemplatePath: "C:\\muleguard-fixed\\tmp\\in\\api2\\payload.xml"
+      
+# Set the maximum number of iterations to run, as a safeguard.
+maxIterations: 100
+
+# Define tokens and the values to iterate over.
+# The tool will generate iterations from all possible combinations (Cartesian product) of the token values provided below.
+tokens:
+  account:
+    - "999"
+    - "1000"  
+    - "1001"
+  uuid:
+    - "id1"
+    - "id2"
+
+# Iteration Strategy: "ALL_COMBINATIONS" (default) or "ONE_BY_ONE"
+# ONE_BY_ONE: Uses the first value of each token list as a default baseline. 
+#             Then iterates through each token's values one by one while keeping others at their default.
+iterationController: "ONE_BY_ONE"
+
+# ============================================
+# BASELINE TESTING CONFIGURATION (Optional)
+# ============================================
+# Comparison mode: "LIVE" (default - compare API1 vs API2) or "BASELINE" (compare against saved baseline)
+comparisonMode: "BASELINE"
+
+# Baseline configuration (only used when comparisonMode: "BASELINE")
+baseline:
+  # Operation: "CAPTURE" (save new baseline) or "COMPARE" (compare against existing baseline)
+  operation: "COMPARE"
+  
+  # Directory where baselines are stored (can be relative or absolute path)
+  storageDir: "baselines"
+  
+  # Service name (used for folder organization: baselines/{serviceName}/{date}/{run})
+  serviceName: "AccountService"
+  
+  # Description for this baseline capture (optional)
+  description: "Pre-upgrade baseline v1.0.0"
+  
+  # Tags for easy identification (optional)
+  tags:
+    - "raks"
+    - "pre-upgrade"
+  
+  # For COMPARE operation only: specify which baseline to compare against
+  compareDate: "20251208"      # YYYYMMDD format
+  compareRunId: "run-001"      # Which run to compare (run-001, run-002, etc.)
+
+

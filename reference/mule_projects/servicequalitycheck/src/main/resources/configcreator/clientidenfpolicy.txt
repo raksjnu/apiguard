@@ -1,0 +1,9 @@
+##----------------------------------------------------------------------------
+## Client ID Enforcement Policy
+##----------------------------------------------------------------------------
+client.policy.applied=true
+client.policy.client_id=#[attributes.headers['client_id']]
+client.policy.client_secret=''
+client.policy.version = 1.2.1
+
+##-------------------------------------------------------------------------------------------------
