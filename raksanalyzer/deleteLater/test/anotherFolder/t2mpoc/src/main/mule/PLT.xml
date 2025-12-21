@@ -1,0 +1,1339 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ibm-mq="http://www.mulesoft.org/schema/mule/ibm-mq" xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/ibm-mq http://www.mulesoft.org/schema/mule/ibm-mq/current/mule-ibm-mq.xsd">
+	<http:request-config name="GetCredential" doc:name="HTTP Request configuration" doc:id="b58e71dd-5a40-443b-865a-6ebb24d79a2a" >
+		<http:request-connection protocol="HTTPS" host="gitlab.bbtnet.com" port="443" usePersistentConnections="false" >
+			<http:authentication >
+				<http:basic-authentication username="${username.gitlab}" password="${password.gitlab}" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="PLTChecklistupload" doc:name="HTTP Request configuration" doc:id="a966099a-33ee-4651-b235-f820de2ceffb" >
+		<http:request-connection protocol="HTTPS" host="gitlab.bbtnet.com" port="443" usePersistentConnections="false" >
+		</http:request-connection>
+	</http:request-config>
+	<flow name="PLTFlow" doc:id="e93d7380-df36-408e-ba1b-7d25f6aad6d9" >
+		<http:listener doc:name="Listener" doc:id="38c63198-7be5-4e42-952c-bc50c6bbad70" config-ref="HTTP_Listener_config" path="/pltsummary"/>
+		<choice doc:name="Choice" doc:id="2a849623-35e9-4af3-bce7-c90dc38ab668" >
+			<when expression='#[sizeOf(payload)&gt;0]'>
+				<ee:transform doc:name="Transform Message" doc:id="f24c9967-d454-4023-8a93-53eae4ca4b17">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload.wave default "Wave 9"]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="wave"><![CDATA[%dw 2.0
+output application/java
+---
+payload.wave default ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<db:select doc:name="Select" doc:id="e6220df2-97aa-4388-8882-a419b23c4ff9" config-ref="Database-Connection" >
+					<db:sql ><![CDATA[SELECT INDEX_ID,API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS FROM T2M_PLT WHERE WAVE = :wave]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	wave : vars.wave
+}]]]></db:input-parameters>
+				</db:select>
+			</when>
+			<otherwise >
+				<ee:transform doc:name="Transform Message" doc:id="8b5af201-a5d8-45dd-a74f-11f999cbb139">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+"Wave 9"]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="wave" ><![CDATA[%dw 2.0
+output application/java
+---
+"Wave 9"]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<db:select doc:name="Select" doc:id="97c546a7-9bdc-4a83-b3e8-a67bc7693d98" config-ref="Database-Connection">
+			<db:sql><![CDATA[SELECT INDEX_ID,API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS FROM T2M_PLT WHERE WAVE = :wave]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	wave : payload
+}]]]></db:input-parameters>
+		
+</db:select>
+			</otherwise>
+		</choice>
+		<ee:transform doc:name="Transform Message" doc:id="383b78bb-9ff1-437d-9176-eefbcfe6e660" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/xml
+var apiarray = payload default []
+---
+
+		table @(class:'solutionadded',align:'center'):
+		{
+			tr : {
+				td @(class:'reviewheader',color:'white'):{
+					font @(color: 'white') : "API Name" 
+				} ,
+				td @(class:'reviewheader',color:'white'):{
+					font @(color: 'white') : "Operation" 
+				} ,
+				td @(class:'reviewheader',color:'white'):{
+					font @(color: 'white') : "Developer" 
+				} ,
+				td @(class:'reviewheader',color:'white'): {
+					font @(color: 'white') : "Wave"
+					},
+				td @(class:'reviewheader',color:'white'): {
+					font @(color: 'white') : "Review Tool Status"
+					},
+				td @(class:'reviewheader',color:'white'): {
+					font @(color: 'white') : "Response Check"
+					},
+				td @(class:'reviewheader',color:'white'): {
+					font @(color: 'white') : "EPLT Validation Status"
+					},
+				td @(class:'reviewheader',color:'white'): {
+					font @(color: 'white') : "PLT Status"
+					},
+				td @(class:'reviewheader',color:'white'): {
+					font @(color: 'white') : "PLT Certification Status"
+					},
+				td @(class:'reviewheader',color:'white'): {
+					font @(color: 'white') : "Overall Status"
+					}
+			},
+			tr: apiarray map 
+			{		
+						td @(class:'reviewelement',padding:'5'): $."API_NAME",
+						td @(class:'reviewelement',padding:'5'): $."OPERATION",
+						td @(class:'reviewelement',padding:'5'): $."DEVELOPER",
+						td @(class:'reviewelement',padding:'5'): $."WAVE",
+						td @(class:'reviewelement',padding:'5'): $."REVIEW_TOOL_STATUS",
+						td @(class:'reviewelement',padding:'5'): $."RESPONSE_COMPARISON_STATUS",
+						td @(class:'reviewelement',padding:'5'): $."EPLT_VALIDATION_STATUS",
+						td @(class:'reviewelement',padding:'5'): $."PLT_STATUS",
+						td @(class:'reviewelement',padding:'5'): $."PLT_CERTIFICATION_STATUS",
+						td @(class:'reviewelement',padding:'5'): $."OVERALL_STATUS"
+			}
+			
+		}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="18aca5ee-c1e6-4421-9919-2147661cdfd8" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, "application/xml")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="a1777432-8a8f-4e18-b14c-cf8419c25ca1" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+
+replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(payload,'Fail','<span class="failed">Fail</span>'),"Pass",'<span class="passed">Pass</span>'),'PLT Completed','<span class="passed">PLT Completed</span>'),'PLT Pending','<span class="failed">PLT Pending</span>'),'Ready for PLT','<span class="passed">Ready for PLT</span>'),'Not Ready','<span class="failed">Not Ready</span>'),"PLT Certification Completed",'<span class="passed">PLT Certification Completed</span>'),"PLT Certification Pending",'<span class="failed">PLT Certification Pending</span>')]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<parse-template doc:name="Parse Template" doc:id="255afa10-492b-4a37-9337-4bfcd5f5b812" location="web\pltsummary.html"/>
+	
+</flow>
+	<flow name="PLTUpdate" doc:id="77398a90-f02e-40c6-8c2d-7e23cf97c6e0" >
+		<http:listener doc:name="Listener" doc:id="e0ea1a2e-303b-40d6-8691-2991ee7e63dc" config-ref="HTTP_Listener_config" path="/updatepltentry/{index}"/>
+		<ee:transform doc:name="Transform Message" doc:id="72d2f2c8-5a4f-4ac8-9b65-12890801db13" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+trim(attributes.uriParams.index default "")]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="epltstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.epltstatus default "")]]></ee:set-variable>
+				<ee:set-variable variableName="pltstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.pltstatus default "")]]></ee:set-variable>
+				<ee:set-variable variableName="pltcertstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.pltcertstatus default "")]]></ee:set-variable>
+				<ee:set-variable variableName="overallstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.overallstatus default "")]]></ee:set-variable>
+				<ee:set-variable variableName="index" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(attributes.uriParams.index default "")]]></ee:set-variable>
+				<ee:set-variable variableName="respcompstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.respcompstatus default "")]]></ee:set-variable>
+				<ee:set-variable variableName="operation" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.operation default "")]]></ee:set-variable>
+				<ee:set-variable variableName="nextactionowner" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.nextactionowner default "")]]></ee:set-variable>
+			
+</ee:variables>
+		
+</ee:transform>
+		<db:select doc:name="Select" doc:id="8c740e47-fc00-4352-872f-aa922f69d76f" config-ref="Database-Connection">
+			<db:sql ><![CDATA[SELECT INDEX_ID,API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS FROM T2M_PLT WHERE OPERATION = :operation]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	
+	operation : vars.operation
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="8da605cd-443e-4595-9295-5010718428a2" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	respcompstatus : if(sizeOf(vars.respcompstatus)>0) vars.respcompstatus else payload."RESPONSE_COMPARISON_STATUS"[0],	
+	epltstatus : if(sizeOf(vars.epltstatus)>0) vars.epltstatus else payload."EPLT_VALIDATION_STATUS"[0],
+	pltstatus : if(sizeOf(vars.pltstatus)>0) vars.pltstatus else payload."PLT_STATUS"[0],
+	pltcertstatus : if(sizeOf(vars.pltcertstatus)>0) vars.pltcertstatus else payload."PLT_CERTIFICATION_STATUS"[0],
+	overallstatus : if(sizeOf(vars.overallstatus)>0) vars.overallstatus else payload."OVERALL_STATUS"[0],
+	operation : vars.operation default "",
+	nextactionowner : if(sizeOf(vars.nextactionowner)>0) vars.nextactionowner else payload."NEXT_ACTION_OWNER"[0]
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<db:update doc:name="Update" doc:id="73c89eaf-8169-49fa-bc46-7d60fb78d2e4" config-ref="Database-Connection">
+			<db:sql ><![CDATA[UPDATE T2M_PLT SET RESPONSE_COMPARISON_STATUS=:respcompstatus,EPLT_VALIDATION_STATUS=:epltstatus,PLT_STATUS=:pltstatus,PLT_CERTIFICATION_STATUS=:pltcertstatus,OVERALL_STATUS=:overallstatus,NEXT_ACTION_OWNER=:nextactionowner WHERE OPERATION = :operation]]></db:sql>
+			<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+		</db:update>
+		<db:select doc:name="Select" doc:id="db76fd06-2dc0-403d-9ca1-7f4b4cca759b" config-ref="Database-Connection" >
+			<db:sql ><![CDATA[SELECT INDEX_ID,API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS FROM T2M_PLT WHERE OPERATION = :operation]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	operation : vars.operation
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message1" doc:id="0563d67f-3f61-4d77-88ef-da84e36b7b6c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/xml
+var apiarray = payload default []
+---
+
+		table @(class:'solutionadded',align:'center'):
+		{
+			tr : {
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "API Name" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "Operation" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "Developer" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Wave"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Review Tool Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Response Check"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "EPLT Validation Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "PLT Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "PLT Certification Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Overall Status"
+					}
+			},
+			tr: apiarray map 
+			{		
+						td @(class:'reviewelement',padding:'5'): $."API_NAME",
+						td @(class:'reviewelement',padding:'5'): $."OPERATION",
+						td @(class:'reviewelement',padding:'5'): $."DEVELOPER",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."WAVE",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."REVIEW_TOOL_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."RESPONSE_COMPARISON_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."EPLT_VALIDATION_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."PLT_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."PLT_CERTIFICATION_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."OVERALL_STATUS"
+			}
+			
+		}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="index" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload."INDEX_ID")[0]]]></ee:set-variable>
+				<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload."API_NAME")[0]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message2" doc:id="a44f4af8-6e4c-4304-b176-9bdffd4433ff" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, "application/xml")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message3" doc:id="fdbe3150-5777-4ec3-8c0a-0dd1340b796b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+
+replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(payload,'Fail','<span class="failed">Fail</span>'),"Pass",'<span class="passed">Pass</span>'),'PLT Completed','<span class="passed">PLT Completed</span>'),'PLT Pending','<span class="failed">PLT Pending</span>'),'Ready for PLT','<span class="passed">Ready for PLT</span>'),'Not Ready','<span class="failed">Not Ready</span>'),"PLT Certification Completed",'<span class="passed">PLT Certification Completed</span>'),"PLT Certification Pending",'<span class="failed">PLT Certification Pending</span>')]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<parse-template doc:name="Parse Template" doc:id="e1817831-1a7a-423a-b8cd-3739712393e8" location="web\existingpltentries.html" />
+	
+</flow>
+	<flow name="PLTFlow2" doc:id="acce6f75-1884-4f01-b572-73514360fd47" >
+		<http:listener doc:name="Listener" doc:id="c92384dc-e76b-4a56-a7c3-a0ed0522e97e" config-ref="HTTP_Listener_config" path="/fetchpltdata"/>
+		<ee:transform doc:name="Transform Message" doc:id="37f669b6-bad6-4e39-9799-b21540b4b2c0" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+var fromparts = trim(payload.parts.apiname.content default "")
+var frompayload = trim(payload.apiname default "")
+---
+if(sizeOf(fromparts)>1) fromparts else frompayload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="Select" doc:id="8ab45822-25bf-4f42-845e-7981fad7f3f7" config-ref="Database-Connection">
+			<db:sql ><![CDATA[SELECT INDEX_ID,API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS FROM T2M_PLT WHERE API_NAME = :apiname or WAVE = :apiname or NEXT_ACTION_OWNER = :apiname]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	apiname : vars.apiname
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message1" doc:id="4f6ca73a-5035-46a9-81f5-ad3481a9f4c4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/xml
+var apiarray = payload default []
+---
+
+		table @(class:'solutionadded',align:'center'):
+		{
+			tr : {
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "API Name" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "Operation" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "Developer" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Wave"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Review Tool Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Response Check"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "EPLT Validation Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "PLT Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "PLT Certification Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Overall Status"
+					}
+			},
+			tr: apiarray map 
+			{		
+						td @(class:'reviewelement',padding:'5'): $."API_NAME",
+						td @(class:'reviewelement',padding:'5'): $."OPERATION",
+						td @(class:'reviewelement',padding:'5'): $."DEVELOPER",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."WAVE",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."REVIEW_TOOL_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."RESPONSE_COMPARISON_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."EPLT_VALIDATION_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."PLT_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."PLT_CERTIFICATION_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."OVERALL_STATUS"
+			}
+			
+		}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="index" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload."INDEX_ID")[0]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message2" doc:id="f2189895-3f1d-4549-8408-3e565944b127" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, "application/xml")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message3" doc:id="68a63311-7ccd-45c8-b393-d7911a94f2c9" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+
+replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(payload,'Fail','<span class="failed">Fail</span>'),"Pass",'<span class="passed">Pass</span>'),'PLT Completed','<span class="passed">PLT Completed</span>'),'PLT Pending','<span class="failed">PLT Pending</span>'),'Ready for PLT','<span class="passed">Ready for PLT</span>'),'Not Ready','<span class="failed">Not Ready</span>'),"PLT Certification Completed",'<span class="passed">PLT Certification Completed</span>'),"PLT Certification Pending",'<span class="failed">PLT Certification Pending</span>')]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<parse-template doc:name="Parse Template" doc:id="59ce5a2a-a95c-4140-9ecd-83fc26f77cfe" location="web\existingpltentries.html" />
+	</flow>
+	<flow name="PLTFlow1" doc:id="8695b3bc-e57d-4a12-8a5a-36c37df75e35" >
+		<http:listener doc:name="Listener" doc:id="127414d0-876c-4082-959a-93e4ebb1caec" config-ref="HTTP_Listener_config" path="/plt"/>
+		<parse-template doc:name="Parse Template" doc:id="1476dbc5-42c9-4de5-82f4-0c761477607e" location="web\fetchpltdata.html"/>
+	</flow>
+	<flow name="PLTFlow3" doc:id="d0025811-9fcf-424c-bd87-7458125450c1" >
+		<http:listener doc:name="Listener" doc:id="d63e35a2-7719-44c6-8964-c9b079740015" config-ref="HTTP_Listener_config" path="/addpltentry"/>
+		<ee:transform doc:name="Transform Message" doc:id="6d1ca89f-a1d6-433f-aee8-011da43bd675" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.apiname.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="wave" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.wave.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="reviewtoolstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.reviewtoolstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="respcompstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.respcompstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="epltstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.epltstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="pltstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.pltstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="pltcertstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.pltcertstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="overallstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.overallstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="operation" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.operation.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="developer" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.developer.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="nextactionowner" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.nextactionowner.content default "")]]></ee:set-variable>
+			
+</ee:variables>
+		</ee:transform>
+		<db:insert doc:name="Insert" doc:id="1529647d-5e13-4d1d-9c48-d088dea68a8c" config-ref="Database-Connection">
+			<db:sql ><![CDATA[INSERT INTO T2M_PLT (API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS)
+VALUES (:apiname,:wave,:reviewtoolstatus,:respcompstatus,:epltstatus,:pltstatus,:pltcertstatus,:overallstatus)]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	apiname : vars.apiname,
+	operation : vars.operation,
+	developer : vars.developer,
+	wave : vars.wave,
+	reviewtoolstatus : vars.reviewtoolstatus,
+	respcompstatus : vars.respcompstatus,
+	epltstatus : vars.epltstatus,
+	pltstatus : vars.pltstatus,
+	pltcertstatus : vars.pltcertstatus,
+	overallstatus : vars.overallstatus
+}]]]></db:input-parameters>
+		</db:insert>
+		<db:select doc:name="Select" doc:id="1eb505c2-696e-42b7-a708-65adfa9e724d" config-ref="Database-Connection" >
+			<db:sql ><![CDATA[SELECT INDEX_ID,API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS FROM T2M_PLT WHERE API_NAME = :apiname and WAVE=:wave ]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	apiname : vars.apiname,
+	wave : vars.wave
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message1" doc:id="3f1bddc6-6bb3-4411-a081-666c2e81bcc3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/xml
+var apiarray = payload default []
+---
+
+		table @(class:'solutionadded',align:'center'):
+		{
+			tr : {
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "API Name" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "Operation" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "Developer" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Wave"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Review Tool Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Response Check"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "EPLT Validation Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "PLT Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "PLT Certification Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Overall Status"
+					}
+			},
+			tr: apiarray map 
+			{		
+						td @(class:'reviewelement',padding:'5'): $."API_NAME",
+						td @(class:'reviewelement',padding:'5'): $."OPERATION",
+						td @(class:'reviewelement',padding:'5'): $."DEVELOPER",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."WAVE",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."REVIEW_TOOL_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."RESPONSE_COMPARISON_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."EPLT_VALIDATION_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."PLT_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."PLT_CERTIFICATION_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."OVERALL_STATUS"
+			}
+			
+		}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="index" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload."INDEX_ID")[0]]]></ee:set-variable>
+				<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload."API_NAME")[0]]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message2" doc:id="44e5ece1-5e3e-4d51-996c-c80307689cf3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, "application/xml")]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message3" doc:id="8dc0516b-5989-4dbc-9d16-6ca326cb6044" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+
+replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(payload,'Fail','<span class="failed">Fail</span>'),"Pass",'<span class="passed">Pass</span>'),'PLT Completed','<span class="passed">PLT Completed</span>'),'PLT Pending','<span class="failed">PLT Pending</span>'),'Ready for PLT','<span class="passed">Ready for PLT</span>'),'Not Ready','<span class="failed">Not Ready</span>'),"PLT Certification Completed",'<span class="passed">PLT Certification Completed</span>'),"PLT Certification Pending",'<span class="failed">PLT Certification Pending</span>')]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<parse-template doc:name="Parse Template" doc:id="c66b032b-12cb-4b15-890b-8d6fcc6fe5da" location="web\existingpltentries.html" />
+		<error-handler >
+			<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="38a699f5-8564-4985-9c68-cb168d36ccdb" >
+				<set-variable value="#[%dw 2.0&#10;output application/json&#10;---&#10;error.detailedDescription]" doc:name="Set Variable" doc:id="baee699f-455a-495d-8da3-e3a75119eb88" variableName="errordetails"/>
+				<db:select doc:name="Select" doc:id="b2509cc1-1629-4482-b7df-deae7d25e307" config-ref="Database-Connection" >
+					<db:sql ><![CDATA[SELECT INDEX_ID,API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS FROM T2M_PLT WHERE API_NAME = :apiname]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	apiname : vars.apiname
+}]]]></db:input-parameters>
+				</db:select>
+				<ee:transform doc:name="Transform Message" doc:id="a0eca706-07ae-4a0f-a76e-6d51561e21fe" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/xml
+var apiarray = payload default []
+---
+
+		table @(class:'solutionadded',align:'center'):
+		{
+			tr : {
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "API Name" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "Operation" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'):{
+					font @(color: 'white') : "Developer" 
+				} ,
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Wave"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Review Tool Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Response Check"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "EPLT Validation Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "PLT Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "PLT Certification Status"
+					},
+				td @(class:'reviewheader',align:'center',color:'white'): {
+					font @(color: 'white') : "Overall Status"
+					}
+			},
+			tr: apiarray map 
+			{		
+						td @(class:'reviewelement',padding:'5'): $."API_NAME",
+						td @(class:'reviewelement',padding:'5'): $."OPERATION",
+						td @(class:'reviewelement',padding:'5'): $."DEVELOPER",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."WAVE",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."REVIEW_TOOL_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."RESPONSE_COMPARISON_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."EPLT_VALIDATION_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."PLT_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."PLT_CERTIFICATION_STATUS",
+						td @(class:'reviewelement',align:'center',padding:'5'): $."OVERALL_STATUS"
+			}
+			
+		}]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="index" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload."INDEX_ID")[0]]]></ee:set-variable>
+						<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload."API_NAME")[0]]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<ee:transform doc:name="Transform Message1" doc:id="9c30e602-0e22-4807-9f36-7c69861a2047" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, "application/xml")]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<ee:transform doc:name="Transform Message2" doc:id="042acec0-ef42-4b11-a21a-5d23ba19fab3" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+
+replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(payload,'Fail','<span class="failed">Fail</span>'),"Pass",'<span class="passed">Pass</span>'),'PLT Completed','<span class="passed">PLT Completed</span>'),'PLT Pending','<span class="failed">PLT Pending</span>'),'Ready for PLT','<span class="passed">Ready for PLT</span>'),'Not Ready','<span class="failed">Not Ready</span>'),"PLT Certification Completed",'<span class="passed">PLT Certification Completed</span>'),"PLT Certification Pending",'<span class="failed">PLT Certification Pending</span>')]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<parse-template doc:name="Parse Template" doc:id="8c10fba6-cbb6-4ddf-a3f2-f2226866e06d" location="web\duplicatepltentries.html" />
+			</on-error-continue>
+		</error-handler>
+	</flow>
+	<flow name="PLTFlow4" doc:id="143a5613-effc-4b98-99e9-8527dc2338fd" >
+		<http:listener doc:name="Listener" doc:id="47278ef7-18e1-4b2b-9e63-7eb35f3ee14a" config-ref="HTTP_Listener_config" path="/loadpltdatabulk"/>
+		<file:read doc:name="Read" doc:id="793f1de9-3d1d-4f36-a578-730c2322720d" config-ref="File_Config" path="C:\data\PLT\Wave 7 &amp; 8\Wave 7 and 8 PLT.xlsx" outputMimeType="application/xlsx"/>
+		<ee:transform doc:name="Transform Message" doc:id="0da7de13-cd5e-4235-bfc8-acb71fcf6168" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload."Wave 8"]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="54941d89-4dd3-4ba0-a2bb-204d4616689f" >
+			<ee:transform doc:name="Transform Message" doc:id="2072e987-4ad4-46bf-bc8e-ebcfd92e09d7">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	apiname : payload."Git Repo Name",
+	operation : payload."Operation_Name",
+	developer : payload."Developer",
+	wave : "Wave 8",
+	reviewtoolstatus : "Pass",
+	respcompstatus : "Pass",
+	epltstatus : "Ready for PLT",
+	pltstatus : if(payload."Overall Status" contains("Ready for PLT")) "PLT Completed" else "PLT Pending",
+	pltcertstatus : if(payload."PLT Certification Status" contains("Certification is done")) "PLT Certification Completed" else "PLT Certification Pending",
+	overallstatus : if(payload."Overall Status" contains("Ready for PLT")) "PLT Completed" else payload."Overall Status"
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+			<db:insert doc:name="Insert" doc:id="55faefd1-1142-46dc-86bd-8590d7b8c80e" config-ref="Database-Connection" >
+				<db:sql ><![CDATA[INSERT INTO T2M_PLT (API_NAME,OPERATION,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,EPLT_VALIDATION_STATUS,PLT_STATUS,PLT_CERTIFICATION_STATUS,OVERALL_STATUS)
+VALUES (:apiname,:operation,:developer,:wave,:reviewtoolstatus,:respcompstatus,:epltstatus,:pltstatus,:pltcertstatus,:overallstatus)]]></db:sql>
+				<db:input-parameters ><![CDATA[#[payload]]]></db:input-parameters>
+			</db:insert>
+		</foreach>
+	</flow>
+	<flow name="PLTFlow5" doc:id="9532dca8-2e8b-4c4b-ac67-bb2083457ba5" >
+		<http:listener doc:name="Listener" doc:id="60491449-37e4-41e5-86c5-99893a2593f1" config-ref="HTTP_Listener_config" path="/requestplt"/>
+		<ee:transform doc:name="Transform Message" doc:id="3d85a7f1-9b58-4afa-abba-847d10ffaa73" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.apiname.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="repo" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.repo.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="developer" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.developer.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="codecheckstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.codecheckstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="configcheckstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.configcheckstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="configcreatorstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.configcreatorstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="responsecomparisonstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.responsecomparisonstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="apiprepstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.apiprepstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="soapuistatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.soapuistatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="endpointstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.endpointstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="pltcontractstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.pltcontractstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="soapuivalidationstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.soapuivalidationstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="ratelimitstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.ratelimitstatus.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="wave" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.wave.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="exception" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.exception.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="operation" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.operation.content default "")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<choice doc:name="Choice" doc:id="fc68bf03-35f6-4e8f-8aad-ece7f341b965" >
+			<when expression="#[(vars.codecheckstatus == &quot;Pass&quot; and vars.configcheckstatus == &quot;Pass&quot; and vars.configcreatorstatus == &quot;Yes&quot; and &#10;vars.responsecomparisonstatus == &quot;EXECUTED&quot; and vars.apiprepstatus == &quot;RUNNING&quot; and &#10;vars.soapuistatus == &quot;SOAP UI/Postman collection found in Git&quot; and &#10;vars.endpointstatus == &quot;Tibco and Mule endpoints are added in SOAP UI/Postman collection&quot; and &#10;vars.pltcontractstatus == &quot;PLT contract is added&quot; and vars.soapuivalidationstatus == &quot;Yes&quot; and vars.ratelimitstatus == &quot;Yes&quot;) or (vars.exception == 'Yes')]">
+				<ee:transform doc:name="Transform Message" doc:id="0bc1c8ea-1c18-402d-84ac-0d6b2a8b51e8">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+"Developer" ++ "," ++ vars.developer ++ "\n" ++ 
+"API Name" ++ "," ++ vars.apiname ++ "\n" ++ 
+"Operation(s)" ++ "," ++ vars.operation ++ "\n" ++ 
+"Repository" ++ "," ++ vars.repo ++ "\n" ++ 
+"T2M Wave" ++ "," ++ vars.wave ++ "\n" ++ 
+"Code Review Tool Status" ++ "," ++ vars.codecheckstatus ++ "\n" ++ 
+"Config Review Tool Status" ++ "," ++ vars.configcheckstatus ++ "\n" ++ 
+"Config files created using Tool?" ++ "," ++ vars.configcreatorstatus ++ "\n" ++ 
+"Response Comparison tool executed?" ++ "," ++ vars.responsecomparisonstatus ++ "\n" ++ 
+"API Status in PREP" ++ "," ++ vars.apiprepstatus ++ "\n" ++ 
+"SOAP UI/Postman Collection Status" ++ "," ++ vars.soapuistatus ++ "\n" ++ 
+"Tibco and Mule endpoint Status" ++ "," ++ vars.endpointstatus ++ "\n" ++
+"PLT Contract Status" ++ "," ++ vars.pltcontractstatus ++ "\n" ++
+"Validated Responses in SOAP UI?" ++ "," ++ vars.soapuivalidationstatus ++ "\n" ++
+"Updated Ratelimit as per DEV Tracker?" ++ "," ++ vars.ratelimitstatus ++ "\n" ++
+"Exception needed?" ++ "," ++ vars.exception ++ "\n" ]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="18c8e920-d3d3-4691-9cf8-6644d3df3896" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+
+    "branch":"master",
+    "author_email":"narendranadh.kilari@truist.com",
+    "author_name":"Narendra Kilari",  
+    "content":payload,
+    "commit_message":"Uploaded PLT Checklist for " ++ vars.apiname
+
+}
+]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="gituri" ><![CDATA[%dw 2.0
+output application/java
+var datetime = now() as String {format: "yMMddhhms"}
+---
+if(vars.repo == "EAPI02")
+"/api/v4/projects/27094/repository/files/" ++ (vars.apiname default "t2mpoc") ++ "%2FPLT_Checklist_" ++ (vars.wave default "") ++ "_" ++ datetime ++ "%2Ecsv?private_token=fJxtGiDkj9gjkzNJsF7T"
+else
+if(vars.repo == "EAPI01")
+"/api/v4/projects/21040/repository/files/" ++ (vars.apiname default "t2mpoc") ++ "%2FPLT_Checklist_" ++ (vars.wave default "") ++ "_" ++ datetime ++ "%2Ecsv?private_token=fJxtGiDkj9gjkzNJsF7T"
+else
+if(vars.repo == "EAPI")
+"/api/v4/projects/14095/repository/files/" ++ (vars.apiname default "t2mpoc") ++ "%2FPLT_Checklist_" ++ (vars.wave default "") ++ "_" ++ datetime ++ "%2Ecsv?private_token=fJxtGiDkj9gjkzNJsF7T"
+else
+""]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<try doc:name="Try" doc:id="2d089de5-4e9c-4806-ba7d-aee25473c9d7" >
+					<http:request method="POST" doc:name="Request" doc:id="fb47dc8c-5d86-44f5-9d46-5b3b32e2be3d" config-ref="PLTChecklistupload" path='#[vars.gituri]' >
+						<http:headers ><![CDATA[#[output application/java
+---
+{
+	"Content-Type" : "application/json"
+}]]]></http:headers>
+					</http:request>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="336a4024-1853-49a2-96a5-7ba06cb47b11" >
+							<logger level="INFO" doc:name="Logger" doc:id="052816be-5bc9-4d45-821c-41a49e8ddb6e" message="Error uploading file to Git"/>
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<try doc:name="Try" doc:id="2d200204-c33c-4e1b-b9e6-30cd1e5d2b17" >
+					<email:send doc:name="Send" doc:id="e34ce411-41da-4918-b47a-7eb0f4a4bcba" config-ref="Email_SMTP" fromAddress="${smtp.from}" subject='#["PLT request has been raised for " ++ (vars.apiname default "") ++ " - " ++ (vars.wave default "")]' >
+						<email:to-addresses >
+							<email:to-address value="DL.API.T2M@truist.com" />
+						</email:to-addresses>
+						<email:cc-addresses >
+						</email:cc-addresses>
+						<email:body contentType="text/html" encoding="UTF-8" >
+							<email:content ><![CDATA[#[%dw 2.0
+output text/plain
+---
+'Hi,<br/><br/>PLT request has been raised for the API - <b>' ++ (vars.apiname default "")  ++ "</b><br/><br/>Thanks & Regards,<br/>T2M PLT Tool"]]]></email:content>
+						</email:body>
+						<email:attachments ><![CDATA[#[%dw 2.0
+output application/xlsx header=true
+---
+{'PLT_Checklist.xlsx' : vars.filecontent }]]]></email:attachments>
+					</email:send>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="07457a55-930a-470d-bc5a-7f2983c2f642" >
+							<logger level="INFO" doc:name="Logger" doc:id="be95744a-fe92-433a-bd53-ecbb27584ca3" message="Error sending email to the team" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<try doc:name="Try1" doc:id="b5d493e8-5e13-4176-82ff-cec7dd35b222" >
+					<db:select doc:name="Select" doc:id="c545dba2-70ce-4731-b80c-e16bc3a8d440" config-ref="Database-Connection">
+						<db:sql ><![CDATA[SELECT API_NAME,WAVE FROM T2M_PLT WHERE API_NAME=:apiname and WAVE=:wave]]></db:sql>
+						<db:input-parameters ><![CDATA[#[{
+	apiname : vars.apiname,
+	wave : vars.wave
+}]]]></db:input-parameters>
+					</db:select>
+					<choice doc:name="Choice" doc:id="2a9c7d1e-be9a-40d0-9e3a-7fca36706512" >
+						<when expression="#[sizeOf(payload)==0]">
+							<ee:transform doc:name="Transform Message" doc:id="e3cfe441-1af8-4709-8c04-0a233abcf187">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+	apiname : vars.apiname,
+	//operation : payload."Operation_Name",
+	developer : vars.developer,
+	wave : vars.wave,
+	reviewtoolstatus : "Pass",
+	respcompstatus : "Pass",
+	nextactionowner : "Narendra",
+	exception : vars.exception,
+	operation : vars.operation
+}]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+							<db:insert doc:name="Insert" doc:id="cae6c31d-e7f3-4638-abec-f2f31f13590e" config-ref="Database-Connection">
+						<db:sql><![CDATA[INSERT INTO T2M_PLT (API_NAME,DEVELOPER,WAVE,REVIEW_TOOL_STATUS,RESPONSE_COMPARISON_STATUS,NEXT_ACTION_OWNER,EXCEPTION,OPERATION)
+VALUES (:apiname,:developer,:wave,:reviewtoolstatus,:respcompstatus,:nextactionowner, :exception, :operation)]]></db:sql>
+						<db:input-parameters><![CDATA[#[payload]]]></db:input-parameters>
+					</db:insert>
+						</when>
+					</choice>
+					<error-handler >
+						<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="40e58d9e-67c3-4f43-acb8-7e3986b1ebb3" >
+							<logger level="INFO" doc:name="Logger" doc:id="d2eb5fe9-5a9c-4933-9e4c-efd53858b725" message="Error occured while updating database" />
+						</on-error-continue>
+					</error-handler>
+				</try>
+				<parse-template doc:name="Parse Template" doc:id="a1015ac2-06ac-44c0-9a2e-54f9fb6438a9" location="web\pltrequestsubmitted.html"/>
+			</when>
+			<otherwise >
+				<parse-template doc:name="Parse Template" doc:id="8f1ec45a-4da5-4728-9334-d454dfbdefe9" location="web\PLT Request error.html"/>
+			</otherwise>
+		</choice>
+	</flow>
+	<flow name="PLTFlow6" doc:id="ca7fa326-fd2e-4b7f-97fd-6d693bae08b1" >
+		<http:listener doc:name="Listener" doc:id="5f27fb4c-8a09-441f-81aa-581037f8e50d" config-ref="HTTP_Listener_config" path="/pltrequest"/>
+		<parse-template doc:name="Parse Template" doc:id="26b269e9-cb2c-4f4a-8a8f-9501e5a62dc9" location="web\requestpltstart.html"/>
+	</flow>
+	<flow name="PLTFlow7" doc:id="412c76f2-bc87-4eef-b4b7-107fe48755f6" >
+		<http:listener doc:name="Listener" doc:id="770869e5-1e94-4ab8-9935-88b9c8e84628" config-ref="HTTP_Listener_config" path="/fetchapireviewstatus"/>
+		<ee:transform doc:name="Transform Message" doc:id="5b35ffe4-b7b9-4711-94bc-333ad9240303" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.apiname.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="repo" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.repo.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="developer" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.developer.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="wave" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.wave.content default "")]]></ee:set-variable>
+				<ee:set-variable variableName="operation" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.operation.content default "")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<db:select doc:name="Select" doc:id="e6a69c3b-fc7e-4cb3-a2a2-6f0315d72c88" config-ref="Database-Connection">
+			<db:sql ><![CDATA[SELECT TOOL_NAME, SERVICE_NAME, BRANCH_NAME, USAGE_STATUS, FAIL_COUNT, PASS_COUNT, USED_BY, LAST_UPDATED, REVIEW_FAILURE_EXCEPTION, EXCEPTION_APPROVED_BY FROM EAPI_MULE_T2M_REPORT WHERE SERVICE_NAME = :apiname ORDER BY LAST_UPDATED DESC]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{
+	apiname : vars.apiname
+}]]]></db:input-parameters>
+		</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="78df76f4-35bb-4c16-a2dd-780d2e1c0a78" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="codecheckstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload filter(v,i)-> (v."TOOL_NAME" == "Service Code Quality Check"))[0]."USAGE_STATUS"]]></ee:set-variable>
+				<ee:set-variable variableName="configcheckstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload filter(v,i)-> (v."TOOL_NAME" == "Service Config Quality Check"))[0]."USAGE_STATUS"]]></ee:set-variable>
+				<ee:set-variable variableName="configcreatorstatus" ><![CDATA[%dw 2.0
+output application/java
+var status = (payload filter(v,i)-> (v."TOOL_NAME" == "Mule Config Creator"))[0]."USAGE_STATUS"
+---
+if(status == "Pass") "Yes" else "No"]]></ee:set-variable>
+				<ee:set-variable variableName="responsecomparisonstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+(payload filter(v,i)-> (v."TOOL_NAME" == "Compare API Responses"))[0]."USAGE_STATUS"]]></ee:set-variable>
+				<ee:set-variable variableName="apimuleendpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+"https://api-lms-1x." ++ (lower(vars.repo) default "eapi02") ++ "-prep.truist-tst.com/" ++ (vars.apiname default "") ++ "-" ++ (lower(vars.repo) default "eapi02") ++ "-prep1x/" ++ (vars.apiname default "")]]></ee:set-variable>
+				<ee:set-variable variableName="tibcoendpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+".truist-tst.com/TIBCO_"]]></ee:set-variable>
+				<ee:set-variable variableName="mulehost" ><![CDATA[%dw 2.0
+output application/java
+---
+"api-lms-1x." ++ (lower(vars.repo) default "eapi02") ++ "-prep.truist-tst.com"]]></ee:set-variable>
+				<ee:set-variable variableName="muleuri" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+(vars.apiname default "") ++ "-" ++ (lower(vars.repo) default "eapi02") ++ "-prep1x/" ++ (vars.apiname default "")]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<try doc:name="Try" doc:id="e0b20b2b-39dc-4806-b266-6a3712edc563">
+				<http:request method="POST" doc:name="RequestMule" doc:id="153e53fa-d97a-42ed-abb9-4c0f1551dc89" config-ref="HTTPRVMule" path='#[vars.muleuri default ""]'>
+		</http:request>
+				<ee:transform doc:name="Transform Message" doc:id="0ff83114-76ed-4d38-9998-a24ea0dba768">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="muleresponse"><![CDATA[%dw 2.0
+output application/java
+---
+write(payload,'application/xml')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="cf838667-c182-4497-90da-5ab9e84cf885">
+						<set-variable value='#[if(error.description contains(" (40")) "API is UP and RUNNING" else "Error calling Mule service"]' doc:name="Set Variable" doc:id="2a2a7e13-d8b9-4943-8472-4256a282d974" variableName="muleresponse" />
+					</on-error-continue>
+				</error-handler>
+			</try>
+		<ee:transform doc:name="Transform Message" doc:id="eaecd8d0-1298-4fc0-b23c-6584c9e2aae3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="apiprepstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+if(vars.muleresponse contains("Error calling Mule service")) "NOT RUNNING" else "RUNNING"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<try doc:name="Try" doc:id="51358bf2-5d6a-4e99-b41d-82092d497770" >
+				<ee:transform doc:name="Transform Message" doc:id="2c64596b-60bb-4d06-bf83-4f3577a2637d" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+if(trim(vars.repo default "") == 'EAPI01')
+("/api/v4/projects/21040/repository/files/" ++ (vars.apiname default "") ++ "%2f" ++ (vars.apiname default "") ++ "_soapui_project.xml/raw?ref=master&private_token=" ++ "${password.gitlab}")
+else if(trim(vars.repo default "") == 'EAPI02')
+("/api/v4/projects/27094/repository/files/" ++ (vars.apiname default "") ++ "%2f" ++ (vars.apiname default "") ++ "_soapui_project.xml/raw?ref=master&private_token=" ++ "${password.gitlab}")
+else
+("/api/v4/projects/14095/repository/files/" ++ (vars.apiname default "") ++ "%2f" ++ (vars.apiname default "") ++ "_soapui_project.xml/raw?ref=master&private_token=" ++ "${password.gitlab}")]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<http:request method="GET" doc:name="SOAPUI" doc:id="0505045b-af34-4e32-bc50-003f600be27a" config-ref="GetCredential" path="#[payload]" target="soapuinamecheck"/>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="88a23c66-be00-4925-aed2-27290231b8fd" >
+						<logger level="INFO" doc:name="Logger" doc:id="dab9a665-45e5-40c1-b517-54bab36c3095" message="SOAP UI project not found in Git or naming convention not followed for SOAP UI project"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+			<try doc:name="Try" doc:id="a1b5fd62-bb1e-437b-b343-fe0cbe2f474d" >
+				<ee:transform doc:name="Transform Message" doc:id="b101b2a4-dff0-4328-a462-f6576f446955" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+if(trim(vars.repo default "") == 'EAPI01')
+("/api/v4/projects/21040/repository/files/" ++ (vars.apiname default "") ++ "%2f" ++ (vars.apiname default "") ++ "_postman_collection.json/raw?ref=master&private_token=" ++ "${password.gitlab}")
+else if(trim(vars.repo default "") == 'EAPI02')
+("/api/v4/projects/27094/repository/files/" ++ (vars.apiname default "") ++ "%2f" ++ (vars.apiname default "") ++ "_postman_collection.json/raw?ref=master&private_token=" ++ "${password.gitlab}")
+else
+("/api/v4/projects/14095/repository/files/" ++ (vars.apiname default "") ++ "%2f" ++ (vars.apiname default "") ++ "_postman_collection.json/raw?ref=master&private_token=" ++ "${password.gitlab}")]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<http:request method="GET" doc:name="PostmanCollection" doc:id="87523538-7551-44a1-ad7a-cf8aa69496d4" config-ref="GetCredential" path="#[payload]" target="postmancollectioncheck"/>
+				<error-handler >
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="382cac79-c584-4260-af79-d0ba8aae5899" >
+						<logger level="INFO" doc:name="Logger" doc:id="4c6e31a3-4054-479c-800b-ffe9b8f20280" message="SOAP UI project not found in Git or naming convention not followed for SOAP UI project"/>
+					</on-error-continue>
+				</error-handler>
+			</try>
+		<ee:transform doc:name="Transform Message" doc:id="c9fd1537-98ee-48ca-9db9-ac455f5f0558">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="soapuistatus" ><![CDATA[%dw 2.0
+output application/java
+---
+if((sizeOf(vars.soapuinamecheck default "")>1) or (sizeOf(vars.postmancollectioncheck default "")>1))
+"SOAP UI/Postman collection found in Git"
+else
+"SOAP UI/Postman collection is not uploaded in Git"]]></ee:set-variable>
+				<ee:set-variable variableName="endpointstatus" ><![CDATA[%dw 2.0
+output application/java
+---
+if(((vars.soapuinamecheck default "") contains(vars.apimuleendpoint)) and ((vars.soapuinamecheck default "") contains(vars.tibcoendpoint)) or ((vars.postmancollectioncheck default "") contains(vars.apimuleendpoint)) and ((vars.postmancollectioncheck default "") contains(vars.tibcoendpoint)))
+"Tibco and Mule endpoints are added in SOAP UI/Postman collection"
+else
+"Tibco and Mule endpoints are not added in SOAP UI/Postman collection"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message1" doc:id="2629bdce-439b-484a-85c4-e2c6acb5e0b3" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+"/api/v4/search?scope=projects&search=" ++ (vars.apiname default "") ++ "_config&private_token=" ++ "${password.gitlab}"
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="request" doc:id="17d3e2f6-08c4-439d-a29b-dd3fcfd233cd" config-ref="GetCredential" path="#[payload]" />
+		<ee:transform doc:name="Transform Message2" doc:id="6326e9a7-bec7-4ce6-b099-bf14c23d981a" >
+			<ee:message >
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="projectid" ><![CDATA[%dw 2.0
+output application/json
+var api=vars.apiname
+---
+(payload filter(v,i)-> (v."http_url_to_repo" contains("/" ++ api)))[0].id]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message3" doc:id="ee8d2fd6-8b17-42dd-a003-a851c5d6061c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var path="Policies/PREP.policy"
+var separator = if(path contains('/')) "/" else "\\"
+var replacedstring = replaceAll(path,separator,'%2F')
+var branch="master"
+---
+
+"/api/v4/projects/" ++ vars.projectid ++ "/repository/files/" ++ replacedstring ++ "?ref=" ++ branch ++ "&private_token=" ++ "${password.gitlab}"
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="3684f2d5-3ca1-41fe-bc89-b8f3145efd44" config-ref="GetCredential" path="#[payload]" />
+		<ee:transform doc:name="Transform Message" doc:id="b3fa3834-b9bf-4d84-a6d8-8788fb65ce76" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="pltcontractstatus" ><![CDATA[%dw 2.0
+import * from dw::core::Binaries
+output text/plain
+var pltcontract = "EAPI_PLT"
+var pltclientid = "4f546f4e1692447280942e8f4841a308:EAPI_PLT"
+var filecontent = fromBase64(payload.content as String) as String
+---
+if((filecontent contains(pltcontract)) and (filecontent contains(pltclientid)))
+"PLT contract is added"
+else
+"PLT contract is not added"]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<parse-template doc:name="Parse Template" doc:id="74214964-54df-45da-992f-7528dada20d3" location="web\apipltvalidation.html"/>
+	</flow>
+	
+	<flow name="PLTLive" doc:id="d794c61a-4f1e-464a-92c9-3538c616ae5a" >
+		<http:listener doc:name="Listener" doc:id="d394596b-4d1e-4e16-9ae3-bd4d39495265" config-ref="HTTP_Listener_config" path="/pltplanned"/>
+		<choice doc:name="Choice" doc:id="9805d70c-ddfa-4303-9585-fe6e6f9bde31" >
+			<when expression="#[sizeOf(payload)&gt;0]">
+				<ee:transform doc:name="Transform Message" doc:id="7d181ba0-baca-4703-9db1-5fd4fb3c4fe5">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="pltdate"><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.pltdate.content]]></ee:set-variable>
+				<ee:set-variable variableName="apiname"><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.apiname.content]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<db:select doc:name="Select" doc:id="0e154c27-a4c9-4aad-9bbb-cbb62d6f3dd4" config-ref="Database-Connection" target="dboutput">
+			<db:sql><![CDATA[SELECT * FROM T2M_PLT_LIVE WHERE API_NAME = :apiname and DATE = :date]]></db:sql>
+			<db:input-parameters><![CDATA[#[{
+	apiname : vars.apiname,
+	date : vars.pltdate
+}]]]></db:input-parameters>
+		</db:select>
+			</when>
+		</choice>
+		<choice doc:name="Choice" doc:id="09348612-9e2e-4355-859e-2f798684714a" >
+			<when expression="#[sizeOf(vars.dboutput) == 0]">
+				<db:insert doc:name="Insert" doc:id="dc1d089e-a5fe-471b-9353-deb2b554b0f9" config-ref="Database-Connection" >
+					<db:sql ><![CDATA[INSERT INTO T2M_PLT_LIVE (API_NAME,DATE)
+VALUES (:apiname,:date)]]></db:sql>
+					<db:input-parameters ><![CDATA[#[{
+	apiname : vars.apiname,
+	date : vars.pltdate
+}]]]></db:input-parameters>
+				</db:insert>
+			</when>
+		</choice>
+		<db:select doc:name="Select" doc:id="10ab1b5d-89f4-4ed1-89d7-02bb2e8696dd" config-ref="Database-Connection">
+					<db:sql><![CDATA[SELECT * FROM T2M_PLT_LIVE ]]></db:sql>
+				</db:select>
+		<ee:transform doc:name="Transform Message" doc:id="de9bd3f0-102c-4071-908c-c1fc9fa675a5">
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="allpltentries"><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="801cc97f-8737-4662-aaaf-da39950d71e1">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var pltdates = vars.allpltentries map(data,index)->{
+	dates : data.DATE
+}
+var distinctdate = pltdates distinctBy($)
+---
+distinctdate  filter(v,i)-> (sizeOf(v.dates)>0)]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+		<foreach doc:name="For Each" doc:id="4f84db55-5597-4a79-b399-72be8e1855c4" collection="#[payload]">
+				<ee:transform doc:name="Transform Message" doc:id="f609d59e-6a90-4d9c-8104-4bac6b45ee19">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload[0]]]></ee:set-payload>
+				</ee:message>
+				<ee:variables>
+					<ee:set-variable variableName="currentdate"><![CDATA[%dw 2.0
+output application/java
+---
+payload[0]]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+				<ee:transform doc:name="Transform Message" doc:id="a8d46efb-ce4b-4743-8e45-1061ccb7e235">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var curdate = vars.currentdate default ""
+---
+vars.allpltentries filter(v,i)-> (v.DATE contains(curdate))]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+				<ee:transform doc:name="Transform Message1" doc:id="9a862c42-38f1-4979-8b85-4fc07662bba5">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+import * from dw::core::Strings
+output application/xml
+var apiarray = payload default []
+---
+
+	div @(class:'pltbox') :{
+	p @(class:'dateclass'):vars.currentdate,
+	table @(class:'plttable'):
+		{
+			tr: apiarray map 
+			{		
+						td @(class:'pltitem'): $."API_NAME"
+			}
+			
+		}
+
+
+}]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+				<ee:transform doc:name="Transform Message2" doc:id="f8709b82-09dc-4adc-a436-27b51876ceda">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+write(payload, "application/xml")]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+				<set-variable value="#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;---&#10;(vars.pltapivar default &quot;&quot;) ++ substringAfter(payload,'?&gt;')]" doc:name="Set Variable" doc:id="b924edaa-32aa-40e5-a312-e50dcd3be328" variableName="pltapivar" />
+			</foreach>
+		<parse-template doc:name="Parse Template" doc:id="0464ce59-3b79-4b30-af20-612b070e0150" location="web\ongoingplt.html"/>
+	</flow>
+	<flow name="PLTLiveStart" doc:id="12692695-fc2a-4f1e-a320-d4c287c9f7e2" >
+		<http:listener doc:name="Listener" doc:id="aa309db3-e69c-4359-b9f0-aee08c6343a8" config-ref="HTTP_Listener_config" path="/planplt"/>
+		<parse-template doc:name="Parse Template" doc:id="b5b448d3-7582-470e-81a0-82d2d3b61bd5" location="web\pltplanning.html"/>
+	</flow>
+
+
+</mule>

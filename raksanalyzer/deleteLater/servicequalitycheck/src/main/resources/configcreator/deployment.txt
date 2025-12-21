@@ -1,0 +1,2 @@
+#The below entries are for RTF on OCP deployments. You dont need to pass cluster names for OCP.
+deployment.target.type=OCP

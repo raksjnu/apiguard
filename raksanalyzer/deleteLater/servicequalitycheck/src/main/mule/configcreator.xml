@@ -1,0 +1,794 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:compression="http://www.mulesoft.org/schema/mule/compression"
+	xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/mule/compression/current/mule-compression.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
+	<flow name="configcreatorFlow" doc:id="cfcd4269-e359-4ea1-a819-d2f90144a1b7" >
+		<http:listener doc:name="Listener" doc:id="473cf5ff-d657-456b-9cca-9116ba49dc0d" config-ref="HTTP_GUIListener_config" path="/createconfig/{apiname}/{reponame}"/>
+		<ee:transform doc:name="Transform Message" doc:id="25e8d42d-351b-4502-bdbb-317ac4e86206" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+var envs = "SBX~TDV~ATDV~ITE~PITE~MNE~IBF~PREP~PREP_LIVE~DRL~TRN~PROD~DR"
+---
+envs splitBy('~')]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="apiname" ><![CDATA[%dw 2.0
+output application/java
+var separator = if(trim(attributes.uriParams.apiname) contains(',')) ',' else ' '
+---
+trim(attributes.uriParams.apiname default "") splitBy(separator)]]></ee:set-variable>
+				<ee:set-variable variableName="gitupload" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.gitflag.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="branch" ><![CDATA[%dw 2.0
+output application/java
+--- 
+payload.parts.branch.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="reponame" ><![CDATA[%dw 2.0
+output application/java
+---
+attributes.uriParams.reponame]]></ee:set-variable>
+				<ee:set-variable variableName="environments" ><![CDATA[%dw 2.0
+output application/java
+var envs = "SBX~TDV~ATDV~ITE~PITE~MNE~IBF~PREP~PREP_LIVE~DRL~TRN~PROD~DR"
+---
+envs splitBy('~')]]></ee:set-variable>
+				<ee:set-variable variableName="deploymenttarget" ><![CDATA[output application/java
+---
+payload.parts.deploymenttarget.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="ratelimitpol" ><![CDATA[output application/java
+---
+payload.parts.ratelimit.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="headerinjectionpol" ><![CDATA[output application/java
+---
+payload.parts.headerinjection.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="compositepol" ><![CDATA[output application/java
+---
+payload.parts.comp.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="clientidenfpol" ><![CDATA[output application/java
+---
+payload.parts.clientidenf.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="authzpol" ><![CDATA[output application/java
+---
+payload.parts.authz.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="dataencryptionpol" ><![CDATA[output application/java
+---
+payload.parts.dataencryption.content]]></ee:set-variable>
+				<ee:set-variable variableName="newratelimitvalue" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.ratelimitvalue.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="newclustervalue" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.cluster.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="healthcheckcontract" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.healthcheckcon.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="eapipltcontract" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.eapipltcon.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="vaultstore" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"ATDV" : "https://api-lms-atdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-atdv/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-atdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-atdv/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"ATDV1" : "https://api-lms-atdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-atdv/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-atdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-atdv/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"TDV" : "https://api-lms-tdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-tdv/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-tdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-tdv/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"DR" : "https://api-lms-1x.eapi01-prod.truist-prd.com/truistocpvaultv01-eapi01-prod1x/common/keystore/eapi-mule-lastmile.truist-prd.com.jks,https://api-lms-1x.eapi01-prod.truist-prd.com/truistocpvaultv01-eapi01-prod1x/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"DRL" : "https://api-lms-drl.eapi01.truist-tst.com/truistocpvaultv01-eapi01-drl/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-drl.eapi01.truist-tst.com/truistocpvaultv01-eapi01-drl/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"IBF" : "https://api-lms-tdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-tdv/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-tdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-tdv/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"ITE" : "https://api-lms-ite.eapi01.truist-tst.com/truistocpvaultv01-eapi01-ite/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-ite.eapi01.truist-tst.com/truistocpvaultv01-eapi01-ite/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"MNE" : "https://api-lms-mne.eapi01.truist-dev.com/truistocpvaultv01-eapi01-mne/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-mne.eapi01.truist-dev.com/truistocpvaultv01-eapi01-mne/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"PITE" : "https://api-lms-pite.eapi01.truist-tst.com/truistocpvaultv01-eapi01-pite/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-pite.eapi01.truist-tst.com/truistocpvaultv01-eapi01-pite/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"PREP" : "https://api-lms-1x.eapi01-prep.truist-tst.com/truistocpvaultv01-eapi01-prep1x/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-1x.eapi01-prep.truist-tst.com/truistocpvaultv01-eapi01-prep1x/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"PREP_LIVE" : "https://api-lms-1x.eapi01-prep.truist-tst.com/truistocpvaultv01-eapi01-prep1x/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-1x.eapi01-prep.truist-tst.com/truistocpvaultv01-eapi01-prep1x/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"PROD" : "https://api-lms-1x.eapi01-prod.truist-prd.com/truistocpvaultv01-eapi01-prod1x/common/keystore/eapi-mule-lastmile.truist-prd.com.jks,https://api-lms-1x.eapi01-prod.truist-prd.com/truistocpvaultv01-eapi01-prod1x/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"TDV1" : "https://api-lms-tdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-tdv/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-tdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-tdv/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"TRN" : "https://api-lms-trn.eapi01.truist-tst.com/truistocpvaultv01-eapi01-trn/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-trn.eapi01.truist-tst.com/truistocpvaultv01-eapi01-trn/signvalidation/keystore/x509-validate-truststore.prd.com.jks",
+	"SBX" : "https://api-lms-tdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-tdv/common/keystore/eapi-mule-lastmile.truist-tst.com.jks,https://api-lms-tdv.eapi01.truist-dev.com/truistocpvaultv01-eapi01-tdv/signvalidation/keystore/x509-validate-truststore.prd.com.jks"
+}]]></ee:set-variable>
+				<ee:set-variable variableName="cicshost" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"ATDV" : "mvsdevb.bbtnet.com",
+	"ATDV1" : "mvsdevb.bbtnet.com",
+	"TDV" : "mvsdevb.bbtnet.com",
+	"DR" : "mvsproda.bbtnet.com",
+	"DRL" : "ZOS-QASYSQCICS.bbtnet.com",
+	"IBF" : "mvsdevb.bbtnet.com",
+	"ITE" : "mvsdevb.bbtnet.com",
+	"MNE" : "mvsdevb.bbtnet.com",
+	"PITE" : "mvsdevb.bbtnet.com",
+	"PREP" : "ZOS-QASYSQ.bbtnet.com",
+	"PREP_LIVE" : "ZOS-QASYSQ.bbtnet.com",
+	"PROD" : "mvsproda.bbtnet.com",
+	"TDV1" : "mvsdevb.bbtnet.com",
+	"TRN" : "mvsdevb.bbtnet.com",
+	"SBX" : "mvsdevb.bbtnet.com"
+}]]></ee:set-variable>
+				<ee:set-variable variableName="cicsport" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"ATDV" : "3115",
+	"ATDV1" : "3115",
+	"TDV" : "3401",
+	"DR" : "4380",
+	"DRL" : "4380",
+	"IBF" : "3605",
+	"ITE" : "3705",
+	"MNE" : "3401",
+	"PITE" : "3240",
+	"PREP" : "4380",
+	"PREP_LIVE" : "4380",
+	"PROD" : "4380",
+	"TDV1" : "3401",
+	"TRN" : "3121",
+	"SBX" : "3115"
+}]]></ee:set-variable>
+				<ee:set-variable variableName="testregion" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"ATDV" : "ATDV",
+	"ATDV1" : "ATDV1",
+	"TDV" : "TDV",
+	"DR" : "DR",
+	"DRL" : "DRL",
+	"IBF" : "IBF",
+	"ITE" : "ITE",
+	"MNE" : "MNE",
+	"PITE" : "PITE",
+	"PREP" : "PREP",
+	"PREP_LIVE" : "PREP_LIVE",
+	"PROD" : "PROD",
+	"TDV1" : "TDV1",
+	"TRN" : "TRN",
+	"SBX" : "SBX"
+}]]></ee:set-variable>
+				<ee:set-variable variableName="dbschema" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"ATDV" : "DBHXS01",
+	"ATDV1" : "DBHXS01",
+	"TDV" : "DBEXS01",
+	"DR" : "DBPXS01",
+	"DRL" : "DBDXS01",
+	"IBF" : "DBMXS01",
+	"ITE" : "DBUXS01",
+	"MNE" : "DBEXS01",
+	"PITE" : "DBXXS01",
+	"PREP" : "DBQXS01",
+	"PREP_LIVE" : "DBQXS01",
+	"PROD" : "DBPXS01",
+	"TDV1" : "DBEXS01",
+	"TRN" : "DBRXS01",
+	"SBX" : "DBHXS01"
+}]]></ee:set-variable>
+				<ee:set-variable variableName="dburl" ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	"ATDV" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2H:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"ATDV1" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2H:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"TDV" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2E:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"DR" : "jdbc:db2://wil-db2econvip.bbtnet.com:50000/DB2P:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"DRL" : "jdbc:db2://db2contdhvip.truist-tst.com:50000/DB2D:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"IBF" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2M:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"ITE" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2U:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"MNE" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2E:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"PITE" : "jdbc:db2://db2conaitvip.truist-tst.com:50000/DB2X:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"PREP" : "jdbc:db2://db2contppvip.truist-tst.com:50000/DB2Q:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"PREP_LIVE" : "jdbc:db2://db2contppvip.truist-tst.com:50000/DB2Q:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"PROD" : "jdbc:db2://wil-db2econvip.bbtnet.com:50000/DB2P:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"TDV1" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2E:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"TRN" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2R:useJDBC4ColumnNameAndLabelSemantics=2;",
+	"SBX" : "jdbc:db2://wil-db2contstvip.bbtnet.com:50000/DB2H:useJDBC4ColumnNameAndLabelSemantics=2;"
+}]]></ee:set-variable>
+				<ee:set-variable variableName="developer" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.developer.content default ""]]></ee:set-variable>
+				<ee:set-variable variableName="apitype" ><![CDATA[%dw 2.0
+output application/java
+---
+trim(payload.parts.apitype.content default "") default "realtime"]]></ee:set-variable>
+				<ee:set-variable variableName="mtlspol" ><![CDATA[output application/java
+---
+payload.parts.mtls.content default ""]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<http:request method="GET" doc:name="Request" doc:id="972b4739-bc41-4511-a96c-2bc03095ebde" config-ref="GetCredential" path='#["/api/v4/projects/14095/repository/files/EAPIServicesCommonDocs%2fEAPIServiceAccounts%2fMule_Credentials.csv/raw?ref=master&amp;private_token=" ++ "${password.gitlab}"]' />
+		<set-variable value="#[output text/plain&#10;---&#10;payload]" doc:name="Set Variable" doc:id="8260878d-960c-4051-ab33-8d757d902836" variableName="credential"/>
+		<http:request method="GET" doc:name="Request" doc:id="4d5adb46-fe70-48c3-8864-9156e2beff32" config-ref="GetCredential" path='#["/api/v4/projects/14095/repository/files/EAPIServicesCommonDocs%2fEAPIServiceAccounts%2fMuleStudio_Credentials.csv/raw?ref=master&amp;private_token=" ++ "${password.gitlab}"]' />
+		<set-variable value="#[output text/plain&#10;---&#10;payload]" doc:name="Set Variable" doc:id="f0ec7196-b739-4976-84fb-5bf9f5ab3186" variableName="studiocredential"/>
+		<foreach doc:name="For Each" doc:id="f098f3e5-0ac0-4a97-a8ad-43e1b0bac944" collection="#[vars.apiname default []]">
+			<set-variable value="#[output text/plain&#10;---&#10;read(payload,'application/java')]" doc:name="Set Variable" doc:id="44f3effc-c1e5-4080-bebc-c8bb7eea9169" variableName="currentapiname"/>
+			<java:new doc:name="CreateGitBranchInstance" doc:id="320509b1-2e6c-4ae7-8bee-03f2df6ad577" class="com.org.propertyutil.GitCloneBranch" constructor="GitCloneBranch()" />
+			<java:invoke doc:name="Git Clone" doc:id="27dde716-5770-4dc8-aec5-e81b5f54b517" instance="#[payload]" class="com.org.propertyutil.GitCloneBranch" method="GitCloneRepo(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
+			<java:args><![CDATA[#[var repo = vars.reponame default "EAPI02"
+var datetime = now() as String {format: "yMMddhhm"}
+---
+
+{
+	arg0 : Mule::p('repo.eapi01') ++ repo ++ "//" ++ vars.currentapiname ++ ".git",
+	arg1 : Mule::p('username.gitlab'),
+	arg2 : Mule::p('password.gitlab'),
+	arg3 : vars.branch default "mjr-feature",
+	arg4 : "${gui.inputLocation}" ++ vars.currentapiname ++ "_" ++ vars.branch ++ datetime ++ "//",
+	arg5 : "${gui.inputLocation}" ++ vars.currentapiname ++ "_" ++ vars.branch ++ datetime ++ "//"
+}]]]></java:args>
+		</java:invoke>
+			<set-variable value='#[import * from dw::core::Strings&#10;---&#10;substringAfter(payload,",")]' doc:name="Set Variable" doc:id="64634813-349d-4587-b7a0-5da782481082" variableName="clonedcode"/>
+			<file:list doc:name="List" doc:id="85ba936c-24be-4380-8ef6-c12cae8cd697" config-ref="File_Config" directoryPath='#[import * from dw::core::Strings&#10;---&#10;substringAfter(payload,",")]' recursive="true">
+			<file:matcher filenamePattern="*.{properties}" directories="EXCLUDE" />
+		</file:list>
+			<foreach doc:name="For Each" doc:id="979b2910-c7b8-4760-9705-d365613fe5b7" collection="#[payload.typedAttributes.path default []]">
+				<file:read doc:name="Read" doc:id="8871e393-5612-4d3e-98fe-160915b3212f" config-ref="File_Config" path="#[payload]"/>
+				<ee:transform doc:name="Transform Message" doc:id="5f505f92-6e39-444a-9c01-6ad67f233742" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="muleappproperties" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('mule-app')) payload else (vars.muleappproperties default "")]]></ee:set-variable>
+						<ee:set-variable variableName="secureproperties" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('secure')) payload else (vars.secureproperties default "")]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</foreach>
+			<file:list doc:name="List" doc:id="4e4744e2-b980-4b16-8dc4-41bc0affcc63" config-ref="File_Config" directoryPath="configcreator\" recursive="true"/>
+			<foreach doc:name="For Each" doc:id="18e945b5-4552-427d-85e1-56f16e708068" collection="#[payload.typedAttributes.path default []]">
+				<file:read doc:name="Read" doc:id="0e2b7164-728f-4b8b-a8ef-3f1272d12867" config-ref="File_Config" path="#[payload]"/>
+				<ee:transform doc:name="Transform Message" doc:id="e277569c-3eae-48bf-bd04-721bf681e3ec" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="deployfilecontent" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('deployment.txt')) payload else (vars.deployfilecontent default "")]]></ee:set-variable>
+						<ee:set-variable variableName="nonprodconstants" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('NONPROD.txt')) payload else (vars.nonprodconstants default "")]]></ee:set-variable>
+						<ee:set-variable variableName="prodconstants" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('PROD.txt')) payload else (vars.prodconstants default "")]]></ee:set-variable>
+						<ee:set-variable variableName="apicontracts" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('apicontracts.txt')) payload else (vars.apicontracts default "")]]></ee:set-variable>
+						<ee:set-variable variableName="authorizationpolicy" ><![CDATA[output text/plain
+var filename=attributes.fileName
+---
+if(filename contains('authorizationpolicy.txt')) payload else (vars.authorizationpolicy default "")]]></ee:set-variable>
+						<ee:set-variable variableName="basicauthnpolicy" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('basicauthnpolicy.txt')) payload else (vars.basicauthnpolicy default "")]]></ee:set-variable>
+						<ee:set-variable variableName="headerinjectionpolicy" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('headerinjectionpolicy.txt')) payload else (vars.headerinjectionpolicy default "")]]></ee:set-variable>
+						<ee:set-variable variableName="ratelimitpolicy" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('ratelimitpolicy.txt')) payload else (vars.ratelimitpolicy default "")]]></ee:set-variable>
+						<ee:set-variable variableName="compositepolicy" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('compositepolicy.txt')) payload else (vars.compositepolicy default "")]]></ee:set-variable>
+						<ee:set-variable variableName="clientidenfpolicy" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('clientidenfpolicy.txt')) payload else (vars.clientidenfpolicy default "")]]></ee:set-variable>
+						<ee:set-variable variableName="authorizationpolicyprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('authorizationpolicyprod.txt')) payload else (vars.authorizationpolicyprod default "")]]></ee:set-variable>
+						<ee:set-variable variableName="Mtls-Non-Prod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('Mtls-Non-Prod.txt')) payload else (vars."Mtls-Non-Prod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="mtlsnonprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('mtlsnonprod.txt')) payload else (vars."mtlsnonprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="mtlsprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('mtlsprod.txt')) payload else (vars."mtlsprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="authnauthznonprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('authnauthznonprod.txt')) payload else (vars."authnauthznonprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="authnauthprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('authnauthzprod.txt')) payload else (vars."authnauthzprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="x509basicauthnonprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('x509basicauthnonprod.txt')) payload else (vars."x509basicauthnonprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="x509basicauthprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('x509basicauthprod.txt')) payload else (vars."x509basicauthprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="x509mtlsbasicauthnonprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('x509mtlsbasicauthnonprod.txt')) payload else (vars."x509mtlsbasicauthnonprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="x509mtlsbasicauthprod" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('x509mtlsbasicauthprod.txt')) payload else (vars."x509mtlsbasicauthprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="mtlsbasicauthprod.txt" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('mtlsbasicauthprod.txt')) payload else (vars."mtlsbasicauthprod" default "")]]></ee:set-variable>
+						<ee:set-variable variableName="mtlsbasicauthnonprod.txt" ><![CDATA[output application/java
+var filename=attributes.fileName
+---
+if(filename contains('mtlsbasicauthnonprod.txt')) payload else (vars."mtlsbasicauthnonprod" default "")]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</foreach>
+			<file:read doc:name="Read" doc:id="742b8705-b41c-47fe-b1b8-f140e49d8722" config-ref="File_Config" path="#[vars.clonedcode default &quot;&quot; ++ '\\src\\main\\mule\\' ++ (vars.currentapiname default &quot;&quot;) ++ '-config.xml']" outputMimeType="application/xml" />
+			<ee:transform doc:name="Transform Message" doc:id="86787154-c2e7-4430-9aef-354185190aec" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+---
+write(payload,'application/xml')]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+			<choice doc:name="Choice" doc:id="7501dee1-c63f-487c-a9a4-cb718e887951" >
+				<when expression="#[payload contains('apikit-soap:config')]">
+					<ee:transform doc:name="Transform Message" doc:id="a1628c61-de48-4a1b-b2af-a7541e33c356">
+				<ee:message>
+					<ee:set-payload><![CDATA[output text/plain
+import * from dw::core::Strings
+---
+substringBefore(substringAfter(substringBefore((substringAfter(payload,'apikit-soap:config')),'</apikit-soap:config>'),'wsdlLocation="api\\'),'"')]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+					<file:read doc:name="Read" doc:id="2b419498-1468-4c93-b50e-6380c9f9fbef" config-ref="File_Config" path="#[output application/java&#10;---&#10;(vars.clonedcode default &quot;&quot;) ++ '\\src\\main\\resources\\api\\' ++ payload]" />
+					<ee:transform doc:name="Transform Message" doc:id="fb8d546f-74c9-4d87-85be-fdad3e2b8941">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var operationscontent = ((substringBefore(substringAfter(substringAfter(payload,'<wsdl:portType'),'>'),'</wsdl:portType>')) splitBy('</wsdl:operation>')) filter(v,i)-> sizeOf(v)>5
+---
+operationscontent]]></ee:set-payload>
+				</ee:message>
+			</ee:transform>
+					<foreach doc:name="For Each" doc:id="fb336e05-3f47-470a-b877-f9dd4bea9f2b" collection="#[payload]">
+				<ee:transform doc:name="Transform Message" doc:id="f1d9ec1e-49cf-4580-8371-46d5f865f58c">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="wsdlinputmsgs"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var inputmsg = trim(substringAfter(substringBefore(substringAfter(payload,'wsdl:input message="'),'"'),':'))
+var frontline = 'truist.authz.policy.clientIDmap.'
+var endline = ':SOAPBody='
+var hcenabled = if(sizeOf(vars.healthcheckcontract default "")>1) 'c06872cb9de848b08eee37335699af86:HC_NonProd' else ''
+var hcadded = trim(frontline ++ inputmsg ++ endline ++ hcenabled)
+---
+if(sizeOf(vars.wsdlinputmsgs default "")>1)
+	(vars.wsdlinputmsgs default "") ++ "\n" ++ hcadded
+else
+	hcadded]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+			</foreach>
+				</when>
+				<otherwise >
+					<set-variable value="#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;var inputmsg = 'POST:'  ++ (vars.currentapiname default &quot;&quot;)&#10;var frontline = 'truist.authz.policy.clientIDmap.'&#10;var endline = '='&#10;var hcenabled = if(sizeOf(vars.healthcheckcontract default &quot;&quot;)&gt;1) 'c06872cb9de848b08eee37335699af86:HC_NonProd' else ''&#10;var hcadded = trim(frontline ++ inputmsg ++ endline ++ hcenabled)&#10;---&#10;if(sizeOf(vars.wsdlinputmsgs default &quot;&quot;)&gt;1)&#10;	(vars.wsdlinputmsgs default &quot;&quot;) ++ &quot;\n&quot; ++ hcadded&#10;else&#10;	hcadded]" doc:name="Set Variable" doc:id="f7febbe0-b6de-496a-9f91-586ecba0e3ca" variableName="wsdlinputmsgs"/>
+				</otherwise>
+			</choice>
+			<foreach doc:name="For Each" doc:id="10002ba1-e568-4371-9f5f-b42f27e406fe" collection="#[vars.environments default []]">
+				<set-variable value="#[%dw 2.0&#10;output application/java&#10;---&#10;payload]" doc:name="Set Variable" doc:id="26e80d2f-a344-4d80-bc12-5d64d087ecbb" variableName="currentenv"/>
+				<choice doc:name="Choice" doc:id="3a8e299a-90b2-42c9-8899-2faa2de910b0" >
+					<when expression="#[((payload contains('PROD')) or (payload contains('DR'))) and (!(payload contains('DRL')))]">
+						<set-variable value="#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;var env = vars.currentenv&#10;var vault = vars.vaultstore[env]&#10;---&#10;(substringBefore(vars.prodconstants,'vault.storelocation=') default &quot;&quot;) ++ 'vault.storelocation=' ++ (vault default &quot;&quot;) ++ &quot;   #UpdatedByTool&quot; ++ '\n' ++ 'vault.app.name=' ++ &#10;lower(vars.currentapiname) ++ '-' ++ lower(vars.reponame) ++ '-' ++ lower(env) ++ &quot;   #UpdatedByTool&quot; ++ '\n\n' ++  '#Vault clientid' ++ (substringAfter(vars.prodconstants,'#Vault clientid') default &quot;&quot;)]" doc:name="Set Variable" doc:id="abed0b6b-b1fc-42c5-973a-69517f5f6de5" variableName="propertytemplate"/>
+						<set-variable value="#[output text/plain&#10;---&#10;vars.deployfilecontent]" doc:name="Set Variable" doc:id="52f3973e-000f-4f01-b25c-96eec4f6d6dc" variableName="deploytemplate"/>
+					</when>
+					<otherwise >
+						<set-variable value="#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;var env = vars.currentenv&#10;var vault = vars.vaultstore[env] default &quot;&quot;&#10;---&#10;(substringBefore(vars.nonprodconstants,'vault.storelocation=') default &quot;&quot;) ++ 'vault.storelocation=' ++ (vault default &quot;&quot;) ++ &quot;   #UpdatedByTool&quot; ++ '\n' ++ 'vault.app.name=' ++ &#10;lower(vars.currentapiname) ++ '-' ++ lower(vars.reponame) ++ '-' ++ lower(env) ++ &quot;   #UpdatedByTool&quot; ++ '\n' ++ '\n' ++ '#Vault clientid' ++ (substringAfter(vars.nonprodconstants,'#Vault clientid') default &quot;&quot;)]" doc:name="Set Variable" doc:id="f55ac5de-1fc4-4c72-bac8-93d6a2d33483" variableName="propertytemplate"/>
+						<set-variable value="#[output text/plain&#10;---&#10;vars.deployfilecontent]" doc:name="Set Variable" doc:id="db12afb7-e10c-4238-b63c-65e561fa4fab" variableName="deploytemplate"/>
+					</otherwise>
+				</choice>
+				<ee:transform doc:name="Transform Message" doc:id="8805e1f7-7074-469e-b2d0-cab00e7d953a" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+var allproperties = (vars.muleappproperties default "") ++ (vars.secureproperties default "")
+---
+(allproperties splitBy('\n')) filter(v,i)-> (sizeOf(v)>1)
+]]></ee:set-payload>
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="propertysize" ><![CDATA[%dw 2.0
+output application/java
+---
+sizeOf((vars.muleappproperties splitBy('\n')) filter(v,i)-> (sizeOf(v)>1))]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<foreach doc:name="For Each" doc:id="ad72c731-ad91-4ea1-a3b3-51a5e81061af" collection="#[payload]">
+					<choice doc:name="Choice" doc:id="7bfc3ce0-9093-4582-8653-35fbaf04b40d" >
+						<when expression="#[payload contains('![')]">
+							<ee:transform doc:name="Transform Message" doc:id="bc1d1209-ba95-4951-9aed-c0b188b45c1c">
+								<ee:message>
+									<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var env=vars.currentenv default ""
+var currentproperty=trim(substringBefore(payload,"="))
+var currentvalue=trim(substringAfter(payload,"="))
+var credtype = if(payload contains('userid')) 'userid' else 'password'
+var studiouserid = trim(substringAfterLast(substringBefore(vars.studiocredential,("," ++ currentvalue)),'\n'))
+var studiopwd = trim(substringBefore(substringAfterLast(substringBefore(vars.studiocredential,("," ++ currentvalue)),'\n'),','))
+var studiodecrypted = if(credtype=="userid") studiouserid else studiopwd
+var nonidcred = if(env=="PROD" or env=="DR")
+				trim(substringBefore(substringAfter(vars.credential,((studiodecrypted default "") ++ ",PROD,")),'\n'))
+				else
+				trim(substringBefore(substringAfter(vars.credential,((studiodecrypted default "") ++ ",Non-PROD,")),'\n'))
+var nonidcredvalue=if(nonidcred contains(',')) substringBefore(nonidcred,',') else nonidcred
+var envreplacedid = if(env=="PREP" or env=="PREP_LIVE") replaceAll(studiodecrypted,(studiodecrypted last 1),'Q') else 
+					if(env=="PROD" or env=="DR") replaceAll(studiodecrypted,(studiodecrypted last 1),'P') else 
+					if(env=="DRL") replaceAll(studiodecrypted,(studiodecrypted last 1),'D') else replaceAll(studiodecrypted,(studiodecrypted last 1),'T')
+var nonprodcredvalue = if(trim(substringBefore(substringAfter(substringAfter(vars.credential,((envreplacedid default "") ++ ",")),','),'\n')) contains(",")) trim(substringBefore(substringAfter(substringAfter(vars.credential,((envreplacedid default "") ++ ",")),','),',')) else trim(substringBefore(substringAfter(substringAfter(vars.credential,((envreplacedid default "") ++ ",")),','),'\n'))
+var nonprodcred = if(credtype=="userid") trim(substringBefore(substringAfter(vars.credential,((envreplacedid default "")++ ",")),',')) else 
+				  nonprodcredvalue
+var prodcred = 	if(credtype=="userid") trim(substringBefore(substringAfter(vars.credential,((envreplacedid default "")++ ",")),',')) else 
+				  if(trim(substringAfter(substringAfter(substringBefore(substringAfter(vars.credential,(envreplacedid default "")), '\n'),','),',')) contains(",")) trim(substringBefore(substringAfter(substringAfter(substringBefore(substringAfter(vars.credential,(envreplacedid default "")), '\n'),','),','),',')) else trim(substringAfter(substringAfter(substringBefore(substringAfter(vars.credential,(envreplacedid default "")), '\n'),','),','))		  
+var constant = vars.propertyfilebuilding contains(currentproperty)
+var crednotexists = if((sizeOf(trim(nonprodcred))==0) and (sizeOf(trim(prodcred))==0) and (sizeOf(trim(nonidcredvalue))==0)) payload ++ " - " ++ envreplacedid ++ " - not available in master cred file, so it is not added in " ++ env ++ " properties." else 'true'
+---
+if(constant or (!(nonprodcred contains("^{")) and (nonidcredvalue contains("^{")) and (prodcred contains("^{")))) payload else 
+if(crednotexists=='true')
+if(env=="PROD" or env=="DR")
+if(trim(substringBefore(substringAfter(vars.credential,((studiodecrypted default "") ++ ",")),'\n')) contains("PROD"))
+	"secure::" ++ currentproperty ++ "=" ++ (nonidcredvalue default "") ++ "   #UpdatedByTool"
+	else
+	"secure::" ++ currentproperty ++ "=" ++ (prodcred default "") ++ "   #UpdatedByTool"
+else
+	if(trim(substringBefore(substringAfter(vars.credential,((studiodecrypted default "") ++ ",")),'\n')) contains("PROD"))
+	"secure::" ++ currentproperty ++ "=" ++ (nonidcredvalue default "") ++ "   #UpdatedByTool"
+	else
+	"secure::" ++ currentproperty ++ "=" ++ (nonprodcred default "") ++ "   #UpdatedByTool"
+else
+crednotexists
+]]></ee:set-payload>
+								</ee:message>
+								<ee:variables >
+									<ee:set-variable variableName="templatepropcheck" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var currentpropertyname = if(payload contains('#')) ('\n\n' ++ payload) else trim(substringBefore(payload,'='))
+var propconcheck = (vars.propertytemplate default "") contains(currentpropertyname)
+---
+if(propconcheck) 'true' else 'false']]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+						</when>
+						<otherwise >
+							<ee:transform doc:name="Transform Message" doc:id="29e702dc-5611-40bb-9583-fc792f641d33">
+						<ee:message>
+							<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var env = vars.currentenv default ""
+var currentproperty = trim(substringBefore(trim(payload default ""),'='))
+var currentvalue = trim(substringAfter(trim(payload default ""),'='))
+var valueexcluded = trim(currentproperty ++ "=")
+var httppathcheck = if((substringAfter(payload,'/'))==vars.currentapiname) payload else valueexcluded ++ '/' ++ (vars.currentapiname default "") ++ "   #UpdatedByTool"
+var autodeployflowname = if(currentvalue == ('flow-' ++ (vars.currentapiname default "") ++ '-main')) payload else ('flow-' ++ (vars.currentapiname default "") ++ '-main') ++ "   #UpdatedByTool"
+var noneedprops = "apiId"
+---
+if((payload contains('http.path')) and sizeOf(httppathcheck)>1) httppathcheck else 
+if((payload contains('autodeploy-flow-name')) and sizeOf(autodeployflowname)>1) autodeployflowname else 
+if((upper(currentproperty) contains('ENV')) or (upper(currentvalue) contains('PTEST'))) valueexcluded ++ (vars.testregion[env] default "") ++ "   #UpdatedByTool" else 
+if((payload contains('-db2con')) and (payload contains('/DB2'))) valueexcluded ++ (vars.dburl[env] default "") ++ "   #UpdatedByTool" else  
+if((upper(currentproperty) contains('SCHEMA')) or (upper(currentvalue) contains('XS01'))) valueexcluded ++ (vars.dbschema[env] default "") ++ "   #UpdatedByTool" else 
+if((upper(currentproperty) contains('CICS.HOST'))) valueexcluded ++ (vars.cicshost[env] default "") ++ "   #UpdatedByTool" else
+if((upper(currentproperty) contains('CICS.PORT'))) valueexcluded ++ (vars.cicsport[env] default "") ++ "   #UpdatedByTool" else 
+if((noneedprops contains(currentproperty))) "" else payload]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+						</otherwise>
+					</choice>
+					<choice doc:name="Choice" doc:id="371c0ad4-4011-4140-bfb4-928ce475d620" >
+						<when expression="#[((payload contains(&quot;![&quot;)) and ((vars.templatepropcheck default &quot;&quot;)=='false')) or ((payload contains(&quot;not available in master cred file&quot;)))]">
+							<set-variable value="#[output application/java&#10;import * from dw::core::Strings&#10;var currentvalue = vars.nonstandardproperties default &quot;&quot;&#10;var currentproperty = trim(substringBefore(payload,'='))&#10;---&#10;if((sizeOf(currentvalue)&gt;1)) &#10;	if((currentvalue contains(currentproperty)))&#10;	currentvalue&#10;	else&#10;	currentvalue ++ &quot;&lt;br/&gt;&quot; ++ payload&#10;else payload]" doc:name="Set Variable" doc:id="290b1f31-454a-4635-8dda-7c6a00fcc487" variableName="nonstandardproperties"/>
+						</when>
+						<otherwise >
+							<ee:transform doc:name="Transform Message" doc:id="88ded7cc-9b83-49c0-b0ad-4e6dbb485024">
+					<ee:message>
+					</ee:message>
+						<ee:variables>
+							<ee:set-variable variableName="propertyfilebuilding"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var currentpropertyname = if(payload contains('#')) ('\n\n' ++ payload) else trim(substringBefore(payload,'='))
+var propconcheck = (vars.propertytemplate default "") contains(currentpropertyname)
+var counter = vars.counter
+//var previouspropcontent = if(counter==1) (vars.nonprodconstants default "") ++ (vars.securepropertycontent default "") else (vars.propertyfilebuilding default "")
+//var previouspropcontent = if(counter==1) (vars.propertytemplate default "") else (vars.propertyfilebuilding default "")
+var previouspropcontent = (vars.propertyfilebuilding default "")
+var lastproperty = vars.propertysize == vars.counter
+---
+if(lastproperty)
+if(propconcheck) previouspropcontent ++ '\n' ++ (vars.propertytemplate default "")
+	else
+		if(sizeOf(previouspropcontent)>1)
+		previouspropcontent ++ '\n' ++ payload ++ '\n' ++ (vars.propertytemplate default "")
+		else
+		payload ++ '\n' ++ (vars.propertytemplate default "")
+else
+	if(propconcheck) previouspropcontent
+	else
+		if(sizeOf(previouspropcontent)>1)
+		if(payload contains('#'))
+		previouspropcontent ++ '\n\n' ++ payload
+		else
+		previouspropcontent ++ '\n' ++ payload
+		else
+		payload
+
+	]]></ee:set-variable>
+						</ee:variables>
+				</ee:transform>
+						</otherwise>
+					</choice>
+				</foreach>
+				<choice doc:name="Choice" doc:id="7bdcd450-b403-434c-9935-138c69d23e24" >
+					<when expression="#[(sizeOf(vars.eapipltcontract default &quot;&quot;)&gt;1) and (vars.currentenv contains('PREP'))]">
+						<ee:transform doc:name="Transform Message" doc:id="203511e0-bd5c-4915-bc08-c1c5f9421f8c">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var authzpol = if(trim(vars.authzpol default "")=='on') trim(vars.authorizationpolicy default "") else ''
+var inputmsgsadded = trim(vars.authorizationpolicy default "") ++ '\n' ++ (vars.wsdlinputmsgs default "") 
+var eapiplt = if(sizeOf(vars.healthcheckcontract default "")>1) '4f546f4e1692447280942e8f4841a308:EAPI_PLT' else ''
+var clientidmaps = (inputmsgsadded splitBy('\n')) filter(v,i)-> (v contains('clientIDmap'))
+---
+clientidmaps]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+						<foreach doc:name="For Each" doc:id="ef20b1a3-e488-45aa-8f6d-629bd257ae3d" collection="#[payload]">
+							<ee:transform doc:name="Transform Message" doc:id="26892f9d-7c99-44e8-9a0c-00451950ab1f" >
+								<ee:message >
+									<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var currentconcheck = sizeOf(substringAfter(payload,'='))>1
+var pltclientaddition = if(currentconcheck) payload ++ ';' ++ '4f546f4e1692447280942e8f4841a308:EAPI_PLT' else payload
+---
+if(sizeOf(vars.pltclientaddition default "")>1)
+	(vars.pltclientaddition default "") ++ '\n' ++ pltclientaddition
+else
+	pltclientaddition]]></ee:set-payload>
+								</ee:message>
+								<ee:variables >
+									<ee:set-variable variableName="pltclientaddition" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var currentconcheck = sizeOf(substringAfter(payload,'='))>1
+var pltclientaddition = if(currentconcheck) payload ++ ';' ++ '4f546f4e1692447280942e8f4841a308:EAPI_PLT' else payload
+---
+if(sizeOf(vars.pltclientaddition default "")>1)
+	(vars.pltclientaddition default "") ++ '\n' ++ pltclientaddition
+else
+	pltclientaddition]]></ee:set-variable>
+								</ee:variables>
+							</ee:transform>
+						</foreach>
+					</when>
+				</choice>
+				<choice doc:name="Choice" doc:id="feea6486-8bd2-4264-8548-414b5c6e32af" >
+					<when expression='#[vars.currentenv=="PROD" or vars.currentenv=="DR"]'>
+						<ee:transform doc:name="Policies-PROD" doc:id="fd21faf7-0614-43a1-8349-340714e32334">
+					<ee:message />
+					<ee:variables>
+						<ee:set-variable variableName="policyfilebuilding"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var env = vars.currentenv default ""
+var ratelimitpol = if(trim(vars.ratelimitpol default "")=='on') trim(vars.ratelimitpolicy default "") else ''
+var ratelimitupdated = if(sizeOf(ratelimitpol)>1) substringBefore((vars.ratelimitpolicy default ""),'policy.rate=') ++ 'policy.rate=' ++ (vars.newratelimitvalue default "") ++ '\n' ++ 'ratelimit.policy.frequency' ++ substringAfter((vars.ratelimitpolicy default ""),'ratelimit.policy.frequency') else ''
+var headerinjectionpol = if(trim(vars.headerinjectionpol default "")=='on') trim(vars.headerinjectionpolicy default "") else ''
+
+var compositepol = if(trim(vars.compositepol default "")=='comp1') trim(vars.x509basicauthprod default "") else 
+				   if(trim(vars.mtlspol default "")=='on') trim(vars.mtlsprod default "") else 
+				   if(trim(vars.compositepol default "")=='comp3') trim(vars.x509mtlsbasicauthprod default "") else
+				   if(trim(vars.compositepol default "")=='comp4') trim(vars.mtlsbasicauthprod default "") else ''
+				   
+var clientidenfpol = if(trim(vars.clientidenfpol default "")=='on') trim(vars.clientidenfpolicy default "") else ''
+var authzpol = if(trim(vars.authzpol default "")=='on') trim(vars.authorizationpolicyprod default "") else ''
+var inputmsgsadded = if((vars.pltclientaddition default "") contains('PLT')) trim(vars.authorizationpolicyprod default "") ++ '\n' ++ (vars.pltclientaddition default "")  else trim(vars.authorizationpolicyprod default "") ++ '\n' ++ (if(env=="DR" or env=="PROD") replaceAll((vars.wsdlinputmsgs default ""),"c06872cb9de848b08eee37335699af86:HC_NonProd","e7f49e5c8b044f6b9cbd3e2e65e040da:HC") else (vars.wsdlinputmsgs default "")) 
+var dataencryptionpol = if(trim(vars.dataencryptionpol default "")=='on') trim(vars.authzpolicy default "") else ''
+var newratelimtvalue = trim(vars.newratelimtvalue default "")
+var apicontracts = substringBefore((vars.apicontracts default ""),'contracts.list=') ++ 'contracts.list=' 
+var healthcheckcontract = if(trim(vars.healthcheckcontract default "")=='on') if(env=='PROD' or env=="DR") 'HC' else 'HC_NonProd' else ''
+var eapipltcontract = if(trim(vars.eapipltcontract default "")=='on') 'EAPI_PLT' else ''
+var contracts = if(((vars.currentenv default "") contains('PREP')) and ((vars.pltclientaddition default "") contains('PLT'))) healthcheckcontract ++ ',' ++ eapipltcontract else healthcheckcontract
+var updatedcontracts = apicontracts ++ contracts
+var mtlspol = ""
+
+--- 
+headerinjectionpol ++ '\n\n' ++ ratelimitupdated ++ '\n\n' ++ compositepol ++ '\n\n' ++  clientidenfpol ++ '\n\n' ++ inputmsgsadded ++ '\n\n' ++ updatedcontracts
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+					</when>
+					<otherwise >
+						<ee:transform doc:name="Policies-NonPROD" doc:id="f5cf6496-b613-4159-b80b-00ec861cbde7">
+					<ee:message>
+					</ee:message>
+					<ee:variables>
+						<ee:set-variable variableName="policyfilebuilding"><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var env = vars.currentenv default ""
+var ratelimitpol = if(trim(vars.ratelimitpol default "")=='on') trim(vars.ratelimitpolicy default "") else ''
+var ratelimitupdated = if(sizeOf(ratelimitpol)>1) substringBefore((vars.ratelimitpolicy default ""),'policy.rate=') ++ 'policy.rate=' ++ (vars.newratelimitvalue default "") ++ '\n' ++ 'ratelimit.policy.frequency' ++ substringAfter((vars.ratelimitpolicy default ""),'ratelimit.policy.frequency') else ''
+var headerinjectionpol = if(trim(vars.headerinjectionpol default "")=='on') trim(vars.headerinjectionpolicy default "") else ''
+
+var compositepol = if(trim(vars.compositepol default "")=='comp1') trim(vars.x509basicauthnonprod default "") else 
+				   if(trim(vars.mtlspol default "")=='on') trim(vars.mtlsnonprod default "") else 
+				   if(trim(vars.compositepol default "")=='comp3') trim(vars.x509mtlsbasicauthnonprod default "") else 
+				   if(trim(vars.compositepol default "")=='comp4') trim(vars.mtlsbasicauthnonprod default "") else ''
+
+var clientidenfpol = if(trim(vars.clientidenfpol default "")=='on') trim(vars.clientidenfpolicy default "") else ''
+var authzpol = if(trim(vars.authzpol default "")=='on') trim(vars.authorizationpolicy default "") else ''
+var inputmsgsadded = if((vars.pltclientaddition default "") contains('PLT')) trim(vars.authorizationpolicy default "") ++ '\n' ++ (vars.pltclientaddition default "")  else trim(vars.authorizationpolicy default "") ++ '\n' ++ (if(env=="DR" or env=="PROD") replaceAll((vars.wsdlinputmsgs default ""),"c06872cb9de848b08eee37335699af86:HC_NonProd","e7f49e5c8b044f6b9cbd3e2e65e040da:HC") else (vars.wsdlinputmsgs default "")) 
+var dataencryptionpol = if(trim(vars.dataencryptionpol default "")=='on') trim(vars.authzpolicy default "") else ''
+var newratelimtvalue = trim(vars.newratelimtvalue default "")
+var apicontracts = substringBefore((vars.apicontracts default ""),'contracts.list=') ++ 'contracts.list=' 
+var healthcheckcontract = if(trim(vars.healthcheckcontract default "")=='on') if(env=='PROD' or env=="DR") 'HC' else 'HC_NonProd' else ''
+var eapipltcontract = if(trim(vars.eapipltcontract default "")=='on') 'EAPI_PLT' else ''
+var contracts = if(((vars.currentenv default "") contains('PREP')) and ((vars.pltclientaddition default "") contains('PLT'))) healthcheckcontract ++ ',' ++ eapipltcontract else healthcheckcontract
+var updatedcontracts = apicontracts ++ contracts
+
+--- 
+headerinjectionpol ++ '\n\n' ++ ratelimitupdated ++ '\n\n' ++ compositepol ++ '\n\n' ++  clientidenfpol ++ '\n\n' ++ inputmsgsadded ++ '\n\n' ++ updatedcontracts
+]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+					</otherwise>
+				</choice>
+				<file:write doc:name="Write" doc:id="85699153-bb63-4328-bed2-0f9e33804531" config-ref="File_Config" path='#["${gui.workingdirectory}" ++ (vars.currentapiname default "") ++ "_config\\Deployment\\" ++ (vars.currentenv default "") ++ ".deploy"]'>
+					<file:content ><![CDATA[#[trim(vars.deploytemplate)]]]></file:content>
+				</file:write>
+				<file:write doc:name="Write" doc:id="9b128e73-6a07-4cdb-a8fa-f57f1fb2db67" config-ref="File_Config" path='#["${gui.workingdirectory}" ++ (vars.currentapiname default "") ++ "_config\\Policies\\" ++ (vars.currentenv default "") ++ ".policy"]'>
+					<file:content ><![CDATA[#[trim(vars.policyfilebuilding)]]]></file:content>
+				</file:write>
+				<file:write doc:name="Write" doc:id="24207048-b536-4e58-b24d-dc522fc1eb0c" config-ref="File_Config" path='#["${gui.workingdirectory}" ++ (vars.currentapiname default "") ++ "_config\\Properties\\OCP\\" ++ (vars.currentenv default "") ++ ".properties"]'>
+					<file:content ><![CDATA[#[trim(vars.propertyfilebuilding)]]]></file:content>
+				</file:write>
+				<ee:transform doc:name="Transform Message" doc:id="239c61d4-2893-446d-9cea-0ccfb16826ed" >
+					<ee:message >
+					</ee:message>
+					<ee:variables >
+						<ee:set-variable variableName="propertyfilebuilding" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+						<ee:set-variable variableName="pltclientaddition" ><![CDATA[%dw 2.0
+output application/java
+---
+""]]></ee:set-variable>
+					</ee:variables>
+				</ee:transform>
+				<set-variable value='#[""]' doc:name="Set Variable" doc:id="5e29d480-1222-4332-80fa-b16220b98ee7" variableName="pltclientaddition"/>
+			</foreach>
+			<ee:transform doc:name="Transform Message" doc:id="5b9791ac-0324-42c2-9616-305e2b0ba3d4" >
+				<ee:message >
+					<ee:set-payload ><![CDATA[output application/json
+---
+{
+	"default" : {
+		"isolationPrefix" : null,
+		"endpointURL" : "url.1-way-ingress-https-api,url.2-way-ingress-https-api",
+		"clusterType" : vars.newclustervalue default "",
+		"businessGroup" : vars.reponame default "",
+		"api-type": "realtime"
+		
+	}
+}]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="configfilename" ><![CDATA[%dw 2.0
+output application/java
+---
+(vars.currentapiname default "") ++ "_config.zip"]]></ee:set-variable>
+					<ee:set-variable variableName="nonstandardprops" ><![CDATA[%dw 2.0
+output application/java
+var nsprops = (vars.nonstandardproperties default "")
+---
+if(sizeOf(nsprops)>1) '<span class="warning">**Properties updated by tool are tagged as "#UpdatedByTool" which needs to be reviewed.<br/><br/>**Below properties/credentials are not available in master cred file, please verify and add them if required</span><br/><br/>' ++ nsprops else '<span class="warning">**Tool has updated few properties. Please verify and update them if required, before pushing to Git.<br/>**Tool has updated api-type as "realtime" in tagertconfig.json file under deployment folder. Please verify and update if required.<br/>']]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<file:write doc:name="Write" doc:id="feabcaf7-2dd0-4d7e-8123-b8a66f4fa548" config-ref="File_Config" path='#["${gui.workingdirectory}" ++ (vars.currentapiname default "") ++ "_config\\Deployment\\" ++ "targetconfig.json"]' >
+			</file:write>
+		</foreach>
+		<java:new doc:name="New" doc:id="7b161971-e713-4fe7-bf04-b19f2b1994b3" class="com.org.propertyutil.ZipFiles" constructor="ZipFiles()" />
+		<java:invoke doc:name="Invoke" doc:id="ce1aa798-bcad-4a8d-a6f2-fb703299ffdc" instance="#[payload]" class="com.org.propertyutil.ZipFiles" method="zipDirectory(java.lang.String,java.lang.String)">
+					<java:args><![CDATA[#[{
+	arg0 : Mule::p('gui.workingdirectory') ++ (vars.currentapiname default "") ++ "_config",
+	arg1 : Mule::p('gui.workingdirectory') ++ (vars.currentapiname default "") ++ "_config.zip" 
+}]]]></java:args>
+				</java:invoke>
+		<file:copy doc:name="Copy" doc:id="cf93ee1b-30a6-4bc0-9053-7ca13e5e387e" config-ref="File_Config" sourcePath="#[Mule::p('gui.workingdirectory') ++ (vars.currentapiname default &quot;&quot;) ++ &quot;_config.zip&quot;]" targetPath="#[Mule::p('gui.workingdirectory') ++ &quot;File\\&quot;]" overwrite="true"/>
+		<logger level="INFO" doc:name="Logger" doc:id="ecec7dd7-64ee-465a-9e8a-1563b1e7e6c0" message="***************Config files have been created******************"/>
+		<try doc:name="Try1" doc:id="10b8db92-1d05-4100-80a5-6fcf73360b5b">
+			<email:send doc:name="Send" doc:id="271eb6f0-49cf-4034-847b-386038d884e1" config-ref="Email_SMTP" fromAddress="${smtp.from}" subject="#[&quot;Service Config Creator - &quot; ++ (vars.currentapiname default &quot;&quot;) ++ &quot;, Status : &quot; ++ 'Pass' ++ &quot;, Branch : &quot; ++ &quot;master&quot;]">
+				<email:to-addresses>
+					<email:to-address value="narendranadh.kilari@truist.com" />
+				</email:to-addresses>
+				<email:cc-addresses>
+				</email:cc-addresses>
+				<email:body contentType="text/html" encoding="UTF-8">
+					<email:content><![CDATA[#[%dw 2.0
+output text/plain
+---
+'Mule config files have been created for ' ++ (vars.currentapiname default "")]]]></email:content>
+				</email:body>
+			</email:send>
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="01e2ce8b-1ebc-4166-988c-964be3ed2206">
+					<logger level="INFO" doc:name="Logger" doc:id="45993831-9fea-4429-b025-d2e29d01f40e" message="Error sending email" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<try doc:name="Try" doc:id="4d62b136-b8bc-40c8-a9bc-5fe88558ccc5">
+			<db:insert doc:name="Insert" doc:id="098661c1-10ec-417d-b6c4-e7e29533dd63" config-ref="Database-Connection">
+				<db:sql><![CDATA[INSERT INTO EAPI_MULE_T2M_REPORT (TOOL_NAME, SERVICE_NAME, BRANCH_NAME, USAGE_STATUS, FAIL_COUNT, PASS_COUNT, USED_BY, LAST_UPDATED)
+VALUES (:toolname, :servicename, :branchname, :usagestatus, :failcount, :passcount, :usedby, :lastupdated)]]></db:sql>
+				<db:input-parameters><![CDATA[#[{
+	'toolname' : "Mule Config Creator",
+	'servicename' : vars.apiname[0],
+	'branchname' : vars.branch,
+	'usagestatus' : "Pass",
+	'failcount' : "N/A",
+	'passcount': "N/A",
+	'usedby' : vars.developer,
+	'lastupdated' : (now() >> "America/New_York") as String {format: "y-MM-dd HH:m:s"}
+}]]]></db:input-parameters>
+			</db:insert>
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="486bac5b-caa5-4391-b9ae-0c22b1d647d7">
+					<logger level="INFO" doc:name="Logger" doc:id="7570a8e5-0166-47b4-942f-29cb61dcbdce" message="Error inserting in to database" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<parse-template doc:name="Parse Template" doc:id="b2760b6b-9a16-4c7c-8d64-752d57739823" location="web\generateconfig.html"/>
+	</flow>
+</mule>

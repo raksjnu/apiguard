@@ -1,0 +1,819 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<tls:context name="TLS_ContextRV" doc:name="TLS Context" doc:id="ffd24f90-22c9-47ae-9e73-a5f2e8b5aeeb" >
+		<tls:trust-store path="${truststore.path}" password="${secure::truststore.password}" type="jks" />
+	</tls:context>
+	
+	<http:request-config name="HTTPResponseCompare" doc:name="HTTP Request configuration" doc:id="7dc5c6c6-99b6-4900-82cb-d8ffe439b822" >
+		<http:request-connection protocol="HTTPS" host="#[vars.tibcohost]" port="443" usePersistentConnections="false" tlsContext="TLS_ContextRV"/>
+	</http:request-config>
+	<http:request-config name="HTTPRVMule" doc:name="HTTP Request configuration" doc:id="88e84cb3-9d9f-4bd2-ba2e-b7a9cd0613d4" >
+		<http:request-connection protocol="HTTPS" host="#[vars.mulehost]" port="443" usePersistentConnections="false" >
+			<http:authentication >
+				<http:basic-authentication username="c06872cb9de848b08eee37335699af86" password="D12dDf9C2f3848EAA241c81f7Fb1628b" />
+			</http:authentication>
+		</http:request-connection>
+	</http:request-config>
+	<http:request-config name="bbtnetconnection" doc:name="HTTP Request configuration" doc:id="58c8bfac-61bd-4090-b5a1-9cd951ceb860" >
+		<http:request-connection usePersistentConnections="false" host="webservicetest.bbtnet.com" port="81"/>
+	</http:request-config>
+	<flow name="responsevalidatorFlow" doc:id="51de5f6d-b4c0-43df-af16-4489efa8241e" >
+		<http:listener doc:name="Listener" doc:id="e26d407a-6b58-48d7-8687-58a738bb2992" config-ref="HTTP_Listener_config" path="/compareresponses"/>
+		<ee:transform doc:name="Transform Message" doc:id="90b88bbc-7c67-4899-83f4-f51ec0e4d727" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.tibcoendpoint.content]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="tibcoendpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.tibcoendpoint.content]]></ee:set-variable>
+				<ee:set-variable variableName="muleendpoint" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.muleendpoint.content]]></ee:set-variable>
+				<ee:set-variable variableName="soapaction" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.soapaction.content]]></ee:set-variable>
+				<ee:set-variable variableName="inputrequest" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.inputrequest.content]]></ee:set-variable>
+				<ee:set-variable variableName="servicename" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.servicename.content]]></ee:set-variable>
+				<ee:set-variable variableName="developer" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.developer.content]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="f923c383-f1cf-44ab-b9a6-3eb10ecfd1c0" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+var namespace = substringAfter(substringBefore(vars.inputrequest,':'),'<') default "SOAP-ENV"
+var soapenv = if(vars.inputrequest contains('SOAP-ENV')) "SOAP-ENV" else "soapenv"
+---
+substringBeforeLast(substringBefore(substringAfter(substringAfter(vars.inputrequest,('<' ++ soapenv ++ ':Body>')),'>'),('</' ++ soapenv ++ ':Body>')),'</')
+]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<ee:transform doc:name="Transform Message" doc:id="5d62c7b8-15b1-4291-8c39-cd2c85c9bc4b" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+(payload splitBy("\n")) filter(v,i)-> (sizeOf(trim(v default ""))>1) and (!(v contains("<!")))]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="tibcohost" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter((vars.tibcoendpoint default ""),'//'),'/')]]></ee:set-variable>
+				<ee:set-variable variableName="mulehost" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+substringBefore(substringAfter((vars.muleendpoint default ""),'//'),'/')]]></ee:set-variable>
+				<ee:set-variable variableName="tibcouri" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+"/" ++ substringAfter(substringAfter((vars.tibcoendpoint default ""),'//'),'/')]]></ee:set-variable>
+				<ee:set-variable variableName="muleuri" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+"/" ++ substringAfter(substringAfter((vars.muleendpoint default ""),'//'),'/')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="9bfd61c3-6156-4b0c-8cbc-39652505bd3a" collection="#[payload default []]">
+			<choice doc:name="Choice" doc:id="6276b91b-b2fd-443c-9dc2-f30e309beb5e" >
+				<when expression="#[(payload contains('Channel')) or (payload contains('channel'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="fab0c7f0-8813-4446-a0a1-68f984ec9563" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="784dc181-0d25-4a4b-a0d7-ace7c8c849f8" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.channels') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="be8d3e5d-568b-4554-80c2-e91aea5481fe" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="ce4e5f28-991a-4028-9519-ab308ae0d3ee" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="7b9dd495-df8f-4c2c-ba84-52db120bd302" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="47c3e251-cf54-48e1-8da3-21217108dc2c" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('User')) or (payload contains('user'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="bc92add4-11b9-4cd3-8f94-ad1187729d60" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="0c55ed28-9295-4d31-aee9-eb8da396f487" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.userids') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="21d71886-a587-4669-9d34-92a8114ab6da" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="d75be37f-5dac-472c-8d9e-ee7b0eadc8cc" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="985dbc7f-668f-49fc-b021-b0b501d985b5" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="a86c4c34-7228-49f5-8a56-b6a4fd0e2635" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('AccountNumber')) or (payload contains('AccountNum')) or (payload contains('accountnumber')) or (payload contains('acctNumber')) or (payload contains('AcctNumber')) or (payload contains('acctNum'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="c9481c35-10c0-4995-87d6-ba87e15aee26" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="5b54abd5-e5a9-444c-b8c9-72ba87efe1b0" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.accountnumbers') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="c4a30cb9-6954-4b7d-8080-7ed2a4462f5c" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="2524c754-47a8-44e5-bc75-4e11dca26cc5" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="32051688-4f9e-4dd4-9973-46fd6e5c40c0" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="96cfb991-3318-464d-8f2e-1c8ed2e6126d" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('Amount')) or (payload contains('amount')) or (payload contains('Amt')) or (payload contains('amt')) or (payload contains('Payment')) &#10;or (payload contains('Pmnt')) or (payload contains('payment')) or (payload contains('pmnt')) or (payload contains('Income')) or (payload contains('income')) &#10;or (payload contains('Cost')) or (payload contains('cost')) or (payload contains('price')) or (payload contains('Price')) or (payload contains('Balance')) or (payload contains('Bal&gt;'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="b791b391-abad-4fa9-9018-6faf14337f29" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="956b6fa6-22ef-4bf3-992c-06d48d9508d0" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.amounts') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="589f0bfd-a324-49c0-8424-dbbbeebabbc5" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="512ddd6b-2a24-46ca-9b81-cc19070630e8" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="f4c5fbbe-fda4-4f2a-92d0-5c0eaae7eee9" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="532da5a5-44bf-4a17-a1cd-ff1300c34255" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('CIFStaticKey')) or (payload contains('StaticKey')) or (payload contains('Static')) or (payload contains('staticKey')) or (payload contains('static')) or (payload contains('statickey'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="9a299774-5001-4f38-95c0-3ce8ff197611" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="2935594c-d36d-422a-bb69-8fa120c74479" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.statickeys') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="b213f1bb-1e66-41d7-b94a-c89675dd80dc" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="86336ce6-3eb9-4665-803a-2cb22b2c5cd8" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="136b66e3-bd0e-42a6-b29e-5e140cb75c7d" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="fc803143-82c6-42d3-985e-12139ca9b9a8" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('BankNum')) or (payload contains('BankNo')) or (payload contains('bankNum')) or (payload contains('Bank')) or (payload contains('banknum')) or (payload contains('bank'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="a28ec815-57f7-4568-b1be-463b695c95c1" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="84460d17-9491-4e78-9f6f-834905041886" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.banknums') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="6e873feb-9aed-443b-9b41-0e7d91f5fa42" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="9b4940f4-2f3f-4687-8160-95cd294e39ec" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="de49f4e0-879a-41f5-aba2-9bac3406d068" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="a124c377-793c-42ec-9e5b-8b0be34214bb" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('CardNum')) or (payload contains('CardNumber')) or (payload contains('cardNumber')) or (payload contains('cardnumber')) or (payload contains('CardNo')) or (payload contains('cardno'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="509ae930-4587-41c0-8099-b328eeaff67f" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="e41362a6-de8f-4087-bcde-c9cf535da1fe" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.cardnumbers') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="9beae451-96a1-4aa3-8c15-90d047d5a504" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="823fa55d-ae11-412a-b8a6-b99b121e8e25" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="a9e19f8c-bfc7-4ec8-b438-3ab2444c7fb9" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="c9b1f50c-2522-42d8-aae5-a3e321ac9f2d" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('Date')) or (payload contains('date'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="9dc6a2b4-b3d7-4939-9240-052203fb4e31" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="7a8b441c-1c19-48c1-b66f-3247611e35b2" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.dates') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="a7ee6ed5-fe04-40da-a97f-46b361018ff2" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="fd771c4f-378a-40d3-8c77-cda6ce25ec19" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="ba8b9667-46af-4e33-846b-84b2251813d7" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="b7d0c63b-810b-4d7b-88fc-0d1d8ffe2e61" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('Name')) or (payload contains('name')) or (payload contains('Address')) or (payload contains('address')) or (payload contains('County')) or (payload contains('State')) or (payload contains('City'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="ec22b92a-c060-4dc1-ae58-c7cec0e85c27" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="5e681eb6-0b40-467a-8688-40a0819ae30b" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.names') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="c26872aa-12d4-4075-bed3-2458fbe0acd0" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="c614f510-c15f-4f10-8aee-04cb95aa39b3" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="48ae2e18-576c-4591-ae2b-f433370827c8" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="14dcc01b-47a9-4e2f-84bb-8782752f7aad" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('Application')) or (payload contains('application'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="9bf17b1a-7662-47d7-9a45-940fc69d3883" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="69110cc1-e521-4197-a873-f3fe0ee3a244" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.applications') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="a56146bc-2036-40b5-bb1a-9635d99b9f32" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="4e861c23-6e47-4d5e-a1e2-2146ab9800a0" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="23613627-7910-473f-801b-1f4c78493112" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="b49eb99d-693c-4db0-ad54-e843694ccd40" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('SSN')) or (payload contains('ssn'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="413fa474-1a08-4100-93e2-abfb63dac422" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="e67764c7-eee8-46d9-b4ea-94768e6f4cd8" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.ssn') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="2f4ba079-b7cc-4c9c-930f-02835e587e7d" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="2b561df2-4c66-404b-b3ee-106e6095dc4c" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="aa7eea22-7beb-4162-bbd7-13a1c303c85f" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="be2fe00e-6c0b-4488-aac1-c53719e55395" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('CustomerId')) or (payload contains('Customer')) or (payload contains('customerId')) or (payload contains('customer')) or (payload contains('Id'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="0ed641a5-d60f-4503-bbaf-a97e6c01cae0" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="00c8d621-73c8-4ee3-a33b-a2e0969d5d8b" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.ssn') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="d9f0dbc9-4653-4606-abd9-6f456b9745e7" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="a6be0b6f-0b35-4731-89a6-64ce1eaf1e65" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="36daff91-6a48-45c1-8474-2197de1cec13" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="8b48898a-db7b-41b2-acea-ca2be3ffd9d7" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('InquiryLevel')) or (payload contains('inquiryLevel')) or (payload contains('inquirylevel')) or (payload contains('inquiry')) or (payload contains('Inquiry'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="90cb1c39-48c4-41e4-a7a8-1497fa6dc273" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="88bc498a-cacf-4d5f-b4f8-2dc05fffe4fc" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.inquirylevel') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="43b5e851-d1b9-40a0-bf0b-a96047984e9b" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="a8bedc7c-1635-4486-904d-d1ae9213e6eb" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="26d57919-ef3c-4386-bed4-5c21c5ff2b2a" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="399bc0bd-31ec-4930-9b6e-b7afda0d7437" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('Ind&gt;')) or (payload contains('PrimaryInd')) or (payload contains('Flag')) or (payload contains('Action'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="c67ea48c-56a6-44d1-87fa-bb1951692961" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="a8f95677-f6b8-4a44-b997-ea00dfdd9aad" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.inds') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="35993d88-f9d5-46b0-b276-49ddcac069b2" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="0f55952c-fdfb-4922-ab29-490485152412" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="7619f535-5ae1-4585-a6c0-5fa09f67e3d4" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="d8c32864-2ebf-4fb2-9529-19d89a4504a9" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<when expression="#[(payload contains('Code')) or (payload contains('code'))]">
+					<set-variable value='#[%dw 2.0&#10;import * from dw::core::Strings&#10;---&#10;trim(payload default "")]' doc:name="Set Variable" doc:id="1163fe5d-b2f8-4c28-b4da-99b997050fbc" variableName="currentelementpayload"/>
+					<ee:transform doc:name="Transform Message" doc:id="80a463e1-2408-4eb0-9adc-49cec17d7479" >
+						<ee:message >
+							<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+
+---
+p('input.codes') splitBy(",")]]></ee:set-payload>
+						</ee:message>
+					</ee:transform>
+					<foreach doc:name="For Each" doc:id="76ffb738-72e1-4745-a323-3047a5d4990a" collection="#[payload]">
+						<ee:transform doc:name="Transform Message" doc:id="4de15606-2112-461c-9685-e2239670fb8d" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+if(payload contains("removetag")) "" else
+substringBefore(vars.currentelementpayload,'>') ++ ">" ++ payload ++ "</" ++ substringAfter(vars.currentelementpayload,'</')]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<ee:transform doc:name="Transform Message" doc:id="5e1f2cf3-1754-439e-90b3-b47d90219d8a" >
+							<ee:message >
+								<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.inputrequest,vars.currentelementpayload,payload)]]></ee:set-payload>
+							</ee:message>
+						</ee:transform>
+						<set-variable value='#[%dw 2.0&#10;output application/java&#10;var formedrequests = vars.formedrequests default ""&#10;---&#10;if(sizeOf(formedrequests)&gt;1) formedrequests ++ "," ++ payload else payload]' doc:name="Set Variable" doc:id="4a192193-7c50-456b-b90c-0838df109880" variableName="formedrequests"/>
+					</foreach>
+				</when>
+				<otherwise >
+					<logger level="INFO" doc:name="Logger" doc:id="3381f47e-e157-4335-9aee-aa83a7a3c691" />
+				</otherwise>
+			</choice>
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="416add2a-b71e-42a0-9b16-eb376139919c" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+(vars.formedrequests splitBy(",")) filter(v,i)-> (v contains('xml'))]]></ee:set-payload>
+			</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="testrequestscount" ><![CDATA[%dw 2.0
+output application/java
+var testrequests = (vars.formedrequests splitBy(",")) filter(v,i)-> (v contains('xml'))
+---
+sizeOf(testrequests)]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+		<foreach doc:name="For Each" doc:id="a016202f-d365-4280-b6fa-54510d516642" collection="#[payload default []]">
+			<set-variable value="#[payload]" doc:name="Set Variable" doc:id="9d8fbbaf-a629-41e3-8a47-7b49da02cbeb" variableName="currentrequestdata" />
+			<try doc:name="Try" doc:id="24e59b93-5703-4db7-af6f-6fcaca168d2f">
+				<choice doc:name="Choice" doc:id="9f1a7e38-8254-48f7-80b0-c30c8aafe640" >
+					<when expression="#[vars.tibcoendpoint contains('bbtnet.com')]">
+						<http:request method="POST" doc:name="Request" doc:id="952aeaa6-0aac-4241-b9fe-f7e62fb93ca3" config-ref="bbtnetconnection" path='#[vars.tibcouri default ""]'>
+							<http:body ><![CDATA[#[vars.currentrequestdata default ""]]]></http:body>
+							<http:headers ><![CDATA[#[output application/java
+---
+{
+	"SOAPAction" : vars.soapaction default "",
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+						</http:request>
+					</when>
+					<otherwise >
+						<http:request method="POST" doc:name="RequestTibco" doc:id="ee836a5d-70ef-46fb-b754-059d2e0f708b" config-ref="HTTPResponseCompare" path='#[vars.tibcouri default ""]'>
+			<http:body><![CDATA[#[vars.currentrequestdata default ""]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"SOAPAction" : vars.soapaction default "",
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+		</http:request>
+					</otherwise>
+				</choice>
+				<ee:transform doc:name="Transform Message" doc:id="9f98ccd8-695e-4570-a259-134df7bc1e20">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="tibcoresponse"><![CDATA[%dw 2.0
+output application/java
+---
+write(payload,'application/xml')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="da780b12-98ca-4688-8bd3-0fc22b62567f">
+						<set-variable value="Error calling Tibco service" doc:name="Set Variable" doc:id="2f985cbe-bd9d-4724-8d8b-17aa9a0578e3" variableName="tibcoresponse" />
+					</on-error-continue>
+				</error-handler>
+			</try>
+			<try doc:name="Try" doc:id="ac8980c6-5a01-40f8-8cd1-5fe11579e452">
+				<http:request method="POST" doc:name="RequestMule" doc:id="0eaf9600-3f8f-48e5-94f9-76a4f3e13d8d" config-ref="HTTPRVMule" path='#[vars.muleuri default ""]'>
+			<http:body><![CDATA[#[vars.currentrequestdata default ""]]]></http:body>
+			<http:headers><![CDATA[#[output application/java
+---
+{
+	"SOAPAction" : vars.soapaction default "",
+	"Content-Type" : "application/xml"
+}]]]></http:headers>
+		</http:request>
+				<ee:transform doc:name="Transform Message" doc:id="e8152c95-f055-42e4-8e38-e1b1983f2c5c">
+			<ee:message>
+			</ee:message>
+			<ee:variables>
+				<ee:set-variable variableName="muleresponse"><![CDATA[%dw 2.0
+output application/java
+---
+write(payload,'application/xml')]]></ee:set-variable>
+			</ee:variables>
+		</ee:transform>
+				<error-handler>
+					<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="918e186e-b56a-4011-a23a-bac088909ab3">
+						<set-variable value="Error calling Mule service" doc:name="Set Variable" doc:id="11a8ee02-982b-4634-be1c-87083bef7538" variableName="muleresponse" />
+					</on-error-continue>
+				</error-handler>
+			</try>
+			<ee:transform doc:name="Transform Message" doc:id="89c78809-50c7-4ffd-9b31-9dcf88e6c8ec">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+var responsesame = vars.tibcoresponse == vars.muleresponse
+---
+if(responsesame)
+'<tr><td class="numberstyle">' ++ vars.counter ++ '</td><td><textarea class="responsevalidatortibco">' ++ (vars.tibcoresponse default "") ++  '</textarea></td> <td><img width="80px" height="80px" src="https://cdn2.iconfinder.com/data/icons/flat-game-set/64/FIRST_SET_ICON_part_4-22-512.png"></td> <td><textarea class="responsevalidatormule">' ++ (vars.muleresponse default "") ++ '</textarea></td></tr>'
+else
+'<tr><td class="numberstyle">' ++ vars.counter ++ '</td><td><textarea class="responsevalidatortibco">' ++ (vars.tibcoresponse default "") ++  '</textarea></td> <td><img width="80px" height="80px" src="https://media.baamboozle.com/uploads/images/250053/1614720839_86296_gif-url.gif"></td> <td><textarea class="responsevalidatormule">' ++ (vars.muleresponse default "") ++ '</textarea></td></tr>'
+]]></ee:set-payload>
+				</ee:message>
+				<ee:variables >
+					<ee:set-variable variableName="consolidatedrequestscontent" ><![CDATA[%dw 2.0
+output application/java
+var formedrequests = vars.consolidatedrequestscontent default ""
+---
+if(sizeOf(formedrequests)>1) formedrequests ++ "\n\n--------------------------------------------------------------------------------------------------\n\n" ++ vars.counter ++ "\n\n--------------------------------------------------------------------------------------------------\n\n" ++ vars.currentrequestdata else '1\n\n' ++ vars.currentrequestdata]]></ee:set-variable>
+				</ee:variables>
+			</ee:transform>
+			<set-variable value='#[%dw 2.0&#10;output application/java&#10;import * from dw::core::Strings&#10;var finalresponses = vars.finalresponses default ""&#10;---&#10;if(sizeOf(finalresponses)&gt;1) finalresponses ++ payload else payload]' doc:name="Set Variable" doc:id="8a69b9fb-094a-43e1-b4a2-929eb8e1075c" variableName="finalresponses" />
+		</foreach>
+		<ee:transform doc:name="Transform Message" doc:id="fe1d7e33-441a-42f8-921d-30f6bb28c0d1">
+				<ee:message>
+					<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var finalresponses = vars.finalresponses default ""
+---
+finalresponses]]></ee:set-payload>
+				</ee:message>
+			<ee:variables >
+				<ee:set-variable variableName="finalresponsecomparisondata" ><![CDATA[%dw 2.0
+output text/plain
+import * from dw::core::Strings
+var finalresponses = vars.finalresponses default ""
+---
+finalresponses]]></ee:set-variable>
+				<ee:set-variable variableName="formedrequestscontent" ><![CDATA[%dw 2.0
+output application/java
+import * from dw::core::Strings
+---
+replaceAll(vars.formedrequests,',','\n\n--------------------------------------------------------------------------------------------------\n\n')]]></ee:set-variable>
+			</ee:variables>
+			</ee:transform>
+		<try doc:name="Try" doc:id="8a5c31aa-49da-42e0-9158-7ebf72703026">
+			<email:send doc:name="Send" doc:id="83bce46b-1054-4053-904a-7d43ced5c07f" config-ref="Email_SMTP" fromAddress="${smtp.from}" subject="#[&quot;API Response Comparison - API : &quot; ++ (vars.servicename default &quot;&quot;) ++ &quot;, Status : &quot; ++ 'Executed']">
+				<email:to-addresses>
+					<email:to-address value="narendranadh.kilari@truist.com" />
+				</email:to-addresses>
+				<email:cc-addresses />
+				<email:body contentType="text/html" encoding="UTF-8">
+					<email:content><![CDATA[#[%dw 2.0
+output text/plain
+---
+'API Response comparison has been triggered for ' ++ (vars.servicename default "") ++  " - Number of test cases executed : " ++ (vars.testrequestscount default "")]]]></email:content>
+				</email:body>
+			</email:send>
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="03e4a63c-bae4-4701-9d44-e5d9d7e2373c">
+					<logger level="INFO" doc:name="Logger" doc:id="e37b7d03-6d1f-4361-8c1a-1346218ff8eb" message="Error sending email" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<try doc:name="Try1" doc:id="2d946306-9a51-4879-868f-42ea00d29443">
+			<db:insert doc:name="Insert" doc:id="af53d269-1f31-4060-a9b8-4b87a29a9656" config-ref="Database-Connection">
+				<db:sql><![CDATA[INSERT INTO EAPI_MULE_T2M_REPORT (TOOL_NAME, SERVICE_NAME, BRANCH_NAME, USAGE_STATUS, FAIL_COUNT, PASS_COUNT, USED_BY, LAST_UPDATED, TIBCO_ENDPOINT, MULE_ENDPOINT, INPUT_REQUEST_DATA, SOAP_ACTION, NUM_OF_TESTCASES_EXECUTED)
+VALUES (:toolname, :servicename, :branchname, :usagestatus, :failcount, :passcount, :usedby, :lastupdated, :tibcoendpoint, :muleendpoint, :requestdata, :soapaction, :testcasescount)]]></db:sql>
+				<db:input-parameters><![CDATA[#[{
+	'toolname' : 'Compare API Responses',
+	'servicename' : vars.servicename,
+	'branchname' : "",
+	'usagestatus' : "EXECUTED",
+	'failcount' : "",
+	'passcount': "",
+	'usedby' : vars.developer,
+	'lastupdated' : (now() >> "America/New_York") as String {format: "y-MM-dd HH:m:s"},
+	'tibcoendpoint' : vars.tibcoendpoint,
+	'muleendpoint' : vars.muleendpoint,
+	'requestdata' : vars.inputrequest,
+	'soapaction' : vars.soapaction,
+	'testcasescount' : vars.testrequestscount
+}]]]></db:input-parameters>
+			</db:insert>
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true" doc:name="On Error Continue" doc:id="0013c4f2-0e2c-4e50-85c3-a7a948cde939">
+					<logger level="INFO" doc:name="Logger" doc:id="a0a6dc16-9ed3-4aa5-9b17-8c3dff8c8133" message="Error inserting in to database" />
+				</on-error-continue>
+			</error-handler>
+		</try>
+		<parse-template doc:name="Parse Template" doc:id="ae69f99e-3708-4742-b007-f31dd458ea68" location="web\compareapiresponses.html"/>
+	</flow>
+	<flow name="responsevalidatorFlow1" doc:id="2efcceae-1877-4e26-80f5-507d9df896f8" >
+		<http:listener doc:name="Listener" doc:id="f5c8b649-8f37-46c4-8b01-6a9c4c07a5bd" config-ref="HTTP_Listener_config" path="/compareapiresponses"/>
+		<parse-template doc:name="Parse Template" doc:id="cb5586a4-e511-4e12-b880-bb119bb194d0" location="web\compareresponseshome.html"/>
+	</flow>
+</mule>

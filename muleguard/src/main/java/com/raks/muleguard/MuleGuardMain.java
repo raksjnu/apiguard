@@ -79,6 +79,9 @@ public class MuleGuardMain {
         // Load project identification configuration
         Map<String, Object> projectIdConfig = configWrapper.getConfig().getProjectIdentification();
 
+        // Max search depth for nested projects
+        int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
+
         // Config folder pattern
         @SuppressWarnings("unchecked")
         Map<String, Object> configFolderConfig = (Map<String, Object>) projectIdConfig.get("configFolder");
@@ -113,105 +116,79 @@ public class MuleGuardMain {
             System.exit(1);
         }
 
-        try (var stream = Files.list(parentFolder)) {
-            stream.filter(Files::isDirectory)
-                    .filter(dir -> {
-                        String name = dir.getFileName().toString();
+        // Use recursive project discovery instead of flat Files.list()
+        List<Path> discoveredProjects = com.raks.muleguard.util.ProjectDiscovery.findMuleProjects(
+                parentFolder,
+                maxSearchDepth,
+                markerFiles,
+                matchMode,
+                configFolderPattern,
+                exactIgnoredNames,
+                ignoredPrefixes);
 
-                        // Check exact ignored folder names
-                        if (exactIgnoredNames.contains(name)) {
-                            return false;
+        System.out.println(); // Blank line after discovery
+
+        // Validate each discovered project
+        for (Path apiDir : discoveredProjects) {
+            String apiName = apiDir.getFileName().toString();
+            boolean isConfigProject = apiName.matches(configFolderPattern);
+            System.out.printf("Validating %s: %s%n", isConfigProject ? "Config" : "API", apiName);
+
+            List<Rule> applicableRules = allRules.stream()
+                    .filter(Rule::isEnabled)
+                    .filter(rule -> {
+                        int ruleIdNum = Integer.parseInt(rule.getId().replace("RULE-", ""));
+                        boolean isConfigRule = (ruleIdNum >= configRuleStart && ruleIdNum <= configRuleEnd);
+
+                        if (isConfigRule && globalEnvironments != null && !globalEnvironments.isEmpty()) {
+                            rule.getChecks().forEach(check -> {
+                                if (check.getParams() == null) {
+                                    check.setParams(new java.util.HashMap<>());
+                                }
+
+                                // Check if environments parameter exists and contains "ALL"
+                                @SuppressWarnings("unchecked")
+                                List<String> envs = (List<String>) check.getParams().get("environments");
+
+                                if (envs != null && envs.size() == 1
+                                        && "ALL".equalsIgnoreCase(envs.get(0))) {
+                                    // Replace "ALL" with global environment list
+                                    check.getParams().put("environments",
+                                            new ArrayList<>(globalEnvironments));
+                                } else if (envs == null || envs.isEmpty()) {
+                                    // If no environments specified, use global list
+                                    check.getParams().put("environments",
+                                            new ArrayList<>(globalEnvironments));
+                                }
+                                // Otherwise, keep the specific environments list as-is
+                            });
                         }
 
-                        // Check ignored prefixes
-                        for (String prefix : ignoredPrefixes) {
-                            if (name.startsWith(prefix)) {
-                                return false;
-                            }
-                        }
+                        return isConfigProject == isConfigRule;
+                    }).collect(Collectors.toList());
 
-                        // Check if it's a Mule API project based on matchMode
-                        boolean isCodeProject;
-                        if ("ALL".equalsIgnoreCase(matchMode)) {
-                            // ALL mode: ALL marker files must exist (AND logic)
-                            isCodeProject = markerFiles.stream()
-                                    .allMatch(markerFile -> Files.exists(dir.resolve(markerFile)));
-                        } else {
-                            // ANY mode (default): At least ONE marker file must exist (OR logic)
-                            isCodeProject = markerFiles.stream()
-                                    .anyMatch(markerFile -> Files.exists(dir.resolve(markerFile)));
-                        }
+            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir);
+            ValidationReport report = engine.validate();
+            report.projectPath = apiName + " (" + apiDir.toString() + ")";
 
-                        // Check if it's a config project (matches naming pattern)
-                        boolean isConfigProject = name.matches(configFolderPattern);
+            Path apiReportDir = reportsRoot.resolve(apiName);
 
-                        return isCodeProject || isConfigProject;
-                    })
-                    .forEach(apiDir -> {
-                        String apiName = apiDir.getFileName().toString();
-                        boolean isConfigProject = apiName.matches(configFolderPattern);
-                        System.out.printf("Validating %s: %s%n", isConfigProject ? "Config" : "API", apiName);
+            try {
+                Files.createDirectories(apiReportDir);
+            } catch (IOException e) {
+                System.err.println("Failed to create report dir for " + apiName + ": " + e.getMessage());
+                continue; // Changed from return to continue
+            }
 
-                        List<Rule> applicableRules = allRules.stream()
-                                .filter(Rule::isEnabled)
-                                .filter(rule -> {
-                                    int ruleIdNum = Integer.parseInt(rule.getId().replace("RULE-", ""));
-                                    boolean isConfigRule = (ruleIdNum >= configRuleStart && ruleIdNum <= configRuleEnd);
+            ReportGenerator.generateIndividualReports(report, apiReportDir);
 
-                                    if (isConfigRule && globalEnvironments != null && !globalEnvironments.isEmpty()) {
-                                        rule.getChecks().forEach(check -> {
-                                            if (check.getParams() == null) {
-                                                check.setParams(new java.util.HashMap<>());
-                                            }
+            int passed = report.passed.size();
+            int failed = report.failed.size();
+            int skipped = report.skipped.size();
+            results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
 
-                                            // Check if environments parameter exists and contains "ALL"
-                                            @SuppressWarnings("unchecked")
-                                            List<String> envs = (List<String>) check.getParams().get("environments");
-
-                                            if (envs != null && envs.size() == 1
-                                                    && "ALL".equalsIgnoreCase(envs.get(0))) {
-                                                // Replace "ALL" with global environment list
-                                                check.getParams().put("environments",
-                                                        new ArrayList<>(globalEnvironments));
-                                            } else if (envs == null || envs.isEmpty()) {
-                                                // If no environments specified, use global list
-                                                check.getParams().put("environments",
-                                                        new ArrayList<>(globalEnvironments));
-                                            }
-                                            // Otherwise, keep the specific environments list as-is
-                                        });
-                                    }
-
-                                    return isConfigProject == isConfigRule;
-                                }).collect(Collectors.toList());
-
-                        ValidationEngine engine = new ValidationEngine(applicableRules, apiDir);
-                        ValidationReport report = engine.validate();
-                        report.projectPath = apiName + " (" + apiDir.toString() + ")";
-
-                        Path apiReportDir = reportsRoot.resolve(apiName);
-
-                        try {
-                            Files.createDirectories(apiReportDir);
-                        } catch (IOException e) {
-                            System.err.println("Failed to create report dir for " + apiName + ": " + e.getMessage());
-                            return;
-                        }
-
-                        ReportGenerator.generateIndividualReports(report, apiReportDir);
-
-                        int passed = report.passed.size();
-                        int failed = report.failed.size();
-                        int skipped = report.skipped.size();
-                        results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
-
-                        System.out.println("   " + (failed == 0 ? "PASS" : "FAIL") +
-                                " | Passed: " + passed + " | Failed: " + failed + " | Skipped: " + skipped + "\n");
-                    });
-        } catch (Exception e) {
-            System.err.println("Error scanning folders: " + e.getMessage());
-            e.printStackTrace();
-            System.exit(1);
+            System.out.println("   " + (failed == 0 ? "PASS" : "FAIL") +
+                    " | Passed: " + passed + " | Failed: " + failed + " | Skipped: " + skipped + "\n");
         }
 
         try {
@@ -279,6 +256,24 @@ public class MuleGuardMain {
             @SuppressWarnings("unchecked")
             List<String> ignoredPrefixes = (List<String>) ignoredFoldersConfig.get("prefixes");
 
+            // Get max search depth
+            @SuppressWarnings("unchecked")
+            Map<String, Object> projectIdConfig = (Map<String, Object>) configWrapper.getConfig()
+                    .getProjectIdentification();
+            int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
+
+            // Get marker files and match mode
+            @SuppressWarnings("unchecked")
+            Map<String, Object> muleApiConfig = (Map<String, Object>) projectIdConfig.get("muleApiProject");
+            String matchMode = (String) muleApiConfig.getOrDefault("matchMode", "ANY");
+            @SuppressWarnings("unchecked")
+            List<String> markerFiles = (List<String>) muleApiConfig.get("markerFiles");
+
+            // Get config folder pattern
+            @SuppressWarnings("unchecked")
+            Map<String, Object> configFolderConfig = (Map<String, Object>) projectIdConfig.get("configFolder");
+            String configFolderPattern = (String) configFolderConfig.get("namePattern");
+
             int configRuleStart = configWrapper.getConfig().getRules().get("start");
             int configRuleEnd = configWrapper.getConfig().getRules().get("end");
             List<String> globalEnvironments = configWrapper.getConfig().getEnvironments();
@@ -298,109 +293,95 @@ public class MuleGuardMain {
                 return result;
             }
 
-            // Run validation
-            try (var stream = Files.list(parentFolder)) {
-                stream.filter(Files::isDirectory)
-                        .filter(dir -> {
-                            String name = dir.getFileName().toString();
-                            if (exactIgnoredNames.contains(name))
-                                return false;
-                            for (String prefix : ignoredPrefixes) {
-                                if (name.startsWith(prefix))
-                                    return false;
-                            }
-                            return true;
-                        })
-                        .forEach(apiDir -> {
-                            String apiName = apiDir.getFileName().toString();
-                            Path apiReportDir = reportsRoot.resolve(apiName);
+            // Use recursive project discovery
+            List<Path> discoveredProjects = com.raks.muleguard.util.ProjectDiscovery.findMuleProjects(
+                    parentFolder,
+                    maxSearchDepth,
+                    markerFiles,
+                    matchMode,
+                    configFolderPattern,
+                    exactIgnoredNames,
+                    ignoredPrefixes);
 
+            // Run validation on each discovered project
+            for (Path apiDir : discoveredProjects) {
+                String apiName = apiDir.getFileName().toString();
+                Path apiReportDir = reportsRoot.resolve(apiName);
+
+                try {
+                    Files.createDirectories(apiReportDir);
+                } catch (IOException e) {
+                    System.err.println("Failed to create report directory for " + apiName);
+                    continue;
+                }
+
+                // Determine if project is Config or Code
+                boolean isConfigProject = apiName.matches(configFolderPattern);
+
+                // Filter rules based on project type
+                List<Rule> applicableRules = configWrapper.getRules().stream()
+                        .filter(Rule::isEnabled)
+                        .filter(rule -> {
                             try {
-                                Files.createDirectories(apiReportDir);
-                            } catch (IOException e) {
-                                System.err.println("Failed to create report directory for " + apiName);
-                                return;
-                            }
+                                int ruleIdNum = Integer.parseInt(rule.getId().replace("RULE-", ""));
+                                boolean isConfigRule = (ruleIdNum >= configRuleStart
+                                        && ruleIdNum <= configRuleEnd);
 
-                            // Determine if project is Config or Code
-                            @SuppressWarnings("unchecked")
-                            Map<String, Object> configFolderConfig = (Map<String, Object>) configWrapper.getConfig()
-                                    .getProjectIdentification().get("configFolder");
-                            String configFolderPattern = (String) configFolderConfig.get("namePattern");
-                            boolean isConfigProject = apiName.matches(configFolderPattern);
-
-                            // Filter rules based on project type
-                            List<Rule> applicableRules = configWrapper.getRules().stream()
-                                    .filter(Rule::isEnabled)
-                                    .filter(rule -> {
-                                        try {
-                                            int ruleIdNum = Integer.parseInt(rule.getId().replace("RULE-", ""));
-                                            boolean isConfigRule = (ruleIdNum >= configRuleStart
-                                                    && ruleIdNum <= configRuleEnd);
-
-                                            // Handle global environments for config rules
-                                            if (isConfigRule && globalEnvironments != null
-                                                    && !globalEnvironments.isEmpty()) {
-                                                rule.getChecks().forEach(check -> {
-                                                    if (check.getParams() == null) {
-                                                        check.setParams(new HashMap<>());
-                                                    }
-
-                                                    @SuppressWarnings("unchecked")
-                                                    List<String> envs = (List<String>) check.getParams()
-                                                            .get("environments");
-
-                                                    if (envs != null && envs.size() == 1
-                                                            && "ALL".equalsIgnoreCase(envs.get(0))) {
-                                                        check.getParams().put("environments",
-                                                                new ArrayList<>(globalEnvironments));
-                                                    } else if (envs == null || envs.isEmpty()) {
-                                                        check.getParams().put("environments",
-                                                                new ArrayList<>(globalEnvironments));
-                                                    }
-                                                });
-                                            }
-
-                                            return isConfigProject == isConfigRule;
-                                        } catch (NumberFormatException e) {
-                                            return false; // Skip rules with invalid IDs
+                                // Handle global environments for config rules
+                                if (isConfigRule && globalEnvironments != null
+                                        && !globalEnvironments.isEmpty()) {
+                                    rule.getChecks().forEach(check -> {
+                                        if (check.getParams() == null) {
+                                            check.setParams(new HashMap<>());
                                         }
-                                    }).collect(Collectors.toList());
 
-                            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir);
-                            ValidationReport report = engine.validate();
+                                        @SuppressWarnings("unchecked")
+                                        List<String> envs = (List<String>) check.getParams()
+                                                .get("environments");
 
-                            if (report == null) {
-                                System.err.println("Validation failed for " + apiName);
-                                return;
+                                        if (envs != null && envs.size() == 1
+                                                && "ALL".equalsIgnoreCase(envs.get(0))) {
+                                            check.getParams().put("environments",
+                                                    new ArrayList<>(globalEnvironments));
+                                        } else if (envs == null || envs.isEmpty()) {
+                                            check.getParams().put("environments",
+                                                    new ArrayList<>(globalEnvironments));
+                                        }
+                                    });
+                                }
+
+                                return isConfigProject == isConfigRule;
+                            } catch (NumberFormatException e) {
+                                return false; // Skip rules with invalid IDs
                             }
+                        }).collect(Collectors.toList());
 
-                            // Use display name (ZIP filename) if provided, otherwise show full local path
-                            // This ensures reports for uploaded ZIPs don't show internal temp paths
-                            if (displayName != null && !displayName.trim().isEmpty()) {
-                                report.projectPath = displayName;
-                            } else {
-                                report.projectPath = apiName + " (" + apiDir.toString() + ")";
-                            }
+                ValidationEngine engine = new ValidationEngine(applicableRules, apiDir);
+                ValidationReport report = engine.validate();
 
-                            ReportGenerator.generateIndividualReports(report, apiReportDir);
+                if (report == null) {
+                    System.err.println("Validation failed for " + apiName);
+                    continue;
+                }
 
-                            int passed = report.passed.size();
-                            int failed = report.failed.size();
-                            int skipped = report.skipped.size();
-                            results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
+                // Use display name (ZIP filename) if provided, otherwise show full local path
+                // This ensures reports for uploaded ZIPs don't show internal temp paths
+                if (displayName != null && !displayName.trim().isEmpty()) {
+                    report.projectPath = displayName;
+                } else {
+                    report.projectPath = apiName + " (" + apiDir.toString() + ")";
+                }
 
-                            System.out.println("Validating API: " + apiName);
-                            System.out.println("   " + (failed == 0 ? "PASS" : "FAIL") +
-                                    " | Passed: " + passed + " | Failed: " + failed + " | Skipped: " + skipped + "\n");
-                        });
-            } catch (Exception e) {
-                result.put("status", "ERROR");
-                result.put("message", "Error scanning folders: " + e.getMessage());
-                result.put("passed", new ArrayList<>());
-                result.put("failed", new ArrayList<>());
-                result.put("skipped", new ArrayList<>());
-                return result;
+                ReportGenerator.generateIndividualReports(report, apiReportDir);
+
+                int passed = report.passed.size();
+                int failed = report.failed.size();
+                int skipped = report.skipped.size();
+                results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
+
+                System.out.println("Validating API: " + apiName);
+                System.out.println("   " + (failed == 0 ? "PASS" : "FAIL") +
+                        " | Passed: " + passed + " | Failed: " + failed + " | Skipped: " + skipped + "\n");
             }
 
             // Generate consolidated report

@@ -1,0 +1,13 @@
+
+#------------------------------------ START --------------------------------------------------------------------
+##                              TruistMtlsAuthnpolicy
+##-------------------------------------------------------------------------------------------------
+truist.mtlsauthn.policy.applied=true
+truist.mtlsauthn.policy.name="TruistMtlsAuthnpolicy"
+truist.mtlsauthn.policy.assetid="TruistMtlsAuthnpolicy"
+truist.mtlsauthn.policy.version=1.0.0
+truist.mtlsauthn.policy.serviceType="Soap"
+truist.mtlsauthn.policy.xtfcauthorizationheader="x-tfc-authorization"
+truist.mtlsauthn.policy.wsdlclientid="e7f49e5c8b044f6b9cbd3e2e65e040da"
+truist.mtlsauthn.policy.clientDNmap.DNtoCI="C=US, ST=North Carolina, L=Charlotte, O=Truist Bank, OU=ITSM-Mulesoft-APIPlatform, CN=eapigw-apisops.truist-prd.com:e7f49e5c8b044f6b9cbd3e2e65e040da"
+#------------------------------------- END ---------------------------------------------------------------------

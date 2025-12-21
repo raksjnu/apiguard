@@ -1,0 +1,488 @@
+<html>
+<head>
+  <script>
+
+    number = 0;
+    var animations = ['https://i.gifer.com/7YkR.gif'
+    ];
+    
+    
+     var refreshIntervalId = setInterval(function() {
+      image = document.getElementById('hiddenimageid').style.visibility="hidden";
+      image.src = animations[number];
+    },1)
+    
+    
+    function character() {
+    clearInterval(refreshIntervalId);
+      image = document.getElementById('hiddenimageid').style.visibility="visible";
+      image.src = animations[number];
+    
+      console.log(number);
+      number++;
+    
+    
+    }
+    
+    function configureDropDownLists(ddl1, ddl2) {
+  var queuemanager = ['MUL_DEV_QM1', 'MULSITQM1', 'MULTPPQM1'];
+  var channels = ['TDV10.MUL.API.SVRCON', 'ATD10.MUL.API.SVRCON', 'ITE10.MUL.API.SVRCON', 'PIT10.MUL.API.SVRCON', 'TRN10.MUL.API.SVRCON', 'PRP10.MUL.API.SVRCON','TDH10.MUL.API.SVRCON'];
+
+
+  switch (ddl1.value) {
+    case 'queuemanager':
+      ddl2.options.length = 0;
+      for (i = 0; i < qm.length; i++) {
+        createOption(ddl2, qm[i], colours[i]);
+      }
+      break;
+    case 'channels':
+      ddl2.options.length = 0;
+      for (i = 0; i < cn.length; i++) {
+        createOption(ddl2, cn[i], shapes[i]);
+      }
+      break;
+    
+    default:
+      ddl2.options.length = 0;
+      break;
+  }
+
+}
+
+function createOption(ddl, text, value) {
+  var opt = document.createElement('option');
+  opt.value = value;
+  opt.text = text;
+  ddl.options.add(opt);
+}
+    
+function showCSTemplates(sel){   
+
+locations =[ "", /*this remains blank for first selection in drop-down list*/ 
+
+/*option 1*/                 
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>dev-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MUL_DEV_QM1</b><br/>MQ Channel = <b>TDV10.MUL.API.SVRCON</b><br/><br/></p>',
+
+/*option 2*/                
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>dev-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MUL_DEV_QM1</b><br/>MQ Channel = <b>ATD10.MUL.API.SVRCON</b><br/><br/></p>',
+
+/*option 3*/                 
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>dev-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MUL_DEV_QM1</b><br/>MQ Channel = <b>ATD10.MUL.API.SVRCON</b><br/><br/></p>',
+
+/*option 4*/                 
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>sit-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MULSITQM1</b><br/>MQ Channel = <b>ITE10.MUL.API.SVRCON</b><br/><br/></p>',
+
+/*option 5*/                 
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>sit-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MULSITQM1</b><br/>MQ Channel = <b>PIT10.MUL.API.SVRCON</b><br/><br/></p>',
+
+/*option 6*/                 
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>sit-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MULSITQM1</b><br/>MQ Channel = <b>PIT10.MUL.API.SVRCON</b><br/><br/></p>',
+
+/*option 7*/                
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>sit-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MULSITQM1</b><br/>MQ Channel = <b>TRN10.MUL.API.SVRCON</b><br/><br/></p>',
+
+/*option 8*/                 
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>tpp-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MULTPPQM1</b><br/>MQ Channel = <b>PRP10.MUL.API.SVRCON</b><br/><br/></p>',
+
+/*option 9*/                 
+'<p><b>#Selected Environment Configuration</b><br/><br/>MQ Host = <b>tpp-vmulwmq01.bbtnet.com</b><br/>MQ Port = <b>11415</b><br/>MQ Queue Manager = <b>MULTPPQM1</b><br/>MQ Channel = <b>TDH10.MUL.API.SVRCON</b><br/><br/></p>',
+
+
+];
+                   srcLocation = locations    [sel.selectedIndex];    
+   if (srcLocation != undefined && srcLocation != "") {      
+                  document.getElementById('CSTemplates').innerHTML= srcLocation;   
+ } 
+}
+    </script>
+<style>
+body{
+	background-color:#f3f2ed;
+}
+.header{
+	background-size: cover;
+}
+
+.header{
+  text-align:center;
+  padding:2px 2px;
+  padding-right:10px;
+  font-family: Roboto Slab;
+  font-size: 30px;
+  text-transform: uppercase;
+  text-rendering: optimizeLegibility;
+  color: #131313;
+  letter-spacing: .15em;
+ text-shadow:
+    -1px -1px 0 #767676,
+    -1px 1px 1px #737272;
+}          
+
+.mqheader{
+font-family:Roboto Slab;
+text-shadow:none;
+letter-spacing:0em;
+padding-top:0px;
+font-weight: normal;
+font-size:20px;
+margin-left:7%;
+
+}
+
+td{
+  padding:5px;
+  border:none;
+  outline:none;
+}
+
+.mqinputs{
+  width:350px;
+  height:50px;
+  border:none;
+  outline:none;
+  border-radius:18px;
+  text-align:center;
+  font-family: Roboto Slab;
+  font-size:17px;
+  margin-right:500px;
+}
+.mqtable{
+  margin-top:50px;
+}
+
+.sendbutton{
+	width:350px;
+  height:70px;
+	text-align:center;
+	margin-top:20px;
+	border-radius:18px;
+	font-family:Roboto Slab;
+	font-size:20px;
+	background-color:#13b67d;
+	box-shadow: 0px 12px 16px 0px rgba(0,0,0,0.2);
+	border:none;
+	outline:none;
+	color:white;	
+}		
+
+.sendbutton:hover{
+	box-shadow: 0px 16px 16px 0px rgba(0,0,0,0.2);
+	background-color:#1bce8f;
+}
+
+.sendbutton:active{
+	border:none;
+}
+
+.mqconsumer{
+  position:absolute;
+  width:250px;
+  height:60px;
+	text-align:center;
+	bottom:15px;
+  right:30px;
+	border-radius:18px;
+	font-family:Roboto Slab;
+	font-size:20px;
+	background-color:#13b67d;
+	box-shadow: 0px 12px 16px 0px rgba(0,0,0,0.2);
+	border:none;
+	outline:none;
+	color:white;	
+}
+
+.mqtextarea{
+  position: absolute;
+  right:120px;
+  top:240px;
+  width:40%;
+  height:38%;
+  border:2px solid #13b67d;
+  outline:none;
+  font-family:Roboto Slab;
+  font-size:17px;
+  padding:10px;
+  background-color: #ffffff;
+  border-radius: 18px;
+}
+
+.board {
+  position: absolute;
+  top: 4.3vh;
+  left: 10vw;
+  cursor: pointer;
+  left:86%;
+  top:85%;
+  background-color: transparent;
+
+}
+
+.board img {
+  width: 200px;
+  height:100px;
+  border-radius: 15%;
+  
+
+}
+
+.custom-select {
+  min-width: 350px;
+  position: relative;
+  
+  
+}
+
+select {
+  appearance: none;
+  /*  safari  */
+  -webkit-appearance: none;
+  /*  other styles for aesthetics */
+  border:none;
+  outline:none;
+  
+
+}
+
+.custom-select::before,
+.custom-select::after {
+  --size: 0.3rem;
+  content: "";
+  position: absolute;
+  right: 1rem;
+  pointer-events: none;
+
+}
+
+.custom-select::before {
+  border-left: var(--size) solid transparent;
+  border-right: var(--size) solid transparent;
+  border-bottom: var(--size) solid black;
+  top: 40%;
+
+}
+
+.custom-select::after {
+  border-left: var(--size) solid transparent;
+  border-right: var(--size) solid transparent;
+  border-top: var(--size) solid black;
+  top: 55%;
+}
+
+
+/*=============
+Aesthetics 
+=========================*/
+
+* {
+  box-sizing: border-box;
+  
+}
+
+.autocomplete {
+  position: relative;
+  display: inline-block;
+  align-items:right;
+}
+
+.autocomplete-items {
+width:300px;
+  position: absolute;
+  border: none;
+  z-index: 99;
+  border-radius:30px;
+  font-family:Roboto Slab;
+  font-size:14px;
+  /*position the autocomplete items to be the same width as the container:*/
+}
+
+.autocomplete-items div {
+  padding: 10px;
+  cursor: pointer;
+  background-color: #fff; 
+  border-bottom: 1px solid #d4d4d4; 
+  border-radius:12px;
+}
+
+/*when hovering an item:*/
+.autocomplete-items div:hover {
+  background-color: #e9e9e9; 
+}
+
+/*when navigating through the items using the arrow keys:*/
+.autocomplete-active {
+  background-color: DodgerBlue !important; 
+  color: #ffffff; 
+}
+
+</style>
+ <title>Mule MQ Trigger</title>
+<link href="https://fonts.googleapis.com/css?family=Pridi:300|Quattrocento|Quicksand|Roboto+Slab&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+<div class="header">
+<p>Mule MQ Trigger</p>
+<br/>
+</div>
+<h4 class="mqheader">Please provide MQ connection details</h4>
+<form action="/t2mpoc-eapi01-sbx/mqtrigger" enctype="multipart/form-data" method="POST">
+<table align="center" class="mqtable">
+  <tr><td><input type="text" id="myapiname" name="servicename" class="mqinputs" placeholder="Service Name" required></td></tr>
+  <tr><td><input type="text" id="myqueuevar" name="queuename" class="mqinputs" placeholder="Queue Name" required></td></tr>
+  <!--<tr><td><input type="text" name="queuemanager" class="mqinputs" placeholder="Queue Manager"></td></tr>
+  <tr><td><input type="text" name="channel" class="mqinputs" placeholder="Channel"></td></tr>-->
+  <tr><td><p class="custom-select mqinputs" >
+    <select class="mqinputs" name="environment" onchange="showCSTemplates(this);" required>
+      <option value="Environment" id="Templates">Environment</option>
+      <option value="TDV">TDV</option>
+      <option value="ATDV">ATDV</option>
+      <option value="MNE">MNE</option>
+      <option value="ITE">ITE</option>
+      <option value="PITE">PITE</option>
+      <option value="IBF">IBF</option>
+      <option value="TRN">TRN</option>
+      <option value="TPP">TPP</option>
+      <option value="DRL">DRL</option>
+    </select>
+  </p></td></tr>
+  
+  <tr><td><input type="text" name="triggermessage" class="mqinputs" placeholder="Payload" required></td></tr>
+  <tr><td><input type="text" id="myInput" name="developer" class="mqinputs" placeholder="Developer" required pattern="(([^@\s]+@[^@\s]+.[^@\s]+),)*(([^@\s]+@[^@\s]+.[^@\s,.]+$))"></td></tr>
+  <tr><td><button type="submit" value="submit" onclick="character();" class="sendbutton">Send Message</button></td></tr>
+</table>
+</form>
+<br/>
+<table align="center" class="mqtable">
+  <form action="/t2mpoc-eapi01-sbx/mqconsumer" enctype="multipart/form-data" method="POST">
+  <tr><td><button type="submit" value="submit" onclick="character();" class="mqconsumer">MQ Consumer</button></td></tr>
+  </form>
+</table>
+<script>
+
+  function autocomplete(inp, arr) {
+    /*the autocomplete function takes two arguments,
+    the text field element and an array of possible autocompleted values:*/
+    var currentFocus;
+    /*execute a function when someone writes in the text field:*/
+    inp.addEventListener("input", function(e) {
+        var a, b, i, val = this.value;
+        /*close any already open lists of autocompleted values*/
+        closeAllLists();
+        if (!val) { return false;}
+        currentFocus = -1;
+        /*create a DIV element that will contain the items (values):*/
+        a = document.createElement("DIV");
+        a.setAttribute("id", this.id + "autocomplete-list");
+        a.setAttribute("class", "autocomplete-items");
+        /*append the DIV element as a child of the autocomplete container:*/
+        this.parentNode.appendChild(a);
+        /*for each item in the array...*/
+        for (i = 0; i < arr.length; i++) {
+          /*check if the item starts with the same letters as the text field value:*/
+          if (arr[i].substr(0, val.length).toUpperCase() == val.toUpperCase()) {
+            /*create a DIV element for each matching element:*/
+            b = document.createElement("DIV");
+            /*make the matching letters bold:*/
+            b.innerHTML = "<strong>" + arr[i].substr(0, val.length) + "</strong>";
+            b.innerHTML += arr[i].substr(val.length);
+            /*insert a input field that will hold the current array item's value:*/
+            b.innerHTML += "<input type='hidden' value='" + arr[i] + "'>";
+            /*execute a function when someone clicks on the item value (DIV element):*/
+            b.addEventListener("click", function(e) {
+                /*insert the value for the autocomplete text field:*/
+                inp.value = this.getElementsByTagName("input")[0].value;
+                /*close the list of autocompleted values,
+                (or any other open lists of autocompleted values:*/
+                closeAllLists();
+            });
+            a.appendChild(b);
+          }
+        }
+    });
+    /*execute a function presses a key on the keyboard:*/
+    inp.addEventListener("keydown", function(e) {
+        var x = document.getElementById(this.id + "autocomplete-list");
+        if (x) x = x.getElementsByTagName("div");
+        if (e.keyCode == 40) {
+          /*If the arrow DOWN key is pressed,
+          increase the currentFocus variable:*/
+          currentFocus++;
+          /*and and make the current item more visible:*/
+          addActive(x);
+        } else if (e.keyCode == 38) { //up
+          /*If the arrow UP key is pressed,
+          decrease the currentFocus variable:*/
+          currentFocus--;
+          /*and and make the current item more visible:*/
+          addActive(x);
+        } else if (e.keyCode == 13) {
+          /*If the ENTER key is pressed, prevent the form from being submitted,*/
+          e.preventDefault();
+          if (currentFocus > -1) {
+            /*and simulate a click on the "active" item:*/
+            if (x) x[currentFocus].click();
+          }
+        }
+    });
+    function addActive(x) {
+      /*a function to classify an item as "active":*/
+      if (!x) return false;
+      /*start by removing the "active" class on all items:*/
+      removeActive(x);
+      if (currentFocus >= x.length) currentFocus = 0;
+      if (currentFocus < 0) currentFocus = (x.length - 1);
+      /*add class "autocomplete-active":*/
+      x[currentFocus].classList.add("autocomplete-active");
+    }
+    function removeActive(x) {
+      /*a function to remove the "active" class from all autocomplete items:*/
+      for (var i = 0; i < x.length; i++) {
+        x[i].classList.remove("autocomplete-active");
+      }
+    }
+    function closeAllLists(elmnt) {
+      /*close all autocomplete lists in the document,
+      except the one passed as an argument:*/
+      var x = document.getElementsByClassName("autocomplete-items");
+      for (var i = 0; i < x.length; i++) {
+        if (elmnt != x[i] && elmnt != inp) {
+          x[i].parentNode.removeChild(x[i]);
+        }
+      }
+    }
+    /*execute a function when someone clicks in the document:*/
+    document.addEventListener("click", function (e) {
+        closeAllLists(e.target);
+    });
+  }
+  
+  /*An array containing all the country names in the world:*/
+  var countries = ["Tanvi.Mehta@truist.com","Ananya.Ghosh@truist.com","Chandrika.H@truist.com","Vaibhav.Desmukh@truist.com","Selvapriyanka.Muthukrishnan@truist.com","PavanKumar.MC@truist.com","Pratiksha.Nikam@truist.com","Bhulakshmi.Arigela@truist.com","SyedaMeraj.Unnisa@truist.com","Rajni.Shrivas@truist.com","Akansha.Khandelwal@truist.com","Savita.Gupta@truist.com","Shivani.Jadhav@truist.com","Umang.Kushwaha@truist.com","Supriya.Sontena@truist.com","SriLakshmi.Singampalli@truist.com","Vijayakumara.Pk@truist.com","V.Kumar@truist.com","Mayur.Bhadane@truist.com","Poulami.Saha@truist.com","madhura.wagajkar@truist.com","Reshmitha.Naik@truist.com","Manisha.Ahuja@truist.com","Saurabh.Gambhir@truist.com","Nisha.Makhija@SunTrust.com","Ramesh.Mandali@truist.com","Vinod.Arya@truist.com","Sravani.Kovelampati@truist.com","Ramakrishna.Koppala@truist.com","Ashish.Singh@truist.com","SaiAdithya.Gowlikar@truist.com","Tharun.Pachila@truist.com","Neeharika.Akula@truist.com","Rajeev.Gunturu@truist.com","NAGASAIBALAJI.SIRIGINEEDI@truist.com","Avijit.Rout@truist.com","Sandeep.Bhupathiraju@truist.com","HariPrasad@truist.com","Anubhav.Goel@truist.com","Jinendra.Jain@truist.com","DurgaVijayaKumar.Mandapudi@truist.com","Kavya.Sanga@truist.com","Kalpana.Vesangi@truist.com","Preethi.Parsi@truist.com","Mahipal.Lethakula@truist.com","VenkataJagadeesh.Akula@truist.com","Suveetha.Madhaiyan@truist.com","Santhosh.Ramagiri@truist.com","Praveena.Golthi@SunTrust.com","Nagasuna.Gurudatha@truist.com","Anubhav.Prasad@truist.com","Vishnu.V@truist.com","Thilak.Vesangi@truist.com","Sridevi.Velumani@truist.com","Likhita.Thota@Truist.com","Murali.Siripurapu@truist.com","shireen.shaik@truist.com","Vaishnavi.Ravi@BBandT.com","Savita.Sharma@Truist.com","vafiya.shaik@truist.com","VinayaKumar.Bharatha@SunTrust.com","Kalyani.Tikare@truist.com","geetanjali.shekhar@truist.com","Srinivas.Poluparthi@truist.com","Jasti.Lakshmi@truist.com","swetha.valipireddy@truist.com","punita.kushwaha@truist.com","swatiagrawal@truist.com","Vijay.Baheti@truist.com","Ashok.Chigurupati@truist.com","Alex.Punnoose@truist.com","Raghu.Mecheeri@truist.com","Rakesh.Y.Kumar@truist.com","Narendranadh.Kilari@truist.com","Nisha.Makhija@truist.com>","Nagendra.Katta@truist.com","AkshayVilas.Jadhav@truist.com","Rakhi.Majumdar@truist.com","Mamatha.Panga@truist.com","sandeep.mooda@truist.com","shivaranjan.kondla@truist.com","kiran.gubbala@truist.com"];
+  
+  /*initiate the autocomplete function on the "myInput" element, and pass along the countries array as possible autocomplete values:*/
+  autocomplete(document.getElementById("myInput"), countries);
+  
+  var myapinamefvar = ["futureobligationapi","racsecurityquestionapi","zipcodetimezoneapi","clipintstarterapi","clipintobligorrestapi","pendingpromptinqapi","isamsecuritystarterapi","branchwiretransferapi","retaillinestppmtinqapi","filenetgetdocapi","wiretransferapi","wiretransfrpinauthapi","transferdeleteapi","achonlnapi","achenrollmentapi","cifoperationsapi","bankproatmtxninqapi","accountlistapi","bankprocdiraaccinqapi","cdiraclsvalinqapi","averageprimerateapi","cdiracustmntapi","cdiramodlrateexcpapi","privacyupdatecifapi","mnttimedepapi","ofcrlmtlvlinqapi","postxnapi","preauthtfrapi","rateexcpappridvldapi","bankproprimertapyinqapi","stoppmntinqapi","txnhistinqapi","aifaccmntapi","bankproballblapi","cdiraasgncautnapi","cdirapnltcalapi","clntmailnotifapi","depprimecodeapi","emplrdeprecinqapi","hlthsavaccapi","bulkdataaccvldtapi","callctractcodapi","callctrnsfcurrhistitemsapi","callctrscndfctrauthapi","checkorderdtlapi","crlaccholdapi","crlacccombstmtapi","crlaccolbaccinqapi","crlacczerobalaccapi","crlaccactvtdebcardapi","drlcrtcollatapi","drlcrtconsloanapi","crtshawloancustapi","cmolusergrpmaintapi","drlgetofcrlndglmtapi","docprcngredactimgapi","elndgglupdinqapi","elndgglsrccodeapi","mvtxninqapi","filenetdoctypeapi","igadviginqapi","rlmveraccnumapi","achcompletionapi","rlmdlrfincntapi","finreminderemailapi","adpasswordresetapi","atmereceiptsapi","prdprcextrctapi","stmtsecurityapi","asscpmntwbvltapi","cdiraasgncautninqapi","ddasavaccinqapi","sigdebtxninqapi","bankprocheckapi","findcompanyapi","truistatworkapi","adflmntapi","callctrmischistapi","getclientcallwindow","callctracctranslationapi","ivrcananwillacctfrapi","myfiolbprofileprefapi","ivrctrverificationapi","callctrivrinvldpinapi","ivrpreceptgetempapi","phonetypeapi","callctrstoppayfeeapi","cifaccholdrlnapi","cifaddclientincomeapi","cifaltaddraccapi","cifaltaddapi","finprofilelookupapi","mntcifcommentsapi","clntaccaddrapi","clientbeneficiaryapi","clientemailcontapi","onstartuppwdsetapi","cifcltsearchapi","refreshloginapi","cifbusinessownersapi","ciflegalentityapi","usrselfasscdtlapi","complyctrnonclientmntapi","crlaccvldnusageinqapi","bankownedtaxidsapi","realtimedispbaltranapi","codetableinqapi","crlfetchbanknumappcdapi","crlrtvprdratesapi","crlloanctrofcrinqapi","crlacctfrumbrellaapi","crltfrumbrellaapi","deinqapi","checkpendingaccapi","ordcheckequitylnapi","updshawrewritefileapi","ecomegprofileadrlstapi","ecomegprofilesvclstapi","ecommprofileapi","sboalertapi","commloanobligtninqapi","formattedataapi","exchgemailclndrapi","viewcifcommentsapi","clntprofileapi","laserprocasecrtapi","myfiuserprfapi","ofxenrollmentapi","rcmclientoffersapi","racloanstmtapi","loandecisionapi","filenetdocapi","achenrollapi","alertsenrollmentapi","olbcombtxnlstapi","stmtsupsdecisionapi","achcompanyidinqapi","pendingachtxnapi","waivecodapi","odretitemsfeesapi","ddainqachumbrellaapi","dbtcrdpnvldapi","updatecmspinapi","mntcorprslnapi","olbshowhideaccapi","viewassetliabilityapi","viewclientincomeapi","viewcorpresolutionapi","cifaddrnormalizapi","cifauditapi","checkorderrestapi","checkorderapi","refreshirmlookupapi","cifcnttalrtcontinfoapi","cltprofileapi","onlnbankrecipientapi","cifclientmergeapi","cifcodesapi","cifcompanysearchapi","generatepdfbarcodeapi","cifhouseholdapi","olacclstapi","cltrsgmtvwtmcltapi","afsworkdateapi","cmolacctxnapi","cmolaccapi","cmolaccwrapperapi","cmolacctxnwrapperapi","cmbankprocodtblrtvapi","contjournalapi","accsearchapi","clipcrlintapi","debitcrdmemoapi","debitcrdperznapi","olbcltprofileinfoapi","crltempdebitcrdapi","debitcrdcashrwdapi","debitcrdcntlsetapi","intfadddebitcrdapi","crlintfcardapi","uisupportapi","datasearchrlmapi","updcustatshawapi","egauditlogapi","ecommegauthzlstapi","egbillplanlstapi","egbillplnsvccodlstapi","egbillplansvccodmntapi","egcodesearchapi","ecommegentlmtlstapi","egerrormsglstapi","egpayablestxnlstapi","ecommegx12routerapi","egx12routerlstapi","comlcrdtreportapi","intfdrlfdsapi","loanindexupdapi","docconversionapi","checkaccnumapi","bankregionsearchapi","ezpathbsnezofrinqapi","soapposinqapi","posupdateapi","ldmretrievalapi","loancustinqapi","flexaccviewapi","mtglpsintapi","nadaapi","httpstartwsdlqueryapi","olbprofileflagsapi","ofxonlnpayeeapi","bankcrdprdapi","onlnmiscapi","singlesignonapi","frontofficedocstoreapi","clientproblemsumapi","refundadjustmentapi","nsfodoptinfoapi","wpiqueryapi","salesincentiveapi","empowerclientapi","dlrfinanceautoloanapi","ivrcasemngapi","pdmdocapi","sfcachestartupapi","olbacclstapi","archiveappldataapi","appfilecrtrwdenrapi","astatdtcleanapi","trustbuildersupportapi","olbbulkrecipientsapi","ivrcrdauthnapi","ivrfndtfrapi","ivrprimerateacctfrapi","mlainqapi","taxintsumsvcapi","rmuiclientsearchapi","viewclienthshldapi","viewparkinglotsapi","cltrsgmtvwmtmreqapi","relationshipmngtapi","cplctrexmsrchapi","intfcicsaddcrlaccapi","crlolbenrollmentapi","demntapi","ebilprstsvclsrapi","ebillactapi","ebillautopmntapi","ebillmakepmntapi","ebillmasterapi","ebillsumapi","egauditloglstapi","egchangelogapi","egchangeloglstapi","egentitlementsmntapi","egnotificationlstapi","ecommegprofilemntapi","egtradepartnerlstapi","egvectorcodlstapi","callequifaxcrdtrptapi","centermanagerapi","ebillbankcrdstmtapi","centersearchapi","departmentsearchapi","returneditemapi","ezpathinitialapi","soapezpathupdapi","soapricppapi","posaddapi","ricppupdateapi","bankcrdratemasterapi","bankcrdrwdpolicyapi","calculatecrdtlmtapi","usrprofileapi","retailloansoapstartapi","bankcrdadverseactnapi","collatinqapi","intfgeocodeaddressapi","mtghistapi","payoffquoteapi","eventhandlerapi","wealthwsdlqueryapi","myfiquickviewbalapi","profileimageapi","termsandconditnapi","resumeretryapi","idarelatedappapi","investmentaccdtlapi","getcontactlstapi","onlnbnksvcsenrlapi","onlnbnkslfsvcapi","merchantdtlapi","onlnbannerapi","soapgetatmctrdtlapi","pmntextreliefapi","safeboxapi","sapinqapi","investmentaccapi","planaccessapi","securitiesexchgapi","pctlintradayholdinqapi","wealthdataapi","commloanobliganinqapi","agdocsearchapi","agtasksearchapi","fetchgiftcrdapplstapi","humansystemsicmapi","maintainliabilityapi","mobileappconfigapi","tamapi","acctranslationapi","addprivacyrecordapi","affltsearchapi","cpspmntumbrellaapi","ivrauthacctlistapi","ivrcallacctvmodapi","ivrclainqapi","ivrcustnameaddapi","ivrcpslogoninfoapi","ivrmerchcheckverapi","ivrpreauthapi","ivrreadlogonidapi","ivrremovedormantapi","ivrssnpinapi","ivrtxnlistapi","readadpayxrecapi","writeadpayxrecapi","addassetapi","maintprospectsapi","maintclientincomeapi","crlaccaccmntapi","clipintcifapi","legalentitywrapperapi","listtaskstarterapi","listtrgdtlstarterapi","reasgntrigsoapapi","blainqapi","addcontactapi","crlmntdepaccapi","intfcardapi","crlinqdebitcrddtlapi","egvectorcodemntapi","emailsvcapi","getviewpointeimageapi","filentfrdclmchkimapi","generatedynamicpdfapi","getregionlistapi","getadditionalprdapi","cmpisamapistarterapi","appchalngequesapi","myadvisorapi","clientidentificationapi","ldmcreateupdateapi","bankcardappapi","ldmwrapperapi","corporateadvapi","crdpersonalizationapi","accnicknameapi","billpmntcheckapi","ofxwrpolbtxnapi","fraudinspectorapi","disputetxndtlapi","onlnmiscscrmsgapi","ommaccountapi","alertregistrationapi","fraudclaimscaseapi","atmdebitcardinquiryapi","documentretrieveapi","documentuploadapi","reffrdvldtprmrefapi","tchintgtcifenrdtapi","egnotifcontactlistapi","accountsstarterapi","httpreceiverapi","olbaudtiwsdlqueryapi","remotedepwsdlqueryapi","estmtwrapperapi","fiservaccapi","pegaalertmessageapi","pegaalertsyslog","activedirectoryapi","exposureservicesapi","actdirectoryapi","onlnbankrecipientapi","applicationprofileapi","bankruptcyupdapi","blaupdateapi","cifaccountlistapi","tasktrackingapi","clientsearchapi","consumerauditlogapi","loandealerapi","egcodemntapi","frontofficescanapi","getmngrinfoapi","openbankinglistnerapi","viewclientrmstarterapi","httpstarterapi","treasryhttpstarterapi ","achapi","olbcustomersvcapi","encryptdecryptdataapi","yodleeenrollmentapi","igracfapi","iginquiryapi","kbasecuritysvcsapi","loanreportingapi","mngrdirectreportapi","olbclientapi","zelledualenrollchkapi","ommtransferwebapi","genmultiplepdfapi","ommuserwebapi","onlnusrriskassesmtapi","racusersessionapi","receiptcaptureapi","retailloanlineapi","retailloanlineinqapi","retailloantraninqapi","retailloanpayoffapi","ldmusagesubscriberapi","branchsearchapi","storedvalaccinqapi","generalledgerentryapi","sbouserentitlementsapi","racloanapi","spacecodeapi","rsaapi","usrchallengequesv2api","usrchallengequesapi","userprofilesslv2api","archiveproblemapi","mobiusstarterapi","branchlocatorutilapi","myfimyteamapi","ractermsnconditionapi","wpidirectapi","myfiwsdlqueryapi","racpaymentapi","genaccnumberapi","complyctrtellerapi","auditlogsvcapi","humansystemsapi","mergerbankinquiryapi","cipofachotlistcheckapi","commonlineuserapi","schpmtreminderalertapi","ofxwrpolbaccountsapi","soappayeemntapi","onlinemiscolbclientapi","racsecuremessageapi","racuserenrollmentapi","racclientapi","racnotificationapi","loandecisionnotifyapi","racrecurringachapi","glvalidateapi","directoryscanapi","soappmntlistapi","cntproacctumbrellaapi","multiglvalidateapi","getretailloanpayapi","commapponboardstartapi","ofxsignoffsoapapi","createhomeeqlnapi","accountsvcsapi","ofxsignonsoapapi","recemailnotifyapi","removeoldlogfilesapi","eventnotifapi","prcsalertnotiftimapi","cpfreplacementstartapi","glupdateinquireapi","commloanappapi","intfcrlccountapi"];
+  autocomplete(document.getElementById("myapiname"), myapinamefvar);
+  
+  var myqueuevar = ["EAPI01.ESP.TRG.ARCHVPRBLMAPI.TDV.L","EAPI01.ESP.TRG.ARCHVPRBLMAPI.ATDV.L","EAPI01.ESP.TRG.ARCHVPRBLMAPI.MNE.L","EAPI01.ESP.TRG.ARCHVPRBLMAPI.ITE.L","EAPI01.ESP.TRG.ARCHVPRBLMAPI.PITE.L","EAPI01.ESP.TRG.ARCHVPRBLMAPI.IBF.L","EAPI01.ESP.TRG.ARCHVPRBLMAPI.TRN.L","EAPI01.ESP.TRG.ARCHVPRBLMAPI.TPP.L","EAPI01.ESP.TRG.ARCHVPRBLMAPI.DRL.L","EAPI01.ESP.TRG.REMOLDFILEAPI.TDV.L","EAPI01.ESP.TRG.REMOLDFILEAPI.ATDV.L","EAPI01.ESP.TRG.REMOLDFILEAPI.MNE.L","EAPI01.ESP.TRG.REMOLDFILEAPI.ITE.L","EAPI01.ESP.TRG.REMOLDFILEAPI.PITE.L","EAPI01.ESP.TRG.REMOLDFILEAPI.IBF.L","EAPI01.ESP.TRG.REMOLDFILEAPI.TRN.L","EAPI01.ESP.TRG.REMOLDFILEAPI.TPP.L","EAPI01.ESP.TRG.REMOLDFILEAPI.DRL.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.TDV.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.ATDV.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.MNE.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.ITE.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.PITE.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.IBF.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.TRN.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.TPP.L","EAPI01.ESP.TRG.PRCALRTNOTIFAPI.DRL.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.TDV.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.ATDV.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.MNE.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.ITE.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.PITE.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.IBF.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.TRN.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.TPP.L","EAPI01.FTM.ALERT.NOTIFY.EXCEPTION.DRL.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.TDV.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.ATDV.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.MNE.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.ITE.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.PITE.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.IBF.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.TRN.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.TPP.L","EAPI01.ACH.EMAIL.RECEMAILNOTIFYAPI.DRL.L","EAPI01.DFS.RLM.LOAN.DECISION.TDV.L","EAPI01.DFS.RLM.LOAN.DECISION.ATDV.L","EAPI01.DFS.RLM.LOAN.DECISION.MNE.L","EAPI01.DFS.RLM.LOAN.DECISION.ITE.L","EAPI01.DFS.RLM.LOAN.DECISION.PITE.L","EAPI01.DFS.RLM.LOAN.DECISION.IBF.L","EAPI01.DFS.RLM.LOAN.DECISION.TRN.L","EAPI01.DFS.RLM.LOAN.DECISION.TPP.L","EAPI01.DFS.RLM.LOAN.DECISION.DRL.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.TDV.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.ATDV.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.MNE.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.ITE.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.PITE.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.IBF.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.TRN.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.TPP.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REQ.DRL.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.TDV.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.ATDV.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.MNE.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.ITE.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.PITE.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.IBF.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.TRN.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.TPP.L","EAPI01.ZELLE.SCH.PMNT.ALERT.REPLY.DRL.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.TDV.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.ATDV.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.MNE.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.ITE.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.PITE.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.IBF.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.TRN.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.TPP.L","EAPI01.ZELLE.PMNT.REMINDER.ALERT.DRL.L","EAPI01.NEW.DEPOSIT.ACCOUNT.TDV.L","EAPI01.NEW.DEPOSIT.ACCOUNT.ATDV.L","EAPI01.NEW.DEPOSIT.ACCOUNT.MNE.L","EAPI01.NEW.DEPOSIT.ACCOUNT.ITE.L","EAPI01.NEW.DEPOSIT.ACCOUNT.PITE.L","EAPI01.NEW.DEPOSIT.ACCOUNT.IBF.L","EAPI01.NEW.DEPOSIT.ACCOUNT.TRN.L","EAPI01.NEW.DEPOSIT.ACCOUNT.TPP.L","EAPI01.NEW.DEPOSIT.ACCOUNT.DRL.L","EAPI01.NEW.DDA.NOTIFICATION.TDV.L","EAPI01.NEW.DDA.NOTIFICATION.ATDV.L","EAPI01.NEW.DDA.NOTIFICATION.MNE.L","EAPI01.NEW.DDA.NOTIFICATION.ITE.L","EAPI01.NEW.DDA.NOTIFICATION.PITE.L","EAPI01.NEW.DDA.NOTIFICATION.IBF.L","EAPI01.NEW.DDA.NOTIFICATION.TRN.L","EAPI01.NEW.DDA.NOTIFICATION.TPP.L","EAPI01.NEW.DDA.NOTIFICATION.DRL.L"];
+  autocomplete(document.getElementById("myqueuevar"), myqueuevar);
+  
+  </script>
+
+<div class="board">
+<img src="https://www.launchpads.com.au/assets/css/icons/animated/rocket/animat-rocket-color.gif" id="hiddenimageid" />
+</div>
+</div>
+<p class="mqtextarea" id="CSTemplates"><b>#Default Configuration</b>
+    <br/><br/>
+    MQ Host = <b>dev-vmulwmq01.bbtnet.com</b><br/>
+    MQ Port = <b>11415</b><br/>
+    MQ Queue Manager = <b>MUL_DEV_QM1</b><br/>
+    MQ Channel = <b>TDV.TLS.CMAS.SVRCN</b><br/>
+    <br/>
+</p>
+  </body>
+  </html>

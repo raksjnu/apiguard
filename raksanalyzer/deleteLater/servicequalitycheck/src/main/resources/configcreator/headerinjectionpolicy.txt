@@ -1,0 +1,11 @@
+#------------------------------------ START ------------------------------------------------------------------------
+#Header Injection Policy - DO NOT UPDATE-
+#These headers are used to manipulate custom log points and logging levels in an api. 
+#------------------------------------------------------------------------------------------------------------------------
+headerinjection.policy.applied=true
+headerinjection.policy.inboundheadermap.x-tfc-request-in=INFO
+headerinjection.policy.inboundheadermap.x-tfc-request-out=INFO
+headerinjection.policy.inboundheadermap.x-tfc-response-in=INFO
+headerinjection.policy.inboundheadermap.x-tfc-response-out=INFO
+headerinjection.policy.version=1.1.1
+#------------------------------------- END --------------------------------------------------------------------------

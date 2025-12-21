@@ -1,0 +1,229 @@
+<html>
+<head>
+<script>
+
+number = 0;
+var animations = ['https://animaticons.co/wp-content/uploads/2015/10/animat-pencil-512x512-color.gif'
+];
+
+
+ var refreshIntervalId = setInterval(function() {
+  image = document.getElementById('hiddenimageid').style.visibility="hidden";
+  image.src = animations[number];
+},1)
+
+
+function character() {
+clearInterval(refreshIntervalId);
+  image = document.getElementById('hiddenimageid').style.visibility="visible";
+  image.src = animations[number];
+
+  console.log(number);
+  number++;
+
+}
+
+function myFunction() {
+
+                var btn = document.getElementById("myButton");
+
+                if (btn.value == "Extract") {
+                    btn.value = "In progress";
+                    btn.innerHTML = "In progress";
+                }
+                else {
+                    btn.value = "Extract";
+                    btn.innerHTML = "Extract";
+                }
+
+            }
+			
+</script>
+
+<style>
+
+body { padding: 0; margin: 0; background-color:#[vars.welcome_page_background_color];     background-image: url(http://home.suntrust.com/images/spotlight_background.png);}
+
+.main{
+	width: 100%; height: 100%;
+}
+
+.header{
+	background-size: cover;
+	
+}
+
+.logo{
+	padding-bottom:2px;
+	text-align:left;
+}
+
+.header{
+  text-align:center;
+  padding:2px 2px;
+  padding-right:10px;
+  font-family: Roboto Slab;
+  font-size: 30px;
+  text-transform: uppercase;
+  text-rendering: optimizeLegibility;
+  color: white;
+  letter-spacing: .15em;
+ text-shadow:
+    -1px -1px 0 #767676,
+    -1px 2px 1px #737272;
+background: linear-gradient(to right, #135 0%, #9BD 100%);
+}
+           
+h4{
+	font-size:20px;
+	font-family:Quattrocento;
+	text-transform: lower;
+	font-weight:bold;
+	padding-left:7%;
+	padding-top:7%;
+	margin-bottom:2%;
+
+}
+.button{
+  border-radius: 15px;
+  padding:15px 7px;
+  font-size: 20px;
+  width:250px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  font-family: quicksand;
+  background-color:#[vars.button_color];
+  border:none;
+  outline:none;
+  left:50%;
+  right:50%;
+  color:#[vars.font_color];
+}
+.button:active{
+	border:none;
+	background:teal;   
+}
+.button:focus{
+	border:none;
+	background:teal;   
+}
+.button:visited{
+	border:none;
+	background:teal;   
+}
+
+.button:hover{
+	box-shadow: 0px 14px 16px 0px rgba(0,0,0,0.2);
+	background-color:teal;
+	
+}
+.property{
+	width:250px;
+	text-align:center;
+	margin-top:10%;
+	border-radius:18px;
+	padding:15px;
+	font-family:quicksand;
+	font-size:20px;
+	box-shadow: 0px 12px 16px 0px rgba(0,0,0,0.2);
+	border:none;
+}
+
+.board {
+  position: absolute;
+  top: 4.3vh;
+  left: 10vw;
+  cursor: pointer;
+  left:84%;
+  top:81%;
+
+}
+
+.board img {
+  width: 200px;
+  height:100px;
+  border-radius: 15%;
+
+}
+
+@-moz-document url-prefix() {
+	.file{
+		padding-left:20px;
+	}
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    
+	.filebutton{
+		opacity:0;
+	}
+	.file{
+		margin:0;
+		padding:0;
+		margin-right:100px;
+	}
+	
+}
+
+@supports (-ms-ime-align: auto) {
+  .filebutton{
+		opacity:0;
+	}
+	.file{
+		margin:0;
+		padding:0;
+		margin-right:100px;
+	}
+}
+ .configreview{
+		width:150px;
+		padding:7px;
+		margin:10px;
+		font-family:Pridi;
+		font-size:18px;
+		position:absolute;
+		top:89.5%;
+		right:2.5%;
+		background-color:#FF6347;
+		border-radius:18px;
+		box-shadow: 0px 12px 16px 0px rgba(0,0,0,0.2);
+		border:none;
+		outline:none;
+		color:white;
+	  }
+	  .configreview:hover {
+        	box-shadow: 0px 14px 16px 0px rgba(0,0,0,0.2);
+			background-color:teal;
+      }
+
+</style>
+ <title>#[vars.welcome_page_title]</title>
+<link href="https://fonts.googleapis.com/css?family=Pridi:300|Quattrocento|Quicksand|Roboto+Slab&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="main">
+<div class="header">
+<p>#[vars.welcome_page_header]</p>
+</div>
+<h4>#[vars.propertyFileFolder]</h4>
+<table align="center" class="uploadtable"><tr><td>
+<form action="/extract" enctype="multipart/form-data" method="POST">
+<div class="container">
+      <div class="button-wrap">
+        <input type="text" name="folder" placeholder="Config Repo(s)" class="property" required style="border:none;outline:none;autocomplete:on;">
+        <input type="text" name="rawflag" placeholder="Create raw file : Yes/No" value="Create raw file : Yes" class="property" required style="border:none;outline:none;autocomplete:on;">
+		<input type="text" name="path" placeholder="EAPI/EAPI01" value="EAPI01" class="property" required style="border:none;outline:none;autocomplete:on;">
+      </div>
+    </div>
+	
+</td></tr></table>
+
+<table class="buttontable" align="center" onclick="character()"><tr><td><button class="button" type="submit" onclick="myFunction()" value="Extract" id="myButton">Extract</button></form></td></tr></table>
+
+<div class="board">
+<img src="https://animaticons.co/wp-content/uploads/2015/10/animat-pencil-512x512-color.gif" id="hiddenimageid" />
+</div>
+<table><tr><td><form action="/configreview" enctype="multipart/form-data" method="POST">
+<button class="configreview" type="submit">Config Review</button>
+</form></td></tr></table>
+  </body>
+  </html>

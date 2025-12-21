@@ -109,10 +109,21 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         Element parentElement = (Element) parentNodes.item(0);
         String groupId = getElementText(parentElement, "groupId");
         String artifactId = getElementText(parentElement, "artifactId");
+        String version = getElementText(parentElement, "version");
 
+        // Check groupId and artifactId
         if (!parent.get("groupId").equals(groupId) || !parent.get("artifactId").equals(artifactId)) {
             failures.add(String.format("Parent mismatch in %s: expected %s:%s",
                     projectRoot.relativize(pomFile), parent.get("groupId"), parent.get("artifactId")));
+            return;
+        }
+
+        // Check version if specified in the rule
+        String expectedVersion = parent.get("version");
+        if (expectedVersion != null && !expectedVersion.equals(version)) {
+            failures.add(String.format("Parent version mismatch in %s: expected %s:%s:%s, got version '%s'",
+                    projectRoot.relativize(pomFile), parent.get("groupId"), parent.get("artifactId"), 
+                    expectedVersion, version));
         }
     }
 
@@ -202,15 +213,39 @@ public class PomValidationRequiredCheck extends AbstractCheck {
     private boolean matchesDependency(Element depElement, Map<String, String> expected) {
         String groupId = getElementText(depElement, "groupId");
         String artifactId = getElementText(depElement, "artifactId");
-
-        return expected.get("groupId").equals(groupId) && expected.get("artifactId").equals(artifactId);
+        
+        // Check groupId and artifactId (always required)
+        if (!expected.get("groupId").equals(groupId) || !expected.get("artifactId").equals(artifactId)) {
+            return false;
+        }
+        
+        // Check version if specified in the rule configuration
+        String expectedVersion = expected.get("version");
+        if (expectedVersion != null) {
+            String actualVersion = getElementText(depElement, "version");
+            return expectedVersion.equals(actualVersion);
+        }
+        
+        return true;
     }
 
     private boolean matchesPlugin(Element pluginElement, Map<String, String> expected) {
         String groupId = getElementText(pluginElement, "groupId");
         String artifactId = getElementText(pluginElement, "artifactId");
-
-        return expected.get("groupId").equals(groupId) && expected.get("artifactId").equals(artifactId);
+        
+        // Check groupId and artifactId (always required)
+        if (!expected.get("groupId").equals(groupId) || !expected.get("artifactId").equals(artifactId)) {
+            return false;
+        }
+        
+        // Check version if specified in the rule configuration
+        String expectedVersion = expected.get("version");
+        if (expectedVersion != null) {
+            String actualVersion = getElementText(pluginElement, "version");
+            return expectedVersion.equals(actualVersion);
+        }
+        
+        return true;
     }
 
     private String getElementText(Element parent, String tagName) {

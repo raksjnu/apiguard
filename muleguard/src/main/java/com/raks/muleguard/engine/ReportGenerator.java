@@ -21,24 +21,27 @@ import java.util.stream.Collectors;
 public class ReportGenerator {
 
     private static final String[] RULE_DOCS = {
-            "CLIENTIDMAP_VALIDATOR.md",
-            "GENERIC_PROPERTY_FILE_CHECK.md",
-            "GENERIC_TOKEN_SEARCH.md",
-            "GENERIC_TOKEN_SEARCH_FORBIDDEN.md",
-            "GENERIC_TOKEN_SEARCH_REQUIRED.md",
-            "JSON_VALIDATION_FORBIDDEN.md",
-            "JSON_VALIDATION_REQUIRED.md",
-            "MANDATORY_PROPERTY_VALUE_CHECK.md",
-            "MANDATORY_SUBSTRING_CHECK.md",
-            "OPTIONAL_PROPERTY_VALUE_CHECK.md",
-            "POM_VALIDATION_FORBIDDEN.md",
-            "POM_VALIDATION_REQUIRED.md",
-            "XML_ATTRIBUTE_EXISTS.md",
-            "XML_ATTRIBUTE_NOT_EXISTS.md",
-            "XML_ELEMENT_CONTENT_FORBIDDEN.md",
-            "XML_ELEMENT_CONTENT_REQUIRED.md",
-            "XML_XPATH_EXISTS.md",
-            "XML_XPATH_NOT_EXISTS.md"
+            // CONFIG Rules (5)
+            "CONFIG_CLIENTIDMAP_VALIDATOR.md",
+            "CONFIG_GENERIC_PROPERTY_FILE_CHECK.md",
+            "CONFIG_MANDATORY_PROPERTY_VALUE_CHECK.md",
+            "CONFIG_MANDATORY_SUBSTRING_CHECK.md",
+            "CONFIG_OPTIONAL_PROPERTY_VALUE_CHECK.md",
+            
+            // CODE Rules (13)
+            "CODE_GENERIC_TOKEN_SEARCH.md",
+            "CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN.md",
+            "CODE_GENERIC_TOKEN_SEARCH_REQUIRED.md",
+            "CODE_JSON_VALIDATION_FORBIDDEN.md",
+            "CODE_JSON_VALIDATION_REQUIRED.md",
+            "CODE_POM_VALIDATION_FORBIDDEN.md",
+            "CODE_POM_VALIDATION_REQUIRED.md",
+            "CODE_XML_ATTRIBUTE_EXISTS.md",
+            "CODE_XML_ATTRIBUTE_NOT_EXISTS.md",
+            "CODE_XML_ELEMENT_CONTENT_FORBIDDEN.md",
+            "CODE_XML_ELEMENT_CONTENT_REQUIRED.md",
+            "CODE_XML_XPATH_EXISTS.md",
+            "CODE_XML_XPATH_NOT_EXISTS.md"
     };
 
     // Generate individual API report (HTML + Excel)
@@ -175,8 +178,8 @@ public class ReportGenerator {
                                 <strong>Total Rules:</strong> %d | <strong style="color:green">Passed:</strong> %d | <strong style="color:red">Failed:</strong> %d
                             </div>
                             <table><tr><th>Rule ID</th><th>Name</th><th>Severity</th><th>Status</th><th>Details</th></tr>%s</table>
-                            <a href="checklist.html" class="contact-button" title="View all validation checklist items.">Checklist</a>
-                            <a href="" class="contact-button" title="Mulesoft Runtime Upgrade Project Runbook.">Runbook</a>
+                            <a href="../checklist.html" class="contact-button" title="View all validation checklist items.">Checklist</a>
+                            <a href="#" onclick="return false;" class="contact-button" title="Placeholder: Configure your runbook or playbook link here" style="opacity: 0.7; cursor: not-allowed;">Runbook</a>
                             <a href="../rule_guide.html" class="contact-button" title="Guide to all MuleGuard validation rules.">Rule Guide</a>
                             <a href="../help.html" class="contact-button" title="View help and documentation about MuleGuard" style="margin-left: 10px;">Help</a>
                         </div>
@@ -192,7 +195,7 @@ public class ReportGenerator {
                             report.failed.size(),
                             rows.toString());
 
-            Files.writeString(outputPath, html);
+            Files.writeString(outputPath, html, java.nio.charset.StandardCharsets.UTF_8);
 
         } catch (Exception e) {
             System.err.println("Failed to generate HTML: " + e.getMessage());
@@ -383,7 +386,7 @@ public class ReportGenerator {
                             </div>
                             <table><tr><th>API Name</th><th>Total Rules</th><th>Passed</th><th>Failed</th><th>Status</th><th>Report</th></tr>%s</table>
                             <a href="checklist.html" class="contact-button" title="View all validation checklist items.">Checklist</a>
-                            <a href="" class="contact-button" title="Mulesoft Runtime Upgrade Project Runbook.">Runbook</a>
+                            <a href="#" onclick="return false;" class="contact-button" title="Placeholder: Configure your runbook or playbook link here" style="opacity: 0.7; cursor: not-allowed;">Runbook</a>
                             <a href="rule_guide.html" class="contact-button" title="Guide to all MuleGuard validation rules.">Rule Guide</a>
                             <a href="help.html" class="contact-button" title="View help and documentation about MuleGuard" style="margin-left: 10px;">Help</a>
 
@@ -402,7 +405,7 @@ public class ReportGenerator {
                             tableRows);
 
             Path htmlPath = outputPath.resolve("CONSOLIDATED-REPORT.html");
-            Files.writeString(htmlPath, html);
+            Files.writeString(htmlPath, html, java.nio.charset.StandardCharsets.UTF_8);
 
             System.out.println("CONSOLIDATED REPORT GENERATED:");
             System.out.println("   → " + htmlPath.toAbsolutePath());
@@ -563,7 +566,7 @@ public class ReportGenerator {
                     .formatted(rows.toString());
 
             Path checklistPath = outputDir.resolve("checklist.html");
-            Files.writeString(checklistPath, html);
+            Files.writeString(checklistPath, html, java.nio.charset.StandardCharsets.UTF_8);
             System.out.println("   → checklist.html generated");
         } catch (Exception e) {
             System.err.println("Failed to generate checklist report: " + e.getMessage());
@@ -582,7 +585,7 @@ public class ReportGenerator {
 
                 try (InputStream is = ReportGenerator.class.getResourceAsStream("/docs/" + fileName)) {
                     if (is != null) {
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(is));
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8));
                         String md = reader.lines().collect(Collectors.joining("\n"));
                         contentHtml = convertMdToHtml(md);
                     } else {
@@ -683,7 +686,7 @@ public class ReportGenerator {
                                 padding: 40px;
                                 border-radius: 8px;
                                 box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-                                max-width: 1000px;
+                                max-width: 1400px;
                                 margin: 0 auto;
                                 border: 5px solid var(--truist-purple);
                                 position: relative;
@@ -839,7 +842,7 @@ public class ReportGenerator {
                     .formatted(sidebar.toString(), content.toString());
 
             Path ruleGuidePath = outputDir.resolve("rule_guide.html");
-            Files.writeString(ruleGuidePath, html);
+            Files.writeString(ruleGuidePath, html, java.nio.charset.StandardCharsets.UTF_8);
             System.out.println("   → rule_guide.html generated");
 
         } catch (Exception e) {

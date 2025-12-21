@@ -38,6 +38,12 @@ config:
   # Defines how to identify different types of projects in the root folder
   
   projectIdentification:
+    # Maximum depth to search for nested Mule projects
+    # Default: 5 levels deep from the root folder
+    # Set to 1 for flat structure only (no nesting)
+    # Set to 0 to search only the root folder itself
+    maxSearchDepth: 5
+    
     # Configuration Folder Identification
     # Config folders are identified by naming pattern (regex)
     configFolder:
