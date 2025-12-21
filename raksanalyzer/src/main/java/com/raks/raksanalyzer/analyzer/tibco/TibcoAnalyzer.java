@@ -86,7 +86,7 @@ public class TibcoAnalyzer {
     private ProjectInfo extractProjectInfo() {
         ProjectInfo info = new ProjectInfo();
         info.setProjectType(ProjectType.TIBCO_BW5);
-        info.setProjectPath(projectPath.toString());
+        info.setProjectPath(projectPath.toAbsolutePath().toString());
         info.setProjectName(projectPath.getFileName().toString());
         
         // Try to detect Tibco version from project files

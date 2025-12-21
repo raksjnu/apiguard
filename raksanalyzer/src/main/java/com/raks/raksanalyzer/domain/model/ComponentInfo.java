@@ -12,6 +12,8 @@ public class ComponentInfo {
     private String category;  // "connector", "transformer", "router", etc.
     private Map<String, String> attributes = new HashMap<>();
     private String configRef;  // Reference to global configuration
+    private String connectionDetails;  // Resolved connection details (host:port/path, etc.)
+    private java.util.List<ComponentInfo> children = new java.util.ArrayList<>();
     
     // Getters and Setters
     public String getName() {
@@ -56,5 +58,25 @@ public class ComponentInfo {
     
     public void setConfigRef(String configRef) {
         this.configRef = configRef;
+    }
+
+    public String getConnectionDetails() {
+        return connectionDetails;
+    }
+
+    public void setConnectionDetails(String connectionDetails) {
+        this.connectionDetails = connectionDetails;
+    }
+
+    public java.util.List<ComponentInfo> getChildren() {
+        return children;
+    }
+
+    public void setChildren(java.util.List<ComponentInfo> children) {
+        this.children = children;
+    }
+
+    public void addChild(ComponentInfo child) {
+        this.children.add(child);
     }
 }

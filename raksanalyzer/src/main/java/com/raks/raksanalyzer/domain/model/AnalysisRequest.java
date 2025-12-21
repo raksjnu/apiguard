@@ -2,6 +2,7 @@ package com.raks.raksanalyzer.domain.model;
 
 import com.raks.raksanalyzer.domain.enums.ExecutionMode;
 import com.raks.raksanalyzer.domain.enums.ProjectType;
+import com.raks.raksanalyzer.model.OutputFormatConfig;
 
 import java.util.List;
 
@@ -16,6 +17,8 @@ public class AnalysisRequest {
     private String inputPath;  // Folder path, ZIP path, or Git URL
     private String gitBranch;  // Optional Git branch
     private List<String> selectedEnvironments;  // Parsed from environmentAnalysisScope
+    private OutputFormatConfig outputFormatConfig;  // Output format preferences
+    private String analysisId;
     
     // Getters and Setters
     public ProjectType getProjectTechnologyType() {
@@ -72,6 +75,22 @@ public class AnalysisRequest {
     
     public void setSelectedEnvironments(List<String> selectedEnvironments) {
         this.selectedEnvironments = selectedEnvironments;
+    }
+    
+    public OutputFormatConfig getOutputFormatConfig() {
+        return outputFormatConfig;
+    }
+    
+    public void setOutputFormatConfig(OutputFormatConfig outputFormatConfig) {
+        this.outputFormatConfig = outputFormatConfig;
+    }
+    
+    public String getAnalysisId() {
+        return analysisId;
+    }
+
+    public void setAnalysisId(String analysisId) {
+        this.analysisId = analysisId;
     }
     
     @Override

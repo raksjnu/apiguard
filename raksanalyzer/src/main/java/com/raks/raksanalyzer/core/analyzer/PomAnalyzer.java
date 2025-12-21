@@ -27,6 +27,9 @@ public class PomAnalyzer {
             Document doc = XmlUtils.parseXmlFile(pomFile);
             Element root = doc.getDocumentElement();
             
+            // Model Version
+            info.setModelVersion(getTagValue(root, "modelVersion"));
+            
             // Basic Info
             info.setGroupId(getTagValue(root, "groupId"));
             info.setArtifactId(getTagValue(root, "artifactId"));
@@ -35,12 +38,29 @@ public class PomAnalyzer {
             info.setDescription(getTagValue(root, "description"));
             info.setPackaging(getTagValue(root, "packaging"));
             
-            // Allow parent groupId if not present
-            if (info.getGroupId() == null) {
-                Element parent = (Element) root.getElementsByTagName("parent").item(0);
-                if (parent != null) {
-                    info.setGroupId(getTagValue(parent, "groupId"));
+            // Parent Information
+            Element parentElement = (Element) root.getElementsByTagName("parent").item(0);
+            if (parentElement != null) {
+                String parentGroupId = getTagValue(parentElement, "groupId");
+                String parentArtifactId = getTagValue(parentElement, "artifactId");
+                String parentVersion = getTagValue(parentElement, "version");
+                
+                if (parentGroupId != null && parentArtifactId != null) {
+                    PomInfo.ParentInfo parentInfo = new PomInfo.ParentInfo(parentGroupId, parentArtifactId, parentVersion);
+                    String relativePath = getTagValue(parentElement, "relativePath");
+                    if (relativePath != null) {
+                        parentInfo.setRelativePath(relativePath);
+                    }
+                    info.setParent(parentInfo);
                 }
+            }
+            
+            // Allow parent groupId/version if not present in project
+            if (info.getGroupId() == null && parentElement != null) {
+                info.setGroupId(getTagValue(parentElement, "groupId"));
+            }
+            if (info.getVersion() == null && parentElement != null) {
+                info.setVersion(getTagValue(parentElement, "version"));
             }
             
             // Properties

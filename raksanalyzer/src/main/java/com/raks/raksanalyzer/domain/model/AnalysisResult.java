@@ -23,6 +23,7 @@ public class AnalysisResult {
     
     private String excelReportPath;
     private String wordDocumentPath;
+    private String pdfDocumentPath;
     
     // Getters and Setters
     public String getAnalysisId() {
@@ -119,6 +120,14 @@ public class AnalysisResult {
     
     public void setWordDocumentPath(String wordDocumentPath) {
         this.wordDocumentPath = wordDocumentPath;
+    }
+    
+    public String getPdfDocumentPath() {
+        return pdfDocumentPath;
+    }
+    
+    public void setPdfDocumentPath(String pdfDocumentPath) {
+        this.pdfDocumentPath = pdfDocumentPath;
     }
     
     public List<String> getPropertyFiles() {

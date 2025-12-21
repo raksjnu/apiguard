@@ -4,7 +4,10 @@ import com.raks.raksanalyzer.core.analyzer.JsonAnalyzer;
 import com.raks.raksanalyzer.core.analyzer.PomAnalyzer;
 import com.raks.raksanalyzer.core.analyzer.ProjectCrawler;
 import com.raks.raksanalyzer.core.config.ConfigurationManager;
-import com.raks.raksanalyzer.core.utils.FileUtils;
+import com.raks.raksanalyzer.core.connection.ConnectorDetailExtractor;
+import com.raks.raksanalyzer.core.connection.ConnectorDetailExtractorFactory;
+import com.raks.raksanalyzer.core.utils.ConfigResolver;
+import com.raks.raksanalyzer.core.utils.PropertyResolver;
 import com.raks.raksanalyzer.core.utils.XmlUtils;
 import com.raks.raksanalyzer.domain.enums.ProjectType;
 import com.raks.raksanalyzer.domain.model.*;
@@ -15,7 +18,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -73,7 +75,7 @@ public class MuleAnalyzer {
             
             // 2. Initialize Project Info
             ProjectInfo info = new ProjectInfo();
-            info.setProjectPath(projectPath.toString());
+            info.setProjectPath(projectPath.toAbsolutePath().toString());
             info.setProjectName(projectPath.getFileName().toString());
             info.setProjectType(ProjectType.MULE);
             result.setProjectInfo(info);
@@ -85,6 +87,9 @@ public class MuleAnalyzer {
             // But actually we should parse them via the tree now. 
             // We will stick to the existing global property parsing for robustness as "src/main/resources" is standard.
             parseProperties(result);
+            
+            // 5. Enrich components with connection details (if enabled)
+            enrichConnectionDetails(result);
             
             result.setSuccess(true);
             logger.info("Analysis completed successfully");
@@ -196,13 +201,26 @@ public class MuleAnalyzer {
     }
     
     private boolean isConfigTag(String tagName) {
-        return configTags.contains(tagName) || tagName.endsWith("-config");
+        // Check explicit list first
+        if (configTags.contains(tagName)) {
+            return true;
+        }
+        
+        // Check for common config patterns:
+        // - http:listener-config (ends with -config)
+        // - ibm-mq:config (ends with :config)
+        // - db:config (ends with :config)
+        return tagName.endsWith("-config") || tagName.endsWith(":config");
     }
     
     private ConnectorConfig parseConfig(Element el) {
         ConnectorConfig cfg = new ConnectorConfig();
-        cfg.setType(el.getTagName());
-        cfg.setName(el.getAttribute("name"));
+        String type = el.getTagName();
+        String name = el.getAttribute("name");
+        
+        cfg.setType(type);
+        // If name is empty, use type as fallback
+        cfg.setName(name != null && !name.isEmpty() ? name : type);
         
         // Attributes
         org.w3c.dom.NamedNodeMap attrs = el.getAttributes();
@@ -210,7 +228,92 @@ public class MuleAnalyzer {
             Node attr = attrs.item(k);
             cfg.addAttribute(attr.getNodeName(), attr.getNodeValue());
         }
+        
+        // Parse nested elements (like email:smtp-connection under email:smtp-config)
+        parseNestedConfigElements(el, cfg, 0);
+        
         return cfg;
+    }
+    
+    /**
+     * Recursively parse nested elements within a connector config.
+     */
+    private void parseNestedConfigElements(Element element, ConnectorConfig config, int depth) {
+        NodeList children = element.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element el = (Element) node;
+                String tagName = el.getTagName();
+                
+                // Skip documentation elements
+                if (tagName.startsWith("doc:")) continue;
+                
+                ComponentInfo comp = new ComponentInfo();
+                comp.setType(tagName);
+                comp.setName(el.getAttribute("name"));
+                comp.setCategory("Configuration");
+                
+                // Attributes
+                org.w3c.dom.NamedNodeMap attrs = el.getAttributes();
+                for(int k=0; k<attrs.getLength(); k++) {
+                    Node attr = attrs.item(k);
+                    comp.addAttribute(attr.getNodeName(), attr.getNodeValue());
+                }
+                
+                // Store depth
+                comp.addAttribute("_depth", String.valueOf(depth));
+                
+                // Capture CDATA content
+                String textContent = extractTextContent(el);
+                if (textContent != null && !textContent.trim().isEmpty()) {
+                    comp.addAttribute("_content", textContent.trim());
+                }
+                
+                config.addNestedComponent(comp);
+                
+                // Recursively parse nested elements
+                parseNestedConfigElementsRecursive(el, config, depth + 1);
+            }
+        }
+    }
+    
+    /**
+     * Helper to continue recursive parsing of nested config elements.
+     */
+    private void parseNestedConfigElementsRecursive(Element element, ConnectorConfig config, int depth) {
+        NodeList children = element.getChildNodes();
+        for (int i = 0; i < children.getLength(); i++) {
+            Node node = children.item(i);
+            if (node.getNodeType() == Node.ELEMENT_NODE) {
+                Element el = (Element) node;
+                String tagName = el.getTagName();
+                
+                if (tagName.startsWith("doc:")) continue;
+                
+                ComponentInfo comp = new ComponentInfo();
+                comp.setType(tagName);
+                comp.setName(el.getAttribute("name"));
+                comp.setCategory("Configuration");
+                
+                org.w3c.dom.NamedNodeMap attrs = el.getAttributes();
+                for(int k=0; k<attrs.getLength(); k++) {
+                    Node attr = attrs.item(k);
+                    comp.addAttribute(attr.getNodeName(), attr.getNodeValue());
+                }
+                
+                comp.addAttribute("_depth", String.valueOf(depth));
+                
+                String textContent = extractTextContent(el);
+                if (textContent != null && !textContent.trim().isEmpty()) {
+                    comp.addAttribute("_content", textContent.trim());
+                }
+                
+                config.addNestedComponent(comp);
+                
+                parseNestedConfigElementsRecursive(el, config, depth + 1);
+            }
+        }
     }
 
     // Existing methods optimized (parseFlow, parseComponents, parseProperties)
@@ -228,13 +331,25 @@ public class MuleAnalyzer {
     }
     
     private void parseComponents(Element flowElement, FlowInfo flowInfo) {
-        NodeList children = flowElement.getChildNodes();
+        parseComponentsRecursive(flowElement, flowInfo, 0, null);
+    }
+    
+    /**
+     * Recursively parse components and their nested children.
+     * @param element Parent element
+     * @param flowInfo Flow to add components to (flat list)
+     * @param depth Current nesting depth (for hierarchy)
+     * @param parent Parent component (for tree structure)
+     */
+    private void parseComponentsRecursive(Element element, FlowInfo flowInfo, int depth, ComponentInfo parent) {
+        NodeList children = element.getChildNodes();
         for (int i = 0; i < children.getLength(); i++) {
             Node node = children.item(i);
             if (node.getNodeType() == Node.ELEMENT_NODE) {
                 Element el = (Element) node;
                 String tagName = el.getTagName();
                 
+                // Skip documentation elements
                 if (tagName.startsWith("doc:")) continue;
                 
                 ComponentInfo comp = new ComponentInfo();
@@ -257,42 +372,119 @@ public class MuleAnalyzer {
                     comp.addAttribute(attr.getNodeName(), attr.getNodeValue());
                 }
                 
-                flowInfo.addComponent(comp);
+                // Store nesting depth for hierarchical display
+                comp.addAttribute("_depth", String.valueOf(depth));
+                
+                // Capture CDATA or text content
+                String textContent = extractTextContent(el);
+                logger.debug("Element: {}, hasContent: {}, contentLength: {}", 
+                    tagName, textContent != null && !textContent.trim().isEmpty(), 
+                    textContent != null ? textContent.length() : 0);
+                
+                if (textContent != null && !textContent.trim().isEmpty()) {
+                    comp.addAttribute("_content", textContent.trim());
+                    logger.debug("Added content for {}: {}", tagName, textContent.substring(0, Math.min(50, textContent.length())));
+                }
+                
+                flowInfo.addComponent(comp); // Add to flat list
+                
+                // Add to parent for tree structure
+                if (parent != null) {
+                    parent.addChild(comp);
+                }
+                
+                // Recursively parse nested components, passing 'comp' as the new parent
+                parseComponentsRecursive(el, flowInfo, depth + 1, comp);
             }
         }
     }
     
+    /**
+     * Extract text content including CDATA from an element.
+     * Preserves CDATA markers to show exact XML content.
+     */
+    private String extractTextContent(Element element) {
+        StringBuilder content = new StringBuilder();
+        NodeList nodes = element.getChildNodes();
+        boolean hasCDATA = false;
+        
+        for (int i = 0; i < nodes.getLength(); i++) {
+            Node node = nodes.item(i);
+            if (node.getNodeType() == Node.CDATA_SECTION_NODE) {
+                // Preserve CDATA markers
+                if (!hasCDATA) {
+                    content.append("<![CDATA[");
+                    hasCDATA = true;
+                }
+                String text = node.getNodeValue();
+                if (text != null) {
+                    content.append(text);
+                }
+            } else if (node.getNodeType() == Node.TEXT_NODE) {
+                String text = node.getNodeValue();
+                if (text != null && !text.trim().isEmpty()) {
+                    content.append(text);
+                }
+            }
+        }
+        
+        // Close CDATA if we opened it
+        if (hasCDATA) {
+            content.append("]]>");
+        }
+        
+        return content.toString();
+    }
+    
     // Legacy properties parsing logic (kept as is for now)
     private void parseProperties(AnalysisResult result) {
-         Path resourcesDir = projectPath.resolve("src/main/resources");
-         if (!Files.exists(resourcesDir)) return;
-         try {
-             List<Path> files = FileUtils.findFilesByExtension(resourcesDir, "properties");
-             // Add .yaml support
-             files.addAll(FileUtils.findFilesByExtension(resourcesDir, "yaml"));
-             
-             for (Path f : files) {
-                 String relative = projectPath.relativize(f).toString();
-                 result.getPropertyFiles().add(relative);
-                 parsePropertiesFile(f, relative, result);
-             }
-         } catch (IOException e) {
-             logger.error("Failed property parsing", e);
+         // Instead of hardcoding src/main/resources, search within the crawled structure
+         List<ProjectNode> propFiles = new ArrayList<>();
+         collectPropertiesFiles(result.getProjectStructure(), propFiles);
+         
+         logger.info("Found {} properties/yaml files to parse", propFiles.size());
+         
+         for (ProjectNode propFile : propFiles) {
+             String relative = propFile.getRelativePath();
+             logger.debug("Parsing properties file: {} (relative: {})", propFile.getName(), relative);
+             result.getPropertyFiles().add(relative);
+             parsePropertiesFile(Paths.get(propFile.getAbsolutePath()), relative, result);
          }
+         
+         logger.info("Total properties parsed: {}", result.getProperties().size());
+    }
+    
+    private void collectPropertiesFiles(ProjectNode node, List<ProjectNode> result) {
+        if (node.getType() == ProjectNode.NodeType.FILE) {
+            String name = node.getName();
+            if (name.endsWith(".properties") || name.endsWith(".yaml") || name.endsWith(".yml")) {
+                result.add(node);
+            }
+        } else if (node.getType() == ProjectNode.NodeType.DIRECTORY) {
+            for (ProjectNode child : node.getChildren()) {
+                collectPropertiesFiles(child, result);
+            }
+        }
     }
     
     private void parsePropertiesFile(Path file, String relative, AnalysisResult result) {
-        // ... (Existing logic implementation abbreviated for replace_file_content)
-        // Re-implementing simplified version since I am overwriting the file
         try {
             Properties props = new Properties();
-            // TODO: proper YAML handling. For now assuming .properties format only
-            // If the user needs YAML, we need a YamlParser utility.
             if (file.toString().endsWith(".properties")) {
                 props.load(Files.newInputStream(file));
+                logger.debug("Loaded {} properties from file: {}", props.size(), file.getFileName());
+                
                 for(String key : props.stringPropertyNames()) {
                     PropertyInfo info = findOrCreatePropertyInfo(result, key);
-                    info.addEnvironmentValue(relative, props.getProperty(key));
+                    String value = props.getProperty(key);
+                    
+                    // Set source path if not already set
+                    if (info.getSourcePath() == null || info.getSourcePath().isEmpty()) {
+                        info.setSourcePath(relative);
+                    }
+                    
+                    info.addEnvironmentValue(relative, value);
+                    logger.trace("Added property: {} = {} (file: {})", key, value, relative);
                 }
             }
         } catch(Exception e) {
@@ -308,6 +500,142 @@ public class MuleAnalyzer {
         n.setKey(key);
         result.getProperties().add(n);
         return n;
+    }
+
+    /**
+     * Enriches components with connection details by resolving config-ref and properties.
+     */
+    private void enrichConnectionDetails(AnalysisResult result) {
+        try {
+            // Check if feature is enabled
+            boolean enabled = Boolean.parseBoolean(
+                config.getProperty("diagram.integration.show.connection.details", "true")
+            );
+            
+            if (!enabled) {
+                logger.info("Connection details enrichment is disabled");
+                return;
+            }
+            
+            logger.info("Starting connection details enrichment");
+            
+            // 1. Load properties from project
+            PropertyResolver propertyResolver = new PropertyResolver();
+            String propertyPattern = config.getProperty(
+                "diagram.integration.property.files", 
+                "src/main/resources/*.properties"
+            );
+            int propsLoaded = propertyResolver.loadProperties(projectPath, propertyPattern);
+            logger.info("Loaded {} property files", propsLoaded);
+            
+            // 2. Build config resolver from parsed connector configs
+            ConfigResolver configResolver = new ConfigResolver();
+            collectAllConfigs(result.getProjectStructure(), configResolver);
+            logger.info("Loaded {} connector configs", configResolver.getConfigCount());
+            
+            // 3. Create extractor factory
+            Properties configProps = new Properties();
+            config.getAllProperties().forEach(configProps::put);
+            ConnectorDetailExtractorFactory extractorFactory = 
+                new ConnectorDetailExtractorFactory(configProps);
+            
+            // 4. Enrich all components in all flows
+            enrichFlowComponents(result.getProjectStructure(), configResolver, propertyResolver, extractorFactory);
+            
+            logger.info("Connection details enrichment completed");
+            
+        } catch (Exception e) {
+            logger.error("Failed to enrich connection details", e);
+            // Don't fail the entire analysis, just log the error
+        }
+    }
+    
+    /**
+     * Recursively collects all connector configs from project structure.
+     */
+    private void collectAllConfigs(ProjectNode node, ConfigResolver resolver) {
+        if (node == null) return;
+        
+        if (node.getType() == ProjectNode.NodeType.FILE) {
+            Object configs = node.getMetadata("muleConfigs");
+            if (configs instanceof List) {
+                for (Object o : (List<?>)configs) {
+                    if (o instanceof ConnectorConfig) {
+                        resolver.addConfig((ConnectorConfig)o);
+                    }
+                }
+            }
+        }
+        
+        if (node.getChildren() != null) {
+            for (ProjectNode child : node.getChildren()) {
+                collectAllConfigs(child, resolver);
+            }
+        }
+    }
+    
+    /**
+     * Recursively enriches components in all flows.
+     */
+    private void enrichFlowComponents(ProjectNode node, ConfigResolver configResolver, 
+                                     PropertyResolver propertyResolver, 
+                                     ConnectorDetailExtractorFactory extractorFactory) {
+        if (node == null) return;
+        
+        if (node.getType() == ProjectNode.NodeType.FILE) {
+            Object flows = node.getMetadata("muleFlows");
+            if (flows instanceof List) {
+                for (Object o : (List<?>)flows) {
+                    if (o instanceof FlowInfo) {
+                        FlowInfo flow = (FlowInfo)o;
+                        if (flow.getComponents() != null) {
+                            for (ComponentInfo comp : flow.getComponents()) {
+                                enrichComponent(comp, configResolver, propertyResolver, extractorFactory);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        if (node.getChildren() != null) {
+            for (ProjectNode child : node.getChildren()) {
+                enrichFlowComponents(child, configResolver, propertyResolver, extractorFactory);
+            }
+        }
+    }
+    
+    /**
+     * Recursively enriches a component and its children with connection details.
+     */
+    private void enrichComponent(ComponentInfo comp, ConfigResolver configResolver,
+                                PropertyResolver propertyResolver,
+                                ConnectorDetailExtractorFactory extractorFactory) {
+        if (comp == null) return;
+        
+        // If component has config-ref, extract connection details
+        if (comp.getConfigRef() != null && !comp.getConfigRef().isEmpty()) {
+            logger.debug("Component {} has config-ref: {}", comp.getType(), comp.getConfigRef());
+            ConnectorConfig config = configResolver.resolveConfig(comp.getConfigRef());
+            if (config != null) {
+                logger.debug("Found config: {} (type: {})", config.getName(), config.getType());
+                ConnectorDetailExtractor extractor = extractorFactory.getExtractor(config.getType());
+                String details = extractor.extractDetails(config, comp, propertyResolver);
+                if (details != null && !details.isEmpty()) {
+                    comp.setConnectionDetails(details);
+                    logger.debug("Enriched {} with details: {}", comp.getType(), details);
+                }
+            } else {
+                logger.warn("Config not found for config-ref: {}", comp.getConfigRef());
+            }
+        }
+        
+        // Recursively enrich children
+        if (comp.getChildren() != null) {
+            for (ComponentInfo child : comp.getChildren()) {
+                enrichComponent(child, configResolver, propertyResolver, extractorFactory);
+            }
+        }
     }
 
 }

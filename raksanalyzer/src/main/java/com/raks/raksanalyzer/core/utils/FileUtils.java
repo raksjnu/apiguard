@@ -182,22 +182,23 @@ public class FileUtils {
     }
     
     /**
-     * Check if path is a Mule project (contains mule-app.properties or pom.xml with mule).
+     * Check if path is a Mule project.
+     * MUST have both pom.xml AND mule-artifact.json (AND logic).
      */
     public static boolean isMuleProject(Path directory) {
         try {
-            // Check for mule-app.properties
-            Path muleAppProps = directory.resolve("src/main/resources/mule-app.properties");
-            if (Files.exists(muleAppProps)) {
-                return true;
+            // MUST have both files (AND logic)
+            Path pomXml = directory.resolve("pom.xml");
+            Path muleArtifact = directory.resolve("mule-artifact.json");
+            
+            if (!Files.exists(pomXml) || !Files.exists(muleArtifact)) {
+                return false;
             }
             
-            // Check for pom.xml with Mule dependencies
-            Path pomXml = directory.resolve("pom.xml");
-            if (Files.exists(pomXml)) {
-                String content = readFileAsString(pomXml);
-                return content.contains("mule-maven-plugin") || content.contains("org.mule");
-            }
+            // Verify pom.xml contains Mule dependencies
+            String content = readFileAsString(pomXml);
+            return content.contains("mule-maven-plugin") || content.contains("org.mule");
+            
         } catch (IOException e) {
             logger.warn("Error checking if directory is Mule project: {}", directory, e);
         }

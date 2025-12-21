@@ -78,6 +78,17 @@
                     <small>Enter the full path to your project folder</small>
                 </div>
 
+                <!-- Output Format Selection -->
+                <div class="form-group">
+                    <label>Output Formats</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="generatePdf" name="generatePdf" checked> 📄 PDF Document (Recommended for large projects)</label>
+                        <label><input type="checkbox" id="generateWord" name="generateWord"> 📝 Word Document</label>
+                        <label><input type="checkbox" id="generateExcel" name="generateExcel"> 📊 Excel Spreadsheet</label>
+                    </div>
+                    <small>Select one or more output formats. PDF is recommended to avoid corruption issues with large projects.</small>
+                </div>
+
                 <!-- File Upload -->
                 <div id="uploadSection" class="form-group" style="display: none;">
                     <label for="projectFile">Project ZIP File</label>
@@ -109,17 +120,35 @@
             <!-- Results Section -->
             <div id="resultsSection" style="display: none;">
                 <h3>✅ Documents Generated Successfully!</h3>
-                <p id="outputLocation" style="margin-bottom: 20px; color: #663399; font-weight: bold;"></p>
+                <div style="margin-bottom: 20px;">
+                    <span id="outputLocation" style="color: #663399; font-weight: bold;"></span>
+                    <button id="openFolder" class="btn-small" style="margin-left: 10px;">📂 Open Folder</button>
+                </div>
+                
                 <div class="results">
-                    <div class="result-item">
+                    <div id="excelResult" class="result-item" style="display: none;">
                         <h4>📊 Excel Analysis Report</h4>
                         <p id="excelFileName" style="font-size: 0.9em; color: #666;"></p>
-                        <a href="#" id="downloadExcel" class="btn-secondary">Download Excel</a>
+                        <div class="button-group">
+                            <button id="openExcel" class="btn-secondary">Open Excel</button>
+                            <a href="#" id="downloadExcel" class="link-small">Download</a>
+                        </div>
                     </div>
-                    <div class="result-item">
+                    <div id="wordResult" class="result-item" style="display: none;">
                         <h4>📄 Word Design Document</h4>
                         <p id="wordFileName" style="font-size: 0.9em; color: #666;"></p>
-                        <a href="#" id="downloadWord" class="btn-secondary">Download Word</a>
+                        <div class="button-group">
+                            <button id="openWord" class="btn-secondary">Open Word</button>
+                            <a href="#" id="downloadWord" class="link-small">Download</a>
+                        </div>
+                    </div>
+                    <div id="pdfResult" class="result-item" style="display: none;">
+                        <h4>📑 PDF Document</h4>
+                        <p id="pdfFileName" style="font-size: 0.9em; color: #666;"></p>
+                        <div class="button-group">
+                            <button id="openPdf" class="btn-secondary">Open PDF</button>
+                            <a href="#" id="downloadPdf" class="link-small">Download</a>
+                        </div>
                     </div>
                     <div class="result-item">
                         <h4>📧 Email Documents</h4>

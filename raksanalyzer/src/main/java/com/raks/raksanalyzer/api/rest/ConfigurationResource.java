@@ -80,6 +80,7 @@ public class ConfigurationResource {
         // Only expose non-sensitive settings
         settings.put("serverPort", config.getProperty("framework.server.port", "8080"));
         settings.put("outputDirectory", config.getProperty("framework.output.directory", "./output"));
+        settings.put("defaultProjectPath", config.getProperty("project.input.path", "./testdata"));
         settings.put("maxThreads", config.getProperty("analyzer.max.threads", "4"));
         settings.put("version", "1.0.0");
         

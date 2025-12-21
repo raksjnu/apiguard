@@ -9,6 +9,7 @@ import java.util.Map;
  * Model representing Maven POM information.
  */
 public class PomInfo {
+    private String modelVersion;
     private String groupId;
     private String artifactId;
     private String version;
@@ -16,12 +17,15 @@ public class PomInfo {
     private String description;
     private String packaging;
     private String appRuntime;
+    private ParentInfo parent;
     
     private Map<String, String> properties = new HashMap<>();
     private List<DependencyInfo> dependencies = new ArrayList<>();
     private List<PluginInfo> plugins = new ArrayList<>();
     
     // Getters and Setters
+    public String getModelVersion() { return modelVersion; }
+    public void setModelVersion(String modelVersion) { this.modelVersion = modelVersion; }
     public String getGroupId() { return groupId; }
     public void setGroupId(String groupId) { this.groupId = groupId; }
     
@@ -43,6 +47,9 @@ public class PomInfo {
     public String getAppRuntime() { return appRuntime; }
     public void setAppRuntime(String appRuntime) { this.appRuntime = appRuntime; }
     
+    public ParentInfo getParent() { return parent; }
+    public void setParent(ParentInfo parent) { this.parent = parent; }
+    
     public Map<String, String> getProperties() { return properties; }
     public void setProperties(Map<String, String> properties) { this.properties = properties; }
     
@@ -53,6 +60,25 @@ public class PomInfo {
     public void setPlugins(List<PluginInfo> plugins) { this.plugins = plugins; }
     
     // Inner Classes
+    public static class ParentInfo {
+        private String groupId;
+        private String artifactId;
+        private String version;
+        private String relativePath;
+        
+        public ParentInfo(String groupId, String artifactId, String version) {
+            this.groupId = groupId;
+            this.artifactId = artifactId;
+            this.version = version;
+        }
+        
+        public String getGroupId() { return groupId; }
+        public String getArtifactId() { return artifactId; }
+        public String getVersion() { return version; }
+        public String getRelativePath() { return relativePath; }
+        public void setRelativePath(String relativePath) { this.relativePath = relativePath; }
+    }
+    
     public static class DependencyInfo {
         private String groupId;
         private String artifactId;

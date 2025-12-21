@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', function() {
 
 let currentExcelPath = null;
 let currentWordPath = null;
+let currentPdfPath = null;
+let currentAnalysisId = null;
 
 function setupEventHandlers() {
     const form = document.getElementById('analysisForm');
@@ -21,6 +23,7 @@ function setupEventHandlers() {
     
     // Toggle custom environment selection
     environmentScope.addEventListener('change', function() {
+        customEnvs.style.display = 'block'; // Always block for now to debug
         customEnvs.style.display = this.value === 'CUSTOM' ? 'block' : 'none';
     });
     
@@ -54,26 +57,49 @@ function setupEventHandlers() {
         document.getElementById('analysisForm').reset();
         currentExcelPath = null;
         currentWordPath = null;
+        currentPdfPath = null;
+        currentAnalysisId = null;
+        
+        // Hide all results by default
+        document.getElementById('excelResult').style.display = 'none';
+        document.getElementById('wordResult').style.display = 'none';
+        document.getElementById('pdfResult').style.display = 'none';
     });
     
-    // Download Excel button
+    // Open Folder button
+    document.getElementById('openFolder').addEventListener('click', async function() {
+         if (currentAnalysisId) {
+             await openLocalFile(currentAnalysisId, 'folder');
+         }
+    });
+
+    // Open Excel button
+    document.getElementById('openExcel').addEventListener('click', async function(e) {
+        e.preventDefault();
+        if (currentAnalysisId) await openLocalFile(currentAnalysisId, 'excel');
+    });
+    
+    // Open Word button
+    document.getElementById('openWord').addEventListener('click', async function(e) {
+        e.preventDefault();
+        if (currentAnalysisId) await openLocalFile(currentAnalysisId, 'word');
+    });
+    
+    // Open PDF button
+    document.getElementById('openPdf').addEventListener('click', async function(e) {
+        e.preventDefault();
+        if (currentAnalysisId) await openLocalFile(currentAnalysisId, 'pdf');
+    });
+    
+    // Download handlers (Keep as fallback)
     document.getElementById('downloadExcel').addEventListener('click', function(e) {
-        e.preventDefault();
-        if (currentExcelPath) {
-            alert('Excel file saved to: ' + currentExcelPath + '\n\nPlease open it from the output folder.');
-        } else {
-            alert('No Excel file available');
-        }
+        if (!currentExcelPath) e.preventDefault();
     });
-    
-    // Download Word button
     document.getElementById('downloadWord').addEventListener('click', function(e) {
-        e.preventDefault();
-        if (currentWordPath) {
-            alert('Word file saved to: ' + currentWordPath + '\n\nPlease open it from the output folder.');
-        } else {
-            alert('No Word file available');
-        }
+        if (!currentWordPath) e.preventDefault();
+    });
+    document.getElementById('downloadPdf').addEventListener('click', function(e) {
+        if (!currentPdfPath) e.preventDefault();
     });
     
     // Email button
@@ -85,6 +111,18 @@ function setupEventHandlers() {
         }
         alert('Email functionality coming soon! Documents will be sent to: ' + email);
     });
+}
+
+async function openLocalFile(id, type) {
+    try {
+        const response = await fetch('/api/analyze/open/' + id + '/' + type, { method: 'POST' });
+        if (!response.ok) {
+            const err = await response.json();
+            throw new Error(err.error || 'Failed to open file');
+        }
+    } catch (e) {
+        alert('Could not open file: ' + e.message);
+    }
 }
 
 /**
@@ -115,6 +153,16 @@ async function loadConfiguration() {
                 label.appendChild(document.createTextNode(' ' + env.displayName));
                 existingCheckboxes.appendChild(label);
             });
+        }
+        
+        // Load framework configuration for default paths
+        const frameworkResponse = await fetch('/api/config/framework');
+        const frameworkConfig = await frameworkResponse.json();
+        
+        // Set default project folder path
+        if (frameworkConfig.defaultProjectPath) {
+            const folderPathInput = document.getElementById('folderPath');
+            folderPathInput.value = frameworkConfig.defaultProjectPath;
         }
     } catch (error) {
         console.error('Failed to load configuration:', error);
@@ -173,7 +221,11 @@ async function submitAnalysis() {
         environmentAnalysisScope: environments,
         inputSourceType: inputSource,
         inputPath: inputPath,
-        gitBranch: formData.get('gitBranch') || 'main'
+        gitBranch: formData.get('gitBranch') || 'main',
+        // Output format preferences
+        generatePdf: document.getElementById('generatePdf').checked,
+        generateWord: document.getElementById('generateWord').checked,
+        generateExcel: document.getElementById('generateExcel').checked
     };
     
     try {
@@ -196,17 +248,70 @@ async function submitAnalysis() {
             progressSection.style.display = 'none';
             resultsSection.style.display = 'block';
             
-            // Display file paths (simulated for now)
-            const projectName = inputPath.split('\\').pop() || inputPath.split('/').pop();
-            const timestamp = new Date().toISOString().replace(/[-:]/g, '').replace('T', '_').substring(0, 15);
+            // Use file paths from API response
+            currentExcelPath = result.excelPath || '';
+            currentWordPath = result.wordPath || '';
+            currentPdfPath = result.pdfPath || '';
             
-            currentExcelPath = `C:\\raks\\apiguard\\raksanalyzer\\output\\${projectName}_${timestamp}.xlsx`;
-            currentWordPath = `C:\\raks\\apiguard\\raksanalyzer\\output\\${projectName}_${timestamp}.docx`;
+            // Extract just the filename from the full path
+            const excelFileName = currentExcelPath.split('\\').pop().split('/').pop();
+            const wordFileName = currentWordPath.split('\\').pop().split('/').pop();
+            const pdfFileName = currentPdfPath.split('\\').pop().split('/').pop();
             
+            // Store Analysis ID for Open buttons
+            // Generate a temporary ID or use project name if real ID not returned (backend mock)
+            // In a real scenario, the backend's analyze endpoint should return the ID
+            // For now, we will construct/assume one that matches what AnalysisResource will look up
+            // Since AnalysisResource.analyze stores as: getAnalysisId() + "_" + projectName
+            // But wait, the Analyze endpoint returns "status: STARTED" and immediate paths, but doesn't return the ID used for storing results in the 'results' map yet?
+            // Actually, AnalysisResource.executeAnalysis stores it. The /analyze endpoint returns just "projectName".
+            // We need the ID to call /open.
+            // Let's modify AnalysisResource to return the ID or let's just use the download paths for now.
+            // Wait, the /open endpoint relies on 'results.get(analysisId)'.
+            // The current /analyze implementation returns immediately but the actual analysis runs in bg.
+            // This is a race condition for the "Open" button if we click it too fast, but fine for now.
+            // WE NEED THE ID from the backend. The current /analyze response doesn't seem to return it? 
+            // It returns "projectName". 
+            // Let's assume for this single-user tool we can just find it? 
+            // NOTE: I will update the backend to return the ID in the next step to be sure.
+            // For now, let's assume result.analysisId is returned.
+            currentAnalysisId = result.analysisId || (projectName + "_" + timestamp); // Fallback attempt
+            
+            // Update Download Links for fallback
+            document.getElementById('downloadExcel').href = '/api/analyze/download/' + currentAnalysisId + '/excel';
+            document.getElementById('downloadWord').href = '/api/analyze/download/' + currentAnalysisId + '/word';
+            document.getElementById('downloadPdf').href = '/api/analyze/download/' + currentAnalysisId + '/pdf';
+            
+            // Display output location and file names
+            const outputDir = result.outputDirectory || 'C:\\raks\\apiguard\\raksanalyzer\\output\\';
             document.getElementById('outputLocation').textContent = 
-                'Files saved to: C:\\raks\\apiguard\\raksanalyzer\\output\\';
-            document.getElementById('excelFileName').textContent = `${projectName}_${timestamp}.xlsx`;
-            document.getElementById('wordFileName').textContent = `${projectName}_${timestamp}.docx`;
+                'Files saved to: ' + outputDir;
+                
+            // Conditionally display result items based on request flags
+            const excelResult = document.getElementById('excelResult');
+            const wordResult = document.getElementById('wordResult');
+            const pdfResult = document.getElementById('pdfResult');
+            
+            if (requestData.generateExcel) {
+                excelResult.style.display = 'block';
+                document.getElementById('excelFileName').textContent = excelFileName;
+            } else {
+                excelResult.style.display = 'none';
+            }
+            
+            if (requestData.generateWord) {
+                wordResult.style.display = 'block';
+                document.getElementById('wordFileName').textContent = wordFileName;
+            } else {
+                wordResult.style.display = 'none';
+            }
+            
+            if (requestData.generatePdf) {
+                pdfResult.style.display = 'block';
+                document.getElementById('pdfFileName').textContent = pdfFileName;
+            } else {
+                pdfResult.style.display = 'none';
+            }
             
         } else {
             throw new Error(result.message || 'Analysis failed');

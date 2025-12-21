@@ -22,6 +22,7 @@
         <jetty.version>11.0.18</jetty.version>
         <jersey.version>3.1.5</jersey.version>
         <poi.version>5.2.5</poi.version>
+        <pdfbox.version>3.0.1</pdfbox.version>
         <jackson.version>2.16.1</jackson.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <slf4j.version>2.0.11</slf4j.version>
@@ -77,6 +78,20 @@
             <version>${poi.version}</version>
         </dependency>
 
+        <!-- Apache PDFBox for PDF Generation -->
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+        
+        <!-- PDFBox EasyTable for text wrapping in tables -->
+        <dependency>
+            <groupId>com.github.vandeseer</groupId>
+            <artifactId>easytable</artifactId>
+            <version>1.0.2</version>
+        </dependency>
+
         <!-- Jackson for JSON -->
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -115,12 +130,26 @@
             <version>${jgit.version}</version>
         </dependency>
 
+        <!-- Gson for JSON pretty-printing -->
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>2.10.1</version>
+        </dependency>
+
         <!-- JUnit 5 for Testing -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
+        </dependency>
+        
+        <!-- PlantUML for Flow Diagrams -->
+        <dependency>
+            <groupId>net.sourceforge.plantuml</groupId>
+            <artifactId>plantuml</artifactId>
+            <version>1.2023.13</version>
         </dependency>
     </dependencies>
 
