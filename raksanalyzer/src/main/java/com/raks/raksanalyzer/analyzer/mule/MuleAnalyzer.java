@@ -97,6 +97,9 @@ public class MuleAnalyzer {
             // 5. Enrich components with connection details (if enabled)
             enrichConnectionDetails(result);
             
+            // 6. Resolve properties in connector configurations
+            resolveConnectorConfigProperties(result);
+            
             result.setSuccess(true);
             logger.info("Analysis completed successfully");
             
@@ -650,6 +653,123 @@ public class MuleAnalyzer {
         if (comp.getChildren() != null) {
             for (ComponentInfo child : comp.getChildren()) {
                 enrichComponent(child, configResolver, propertyResolver, extractorFactory);
+            }
+        }
+    }
+    
+    /**
+     * Resolves properties in connector configurations and updates stored properties.
+     */
+    private void resolveConnectorConfigProperties(AnalysisResult result) {
+        try {
+            logger.info("Resolving properties in connector configurations");
+            
+            // 1. Load properties from project first (base properties)
+            PropertyResolver propertyResolver = new PropertyResolver();
+            
+            // Always load project properties as base
+            String propertyPattern = config.getProperty(
+                "diagram.integration.property.files", 
+                "src/main/resources/*.properties"
+            );
+            propertyResolver.loadProperties(projectPath, propertyPattern);
+            
+            // If external config file is provided, load it to override project properties
+            if (externalConfigFile != null && Files.exists(externalConfigFile)) {
+                logger.info("Loading external config to override properties: {}", externalConfigFile);
+                propertyResolver.loadPropertiesFromFile(externalConfigFile);
+            }
+            
+            // 2. Update stored properties in result with resolved values
+            for (PropertyInfo propInfo : result.getProperties()) {
+                String key = propInfo.getKey();
+                String resolvedValue = propertyResolver.getProperty(key);
+                
+                if (resolvedValue != null) {
+                    // Update all environment values with the resolved value
+                    for (String envKey : new ArrayList<>(propInfo.getEnvironmentValues().keySet())) {
+                        propInfo.addEnvironmentValue(envKey, resolvedValue);
+                    }
+                }
+            }
+            
+            // 3. Resolve properties in connector config attributes
+            resolveConnectorConfigAttributesRecursive(result.getProjectStructure(), propertyResolver);
+            
+            logger.info("Property resolution completed");
+            
+        } catch (Exception e) {
+            logger.error("Failed to resolve connector config properties", e);
+            // Don't fail the entire analysis
+        }
+    }
+    
+    /**
+     * Recursively resolves properties in connector config attributes.
+     */
+    private void resolveConnectorConfigAttributesRecursive(ProjectNode node, PropertyResolver propertyResolver) {
+        if (node == null) return;
+        
+        if (node.getType() == ProjectNode.NodeType.FILE) {
+            Object configs = node.getMetadata("muleConfigs");
+            if (configs instanceof List) {
+                for (Object o : (List<?>)configs) {
+                    if (o instanceof ConnectorConfig) {
+                        ConnectorConfig config = (ConnectorConfig)o;
+                        resolveConfigAttributes(config, propertyResolver);
+                    }
+                }
+            }
+        }
+        
+        if (node.getChildren() != null) {
+            for (ProjectNode child : node.getChildren()) {
+                resolveConnectorConfigAttributesRecursive(child, propertyResolver);
+            }
+        }
+    }
+    
+    /**
+     * Resolves properties in a connector config's attributes and nested components.
+     */
+    private void resolveConfigAttributes(ConnectorConfig config, PropertyResolver propertyResolver) {
+        // Resolve attributes
+        if (config.getAttributes() != null) {
+            for (Map.Entry<String, String> entry : config.getAttributes().entrySet()) {
+                String value = entry.getValue();
+                if (value != null && (value.contains("${") || value.contains("p('"))) {
+                    String resolved = propertyResolver.resolve(value);
+                    config.addAttribute(entry.getKey(), resolved);
+                }
+            }
+        }
+        
+        // Resolve nested component attributes
+        if (config.getNestedComponents() != null) {
+            for (ComponentInfo comp : config.getNestedComponents()) {
+                resolveComponentAttributes(comp, propertyResolver);
+            }
+        }
+    }
+    
+    /**
+     * Resolves properties in a component's attributes recursively.
+     */
+    private void resolveComponentAttributes(ComponentInfo comp, PropertyResolver propertyResolver) {
+        if (comp.getAttributes() != null) {
+            for (Map.Entry<String, String> entry : comp.getAttributes().entrySet()) {
+                String value = entry.getValue();
+                if (value != null && (value.contains("${") || value.contains("p('"))) {
+                    String resolved = propertyResolver.resolve(value);
+                    comp.addAttribute(entry.getKey(), resolved);
+                }
+            }
+        }
+        
+        // Recursively resolve children
+        if (comp.getChildren() != null) {
+            for (ComponentInfo child : comp.getChildren()) {
+                resolveComponentAttributes(child, propertyResolver);
             }
         }
     }
