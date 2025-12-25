@@ -60,6 +60,11 @@ public class Application {
         request.setInputPath(inputPath);
         request.setProjectTechnologyType(projectType);
         
+        String inputSourceType = arguments.getInputSourceType()
+            .orElseGet(() -> detectInputSourceType(inputPath));
+        request.setInputSourceType(inputSourceType);
+        logger.info("Input source type: {}", inputSourceType);
+        
         arguments.getOutputPath().ifPresent(outputPath -> {
             request.setOutputDirectory(outputPath);
             logger.info("Custom output directory set: {}", outputPath);
@@ -75,6 +80,22 @@ public class Application {
         } else {
             logger.error("Analysis failed: {}", result.getErrorMessage());
             System.exit(1);
+        }
+    }
+    
+    private static String detectInputSourceType(String inputPath) {
+        String lowerPath = inputPath.toLowerCase();
+        
+        if (lowerPath.startsWith("http://") || lowerPath.startsWith("https://") || lowerPath.startsWith("git@")) {
+            return "git";
+        } else if (lowerPath.endsWith(".zip")) {
+            return "zip";
+        } else if (lowerPath.endsWith(".ear")) {
+            return "ear";
+        } else if (lowerPath.endsWith(".jar")) {
+            return "jar";
+        } else {
+            return "folder";
         }
     }
     

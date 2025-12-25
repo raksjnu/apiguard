@@ -61,6 +61,10 @@ public class ApplicationArguments {
         return Optional.ofNullable(arguments.get("input"));
     }
     
+    public Optional<String> getInputSourceType() {
+        return Optional.ofNullable(arguments.get("input-type"));
+    }
+    
     public Optional<String> getOutputPath() {
         return Optional.ofNullable(arguments.get("output"));
     }
@@ -107,7 +111,9 @@ public class ApplicationArguments {
         System.out.println("Options:");
         System.out.println("  --config <path>    Path to external configuration file");
         System.out.println("  --type <type>      Project type: mule, tibco5, spring");
-        System.out.println("  --input <path>     Input project path (local folder, zip, or git URL)");
+        System.out.println("  --input <path>     Input project path");
+        System.out.println("  --input-type <type> Input source type: folder, zip, ear, jar, git");
+        System.out.println("                     (auto-detected if not specified)");
         System.out.println("  --output <path>    Output directory for generated documents");
         System.out.println("  --port <number>    Server port (default: 8080, UI mode only)");
         System.out.println("  --no-browser       Don't auto-open browser (UI mode only)");
@@ -117,11 +123,20 @@ public class ApplicationArguments {
         System.out.println("  # Start UI mode");
         System.out.println("  java -jar raksanalyzer.jar");
         System.out.println();
-        System.out.println("  # CLI mode with custom config");
-        System.out.println("  java -jar raksanalyzer.jar --cli --config myconfig.properties --type tibco5 --input project.zip");
+        System.out.println("  # CLI mode with local folder");
+        System.out.println("  java -jar raksanalyzer.jar --cli --type tibco5 --input /path/to/project");
         System.out.println();
-        System.out.println("  # UI mode on custom port");
-        System.out.println("  java -jar raksanalyzer.jar --port 9090");
+        System.out.println("  # CLI mode with ZIP file");
+        System.out.println("  java -jar raksanalyzer.jar --cli --type tibco5 --input project.zip --input-type zip");
+        System.out.println();
+        System.out.println("  # CLI mode with EAR file");
+        System.out.println("  java -jar raksanalyzer.jar --cli --type tibco5 --input project.ear --input-type ear");
+        System.out.println();
+        System.out.println("  # CLI mode with Git repository");
+        System.out.println("  java -jar raksanalyzer.jar --cli --type mule --input https://github.com/user/repo.git --input-type git");
+        System.out.println();
+        System.out.println("  # With custom config and output");
+        System.out.println("  java -jar raksanalyzer.jar --cli --config custom.properties --type tibco5 --input project.zip --output /output/path");
         System.out.println();
     }
 }
