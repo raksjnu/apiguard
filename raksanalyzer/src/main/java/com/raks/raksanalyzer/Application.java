@@ -98,67 +98,95 @@ public class Application {
         
         request.setOutputFormatConfig(formatConfig);
         
-        logger.info("Analyzing project: {}", inputPath);
-        AnalysisResult result = AnalyzerFactory.analyze(request);
+        logger.info("Discovering projects in: {}", inputPath);
         
-        if (!result.isSuccess()) {
-            logger.error("Analysis failed: {}", result.getErrorMessage());
+        java.nio.file.Path inputPathObj = java.nio.file.Paths.get(inputPath).toAbsolutePath().normalize();
+        java.util.List<com.raks.raksanalyzer.core.discovery.DiscoveredProject> projects = 
+            com.raks.raksanalyzer.core.discovery.ProjectDiscovery.findProjects(inputPathObj, projectType);
+        
+        if (projects.isEmpty()) {
+            logger.error("No {} projects found in: {}", projectType, inputPath);
             System.exit(1);
         }
         
-        logger.info("Analysis completed successfully");
+        logger.info("Found {} {} project(s) to analyze", projects.size(), projectType);
         
         try {
             com.raks.raksanalyzer.core.config.ConfigurationManager config = 
                 com.raks.raksanalyzer.core.config.ConfigurationManager.getInstance();
             
-            if (formatConfig.isPdfEnabled()) {
-                if (projectType == ProjectType.TIBCO_BW5) {
-                    com.raks.raksanalyzer.generator.pdf.TibcoPdfGenerator pdfGen = 
-                        new com.raks.raksanalyzer.generator.pdf.TibcoPdfGenerator();
-                    String pdfPath = pdfGen.generate(result);
-                    logger.info("PDF generated: {}", pdfPath);
-                } else {
-                    com.raks.raksanalyzer.generator.pdf.PdfGenerator pdfGen = 
-                        new com.raks.raksanalyzer.generator.pdf.PdfGenerator(config);
-                    java.nio.file.Path pdfPath = pdfGen.generate(result);
-                    logger.info("PDF generated: {}", pdfPath);
+            for (com.raks.raksanalyzer.core.discovery.DiscoveredProject project : projects) {
+                logger.info("Analyzing project: {} at {}", project.getProjectName(), project.getProjectPath());
+                
+                AnalysisRequest projectRequest = new AnalysisRequest();
+                projectRequest.setProjectTechnologyType(projectType);
+                projectRequest.setInputSourceType(inputSourceType);
+                projectRequest.setInputPath(project.getProjectPath().toString());
+                projectRequest.setOutputFormatConfig(formatConfig);
+                
+                if (request.getOutputDirectory() != null) {
+                    projectRequest.setOutputDirectory(request.getOutputDirectory());
                 }
+                
+                AnalysisResult result = AnalyzerFactory.analyze(projectRequest);
+                
+                if (!result.isSuccess()) {
+                    logger.error("Analysis failed for project {}: {}", project.getProjectName(), result.getErrorMessage());
+                    continue;
+                }
+                
+                logger.info("Analysis completed successfully for project: {}", project.getProjectName());
+                
+                if (formatConfig.isPdfEnabled()) {
+                    if (projectType == ProjectType.TIBCO_BW5) {
+                        com.raks.raksanalyzer.generator.pdf.TibcoPdfGenerator pdfGen = 
+                            new com.raks.raksanalyzer.generator.pdf.TibcoPdfGenerator();
+                        String pdfPath = pdfGen.generate(result);
+                        logger.info("PDF generated for {}: {}", project.getProjectName(), pdfPath);
+                    } else {
+                        com.raks.raksanalyzer.generator.pdf.PdfGenerator pdfGen = 
+                            new com.raks.raksanalyzer.generator.pdf.PdfGenerator(config);
+                        java.nio.file.Path pdfPath = pdfGen.generate(result);
+                        logger.info("PDF generated for {}: {}", project.getProjectName(), pdfPath);
+                    }
+                }
+                
+                if (formatConfig.isWordEnabled()) {
+                    if (projectType == ProjectType.TIBCO_BW5) {
+                        com.raks.raksanalyzer.generator.word.TibcoWordGenerator wordGen = 
+                            new com.raks.raksanalyzer.generator.word.TibcoWordGenerator();
+                        String wordPath = wordGen.generate(result);
+                        logger.info("Word document generated for {}: {}", project.getProjectName(), wordPath);
+                    } else {
+                        com.raks.raksanalyzer.generator.word.WordGenerator wordGen = 
+                            new com.raks.raksanalyzer.generator.word.WordGenerator();
+                        java.nio.file.Path wordPath = wordGen.generate(result);
+                        logger.info("Word document generated for {}: {}", project.getProjectName(), wordPath);
+                    }
+                }
+                
+                if (formatConfig.isExcelEnabled()) {
+                    if (projectType == ProjectType.TIBCO_BW5) {
+                        com.raks.raksanalyzer.generator.excel.TibcoExcelGenerator excelGen = 
+                            new com.raks.raksanalyzer.generator.excel.TibcoExcelGenerator();
+                        String excelPath = excelGen.generate(result);
+                        logger.info("Excel report generated for {}: {}", project.getProjectName(), excelPath);
+                    } else {
+                        com.raks.raksanalyzer.generator.excel.ExcelGenerator excelGen = 
+                            new com.raks.raksanalyzer.generator.excel.ExcelGenerator();
+                        java.nio.file.Path excelPath = excelGen.generate(result);
+                        logger.info("Excel report generated for {}: {}", project.getProjectName(), excelPath);
+                    }
+                }
+                
+                logger.info("All documents generated for {}: {}", project.getProjectName(), result.getOutputDirectory());
             }
             
-            if (formatConfig.isWordEnabled()) {
-                if (projectType == ProjectType.TIBCO_BW5) {
-                    com.raks.raksanalyzer.generator.word.TibcoWordGenerator wordGen = 
-                        new com.raks.raksanalyzer.generator.word.TibcoWordGenerator();
-                    String wordPath = wordGen.generate(result);
-                    logger.info("Word document generated: {}", wordPath);
-                } else {
-                    com.raks.raksanalyzer.generator.word.WordGenerator wordGen = 
-                        new com.raks.raksanalyzer.generator.word.WordGenerator();
-                    java.nio.file.Path wordPath = wordGen.generate(result);
-                    logger.info("Word document generated: {}", wordPath);
-                }
-            }
-            
-            if (formatConfig.isExcelEnabled()) {
-                if (projectType == ProjectType.TIBCO_BW5) {
-                    com.raks.raksanalyzer.generator.excel.TibcoExcelGenerator excelGen = 
-                        new com.raks.raksanalyzer.generator.excel.TibcoExcelGenerator();
-                    String excelPath = excelGen.generate(result);
-                    logger.info("Excel report generated: {}", excelPath);
-                } else {
-                    com.raks.raksanalyzer.generator.excel.ExcelGenerator excelGen = 
-                        new com.raks.raksanalyzer.generator.excel.ExcelGenerator();
-                    java.nio.file.Path excelPath = excelGen.generate(result);
-                    logger.info("Excel report generated: {}", excelPath);
-                }
-            }
-            
-            logger.info("All documents generated successfully in: {}", result.getOutputDirectory());
+            logger.info("All {} project(s) analyzed and documented successfully", projects.size());
             System.exit(0);
             
         } catch (Exception e) {
-            logger.error("Failed to generate documents", e);
+            logger.error("Failed to analyze or generate documents", e);
             System.exit(1);
         }
     }
