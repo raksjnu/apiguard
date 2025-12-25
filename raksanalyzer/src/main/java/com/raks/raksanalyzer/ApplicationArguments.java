@@ -69,6 +69,10 @@ public class ApplicationArguments {
         return Optional.ofNullable(arguments.get("output"));
     }
     
+    public Optional<String> getOutputTypes() {
+        return Optional.ofNullable(arguments.get("output-type"));
+    }
+    
     public Optional<String> getDocumentGenerationExecutionMode() {
         return Optional.ofNullable(arguments.get("mode"));
     }
@@ -115,6 +119,8 @@ public class ApplicationArguments {
         System.out.println("  --input-type <type> Input source type: folder, zip, ear, jar, git");
         System.out.println("                     (auto-detected if not specified)");
         System.out.println("  --output <path>    Output directory for generated documents");
+        System.out.println("  --output-type <types> Output formats: pdf, word, excel, or comma-separated");
+        System.out.println("                     (default: all formats)");
         System.out.println("  --port <number>    Server port (default: 8080, UI mode only)");
         System.out.println("  --no-browser       Don't auto-open browser (UI mode only)");
         System.out.println("  --help, -h         Show this help message");
@@ -134,6 +140,12 @@ public class ApplicationArguments {
         System.out.println();
         System.out.println("  # CLI mode with Git repository");
         System.out.println("  java -jar raksanalyzer.jar --cli --type mule --input https://github.com/user/repo.git --input-type git");
+        System.out.println();
+        System.out.println("  # Generate only PDF");
+        System.out.println("  java -jar raksanalyzer.jar --cli --type tibco5 --input project.zip --output-type pdf");
+        System.out.println();
+        System.out.println("  # Generate PDF and Word");
+        System.out.println("  java -jar raksanalyzer.jar --cli --type mule --input /path/to/project --output-type pdf,word");
         System.out.println();
         System.out.println("  # With custom config and output");
         System.out.println("  java -jar raksanalyzer.jar --cli --config custom.properties --type tibco5 --input project.zip --output /output/path");

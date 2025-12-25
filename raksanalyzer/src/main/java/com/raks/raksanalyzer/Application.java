@@ -70,6 +70,26 @@ public class Application {
             logger.info("Custom output directory set: {}", outputPath);
         });
         
+        arguments.getOutputTypes().ifPresent(outputTypes -> {
+            com.raks.raksanalyzer.model.OutputFormatConfig formatConfig = new com.raks.raksanalyzer.model.OutputFormatConfig();
+            String[] types = outputTypes.toLowerCase().split(",");
+            
+            boolean hasPdf = false, hasWord = false, hasExcel = false;
+            for (String type : types) {
+                type = type.trim();
+                if ("pdf".equals(type)) hasPdf = true;
+                else if ("word".equals(type)) hasWord = true;
+                else if ("excel".equals(type)) hasExcel = true;
+            }
+            
+            formatConfig.setPdfEnabled(hasPdf);
+            formatConfig.setWordEnabled(hasWord);
+            formatConfig.setExcelEnabled(hasExcel);
+            
+            request.setOutputFormatConfig(formatConfig);
+            logger.info("Output formats: PDF={}, Word={}, Excel={}", hasPdf, hasWord, hasExcel);
+        });
+        
         logger.info("Analyzing project: {}", inputPath);
         AnalysisResult result = AnalyzerFactory.analyze(request);
         
