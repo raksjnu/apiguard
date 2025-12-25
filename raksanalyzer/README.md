@@ -76,6 +76,7 @@ java -jar raksanalyzer.jar [OPTIONS]
 | `--input <path>` | Input project path | Yes (CLI mode) | - |
 | `--input-type <type>` | Input source type: `folder`, `zip`, `ear`, `jar`, `git` | No | Auto-detected |
 | `--output <path>` | Output directory for generated documents | No | `./output` |
+| `--output-type <types>` | Output formats: `pdf`, `word`, `excel`, or comma-separated | No | All formats |
 | `--port <number>` | Server port (UI mode only) | No | `8080` |
 | `--no-browser` | Don't auto-open browser (UI mode only) | No | Opens browser |
 | `--help`, `-h` | Show help message | No | - |
@@ -93,6 +94,20 @@ The `--input-type` option specifies how to interpret the input path:
 | `git` | Git repository URL | `https://github.com/user/repo.git` |
 
 **Auto-Detection**: If `--input-type` is not specified, the system will auto-detect based on the file extension or URL pattern.
+
+### Output Format Types
+
+The `--output-type` option controls which document formats to generate:
+
+| Type | Description |
+|------|-------------|
+| `pdf` | Generate PDF document only |
+| `word` | Generate Word document only |
+| `excel` | Generate Excel spreadsheet only |
+| `pdf,word` | Generate both PDF and Word |
+| `pdf,excel` | Generate both PDF and Excel |
+| `word,excel` | Generate both Word and Excel |
+| *(not specified)* | Generate all formats (default) |
 
 ### Examples
 
@@ -116,13 +131,29 @@ java -jar raksanalyzer.jar --cli --type tibco5 --input application.ear --input-t
 java -jar raksanalyzer.jar --cli --type mule --input https://github.com/user/mule-project.git --input-type git
 ```
 
+#### Generate Only PDF
+```bash
+java -jar raksanalyzer.jar --cli --type tibco5 --input project.zip --output-type pdf
+```
+
+#### Generate PDF and Word
+```bash
+java -jar raksanalyzer.jar --cli --type mule --input /path/to/project --output-type pdf,word
+```
+
+#### Generate Only Excel
+```bash
+java -jar raksanalyzer.jar --cli --type tibco5 --input /path/to/project --output-type excel
+```
+
 #### With Custom Configuration
 ```bash
 java -jar raksanalyzer.jar --cli \
   --config custom.properties \
   --type tibco5 \
   --input project.zip \
-  --output /custom/output/path
+  --output /custom/output/path \
+  --output-type pdf,word
 ```
 
 #### UI Mode on Custom Port
