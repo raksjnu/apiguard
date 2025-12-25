@@ -37,13 +37,13 @@ public class TibcoConfigParser {
             Path customConfigPath) {
         
         // CRITICAL LOGGING: Entry point trace
-        logger.info("[CONFIG-TRACE] TibcoConfigParser.parseGlobalVariables() called");
-        logger.info("[CONFIG-TRACE]   projectPath: {}", projectPath != null ? projectPath.toAbsolutePath() : "NULL");
+
+
         if (customConfigPath != null) {
-            logger.info("[CONFIG-TRACE]   customConfigPath: {}", customConfigPath.toAbsolutePath());
-            logger.info("[CONFIG-TRACE]   customConfigPath exists: {}", Files.exists(customConfigPath));
+
+
         } else {
-            logger.info("[CONFIG-TRACE]   customConfigPath: NULL (will use defaults only)");
+
         }
         
         // Master map to hold merged variables (groupName/varName -> GlobalVariable)

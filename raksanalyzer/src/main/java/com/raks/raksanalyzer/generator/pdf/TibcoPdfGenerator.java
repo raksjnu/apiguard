@@ -693,6 +693,7 @@ public class TibcoPdfGenerator {
             
             subIndex++;
             String diagramTitle = numbering.getSectionNumber() + "." + subIndex + " " + flow.getName() + " Integration";
+            drawH3Header(diagramTitle);
             insertIntegrationDiagram(diagramTitle, relPath, projPath);
 
             subIndex++;
@@ -726,6 +727,7 @@ public class TibcoPdfGenerator {
 
             subIndex++;
             String diagramTitle = numbering.getSectionNumber() + "." + subIndex + " " + flow.getName() + " Integration";
+            drawH3Header(diagramTitle);
             insertIntegrationDiagram(diagramTitle, relPath, projPath);
 
             subIndex++;
@@ -778,8 +780,9 @@ public class TibcoPdfGenerator {
                     if (impl != null && !impl.isEmpty()) {
                         String projPath = result.getProjectInfo().getProjectPath();
                         // Use opIdx to distinct operations
-                        String diagramTitle = numbering.getSectionNumber() + "." + idx + "." + opIdx + " " + opName + " Integration";
-                        insertIntegrationDiagram(diagramTitle, impl, projPath, "Service Agent");
+                    String diagramTitle = numbering.getSectionNumber() + "." + idx + "." + opIdx + " " + opName + " Integration";
+                    drawH3Header(diagramTitle);
+                    insertIntegrationDiagram(diagramTitle, impl, projPath, "Service Agent");
                     }
                     opIdx++;
                 }

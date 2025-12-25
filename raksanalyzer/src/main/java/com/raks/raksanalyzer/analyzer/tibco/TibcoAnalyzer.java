@@ -56,9 +56,9 @@ public class TibcoAnalyzer {
         
         // CRITICAL LOGGING: Track config file path
         if (configFilePath != null) {
-            logger.info("[CONFIG-TRACE] TibcoAnalyzer initialized WITH custom config: {}", configFilePath.toAbsolutePath());
+
         } else {
-            logger.info("[CONFIG-TRACE] TibcoAnalyzer initialized WITHOUT custom config (will use defaults)");
+
         }
     }
     
@@ -377,9 +377,9 @@ public class TibcoAnalyzer {
             
             // CRITICAL LOGGING: Track what we're passing to parser
             if (configFilePath != null) {
-                logger.info("[CONFIG-TRACE] Calling TibcoConfigParser WITH custom config: {}", configFilePath.toAbsolutePath());
+
             } else {
-                logger.info("[CONFIG-TRACE] Calling TibcoConfigParser WITHOUT custom config (configFilePath is NULL)");
+
             }
             
             Map<String, List<TibcoGlobalVariable>> parsedVars = 

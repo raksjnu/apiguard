@@ -33,16 +33,8 @@ public class AnalyzerFactory {
         
         // CRITICAL LOGGING: Track config path from request
         String configPathStr = request.getConfigFilePath();
-        logger.info("[CONFIG-TRACE] AnalyzerFactory.analyze() - Config path from request: {}", 
-            configPathStr != null ? configPathStr : "NULL");
         
         Path configFilePath = configPathStr != null ? Paths.get(configPathStr) : null;
-        
-        if (configFilePath != null) {
-            logger.info("[CONFIG-TRACE] AnalyzerFactory - Passing config path to analyzer: {}", configFilePath.toAbsolutePath());
-        } else {
-            logger.info("[CONFIG-TRACE] AnalyzerFactory - NO config path to pass (will use defaults)");
-        }
         
         // Route to appropriate analyzer
         switch (request.getProjectTechnologyType()) {

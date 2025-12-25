@@ -94,7 +94,7 @@ public class TibcoDiagramGenerator {
      * @return Byte array of the generated PNG image
      */
     public byte[] generateFlowDiagram(File processFile) {
-        logger.info("Generating flow diagram for: {}", processFile.getName());
+
         try {
             if (!processFile.exists()) {
                 logger.warn("Process file not found: {}", processFile);
@@ -107,11 +107,11 @@ public class TibcoDiagramGenerator {
             Document doc = dBuilder.parse(processFile);
 
             String puml = generateFlowPuml(doc, processFile.getName());
-            logger.info("Generated PlantUML for {}, length: {} chars", processFile.getName(), puml != null ? puml.length() : 0);
+
             
             byte[] pngBytes = renderPng(puml);
             if (pngBytes != null && pngBytes.length > 0) {
-                logger.info("✓ Successfully generated diagram for {}, size: {} bytes", processFile.getName(), pngBytes.length);
+
             } else {
                 logger.warn("✗ Diagram generation returned empty/null for {}", processFile.getName());
             }
