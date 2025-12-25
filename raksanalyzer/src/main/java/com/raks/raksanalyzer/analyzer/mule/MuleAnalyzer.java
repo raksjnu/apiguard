@@ -525,23 +525,23 @@ public class MuleAnalyzer {
             
             logger.info("Starting connection details enrichment");
             
-            // 1. Load properties from external config file or project
+            // 1. Load properties from project first (base properties)
             PropertyResolver propertyResolver = new PropertyResolver();
             int propsLoaded = 0;
             
+            // Always load project properties as base
+            String propertyPattern = config.getProperty(
+                "diagram.integration.property.files", 
+                "src/main/resources/*.properties"
+            );
+            propsLoaded = propertyResolver.loadProperties(projectPath, propertyPattern);
+            logger.info("Loaded {} property files from project", propsLoaded);
+            
+            // If external config file is provided, load it to override project properties
             if (externalConfigFile != null && Files.exists(externalConfigFile)) {
-                // Use external config file for property resolution
-                logger.info("Using external config file for property resolution: {}", externalConfigFile);
-                propsLoaded = propertyResolver.loadPropertiesFromFile(externalConfigFile);
-                logger.info("Loaded {} properties from external config file", propsLoaded);
-            } else {
-                // Use default property discovery from project
-                String propertyPattern = config.getProperty(
-                    "diagram.integration.property.files", 
-                    "src/main/resources/*.properties"
-                );
-                propsLoaded = propertyResolver.loadProperties(projectPath, propertyPattern);
-                logger.info("Loaded {} property files from project", propsLoaded);
+                logger.info("Loading external config file to override project properties: {}", externalConfigFile);
+                int externalPropsLoaded = propertyResolver.loadPropertiesFromFile(externalConfigFile);
+                logger.info("Loaded {} properties from external config file (overriding project properties)", externalPropsLoaded);
             }
             
             // 2. Build config resolver from parsed connector configs

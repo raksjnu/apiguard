@@ -131,6 +131,11 @@ public class Application {
                     projectRequest.setOutputDirectory(request.getOutputDirectory());
                 }
                 
+                // Copy config file path for property resolution
+                if (request.getConfigFilePath() != null) {
+                    projectRequest.setConfigFilePath(request.getConfigFilePath());
+                }
+                
                 AnalysisResult result = AnalyzerFactory.analyze(projectRequest);
                 
                 if (!result.isSuccess()) {
