@@ -1571,8 +1571,6 @@ public class TibcoPdfGenerator {
         float availableSpace = currentY - MARGIN;
         
         if (availableSpace < minSpaceNeeded) {
-            logger.info("[HEADER-FIX] Not enough space for header + table (need {}, have {}), creating new page", 
-                        minSpaceNeeded, availableSpace);
             newPage();
             closeContentStream();
             // Create new content stream for the new page
@@ -1587,9 +1585,9 @@ public class TibcoPdfGenerator {
         contentStream.newLineAtOffset(MARGIN, currentY);
         contentStream.showText(title);
         contentStream.endText();
-        logger.info("[PDF-DEBUG] Header '{}' drawn at Y={}", title, currentY);
+
         currentY -= 25; // Match Mule PDF spacing
-        logger.info("[PDF-DEBUG] After header, currentY={}", currentY);
+
         
 
         if (tocEntries != null) {
@@ -1695,7 +1693,7 @@ public class TibcoPdfGenerator {
     // Check space
     checkPageSpace(renderHeight + 30);
     
-    logger.info("[PDF-DEBUG] Drawing table at startY={}, Est Height={}", currentY, renderHeight);
+
     
     // Use TableDrawer (single-page) instead of RepeatedHeaderTableDrawer (multi-page)
     // This matches Mule's approach and prevents headers from being left on previous pages

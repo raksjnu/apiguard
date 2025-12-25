@@ -66,16 +66,11 @@ public class SectionContext {
         float currentY = generator.getCurrentY();
         float availableSpace = currentY - MARGIN;
         
-        logger.info("[SECTION-CONTEXT] Estimated height: {}, Available space: {}, CurrentY: {}", 
-                    estimatedHeight, availableSpace, currentY);
-        
         spaceEnsured = true;
         
         if (estimatedHeight > availableSpace) {
-            logger.info("[SECTION-CONTEXT] Not enough space, new page needed");
             return true;
         } else {
-            logger.info("[SECTION-CONTEXT] Sufficient space available, proceeding on current page");
             return false;
         }
     }
