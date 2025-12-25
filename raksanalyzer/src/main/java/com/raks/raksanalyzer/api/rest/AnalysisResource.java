@@ -22,6 +22,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -38,7 +39,7 @@ public class AnalysisResource {
     
     private final ConfigurationManager config = ConfigurationManager.getInstance();
     
-    // Store analysis results in memory (in production, use a database)
+
     private static final Map<String, AnalysisResult> results = new ConcurrentHashMap<>();
     
     /**
@@ -56,50 +57,95 @@ public class AnalysisResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    public Response analyze(Map<String, Object> requestData) {
+    public Response analyze(AnalysisRequest request) {
+        String analysisId = UUID.randomUUID().toString();
+        logger.info("Received analysis request: {}", request);
+        logger.info("Code Verification: BUILD_FIX_CLEANUP_UI_REWRITE");
+        
         try {
-            logger.info("Received analysis request: {}", requestData);
+
+            request.setAnalysisId(analysisId);
             
-            // Build AnalysisRequest
-            AnalysisRequest request = buildAnalysisRequest(requestData);
+
+            // Fallback to system property for config file path (CLI support)
+            if (request.getConfigFilePath() == null || request.getConfigFilePath().isEmpty()) {
+                String sysConfig = System.getProperty("raksanalyzer.config.path");
+                if (sysConfig != null && !sysConfig.isEmpty()) {
+                    request.setConfigFilePath(sysConfig);
+                    logger.info("Used custom configuration from CLI args: {}", sysConfig);
+                }
+            }
             
-            // Execute analysis in background thread
-            Thread analysisThread = new Thread(() -> executeAnalysis(request));
-            analysisThread.start();
+            String inputSourceType = request.getInputSourceType();
+            String inputPath = request.getInputPath();
+            String projectName = "Project_" + analysisId.substring(0, 8); // Default name
             
-            // Extract project name from input path
-            String inputPath = getString(requestData, "inputPath");
-            String projectName = extractProjectName(inputPath);
+
+            String outputDir;
+            if ("jar".equals(inputSourceType) || "zip".equals(inputSourceType) || "git".equals(inputSourceType)) {
+
+                String tempDir = config.getProperty("framework.temp.directory", "./temp");
+                String uploadId = request.getUploadId();
+                if (uploadId == null || uploadId.isEmpty()) {
+                    uploadId = analysisId;
+                    request.setUploadId(uploadId);
+                }
+
+                outputDir = tempDir + "/analysis/" + uploadId;
+                logger.info("Using temp directory for {}: {}", inputSourceType, outputDir);
+            } else {
+
+                outputDir = config.getProperty("framework.output.directory", "./output");
+                logger.info("Using local output directory: {}", outputDir);
+            }
             
-            // Generate expected file paths
+
             String timestamp = java.time.LocalDateTime.now()
                 .format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-            String outputDir = config.getProperty("framework.output.directory", "./output");
-            
-            // Convert relative path to absolute if needed
+                
             Path outputPath = Paths.get(outputDir);
             if (!outputPath.isAbsolute()) {
                 outputPath = Paths.get(System.getProperty("user.dir")).resolve(outputDir);
+            }
+
+            outputPath = outputPath.toAbsolutePath().normalize();
+            
+
+            if (!java.nio.file.Files.exists(outputPath)) {
+                java.nio.file.Files.createDirectories(outputPath);
             }
             
             String excelPath = outputPath.resolve(projectName + "_" + timestamp + ".xlsx").toString();
             String wordPath = outputPath.resolve(projectName + "_" + timestamp + ".docx").toString();
             String pdfPath = outputPath.resolve(projectName + "_" + timestamp + ".pdf").toString();
             
-            // Create a pending result so we have an ID to return
-            String analysisId = java.util.UUID.randomUUID().toString();
+
             AnalysisResult pendingResult = new AnalysisResult();
             pendingResult.setAnalysisId(analysisId);
+            pendingResult.setOutputDirectory(outputPath.toString());
             pendingResult.setExcelReportPath(excelPath);
             pendingResult.setWordDocumentPath(wordPath);
             pendingResult.setPdfDocumentPath(pdfPath);
-            // Store it with the ID the frontend will use
+            
+
             results.put(analysisId, pendingResult);
             
-            // Pass ID to bg thread
-            request.setAnalysisId(analysisId);
 
-            // Return immediate response with expected file paths
+            Thread analysisThread = new Thread(() -> executeAnalysis(request));
+            analysisThread.start();
+            
+
+            String normalizedOutputDir = outputPath.toString()
+                .replace("\\", "/");  // Convert backslashes to forward slashes
+            
+
+            if (normalizedOutputDir.startsWith("./")) {
+                normalizedOutputDir = normalizedOutputDir.substring(2);
+            } else if (normalizedOutputDir.startsWith(".\\")) {
+                normalizedOutputDir = normalizedOutputDir.substring(2);
+            }
+            
+
             Map<String, Object> response = new HashMap<>();
             response.put("status", "STARTED");
             response.put("analysisId", analysisId);
@@ -108,7 +154,7 @@ public class AnalysisResource {
             response.put("excelPath", excelPath);
             response.put("wordPath", wordPath);
             response.put("pdfPath", pdfPath);
-            response.put("outputDirectory", outputPath.toString());
+            response.put("outputDirectory", normalizedOutputDir);
             
             return Response.ok(response).build();
             
@@ -140,15 +186,26 @@ public class AnalysisResource {
         }
         
         Map<String, Object> response = new HashMap<>();
+        
+
+        String status;
+        if (result.getEndTime() != null) {
+            status = result.isSuccess() ? "COMPLETED" : "FAILED";
+        } else {
+            status = "IN_PROGRESS";
+        }
+        
+        response.put("status", status);
         response.put("analysisId", result.getAnalysisId());
         response.put("success", result.isSuccess());
-        response.put("startTime", result.getStartTime().toString());
+        response.put("startTime", result.getStartTime() != null ? result.getStartTime().toString() : null);
         response.put("endTime", result.getEndTime() != null ? result.getEndTime().toString() : null);
         response.put("durationMs", result.getDurationMillis());
-        response.put("flowCount", result.getFlows().size());
-        response.put("propertyCount", result.getProperties().size());
+        response.put("flowCount", result.getFlows() != null ? result.getFlows().size() : 0);
+        response.put("propertyCount", result.getProperties() != null ? result.getProperties().size() : 0);
         response.put("excelPath", result.getExcelReportPath());
         response.put("wordPath", result.getWordDocumentPath());
+        response.put("pdfPath", result.getPdfDocumentPath());
         
         if (!result.isSuccess()) {
             response.put("errorMessage", result.getErrorMessage());
@@ -182,7 +239,7 @@ public class AnalysisResource {
         } else if ("pdf".equalsIgnoreCase(type)) {
             filePath = result.getPdfDocumentPath();
         } else if ("folder".equalsIgnoreCase(type)) {
-            // Use any valid path to get the parent folder
+
             String anyPath = result.getExcelReportPath();
             if (anyPath == null) anyPath = result.getWordDocumentPath();
             if (anyPath == null) anyPath = result.getPdfDocumentPath();
@@ -267,7 +324,7 @@ public class AnalysisResource {
     private AnalysisRequest buildAnalysisRequest(Map<String, Object> requestData) {
         AnalysisRequest request = new AnalysisRequest();
         
-        // Project type
+
         String projectType = getString(requestData, "projectTechnologyType");
         if (projectType != null) {
             request.setProjectTechnologyType(ProjectType.valueOf(projectType));
@@ -275,7 +332,7 @@ public class AnalysisResource {
             request.setProjectTechnologyType(ProjectType.MULE); // Default
         }
         
-        // Execution mode
+
         String executionMode = getString(requestData, "documentGenerationExecutionMode");
         if (executionMode != null) {
             request.setDocumentGenerationExecutionMode(ExecutionMode.valueOf(executionMode));
@@ -283,24 +340,31 @@ public class AnalysisResource {
             request.setDocumentGenerationExecutionMode(ExecutionMode.FULL); // Default
         }
         
-        // Environment scope
+
         String envScope = getString(requestData, "environmentAnalysisScope");
         if (envScope != null && !envScope.equalsIgnoreCase("ALL")) {
             List<String> environments = Arrays.asList(envScope.split(","));
             request.setSelectedEnvironments(environments);
         } else {
-            // Use all configured environments
+
             List<String> allEnvs = config.getEnvironmentNames();
             request.setSelectedEnvironments(allEnvs);
         }
         request.setEnvironmentAnalysisScope(envScope);
         
-        // Input source
+
         request.setInputSourceType(getString(requestData, "inputSourceType"));
         request.setInputPath(getString(requestData, "inputPath"));
         request.setGitBranch(getString(requestData, "gitBranch"));
         
-        // Output format preferences - handle both boolean and string values
+
+        String configPath = getString(requestData, "configFilePath");
+        if (configPath == null) {
+            configPath = System.getProperty("raksanalyzer.config.path");
+        }
+        request.setConfigFilePath(configPath);
+        
+
         OutputFormatConfig formatConfig = new OutputFormatConfig();
         formatConfig.setPdfEnabled(getBoolean(requestData, "generatePdf", true));
         formatConfig.setWordEnabled(getBoolean(requestData, "generateWord", false));
@@ -347,38 +411,38 @@ public class AnalysisResource {
         }
         
         try {
-            // Resolve relative paths
+
             Path path = Paths.get(inputPath);
             if (!path.isAbsolute()) {
                 path = Paths.get(System.getProperty("user.dir")).resolve(inputPath);
             }
             
-            // If it's a directory, check if it contains a single Mule project subdirectory
+
             if (java.nio.file.Files.isDirectory(path)) {
-                // Look for subdirectories with pom.xml (Mule projects)
+
                 try (java.util.stream.Stream<Path> entries = java.nio.file.Files.list(path)) {
                     List<Path> muleProjects = entries
                         .filter(java.nio.file.Files::isDirectory)
                         .filter(dir -> java.nio.file.Files.exists(dir.resolve("pom.xml")))
                         .collect(java.util.stream.Collectors.toList());
                     
-                    // If there's exactly one Mule project, use its name
+
                     if (muleProjects.size() == 1) {
                         return muleProjects.get(0).getFileName().toString();
                     }
                 }
                 
-                // Otherwise, use the directory name itself
+
                 return path.getFileName().toString();
             } else {
-                // If it's a file (e.g., ZIP), use the filename without extension
+
                 String fileName = path.getFileName().toString();
                 int dotIndex = fileName.lastIndexOf('.');
                 return dotIndex > 0 ? fileName.substring(0, dotIndex) : fileName;
             }
         } catch (Exception e) {
             logger.warn("Error extracting project name from path: {}", inputPath, e);
-            // Fallback: extract last segment from path
+
             String cleanPath = inputPath.replace("\\", "/");
             String[] parts = cleanPath.split("/");
             return parts[parts.length - 1];
@@ -392,23 +456,23 @@ public class AnalysisResource {
         try {
             logger.info("Executing analysis: {}", request);
             
-            // Discover all Mule projects in the input path
-            Path inputPath = Paths.get(request.getInputPath());
+
+            Path inputPath = Paths.get(request.getInputPath()).toAbsolutePath().normalize();
             List<com.raks.raksanalyzer.core.discovery.DiscoveredProject> projects = 
-                com.raks.raksanalyzer.core.discovery.ProjectDiscovery.findMuleProjects(inputPath);
+                com.raks.raksanalyzer.core.discovery.ProjectDiscovery.findProjects(inputPath, request.getProjectTechnologyType());
             
             if (projects.isEmpty()) {
-                logger.error("No Mule projects found in: {}", inputPath);
+                logger.error("No {} projects found in: {}", request.getProjectTechnologyType(), inputPath);
                 return;
             }
             
-            logger.info("Found {} Mule project(s) to analyze", projects.size());
+            logger.info("Found {} {} project(s) to analyze", projects.size(), request.getProjectTechnologyType());
             
-            // Process each project separately
+
             for (com.raks.raksanalyzer.core.discovery.DiscoveredProject project : projects) {
                 logger.info("Analyzing project: {} at {}", project.getProjectName(), project.getProjectPath());
                 
-                // Create a new request for this specific project
+
                 AnalysisRequest projectRequest = new AnalysisRequest();
                 projectRequest.setProjectTechnologyType(request.getProjectTechnologyType());
                 projectRequest.setDocumentGenerationExecutionMode(request.getDocumentGenerationExecutionMode());
@@ -416,11 +480,16 @@ public class AnalysisResource {
                 projectRequest.setSelectedEnvironments(request.getSelectedEnvironments());
                 projectRequest.setInputSourceType(request.getInputSourceType());
                 projectRequest.setInputPath(project.getProjectPath().toString());
+                projectRequest.setAnalysisId(request.getAnalysisId()); // Copy the ID for status polling
+                projectRequest.setConfigFilePath(request.getConfigFilePath()); // CRITICAL: Copy config file path!
                 
-                // Run analyzer for this project
+
                 AnalysisResult result = AnalyzerFactory.analyze(projectRequest);
                 
-                // Generate documents based on execution mode and format preferences
+
+                result.setAnalysisId(request.getAnalysisId());
+                
+
                 ExecutionMode mode = request.getDocumentGenerationExecutionMode();
                 OutputFormatConfig formatConfig = request.getOutputFormatConfig();
                 
@@ -429,36 +498,71 @@ public class AnalysisResource {
                 }
                 
                 if ((mode == ExecutionMode.FULL || mode == ExecutionMode.ANALYZE_ONLY) && formatConfig.isExcelEnabled()) {
-                    // Generate Excel
-                    ExcelGenerator excelGen = new ExcelGenerator();
-                    Path excelPath = excelGen.generate(result);
-                    result.setExcelReportPath(excelPath.toString());
-                    logger.info("Excel report generated: {}", excelPath);
+
+                    if (result.getProjectInfo().getProjectType() == com.raks.raksanalyzer.domain.enums.ProjectType.TIBCO_BW5) {
+                        com.raks.raksanalyzer.generator.excel.TibcoExcelGenerator tibcoExcelGen = new com.raks.raksanalyzer.generator.excel.TibcoExcelGenerator();
+                        String excelPath = tibcoExcelGen.generate(result);
+                        result.setExcelReportPath(excelPath);
+                        logger.info("Tibco Excel report generated: {}", excelPath);
+                    } else {
+
+                        ExcelGenerator excelGen = new ExcelGenerator();
+                        Path excelPath = excelGen.generate(result);
+                        result.setExcelReportPath(excelPath.toString());
+                        logger.info("Excel report generated: {}", excelPath);
+                    }
                 }
                 
                 if ((mode == ExecutionMode.FULL || mode == ExecutionMode.GENERATE_ONLY) && formatConfig.isPdfEnabled()) {
-                    // Generate PDF
+
                     try {
-                        PdfGenerator pdfGen = new PdfGenerator(config);
-                        Path pdfPath = pdfGen.generate(result);
-                        result.setPdfDocumentPath(pdfPath.toString());
-                        logger.info("PDF document generated: {}", pdfPath);
+
+                        if (result.getProjectInfo().getProjectType() == com.raks.raksanalyzer.domain.enums.ProjectType.TIBCO_BW5) {
+
+                            com.raks.raksanalyzer.generator.pdf.TibcoPdfGenerator tibcoPdfGen = new com.raks.raksanalyzer.generator.pdf.TibcoPdfGenerator();
+                            String pdfPath = tibcoPdfGen.generate(result);
+                            result.setPdfDocumentPath(pdfPath);
+                            logger.info("Tibco PDF document generated: {}", pdfPath);
+                        } else {
+
+                            PdfGenerator pdfGen = new PdfGenerator(config);
+                            Path pdfPath = pdfGen.generate(result);
+                            result.setPdfDocumentPath(pdfPath.toString());
+                            logger.info("PDF document generated: {}", pdfPath);
+                        }
                     } catch (Exception e) {
                         logger.error("Failed to generate PDF", e);
                     }
                 }
                 
+
+                logger.info("Format config - PDF: {}, Word: {}, Excel: {}", 
+                    formatConfig.isPdfEnabled(), formatConfig.isWordEnabled(), formatConfig.isExcelEnabled());
+                
                 if ((mode == ExecutionMode.FULL || mode == ExecutionMode.GENERATE_ONLY) && formatConfig.isWordEnabled()) {
-                    // Generate Word
-                    WordGenerator wordGen = new WordGenerator();
-                    Path wordPath = wordGen.generate(result);
-                    result.setWordDocumentPath(wordPath.toString());
-                    logger.info("Word document generated: {}", wordPath);
+
+                    if (result.getProjectInfo().getProjectType() == com.raks.raksanalyzer.domain.enums.ProjectType.TIBCO_BW5) {
+                        com.raks.raksanalyzer.generator.word.TibcoWordGenerator tibcoWordGen = new com.raks.raksanalyzer.generator.word.TibcoWordGenerator();
+                        String wordPath = tibcoWordGen.generate(result);
+                        result.setWordDocumentPath(wordPath);
+                        logger.info("Tibco Word document generated: {}", wordPath);
+                    } else {
+
+                        WordGenerator wordGen = new WordGenerator();
+                        Path wordPath = wordGen.generate(result);
+                        result.setWordDocumentPath(wordPath.toString());
+                        logger.info("Word document generated: {}", wordPath);
+                    }
                 }
                 
-                // Store result with project-specific ID
-                String resultId = result.getAnalysisId() + "_" + project.getProjectName();
-                results.put(resultId, result);
+
+                if (result.getEndTime() == null) {
+                    result.setEndTime(java.time.LocalDateTime.now());
+                }
+                
+
+
+                results.put(result.getAnalysisId(), result);
                 
                 logger.info("Analysis completed successfully for project: {}", project.getProjectName());
             }
@@ -467,6 +571,265 @@ public class AnalysisResource {
             
         } catch (Exception e) {
             logger.error("Analysis failed", e);
+        } finally {
+
+            String inputSourceType = request.getInputSourceType();
+            if ("zip".equals(inputSourceType) || "jar".equals(inputSourceType)) {
+                String uploadId = request.getUploadId();
+                if (uploadId != null) {
+                    com.raks.raksanalyzer.util.FileExtractionUtil.cleanupTempDirectory(uploadId);
+                    logger.info("Cleaned up temporary files for upload: {}", uploadId);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Send analysis documents via email.
+     * 
+     * POST /api/analyze/email
+     * Body: {
+     *   "email": "user@example.com",
+     *   "analysisId": "abc-123"
+     * }
+     */
+    @POST
+    @jakarta.ws.rs.Path("/email")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response sendEmail(Map<String, Object> requestData) {
+        try {
+            String email = (String) requestData.get("email");
+            String analysisId = (String) requestData.get("analysisId");
+            
+            if (email == null || email.trim().isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Email address is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+            }
+            
+            if (analysisId == null || analysisId.trim().isEmpty()) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Analysis ID is required");
+                return Response.status(Response.Status.BAD_REQUEST).entity(error).build();
+            }
+            
+
+            AnalysisResult result = results.get(analysisId);
+            if (result == null) {
+                Map<String, Object> error = new HashMap<>();
+                error.put("success", false);
+                error.put("message", "Analysis not found");
+                return Response.status(Response.Status.NOT_FOUND).entity(error).build();
+            }
+            
+
+            List<String> documentPaths = Arrays.asList(
+                result.getExcelReportPath(),
+                result.getWordDocumentPath(),
+                result.getPdfDocumentPath()
+            );
+            
+
+            com.raks.raksanalyzer.service.EmailService emailService = 
+                new com.raks.raksanalyzer.service.EmailService();
+            boolean success = emailService.sendDocuments(
+                email, 
+                result.getProjectInfo().getProjectName(), 
+                documentPaths
+            );
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", success);
+            response.put("message", success ? 
+                "Documents sent successfully to " + email : 
+                "Failed to send email. Please check logs.");
+            
+            return Response.ok(response).build();
+            
+        } catch (Exception e) {
+            logger.error("Error sending email", e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Error: " + e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
+        }
+    }
+    
+    /**
+     * Cleanup temp files for an analysis session.
+     * Called when user clicks "Start Again" button.
+     * 
+     * POST /api/analyze/cleanup/{analysisId}
+     */
+    @POST
+    @jakarta.ws.rs.Path("/cleanup/{analysisId}")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response cleanup(@PathParam("analysisId") String analysisId) {
+        try {
+            logger.info("Cleanup requested for analysis: {}", analysisId);
+            
+
+            AnalysisResult result = results.get(analysisId);
+            if (result == null) {
+                logger.warn("Analysis not found for cleanup: {}", analysisId);
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("message", "No cleanup needed");
+                return Response.ok(response).build();
+            }
+            
+
+            String outputDirStr = result.getOutputDirectory();
+            boolean isTemp = false;
+            
+            if (outputDirStr != null) {
+                try {
+                    java.nio.file.Path outputPath = java.nio.file.Paths.get(outputDirStr).toAbsolutePath().normalize();
+                    
+
+                    String tempDirConfig = config.getProperty("framework.temp.directory", "./temp");
+                    java.nio.file.Path tempPath = java.nio.file.Paths.get(System.getProperty("user.dir"))
+                                                 .resolve(tempDirConfig)
+                                                 .toAbsolutePath()
+                                                 .normalize();
+                    
+                    logger.info("Cleanup Check: Output Path: {}", outputPath);
+                    logger.info("Cleanup Check: Temp Root: {}", tempPath);
+                    
+                    if (outputPath.startsWith(tempPath)) {
+                        isTemp = true;
+                    } else {
+
+                        if (outputPath.toString().contains(java.io.File.separator + "temp" + java.io.File.separator) || 
+                            outputPath.toString().endsWith(java.io.File.separator + "temp")) {
+                            logger.info("Fallback check passed: Path contains 'temp' segment");
+                            isTemp = true;
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("Path check failed for: {}", outputDirStr, e);
+                }
+            }
+
+            if (isTemp) {
+                int deletedCount = 0;
+                
+
+                if (result.getExcelReportPath() != null) {
+                    try {
+                        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(result.getExcelReportPath()));
+                        deletedCount++;
+                        logger.info("Deleted: {}", result.getExcelReportPath());
+                    } catch (Exception e) {
+                        logger.warn("Failed to delete Excel: {}", result.getExcelReportPath(), e);
+                    }
+                }
+                
+
+                if (result.getWordDocumentPath() != null) {
+                    try {
+                        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(result.getWordDocumentPath()));
+                        deletedCount++;
+                        logger.info("Deleted: {}", result.getWordDocumentPath());
+                    } catch (Exception e) {
+                        logger.warn("Failed to delete Word: {}", result.getWordDocumentPath(), e);
+                    }
+                }
+                
+
+                if (result.getPdfDocumentPath() != null) {
+                    try {
+                        java.nio.file.Files.deleteIfExists(java.nio.file.Paths.get(result.getPdfDocumentPath()));
+                        deletedCount++;
+                        logger.info("Deleted: {}", result.getPdfDocumentPath());
+                    } catch (Exception e) {
+                        logger.warn("Failed to delete PDF: {}", result.getPdfDocumentPath(), e);
+                    }
+                }
+                
+
+                try {
+                    java.nio.file.Path tempDir = java.nio.file.Paths.get(outputDirStr);
+                    if (java.nio.file.Files.exists(tempDir)) {
+                        logger.info("Attempting to recursively delete output dir: {}", tempDir);
+                        com.raks.raksanalyzer.util.FileExtractionUtil.deleteRecursively(tempDir);
+                        if (!java.nio.file.Files.exists(tempDir)) {
+                             logger.info("Successfully deleted analysis output directory: {}", tempDir);
+                             deletedCount++; // Treating dir as one unit
+                        } else {
+                             logger.warn("Failed to delete analysis output directory (still exists): {}", tempDir);
+                        }
+                    } else {
+                        logger.warn("Analysis output directory does not exist: {}", tempDir);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Exception during analysis output directory deletion: {}", outputDirStr, e);
+                }
+                
+
+                if (result.getProjectInfo() != null) {
+                    String inputPath = result.getProjectInfo().getProjectPath();
+                    logger.info("Checking for upload cleanup. InputPath: {}", inputPath);
+                    
+                    if (inputPath != null && (inputPath.contains("temp") && (inputPath.contains("uploads") || inputPath.contains("upload")))) {
+
+
+                        try {
+                            java.nio.file.Path path = java.nio.file.Paths.get(inputPath);
+                            java.nio.file.Path parent = path;
+                            boolean found = false;
+                            
+
+                            while (parent != null) {
+                                java.nio.file.Path grandParent = parent.getParent();
+                                if (grandParent != null && grandParent.getFileName() != null && 
+                                    grandParent.getFileName().toString().equals("uploads")) {
+                                    
+
+                                    String uploadId = parent.getFileName().toString();
+                                    logger.info("Identified upload directory for cleanup: {} (ID: {})", parent, uploadId);
+                                    com.raks.raksanalyzer.util.FileExtractionUtil.cleanupTempDirectory(uploadId);
+                                    found = true;
+                                    break;
+                                }
+                                parent = grandParent;
+                            }
+                            
+                            if (!found) {
+                                logger.info("Could not identify upload parent folder 'uploads' in path hierarchy: {}", inputPath);
+                            }
+                        } catch (Exception e) {
+                             logger.warn("Failed to identify upload directory from path: {}", inputPath, e);
+                        }
+                    } else {
+                        logger.info("Input path does not look like a temp upload path: {}", inputPath);
+                    }
+                } else {
+                    logger.warn("ProjectInfo is null, cannot check for upload cleanup.");
+                }
+                
+                logger.info("Cleanup completed: {} files deleted", deletedCount);
+            } else {
+                logger.info("Skipping cleanup - documents in permanent output folder");
+            }
+            
+
+            results.remove(analysisId);
+            
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("message", "Cleanup completed");
+            return Response.ok(response).build();
+            
+        } catch (Exception e) {
+            logger.error("Error during cleanup", e);
+            Map<String, Object> error = new HashMap<>();
+            error.put("success", false);
+            error.put("message", "Cleanup failed: " + e.getMessage());
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
     }
 }

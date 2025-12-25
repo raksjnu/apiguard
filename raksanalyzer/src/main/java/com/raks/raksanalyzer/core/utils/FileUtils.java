@@ -1,5 +1,6 @@
 package com.raks.raksanalyzer.core.utils;
 
+import com.raks.raksanalyzer.core.config.ConfigurationManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -207,13 +208,88 @@ public class FileUtils {
     }
     
     /**
-     * Check if path is a Tibco BW5 project (contains .process files).
+     * Check if path is a Tibco BW5 project.
+     * Checks for markers defined in framework.properties (analyzer.tibco.project.markers).
+     * Default markers: AESchemas folder, vcrepo.dat file, .folder file
      */
     public static boolean isTibcoBW5Project(Path directory) {
         try {
-            List<Path> processFiles = findFilesByExtension(directory, "process");
-            return !processFiles.isEmpty();
-        } catch (IOException e) {
+            ConfigurationManager config = ConfigurationManager.getInstance();
+            String markersProperty = config.getProperty("analyzer.tibco.project.markers", "AESchemas,vcrepo.dat,.folder");
+            String[] markers = markersProperty.split(",");
+            
+            // Check for TIBCO.xml (EAR project marker)
+        // But also require at least one other marker to avoid false positives from test folders
+        boolean hasTibcoXml = Files.exists(directory.resolve("TIBCO.xml"));
+        if (hasTibcoXml) {
+            logger.debug("TIBCO.xml found in: {}, checking for additional markers", directory);
+            
+            // For EAR projects, check for .par or .sar files in current OR parent directory
+            // (EAR extraction puts .par/.sar in parent, contents in subdirectory)
+            try {
+                // Check current directory
+                try (java.util.stream.Stream<Path> files = Files.list(directory)) {
+                    boolean hasArchives = files.anyMatch(f -> {
+                        String name = f.getFileName().toString().toLowerCase();
+                        return name.endsWith(".par") || name.endsWith(".sar");
+                    });
+                    
+                    if (hasArchives) {
+                        logger.info("✓ Detected EAR-extracted TIBCO project (TIBCO.xml + .par/.sar): {}", directory);
+                        return true;
+                    }
+                }
+                
+                // Check parent directory (for EAR extraction structure)
+                Path parent = directory.getParent();
+                if (parent != null && Files.exists(parent)) {
+                    try (java.util.stream.Stream<Path> files = Files.list(parent)) {
+                        boolean hasArchives = files.anyMatch(f -> {
+                            String name = f.getFileName().toString().toLowerCase();
+                            return name.endsWith(".par") || name.endsWith(".sar");
+                        });
+                        
+                        if (hasArchives) {
+                            logger.info("✓ Detected EAR-extracted TIBCO project (TIBCO.xml + parent .par/.sar): {}", directory);
+                            return true;
+                        }
+                    }
+                }
+            } catch (IOException e) {
+                logger.warn("Error checking for .par/.sar files in: {}", directory, e);
+            }
+            
+            // For EAR projects, require at least one additional marker (.folder or vcrepo.dat)
+            for (String marker : markers) {
+                marker = marker.trim();
+                if (marker.equals("AESchemas")) continue; // Skip AESchemas for EAR check
+                Path markerPath = directory.resolve(marker);
+                if (Files.exists(markerPath)) {
+                    logger.debug("TIBCO.xml + {} found (EAR project) in: {}", marker, directory);
+                    return true;
+                }
+            }
+            logger.debug("TIBCO.xml found but no additional markers - not a valid TIBCO project: {}", directory);
+            return false;
+        }
+
+            // Check each marker (for non-EAR projects)
+            for (String marker : markers) {
+                marker = marker.trim();
+                Path markerPath = directory.resolve(marker);
+                
+                // Check if marker exists (can be file or directory)
+                if (!Files.exists(markerPath)) {
+                    logger.debug("Tibco marker not found: {} in {}", marker, directory);
+                    return false;
+                }
+            }
+            
+            // All markers found
+            logger.debug("All Tibco BW5 markers found in: {}", directory);
+            return true;
+            
+        } catch (Exception e) {
             logger.warn("Error checking if directory is Tibco BW5 project: {}", directory, e);
         }
         
