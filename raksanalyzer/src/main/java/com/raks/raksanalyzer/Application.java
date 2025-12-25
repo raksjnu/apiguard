@@ -70,8 +70,8 @@ public class Application {
             logger.info("Custom output directory set: {}", outputPath);
         });
         
+        com.raks.raksanalyzer.model.OutputFormatConfig formatConfig = new com.raks.raksanalyzer.model.OutputFormatConfig();
         arguments.getOutputTypes().ifPresent(outputTypes -> {
-            com.raks.raksanalyzer.model.OutputFormatConfig formatConfig = new com.raks.raksanalyzer.model.OutputFormatConfig();
             String[] types = outputTypes.toLowerCase().split(",");
             
             boolean hasPdf = false, hasWord = false, hasExcel = false;
@@ -86,19 +86,79 @@ public class Application {
             formatConfig.setWordEnabled(hasWord);
             formatConfig.setExcelEnabled(hasExcel);
             
-            request.setOutputFormatConfig(formatConfig);
             logger.info("Output formats: PDF={}, Word={}, Excel={}", hasPdf, hasWord, hasExcel);
         });
+        
+        if (!formatConfig.isPdfEnabled() && !formatConfig.isWordEnabled() && !formatConfig.isExcelEnabled()) {
+            formatConfig.setPdfEnabled(true);
+            formatConfig.setWordEnabled(true);
+            formatConfig.setExcelEnabled(true);
+            logger.info("No output types specified, defaulting to all formats");
+        }
+        
+        request.setOutputFormatConfig(formatConfig);
         
         logger.info("Analyzing project: {}", inputPath);
         AnalysisResult result = AnalyzerFactory.analyze(request);
         
-        if (result.isSuccess()) {
-            logger.info("Analysis completed successfully");
-            logger.info("Documents generated in: {}", result.getOutputDirectory());
-            System.exit(0);
-        } else {
+        if (!result.isSuccess()) {
             logger.error("Analysis failed: {}", result.getErrorMessage());
+            System.exit(1);
+        }
+        
+        logger.info("Analysis completed successfully");
+        
+        try {
+            com.raks.raksanalyzer.core.config.ConfigurationManager config = 
+                com.raks.raksanalyzer.core.config.ConfigurationManager.getInstance();
+            
+            if (formatConfig.isPdfEnabled()) {
+                if (projectType == ProjectType.TIBCO_BW5) {
+                    com.raks.raksanalyzer.generator.pdf.TibcoPdfGenerator pdfGen = 
+                        new com.raks.raksanalyzer.generator.pdf.TibcoPdfGenerator();
+                    String pdfPath = pdfGen.generate(result);
+                    logger.info("PDF generated: {}", pdfPath);
+                } else {
+                    com.raks.raksanalyzer.generator.pdf.PdfGenerator pdfGen = 
+                        new com.raks.raksanalyzer.generator.pdf.PdfGenerator(config);
+                    java.nio.file.Path pdfPath = pdfGen.generate(result);
+                    logger.info("PDF generated: {}", pdfPath);
+                }
+            }
+            
+            if (formatConfig.isWordEnabled()) {
+                if (projectType == ProjectType.TIBCO_BW5) {
+                    com.raks.raksanalyzer.generator.word.TibcoWordGenerator wordGen = 
+                        new com.raks.raksanalyzer.generator.word.TibcoWordGenerator();
+                    String wordPath = wordGen.generate(result);
+                    logger.info("Word document generated: {}", wordPath);
+                } else {
+                    com.raks.raksanalyzer.generator.word.WordGenerator wordGen = 
+                        new com.raks.raksanalyzer.generator.word.WordGenerator();
+                    java.nio.file.Path wordPath = wordGen.generate(result);
+                    logger.info("Word document generated: {}", wordPath);
+                }
+            }
+            
+            if (formatConfig.isExcelEnabled()) {
+                if (projectType == ProjectType.TIBCO_BW5) {
+                    com.raks.raksanalyzer.generator.excel.TibcoExcelGenerator excelGen = 
+                        new com.raks.raksanalyzer.generator.excel.TibcoExcelGenerator();
+                    String excelPath = excelGen.generate(result);
+                    logger.info("Excel report generated: {}", excelPath);
+                } else {
+                    com.raks.raksanalyzer.generator.excel.ExcelGenerator excelGen = 
+                        new com.raks.raksanalyzer.generator.excel.ExcelGenerator();
+                    java.nio.file.Path excelPath = excelGen.generate(result);
+                    logger.info("Excel report generated: {}", excelPath);
+                }
+            }
+            
+            logger.info("All documents generated successfully in: {}", result.getOutputDirectory());
+            System.exit(0);
+            
+        } catch (Exception e) {
+            logger.error("Failed to generate documents", e);
             System.exit(1);
         }
     }
