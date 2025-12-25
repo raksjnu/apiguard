@@ -14,15 +14,16 @@ import java.util.List;
 public class AnalysisRequest {
     private ProjectType projectTechnologyType;
     private ExecutionMode documentGenerationExecutionMode;
-    private String environmentAnalysisScope;  // "ALL" or comma-separated list
-    private String inputSourceType;  // "folder", "upload", "git"
-    private String inputPath;  // Folder path, ZIP path, or Git URL
-    private String gitBranch;  // Optional Git branch
-    private List<String> selectedEnvironments;  // Parsed from environmentAnalysisScope
-    private OutputFormatConfig outputFormatConfig;  // Output format preferences
+    private String environmentAnalysisScope;
+    private String inputSourceType;
+    private String inputPath;
+    private String gitBranch;
+    private List<String> selectedEnvironments;
+    private OutputFormatConfig outputFormatConfig;
     private String analysisId;
-    private String uploadId;  // For uploaded files (ZIP/JAR) - used for cleanup
-    private String configFilePath; // Custom configuration file path (e.g. for TIBCO global variables)
+    private String uploadId;
+    private String configFilePath;
+    private String outputDirectory;
     
     // Getters and Setters
     public ProjectType getProjectTechnologyType() {
@@ -111,6 +112,14 @@ public class AnalysisRequest {
 
     public void setConfigFilePath(String configFilePath) {
         this.configFilePath = configFilePath;
+    }
+    
+    public String getOutputDirectory() {
+        return outputDirectory;
+    }
+
+    public void setOutputDirectory(String outputDirectory) {
+        this.outputDirectory = outputDirectory;
     }
     
     // Flat fields for JSON compatibility

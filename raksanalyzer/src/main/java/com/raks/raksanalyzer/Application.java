@@ -1,23 +1,18 @@
 package com.raks.raksanalyzer;
 
+import com.raks.raksanalyzer.analyzer.AnalyzerFactory;
+import com.raks.raksanalyzer.domain.enums.ProjectType;
+import com.raks.raksanalyzer.domain.model.AnalysisRequest;
+import com.raks.raksanalyzer.domain.model.AnalysisResult;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
-import org.glassfish.jersey.servlet.ServletContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.Desktop;
 import java.net.URI;
 
-/**
- * Main application entry point for RaksAnalyzer.
- * 
- * Features:
- * - Starts embedded Jetty server
- * - Auto-opens browser when run without arguments
- * - Supports command-line configuration override
- */
 public class Application {
     private static final Logger logger = LoggerFactory.getLogger(Application.class);
     
@@ -25,40 +20,89 @@ public class Application {
     private static final String DEFAULT_CONTEXT_PATH = "/";
     
     public static void main(String[] args) {
+        try {
+            ApplicationArguments arguments = ApplicationArguments.parse(args);
+            
+            if (arguments.isHelpRequested()) {
+                ApplicationArguments.printHelp();
+                System.exit(0);
+            }
+            
+            if (arguments.isCliMode()) {
+                runCliMode(arguments);
+            } else {
+                runUiMode(arguments);
+            }
+            
+        } catch (Exception e) {
+            logger.error("Failed to start RaksAnalyzer", e);
+            System.exit(1);
+        }
+    }
+    
+    private static void runCliMode(ApplicationArguments arguments) {
+        logger.info("Running in CLI mode");
+        
+        String inputPath = arguments.getProjectInputPath()
+            .orElseThrow(() -> new IllegalArgumentException("--input is required in CLI mode"));
+        
+        String typeStr = arguments.getProjectTechnologyType()
+            .orElseThrow(() -> new IllegalArgumentException("--type is required in CLI mode"));
+        
+        ProjectType projectType = ProjectType.valueOf(typeStr.toUpperCase().replace("TIBCO5", "TIBCO_BW5"));
+        
+        arguments.getCustomConfigPath().ifPresent(path -> {
+            System.setProperty("raksanalyzer.config.path", path);
+            logger.info("Custom configuration path set: {}", path);
+        });
+        
+        AnalysisRequest request = new AnalysisRequest();
+        request.setInputPath(inputPath);
+        request.setProjectTechnologyType(projectType);
+        
+        arguments.getOutputPath().ifPresent(outputPath -> {
+            request.setOutputDirectory(outputPath);
+            logger.info("Custom output directory set: {}", outputPath);
+        });
+        
+        logger.info("Analyzing project: {}", inputPath);
+        AnalysisResult result = AnalyzerFactory.analyze(request);
+        
+        if (result.isSuccess()) {
+            logger.info("Analysis completed successfully");
+            logger.info("Documents generated in: {}", result.getOutputDirectory());
+            System.exit(0);
+        } else {
+            logger.error("Analysis failed: {}", result.getErrorMessage());
+            System.exit(1);
+        }
+    }
+    
+    private static void runUiMode(ApplicationArguments arguments) {
         com.raks.raksanalyzer.service.CleanupScheduler cleanupScheduler = null;
         
         try {
-            logger.info("Starting RaksAnalyzer...");
+            logger.info("Starting RaksAnalyzer in UI mode...");
             
-            // Parse command-line arguments
-            ApplicationArguments arguments = ApplicationArguments.parse(args);
-            
-            // Determine server port
             int serverPort = arguments.getServerPort().orElse(DEFAULT_SERVER_PORT);
             
-            // Start cleanup scheduler
             cleanupScheduler = new com.raks.raksanalyzer.service.CleanupScheduler();
             cleanupScheduler.start();
-            logger.info("Cleanup scheduler started");
             
-            // Set custom config path system property if provided
             arguments.getCustomConfigPath().ifPresent(path -> {
                 System.setProperty("raksanalyzer.config.path", path);
                 logger.info("Custom configuration path set: {}", path);
             });
             
-            // Start embedded Jetty server
             Server server = createServer(serverPort);
             server.start();
             
             logger.info("RaksAnalyzer started successfully on port {}", serverPort);
             
-            // Auto-open browser if enabled
             if (arguments.shouldAutoOpenBrowser()) {
                 openBrowser(serverPort);
             }
             
-            // Add shutdown hook for cleanup
             final com.raks.raksanalyzer.service.CleanupScheduler finalScheduler = cleanupScheduler;
             Runtime.getRuntime().addShutdownHook(new Thread(() -> {
                 logger.info("Shutting down RaksAnalyzer...");
@@ -72,7 +116,6 @@ public class Application {
                 }
             }));
             
-            // Wait for server to stop
             server.join();
             
         } catch (Exception e) {
@@ -80,7 +123,7 @@ public class Application {
             if (cleanupScheduler != null) {
                 cleanupScheduler.stop();
             }
-            System.exit(1);
+            throw new RuntimeException(e);
         }
     }
     
@@ -91,7 +134,6 @@ public class Application {
         context.setContextPath(DEFAULT_CONTEXT_PATH);
         server.setHandler(context);
         
-        // Configure Jersey servlet for REST API
         ServletHolder jerseyServlet = context.addServlet(
             org.glassfish.jersey.servlet.ServletContainer.class, "/api/*");
         jerseyServlet.setInitOrder(0);
@@ -100,7 +142,6 @@ public class Application {
             "com.raks.raksanalyzer.api.rest.RestApplication"
         );
         
-        // Serve static web UI files
         ServletHolder staticServlet = context.addServlet(
             org.eclipse.jetty.servlet.DefaultServlet.class,
             "/*"
