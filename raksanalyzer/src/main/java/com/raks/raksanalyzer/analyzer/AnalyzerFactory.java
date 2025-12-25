@@ -31,32 +31,40 @@ public class AnalyzerFactory {
         Path projectPath = Paths.get(request.getInputPath());
         List<String> environments = request.getSelectedEnvironments();
         
-        // CRITICAL LOGGING: Track config path from request
         String configPathStr = request.getConfigFilePath();
-        
         Path configFilePath = configPathStr != null ? Paths.get(configPathStr) : null;
         
-        // Route to appropriate analyzer
+        AnalysisResult result;
+        
         switch (request.getProjectTechnologyType()) {
             case MULE:
                 MuleAnalyzer muleAnalyzer = new MuleAnalyzer(projectPath, environments);
-                return muleAnalyzer.analyze();
+                result = muleAnalyzer.analyze();
+                break;
                 
             case TIBCO_BW5:
                 TibcoAnalyzer tibcoAnalyzer = new TibcoAnalyzer(projectPath, environments, configFilePath);
-                return tibcoAnalyzer.analyze();
+                result = tibcoAnalyzer.analyze();
+                break;
                 
             case TIBCO_BW6:
-                // TODO: Implement Tibco BW6 analyzer
-                return createUnsupportedResult("Tibco BW6 analyzer not yet implemented");
+                result = createUnsupportedResult("Tibco BW6 analyzer not yet implemented");
+                break;
                 
             case SPRING_BOOT:
-                // TODO: Implement Spring Boot analyzer
-                return createUnsupportedResult("Spring Boot analyzer not yet implemented");
+                result = createUnsupportedResult("Spring Boot analyzer not yet implemented");
+                break;
                 
             default:
-                return createUnsupportedResult("Unknown project type: " + request.getProjectTechnologyType());
+                result = createUnsupportedResult("Unknown project type: " + request.getProjectTechnologyType());
+                break;
         }
+        
+        if (result != null && request.getOutputDirectory() != null) {
+            result.setOutputDirectory(request.getOutputDirectory());
+        }
+        
+        return result;
     }
     
     /**
