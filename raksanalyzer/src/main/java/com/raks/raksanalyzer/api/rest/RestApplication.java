@@ -20,6 +20,7 @@ public class RestApplication extends Application {
         classes.add(AnalysisResource.class);
         classes.add(ConfigurationResource.class);
         classes.add(UploadResource.class);
+        classes.add(SampleResource.class);
         
         // Register Jackson JSON provider
         classes.add(org.glassfish.jersey.jackson.JacksonFeature.class);

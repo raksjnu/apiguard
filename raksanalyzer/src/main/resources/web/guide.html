@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RaksAnalyzer Guide</title>
+    <link rel="stylesheet" href="assets/css/raks-theme.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+        }
+        .logo {
+            max-height: 60px;
+            margin-bottom: 15px;
+        }
+        h1 { color: #663399; margin-bottom: 10px; }
+        h2 { color: #552288; margin-top: 30px; border-left: 5px solid #663399; padding-left: 15px; }
+        h3 { color: #444; margin-top: 25px; }
+        code {
+            background-color: #f0f0f0;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: Consolas, monospace;
+            color: #d63384;
+        }
+        pre {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            font-family: Consolas, monospace;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #663399;
+            color: white;
+        }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        .back-btn {
+            display: inline-block;
+            margin-bottom: 20px;
+            text-decoration: none;
+            color: #663399;
+            font-weight: bold;
+        }
+        .back-btn:hover { text-decoration: underline; }
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .feature-card {
+            background: #fff;
+            border: 1px solid #eee;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .feature-card h3 { margin-top: 0; color: #663399; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" class="back-btn btn-primary" style="color: white; text-decoration: none; display: inline-block; margin-bottom: 20px;">&larr; Back to RaksAnalyzer</a>
+        
+        <div class="header">
+            <img src="assets/images/logo.svg" alt="RAKS Logo" class="logo">
+            <h1>RaksAnalyzer Guide</h1>
+            <p>Universal Document Generation Framework for analyzing and documenting Mule, Tibco, and other technology projects.</p>
+        </div>
+
+        <h2>🚀 Features</h2>
+        <div class="feature-list">
+            <div class="feature-card">
+                <h3>Multi-Technology Support</h3>
+                <p>Mule 4.x, Tibco BW 5.x/6.x, and upcoming Spring Boot support.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Comprehensive Docs</h3>
+                <p>Generates detailed Word design documents, PDF reports, and Excel analysis sheets.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Flow Diagrams</h3>
+                <p>Automatic generation of integration flow diagrams for visual understanding.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Property Resolution</h3>
+                <p>Advanced property resolution, including <code>${prop}</code> and Tibco global variables <code>%%var%%</code>.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Flexible Input</h3>
+                <p>Analyze local folders, ZIP files, EAR/JAR archives, or Git repositories.</p>
+            </div>
+            <div class="feature-card">
+                <h3>Dual Mode</h3>
+                <p>Interactive GUI for ease of use and CLI for automation and pipelines.</p>
+            </div>
+        </div>
+
+        <h2>💻 GUI Mode (Default)</h2>
+        <p>The easiest way to use RaksAnalyzer. Launching the application defaults to opening the local web interface at <code>http://localhost:8080</code>.</p>
+        <p>Simply select your options in the form, choose your input source (Folder, ZIP, etc.), and click "Generate Documents".</p>
+
+        <h2>⚙️ CLI Usage (Automation)</h2>
+        <p>For CI/CD pipelines or batch processing, use the CLI mode.</p>
+        
+        <h3>Basic Syntax</h3>
+        <pre>java -jar raksanalyzer-1.0.0.jar --cli --type [TYPE] --input [PATH] [OPTIONS]</pre>
+
+        <h3>Common Commands</h3>
+        <pre>
+# Analyze a Tibco Project from a Folder
+java -jar raksanalyzer.jar --cli --type tibco5 --input /path/to/project
+
+# Analyze a Mule Project from ZIP
+java -jar raksanalyzer.jar --cli --type mule --input project.zip --input-type zip
+
+# Using External Properties File (Mule)
+java -jar raksanalyzer.jar --cli --type mule \
+  --input project.jar \
+  --config dev.properties
+</pre>
+
+        <h3>Command Options</h3>
+        <table>
+            <tr>
+                <th>Option</th>
+                <th>Description</th>
+                <th>Required</th>
+            </tr>
+            <tr>
+                <td><code>--cli</code></td>
+                <td>Run in CLI mode (no UI)</td>
+                <td>Yes (for CLI)</td>
+            </tr>
+            <tr>
+                <td><code>--type</code></td>
+                <td>Project type: <code>mule</code>, <code>tibco5</code>, <code>spring</code></td>
+                <td>Yes</td>
+            </tr>
+            <tr>
+                <td><code>--input</code></td>
+                <td>Path to project folder, ZIP, JAR, EAR, or Git URL</td>
+                <td>Yes</td>
+            </tr>
+             <tr>
+                <td><code>--config</code></td>
+                <td>External properties/config file path</td>
+                <td>No</td>
+            </tr>
+            <tr>
+                <td><code>--output-type</code></td>
+                <td><code>pdf</code>, <code>word</code>, <code>excel</code> (comma-separated)</td>
+                <td>No</td>
+            </tr>
+        </table>
+
+         <h2>📄 Configuration Files</h2>
+         <p>You can supply an external configuration file using the <code>--config</code> option (CLI) or the file upload (GUI). This is crucial for resolving property placeholders in your code.</p>
+         
+         <h3>For Mule Projects</h3>
+         <p>Upload a standard <code>.properties</code> file. Properties like <code>${http.port}</code> will be resolved from this file, overriding project defaults.</p>
+         
+         <h3>For Tibco Projects</h3>
+         <p>Upload a <code>.substvar</code> (XML) or <code>.properties</code> file. Global variables like <code>%%SharedResources/Connections/DB/Host%%</code> will be replaced with values from your config file.</p>
+
+        <h2>📂 Download Sample Projects</h2>
+        <p>Use these sample files to test the application features:</p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 30px;">
+            <a href="api/samples/muleapp1.jar" class="download-btn">📦 muleapp1.jar</a>
+            <a href="api/samples/muleapp1.zip" class="download-btn">📦 muleapp1.zip</a>
+            <a href="api/samples/muleapp1.properties" class="download-btn">📄 muleapp1.properties</a>
+            <a href="api/samples/TibcoApp1.zip" class="download-btn">📦 TibcoApp1.zip</a>
+            <a href="api/samples/TibcoApp1.ear" class="download-btn">📦 TibcoApp1.ear</a>
+            <a href="api/samples/TIbcoApp1.xml" class="download-btn">📄 TIbcoApp1.xml</a>
+        </div>
+
+        <style>
+            .download-btn {
+                display: block;
+                padding: 12px;
+                background-color: #f8f9fa;
+                border: 1px solid #ddd;
+                border-radius: 5px;
+                text-decoration: none;
+                color: #333;
+                text-align: center;
+                transition: all 0.2s;
+                font-weight: 500;
+            }
+            .download-btn:hover {
+                background-color: #e9ecef;
+                border-color: #663399;
+                color: #663399;
+                transform: translateY(-2px);
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+        </style>
+
+        <h2>🔧 Troubleshooting</h2>
+        <ul>
+            <li><strong>Port Conflict:</strong> If port 8080 is in use, start with <code>--port 9090</code>.</li>
+            <li><strong>Missing Java:</strong> Ensure Java 17+ is installed. Check with <code>java -version</code>.</li>
+            <li><strong>Memory Issues:</strong> For very large projects, increase heap size: <code>java -Xmx2g -jar ...</code></li>
+        </ul>
+
+        <div style="text-align: center; margin-top: 50px; font-size: 0.9em; color: #888;">
+            <p>RaksAnalyzer Version 1.0.0 | Powered by ApiGuard</p>
+        </div>
+    </div>
+</body>
+</html>
