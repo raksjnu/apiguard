@@ -18,7 +18,11 @@ Thumbs.db
 
 # Logs
 *.log
-# logs/  # Temporarily commented out to check log files
+logs/
+
+# Output and temporary directories
+output/
+temp/
 
 # Temporary files
 *.tmp
@@ -28,3 +32,9 @@ Thumbs.db
 
 # Custom config (user overrides)
 custom-config.properties
+
+# Debug and test files
+repro_*.txt
+test_*.txt
+test_*.pdf
+dependency-reduced-pom.xml

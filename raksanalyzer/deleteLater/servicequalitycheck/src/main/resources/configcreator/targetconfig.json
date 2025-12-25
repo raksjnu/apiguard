@@ -1,9 +1,0 @@
-{
-    "default": {
-        "isolationPrefix": null,
-        "endpointURL": "url.1-way-ingress-https-api,url.2-way-ingress-https-api",
-        "clusterType": "1x",
-        "businessGroup": "EAPI01",
-        "api-type": "realtime"
-    }
-}

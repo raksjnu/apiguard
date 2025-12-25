@@ -1,4 +1,0 @@
-%dw 2.0
-
-type auto_385ca077_4ee3_426a_88bc_0fd9eead9dab_Output_Variables_Folder = String | Null
-

@@ -1,5 +1,0 @@
-#------------------------------------ START ------------------------------------------------------------------------
-## Apply Contracts - Comma separated: XXXX,XXXX,XXXX  HC for Non prod. HC,DT for prod.
-api.contracts.applied=true
-api.contracts.list=HC_NonProd
-#------------------------------------- END --------------------------------------------------------------------------
