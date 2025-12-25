@@ -667,17 +667,33 @@ public class MuleAnalyzer {
             // 1. Load properties from project first (base properties)
             PropertyResolver propertyResolver = new PropertyResolver();
             
-            // Always load project properties as base
+            // Try to load project properties from multiple possible locations
+            // For source projects: src/main/resources/*.properties
+            // For extracted JARs: classes/*.properties or *.properties
             String propertyPattern = config.getProperty(
                 "diagram.integration.property.files", 
                 "src/main/resources/*.properties"
             );
-            propertyResolver.loadProperties(projectPath, propertyPattern);
+            int propsLoaded = propertyResolver.loadProperties(projectPath, propertyPattern);
+            logger.info("Loaded {} properties from pattern: {}", propsLoaded, propertyPattern);
+            
+            // Also try classes/ pattern for JAR files
+            if (propsLoaded == 0) {
+                propsLoaded = propertyResolver.loadProperties(projectPath, "classes/*.properties");
+                logger.info("Loaded {} properties from classes/ directory", propsLoaded);
+            }
+            
+            // Also try root level for JAR files
+            if (propsLoaded == 0) {
+                propsLoaded = propertyResolver.loadProperties(projectPath, "*.properties");
+                logger.info("Loaded {} properties from root directory", propsLoaded);
+            }
             
             // If external config file is provided, load it to override project properties
             if (externalConfigFile != null && Files.exists(externalConfigFile)) {
                 logger.info("Loading external config to override properties: {}", externalConfigFile);
-                propertyResolver.loadPropertiesFromFile(externalConfigFile);
+                int externalPropsLoaded = propertyResolver.loadPropertiesFromFile(externalConfigFile);
+                logger.info("Loaded {} properties from external config file", externalPropsLoaded);
             }
             
             // 2. Update stored properties in result with resolved values
