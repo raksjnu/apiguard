@@ -101,14 +101,56 @@ public class Application {
         
         request.setOutputFormatConfig(formatConfig);
         
-        logger.info("Discovering projects in: {}", inputPath);
+        // Extract archives if needed (reuse GUI extraction logic)
+        String uploadId = null;
+        String actualInputPath = inputPath; // Use separate variable to avoid final variable issue
         
-        java.nio.file.Path inputPathObj = java.nio.file.Paths.get(inputPath).toAbsolutePath().normalize();
+        if ("zip".equals(inputSourceType) || "jar".equals(inputSourceType) || "ear".equals(inputSourceType)) {
+            try {
+                uploadId = java.util.UUID.randomUUID().toString();
+                logger.info("Extracting {} file: {}", inputSourceType, inputPath);
+                
+                java.nio.file.Path archivePath = java.nio.file.Paths.get(inputPath);
+                java.nio.file.Path extractedPath;
+                if ("ear".equals(inputSourceType)) {
+                    extractedPath = com.raks.raksanalyzer.util.FileExtractionUtil.extractEar(archivePath, uploadId);
+                } else if ("jar".equals(inputSourceType)) {
+                    extractedPath = com.raks.raksanalyzer.util.FileExtractionUtil.extractJar(archivePath, uploadId);
+                } else {
+                    extractedPath = com.raks.raksanalyzer.util.FileExtractionUtil.extractZip(archivePath, uploadId);
+                }
+                
+                actualInputPath = extractedPath.toString();
+                logger.info("Extracted to: {}", actualInputPath);
+            } catch (Exception e) {
+                logger.error("Failed to extract archive: {}", inputPath, e);
+                if (uploadId != null) {
+                    try {
+                        com.raks.raksanalyzer.util.FileExtractionUtil.cleanupTempDirectory(uploadId);
+                    } catch (Exception cleanupEx) {
+                        logger.warn("Failed to cleanup temp directory", cleanupEx);
+                    }
+                }
+                System.exit(1);
+            }
+        }
+        
+        logger.info("Discovering projects in: {}", actualInputPath);
+        
+        java.nio.file.Path inputPathObj = java.nio.file.Paths.get(actualInputPath).toAbsolutePath().normalize();
         java.util.List<com.raks.raksanalyzer.core.discovery.DiscoveredProject> projects = 
             com.raks.raksanalyzer.core.discovery.ProjectDiscovery.findProjects(inputPathObj, projectType);
         
         if (projects.isEmpty()) {
-            logger.error("No {} projects found in: {}", projectType, inputPath);
+            logger.error("No {} projects found in: {}", projectType, actualInputPath);
+            // Cleanup if we extracted an archive
+            if (uploadId != null) {
+                try {
+                    com.raks.raksanalyzer.util.FileExtractionUtil.cleanupTempDirectory(uploadId);
+                } catch (Exception e) {
+                    logger.warn("Failed to cleanup temp directory", e);
+                }
+            }
             System.exit(1);
         }
         
@@ -191,10 +233,30 @@ public class Application {
             }
             
             logger.info("All {} project(s) analyzed and documented successfully", projects.size());
+            
+            // Cleanup temp directory if we extracted an archive
+            if (uploadId != null) {
+                try {
+                    logger.info("Cleaning up temp directory for upload: {}", uploadId);
+                    com.raks.raksanalyzer.util.FileExtractionUtil.cleanupTempDirectory(uploadId);
+                    logger.info("Temp directory cleaned up successfully");
+                } catch (Exception e) {
+                    logger.warn("Failed to cleanup temp directory", e);
+                }
+            }
+            
             System.exit(0);
             
         } catch (Exception e) {
             logger.error("Failed to analyze or generate documents", e);
+            // Cleanup temp directory on error
+            if (uploadId != null) {
+                try {
+                    com.raks.raksanalyzer.util.FileExtractionUtil.cleanupTempDirectory(uploadId);
+                } catch (Exception cleanupEx) {
+                    logger.warn("Failed to cleanup temp directory", cleanupEx);
+                }
+            }
             System.exit(1);
         }
     }
