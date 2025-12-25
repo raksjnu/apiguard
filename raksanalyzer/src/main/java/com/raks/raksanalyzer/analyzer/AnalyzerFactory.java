@@ -38,7 +38,7 @@ public class AnalyzerFactory {
         
         switch (request.getProjectTechnologyType()) {
             case MULE:
-                MuleAnalyzer muleAnalyzer = new MuleAnalyzer(projectPath, environments);
+                MuleAnalyzer muleAnalyzer = new MuleAnalyzer(projectPath, environments, configFilePath);
                 result = muleAnalyzer.analyze();
                 break;
                 

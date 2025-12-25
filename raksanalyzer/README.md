@@ -71,7 +71,7 @@ java -jar raksanalyzer.jar [OPTIONS]
 
 | Option | Description | Required | Default |
 |--------|-------------|----------|---------|
-| `--config <path>` | Path to external configuration file | No | Built-in defaults |
+| `--config <path>` | Path to external properties file for property resolution (Mule/Tibco) | No | Project properties |
 | `--type <type>` | Project type: `mule`, `tibco5`, `spring` | Yes (CLI mode) | - |
 | `--input <path>` | Input project path | Yes (CLI mode) | - |
 | `--input-type <type>` | Input source type: `folder`, `zip`, `ear`, `jar`, `git` | No | Auto-detected |
@@ -80,6 +80,28 @@ java -jar raksanalyzer.jar [OPTIONS]
 | `--port <number>` | Server port (UI mode only) | No | `8080` |
 | `--no-browser` | Don't auto-open browser (UI mode only) | No | Opens browser |
 | `--help`, `-h` | Show help message | No | - |
+
+### External Configuration File
+
+The `--config` option allows you to specify an external properties file for property resolution in Mule and Tibco projects:
+
+**For Mule Projects:**
+- Provide a `.properties` file (e.g., `mule-app.properties`, `dev.properties`)
+- All property placeholders (`${property.name}`) in connector configurations will be resolved using this file
+- Useful for generating documentation with environment-specific values
+
+**For Tibco Projects:**
+- Provide a `.substvar` or `.properties` file
+- Property resolution works similarly to Mule projects
+
+**Example:**
+```bash
+# Use custom properties file for Mule project
+java -jar raksanalyzer.jar --cli --type mule --input /path/to/project --config /path/to/prod.properties
+
+# Use custom substvar file for Tibco project
+java -jar raksanalyzer.jar --cli --type tibco5 --input /path/to/project --config /path/to/custom.substvar
+```
 
 ### Input Source Types
 
@@ -144,6 +166,16 @@ java -jar raksanalyzer.jar --cli --type mule --input /path/to/project --output-t
 #### Generate Only Excel
 ```bash
 java -jar raksanalyzer.jar --cli --type tibco5 --input /path/to/project --output-type excel
+```
+
+#### Mule Project with Custom Properties
+```bash
+# Generate documentation using production properties
+java -jar raksanalyzer.jar --cli \
+  --type mule \
+  --input /path/to/mule-project \
+  --config /path/to/prod.properties \
+  --output-type pdf
 ```
 
 #### With Custom Configuration

@@ -60,6 +60,9 @@ public class Application {
         request.setInputPath(inputPath);
         request.setProjectTechnologyType(projectType);
         
+        // Set config file path for property resolution
+        arguments.getCustomConfigPath().ifPresent(request::setConfigFilePath);
+        
         String inputSourceType = arguments.getInputSourceType()
             .orElseGet(() -> detectInputSourceType(inputPath));
         request.setInputSourceType(inputSourceType);

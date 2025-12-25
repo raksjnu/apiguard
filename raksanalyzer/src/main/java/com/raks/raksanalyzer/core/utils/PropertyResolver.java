@@ -117,6 +117,20 @@ public class PropertyResolver {
     }
     
     /**
+     * Loads properties from a single .properties file and returns the count.
+     * @param propertyFile Path to the .properties file
+     * @return Number of properties loaded
+     */
+    public int loadPropertiesFromFile(Path propertyFile) {
+        int beforeCount = properties.size();
+        if (loadPropertiesFile(propertyFile)) {
+            int afterCount = properties.size();
+            return afterCount - beforeCount;
+        }
+        return 0;
+    }
+    
+    /**
      * Adds a single property.
      * @param key Property key
      * @param value Property value

@@ -32,6 +32,7 @@ public class MuleAnalyzer {
     
     private final Path projectPath;
     private final List<String> environments;
+    private final Path externalConfigFile;
     private final ConfigurationManager config = ConfigurationManager.getInstance();
     
     // Analyzers
@@ -44,8 +45,13 @@ public class MuleAnalyzer {
     private final Set<String> operationTags;
     
     public MuleAnalyzer(Path projectPath, List<String> environments) {
+        this(projectPath, environments, null);
+    }
+    
+    public MuleAnalyzer(Path projectPath, List<String> environments, Path externalConfigFile) {
         this.projectPath = projectPath;
         this.environments = environments;
+        this.externalConfigFile = externalConfigFile;
         this.crawler = new ProjectCrawler();
         this.pomAnalyzer = new PomAnalyzer();
         this.jsonAnalyzer = new JsonAnalyzer();
@@ -519,14 +525,24 @@ public class MuleAnalyzer {
             
             logger.info("Starting connection details enrichment");
             
-            // 1. Load properties from project
+            // 1. Load properties from external config file or project
             PropertyResolver propertyResolver = new PropertyResolver();
-            String propertyPattern = config.getProperty(
-                "diagram.integration.property.files", 
-                "src/main/resources/*.properties"
-            );
-            int propsLoaded = propertyResolver.loadProperties(projectPath, propertyPattern);
-            logger.info("Loaded {} property files", propsLoaded);
+            int propsLoaded = 0;
+            
+            if (externalConfigFile != null && Files.exists(externalConfigFile)) {
+                // Use external config file for property resolution
+                logger.info("Using external config file for property resolution: {}", externalConfigFile);
+                propsLoaded = propertyResolver.loadPropertiesFromFile(externalConfigFile);
+                logger.info("Loaded {} properties from external config file", propsLoaded);
+            } else {
+                // Use default property discovery from project
+                String propertyPattern = config.getProperty(
+                    "diagram.integration.property.files", 
+                    "src/main/resources/*.properties"
+                );
+                propsLoaded = propertyResolver.loadProperties(projectPath, propertyPattern);
+                logger.info("Loaded {} property files from project", propsLoaded);
+            }
             
             // 2. Build config resolver from parsed connector configs
             ConfigResolver configResolver = new ConfigResolver();

@@ -7,7 +7,7 @@ http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/htt
 http://www.mulesoft.org/schema/mule/ibm-mq http://www.mulesoft.org/schema/mule/ibm-mq/current/mule-ibm-mq.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="9fef10ba-b903-4eec-9bdb-66e5a4a16adb" basePath="DONT_USE">
-		<http:listener-connection host="0.0.0.0" port="8081" />
+		<http:listener-connection host="0.0.0.0" port="${port}" />
 	</http:listener-config>
 	<ibm-mq:config name="IBM_MQ_Config" doc:name="IBM MQ Config" doc:id="432ca34c-456a-48ec-9d0b-94e42c23f2be" >
 		<ibm-mq:connection cipherSuite="${pro1}" >
@@ -18,7 +18,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 	</ibm-mq:config>
 	<configuration-properties doc:name="Configuration properties" doc:id="ce646a21-1d1e-4178-b1b1-c24502214c0b" file="muleapp1.properties" />
 	<flow name="muleapp1Flow" doc:id="84a943bb-8b0a-46f5-8196-0d954c00a6e7" >
-		<http:listener doc:name="Listener" doc:id="3e13f348-c054-4bef-8c77-e68160693087" config-ref="HTTP_Listener_config" path="/test1"/>
+		<http:listener doc:name="Listener" doc:id="3e13f348-c054-4bef-8c77-e68160693087" config-ref="HTTP_Listener_config" path="${pathnew}"/>
 		<set-variable value="toBase64(test) ++log" doc:name="Set Variable" doc:id="5855b17e-9983-4edb-8663-664840c08aa0" variableName="testvar"/>
 		<logger level="INFO" doc:name="Logger" doc:id="e588c88f-d8e9-4f87-9b6e-b0edf2517e5b" message="error.1errorType2 ++ "/>
 		<ibm-mq:publish doc:name="Publish" doc:id="11882b9f-593c-4503-b7ce-3728e4bf4397" config-ref="IBM_MQ_Config" destination="q"/>
