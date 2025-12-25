@@ -69,6 +69,11 @@ public class TibcoDiagramGenerator {
             return "Unknown";
         }
         
+        // Handle TIBCO REST Plugin specifically (often has generic or empty resourceType?)
+        if (resourceType.toLowerCase().contains("restactivity") || resourceType.contains("json.activities.RestActivity")) {
+            return "REST Activity";
+        }
+        
         // Check if we have a custom mapping
         String lastToken = resourceType.substring(resourceType.lastIndexOf('.') + 1);
         if (RESOURCE_TYPE_LABELS.containsKey(lastToken)) {
@@ -170,8 +175,10 @@ public class TibcoDiagramGenerator {
                 sb.append("skinparam shadowing false\n");
                 sb.append("skinparam activity {\n");
                 sb.append("  BackgroundColor #E6E6FA\n");
-                sb.append("  BorderColor #663399\n");
-                sb.append("  ArrowColor #663399\n");
+                sb.append("  BorderColor #6A5ACD\n"); // SlateBlue
+                sb.append("  ArrowColor #483D8B\n"); // DarkSlateBlue
+                sb.append("  StartColor #4CAF50\n");
+                sb.append("  EndColor #E53935\n");
                 sb.append("  FontSize 11\n");
                 sb.append("}\n");
                 sb.append("skinparam partition {\n");
@@ -180,6 +187,15 @@ public class TibcoDiagramGenerator {
                 sb.append("  FontSize 11\n");
                 sb.append("  BorderThickness 2\n");
                 sb.append("}\n");
+                
+                // Force End Node Color (compatibility fix)
+                sb.append("skinparam activityEndColor #E53935\n");
+                
+                // Set DPI for sharper images (same as Section 3)
+                sb.append("skinparam dpi 300\n");
+                
+                // Limit diagram width for better fit
+                sb.append("!pragma maxwidth 600\n");
                 
                 // Allow Service Agent overrides (if startProcessPath is implementation, label it)
                 // If serviceName is passed, we might want to show it as a start node if no other starter exists?
@@ -430,7 +446,7 @@ public class TibcoDiagramGenerator {
                             Set<String> nextVisited = new HashSet<>(visited);
                             nextVisited.add(subFile.getAbsolutePath());
                             
-                            sb.append("partition \"#Orange:<b>override-subprocess</b>\\n").append(processName).append("\" {\n");
+                            sb.append("partition \"<b>override-subprocess</b>\\n").append(processName).append("\" #FFF3E0 {\n");
                             
                             try {
                                 DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -454,7 +470,7 @@ public class TibcoDiagramGenerator {
                         Set<String> nextVisited = new HashSet<>(visited);
                         nextVisited.add(subFile.getAbsolutePath());
                         
-                        sb.append("partition \"#LightGreen:<b>spawn-subprocess</b>\\n").append(nodeName).append("\" {\n");
+                        sb.append("partition \"<b>spawn-subprocess</b>\\n").append(nodeName).append("\" #F1F8E9 {\n");
                         
                         try {
                             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -710,149 +726,555 @@ public class TibcoDiagramGenerator {
     private String generateFlowPuml(Document doc, String processName) {
         StringBuilder sb = new StringBuilder();
         sb.append("@startuml\n");
-        sb.append("skinparam linetype ortho\n");
         sb.append("skinparam shadowing false\n");
         sb.append("skinparam activity {\n");
         sb.append("  BackgroundColor #E6E6FA\n");
-        sb.append("  BorderColor #663399\n");
-        sb.append("  ArrowColor #663399\n");
+        sb.append("  BorderColor #6A5ACD\n"); // SlateBlue
+        sb.append("  ArrowColor #483D8B\n"); // DarkSlateBlue
+        sb.append("  StartColor #4CAF50\n");
+        sb.append("  EndColor #E53935\n");
+        sb.append("  FontSize 11\n");
         sb.append("}\n");
-        sb.append("skinparam rectangle {\n");
-        sb.append("  BackgroundColor #E6E6FA\n");
-        sb.append("  BorderColor #663399\n");
-        sb.append("  RoundCorner 15\n");
+        sb.append("skinparam partition {\n");
+        sb.append("  BackgroundColor #F0F0F0\n");
+        sb.append("  BorderColor #999999\n");
+        sb.append("  FontSize 11\n");
+        sb.append("  BorderThickness 2\n");
         sb.append("}\n");
-        sb.append("skinparam usecase {\n"); // For Start/End (circle)
-        sb.append("  BackgroundColor #FFFFFF\n");
-        sb.append("  BorderColor #000000\n");
-        sb.append("}\n");
-
-        // No internal title inside the image as it's displayed in the Word/PDF caption
-        // sb.append("title ").append(processName).append(" Flow\n");
         
-        Element root = doc.getDocumentElement();
-        String startName = getTagValue(root, "pd:startName");
-        String endName = getTagValue(root, "pd:endName");
-
-        // Check for Starter Activity (Event Source)
-        NodeList starters = doc.getElementsByTagNameNS("*", "starter"); // pd:starter
-        boolean hasStarter = starters != null && starters.getLength() > 0;
+        // Force End Node Color (compatibility fix)
+        sb.append("skinparam activityEndColor #E53935\n");
         
-        if (hasStarter) {
-            Element starter = (Element) starters.item(0);
-            String name = starter.getAttribute("name");
-            String type = getTagValue(starter, "pd:type");
-            String stereotype = getConnectorStereotype(type);
-            String id = sanitizeId(name);
+        sb.append("skinparam dpi 300\n");
+        sb.append("!pragma maxwidth 600\n");
+
+        try {
+            Element root = doc.getDocumentElement();
+            String startName = getTagValue(root, "pd:startName");
             
-            // Render Starter as a Rectangle (Activity)
-            sb.append("rectangle \"").append(name).append("\" as ").append(id)
-              .append(" ").append(stereotype).append("\n");
-              
-            // If pd:startName points to this starter, we map 'start' logic to this node?
-            // TIBCO pd:starter usually implies this IS the start.
-            // We use the ID for transitions.
+            // Build maps
+            Map<String, Element> activityMap = new HashMap<>();
+            Map<String, Element> groupMap = new HashMap<>();
+            Map<String, List<String>> transitions = new HashMap<>();
+            List<String> catchActivities = new ArrayList<>();
+            
+            NodeList activities = doc.getElementsByTagNameNS("*", "activity");
+            for (int i = 0; i < activities.getLength(); i++) {
+                Element activity = (Element) activities.item(i);
+                String name = activity.getAttribute("name");
+                String type = getTagValue(activity, "pd:type");
+                
+                if (type != null && type.contains("CatchActivity")) {
+                    catchActivities.add(name);
+                }
+                
+                if (!isInsideGroup(activity)) {
+                    activityMap.put(name, activity);
+                }
+            }
+            
+            // Add Starter to activityMap (Crucial for Section 3 to show Start Event)
+            NodeList starters = doc.getElementsByTagNameNS("*", "starter");
+            if (starters != null && starters.getLength() > 0) {
+                Element starter = (Element) starters.item(0);
+                String name = starter.getAttribute("name");
+                activityMap.put(name, starter);
+            }
+            
+            NodeList groups = doc.getElementsByTagNameNS("*", "group");
+            for (int i = 0; i < groups.getLength(); i++) {
+                Element group = (Element) groups.item(i);
+                groupMap.put(group.getAttribute("name"), group);
+            }
+            
+            // Build transition map AND label map
+            NodeList transitionList = doc.getElementsByTagNameNS("*", "transition");
+            for (int i = 0; i < transitionList.getLength(); i++) {
+                Element t = (Element) transitionList.item(i);
+                if (isInsideGroup(t)) continue;
+                String from = getTagValue(t, "pd:from");
+                String to = getTagValue(t, "pd:to");
+                transitions.computeIfAbsent(from, k -> new ArrayList<>()).add(to);
+                
+                String xpathDesc = getTagValue(t, "pd:xpathDescription");
+                if (xpathDesc != null && !xpathDesc.isEmpty()) {
+                    // Store label: from -> to -> label
+                    // We need a nested map structure for this
+                }
+            }
+            
+            // Re-parsing transition list to populate labels and conditions
+            Map<String, Map<String, String>> transitionLabels = new HashMap<>();
+            Map<String, Map<String, String>> transitionConditions = new HashMap<>();
+            
+            for (int i = 0; i < transitionList.getLength(); i++) {
+                Element t = (Element) transitionList.item(i);
+                if (isInsideGroup(t)) continue;
+                String from = getTagValue(t, "pd:from");
+                String to = getTagValue(t, "pd:to");
+                
+                String xpathDesc = getTagValue(t, "pd:xpathDescription");
+                if (xpathDesc != null && !xpathDesc.trim().isEmpty()) {
+                     transitionLabels.computeIfAbsent(from, k -> new HashMap<>()).put(to, xpathDesc.trim());
+                }
+                
+                String conditionType = getTagValue(t, "pd:conditionType");
+                if (conditionType != null) {
+                    transitionConditions.computeIfAbsent(from, k -> new HashMap<>()).put(to, conditionType);
+                    
+                    // Fallback Label Logic: If no label exists, use conditionType
+                    Map<String, String> fromLabels = transitionLabels.computeIfAbsent(from, k -> new HashMap<>());
+                    if (!fromLabels.containsKey(to)) {
+                        // Capitalize for better readability (outcome-based)
+                        if ("otherwise".equalsIgnoreCase(conditionType)) {
+                            fromLabels.put(to, "Otherwise");
+                        } else if ("error".equalsIgnoreCase(conditionType)) {
+                            fromLabels.put(to, "Error");
+                        } else if ("xpath".equalsIgnoreCase(conditionType)) {
+                            // Try to get actual xpath
+                            String xpathVal = getTagValue(t, "pd:xpath");
+                            if (xpathVal != null && !xpathVal.trim().isEmpty()) {
+                                fromLabels.put(to, xpathVal.trim());
+                            } else {
+                                fromLabels.put(to, "XPath");
+                            }
+                        }
+                    }
+                }
+            }
+            
+             // 1. Render Main Flow
+             sb.append("start\n");
+             traverseFlowFromNode(sb, startName, activityMap, groupMap, transitions, transitionLabels, transitionConditions, new HashSet<>(), doc, null, false);
+             sb.append("stop\n");
+             
+             // 2. Render Catch Flows
+             if (!catchActivities.isEmpty()) {
+                 sb.append("partition \"Error Handling\" #FFEBEE {\n");
+                 for (String catchName : catchActivities) {
+                      sb.append("\n");
+                      sb.append("start\n");
+                      traverseFlowFromNode(sb, catchName, activityMap, groupMap, transitions, transitionLabels, transitionConditions, new HashSet<>(), doc, null, false);
+                      sb.append("stop\n");
+                 }
+                 sb.append("}\n");
+             }
+            
+        } catch (Exception e) {
+            logger.error("Error generating flow diagram PUML", e);
+            sb.append(":Error generating diagram;\n");
+        }
+        
+        sb.append("@enduml");
+        return sb.toString();
+    }
+    
+    private void traverseFlowFromNode(StringBuilder sb, String nodeName, 
+                                      Map<String, Element> activityMap,
+                                      Map<String, Element> groupMap,
+                                      Map<String, List<String>> transitions,
+                                      Map<String, Map<String, String>> transitionLabels,
+                                      Map<String, Map<String, String>> transitionConditions,
+                                      Set<String> processed,
+                                      Document doc,
+                                      String stopAtNode,
+                                      boolean skipFirstNodeRender) {
+        if (nodeName == null) return;
+        
+        // Stop if we reached the merge point (join node)
+        if (stopAtNode != null && stopAtNode.equals(nodeName)) {
+            return;
+        }
+
+        if (processed.contains(nodeName)) return;
+        processed.add(nodeName);
+        
+        List<String> successors = transitions.get(nodeName);
+        
+        // Check if this node is a Conditional Switch
+        boolean isSwitch = false;
+        if (successors != null && successors.size() > 1) {
+            if (transitionConditions != null && transitionConditions.containsKey(nodeName)) {
+                Map<String, String> conditions = transitionConditions.get(nodeName);
+                for (String s : successors) {
+                    String c = conditions.get(s);
+                    if (c != null && (c.equals("xpath") || c.equals("otherwise") || c.equals("error"))) {
+                        isSwitch = true;
+                        break;
+                    }
+                }
+            }
+        }
+        
+        // Render Node
+        if (isSwitch) {
+            // Switch rendering handles its own visual (Switch Diamond), so we usually don't skip it
+            // unless we strictly want to merge-and-split without a node. 
+            // But Switch implies a decision, so rendering it is correct.
+            sb.append("switch (").append(nodeName).append(")\n");
+            
+            // Handle Switch Branches
+            String joinNode = findCommonJoinNode(successors, transitions);
+            
+            for (String successor : successors) {
+                String label = "";
+                if (transitionLabels != null && transitionLabels.containsKey(nodeName)) {
+                        String l = transitionLabels.get(nodeName).get(successor);
+                        if (l != null) label = l;
+                }
+                label = label.replace("\"", "\\\"");
+                
+                sb.append("case ( ").append(label).append(" )\n");
+                traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, joinNode, false);
+            }
+            sb.append("endswitch\n");
+            
+            // Continue from join node
+            if (joinNode != null) {
+                // If the join node is a NullActivity, we skip rendering it to avoid "Double Diamond"
+                // The 'endswitch' diamond serves as the visual merge point.
+                boolean isNullActivity = false;
+                Element joinEl = activityMap.get(joinNode);
+                if (joinEl != null) {
+                     String t = getTagValue(joinEl, "pd:type");
+                     if (t != null && t.contains("NullActivity")) isNullActivity = true;
+                }
+                traverseFlowFromNode(sb, joinNode, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, stopAtNode, isNullActivity);
+            }
+            
         } else {
-             // Standard Start Circle
-             if (startName != null && !startName.isEmpty()) {
-                 sb.append("usecase \"Start\" as ").append(sanitizeId(startName)).append("\n");
-             } else {
-                 sb.append("usecase \"Start\" as start\n");
+            // Standard Rendering (Single or Fork)
+            // Skip rendering if requested (e.g. for NullActivity merge nodes)
+            if (!skipFirstNodeRender) {
+                if (groupMap.containsKey(nodeName)) {
+                    renderGroup(sb, groupMap.get(nodeName), doc);
+                } else if (activityMap.containsKey(nodeName)) {
+                // Just calling renderActivity is enough now as logic handles styling
+                renderActivity(sb, activityMap.get(nodeName));
+            }
+            }
+            
+            // Follow transitions
+            if (successors != null && !successors.isEmpty()) {
+                if (successors.size() > 1) {
+                    // Parallel Fork
+                    // Attempt to find a common Join Node where these branches merge
+                    String joinNode = findCommonJoinNode(successors, transitions);
+                    
+                    sb.append("fork\n");
+                    for (int i = 0; i < successors.size(); i++) {
+                        if (i > 0) sb.append("fork again\n");
+                        
+                        String successor = successors.get(i);
+                        // Render Label on arrow
+                        if (transitionLabels != null && transitionLabels.containsKey(nodeName)) {
+                            String label = transitionLabels.get(nodeName).get(successor);
+                            if (label != null) {
+                                label = label.replace("\"", "\\\"");
+                                sb.append("-> \"").append(label).append("\"\n");
+                            } else {
+                                sb.append("->\n"); // No label, just an arrow
+                            }
+                        } else {
+                            sb.append("->\n"); // No labels map, just an arrow
+                        }
+    
+                        traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, joinNode, false);
+                    }
+                    sb.append("end fork\n");
+                    
+                    // Now continue traversal from the join node (single path)
+                    if (joinNode != null) {
+                         // Check NullActivity Logic for Forks too
+                        boolean isNullActivity = false;
+                        Element joinEl = activityMap.get(joinNode);
+                        if (joinEl != null) {
+                             String t = getTagValue(joinEl, "pd:type");
+                             if (t != null && t.contains("NullActivity")) isNullActivity = true;
+                        }
+                        traverseFlowFromNode(sb, joinNode, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, stopAtNode, isNullActivity);
+                    }
+                } else {
+                    // Single path
+                    String successor = successors.get(0);
+                    
+                    // Render Label on arrow (only if successor is a real activity/group)
+                    boolean successorExists = activityMap.containsKey(successor) || groupMap.containsKey(successor);
+                    
+                    if (successorExists && transitionLabels != null && transitionLabels.containsKey(nodeName)) {
+                        String label = transitionLabels.get(nodeName).get(successor);
+                        if (label != null) {
+                            label = label.replace("\"", "\\\"");
+                             sb.append("-> \"").append(label).append("\"\n");
+                        } else {
+                            sb.append("->\n"); // No label, just arrow
+                        }
+                    } else {
+                        // Successor doesn't exist or no label - just output arrow
+                        // This handles transitions to "End" or other non-existent nodes
+                        sb.append("->\n");
+                    }
+                    
+                    traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, stopAtNode, false);
+                }
+            }
+        }
+    }
+    
+    // Find the first common node reachable from all startNodes
+    private String findCommonJoinNode(List<String> startNodes, Map<String, List<String>> transitions) {
+        if (startNodes == null || startNodes.isEmpty()) return null;
+        
+        // Get reachable sets for each branch
+        List<Set<String>> reachableSets = new ArrayList<>();
+        for (String start : startNodes) {
+            Set<String> reachable = new HashSet<>();
+            collectReachable(start, transitions, reachable);
+            reachableSets.add(reachable);
+        }
+        
+        // Find intersection (nodes present in ALL branches)
+        Set<String> common = new HashSet<>(reachableSets.get(0));
+        for (int i = 1; i < reachableSets.size(); i++) {
+            common.retainAll(reachableSets.get(i));
+        }
+        
+        if (common.isEmpty()) return null;
+        
+        // Find the "earliest" common node
+        return findFirstCommonInBFS(startNodes.get(0), transitions, common);
+    }
+    
+    private void collectReachable(String current, Map<String, List<String>> transitions, Set<String> visited) {
+        if (current == null || visited.contains(current)) return;
+        visited.add(current);
+        List<String> nexts = transitions.get(current);
+        if (nexts != null) {
+            for (String next : nexts) collectReachable(next, transitions, visited);
+        }
+    }
+    
+    private String findFirstCommonInBFS(String start, Map<String, List<String>> transitions, Set<String> candidates) {
+        Queue<String> queue = new LinkedList<>();
+        queue.add(start);
+        Set<String> visited = new HashSet<>();
+        visited.add(start);
+        
+        while(!queue.isEmpty()) {
+            String curr = queue.poll();
+            if (candidates.contains(curr)) return curr;
+            
+            List<String> nexts = transitions.get(curr);
+            if (nexts != null) {
+                for (String next : nexts) {
+                    if (!visited.contains(next)) {
+                        visited.add(next);
+                        queue.add(next);
+                    }
+                }
+            }
+        }
+        return null;
+    }
+    
+    private void renderActivity(StringBuilder sb, Element activity) {
+        String name = activity.getAttribute("name");
+        String resourceType = getTagValue(activity, "pd:resourceType");
+        String type = getTagValue(activity, "pd:type");
+        
+        // Special Handling for NullActivity (Join/Split) -> Render as Diamond (Decision)
+        if (type != null && type.contains("NullActivity")) {
+             // In PlantUML Activity Beta, 'if ( ) then' renders a diamond
+             // We use empty parens if we don't want a label inside, or name if we do.
+             sb.append("if (").append(name).append(") then\nendif\n");
+             return;
+        }
+
+        // Special Styling for Spawn/Override (Moved here to work inside groups too)
+        boolean renderedSpecial = false;
+        if (type != null && type.contains("CallProcessActivity")) {
+             String dynamicOverride = getDynamicOverride(activity);
+             String spawnConfig = getConfigValue(activity, "spawn");
+             boolean isSpawn = "true".equalsIgnoreCase(spawnConfig);
+             
+             if (dynamicOverride != null && !dynamicOverride.trim().isEmpty()) {
+                 sb.append("partition \"<b>override-subprocess</b>\\n").append(name).append("\" #FFF3E0 {\n");
+                 // Recursive call to render the internal node (icon+name)
+                 renderActivityInternal(sb, name, type, resourceType);
+                 sb.append("}\n");
+                 return;
+             } else if (isSpawn) {
+                 sb.append("partition \"<b>spawn-subprocess</b>\\n").append(name).append("\" #F1F8E9 {\n");
+                 renderActivityInternal(sb, name, type, resourceType);
+                 sb.append("}\n");
+                 return;
              }
         }
 
-        // End Node
-        if (endName != null && !endName.isEmpty()) {
-             sb.append("usecase \"End\" as ").append(sanitizeId(endName)).append("\n");
-        } else {
-             sb.append("usecase \"End\" as end\n");
-        }
-
-        // Activities
-        NodeList activities = doc.getElementsByTagNameNS("*", "activity");
-        for (int i = 0; i < activities.getLength(); i++) {
-            Element activity = (Element) activities.item(i);
-            String name = activity.getAttribute("name");
-            String id = sanitizeId(name);
-            String type = getTagValue(activity, "pd:type");
-            
-            // Determine stereotype
-            String stereo = "";
-            if(type != null) {
-                if (type.contains("CallProcessActivity")) stereo = "<<Call Process>>";
-                else if (type.contains("MapperActivity")) stereo = "<<Map Data>>";
-                else if (type.contains("AssignActivity")) stereo = "<<Assign>>";
-                else if (type.contains("NullActivity")) stereo = ""; // Null
-                else if (isConnector(type)) stereo = getConnectorStereotype(type);
-                else stereo = "<<" + type.substring(type.lastIndexOf('.') + 1) + ">>";
+        renderActivityInternal(sb, name, type, resourceType);
+    }
+    
+    private void renderActivityInternal(StringBuilder sb, String name, String type, String resourceType) {
+        String icon = getConnectorIcon(type);
+        // Simplified rendering: Icon \n Bold Name \n Type
+        String readableType = getReadableTypeLabel(resourceType);
+        sb.append(":").append(icon).append(" **").append(name).append("**\\n").append(readableType).append(";\n");
+    }
+    
+    private void renderGroup(StringBuilder sb, Element group, Document doc) {
+        String groupName = group.getAttribute("name");
+        String groupResourceType = getTagValue(group, "pd:resourceType");
+        String groupLabel = getReadableTypeLabel(groupResourceType);
+        
+        String groupType = "";
+        Element config = (Element) group.getElementsByTagName("config").item(0);
+        if(config == null) config = (Element) group.getElementsByTagNameNS("*", "config").item(0);
+        if(config != null) {
+            String gt = getTagValue(config, "pd:groupType");
+            if(gt != null && !gt.isEmpty()) {
+                groupType = " (" + gt + ")";
             }
-            
-            // Fix long stereotype names (e.g. SetSharedVariableActivity -> SetVariable)
-            if (stereo.contains("SetSharedVariable")) stereo = "<<Set Variable>>";
-            if (stereo.contains("GetSharedVariable")) stereo = "<<Get Variable>>";
-
-            // Check for Dynamic Override
-            String dynamicPath = getDynamicOverride(activity);
-            if (dynamicPath != null) {
-               stereo += "\\nDynamic: " + dynamicPath;
-            }
-
-            sb.append("rectangle \"").append(name).append("\" as ").append(id)
-              .append(" ").append(stereo).append("\n");
         }
         
-        // Transitions
-        NodeList transitions = doc.getElementsByTagNameNS("*", "transition");
+        sb.append("partition \"").append(groupLabel).append(": ").append(groupName).append(groupType).append("\" {\n");
+        
+        // Parse internal transitions AND labels
+        Map<String, String> internalTransitions = new HashMap<>(); 
+        Map<String, String> internalLabels = new HashMap<>(); // From -> Label
+        
+        NodeList transitions = group.getElementsByTagNameNS("*", "transition");
         for (int i = 0; i < transitions.getLength(); i++) {
-            Element trans = (Element) transitions.item(i);
-            String from = getTagValue(trans, "pd:from");
-            String to = getTagValue(trans, "pd:to");
-            String fromId = sanitizeId(from);
-            String toId = sanitizeId(to);
+            Element t = (Element) transitions.item(i);
+            // Ensure transition is a direct child of this group
+            Node parent = t.getParentNode();
+            boolean isChild = parent instanceof Element && 
+                              ((Element)parent).getAttribute("name").equals(groupName);
             
-            // Adjust for generic Start usage if no specific startName logic applies?
-            // Actually, we are using specific names as IDs now.
-            
-            // Label
-            String label = "";
-            String conditionType = getTagValue(trans, "pd:conditionType");
-            if ("xpath".equals(conditionType)) {
-                 label = ": " + getTagValue(trans, "pd:xpath");
-            } else if ("error".equals(conditionType)) {
-                 label = ": [Error]";
-            } else if ("otherwise".equals(conditionType)) {
-                 label = ": [Otherwise]";
+            if (isChild) {
+                String from = getTagValue(t, "pd:from");
+                String to = getTagValue(t, "pd:to");
+                internalTransitions.put(from, to);
+                
+                String xpath = getTagValue(t, "pd:xpathDescription");
+                if (xpath != null && !xpath.trim().isEmpty()) {
+                    internalLabels.put(from, xpath.trim());
+                }
             }
-            if (!label.isEmpty()) {
-                label = label.replace("\n", " ").replace("\r", "");
-                if (label.length() > 40) label = label.substring(0, 37) + "...";
-            }
-
-            sb.append(fromId).append(" --> ").append(toId).append(label).append("\n");
         }
-
-        // Groups
-        NodeList groups = doc.getElementsByTagNameNS("*", "group");
-        for (int i = 0; i < groups.getLength(); i++) {
-            Element group = (Element) groups.item(i);
-            String groupName = group.getAttribute("name");
-            String groupId = sanitizeId(groupName);
+        
+        // Collect Direct Children (Activities and Groups)
+        Map<String, Element> internalNodes = new HashMap<>();
+        
+        NodeList groupActivities = group.getElementsByTagNameNS("*", "activity");
+        for (int i = 0; i < groupActivities.getLength(); i++) {
+            Element act = (Element) groupActivities.item(i);
+            Node parent = act.getParentNode();
+            boolean isChild = parent instanceof Element && 
+                              ((Element)parent).getAttribute("name").equals(groupName);
             
-            sb.append("package \"").append(groupName).append("\" as ").append(groupId).append(" {\n");
-            
-            // Iterate children activities of this group to visually group them
-            NodeList childActivities = group.getElementsByTagNameNS("*", "activity");
-             for (int j = 0; j < childActivities.getLength(); j++) {
-                Element activity = (Element) childActivities.item(j);
-                String name = activity.getAttribute("name");
-                String id = sanitizeId(name);
-                sb.append("  rectangle ").append(id).append("\n");
+            if (isChild) {
+                internalNodes.put(act.getAttribute("name"), act);
             }
-            sb.append("}\n");
         }
+        
+        NodeList nestedGroups = group.getElementsByTagNameNS("*", "group");
+        for (int i = 0; i < nestedGroups.getLength(); i++) {
+            Element subGroup = (Element) nestedGroups.item(i);
+            Node parent = subGroup.getParentNode();
+            boolean isChild = parent instanceof Element && 
+                              ((Element)parent).getAttribute("name").equals(groupName);
 
-        sb.append("@enduml");
-        return sb.toString();
+            if (isChild) {
+                internalNodes.put(subGroup.getAttribute("name"), subGroup);
+            }
+        }
+        
+        // Order by transition
+    // Find Group Start Node: A node that is in internalNodes but NOT a target in internalTransitions
+    Set<String> targets = new HashSet<>(internalTransitions.values());
+    String startNode = null;
+    for (String name : internalNodes.keySet()) {
+        if (!targets.contains(name)) {
+            startNode = name; // Found a start node (no incoming transitions inside group)
+            break;
+        }
+    }
+    
+    // If explicit start "start" exists in transitions? 
+    // Usually TIBCO groups often have transition from "start" to first activity.
+    // If 'start' maps to something, that something is the first real activity.
+    if (internalTransitions.containsKey("start")) {
+        startNode = internalTransitions.get("start");
+    }
+
+    String current = startNode;
+    
+    int steps = 0;
+    Set<String> rendered = new HashSet<>();
+    while (current != null && steps < 50) {
+            String next = internalTransitions.get(current);
+            String label = internalLabels.get(current);
+            
+            // Output label for arrow to NEXT if next exists
+            // Wait, PlantUML renders arrows implicitly between sequential activities.
+            // If I print "-> label", it attaches to the arrow coming OUT of the PREVIOUS activity rendered.
+            // But here we are about to render 'current'.
+            // Actually, we render 'current', then if 'next' comes, the arrow is between current and next.
+            // So we should print '-> label' AFTER rendering current, but BEFORE rendering next.
+            // BUT, the loop renders 'current'. Then loops to 'next'.
+            
+            // Logic:
+            // Render Current Node
+            if (internalNodes.containsKey(current)) {
+                Element el = internalNodes.get(current);
+                String tagName = el.getLocalName();
+                if ("group".equals(tagName) || tagName.endsWith(":group")) {
+                    renderGroup(sb, el, doc);
+                } else {
+                    renderActivity(sb, el);
+                }
+                rendered.add(current);
+            }
+            
+            // Now prepare for next
+            if (next != null) {
+                if (label != null) {
+                    sb.append("-> \"").append(label).append("\"\n");
+                }
+            }
+            
+            current = next;
+            if ("end".equals(current)) break;
+            steps++;
+        }
+        
+        // Fallback for disconnected nodes
+        for (Map.Entry<String, Element> entry : internalNodes.entrySet()) {
+             if (!rendered.contains(entry.getKey())) {
+                 Element el = entry.getValue();
+                 String tagName = el.getLocalName();
+                 if ("group".equals(tagName) || tagName.endsWith(":group")) {
+                    renderGroup(sb, el, doc);
+                } else {
+                    renderActivity(sb, el);
+                }
+             }
+        }
+        
+        sb.append("}\n");
+    }
+    
+    private boolean isInsideGroup(Element element) {
+        Node parent = element.getParentNode();
+        while (parent != null) {
+            String nodeName = parent.getNodeName();
+            String localName = parent.getLocalName();
+            if ("group".equals(localName) || "pd:group".equals(nodeName)) {
+                return true;
+            }
+            parent = parent.getParentNode();
+        }
+        return false;
     }
 
     // --- Integration Diagram Logic ---
@@ -996,7 +1418,7 @@ public class TibcoDiagramGenerator {
      * Returns appropriate icon based on activity type.
      */
     private String getConnectorIcon(String type) {
-        if (type == null) return "";
+        if (type == null) return "<&puzzle-piece>";
         String t = type.toLowerCase();
         
         // Database connectors
@@ -1046,8 +1468,18 @@ public class TibcoDiagramGenerator {
         
         // AE Adapters
         if (t.contains("aesubscriber") || t.contains("aerpcserver") || t.contains(".ae.")) {
-            return "<&link>";
+            return "<&transfer>";
         }
+        
+        // Catch / Error Handler
+        if (t.contains("catch")) {
+            return "<&warning>";
+        }    
+        
+        // Timer / Scheduler
+        if (t.contains("timer") || t.contains("schedule") || t.contains("poller")) {
+            return "<&clock>";
+        }    
         
         // Shared Variables
         if (t.contains("sharedvariable")) {
@@ -1055,6 +1487,22 @@ public class TibcoDiagramGenerator {
         }
         
         // Default
+        if (t.contains("log")) {
+            return "<&file>";
+        }
+        if (t.contains("mapper")) {
+             return "<&map>";
+        }
+        if (t.contains("null")) {
+             return "<&x>"; 
+        }
+        if (t.contains("callprocess")) {
+             return "<&cog>";
+        }
+        if (t.contains("rest") || t.contains("json")) {
+             return "<&cloud>";
+        }
+        
         return "<&puzzle-piece>";
     }
     

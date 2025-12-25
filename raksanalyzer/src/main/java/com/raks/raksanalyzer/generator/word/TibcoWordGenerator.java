@@ -792,10 +792,42 @@ public class TibcoWordGenerator {
                                     noteRun.setText("Note: Special characters in service name normalized for diagram rendering.");
                                 }
                                 
+                                
+                                // Use Mule-style dynamic scaling instead of fixed 500x400
+                                BufferedImage buffImg = ImageIO.read(new ByteArrayInputStream(img));
+                                int width = buffImg.getWidth();
+                                int height = buffImg.getHeight();
+                                
+                                // Convert to EMU (1 px = 9525 EMU)
+                                int widthEMU = width * 9525;
+                                int heightEMU = height * 9525;
+                                
+                                // Scale to Fit Width (approx 6 inches = 5486400 EMU)
+                                // Scale to Fit Height (approx 9 inches = 8229600 EMU)
+                                int maxWidthEMU = 5486400;
+                                int maxHeightEMU = 8229600;
+                                
+                                double scale = 1.0;
+                                
+                                // 1. Scale to fit width if needed
+                                if (widthEMU > maxWidthEMU) {
+                                    scale = (double) maxWidthEMU / widthEMU;
+                                }
+                                
+                                // 2. Check if scaled height fits, if not scale down further
+                                int scaledHeightEMU = (int) (heightEMU * scale);
+                                if (scaledHeightEMU > maxHeightEMU) {
+                                    scale = scale * ((double) maxHeightEMU / scaledHeightEMU);
+                                }
+                                
+                                // Apply final scale
+                                widthEMU = (int) (widthEMU * scale);
+                                heightEMU = (int) (heightEMU * scale);
+                                
                                 XWPFParagraph pDiag = document.createParagraph();
                                 pDiag.setAlignment(ParagraphAlignment.CENTER);
                                 XWPFRun rDiag = pDiag.createRun();
-                                rDiag.addPicture(new ByteArrayInputStream(img), XWPFDocument.PICTURE_TYPE_PNG, procName + "_integration.png", org.apache.poi.util.Units.toEMU(500), org.apache.poi.util.Units.toEMU(400));
+                                rDiag.addPicture(new ByteArrayInputStream(img), XWPFDocument.PICTURE_TYPE_PNG, procName + "_integration.png", widthEMU, heightEMU);
                             }
                         }
                     } catch (Exception e) {
@@ -931,10 +963,25 @@ public class TibcoWordGenerator {
                                 noteRun.setText("Note: Special characters in process name normalized for diagram rendering.");
                             }
                             
+                            // Use Mule-style dynamic scaling
+                            BufferedImage buffImg = ImageIO.read(new ByteArrayInputStream(img));
+                            int width = buffImg.getWidth();
+                            int height = buffImg.getHeight();
+                            int widthEMU = width * 9525;
+                            int heightEMU = height * 9525;
+                            int maxWidthEMU = 5486400;
+                            int maxHeightEMU = 8229600;
+                            double scale = 1.0;
+                            if (widthEMU > maxWidthEMU) scale = (double) maxWidthEMU / widthEMU;
+                            int scaledHeightEMU = (int) (heightEMU * scale);
+                            if (scaledHeightEMU > maxHeightEMU) scale = scale * ((double) maxHeightEMU / scaledHeightEMU);
+                            widthEMU = (int) (widthEMU * scale);
+                            heightEMU = (int) (heightEMU * scale);
+                            
                             XWPFParagraph pDiag = document.createParagraph();
                             pDiag.setAlignment(ParagraphAlignment.CENTER);
                             XWPFRun rDiag = pDiag.createRun();
-                            rDiag.addPicture(new ByteArrayInputStream(img), XWPFDocument.PICTURE_TYPE_PNG, flow.getName() + "_integration.png", org.apache.poi.util.Units.toEMU(500), org.apache.poi.util.Units.toEMU(400));
+                            rDiag.addPicture(new ByteArrayInputStream(img), XWPFDocument.PICTURE_TYPE_PNG, flow.getName() + "_integration.png", widthEMU, heightEMU);
                         }
                     }
                 } catch (Exception e) {
@@ -1039,10 +1086,25 @@ public class TibcoWordGenerator {
                      if (img != null && img.length > 0) {
                          // Use activityIdx to ensure unique, sequential numbering
                          createHeading3(getSectionNumber() + "." + activityIdx + " Flow Diagram");
+                         // Use Mule-style dynamic scaling
+                         BufferedImage buffImg = ImageIO.read(new ByteArrayInputStream(img));
+                         int width = buffImg.getWidth();
+                         int height = buffImg.getHeight();
+                         int widthEMU = width * 9525;
+                         int heightEMU = height * 9525;
+                         int maxWidthEMU = 5486400;
+                         int maxHeightEMU = 8229600;
+                         double scale = 1.0;
+                         if (widthEMU > maxWidthEMU) scale = (double) maxWidthEMU / widthEMU;
+                         int scaledHeightEMU = (int) (heightEMU * scale);
+                         if (scaledHeightEMU > maxHeightEMU) scale = scale * ((double) maxHeightEMU / scaledHeightEMU);
+                         widthEMU = (int) (widthEMU * scale);
+                         heightEMU = (int) (heightEMU * scale);
+                         
                          XWPFParagraph pDiag = document.createParagraph();
                          pDiag.setAlignment(ParagraphAlignment.CENTER);
                          XWPFRun rDiag = pDiag.createRun();
-                         rDiag.addPicture(new ByteArrayInputStream(img), XWPFDocument.PICTURE_TYPE_PNG, flow.getName() + "_flow.png", org.apache.poi.util.Units.toEMU(500), org.apache.poi.util.Units.toEMU(400));
+                         rDiag.addPicture(new ByteArrayInputStream(img), XWPFDocument.PICTURE_TYPE_PNG, flow.getName() + "_flow.png", widthEMU, heightEMU);
                          activityIdx++;
                      }
                  } catch (Exception e) {

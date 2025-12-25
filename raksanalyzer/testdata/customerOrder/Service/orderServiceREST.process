@@ -197,14 +197,16 @@
         <pd:to>End</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>temptest</pd:xpath>
     </pd:transition>
     <pd:transition>
         <pd:from>HTTP Receiver</pd:from>
         <pd:to>createOrderService</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>testingxpath</pd:xpath>
     </pd:transition>
     <pd:transition>
         <pd:from>createOrderService</pd:from>

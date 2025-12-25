@@ -36,7 +36,7 @@
     <pd:processVariables/>
     <pd:targetNamespace>http://xmlns.example.com/1742402679731</pd:targetNamespace>
     <pd:group name="Group">
-        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:type>com.tibco.pe.core.CriticalSectionGroup</pd:type>
         <pd:resourceType>ae.process.group</pd:resourceType>
         <pd:x>303</pd:x>
         <pd:y>17</pd:y>
@@ -47,13 +47,9 @@
         <pd:groupVariables/>
         <pd:joinToggle>inherit</pd:joinToggle>
         <config>
-            <pd:groupType>inputLoop</pd:groupType>
+            <pd:groupType>criticalSection</pd:groupType>
             <pd:serializable>false</pd:serializable>
-            <pd:over>$Map-Data/ns2:customer</pd:over>
-            <pd:iterationElementSlot>customers</pd:iterationElementSlot>
-            <pd:indexSlot>i</pd:indexSlot>
-            <pd:activityOutputName/>
-            <pd:accumulateOutput>false</pd:accumulateOutput>
+            <pd:scope>single</pd:scope>
         </config>
         <pd:inputBindings/>
         <pd:expanded>true</pd:expanded>

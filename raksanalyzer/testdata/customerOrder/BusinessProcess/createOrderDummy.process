@@ -51,9 +51,9 @@
     <pd:group name="Group">
         <pd:type>com.tibco.pe.core.TransactionGroup</pd:type>
         <pd:resourceType>ae.process.group</pd:resourceType>
-        <pd:x>164</pd:x>
-        <pd:y>20</pd:y>
-        <pd:width>179</pd:width>
+        <pd:x>135</pd:x>
+        <pd:y>19</pd:y>
+        <pd:width>228</pd:width>
         <pd:height>144</pd:height>
         <pd:collapsedWidth>57</pd:collapsedWidth>
         <pd:collapsedHeight>70</pd:collapsedHeight>
@@ -69,7 +69,7 @@
         <pd:expanded>true</pd:expanded>
         <pd:transition>
             <pd:from>start</pd:from>
-            <pd:to>Log</pd:to>
+            <pd:to>Write File</pd:to>
             <pd:lineType>Default</pd:lineType>
             <pd:lineColor>-16777216</pd:lineColor>
             <pd:conditionType>always</pd:conditionType>
@@ -81,11 +81,18 @@
             <pd:lineColor>-16777216</pd:lineColor>
             <pd:conditionType>always</pd:conditionType>
         </pd:transition>
+        <pd:transition>
+            <pd:from>Write File</pd:from>
+            <pd:to>Log</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
         <pd:activity name="Log">
             <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
             <pd:resourceType>ae.activities.log</pd:resourceType>
-            <pd:x>261</pd:x>
-            <pd:y>83</pd:y>
+            <pd:x>300</pd:x>
+            <pd:y>86</pd:y>
             <config>
                 <role>User</role>
             </config>
@@ -99,6 +106,17 @@
                     </msgCode>
                 </ns0:ActivityInput>
             </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Write File">
+            <pd:type>com.tibco.plugin.file.FileWriteActivity</pd:type>
+            <pd:resourceType>ae.activities.FileWriteActivity</pd:resourceType>
+            <pd:x>196</pd:x>
+            <pd:y>83</pd:y>
+            <config>
+                <encoding>text</encoding>
+                <compressFile>None</compressFile>
+            </config>
+            <pd:inputBindings/>
         </pd:activity>
     </pd:group>
     <pd:activity name="Map Data">
@@ -213,9 +231,10 @@
         <pd:y>249</pd:y>
         <pd:width>182</pd:width>
         <pd:height>140</pd:height>
-        <pd:collapsedWidth>62</pd:collapsedWidth>
-        <pd:collapsedHeight>69</pd:collapsedHeight>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
         <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
         <config>
             <pd:groupType>transactionGroup</pd:groupType>
             <pd:serializable>false</pd:serializable>
@@ -262,9 +281,10 @@
         <pd:y>25</pd:y>
         <pd:width>145</pd:width>
         <pd:height>140</pd:height>
-        <pd:collapsedWidth>62</pd:collapsedWidth>
-        <pd:collapsedHeight>69</pd:collapsedHeight>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
         <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
         <config>
             <pd:groupType>criticalSection</pd:groupType>
             <pd:serializable>false</pd:serializable>
@@ -335,9 +355,10 @@
         <pd:y>201</pd:y>
         <pd:width>188</pd:width>
         <pd:height>203</pd:height>
-        <pd:collapsedWidth>62</pd:collapsedWidth>
-        <pd:collapsedHeight>69</pd:collapsedHeight>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
         <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
         <config>
             <pd:groupType>inputLoop</pd:groupType>
             <pd:serializable>false</pd:serializable>

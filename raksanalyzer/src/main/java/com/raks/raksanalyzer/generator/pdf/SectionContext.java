@@ -1,8 +1,5 @@
 package com.raks.raksanalyzer.generator.pdf;
 
-import org.apache.pdfbox.pdmodel.PDDocument;
-import org.apache.pdfbox.pdmodel.PDPage;
-import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +11,6 @@ import org.slf4j.LoggerFactory;
 public class SectionContext {
     private static final Logger logger = LoggerFactory.getLogger(SectionContext.class);
     private static final float MARGIN = 50;
-    private static final float PAGE_HEIGHT = PDRectangle.LETTER.getHeight();
     
     private final TibcoPdfGenerator generator;
     private float estimatedHeight;
@@ -55,14 +51,16 @@ public class SectionContext {
     }
     
     /**
-     * Ensure there's enough space on the current page for all accumulated heights.
-     * If not, creates a new page BEFORE any drawing occurs.
+     * Check if there's enough space on the current page for all accumulated heights.
+     * Returns true if a new page is needed, false if current page has enough space.
      * This method should be called ONCE before drawing the section.
+     * 
+     * @return true if new page is needed, false otherwise
      */
-    public void ensureSpace() {
+    public boolean needsNewPage() {
         if (spaceEnsured) {
-            logger.warn("ensureSpace() called multiple times for same context");
-            return;
+            logger.warn("needsNewPage() called multiple times for same context");
+            return false;
         }
         
         float currentY = generator.getCurrentY();
@@ -71,15 +69,15 @@ public class SectionContext {
         logger.info("[SECTION-CONTEXT] Estimated height: {}, Available space: {}, CurrentY: {}", 
                     estimatedHeight, availableSpace, currentY);
         
+        spaceEnsured = true;
+        
         if (estimatedHeight > availableSpace) {
-            logger.info("[SECTION-CONTEXT] Not enough space, creating new page");
-            generator.newPage();
-            generator.closeContentStream();
+            logger.info("[SECTION-CONTEXT] Not enough space, new page needed");
+            return true;
         } else {
             logger.info("[SECTION-CONTEXT] Sufficient space available, proceeding on current page");
+            return false;
         }
-        
-        spaceEnsured = true;
     }
     
     /**

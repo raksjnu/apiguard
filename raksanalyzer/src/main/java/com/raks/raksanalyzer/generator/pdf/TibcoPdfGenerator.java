@@ -18,6 +18,7 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlin
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.vandeseer.easytable.RepeatedHeaderTableDrawer;
+import org.vandeseer.easytable.TableDrawer;
 import org.vandeseer.easytable.structure.Row;
 import org.vandeseer.easytable.structure.Table;
 import org.vandeseer.easytable.structure.cell.TextCell;
@@ -74,6 +75,9 @@ public class TibcoPdfGenerator {
     
     private List<TibcoGlobalVariable> currentProperties;
     private List<TOCEntry> tocEntries;
+    
+    // Track last header for auto-repeat on new pages
+    private String lastHeaderText = null;
     
 
     private static class TOCEntry {
@@ -632,7 +636,7 @@ public class TibcoPdfGenerator {
         if (flowsByType.containsKey("Adapter Subscriber")) adapters.addAll(flowsByType.remove("Adapter Subscriber"));
         if (flowsByType.containsKey("Adapter Service")) adapters.addAll(flowsByType.remove("Adapter Service"));
         if (!adapters.isEmpty()) {
-            createAdapterServicesSection(adapters);
+            createAdapterServicesSection(adapters, result);
         }
         
 
@@ -822,6 +826,15 @@ public class TibcoPdfGenerator {
                              new float[]{0.2f, 0.4f, 0.4f});
                 }
                 
+                // Add Integration Diagram for REST service (Added to match Word)
+                idx++;
+                String path = (String) service.get("processFile"); // Use processFile (absolute) not processPath (relative)
+                if (path != null) {
+                    drawH3Header(numbering.getSectionNumber() + "." + idx + " " + procName + " Integration");
+                    insertIntegrationDiagram(numbering.getSectionNumber() + "." + idx + " " + procName + " Integration",
+                                           path, result.getProjectInfo().getProjectPath());
+                }
+                
                 idx++;
                 checkPageSpace(50);
             }
@@ -850,7 +863,7 @@ public class TibcoPdfGenerator {
         }
     }
     
-    private void createAdapterServicesSection(List<FlowInfo> flows) throws IOException {
+    private void createAdapterServicesSection(List<FlowInfo> flows, AnalysisResult result) throws IOException {
         numbering.incrementSection(1);
         drawSubSectionHeader(numbering.getSectionNumber() + " Adapter Services");
         
@@ -875,16 +888,37 @@ public class TibcoPdfGenerator {
             String providerUrl = "";
             
             boolean isJms = transport.toLowerCase().contains("jms");
+        
+        if (isJms) {
+            if (config.containsKey("jmsQueueSessionQueue")) subjectDest = config.get("jmsQueueSessionQueue");
+            else if (config.containsKey("jmsTopicSessionTopic")) subjectDest = config.get("jmsTopicSessionTopic");
+            else if (config.containsKey("jmsTopicSessionName")) subjectDest = config.get("jmsTopicSessionName");
+            else if (config.containsKey("ae.aepalette.sharedProperties.jmsQueueSessionQueue")) subjectDest = config.get("ae.aepalette.sharedProperties.jmsQueueSessionQueue");
+            else if (config.containsKey("ae.aepalette.sharedProperties.jmsTopicSessionTopic")) subjectDest = config.get("ae.aepalette.sharedProperties.jmsTopicSessionTopic");
+            else subjectDest = config.entrySet().stream()
+                     .filter(e -> e.getKey().toLowerCase().contains("queue") || e.getKey().toLowerCase().contains("topic"))
+                     .map(Map.Entry::getValue).findFirst().orElse("");
             
-            if (isJms) {
-                if (config.containsKey("jmsQueueSessionQueue")) subjectDest = config.get("jmsQueueSessionQueue");
-                else if (config.containsKey("jmsTopicSessionTopic")) subjectDest = config.get("jmsTopicSessionTopic");
-                
-                providerUrl = config.getOrDefault("jmsProviderUrl", "");
-            } else {
-                subjectDest = config.getOrDefault("subject", "");
-                providerUrl = config.getOrDefault("endpoint", "");
-            }
+            providerUrl = config.getOrDefault("jmsSessionProviderURL", 
+                          config.getOrDefault("ae.aepalette.sharedProperties.jmsSessionProviderURL", ""));
+        } else {
+            subjectDest = config.getOrDefault("rvSubject", 
+                          config.getOrDefault("ae.aepalette.sharedProperties.rvSubject", ""));
+                          
+            String service = config.getOrDefault("rvSessionService", 
+                             config.getOrDefault("ae.aepalette.sharedProperties.rvSessionService", ""));
+                             
+            String network = config.getOrDefault("rvSessionNetwork", 
+                             config.getOrDefault("ae.aepalette.sharedProperties.rvSessionNetwork", ""));
+                             
+            String daemon = config.getOrDefault("rvSessionDaemon", 
+                            config.getOrDefault("ae.aepalette.sharedProperties.rvSessionDaemon", ""));
+                            
+            providerUrl = service + ":" + network + ":" + daemon;
+             if (providerUrl.equals("::")) providerUrl = "";
+             else if (providerUrl.startsWith(":")) providerUrl = providerUrl.substring(1);
+             else if (providerUrl.endsWith(":")) providerUrl = providerUrl.substring(0, providerUrl.length() - 1);
+        }
             
             subjectDest = helper.resolveGlobalVariable(subjectDest, currentProperties);
             providerUrl = helper.resolveGlobalVariable(providerUrl, currentProperties);
@@ -893,6 +927,18 @@ public class TibcoPdfGenerator {
             drawTable(data, new String[]{"Transport", "Subject / Destination", "Provider Url"}, 
                      new float[]{0.3f, 0.4f, 0.3f});
             
+            // Add Integration Diagram (missing in PDF previously)
+            String processPath = flow.getRelativePath();
+            if (processPath == null || processPath.isEmpty()) {
+                processPath = flow.getFileName(); // Fallback to absolute path if relative is missing
+            }
+            
+            idx++;
+            drawH3Header(numbering.getSectionNumber() + "." + idx + " " + flow.getName() + " Integration");
+            
+            insertIntegrationDiagram(numbering.getSectionNumber() + "." + idx + " " + flow.getName() + " Integration",
+                                   processPath, result.getProjectInfo().getProjectPath());
+
             idx++;
             checkPageSpace(50);
         }
@@ -969,16 +1015,16 @@ public class TibcoPdfGenerator {
             drawSubSectionHeader(numbering.getSectionNumber() + " " + flow.getName());
             
             String relPath = flow.getRelativePath() != null ? flow.getRelativePath() : flow.getFileName();
-            drawText("Path: " + relPath, fontRegular, FONT_SIZE_BODY);
-            currentY -= 15;
             
-            // Flow Diagram
+            // Flow Diagram - shows all activities within process scope
+            // Use sub-numbering .1 for Flow Diagram
+            drawH4Header(numbering.getSectionNumber() + ".1 Flow Diagram");
             insertFlowDiagram(flow);
 
             createProcessActivityStatsTable(flow);
             
-
-            int activityIdx = 1;
+            // Adjust Activity Index to start from 2, since 1 is Flow Diagram
+            int activityIdx = 2;
             for (ComponentInfo activity : flow.getComponents()) {
                 String type = activity.getType();
                 String simpleType = type;
@@ -1117,7 +1163,7 @@ public class TibcoPdfGenerator {
                     for (String key : sortedKeys) {
                         String val = helper.resolveGlobalVariable(config.get(key), currentProperties);
                         val = helper.formatConfigValue(key, val);
-                        configData.add(new String[]{key, val != null ? val : ""});
+                        configData.add(new String[]{key, val});
                     }
                     
                     drawTable(configData.toArray(new String[0][]), 
@@ -1299,23 +1345,7 @@ public class TibcoPdfGenerator {
             return;
         }
         
-
-        numbering.incrementSection(1);
-        drawSubSectionHeader(numbering.getSectionNumber() + " File Types Count");
-        
-        drawText("Summary of project files grouped by type:", fontRegular, FONT_SIZE_BODY);
-        currentY -= 15;
-        
-
-        long totalActivities = 0;
-        if (result.getFlows() != null) {
-            totalActivities = result.getFlows().stream()
-                .mapToLong(f -> f.getComponents().size())
-                .sum();
-        }
-        drawText("Total Activities Count: " + totalActivities, fontBold, FONT_SIZE_BODY, new Color(0, 0, 255));
-        currentY -= 15;
-        
+        // Build table data first so we can estimate height
         List<String[]> fileTypeData = new ArrayList<>();
         fileCountByType.entrySet().stream()
             .sorted(Map.Entry.comparingByKey())
@@ -1326,6 +1356,23 @@ public class TibcoPdfGenerator {
                 long sizeKB = sizeBytes / 1024;
                 fileTypeData.add(new String[]{fileType, String.valueOf(count), String.format("%,d", sizeKB)});
             });
+        
+        // Use SectionContext to ensure header + content + table stay together
+        SectionContext ctx = new SectionContext(this);
+        ctx.addHeaderHeight(25);  // Header
+        ctx.addTextHeight(15);    // "Summary of project files..."
+        ctx.addSpacing(15);       // Spacing
+        ctx.addTextHeight(15);    // "Total Activities Count: XXX"
+        ctx.addSpacing(15);       // Spacing
+        ctx.addTableHeight(estimateTableHeight(fileTypeData.toArray(new String[0][])));
+        
+        if (ctx.needsNewPage()) {
+            newPage();
+            closeContentStream();
+        }
+
+        numbering.incrementSection(1);
+        drawSubSectionHeader(numbering.getSectionNumber() + " File Types Count");
         
         drawTable(fileTypeData.toArray(new String[0][]), 
                  new String[]{"File Type", "Count", "Total Size (KB)"}, 
@@ -1476,6 +1523,7 @@ public class TibcoPdfGenerator {
     private void checkPageSpace(float required) throws IOException {
         if (currentY - required < MARGIN + 50) {
             newPage();
+            currentY = PDRectangle.LETTER.getHeight() - MARGIN; // Reset currentY like Mule does
         }
     }
     
@@ -1517,8 +1565,22 @@ public class TibcoPdfGenerator {
     }
     
     private void drawSubSectionHeader(String title) throws IOException {
-        // Don't check page space here - let the table handle it
-        // Otherwise we create a new page for the header, then another for the table
+        // Check if we have enough space for header + minimum table size
+        // This prevents headers from being orphaned on one page while tables are on the next
+        float minSpaceNeeded = 25 + 150; // Header height + minimum table space
+        float availableSpace = currentY - MARGIN;
+        
+        if (availableSpace < minSpaceNeeded) {
+            logger.info("[HEADER-FIX] Not enough space for header + table (need {}, have {}), creating new page", 
+                        minSpaceNeeded, availableSpace);
+            newPage();
+            closeContentStream();
+            // Create new content stream for the new page
+            contentStream = new PDPageContentStream(document, currentPage, PDPageContentStream.AppendMode.APPEND, true, true);
+        }
+        
+        // Track this header for potential redraw on new page
+        lastHeaderText = title;
         contentStream.beginText();
         contentStream.setFont(fontBold, FONT_SIZE_H2);
         contentStream.setNonStrokingColor(Color.BLACK);
@@ -1570,8 +1632,7 @@ public class TibcoPdfGenerator {
     private void drawTable(String[][] data, String[] headers, float[] colWidths) throws IOException {
         if (data == null || data.length == 0) return;
         
-
-        checkPageSpace(100); // Minimum space needed for table header
+        // No special page handling here - drawSubSectionHeader already ensured space
         // No padding before table - subsection header already provides spacing
         
         float tableWidth = PDRectangle.LETTER.getWidth() - (2 * MARGIN);
@@ -1601,46 +1662,53 @@ public class TibcoPdfGenerator {
                          .replace("\n", " ")      // Replace newlines with space
                          .replace("\r", "");      // Remove carriage returns
                 if (txt.length() > 150) txt = txt.substring(0, 147) + "...";
-                rb.add(TextCell.builder().text(txt).borderWidth(1).build());
+                rb.add(TextCell.builder().text(txt).borderWidth(1).wordBreak(true).build());
             }
             tableBuilder.addRow(rb.build());
         }
         
+        
         Table table = tableBuilder.build();
-        
-        closeContentStream();
-        
-
-        logger.info("[PDF-DEBUG] Drawing table at startY={}", currentY);
-        RepeatedHeaderTableDrawer.builder()
-            .table(table)
-            .startX(MARGIN)
-            .startY(currentY)
-            .endY(MARGIN)
-            .build()
-            .draw(() -> document, () -> new PDPage(PDRectangle.LETTER), MARGIN);
-        
-
-        float totalHeight = table.getHeight();
-        float availableOnPage = currentY - MARGIN;
-        
-        if (totalHeight <= availableOnPage) {
-            currentY -= totalHeight;
-        } else {
-            float remaining = totalHeight - availableOnPage;
-            float pageContentHeight = PDRectangle.LETTER.getHeight() - (2 * MARGIN);
-            
-            float heightOnLastPage = remaining % pageContentHeight;
-            if (heightOnLastPage == 0) heightOnLastPage = pageContentHeight;
-            
-            currentY = (PDRectangle.LETTER.getHeight() - MARGIN) - heightOnLastPage;
+    
+    // Manual Height Calculation to fix overlap issues with wordBreak(true)
+    // easytable's getHeight() might not account for wrapping correctly in all versions
+    float estimatedTableHeight = 20; // Header
+    for (int i = 0; i < data.length; i++) {
+        float maxRowHeight = 15; // Min row height
+        for (int j = 0; j < data[i].length; j++) {
+             String txt = data[i][j] != null ? data[i][j] : "";
+             float colW = tableWidth * colWidths[j];
+             // Est char width ~ 6pts for Size 10 font. 
+             // length * 6 / colW = lines.
+             int estimatedLines = (int) Math.ceil((txt.length() * 5.0f) / colW);
+             if (estimatedLines < 1) estimatedLines = 1;
+             // Line height approx 12
+             float cellH = estimatedLines * 12 + 5; 
+             if (cellH > maxRowHeight) maxRowHeight = cellH;
         }
-        
+        estimatedTableHeight += maxRowHeight;
+    }
+    
+    // Use the larger of the two heights to be safe
+    float renderHeight = Math.max(table.getHeight(), estimatedTableHeight);
 
-        currentPage = document.getPage(document.getNumberOfPages() - 1);
-        contentStream = new PDPageContentStream(document, currentPage, PDPageContentStream.AppendMode.APPEND, true, true);
-        
-        currentY -= 5; // Minimal space after table (reduced from 15)
+    // Check space
+    checkPageSpace(renderHeight + 30);
+    
+    logger.info("[PDF-DEBUG] Drawing table at startY={}, Est Height={}", currentY, renderHeight);
+    
+    // Use TableDrawer (single-page) instead of RepeatedHeaderTableDrawer (multi-page)
+    // This matches Mule's approach and prevents headers from being left on previous pages
+    TableDrawer.builder()
+        .contentStream(contentStream)
+        .table(table)
+        .startX(MARGIN)
+        .startY(currentY)
+        .build()
+        .draw();
+    
+    // Update currentY using our safer estimate
+    currentY -= (renderHeight + 15); // Add buffer
     }
     
     private void addBookmark(String title) {
@@ -1742,6 +1810,12 @@ public class TibcoPdfGenerator {
     private void insertFlowDiagram(FlowInfo flow) throws IOException {
         if (!config.getBooleanProperty("tibco.diagrams.enabled", true)) return;
         
+        // Diagram is drawn under the current header (which we just added)
+        // No need to add bookmark here if the header was already added before calling this.
+        
+        // String puml = diagramGenerator.generateFlowPuml(flow); // This line was in the instruction but not in original code, keeping original logic.
+        
+        // Generate Image from PUML
         try {
             String fPath = flow.getFileName();
             if (fPath == null) return;
@@ -1817,6 +1891,40 @@ public class TibcoPdfGenerator {
             drawText("(Diagram scaled to fit page)", fontItalic, 8, Color.GRAY);
             currentY -= 10;
         }
+    }
+    
+    // ========== Helper Methods for SectionContext ==========
+    
+    /**
+     * Get the current Y coordinate for section context calculations
+     */
+    float getCurrentY() {
+        return currentY;
+    }
+    
+    /**
+     * Estimate the height needed for a table with given data
+     * @param data Table data rows
+     * @return Estimated height in points
+     */
+    float estimateTableHeight(String[][] data) {
+        if (data == null || data.length == 0) {
+            return 0;
+        }
+        
+        // Conservative estimate:
+        // - Header row: 25px
+        // - Each data row: 20px (average, some may be taller with wrapping)
+        // - Padding: 20px before + 5px after
+        float headerHeight = 25;
+        float rowHeight = 20;
+        float padding = 25; // 20 before + 5 after
+        
+        float estimatedHeight = headerHeight + (data.length * rowHeight) + padding;
+        
+        // Cap at reasonable maximum for first page (if table is huge, it will span pages)
+        float maxFirstPageHeight = 400; // Leave room for header and other content
+        return Math.min(estimatedHeight, maxFirstPageHeight);
     }
 }
 

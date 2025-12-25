@@ -31,59 +31,6 @@
     <pd:errorSchemas/>
     <pd:processVariables/>
     <pd:targetNamespace>http://xmlns.example.com/1628144346800</pd:targetNamespace>
-    <pd:group name="Group">
-        <pd:type>com.tibco.pe.core.TransactionGroup</pd:type>
-        <pd:resourceType>ae.process.group</pd:resourceType>
-        <pd:x>164</pd:x>
-        <pd:y>20</pd:y>
-        <pd:width>179</pd:width>
-        <pd:height>144</pd:height>
-        <pd:collapsedWidth>57</pd:collapsedWidth>
-        <pd:collapsedHeight>70</pd:collapsedHeight>
-        <pd:groupVariables/>
-        <pd:joinToggle>inherit</pd:joinToggle>
-        <config>
-            <pd:groupType>transactionGroup</pd:groupType>
-            <pd:serializable>false</pd:serializable>
-            <pd:transactionType>JDBCTransaction</pd:transactionType>
-            <pd:includeCheckpoint>false</pd:includeCheckpoint>
-        </config>
-        <pd:inputBindings/>
-        <pd:expanded>true</pd:expanded>
-        <pd:transition>
-            <pd:from>start</pd:from>
-            <pd:to>Log</pd:to>
-            <pd:lineType>Default</pd:lineType>
-            <pd:lineColor>-16777216</pd:lineColor>
-            <pd:conditionType>always</pd:conditionType>
-        </pd:transition>
-        <pd:transition>
-            <pd:from>Log</pd:from>
-            <pd:to>end</pd:to>
-            <pd:lineType>Default</pd:lineType>
-            <pd:lineColor>-16777216</pd:lineColor>
-            <pd:conditionType>always</pd:conditionType>
-        </pd:transition>
-        <pd:activity name="Log">
-            <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
-            <pd:resourceType>ae.activities.log</pd:resourceType>
-            <pd:x>261</pd:x>
-            <pd:y>83</pd:y>
-            <config>
-                <role>User</role>
-            </config>
-            <pd:inputBindings>
-                <ns0:ActivityInput>
-                    <message>
-                        <xsl:value-of select="concat(&quot;Order created: &quot;, $Start/pfx:orderRequest/order/ns:customer/ns:customerid,&quot;-&quot;, $Start/pfx:orderRequest/order/ns:customer/ns:firstname, &quot;-ProcessId-&quot;, $_processContext/ns3:ProcessContext/ProcessId)"/>
-                    </message>
-                    <msgCode>
-                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:customerid"/>
-                    </msgCode>
-                </ns0:ActivityInput>
-            </pd:inputBindings>
-        </pd:activity>
-    </pd:group>
     <pd:activity name="Map Data">
         <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
         <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
@@ -242,20 +189,90 @@
             </ns6:ActivityInputClass>
         </pd:inputBindings>
     </pd:activity>
-    <pd:transition>
-        <pd:from>Group</pd:from>
-        <pd:to>Map Data</pd:to>
-        <pd:lineType>Default</pd:lineType>
-        <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
-    </pd:transition>
-    <pd:transition>
-        <pd:from>Start</pd:from>
-        <pd:to>Group</pd:to>
-        <pd:lineType>Default</pd:lineType>
-        <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
-    </pd:transition>
+    <pd:group name="Group (1)">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>143</pd:x>
+        <pd:y>0</pd:y>
+        <pd:width>242</pd:width>
+        <pd:height>215</pd:height>
+        <pd:collapsedWidth>62</pd:collapsedWidth>
+        <pd:collapsedHeight>69</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <config>
+            <pd:groupType>simpleGroup</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Group</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Group</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:group name="Group">
+            <pd:type>com.tibco.pe.core.TransactionGroup</pd:type>
+            <pd:resourceType>ae.process.group</pd:resourceType>
+            <pd:x>164</pd:x>
+            <pd:y>20</pd:y>
+            <pd:width>179</pd:width>
+            <pd:height>144</pd:height>
+            <pd:collapsedWidth>57</pd:collapsedWidth>
+            <pd:collapsedHeight>70</pd:collapsedHeight>
+            <pd:groupVariables/>
+            <pd:joinToggle>inherit</pd:joinToggle>
+            <config>
+                <pd:groupType>transactionGroup</pd:groupType>
+                <pd:serializable>false</pd:serializable>
+                <pd:transactionType>JDBCTransaction</pd:transactionType>
+                <pd:includeCheckpoint>false</pd:includeCheckpoint>
+            </config>
+            <pd:inputBindings/>
+            <pd:expanded>true</pd:expanded>
+            <pd:transition>
+                <pd:from>start</pd:from>
+                <pd:to>Log</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:transition>
+                <pd:from>Log</pd:from>
+                <pd:to>end</pd:to>
+                <pd:lineType>Default</pd:lineType>
+                <pd:lineColor>-16777216</pd:lineColor>
+                <pd:conditionType>always</pd:conditionType>
+            </pd:transition>
+            <pd:activity name="Log">
+                <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+                <pd:resourceType>ae.activities.log</pd:resourceType>
+                <pd:x>261</pd:x>
+                <pd:y>83</pd:y>
+                <config>
+                    <role>User</role>
+                </config>
+                <pd:inputBindings>
+                    <ns0:ActivityInput>
+                        <message>
+                            <xsl:value-of select="concat(&quot;Order created: &quot;, $Start/pfx:orderRequest/order/ns:customer/ns:customerid,&quot;-&quot;, $Start/pfx:orderRequest/order/ns:customer/ns:firstname, &quot;-ProcessId-&quot;, $_processContext/ns3:ProcessContext/ProcessId)"/>
+                        </message>
+                        <msgCode>
+                            <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:customerid"/>
+                        </msgCode>
+                    </ns0:ActivityInput>
+                </pd:inputBindings>
+            </pd:activity>
+        </pd:group>
+    </pd:group>
     <pd:transition>
         <pd:from>GlobalCatch</pd:from>
         <pd:to>Errorhandler</pd:to>
@@ -287,6 +304,20 @@
     <pd:transition>
         <pd:from>Render JSON</pd:from>
         <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group (1)</pd:from>
+        <pd:to>Map Data</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Group (1)</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>
