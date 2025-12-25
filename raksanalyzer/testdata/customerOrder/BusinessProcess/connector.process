@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="www.tibco.com/plugin/java/JavaMethodActivityInput">
+    <pd:name>BusinessProcess/connector.process</pd:name>
+    <pd:startName>Java Event Source</pd:startName>
+    <pd:startX>0</pd:startX>
+    <pd:startY>0</pd:startY>
+    <pd:returnBindings/>
+    <pd:starter name="Java Event Source">
+        <pd:type>com.tibco.plugin.java.JavaEventSource</pd:type>
+        <pd:resourceType>ae.activities.JavaEventSource</pd:resourceType>
+        <pd:x>58</pd:x>
+        <pd:y>35</pd:y>
+        <config>
+            <packageName>BusinessProcess.connector</packageName>
+            <fileName>connectorJavaEventSource</fileName>
+            <fullsource>package BusinessProcess.connector;
+import java.util.*;
+import java.io.*;
+import com.tibco.plugin.java.JavaProcessStarter;
+/**
+ * This class allows users to write custom process starters using the java programming
+ * language. It extends JavaProcessStarter abstract class that interfaces with the ActiveMatrix Business
+ * works engine. JavaProcessStarter class defines following four abstract methods:
+ * 	 1) init() - Allows users to initialize their resources.
+ * 	 2) onStart() - Allows users to activate their listeners or Observers or kick off a process
+ *                   by calling onEvent(object inputData).
+ * 	 3) onStop() - Allows user to de-activate their listeners or Observers.
+ * 	 4) onShutdown() - Allows users to release the resources. This method is somewhat similar to finalize()
+ * 
+ * JavaProcessStarter also defines three non-abstract methods:
+ * 	 1) getGlobalInstance() - It returns an instance of Java Global Instance defined in the advanced tab.
+ * 	 2) onEvent(Object object) - It is the main entry point into the ActiveMartix Business Works engine. This
+                                   method must be called in onStart() or in the listener or observer interface
+ *                                 to trigger the process.
+ * 	 3) onError(Throwable throwable) - It allows the user to throw an exception if the listener or observer fails
+ *                                      to generate an notification event.
+ */
+public class connectorJavaEventSource extends JavaProcessStarter {
+	public connectorJavaEventSource() {
+	}
+
+	/**
+	 * Initializes the Java Event Source component during ActiveMatrix Business Works engine
+	 * start-up. It is highly recommended to initialize resource connections
+	 * in this method. Resource connections can also be defined as Java Global Instance.
+	 * To configure Java Global Instance use the advanced tab. It is a common practice to
+	 * define resource connection as Java Global Instance. Users can get a handle to the Java
+	 * Global Instance by calling this.getJavaGlobalInstance().
+	 */
+	public void init() throws Exception {
+	}
+	/**
+	 * This method is called by ActiveMatrix Business Works engine to activate the Java Event Source. This is
+	 * an ideal place for users to add notifier or resource observer. The notifier/observer
+	 * can then call onEvent(Object inputData) method to kick off a process instance.
+	 */
+	public void onStart() throws Exception {
+	}
+	/** This method is called by ActiveMatrix Business Works engine to de-activate the Event Source. User can 
+	 * add code to de-activate a notifier or resource observer. 
+	 */
+	public void onStop() throws Exception {
+	}
+	/** This method is called at ActiveMatrix Business Works engine shutdown. User can add cleanup code in 
+	 *  this method
+	 */
+	public void onShutdown() {
+	}
+}</fullsource>
+        </config>
+        <pd:inputBindings/>
+    </pd:starter>
+    <pd:endName>End</pd:endName>
+    <pd:endX>450</pd:endX>
+    <pd:endY>64</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1766548391581</pd:targetNamespace>
+    <pd:activity name="Java Method">
+        <pd:type>com.tibco.plugin.java.JavaMethodActivity</pd:type>
+        <pd:resourceType>ae.activities.JavaMethodActivity</pd:resourceType>
+        <pd:x>69</pd:x>
+        <pd:y>132</pd:y>
+        <config>
+            <ConstructDeclaredClass>false</ConstructDeclaredClass>
+            <CacheConstructedClass>false</CacheConstructedClass>
+            <InvokeCleanupMethod>false</InvokeCleanupMethod>
+        </config>
+        <pd:inputBindings>
+            <ns:JavaMethodActivityInput/>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Java To XML">
+        <pd:type>com.tibco.plugin.java.JavaToXmlActivity</pd:type>
+        <pd:resourceType>ae.activities.JavaToXmlActivity</pd:resourceType>
+        <pd:x>268</pd:x>
+        <pd:y>43</pd:y>
+        <config>
+            <Repeatable>false</Repeatable>
+            <UseJavaSchema>false</UseJavaSchema>
+            <ConstructDeclaredClass>false</ConstructDeclaredClass>
+            <CacheConstructedClass>false</CacheConstructedClass>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="XML To Java">
+        <pd:type>com.tibco.plugin.java.XmlToJavaActivity</pd:type>
+        <pd:resourceType>ae.activities.XmlToJavaActivity</pd:resourceType>
+        <pd:x>344</pd:x>
+        <pd:y>155</pd:y>
+        <config>
+            <Repeatable>false</Repeatable>
+            <UseJavaSchema>false</UseJavaSchema>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="Java Code">
+        <pd:type>com.tibco.plugin.java.JavaActivity</pd:type>
+        <pd:resourceType>ae.javapalette.javaActivity</pd:resourceType>
+        <pd:x>188</pd:x>
+        <pd:y>213</pd:y>
+        <config/>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Java Event Source</pd:from>
+        <pd:to>Java Method</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java Event Source</pd:from>
+        <pd:to>Java To XML</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java Method</pd:from>
+        <pd:to>Java Code</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java Event Source</pd:from>
+        <pd:to>Java Code</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>XML To Java</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java To XML</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java Code</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java Event Source</pd:from>
+        <pd:to>XML To Java</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

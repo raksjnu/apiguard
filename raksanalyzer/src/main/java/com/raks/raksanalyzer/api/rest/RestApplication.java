@@ -19,9 +19,13 @@ public class RestApplication extends Application {
         // Register REST resources
         classes.add(AnalysisResource.class);
         classes.add(ConfigurationResource.class);
+        classes.add(UploadResource.class);
         
         // Register Jackson JSON provider
         classes.add(org.glassfish.jersey.jackson.JacksonFeature.class);
+        
+        // Register MultiPart feature for file uploads
+        classes.add(org.glassfish.jersey.media.multipart.MultiPartFeature.class);
         
         return classes;
     }

@@ -31,6 +31,19 @@ public class AnalyzerFactory {
         Path projectPath = Paths.get(request.getInputPath());
         List<String> environments = request.getSelectedEnvironments();
         
+        // CRITICAL LOGGING: Track config path from request
+        String configPathStr = request.getConfigFilePath();
+        logger.info("[CONFIG-TRACE] AnalyzerFactory.analyze() - Config path from request: {}", 
+            configPathStr != null ? configPathStr : "NULL");
+        
+        Path configFilePath = configPathStr != null ? Paths.get(configPathStr) : null;
+        
+        if (configFilePath != null) {
+            logger.info("[CONFIG-TRACE] AnalyzerFactory - Passing config path to analyzer: {}", configFilePath.toAbsolutePath());
+        } else {
+            logger.info("[CONFIG-TRACE] AnalyzerFactory - NO config path to pass (will use defaults)");
+        }
+        
         // Route to appropriate analyzer
         switch (request.getProjectTechnologyType()) {
             case MULE:
@@ -38,7 +51,7 @@ public class AnalyzerFactory {
                 return muleAnalyzer.analyze();
                 
             case TIBCO_BW5:
-                TibcoAnalyzer tibcoAnalyzer = new TibcoAnalyzer(projectPath, environments);
+                TibcoAnalyzer tibcoAnalyzer = new TibcoAnalyzer(projectPath, environments, configFilePath);
                 return tibcoAnalyzer.analyze();
                 
             case TIBCO_BW6:

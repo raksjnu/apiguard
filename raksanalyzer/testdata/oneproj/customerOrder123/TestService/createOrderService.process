@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns="http://xmlns.example.com/unique/default/namespace/1134438639123" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:pfx="http://xmlns.example.com/1628144235184">
+    <wsdl:import namespace="http://xmlns.example.com/1628144235184"/>
+    <wsdl:import namespace="http://xmlns.example.com/1628144235184" location="/TestService/ConcreteOrderService.wsdl"/>
+    <pd:name>TestService/createOrderService.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startX>150</pd:startX>
+    <pd:startY>64</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>450</pd:endX>
+    <pd:endY>64</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1628144974398</pd:targetNamespace>
+    <pd:activity name="SOAPRequestReply">
+        <pd:type>com.tibco.plugin.soap.SOAPSendReceiveActivity</pd:type>
+        <pd:resourceType>ae.activities.SOAPSendReceiveUI</pd:resourceType>
+        <pd:x>301</pd:x>
+        <pd:y>65</pd:y>
+        <config>
+            <timeout>0</timeout>
+            <soapAttachmentStyle>SwA</soapAttachmentStyle>
+            <timeoutType>Seconds</timeoutType>
+            <service>pfx:orderService</service>
+            <servicePort>createOrderEndpoint1</servicePort>
+            <operation>Operation</operation>
+            <soapAction>/Service/orderService.serviceagent/createOrderEndpoint1/Operation</soapAction>
+            <endpointURL>http://localhost:9090/Service/orderService.serviceagent/createOrderEndpoint1</endpointURL>
+            <authScheme>NONE</authScheme>
+        </config>
+        <pd:inputBindings>
+            <inputMessage>
+                <ns:customer>
+                    <ns:customerid>
+                        <xsl:value-of select="&quot;XYZ133&quot;"/>
+                    </ns:customerid>
+                    <ns:firstname>
+                        <xsl:value-of select="&quot;Michael&quot;"/>
+                    </ns:firstname>
+                    <ns:lastname>
+                        <xsl:value-of select="&quot;Smith&quot;"/>
+                    </ns:lastname>
+                    <ns:age>
+                        <xsl:value-of select="36"/>
+                    </ns:age>
+                    <ns:email>
+                        <xsl:value-of select="&quot;test@ibm.com&quot;"/>
+                    </ns:email>
+                    <ns:city>
+                        <xsl:value-of select="&quot;Bangalore&quot;"/>
+                    </ns:city>
+                    <ns:zipcode>
+                        <xsl:value-of select="&quot;500600&quot;"/>
+                    </ns:zipcode>
+                    <ns:transactionstatus>
+                        <xsl:value-of select="&quot;order placed&quot;"/>
+                    </ns:transactionstatus>
+                </ns:customer>
+            </inputMessage>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>SOAPRequestReply</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>SOAPRequestReply</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

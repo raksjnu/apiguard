@@ -4,11 +4,13 @@ import com.raks.raksanalyzer.domain.enums.ExecutionMode;
 import com.raks.raksanalyzer.domain.enums.ProjectType;
 import com.raks.raksanalyzer.model.OutputFormatConfig;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 
 /**
  * Request object for project analysis.
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class AnalysisRequest {
     private ProjectType projectTechnologyType;
     private ExecutionMode documentGenerationExecutionMode;
@@ -19,6 +21,8 @@ public class AnalysisRequest {
     private List<String> selectedEnvironments;  // Parsed from environmentAnalysisScope
     private OutputFormatConfig outputFormatConfig;  // Output format preferences
     private String analysisId;
+    private String uploadId;  // For uploaded files (ZIP/JAR) - used for cleanup
+    private String configFilePath; // Custom configuration file path (e.g. for TIBCO global variables)
     
     // Getters and Setters
     public ProjectType getProjectTechnologyType() {
@@ -93,6 +97,45 @@ public class AnalysisRequest {
         this.analysisId = analysisId;
     }
     
+    public String getUploadId() {
+        return uploadId;
+    }
+
+    public void setUploadId(String uploadId) {
+        this.uploadId = uploadId;
+    }
+    
+    public String getConfigFilePath() {
+        return configFilePath;
+    }
+
+    public void setConfigFilePath(String configFilePath) {
+        this.configFilePath = configFilePath;
+    }
+    
+    // Flat fields for JSON compatibility
+    private Boolean generatePdf;
+    private Boolean generateWord;
+    private Boolean generateExcel;
+
+    public void setGeneratePdf(Boolean generatePdf) {
+        this.generatePdf = generatePdf;
+        if (outputFormatConfig == null) outputFormatConfig = new OutputFormatConfig();
+        outputFormatConfig.setPdfEnabled(generatePdf != null ? generatePdf : false);
+    }
+    
+    public void setGenerateWord(Boolean generateWord) {
+        this.generateWord = generateWord;
+        if (outputFormatConfig == null) outputFormatConfig = new OutputFormatConfig();
+        outputFormatConfig.setWordEnabled(generateWord != null ? generateWord : false);
+    }
+    
+    public void setGenerateExcel(Boolean generateExcel) {
+        this.generateExcel = generateExcel;
+        if (outputFormatConfig == null) outputFormatConfig = new OutputFormatConfig();
+        outputFormatConfig.setExcelEnabled(generateExcel != null ? generateExcel : false);
+    }
+
     @Override
     public String toString() {
         return "AnalysisRequest{" +
@@ -101,6 +144,7 @@ public class AnalysisRequest {
                 ", environmentScope='" + environmentAnalysisScope + '\'' +
                 ", inputSource='" + inputSourceType + '\'' +
                 ", inputPath='" + inputPath + '\'' +
+                ", outputFormatConfig=" + outputFormatConfig +
                 '}';
     }
 }

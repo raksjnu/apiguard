@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns5="http://www.tibco.com/pe/WriteToLogActivitySchema" xmlns:pfx="http://www.tibco.com/xmlns/ae2xsd/2002/05/ae/FileAdapter/wire/FileAdapterConfiguration" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://xmlns.example.com/1628143989205" xmlns:ns2="http://xmlns.example.com/unique/default/namespace/1134438639123" xmlns:ns1="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:ns4="http://www.tibco.com/pe/EngineTypes" xmlns:ns3="http://www.tibco.com/pe/DeployedVarsType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <pd:name>TestService/Others/orderServiceFILEADAPTERSUBSCRIBER.process</pd:name>
+    <pd:startName>Adapter Subscriber</pd:startName>
+    <pd:startX>0</pd:startX>
+    <pd:startY>0</pd:startY>
+    <pd:returnBindings/>
+    <pd:starter name="Adapter Subscriber">
+        <pd:type>com.tibco.plugin.ae.AESubscriberActivity</pd:type>
+        <pd:resourceType>ae.aepalette.aeSubscription</pd:resourceType>
+        <pd:x>61</pd:x>
+        <pd:y>35</pd:y>
+        <config>
+            <ae.aepalette.sharedProperties.transportChoice>default</ae.aepalette.sharedProperties.transportChoice>
+            <ae.aepalette.sharedProperties.useRequestReply>false</ae.aepalette.sharedProperties.useRequestReply>
+            <ae.aepalette.sharedProperties.adapterService>/Adapters/File/FileAdapterConfiguration.adfiles#adapterService.PublicationService</ae.aepalette.sharedProperties.adapterService>
+            <tpPluginEndpointName>PublicationServiceEndPoint</tpPluginEndpointName>
+            <ae.aepalette.sharedProperties.transportType>rvcm</ae.aepalette.sharedProperties.transportType>
+            <ae.aepalette.sharedProperties.rvSubject>%%Domain%%.%%Deployment%%.FileAdapter.FileAdapterConfiguration.PublicationService</ae.aepalette.sharedProperties.rvSubject>
+            <ae.aepalette.sharedProperties.rvSessionService>%%RvService%%</ae.aepalette.sharedProperties.rvSessionService>
+            <ae.aepalette.sharedProperties.rvSessionNetwork>%%RvNetwork%%</ae.aepalette.sharedProperties.rvSessionNetwork>
+            <ae.aepalette.sharedProperties.rvSessionDaemon>%%RvDaemon%%</ae.aepalette.sharedProperties.rvSessionDaemon>
+            <ae.aepalette.sharedProperties.msgFormat>aeRvMsg</ae.aepalette.sharedProperties.msgFormat>
+            <ae.aepalette.sharedProperties.rvCmSessionDefaultTimeLimit>0</ae.aepalette.sharedProperties.rvCmSessionDefaultTimeLimit>
+            <ae.aepalette.sharedProperties.rvCmSessionSyncLedger>true</ae.aepalette.sharedProperties.rvCmSessionSyncLedger>
+            <ae.aepalette.sharedProperties.rvCmSessionLedgerFile>%%DirLedger%%/bw%%Domain%%.%%Deployment%%.%%AppName%%.%%InstanceId%%.ldg</ae.aepalette.sharedProperties.rvCmSessionLedgerFile>
+            <ae.aepalette.sharedProperties.rvCmSessionName>bw%%Domain%%.%%Deployment%%.%%AppName%%.%%InstanceId%%.CM</ae.aepalette.sharedProperties.rvCmSessionName>
+            <ae.aepalette.sharedProperties.rvCmSessionRelayAgent/>
+            <ae.aepalette.sharedProperties.rvCmSessionRequireOldMessages>true</ae.aepalette.sharedProperties.rvCmSessionRequireOldMessages>
+            <ae.aepalette.sharedProperties.outputMeta>
+                <aeMeta>/AESchemas/ae/FileAdapter/wire/FileAdapterConfiguration.aeschema#class.DelimitedFileRecord</aeMeta>
+            </ae.aepalette.sharedProperties.outputMeta>
+        </config>
+        <pd:inputBindings/>
+    </pd:starter>
+    <pd:endName>End</pd:endName>
+    <pd:endX>681</pd:endX>
+    <pd:endY>75</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1742402679731</pd:targetNamespace>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>300</pd:x>
+        <pd:y>1</pd:y>
+        <pd:width>143</pd:width>
+        <pd:height>140</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>$Adapter-Subscriber/ProcessStarterOutput/body/pfx:DelimitedFileRecord</pd:over>
+            <pd:iterationElementSlot>customers</pd:iterationElementSlot>
+            <pd:indexSlot>i</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>createOrder</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>createOrder</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="createOrder">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>362</pd:x>
+            <pd:y>78</pd:y>
+            <config>
+                <processName>/BusinessProcess/createOrderDummy.process</processName>
+            </config>
+            <pd:inputBindings>
+                <ns:orderRequest>
+                    <order>
+                        <xsl:for-each select="$customers/pfx:DelimitedFileRecord">
+                            <ns2:customer>
+                                <ns2:customerid>
+                                    <xsl:value-of select="customerid"/>
+                                </ns2:customerid>
+                                <ns2:firstname>
+                                    <xsl:value-of select="firstname"/>
+                                </ns2:firstname>
+                                <ns2:lastname>
+                                    <xsl:value-of select="lastname"/>
+                                </ns2:lastname>
+                                <ns2:age>
+                                    <xsl:value-of select="age"/>
+                                </ns2:age>
+                                <ns2:email>
+                                    <xsl:value-of select="email"/>
+                                </ns2:email>
+                                <ns2:city>
+                                    <xsl:value-of select="city"/>
+                                </ns2:city>
+                                <ns2:zipcode>
+                                    <xsl:value-of select="zipcode"/>
+                                </ns2:zipcode>
+                                <ns2:transactionstatus>
+                                    <xsl:value-of select="transactionstatus"/>
+                                </ns2:transactionstatus>
+                            </ns2:customer>
+                        </xsl:for-each>
+                    </order>
+                </ns:orderRequest>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="Catch">
+        <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+        <pd:resourceType>ae.activities.catch</pd:resourceType>
+        <pd:x>974</pd:x>
+        <pd:y>75</pd:y>
+        <pd:handler>true</pd:handler>
+        <config>
+            <catchAll>true</catchAll>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="LogandErrorHandler">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>821</pd:x>
+        <pd:y>74</pd:y>
+        <config>
+            <processName>/BusinessProcess/LogandErrorHandlerDummy.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <ns2:logLevel>
+                    <xsl:value-of select="$_globalVariables/ns3:GlobalVariables/LogLevels/LOG_ERROR"/>
+                </ns2:logLevel>
+                <ns2:processCtx>
+                    <ns2:processId>
+                        <xsl:value-of select="$_processContext/ns4:ProcessContext/ProcessId"/>
+                    </ns2:processId>
+                    <ns2:projectName>
+                        <xsl:value-of select="$_processContext/ns4:ProcessContext/ProjectName"/>
+                    </ns2:projectName>
+                    <ns2:ProcessName>
+                        <xsl:value-of select="'/Common/RetryProcessErrors'"/>
+                    </ns2:ProcessName>
+                </ns2:processCtx>
+                <ns2:description>
+                    <xsl:value-of select="'exception handling activated'"/>
+                </ns2:description>
+                <ns2:ExceptionData>
+                    <ns2:Message>
+                        <xsl:value-of select="$_error/ns4:ErrorReport/Msg"/>
+                    </ns2:Message>
+                    <ns2:StackTrace>
+                        <xsl:value-of select="$_error/ns4:ErrorReport/ProcessStack"/>
+                    </ns2:StackTrace>
+                    <ns2:ErrorData>
+                        <xsl:value-of select="$_error/ns4:ErrorReport/Data/*"/>
+                    </ns2:ErrorData>
+                </ns2:ExceptionData>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Log">
+        <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+        <pd:resourceType>ae.activities.log</pd:resourceType>
+        <pd:x>121</pd:x>
+        <pd:y>167</pd:y>
+        <config>
+            <role>User</role>
+        </config>
+        <pd:inputBindings>
+            <ns5:ActivityInput>
+                <message>
+                    <xsl:value-of select="&quot;File Adapter Subscriber Order Service Started&quot;"/>
+                </message>
+            </ns5:ActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Log-1">
+        <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+        <pd:resourceType>ae.activities.log</pd:resourceType>
+        <pd:x>552</pd:x>
+        <pd:y>188</pd:y>
+        <config>
+            <role>User</role>
+        </config>
+        <pd:inputBindings>
+            <ns5:ActivityInput>
+                <message>
+                    <xsl:value-of select="&quot;File Adapter Subscriber  Order Service Terminated&quot;"/>
+                </message>
+            </ns5:ActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>Log-1</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Catch</pd:from>
+        <pd:to>LogandErrorHandler</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>LogandErrorHandler</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Log-1</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Adapter Subscriber</pd:from>
+        <pd:to>Log</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Log</pd:from>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

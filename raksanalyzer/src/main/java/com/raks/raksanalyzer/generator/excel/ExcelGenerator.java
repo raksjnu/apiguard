@@ -374,7 +374,12 @@ public class ExcelGenerator {
      * Get output path for Excel file.
      */
     private Path getOutputPath(AnalysisResult result) {
-        String outputDir = config.getProperty("framework.output.directory", "./output");
+        // Use output directory from result (set based on input source type)
+        String outputDir = result.getOutputDirectory();
+        if (outputDir == null || outputDir.isEmpty()) {
+            // Fallback to config if not set
+            outputDir = config.getProperty("framework.output.directory", "./output");
+        }
         
         // Get project name from result
         String projectName = "analysis";

@@ -1,0 +1,282 @@
+<html>
+<head>
+  <script>
+
+    number = 0;
+    var animations = ['https://i.gifer.com/7YkR.gif'
+    ];
+    
+    
+     var refreshIntervalId = setInterval(function() {
+      image = document.getElementById('hiddenimageid').style.visibility="hidden";
+      image.src = animations[number];
+    },1)
+    
+    
+    function character() {
+    clearInterval(refreshIntervalId);
+      image = document.getElementById('hiddenimageid').style.visibility="visible";
+      image.src = animations[number];
+    
+      console.log(number);
+      number++;
+    
+    
+    }
+    
+    
+    </script>
+<style>
+body{
+	background-color:#f3f2ed;
+}
+.header{
+	background-size: cover;
+}
+
+.header{
+  text-align:center;
+  padding:2px 2px;
+  padding-right:10px;
+  font-family: Roboto Slab;
+  font-size: 30px;
+  text-transform: uppercase;
+  text-rendering: optimizeLegibility;
+  color: #131313;
+  letter-spacing: .15em;
+ text-shadow:
+    -1px -1px 0 #767676,
+    -1px 1px 1px #737272;
+}          
+
+.mqheader{
+font-family:Roboto Slab;
+text-shadow:none;
+letter-spacing:0em;
+padding-top:0px;
+font-weight: normal;
+font-size:20px;
+margin-left:7%;
+
+}
+
+td{
+  padding:5px;
+  border:none;
+  outline:none;
+}
+
+.mqinputs{
+  width:650px;
+  height:50px;
+  border:none;
+  outline:none;
+  border-radius:18px;
+  text-align:center;
+  font-family: Roboto Slab;
+  font-size:17px;
+}
+.mqtable{
+  margin-top:50px;
+}
+
+.sendbutton{
+	width:250px;
+    height:70px;
+	text-align:center;
+	margin-top:25px;
+	border-radius:18px;
+	font-family:Roboto Slab;
+	font-size:20px;
+	background-color:#13b67d;
+	box-shadow: 0px 12px 16px 0px rgba(0,0,0,0.2);
+	border:none;
+	outline:none;
+	color:white;	
+}		
+
+.sendbutton:hover{
+	box-shadow: 0px 16px 16px 0px rgba(0,0,0,0.2);
+	background-color:#1bce8f;
+}
+
+.sendbutton:active{
+	border:none;
+}
+
+
+
+.board {
+  position: absolute;
+  top: 4.3vh;
+  left: 10vw;
+  cursor: pointer;
+  left:86%;
+  top:85%;
+  background-color: transparent;
+
+}
+
+.board img {
+  width: 200px;
+  height:100px;
+  border-radius: 15%;
+  
+
+}
+
+.custom-select {
+  min-width: 350px;
+  position: relative;
+  
+  
+}
+
+select {
+  appearance: none;
+  /*  safari  */
+  -webkit-appearance: none;
+  /*  other styles for aesthetics */
+  border:none;
+  outline:none;
+  
+
+}
+
+.custom-select::before,
+.custom-select::after {
+  --size: 0.3rem;
+  content: "";
+  position: absolute;
+  right: 1rem;
+  pointer-events: none;
+
+}
+
+
+.custom-select::before {
+  border-left: var(--size) solid transparent;
+  border-right: var(--size) solid transparent;
+  border-bottom: var(--size) solid black;
+  top: 40%;
+
+}
+
+.custom-select::after {
+  border-left: var(--size) solid transparent;
+  border-right: var(--size) solid transparent;
+  border-top: var(--size) solid black;
+  top: 55%;
+}
+
+
+
+/*=============
+Aesthetics 
+=========================*/
+
+* {
+  box-sizing: border-box;
+  
+}
+
+
+
+</style>
+ <title>T2M PLT</title>
+<link href="https://fonts.googleapis.com/css?family=Pridi:300|Quattrocento|Quicksand|Roboto+Slab&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+<div class="header">
+<p>T2M PLT</p>
+<br/>
+</div>
+<h4 class="mqheader">Please provide API details</h4>
+<form action="/requestplt" enctype="multipart/form-data" method="POST">
+<table align="center" class="mqtable">
+  
+  <tr><td><input type="text" name="apiname" class="mqinputs" placeholder="Service Name" required></td></tr>
+  <tr><td><input type="text" name="developer" class="mqinputs" placeholder="Developer"></td></tr>
+  <tr><td><input type="text" name="repo" class="mqinputs" value="EAPI02"></td></tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="codecheckstatus" required>
+        <option value="Code Check Tool Status">Code Check Tool Status</option>
+        <option value="Pass">Pass</option>
+        <option value="Fail">Fail</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="configcheckstatus" required>
+        <option value="Config Check Tool Status">Config Check Tool Status</option>
+        <option value="Pass">Pass</option>
+        <option value="Fail">Fail</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="configcreatorstatus" required>
+        <option value="Config Creator Tool Status">Config Creator Tool Status</option>
+        <option value="Pass">Pass</option>
+        <option value="Fail">Fail</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="responsecomparisonstatus" required>
+        <option value="Response Comparison Tool Status">Response Comparison Tool Status</option>
+        <option value="Pass">Pass</option>
+        <option value="Fail">Fail</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="apiprepstatus" required>
+        <option value="API Status in PREP" >API Status in PREP</option>
+        <option value="RUNNING">RUNNING</option>
+        <option value="NOT RUNNING">NOT RUNNING</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="soapuistatus" required>
+        <option value="SOAP UI/Postman collection">SOAP UI/Postman collection</option>
+        <option value="Upload in Git">Upload in Git</option>
+        <option value="Not Uploaded in Git">Not Uploaded in Git</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="endpointstatus" required>
+        <option value="Tibco and Mule endpoints in SOAP UI/Postman collection">Tibco and Mule endpoints in SOAP UI/Postman collection</option>
+        <option value="Endpoints are added">Endpoints are added</option>
+        <option value="Endpoints are not added">Endpoints are not added</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="pltcontractstatus" required>
+        <option value="PLT Contract is added and is working in PREP">PLT Contract is added and is working in PREP</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="soapuivalidationstatus" required>
+        <option value="Responses validated in SOAP UI">Responses validated in SOAP UI</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select></p></td>
+    </tr>
+    <tr><td><p class="custom-select mqinputs">
+      <select class="mqinputs" name="ratelimitstatus" required>
+        <option value="Rate limit is updated as per DEV tracker">Rate limit is updated as per DEV tracker</option>
+        <option value="Yes">Yes</option>
+        <option value="No">No</option>
+      </select></p></td>
+    </tr>
+    <tr align="center"><td><button type="submit" value="submit" onclick="character();" class="sendbutton">Request PLT</button></td></tr>
+</table>
+</form>
+<br/>
+<div class="board">
+<img src="https://www.launchpads.com.au/assets/css/icons/animated/rocket/animat-rocket-color.gif" id="hiddenimageid" />
+</div>
+</div>
+  </body>
+  </html>

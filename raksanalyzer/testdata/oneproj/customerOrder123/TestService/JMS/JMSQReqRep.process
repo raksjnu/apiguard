@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/namespaces/tnt/plugins/jms">
+    <pd:name>TestService/JMS/JMSQReqRep.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startX>37</pd:startX>
+    <pd:startY>35</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>418</pd:endX>
+    <pd:endY>35</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1742587454489</pd:targetNamespace>
+    <pd:activity name="JMS Queue Requestor">
+        <pd:type>com.tibco.plugin.jms.JMSQueueRequestReplyActivity</pd:type>
+        <pd:resourceType>ae.activities.JMSQueueRequestReplyActivity</pd:resourceType>
+        <pd:x>219</pd:x>
+        <pd:y>43</pd:y>
+        <config>
+            <PermittedMessageType>Text</PermittedMessageType>
+            <SessionAttributes>
+                <transacted>false</transacted>
+                <acknowledgeMode>1</acknowledgeMode>
+                <maxSessions>1</maxSessions>
+                <destination>temp</destination>
+            </SessionAttributes>
+            <ConfigurableHeaders>
+                <JMSDeliveryMode>PERSISTENT</JMSDeliveryMode>
+                <JMSExpiration>0</JMSExpiration>
+                <JMSPriority>4</JMSPriority>
+            </ConfigurableHeaders>
+            <ConnectionReference>/Connections/JMS Connection.sharedjmscon</ConnectionReference>
+            <ApplicationProperties>/Connections/JMS Application Properties.sharedjmsapp</ApplicationProperties>
+        </config>
+        <pd:inputBindings>
+            <ns:ActivityInput>
+                <OtherProperties>
+                    <customerid>
+                        <xsl:value-of select="12345"/>
+                    </customerid>
+                    <firstname>
+                        <xsl:value-of select="'Rakesh'"/>
+                    </firstname>
+                    <lastname>
+                        <xsl:value-of select="'Kumar'"/>
+                    </lastname>
+                    <age>
+                        <xsl:value-of select="'40'"/>
+                    </age>
+                    <email>
+                        <xsl:value-of select="'test@test.com'"/>
+                    </email>
+                    <city>
+                        <xsl:value-of select="'Super City'"/>
+                    </city>
+                    <zipcode>
+                        <xsl:value-of select="12345"/>
+                    </zipcode>
+                    <transactionstatus>
+                        <xsl:value-of select="'Open'"/>
+                    </transactionstatus>
+                </OtherProperties>
+                <Body>
+                    <xsl:value-of select="&quot;EMS Message payload for Queue Request Reply&quot;"/>
+                </Body>
+            </ns:ActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>JMS Queue Requestor</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>JMS Queue Requestor</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

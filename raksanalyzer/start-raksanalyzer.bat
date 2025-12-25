@@ -36,6 +36,8 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8080 ^| findstr LISTENING') 
 timeout /t 2 /nobreak >nul
 
 REM Start the application
+echo [INFO] JAR File Details:
+dir "target\raksanalyzer-1.0.0.jar" | findstr "raksanalyzer-1.0.0.jar"
 "%JAVA_HOME%\bin\java" -jar "target\raksanalyzer-1.0.0.jar"
 
 echo.

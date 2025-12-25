@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:apikit-soap="http://www.mulesoft.org/schema/mule/apikit-soap" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+	xmlns:tls="http://www.mulesoft.org/schema/mule/tls"
+	xmlns:jms="http://www.mulesoft.org/schema/mule/jms" xmlns:sockets="http://www.mulesoft.org/schema/mule/sockets" xmlns:email="http://www.mulesoft.org/schema/mule/email" xmlns:batch="http://www.mulesoft.org/schema/mule/batch" xmlns:tracking="http://www.mulesoft.org/schema/mule/ee/tracking" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ee/tracking http://www.mulesoft.org/schema/mule/ee/tracking/current/mule-tracking-ee.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/sockets http://www.mulesoft.org/schema/mule/sockets/current/mule-sockets.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd
+http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd
+http://www.mulesoft.org/schema/mule/apikit-soap http://www.mulesoft.org/schema/mule/apikit-soap/current/mule-apikit-soap.xsd">
+	<email:smtp-config name="Email_SMTP" doc:name="Email SMTP" doc:id="acfd95b4-d4ea-4472-8a6d-a4fbb09e8cbd" >
+		<email:smtps-connection host="testsmtpserver.com">
+			<tls:context />
+		</email:smtps-connection>
+	</email:smtp-config>
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="3e43eccd-04fe-42c7-ae91-c8f6e78f367e" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<http:request-config name="HTTP_Request_config" doc:name="HTTP Request config" doc:id="b550bc32-648d-403b-9f22-2f852e0e0e23" />
+	<http:listener-config name="HTTP_Listener_config1" doc:name="HTTP Listener config" doc:id="1f921c6f-1744-4d73-aa19-dff5120d3a2e" >
+		<http:listener-connection host="0.0.0.0" port="8085" />
+	</http:listener-config>
+	<email:imap-config name="Email_IMAP" doc:name="Email IMAP" doc:id="794ff13a-6961-48dd-8305-9124629f3659" >
+		<email:imap-connection host="smtptestserver.com" port="99355" />
+	</email:imap-config>
+	<sockets:request-config name="Sockets_Request_config" doc:name="Sockets Request config" doc:id="817a5b69-552e-4d9a-8bdf-074baeca4f89" >
+		<sockets:tcp-requester-connection host="ttest.com" port="9876" />
+	</sockets:request-config>
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="11b8e224-1494-426d-a68b-cd48628045db" >
+		<jms:active-mq-connection />
+	</jms:config>
+	<http:request-config name="HTTP_Request_config1" doc:name="HTTP Request config" doc:id="5824e24f-6cc3-440c-90e2-70e67c5113e4" />
+	<configuration-properties doc:name="Configuration properties" doc:id="0f928a6c-40b7-4eae-ab58-fecfa70763bc" file="123.properties" />
+	<apikit:config outboundHeadersMapName="outboundHeadersMapName" httpStatusVarName="httpStatus" doc:name="Router" doc:id="2d3b8e4e-5e1a-4341-8e38-2d191ccf8ad8" name="Router" api="ttest" />
+	<apikit-soap:config name="APIKit_for_SOAP_Configuration" service="service" port="98777444" doc:name="APIKit for SOAP Configuration" doc:id="ca132371-35fd-4a66-9ea1-5b4c97ee9954" wsdlLocation="wsdl" />
+	<flow name="testmule1Flow" doc:id="04f6a065-9f5f-43c1-bb80-a41170e7b4b4" >
+		<http:listener doc:name="Listener" doc:id="1ca3b064-7300-4615-9ffb-f37759ff75aa" config-ref="HTTP_Listener_config" path="${path0}"/>
+		<logger level="INFO" doc:name="Logger" doc:id="50a6b587-9222-4029-9154-a04cf5fe8032" />
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="5408cebf-e335-4c8c-91f5-7854c97462cc" />
+		<choice doc:name="Choice" doc:id="81a0d8a5-a55b-4d8b-b57b-c6926e546295" >
+			<when expression="payload is not null">
+				<logger level="INFO" doc:name="Logger" doc:id="ced79856-0a53-48e0-aa49-dceabde13830" />
+				<async doc:name="Async" doc:id="1a624ad8-b21d-4f15-9bc8-befa3aa4ce94" >
+					<ee:transform doc:name="Transform Message" doc:id="740974f4-2e89-48de-826a-23fe1368e1b2">
+					<ee:message>
+						<ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				</async>
+				<flow-ref doc:name="Flow Reference" doc:id="dfd1363a-a2bd-41d2-87e1-210842659fca" name="testmule1Flow1"/>
+			</when>
+			<when expression='#[vars.parameters == "another flow"]'>
+				<logger level="INFO" doc:name="Logger" doc:id="6febc88e-be5e-49ef-83c2-bd5350005962" />
+				<ee:transform doc:name="Transform Message" doc:id="c0e28820-d16a-4711-9889-9c4be2a7daef" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<http:request doc:name="Request" doc:id="820510ee-d21c-4b55-9910-c135e7371336" config-ref="HTTP_Request_config" path="Testpath123"/>
+			
+</when>
+			<otherwise >
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="70699416-64d3-4675-a987-7feb7d73ca03" />
+				<logger level="INFO" doc:name="Logger" doc:id="3cd8c15c-0cb1-4fb1-a9b0-ceddec2c4559" />
+			</otherwise>
+		</choice>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="090c4df0-c3d9-4291-b105-ac237d7a752c" collection="testcollection">
+			<http:request doc:name="Request" doc:id="db3c3aa7-0fb8-4289-8252-cce5b1920f95" config-ref="HTTP_Request_config_anotherfile" path="/pathforparalle"/>
+		</parallel-foreach>
+		<try doc:name="Try" doc:id="3374e94d-d176-47d5-9401-75db1f546f6e" >
+			<logger level="INFO" doc:name="Logger" doc:id="1784a7d6-69b8-42ea-8f38-61718d2f5794" />
+			<set-payload value="#[payload]" doc:name="Set Payload" doc:id="c54694f5-a1e1-4f21-8c8f-b68bd975cfb7" />
+			<email:send doc:id="75499e8f-ea3b-41e1-a8b0-fbee5aca2bb7" toAddresses="" config-ref="Email_SMTP"/>
+			<error-handler ref="testmule1Error_Handler" />
+		</try>
+		<choice doc:name="Choice" doc:id="d3569b42-3c6c-4f30-932d-c42705b2b70f" >
+			<when >
+				<logger level="INFO" doc:name="Logger" doc:id="83607933-0dc7-4ef3-a109-dc3f8d12cb85" />
+			</when>
+			<otherwise >
+				<set-payload value="#[payload]" doc:name="Set Payload" doc:id="81f70144-f1b6-47db-8b6e-bbda136d9a86" />
+				<logger level="INFO" doc:name="Logger" doc:id="d1d558e9-ecb5-4e95-8c43-47fa51ac6f70" />
+			</otherwise>
+		</choice>
+		<scatter-gather doc:name="Scatter-Gather" doc:id="6a06fa65-ba5c-49a1-8677-fc9e39933432" >
+			<route >
+				<ee:transform doc:name="Transform Message" doc:id="de950a59-2ee7-4a41-a9b2-dae3b57dd0b4" >
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+				<batch:job jobName="Batch Job" doc:id="7bba0534-aa29-456c-9f63-03963322310a" >
+					<batch:process-records >
+						<batch:step name="Batch_Step" doc:id="ccc8d32f-06d8-4832-a133-e9ee9a4534ba" >
+							<logger level="INFO" doc:name="Logger" doc:id="7d96d67e-f041-4a30-a406-1817680dc37d" />
+						</batch:step>
+					</batch:process-records>
+					<batch:on-complete >
+						<ee:invalidate-key doc:name="Invalidate Key" doc:id="4ad0cc84-9a3d-4abe-84af-4cb82151ac98" />
+					</batch:on-complete>
+				</batch:job>
+				<flow-ref doc:name="Flow Reference" doc:id="def84d05-77ed-4749-b9d1-2244f846bdd3" name="testmule1Flow3"/>
+			</route>
+			<route >
+				<tracking:transaction doc:name="Set Transaction Id" doc:id="15744db3-50b9-4ad5-917a-05d3a3492415" />
+				<ee:invalidate-cache doc:name="Invalidate Cache" doc:id="daa7b2df-b6f9-4d8e-8cc4-a24f26580122" />
+			</route>
+		</scatter-gather>
+	</flow>
+	<flow name="testmule1Flow1" doc:id="6b962375-f2c0-4c02-838f-2bc958d01adb" >
+		<http:listener doc:name="Listener" doc:id="b09b0df2-a209-4933-a410-5fe70c3a97cd" config-ref="HTTP_Listener_config2" path="${path3}"/>
+		<ee:transform doc:name="Transform Message" doc:id="c34cabfb-a986-485d-a864-9a3fcd85afa6" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<parallel-foreach doc:name="Parallel For Each" doc:id="a87f74de-5556-4373-b99b-ae30e06a7953" maxConcurrency="4">
+			<async doc:name="Async" doc:id="e67fcca1-65b2-4db2-8b6d-2dd123455fd4">
+			<sockets:send doc:name="Send" doc:id="4a440d95-aec2-40e8-b17e-33693d39fb16" config-ref="Sockets_Request_config" />
+		</async>
+		</parallel-foreach>
+		<set-payload value="#[payload]" doc:name="Set Payload" doc:id="e73be6d0-b1dc-4ab9-8865-be13a10a2cb7" />
+	</flow>
+	<flow name="testmule1Flow2" doc:id="229c3bbc-23e2-4b1e-8dc9-c7e85b0dc1ac" >
+		<scheduler doc:name="Scheduler" doc:id="dc43e4b3-1196-4b93-9abe-486da4341c26" >
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</scheduler>
+		<email:list-imap doc:name="List - IMAP" doc:id="4def41ed-be63-4c93-82bc-32573c3248ed" config-ref="Email_IMAP"/>
+		<sockets:send doc:name="Send" doc:id="154714d6-8740-4b33-a850-b9e082e54378" config-ref="Sockets_Request_config"/>
+		<flow-ref doc:name="Flow Reference" doc:id="23182cbf-2354-41c6-8007-1ef1d20e3ba5" name="testmule1Flow3"/>
+	</flow>
+	<flow name="testmule1Flow3" doc:id="318603a6-1bfc-4a17-89d2-2368107f810c" >
+		<jms:consume doc:name="Consume" doc:id="e3429ba1-9137-408c-a415-96c82d129fcb" config-ref="JMS_Config"/>
+		<async doc:name="Async" doc:id="bf67578c-6e49-4a46-9725-99bbad818074" >
+			<logger level="INFO" doc:name="Logger" doc:id="5ba3367c-41b0-4050-b0c8-c974e61e5917" />
+			<email:send doc:name="Send" doc:id="84b5c114-47f8-413e-8330-a9f0185da5c2" config-ref="Email_SMTP" toAddresses=""/>
+			<flow-ref doc:name="Flow Reference" doc:id="d642833c-745b-49eb-b943-654bde340c37" name="testmule1Sub_Flow"/>
+		</async>
+		<http:request doc:name="Request" doc:id="4b320167-4364-4321-8170-ccd9acde0864" config-ref="HTTP_Request_config_anotherfile" path="/anotherpath345"/>
+	</flow>
+	<flow name="testmule1Flow4" doc:id="95219f7e-01f9-4194-a7df-ed689b7bb10a" >
+		<apikit:router doc:name="APIkit Router" doc:id="9ea067bf-2c6d-4a20-a984-e2660e713b67" config-ref="Router"/>
+		<logger level="INFO" doc:name="Logger" doc:id="f104ad14-7c4a-4c6d-b176-0d6360de2e56" />
+	</flow>
+	<flow name="testmule1Flow5" doc:id="e5a29bc3-75ca-4ce3-b427-e682231276d4" >
+		<apikit-soap:router doc:name="SOAP Router" doc:id="0b6904c0-3ddd-4521-a1a1-36a1377c8520" config-ref="APIKit_for_SOAP_Configuration"/>
+	</flow>
+	<sub-flow name="testmule1Sub_Flow" doc:id="fef5ffc1-56a2-4f19-9be7-4d95e53618bc" >
+		<ee:transform doc:name="Transform Message" doc:id="f8d0acb6-b2b5-48d1-9f91-4834a31e1049" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/java
+---
+{
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<http:request doc:name="Request" doc:id="b6f2e035-6f69-4d53-8873-ad063c062115" config-ref="HTTP_Request_config" path="/subflowpath"/>
+		<logger level="INFO" doc:name="Logger" doc:id="4afd675b-96a2-41c6-b146-de84f51241ed" />
+		<jms:publish doc:name="Publish" doc:id="de744c5d-0559-42d9-bca0-8be36bf837c7" destination="testqueuedestination" config-ref="JMS_Config"/>
+	</sub-flow>
+	<error-handler name="testmule1Error_Handler" doc:id="3a70e50e-2dd1-4c63-a135-869b98d0c7b2" />
+</mule>

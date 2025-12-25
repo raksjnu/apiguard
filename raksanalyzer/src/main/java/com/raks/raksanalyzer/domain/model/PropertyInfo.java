@@ -63,6 +63,14 @@ public class PropertyInfo {
         this.sourcePath = sourcePath;
     }
     
+    // Alias for compatibility
+    public String getSource() { return sourcePath; }
+    public void setSource(String source) { this.sourcePath = source; }
+    
+    // Alias for compatibility with defaultValue
+    public String getValue() { return defaultValue; }
+    public void setValue(String value) { this.defaultValue = value; }
+    
     public boolean isSensitive() {
         return isSensitive;
     }

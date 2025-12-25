@@ -1,0 +1,201 @@
+<html>
+<head>
+<script>
+
+function myFunction() {
+
+                var btn = document.getElementById("myButton");
+
+                if (btn.value == "Load New Data") {
+                    btn.value = "Loading...";
+                    btn.innerHTML = "Loading...";
+                }
+                else {
+                    btn.value = "Load New Data";
+                    btn.innerHTML = "Load New Data";
+                }
+
+            }
+			
+</script>
+
+<style>
+
+body { padding: 0; margin: 0; background-color:#f3f2ed;}
+
+.main{
+	width: 100%; height: 100%;
+}
+
+.header{
+	background-size: cover;
+	
+}
+
+
+.header{
+  text-align:center;
+  padding:2px 2px;
+  padding-right:10px;
+  font-family: Roboto Slab;
+  font-size: 30px;
+  text-transform: uppercase;
+  text-rendering: optimizeLegibility;
+  color: #131313;
+  letter-spacing: .15em;
+ text-shadow:
+    -1px -1px 0 #767676,
+    -1px 2px 1px #737272;
+}
+           
+h4{
+	font-size:18px;
+	font-family:quicksand;
+	text-transform: lower;
+	text-align:center;
+
+}
+h5{
+	font-size:16px;
+	font-family:Quattrocento;
+	text-transform: lower;
+	text-align:center;
+	font-weight:bold;
+
+}
+.button{
+  border-radius: 15px;
+  padding:12px 7px;
+  margin:10px 10px;
+  font-size: 20px;
+  width:150px;
+  box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+  font-family: quicksand;
+  background-color:teal;
+  border:none;
+  outline:none;
+  left:50%;
+  right:50%;
+  color:white;
+}
+.button:active{
+	border:none;
+	background:teal;   
+}
+.button:focus{
+	border:none;
+	background:teal;   
+}
+.button:visited{
+	border:none;
+	background:teal;   
+}
+
+.button:hover{
+	box-shadow: 0px 14px 16px 0px rgba(0,0,0,0.2);
+	background-color:teal;
+	
+}
+
+@-moz-document url-prefix() {
+	.file{
+		padding-left:20px;
+	}
+}
+
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    
+	.filebutton{
+		opacity:0;
+	}
+	.file{
+		margin:0;
+		padding:0;
+		margin-right:100px;
+	}
+	
+}
+
+@supports (-ms-ime-align: auto) {
+  .filebutton{
+		opacity:0;
+	}
+	.file{
+		margin:0;
+		padding:0;
+		margin-right:100px;
+	}
+}
+
+.uploadtable{
+	width:70%;
+	height:32%;
+	margin-top:5%;
+	margin-bottom:2%;
+	align-content:center;
+	border:12px Solid grey;
+
+}
+  .container {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
+        width: 100%;
+      }
+      input[type="file"] {
+        position: absolute;
+        z-index: -1;
+        top: 19px;
+        left: 80px;
+        font-size: 17px;
+        color: #b8b8b8;
+      }
+      .button-wrap {
+        position: relative;
+		margin-left:30%;
+      }
+      .filebutton {
+        display: inline-block;
+        background-color: #FF6347;
+        border-radius: 20px;
+        border: 4px double #cccccc;
+        color: white;
+        text-align: center;
+        font-size: 18px;
+		font-family:Pridi;
+        padding: 8px;
+        width: 160px;
+        transition: all 0.5s;
+        cursor: pointer;
+        margin: 5px;
+      }
+      .filebutton:hover {
+        	box-shadow: 0px 14px 16px 0px rgba(0,0,0,0.2);
+			background-color:teal;
+      }
+</style>
+ <title>DEV tracker load</title>
+<link href="https://fonts.googleapis.com/css?family=Pridi:300|Quattrocento|Quicksand|Roboto+Slab&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="main">
+<form action="/t2mpoc-eapi01-sbx/loadtracker" enctype="multipart/form-data" method="POST">
+<div class="header">
+<p>DEV TRACKER DATA LOAD</p>
+</div>
+<h5>Please upload DEV tracker</h5>
+<h4>Supported Files : .xlsx</h4>
+<table align="center" class="uploadtable"><tr><td>
+<div class="container">
+      <div class="button-wrap">
+        <label class="filebutton" for="upload">Upload File</label>
+        <input id="upload" name="file" required="required" accept=".xlsx" type="file" class="file" style="border:none;outline:none;">
+      </div>
+    </div>
+</td></tr></table>
+<br/>
+<br/>
+<table class="buttontable" align="center" onclick="character()"><tr><td><button class="button" type="submit" onclick="myFunction()" value="Load New Data" id="myButton">Load New Data</button></td></tr></table>
+</form>
+  </body>
+  </html>

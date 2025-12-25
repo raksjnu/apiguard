@@ -1,0 +1,45 @@
+%dw 2.0
+
+type auto_318603a6_1bfc_4a17_89d2_2368107f810c_Input_Payload = Array<org_mule_runtime_api_message_Message {"typeId": "org.mule.runtime.api.message.Message"}>
+type org_mule_runtime_api_message_Message = {|
+  payload: org_mule_extension_email_api_StoredEmailContent {"typeId": "org.mule.extension.email.api.StoredEmailContent"}, 
+  attributes: org_mule_extension_email_api_attributes_IMAPEmailAttributes {"typeAlias": "IMAPEmailAttributes",
+  "typeId": "org.mule.extension.email.api.attributes.IMAPEmailAttributes"}
+|} {"typeId": "org.mule.runtime.api.message.Message"}
+type org_mule_extension_email_api_attributes_IMAPEmailAttributes = {|
+  flags: org_mule_extension_email_api_EmailFlags {"typeAlias": "EmailFlags",
+  "typeId": "org.mule.extension.email.api.EmailFlags"}, 
+  id: String, 
+  number: Number, 
+  fromAddresses: Array<String>, 
+  toAddresses: Array<String>, 
+  ccAddresses: Array<String>, 
+  bccAddresses: Array<String>, 
+  replyToAddresses: Array<String>, 
+  headers: { _?: String }, 
+  subject: String, 
+  receivedDate?: DateTime {"typeId": "java.time.LocalDateTime"}, 
+  sentDate?: DateTime {"typeId": "java.time.LocalDateTime"}
+|} {"typeAlias": "IMAPEmailAttributes",
+"typeId": "org.mule.extension.email.api.attributes.IMAPEmailAttributes"}
+type org_mule_extension_email_api_EmailFlags = {|
+  answered?: Boolean {"typeId": "boolean"}, 
+  deleted?: Boolean {"typeId": "boolean"}, 
+  draft?: Boolean {"typeId": "boolean"}, 
+  recent?: Boolean {"typeId": "boolean"}, 
+  seen?: Boolean {"typeId": "boolean"}
+|} {"typeAlias": "EmailFlags",
+"typeId": "org.mule.extension.email.api.EmailFlags"}
+
+
+
+
+type org_mule_extension_email_api_StoredEmailContent = {|
+  body: String, 
+  attachments: { _?: Binary }
+|} {"typeId": "org.mule.extension.email.api.StoredEmailContent"}
+
+
+
+
+

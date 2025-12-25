@@ -31,10 +31,33 @@ public class ApplicationArguments {
             String arg = args[i];
             
             if (arg.startsWith("-")) {
-                String key = arg.substring(1); // Remove leading dash
-                String value = (i + 1 < args.length && !args[i + 1].startsWith("-")) 
-                    ? args[++i] 
-                    : "true";
+                // Remove all leading dashes
+                String cleanArg = arg.replaceFirst("^-+", "");
+                
+                String key;
+                String value;
+                
+                if (cleanArg.contains("=")) {
+                    // Handle --key=value
+                    String[] parts = cleanArg.split("=", 2);
+                    key = parts[0];
+                    value = parts.length > 1 ? parts[1] : "";
+                } else {
+                    // Handle --key value
+                    key = cleanArg;
+                    value = (i + 1 < args.length && !args[i + 1].startsWith("-")) 
+                        ? args[++i] 
+                        : "true";
+                }
+                
+                // Strip quotes from value if present
+                if (value.startsWith("\"") && value.endsWith("\"")) {
+                    value = value.substring(1, value.length() - 1);
+                }
+                if (value.startsWith("'") && value.endsWith("'")) {
+                    value = value.substring(1, value.length() - 1);
+                }
+                
                 parsedArgs.put(key, value);
             }
         }

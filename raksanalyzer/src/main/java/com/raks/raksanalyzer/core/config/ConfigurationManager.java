@@ -26,23 +26,19 @@ public class ConfigurationManager {
     private static ConfigurationManager instance;
     
     private final Properties frameworkProperties;
-    private final Properties uiLabelsProperties;
     private final Properties mergedProperties;
     
     private ConfigurationManager() {
         this.frameworkProperties = loadPropertiesFile("config/defaults/framework.properties");
-        this.uiLabelsProperties = loadPropertiesFile("config/defaults/ui-labels.properties");
         this.mergedProperties = new Properties();
         
-        // Merge all properties (UI labels can override framework if needed)
+        // Merge framework properties (UI labels are now part of framework.properties)
         mergedProperties.putAll(frameworkProperties);
-        mergedProperties.putAll(uiLabelsProperties);
         
         // Load environment variables with RAKSANALYZER_ prefix
         loadEnvironmentVariables();
         
-        logger.info("Configuration loaded: {} framework properties, {} UI labels", 
-            frameworkProperties.size(), uiLabelsProperties.size());
+        logger.info("Configuration loaded: {} total properties", mergedProperties.size());
     }
     
     /**
@@ -152,7 +148,7 @@ public class ConfigurationManager {
      */
     public String getEnvironmentDisplayName(String envCode) {
         String key = "ui.env." + envCode.trim();
-        return uiLabelsProperties.getProperty(key, capitalize(envCode));
+        return mergedProperties.getProperty(key, capitalize(envCode));
     }
     
     /**
@@ -185,12 +181,6 @@ public class ConfigurationManager {
         return new Properties(frameworkProperties);
     }
     
-    /**
-     * Get UI label properties only.
-     */
-    public Properties getUILabelProperties() {
-        return new Properties(uiLabelsProperties);
-    }
     
     /**
      * Capitalize first letter of a string.

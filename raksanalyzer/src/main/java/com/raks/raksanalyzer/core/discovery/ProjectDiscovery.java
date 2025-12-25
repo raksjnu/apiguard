@@ -13,35 +13,38 @@ import java.util.List;
 import java.util.stream.Stream;
 
 /**
- * Discovers Mule projects within a given directory structure.
- * Recursively searches for directories containing both pom.xml and mule-artifact.json.
+ * Discovers projects within a given directory structure.
+ * Supports Mule and Tibco project types.
+ * Recursively searches for directories containing project-specific markers.
  */
 public class ProjectDiscovery {
     private static final Logger logger = LoggerFactory.getLogger(ProjectDiscovery.class);
     private static final ConfigurationManager config = ConfigurationManager.getInstance();
     
     /**
-     * Find all Mule projects within the given search path.
+     * Find all projects of specified type within the given search path.
      * 
      * @param searchPath Root path to search for projects
-     * @return List of discovered Mule projects
+     * @param projectType Type of project to search for (MULE, TIBCO_BW5, etc.)
+     * @return List of discovered projects
      */
-    public static List<DiscoveredProject> findMuleProjects(Path searchPath) {
+    public static List<DiscoveredProject> findProjects(Path searchPath, com.raks.raksanalyzer.domain.enums.ProjectType projectType) {
         List<DiscoveredProject> projects = new ArrayList<>();
         int maxDepth = Integer.parseInt(config.getProperty("analyzer.multi.project.max.depth", "5"));
         
-        logger.info("Searching for Mule projects in: {}", searchPath.toAbsolutePath());
+        String projectTypeName = projectType != null ? projectType.name() : "MULE";
+        logger.info("Searching for {} projects in: {}", projectTypeName, searchPath.toAbsolutePath());
         logger.info("Maximum search depth: {}", maxDepth);
         
-        searchForProjects(searchPath, projects, 0, maxDepth);
+        searchForProjects(searchPath, projects, 0, maxDepth, projectType);
         
         // Log all discovered projects
         logger.info("Input path: {}", searchPath.toAbsolutePath());
         if (projects.isEmpty()) {
-            logger.warn("No Mule projects found in: {}", searchPath.toAbsolutePath());
+            logger.warn("No {} projects found in: {}", projectTypeName, searchPath.toAbsolutePath());
         } else {
             for (int i = 0; i < projects.size(); i++) {
-                logger.info("Mule project {} path: {}", i + 1, projects.get(i).getProjectPath().toAbsolutePath());
+                logger.info("{} project {} path: {}", projectTypeName, i + 1, projects.get(i).getProjectPath().toAbsolutePath());
             }
         }
         
@@ -49,30 +52,54 @@ public class ProjectDiscovery {
     }
     
     /**
-     * Recursively search for Mule projects.
+     * Find all Mule projects (backward compatibility).
      */
-    private static void searchForProjects(Path directory, List<DiscoveredProject> results, int currentDepth, int maxDepth) {
+    public static List<DiscoveredProject> findMuleProjects(Path searchPath) {
+        return findProjects(searchPath, com.raks.raksanalyzer.domain.enums.ProjectType.MULE);
+    }
+    
+    /**
+     * Recursively search for projects of specified type.
+     */
+    private static void searchForProjects(Path directory, List<DiscoveredProject> results, int currentDepth, int maxDepth, com.raks.raksanalyzer.domain.enums.ProjectType projectType) {
+        logger.info("Searching directory: {} (depth: {}/{})", directory, currentDepth, maxDepth);
+        
         if (currentDepth > maxDepth) {
+            logger.info("Max depth exceeded at: {}", directory);
             return;
         }
         
         try {
-            // Check if current directory is a Mule project
-            if (FileUtils.isMuleProject(directory)) {
+            // Check if current directory is a project of the specified type
+            boolean isProject = false;
+            if (projectType == com.raks.raksanalyzer.domain.enums.ProjectType.TIBCO_BW5 || projectType == com.raks.raksanalyzer.domain.enums.ProjectType.TIBCO_BW6) {
+                isProject = FileUtils.isTibcoBW5Project(directory);
+            } else {
+                isProject = FileUtils.isMuleProject(directory);
+            }
+            
+            if (isProject) {
                 String projectName = directory.getFileName().toString();
                 DiscoveredProject project = new DiscoveredProject(directory, projectName);
                 results.add(project);
-                logger.debug("Found Mule project: {} at {}", projectName, directory);
-                // Don't search subdirectories of a Mule project
+                logger.info("✓ Found {} project: {} at {}", projectType, projectName, directory);
+                // Don't search subdirectories of a project
                 return;
             }
             
             // Search subdirectories
             if (Files.isDirectory(directory)) {
                 try (Stream<Path> paths = Files.list(directory)) {
-                    paths.filter(Files::isDirectory)
-                         .filter(p -> !isExcludedDirectory(p))
-                         .forEach(subDir -> searchForProjects(subDir, results, currentDepth + 1, maxDepth));
+                    List<Path> subdirs = paths.filter(Files::isDirectory).collect(java.util.stream.Collectors.toList());
+                    logger.info("Found {} subdirectories in: {}", subdirs.size(), directory);
+                    
+                    for (Path subDir : subdirs) {
+                        if (isExcludedDirectory(subDir)) {
+                            logger.info("✗ Excluded directory: {}", subDir);
+                        } else {
+                            searchForProjects(subDir, results, currentDepth + 1, maxDepth, projectType);
+                        }
+                    }
                 }
             }
         } catch (IOException e) {

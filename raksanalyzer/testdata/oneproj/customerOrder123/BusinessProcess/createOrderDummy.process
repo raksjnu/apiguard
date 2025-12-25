@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:pfx="http://xmlns.example.com/1628143989205" xmlns:pfx2="http://xmlns.example.com/1628144235184" xmlns:ns="http://xmlns.example.com/unique/default/namespace/1134438639123" xmlns:pfx3="www.tibco.com/plugin/java/JavaMethodActivityInput" xmlns:ns0="http://www.tibco.com/pe/WriteToLogActivitySchema" xmlns:ns2="http://www.tibco.com/namespaces/tnt/plugins/file" xmlns:tib="http://www.tibco.com/bw/xslt/custom-functions" xmlns:ns1="http://schemas.tibco.com/bw/plugins/xml/5.0/xmlExceptions" xmlns:ns4="http://www.tibco.com/schemas/customerOrder/Schema/Schema1.xsd" xmlns:ns3="http://www.tibco.com/pe/EngineTypes" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ns5="http://www.tibco.com/pe/DeployedVarsType" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/" xmlns:pd="http://xmlns.tibco.com/bw/process/2003">
+    <xs:import xmlns:xs="http://www.w3.org/2001/XMLSchema" namespace="http://xmlns.example.com/unique/default/namespace/1134438639123"/>
+    <xs:import xmlns:xs="http://www.w3.org/2001/XMLSchema" namespace="http://xmlns.example.com/unique/default/namespace/1134438639123" schemaLocation="/Schema/OrderStatus.xsd"/>
+    <wsdl:import namespace="http://xmlns.example.com/1628144235184" location="/TestService/ConcreteOrderService.wsdl"/>
+    <wsdl:import namespace="http://xmlns.example.com/1628143989205" location="/WSDL/customerorder.wsdl"/>
+    <pd:name>BusinessProcess/createOrderDummy.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType wsMsgRef="pfx:orderRequest"/>
+    <pd:startX>85</pd:startX>
+    <pd:startY>102</pd:startY>
+    <pd:returnBindings>
+        <pfx:orderResponse>
+            <order>
+                <ns:customer>
+                    <ns:customerid>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:customerid"/>
+                    </ns:customerid>
+                    <ns:firstname>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:firstname"/>
+                    </ns:firstname>
+                    <ns:lastname>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:lastname"/>
+                    </ns:lastname>
+                    <ns:age>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:age"/>
+                    </ns:age>
+                    <ns:email>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:email"/>
+                    </ns:email>
+                    <ns:city>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:city"/>
+                    </ns:city>
+                    <ns:zipcode>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:zipcode"/>
+                    </ns:zipcode>
+                    <ns:transactionstatus>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:transactionstatus"/>
+                    </ns:transactionstatus>
+                </ns:customer>
+            </order>
+        </pfx:orderResponse>
+    </pd:returnBindings>
+    <pd:endName>End</pd:endName>
+    <pd:endType wsMsgRef="pfx:orderResponse"/>
+    <pd:endX>676</pd:endX>
+    <pd:endY>100</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1628144346800</pd:targetNamespace>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.TransactionGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>164</pd:x>
+        <pd:y>20</pd:y>
+        <pd:width>179</pd:width>
+        <pd:height>144</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>transactionGroup</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:transactionType>JDBCTransaction</pd:transactionType>
+            <pd:includeCheckpoint>false</pd:includeCheckpoint>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Log</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Log</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Log">
+            <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+            <pd:resourceType>ae.activities.log</pd:resourceType>
+            <pd:x>261</pd:x>
+            <pd:y>83</pd:y>
+            <config>
+                <role>User</role>
+            </config>
+            <pd:inputBindings>
+                <ns0:ActivityInput>
+                    <message>
+                        <xsl:value-of select="concat(&quot;Order created: &quot;, $Start/pfx:orderRequest/order/ns:customer/ns:customerid,&quot;-&quot;, $Start/pfx:orderRequest/order/ns:customer/ns:firstname, &quot;-ProcessId-&quot;, $_processContext/ns3:ProcessContext/ProcessId)"/>
+                    </message>
+                    <msgCode>
+                        <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:customerid"/>
+                    </msgCode>
+                </ns0:ActivityInput>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="Map Data">
+        <pd:type>com.tibco.plugin.mapper.MapperActivity</pd:type>
+        <pd:resourceType>ae.activities.MapperActivity</pd:resourceType>
+        <pd:x>412</pd:x>
+        <pd:y>99</pd:y>
+        <config>
+            <element ref="ns:order"/>
+        </config>
+        <pd:inputBindings>
+            <ns:order>
+                <ns:orderid>
+                    <xsl:value-of select="&quot;&quot;"/>
+                </ns:orderid>
+                <ns:customerid>
+                    <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:customerid"/>
+                </ns:customerid>
+                <ns:firstname>
+                    <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:firstname"/>
+                </ns:firstname>
+                <ns:lastname>
+                    <xsl:value-of select="$Start/pfx:orderRequest/order/ns:customer/ns:lastname"/>
+                </ns:lastname>
+                <ns:productcode>
+                    <xsl:value-of select="&quot;UPS00&quot;"/>
+                </ns:productcode>
+                <ns:price>
+                    <xsl:value-of select="&quot;1000&quot;"/>
+                </ns:price>
+                <ns:discountstatus>
+                    <xsl:value-of select="if ($Start/pfx:orderRequest/order/ns:customer/ns:age>40) then &quot;Discount applied&quot; else &quot;Discount not eligible&quot;"/>
+                </ns:discountstatus>
+                <ns:orderdatetime>
+                    <xsl:value-of select="current-dateTime()"/>
+                </ns:orderdatetime>
+            </ns:order>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="GlobalCatch">
+        <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+        <pd:resourceType>ae.activities.catch</pd:resourceType>
+        <pd:x>1003</pd:x>
+        <pd:y>99</pd:y>
+        <pd:handler>true</pd:handler>
+        <config>
+            <catchAll>true</catchAll>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="UpdateOrderDetails">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>551</pd:x>
+        <pd:y>98</pd:y>
+        <config>
+            <processName>/BusinessProcess/UpdatePaymentDummy.process</processName>
+            <processNameXPath>if($_globalVariables/ns5:GlobalVariables/Flags/InvokeSOAPService='yes') then 
+"/BusinessProcess/UpdatePaymentDummy.process" else
+"/BusinessProcess/UpdatePaymentDummy.process"</processNameXPath>
+        </config>
+        <pd:inputBindings>
+            <ns:order>
+                <ns:orderid>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:orderid"/>
+                </ns:orderid>
+                <ns:customerid>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:customerid"/>
+                </ns:customerid>
+                <ns:firstname>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:firstname"/>
+                </ns:firstname>
+                <ns:lastname>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:lastname"/>
+                </ns:lastname>
+                <ns:productcode>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:productcode"/>
+                </ns:productcode>
+                <ns:price>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:price"/>
+                </ns:price>
+                <ns:discountstatus>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:discountstatus"/>
+                </ns:discountstatus>
+                <ns:orderdatetime>
+                    <xsl:value-of select="$Map-Data/ns:order/ns:orderdatetime"/>
+                </ns:orderdatetime>
+            </ns:order>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="JDBC Query">
+        <pd:type>com.tibco.plugin.jdbc.JDBCQueryActivity</pd:type>
+        <pd:resourceType>ae.activities.JDBCQueryActivity</pd:resourceType>
+        <pd:x>91</pd:x>
+        <pd:y>260</pd:y>
+        <config>
+            <timeout>10</timeout>
+            <commit>false</commit>
+            <maxRows>100</maxRows>
+            <emptyStrAsNil>false</emptyStrAsNil>
+            <jdbcSharedConfig>/Connections/JDBC Connection.sharedjdbc</jdbcSharedConfig>
+            <statement>select * from temptable</statement>
+        </config>
+        <pd:inputBindings>
+            <jdbcQueryActivityInput/>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="Group (1)">
+        <pd:type>com.tibco.pe.core.TransactionGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>194</pd:x>
+        <pd:y>249</pd:y>
+        <pd:width>182</pd:width>
+        <pd:height>140</pd:height>
+        <pd:collapsedWidth>62</pd:collapsedWidth>
+        <pd:collapsedHeight>69</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <config>
+            <pd:groupType>transactionGroup</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:transactionType>JDBCTransaction</pd:transactionType>
+            <pd:includeCheckpoint>false</pd:includeCheckpoint>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>LogandErrorHandlerDummy</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>LogandErrorHandlerDummy</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="LogandErrorHandlerDummy">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>274</pd:x>
+            <pd:y>313</pd:y>
+            <config>
+                <processName>/BusinessProcess/LogandErrorHandler.process</processName>
+                <spawn>true</spawn>
+                <processNameXPath>if($_globalVariables/ns5:GlobalVariables/Flags/InvokeSOAPService='yes') then 
+"/BusinessProcess/UpdatePaymentDummy.process" else
+"/BusinessProcess/LogandErrorHandler.process"</processNameXPath>
+            </config>
+            <pd:inputBindings>
+                <root/>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:group name="Group (2)">
+        <pd:type>com.tibco.pe.core.CriticalSectionGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>770</pd:x>
+        <pd:y>25</pd:y>
+        <pd:width>145</pd:width>
+        <pd:height>140</pd:height>
+        <pd:collapsedWidth>62</pd:collapsedWidth>
+        <pd:collapsedHeight>69</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <config>
+            <pd:groupType>criticalSection</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:scope>single</pd:scope>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Errorhandler</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Errorhandler</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Errorhandler">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>831</pd:x>
+            <pd:y>89</pd:y>
+            <config>
+                <processName>/BusinessProcess/LogandErrorHandlerDummy.process</processName>
+            </config>
+            <pd:inputBindings>
+                <root>
+                    <ns:logLevel>
+                        <xsl:value-of select="$_globalVariables/ns5:GlobalVariables/LogLevels/LOG_ERROR"/>
+                    </ns:logLevel>
+                    <ns:processCtx>
+                        <ns:processId>
+                            <xsl:value-of select="$_processContext/ns3:ProcessContext/ProcessId"/>
+                        </ns:processId>
+                        <ns:projectName>
+                            <xsl:value-of select="$_processContext/ns3:ProcessContext/ProjectName"/>
+                        </ns:projectName>
+                        <ns:ProcessName>
+                            <xsl:value-of select="'/Common/RetryProcessErrors'"/>
+                        </ns:ProcessName>
+                    </ns:processCtx>
+                    <ns:description>
+                        <xsl:value-of select="'Error in Retyrprocess to update records'"/>
+                    </ns:description>
+                    <ns:ExceptionData>
+                        <ns:Message>
+                            <xsl:value-of select="$_error/ns3:ErrorReport/Msg"/>
+                        </ns:Message>
+                        <ns:StackTrace>
+                            <xsl:value-of select="$_error/ns3:ErrorReport/StackTrace"/>
+                        </ns:StackTrace>
+                        <ns:ErrorData>
+                            <xsl:value-of select="$GlobalCatch/exceptiondata/*"/>
+                        </ns:ErrorData>
+                    </ns:ExceptionData>
+                </root>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:group name="Group (3)">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>464</pd:x>
+        <pd:y>201</pd:y>
+        <pd:width>188</pd:width>
+        <pd:height>203</pd:height>
+        <pd:collapsedWidth>62</pd:collapsedWidth>
+        <pd:collapsedHeight>69</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <config>
+            <pd:groupType>inputLoop</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:over>"test"</pd:over>
+            <pd:indexSlot>i</pd:indexSlot>
+            <pd:activityOutputName/>
+            <pd:accumulateOutput>false</pd:accumulateOutput>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>LogandErrorHandler</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>LogandErrorHandler</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="LogandErrorHandler">
+            <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+            <pd:resourceType>ae.process.subprocess</pd:resourceType>
+            <pd:x>547</pd:x>
+            <pd:y>328</pd:y>
+            <config>
+                <processName>/BusinessProcess/LogandErrorHandler.process</processName>
+                <spawn>true</spawn>
+            </config>
+            <pd:inputBindings>
+                <root/>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="SOAPcreateOrderService">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>726</pd:x>
+        <pd:y>327</pd:y>
+        <config>
+            <processName>/TestService/JMS/SOAPcreateOrderService.process</processName>
+        </config>
+        <pd:inputBindings>
+            <ns:customer/>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Java Method">
+        <pd:type>com.tibco.plugin.java.JavaMethodActivity</pd:type>
+        <pd:resourceType>ae.activities.JavaMethodActivity</pd:resourceType>
+        <pd:x>791</pd:x>
+        <pd:y>240</pd:y>
+        <config>
+            <ConstructDeclaredClass>false</ConstructDeclaredClass>
+            <CacheConstructedClass>false</CacheConstructedClass>
+            <InvokeCleanupMethod>false</InvokeCleanupMethod>
+        </config>
+        <pd:inputBindings>
+            <pfx3:JavaMethodActivityInput/>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>Map Data</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>UpdateOrderDetails</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Map Data</pd:from>
+        <pd:to>UpdateOrderDetails</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>JDBC Query</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>JDBC Query</pd:from>
+        <pd:to>Group (1)</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>GlobalCatch</pd:from>
+        <pd:to>Group (2)</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group (2)</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group (1)</pd:from>
+        <pd:to>Group (3)</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group (3)</pd:from>
+        <pd:to>SOAPcreateOrderService</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>SOAPcreateOrderService</pd:from>
+        <pd:to>Java Method</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java Method</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

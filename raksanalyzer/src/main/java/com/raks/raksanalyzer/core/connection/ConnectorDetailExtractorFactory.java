@@ -46,6 +46,9 @@ public class ConnectorDetailExtractorFactory {
         // Register IBM MQ extractors
         extractors.put("ibm-mq:config", new IbmMqDetailExtractor("ibm-mq:config"));
         
+        // Register Sockets extractors
+        extractors.put("sockets:request-config", new SocketsDetailExtractor("sockets:request-config"));
+        
         logger.info("Initialized ConnectorDetailExtractorFactory with {} extractors", extractors.size());
     }
     

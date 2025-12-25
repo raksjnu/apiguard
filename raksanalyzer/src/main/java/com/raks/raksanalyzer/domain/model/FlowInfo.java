@@ -2,6 +2,8 @@ package com.raks.raksanalyzer.domain.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 /**
  * Flow or Process information (Mule flows, Tibco processes).
@@ -11,7 +13,18 @@ public class FlowInfo {
     private String type;  // "flow", "sub-flow", "process", etc.
     private String fileName;
     private String description;
+    private String relativePath;
     private List<ComponentInfo> components = new ArrayList<>();
+
+    private Map<String, String> starterConfig = new HashMap<>();
+
+    public void addStarterConfig(String key, String value) {
+        starterConfig.put(key, value);
+    }
+
+    public Map<String, String> getStarterConfig() {
+        return starterConfig;
+    }
     
     // Getters and Setters
     public String getName() {
@@ -44,6 +57,14 @@ public class FlowInfo {
     
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    public String getRelativePath() {
+        return relativePath;
+    }
+
+    public void setRelativePath(String relativePath) {
+        this.relativePath = relativePath;
     }
     
     public List<ComponentInfo> getComponents() {

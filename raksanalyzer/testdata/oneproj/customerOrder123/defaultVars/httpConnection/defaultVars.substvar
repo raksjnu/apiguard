@@ -1,0 +1,29 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<repository xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance" xmlns = "http://www.tibco.com/xmlns/repo/types/2002">
+	<globalVariables>
+		<globalVariable>
+			<name>httphost</name>
+			<value>localhost</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1628679241508</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>httpport</name>
+			<value>9090</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1628679241508</modTime>
+		</globalVariable>
+		<globalVariable>
+			<name>soapPath</name>
+			<value>soapOrderServicePath</value>
+			<deploymentSettable>true</deploymentSettable>
+			<serviceSettable>false</serviceSettable>
+			<type>String</type>
+			<modTime>1766416425019</modTime>
+		</globalVariable>
+	</globalVariables>
+</repository>

@@ -11,6 +11,7 @@ public class ComponentInfo {
     private String type;  // "http:request", "db:select", "logger", etc.
     private String category;  // "connector", "transformer", "router", etc.
     private Map<String, String> attributes = new HashMap<>();
+    private Map<String, String> inputBindings = new HashMap<>();
     private String configRef;  // Reference to global configuration
     private String connectionDetails;  // Resolved connection details (host:port/path, etc.)
     private java.util.List<ComponentInfo> children = new java.util.ArrayList<>();
@@ -50,6 +51,18 @@ public class ComponentInfo {
     
     public void addAttribute(String key, String value) {
         this.attributes.put(key, value);
+    }
+    
+    public Map<String, String> getInputBindings() {
+        return inputBindings;
+    }
+    
+    public void setInputBindings(Map<String, String> inputBindings) {
+        this.inputBindings = inputBindings;
+    }
+    
+    public void addInputBinding(String key, String value) {
+        this.inputBindings.put(key, value);
     }
     
     public String getConfigRef() {

@@ -37,6 +37,9 @@ public class HttpDetailExtractor implements ConnectorDetailExtractor {
         if (component != null && component.getAttributes() != null) {
             String componentPath = component.getAttributes().get("path");
             if (componentPath != null && !componentPath.isEmpty()) {
+                if (propertyResolver != null) {
+                    componentPath = propertyResolver.resolve(componentPath);
+                }
                 path = componentPath.startsWith("/") ? componentPath : "/" + componentPath;
             }
         }

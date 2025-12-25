@@ -3,6 +3,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     setupEventHandlers();
     loadConfiguration();
+    loadDynamicLabels();
 });
 
 let currentExcelPath = null;
@@ -26,16 +27,31 @@ function setupEventHandlers() {
         customEnvs.style.display = 'block'; // Always block for now to debug
         customEnvs.style.display = this.value === 'CUSTOM' ? 'block' : 'none';
     });
+
+    // Toggle custom config file section
+    const useCustomConfig = document.getElementById('useCustomConfig');
+    const configUploadSection = document.getElementById('configUploadSection');
+    if (useCustomConfig) {
+        useCustomConfig.addEventListener('change', function() {
+            configUploadSection.style.display = this.checked ? 'block' : 'none';
+        });
+    }
     
-    // Toggle input source (upload vs folder vs git)
+    // Toggle input source (zip vs jar vs folder vs git)
     inputSourceRadios.forEach(radio => {
         radio.addEventListener('change', function() {
-            uploadSection.style.display = 'none';
+            const zipSection = document.getElementById('zipSection');
+            const jarSection = document.getElementById('jarSection');
+            
+            zipSection.style.display = 'none';
+            jarSection.style.display = 'none';
             folderSection.style.display = 'none';
             gitSection.style.display = 'none';
             
-            if (this.value === 'upload') {
-                uploadSection.style.display = 'block';
+            if (this.value === 'zip') {
+                zipSection.style.display = 'block';
+            } else if (this.value === 'jar') {
+                jarSection.style.display = 'block';
             } else if (this.value === 'folder') {
                 folderSection.style.display = 'block';
             } else if (this.value === 'git') {
@@ -51,10 +67,20 @@ function setupEventHandlers() {
     });
     
     // Start Again button
-    document.getElementById('startAgain').addEventListener('click', function() {
+    document.getElementById('startAgain').addEventListener('click', async function() {
+        // Cleanup temp files if this was an upload
+        if (currentAnalysisId) {
+            try {
+                await fetch('/api/analyze/cleanup/' + currentAnalysisId, { method: 'POST' });
+            } catch (error) {
+                console.warn('Cleanup failed:', error);
+            }
+        }
+        
         document.getElementById('resultsSection').style.display = 'none';
         document.getElementById('analysisForm').style.display = 'block';
         document.getElementById('analysisForm').reset();
+        currentAnalysisId = null;
         currentExcelPath = null;
         currentWordPath = null;
         currentPdfPath = null;
@@ -102,14 +128,59 @@ function setupEventHandlers() {
         if (!currentPdfPath) e.preventDefault();
     });
     
+    // Email input - change button color when email is entered
+    document.getElementById('emailAddress').addEventListener('input', function() {
+        const emailButton = document.getElementById('sendEmail');
+        if (this.value.trim()) {
+            emailButton.classList.add('email-ready');
+        } else {
+            emailButton.classList.remove('email-ready');
+        }
+    });
+    
     // Email button
-    document.getElementById('sendEmail').addEventListener('click', function() {
+    document.getElementById('sendEmail').addEventListener('click', async function() {
         const email = document.getElementById('emailAddress').value;
         if (!email) {
             alert('Please enter an email address');
             return;
         }
-        alert('Email functionality coming soon! Documents will be sent to: ' + email);
+        
+        // Validate email format
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+            alert('Please enter a valid email address');
+            return;
+        }
+        
+        try {
+            const button = this;
+            button.disabled = true;
+            button.textContent = 'Sending...';
+            
+            const response = await fetch('/api/analyze/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    email: email,
+                    analysisId: currentAnalysisId
+                })
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                alert('✅ ' + result.message);
+            } else {
+                alert('❌ ' + result.message);
+            }
+            
+        } catch (error) {
+            alert('Error sending email: ' + error.message);
+        } finally {
+            this.disabled = false;
+            this.textContent = 'Send via Email';
+        }
     });
 }
 
@@ -195,16 +266,78 @@ async function submitAnalysis() {
     // Get input path based on source
     const inputSource = formData.get('inputSource');
     let inputPath = '';
+    let uploadId = null;
     
     if (inputSource === 'folder') {
         inputPath = formData.get('folderPath');
     } else if (inputSource === 'git') {
         inputPath = formData.get('gitUrl');
-    } else if (inputSource === 'upload') {
-        alert('File upload not yet implemented. Please use Local Folder or Git Repository.');
-        form.style.display = 'block';
-        progressSection.style.display = 'none';
-        return;
+    } else if (inputSource === 'zip' || inputSource === 'jar') {
+        // Handle file upload
+        const fileInputId = inputSource === 'zip' ? 'zipFile' : 'jarFile';
+        const fileInput = document.getElementById(fileInputId);
+        const file = fileInput.files[0];
+        
+        if (!file) {
+            alert('Please select a ' + inputSource.toUpperCase() + ' file to upload');
+            form.style.display = 'block';
+            progressSection.style.display = 'none';
+            return;
+        }
+        
+        // Validate file size (500MB)
+        const maxSize = 500 * 1024 * 1024;
+        if (file.size > maxSize) {
+            alert('File size exceeds 500MB limit');
+            form.style.display = 'block';
+            progressSection.style.display = 'none';
+            return;
+        }
+        
+        // Upload file
+        updateProgress('Uploading file...', 10);
+        const uploadResult = await uploadFile(file, inputSource);
+        
+        if (!uploadResult.success) {
+            alert('Upload failed: ' + uploadResult.error);
+            form.style.display = 'block';
+            progressSection.style.display = 'none';
+            return;
+        }
+        
+        inputPath = uploadResult.tempPath;
+        uploadId = uploadResult.uploadId;
+        updateProgress('File uploaded successfully', 20);
+    }
+    
+    // Handle Config File Upload (if selected)
+    let configFilePath = null;
+    const configFileInput = document.getElementById('configFile');
+    const configFile = configFileInput ? configFileInput.files[0] : null;
+    
+    if (configFile) {
+        // Validate config file size (10MB)
+        if (configFile.size > 10 * 1024 * 1024) {
+            alert('Config file size exceeds 10MB limit');
+            form.style.display = 'block';
+            progressSection.style.display = 'none';
+            return;
+        }
+        
+        updateProgress('Uploading configuration file...', 25);
+        const configUploadResult = await uploadFile(configFile, 'config');
+        
+        if (!configUploadResult.success) {
+            alert('Config upload failed: ' + configUploadResult.error);
+            form.style.display = 'block';
+            progressSection.style.display = 'none';
+            return;
+        }
+        
+        configFilePath = configUploadResult.tempPath;
+        console.log('[CONFIG-DEBUG] Config file uploaded to:', configFilePath);
+    } else {
+        console.log('[CONFIG-DEBUG] No config file selected, will use defaults');
     }
     
     if (!inputPath) {
@@ -222,6 +355,10 @@ async function submitAnalysis() {
         inputSourceType: inputSource,
         inputPath: inputPath,
         gitBranch: formData.get('gitBranch') || 'main',
+        inputPath: inputPath,
+        gitBranch: formData.get('gitBranch') || 'main',
+        uploadId: uploadId,  // For cleanup of uploaded files
+        configFilePath: configFilePath, // Functionality added for TIBCO/Mule config resolution
         // Output format preferences
         generatePdf: document.getElementById('generatePdf').checked,
         generateWord: document.getElementById('generateWord').checked,
@@ -241,8 +378,16 @@ async function submitAnalysis() {
         const result = await response.json();
         
         if (result.status === 'STARTED') {
-            // Show progress animation
-            await simulateProgress();
+            // Store analysis ID
+            currentAnalysisId = result.analysisId;
+            
+            // Poll for completion instead of fake progress
+            updateProgress('Analysis in progress...', 20);
+            const completed = await pollForCompletion(currentAnalysisId);
+            
+            if (!completed) {
+                throw new Error('Analysis timed out or failed');
+            }
             
             // Show results
             progressSection.style.display = 'none';
@@ -282,10 +427,20 @@ async function submitAnalysis() {
             document.getElementById('downloadWord').href = '/api/analyze/download/' + currentAnalysisId + '/word';
             document.getElementById('downloadPdf').href = '/api/analyze/download/' + currentAnalysisId + '/pdf';
             
-            // Display output location and file names
-            const outputDir = result.outputDirectory || 'C:\\raks\\apiguard\\raksanalyzer\\output\\';
-            document.getElementById('outputLocation').textContent = 
-                'Files saved to: ' + outputDir;
+            // Display output location based on input source
+            const outputDir = result.outputDirectory || 'output';
+            // const inputSource = requestData.inputSourceType; // Already defined above
+            
+            let locationMessage = '';
+            if (inputSource === 'folder') {
+                // Local folder - files saved to output directory
+                locationMessage = 'Files saved to: ' + outputDir;
+            } else {
+                // Uploaded ZIP/JAR or Git - files in temp directory
+                locationMessage = 'Files generated in temporary directory';
+            }
+            
+            document.getElementById('outputLocation').textContent = locationMessage;
                 
             // Conditionally display result items based on request flags
             const excelResult = document.getElementById('excelResult');
@@ -345,5 +500,115 @@ async function simulateProgress() {
         progressMessage.textContent = messages[i];
         progressFill.style.width = ((i + 1) / messages.length * 100) + '%';
         await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+}
+
+/**
+ * Update progress bar and message
+ */
+function updateProgress(message, percentage) {
+    const progressFill = document.getElementById('progressFill');
+    const progressMessage = document.getElementById('progressMessage');
+    progressMessage.textContent = message;
+    progressFill.style.width = percentage + '%';
+}
+
+/**
+ * Poll for analysis completion
+ */
+async function pollForCompletion(analysisId) {
+    const maxAttempts = 600; // 10 minutes max (600 * 1 second) - increased for large projects
+    let attempts = 0;
+    
+    while (attempts < maxAttempts) {
+        try {
+            const response = await fetch('/api/analyze/status/' + analysisId);
+            const status = await response.json();
+            
+            if (status.status === 'COMPLETED') {
+                updateProgress('Analysis completed!', 100);
+                return true;
+            } else if (status.status === 'FAILED') {
+                return false;
+            }
+            
+            // Update progress based on attempts
+            const progress = 20 + (attempts / maxAttempts * 70);
+            updateProgress('Analyzing project... (' + Math.round(progress) + '%)', progress);
+            
+            // Wait 1 second before next poll
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            attempts++;
+            
+        } catch (error) {
+            console.error('Error polling for status:', error);
+            // Continue polling even on error
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            attempts++;
+        }
+    }
+    
+    return false; // Timed out
+}
+
+/**
+ * Upload file to server (ZIP or JAR)
+ */
+async function uploadFile(file, fileType) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    try {
+        const response = await fetch('/api/upload/' + fileType, {
+            method: 'POST',
+            body: formData
+        });
+        
+        const result = await response.json();
+        
+        if (response.ok) {
+            return { 
+                success: true, 
+                tempPath: result.tempPath,
+                uploadId: result.uploadId
+            };
+        } else {
+            return { 
+                success: false, 
+                error: result.error || 'Upload failed' 
+            };
+        }
+    } catch (error) {
+        return { 
+            success: false, 
+            error: error.message 
+        };
+    }
+}
+
+// Load dynamic labels from API
+async function loadDynamicLabels() {
+    try {
+        const response = await fetch('/api/config/ui-labels');
+        const labels = await response.json();
+        
+        // App Header
+        if (labels['ui.app.title']) document.getElementById('appTitle').textContent = labels['ui.app.title'];
+        if (labels['ui.app.subtitle']) document.getElementById('appSubtitle').textContent = labels['ui.app.subtitle'];
+        if (labels['ui.app.description']) document.getElementById('appDescription').textContent = labels['ui.app.description'];
+        
+        // Form Labels
+        if (labels['ui.label.project.type']) document.getElementById('labelProjectType').textContent = labels['ui.label.project.type'];
+        if (labels['ui.label.execution.mode']) document.getElementById('labelExecutionMode').textContent = labels['ui.label.execution.mode'];
+        if (labels['ui.label.environment.scope']) document.getElementById('labelEnvironmentScope').textContent = labels['ui.label.environment.scope'];
+        if (labels['ui.label.select.environments']) document.getElementById('labelSelectEnvironments').textContent = labels['ui.label.select.environments'];
+        if (labels['ui.label.input.source']) document.getElementById('labelInputSource').textContent = labels['ui.label.input.source'];
+        if (labels['ui.label.project.file']) document.getElementById('labelProjectFile').textContent = labels['ui.label.project.file'];
+        
+        // Footer
+        if (labels['ui.footer.text']) document.getElementById('footerText').textContent = labels['ui.footer.text'];
+        
+    } catch (error) {
+        console.warn('Failed to load dynamic labels:', error);
     }
 }

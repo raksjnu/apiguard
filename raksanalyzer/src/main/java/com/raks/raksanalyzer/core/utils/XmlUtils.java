@@ -125,4 +125,43 @@ public class XmlUtils {
         String localName = element.getLocalName();
         return localName != null ? localName : element.getTagName();
     }
+    
+    /**
+     * Convert Element to formatted XML string.
+     */
+    public static String elementToString(Element element) {
+        try {
+            javax.xml.transform.TransformerFactory tf = javax.xml.transform.TransformerFactory.newInstance();
+            javax.xml.transform.Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(javax.xml.transform.OutputKeys.OMIT_XML_DECLARATION, "yes");
+            transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            
+            java.io.StringWriter writer = new java.io.StringWriter();
+            transformer.transform(new javax.xml.transform.dom.DOMSource(element), new javax.xml.transform.stream.StreamResult(writer));
+            return writer.toString();
+        } catch (Exception e) {
+            logger.warn("Failed to convert element to string", e);
+            return element.getTextContent();
+        }
+    }
+    
+    /**
+     * Convert Document to formatted XML string.
+     */
+    public static String documentToString(Document document) {
+        try {
+            javax.xml.transform.TransformerFactory tf = javax.xml.transform.TransformerFactory.newInstance();
+            javax.xml.transform.Transformer transformer = tf.newTransformer();
+            transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
+            transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
+            
+            java.io.StringWriter writer = new java.io.StringWriter();
+            transformer.transform(new javax.xml.transform.dom.DOMSource(document), new javax.xml.transform.stream.StreamResult(writer));
+            return writer.toString();
+        } catch (Exception e) {
+            logger.warn("Failed to convert document to string", e);
+            return "";
+        }
+    }
 }

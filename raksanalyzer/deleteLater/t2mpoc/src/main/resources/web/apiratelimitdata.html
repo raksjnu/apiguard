@@ -1,0 +1,197 @@
+
+<html>
+<head>
+<style>
+body{
+	background-color:#f3f2ed;
+}
+.header{
+	background-size: cover;
+}
+
+.header{
+  text-align:center;
+  padding:2px 2px;
+  padding-right:10px;
+  font-family: Roboto Slab;
+  font-size: 30px;
+  text-transform: uppercase;
+  text-rendering: optimizeLegibility;
+  color: #131313;
+  letter-spacing: .15em;
+ text-shadow:
+    -1px -1px 0 #767676,
+    -1px 1px 1px #737272;
+}        
+h4{
+	font-size:22px;
+	font-family:Gabriola;
+	text-align:left;
+	padding-left:80px;
+	padding-top:60px;
+	color: Black;
+	text-shadow:none;
+	letter-spacing: .10em;
+}
+.solutionadded{
+font-family:Roboto Slab;
+text-shadow:none;
+letter-spacing:0em;
+padding-top:0px;
+font-weight: normal;
+font-size:20px;
+max-width: 100%;
+padding:0px;
+
+}
+table,th,td{
+  border:1px solid rgb(130, 152, 130);
+}
+.reviewheader{
+	font-family: Roboto Slab;
+	color:white;
+	background-color: #04AA6D;
+	font-size:16px;
+	padding:5px;
+	text-align: center;
+	
+}
+.reviewelement{
+	font-family: Roboto Slab;
+	color:#131313;
+	font-size:16px;
+	padding:3px;
+	text-align: center;
+	
+}
+
+.failed{
+	color:red;
+}
+.passed{
+	color:#04AA6D;
+}
+.pending{
+	color:rgb(238, 117, 11);
+}
+
+  
+a{
+    font-family: Roboto Slab;
+    font-size:18px;
+    outline: none;
+    border:none;
+    text-decoration: none;
+    background-color: #13b67d;
+    padding:10px;
+    width:250px;
+    text-align:center;
+    color:white;
+    border-radius: 16px;
+    display:block;
+    
+    
+  }
+  
+  a:hover{
+    box-shadow: rgb(238, 52, 52);
+  }
+  .dropbtn {
+    border: none;
+	position:absolute;
+	top:30px;
+	right:30px;
+	font-family: Roboto Slab;
+    font-size:18px;
+    outline: none;
+    border:none;
+    text-decoration: none;
+    background-color: #13b67d;
+    padding:10px;
+    width:250px;
+    text-align:center;
+    color:white;
+    border-radius: 16px;
+  }
+  
+  .dropdown-content {
+    display: none;
+    background-color: white;
+    box-shadow: 0px 8px 16px 0px rgba(241, 229, 229, 0.966);
+    border-radius: 16px;
+    align-items: justify;
+    width:600px;
+    height:500px;
+    padding:8px;
+    font-family: Roboto Slab;
+    font-size:14px;
+	position: absolute;
+	right:30px;
+	top:108px;
+  }
+  
+  .dropdowntracker {
+    display: none;
+    position: absolute;
+    background-color: #e6d7cd;
+    box-shadow: 0px 8px 16px 0px rgba(241, 229, 229, 0.966);
+    border-radius: 16px;
+    align-items: justify;
+    width:290px;
+    height:280px;
+    padding:8px;
+    font-family: Roboto Slab;
+    font-size:14px;
+  }
+  
+  
+  
+  .dropdown:hover .dropdown-content {
+    display: block;
+    margin-top:-15px;
+  }
+  .dropdown:hover  .dropdowntracker {
+    display: block;
+    margin-top:-15px;
+  }
+  
+ 
+  .sendbutton{
+	font-family: Roboto Slab;
+	font-size:18px;
+	background-color: #13b67d;
+	border:none;
+	outline:none;
+	color:white;	
+
+}		
+
+
+
+.sendbutton:active{
+	border:none;
+	outline:none;
+}
+</style>
+ <title>GET Ratelimits</title>
+<link href="https://fonts.googleapis.com/css?family=Pridi:300|Quattrocento|Quicksand|Roboto+Slab&display=swap" rel="stylesheet">
+</head>
+
+<body>
+<div class="container">
+<div class="header">
+<h3>GET Ratelimits</h3>
+<br/>
+</div>
+<h4 class="solutionadded">#[payload]</h4>
+<br/>
+</div>
+<!--<form action="/exportratelimits/#[vars.developer]" enctype="multipart/form-data" method="POST">
+<div class="container_right">
+	<div class="right_side dropdown">
+		<p class="dropbtn"><button type="submit" value="Export Ratelimits" class="sendbutton">Export Ratelimits</button></p>
+		<div class="dropdown-content"><p name="prepnproddata">#[vars.prepnproddatatable]"</p></div></div>
+</div>
+</form>-->  
+  </body>
+  </html>

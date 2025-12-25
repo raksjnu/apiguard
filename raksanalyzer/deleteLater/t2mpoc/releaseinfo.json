@@ -1,0 +1,10 @@
+
+{ 
+  "API CI Name":"YourAPIServiceName",
+  "Release Value":"YourReleaseValueHere",
+  "Release Number": "RLSEXXXXXXX",
+  "Project Name":"YourProjectNameHere",
+  "Implementation Date":"mm/dd/ccyy HH:MM - mm/dd/ccyy HH:MM",
+  "Project ID":"YourProjectIdHere",
+  "RFC":"YourServiceNowChangeRequestIdHere"
+}

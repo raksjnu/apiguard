@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Repository:repository xmlns="http://www.tibco.com/xmlns/aemeta/types/2002" xmlns:Repository="http://www.tibco.com/xmlns/repo/types/2002" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <class name="DelimitedFileRecord">
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>customerid</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>firstname</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>lastname</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>age</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>email</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>city</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>zipcode</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>transactionstatus</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+    </class>
+    <class name="WriterFileRecord">
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>customerid|</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>firstname</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>lastname</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>age</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>email</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>city</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>zipcode</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+        <attribute>
+            <isReadable>true</isReadable>
+            <isWriteable>true</isWriteable>
+            <name>transactionstatus</name>
+            <attributeType isRef="true">/AESchemas/ae.aeschema#scalar.string</attributeType>
+        </attribute>
+    </class>
+    <designer>
+        <lockedProperties>
+            <locked>
+                <properties>name</properties>
+            </locked>
+            <locked>
+                <resource>/Classes/WriterFileRecord</resource>
+                <properties>name</properties>
+            </locked>
+            <locked>
+                <resource>/Classes/DelimitedFileRecord</resource>
+                <properties>name</properties>
+            </locked>
+        </lockedProperties>
+        <fixedChildren>
+            <fixed>
+                <resource>/Classes</resource>
+                <children>DelimitedFileRecord,WriterFileRecord</children>
+            </fixed>
+            <fixed>
+                <resource>/Classes/WriterFileRecord</resource>
+                <children>customerid|,firstname,lastname,age,email,city,zipcode,transactionstatus</children>
+            </fixed>
+            <fixed>
+                <resource>/Classes/DelimitedFileRecord</resource>
+                <children>customerid,firstname,lastname,age,email,city,zipcode,transactionstatus</children>
+            </fixed>
+        </fixedChildren>
+    </designer>
+</Repository:repository>

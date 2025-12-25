@@ -159,8 +159,16 @@ public class PdfGenerator {
             trackedStreams.clear();
             
             // Save document
-            String fileName = generateFileName(result.getProjectInfo());
-            Path outputPath = Path.of(config.getProperty("framework.output.directory", "./output"), fileName);
+            String fileName = generateFileName(result);
+            
+            // Use output directory from result (set based on input source type)
+            String outputDir = result.getOutputDirectory();
+            if (outputDir == null || outputDir.isEmpty()) {
+                // Fallback to config if not set
+                outputDir = config.getProperty("framework.output.directory", "./output");
+            }
+            
+            Path outputPath = Path.of(outputDir, fileName);
             document.save(outputPath.toFile());
             document.close();
             
@@ -392,6 +400,12 @@ public class PdfGenerator {
             return;
         }
 
+        // Create a map of all flows for recursion
+        Map<String, FlowInfo> allFlowsMap = new HashMap<>();
+        for (FlowWithSource item : allFlows) {
+            allFlowsMap.put(item.flow.getName(), item.flow);
+        }
+
         // 2.1 Integration Diagrams (config-ref only)
         if (genStructure) {
             drawSubSectionHeader("2.1 Mule Project Flow Integration", section, 2);
@@ -425,8 +439,8 @@ public class PdfGenerator {
                  this.contentStream = null;
                  
                  // Generate integration diagram (config-ref only, full names)
-                 int maxDepth = Integer.parseInt(config.getProperty("pdf.diagram.nested.component.max.depth", "0"));
-                 byte[] imageBytes = DiagramGenerator.generatePlantUmlImage(item.flow, maxDepth, true, true);
+                 int maxDepth = Integer.parseInt(config.getProperty("pdf.diagram.nested.component.max.depth", "5"));
+                 byte[] imageBytes = DiagramGenerator.generatePlantUmlImage(item.flow, maxDepth, true, true, allFlowsMap);
                  if (imageBytes != null && imageBytes.length > 0) {
                      // Convert to BufferedImage
                      java.awt.image.BufferedImage image = javax.imageio.ImageIO.read(new java.io.ByteArrayInputStream(imageBytes));
@@ -558,7 +572,7 @@ public class PdfGenerator {
                  closeContentStream(); // Double check logic
 
                  // Generate Image
-                 int maxDepth = Integer.parseInt(config.getProperty("pdf.diagram.nested.component.max.depth", "0"));
+                 int maxDepth = Integer.parseInt(config.getProperty("pdf.diagram.nested.component.max.depth", "5"));
                  boolean useFullNames = Boolean.parseBoolean(config.getProperty("pdf.diagram.element.fullname", "true"));
                  byte[] imageBytes = DiagramGenerator.generatePlantUmlImage(item.flow, maxDepth, useFullNames, false);
                  if (imageBytes != null && imageBytes.length > 0) {
@@ -1441,7 +1455,7 @@ public class PdfGenerator {
             // Create table with File Name and Relative Path
             List<String[]> rows = new ArrayList<>();
             for (ProjectNode file : otherFiles) {
-                rows.add(new String[]{file.getName(), file.getRelativePath()});
+                rows.add(new String[]{file.getRelativePath(), file.getRelativePath()});
             }
             
             String[][] data = rows.toArray(new String[0][]);
@@ -2026,11 +2040,19 @@ public class PdfGenerator {
         return addBookmark(title, parent, page, level);
     }
     
-    private String generateFileName(ProjectInfo projectInfo) {
-        String timestamp = ZonedDateTime.now().format(
-            DateTimeFormatter.ofPattern(config.getProperty("document.output.timestamp.format", "yyyyMMdd_HHmmss"))
-        );
-        return projectInfo.getProjectName() + "_Analysis_" + timestamp + ".pdf";
+    private String generateFileName(AnalysisResult result) {
+        // Use result's start time for consistent timestamp across all documents
+        String timestamp;
+        if (result != null && result.getStartTime() != null) {
+            timestamp = result.getStartTime().format(
+                DateTimeFormatter.ofPattern(config.getProperty("document.output.timestamp.format", "yyyyMMdd_HHmmss"))
+            );
+        } else {
+            timestamp = ZonedDateTime.now().format(
+                DateTimeFormatter.ofPattern(config.getProperty("document.output.timestamp.format", "yyyyMMdd_HHmmss"))
+            );
+        }
+        return result.getProjectInfo().getProjectName() + "_Analysis_Document_" + timestamp + ".pdf";
     }
     
     // Helper method to find a file by name in project structure
@@ -2166,15 +2188,9 @@ public class PdfGenerator {
         
         if (node.getType() == NodeType.FILE) {
             String name = node.getName();
-            // Exclude common Mule project files
-            if (!name.equals("pom.xml") && 
-                !name.endsWith(".xml") && 
-                !name.endsWith(".dwl") && 
-                !name.endsWith(".yaml") && 
-                !name.endsWith(".yml") && 
-                !name.endsWith(".properties") && 
-                !name.endsWith(".json") &&
-                !name.startsWith(".")) {
+            // Only exclude hidden files (starting with .)
+            // Include all other files - they will be filtered by what was already processed
+            if (!name.startsWith(".")) {
                 result.add(node);
             }
         }

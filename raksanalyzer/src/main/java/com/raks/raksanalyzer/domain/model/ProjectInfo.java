@@ -16,6 +16,7 @@ public class ProjectInfo {
     private String muleVersion;  // For Mule projects
     private String tibcoVersion;  // For Tibco projects
     private String springBootVersion;  // For Spring Boot projects
+    private java.util.Properties properties = new java.util.Properties();  // For Tibco global variables
     
     // Getters and Setters
     public String getProjectName() {
@@ -80,5 +81,13 @@ public class ProjectInfo {
     
     public void setSpringBootVersion(String springBootVersion) {
         this.springBootVersion = springBootVersion;
+    }
+    
+    public java.util.Properties getProperties() {
+        return properties;
+    }
+    
+    public void setProperties(java.util.Properties properties) {
+        this.properties = properties;
     }
 }

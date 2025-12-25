@@ -25,6 +25,8 @@ public class Application {
     private static final String DEFAULT_CONTEXT_PATH = "/";
     
     public static void main(String[] args) {
+        com.raks.raksanalyzer.service.CleanupScheduler cleanupScheduler = null;
+        
         try {
             logger.info("Starting RaksAnalyzer...");
             
@@ -33,6 +35,17 @@ public class Application {
             
             // Determine server port
             int serverPort = arguments.getServerPort().orElse(DEFAULT_SERVER_PORT);
+            
+            // Start cleanup scheduler
+            cleanupScheduler = new com.raks.raksanalyzer.service.CleanupScheduler();
+            cleanupScheduler.start();
+            logger.info("Cleanup scheduler started");
+            
+            // Set custom config path system property if provided
+            arguments.getCustomConfigPath().ifPresent(path -> {
+                System.setProperty("raksanalyzer.config.path", path);
+                logger.info("Custom configuration path set: {}", path);
+            });
             
             // Start embedded Jetty server
             Server server = createServer(serverPort);
@@ -45,11 +58,28 @@ public class Application {
                 openBrowser(serverPort);
             }
             
+            // Add shutdown hook for cleanup
+            final com.raks.raksanalyzer.service.CleanupScheduler finalScheduler = cleanupScheduler;
+            Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+                logger.info("Shutting down RaksAnalyzer...");
+                if (finalScheduler != null) {
+                    finalScheduler.stop();
+                }
+                try {
+                    server.stop();
+                } catch (Exception e) {
+                    logger.error("Error stopping server", e);
+                }
+            }));
+            
             // Wait for server to stop
             server.join();
             
         } catch (Exception e) {
             logger.error("Failed to start RaksAnalyzer", e);
+            if (cleanupScheduler != null) {
+                cleanupScheduler.stop();
+            }
             System.exit(1);
         }
     }

@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pfx="http://xmlns.example.com/unique/default/namespace/1134438639123" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/pe/EngineTypes" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:ns2="http://www.tibco.com/pe/WriteToLogActivitySchema" xmlns:ns1="http://www.tibco.com/pe/DeployedVarsType" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:ns3="http://www.tibco.com/namespaces/tnt/plugins/file/v2">
+    <xsd:import namespace="http://xmlns.example.com/unique/default/namespace/1134438639123" schemaLocation="/Schema/OrderStatus.xsd"/>
+    <pd:name>BusinessProcess/UpdatePaymentDummy.process</pd:name>
+    <pd:startName>Start</pd:startName>
+    <pd:startType ref="pfx:order"/>
+    <pd:startX>100</pd:startX>
+    <pd:startY>96</pd:startY>
+    <pd:returnBindings/>
+    <pd:endName>End</pd:endName>
+    <pd:endX>461</pd:endX>
+    <pd:endY>93</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1628160795118</pd:targetNamespace>
+    <pd:activity name="Catch">
+        <pd:type>com.tibco.pe.core.CatchActivity</pd:type>
+        <pd:resourceType>ae.activities.catch</pd:resourceType>
+        <pd:x>750</pd:x>
+        <pd:y>88</pd:y>
+        <pd:handler>true</pd:handler>
+        <config>
+            <catchAll>true</catchAll>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:activity name="LogandErrorHandler">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>607</pd:x>
+        <pd:y>90</pd:y>
+        <config>
+            <processName>/BusinessProcess/LogandErrorHandlerDummy.process</processName>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <pfx:logLevel>
+                    <xsl:value-of select="$_globalVariables/ns1:GlobalVariables/LogLevels/LOG_ERROR"/>
+                </pfx:logLevel>
+                <pfx:processCtx>
+                    <pfx:processId>
+                        <xsl:value-of select="$_processContext/ns:ProcessContext/ProcessId"/>
+                    </pfx:processId>
+                    <pfx:projectName>
+                        <xsl:value-of select="$_processContext/ns:ProcessContext/ProjectName"/>
+                    </pfx:projectName>
+                    <pfx:ProcessName>
+                        <xsl:value-of select="'/Common/RetryProcessErrors'"/>
+                    </pfx:ProcessName>
+                </pfx:processCtx>
+                <pfx:description>
+                    <xsl:value-of select="'Error in RetryProcess to update records'"/>
+                </pfx:description>
+                <pfx:ExceptionData>
+                    <pfx:Message>
+                        <xsl:value-of select="$_error/ns:ErrorReport/Msg"/>
+                    </pfx:Message>
+                    <pfx:StackTrace>
+                        <xsl:value-of select="$_error/ns:ErrorReport/StackTrace"/>
+                    </pfx:StackTrace>
+                    <pfx:ErrorData>
+                        <xsl:value-of select="$Catch/exceptiondata/*"/>
+                    </pfx:ErrorData>
+                </pfx:ExceptionData>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Log">
+        <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+        <pd:resourceType>ae.activities.log</pd:resourceType>
+        <pd:x>230</pd:x>
+        <pd:y>85</pd:y>
+        <config>
+            <role>User</role>
+        </config>
+        <pd:inputBindings>
+            <ns2:ActivityInput>
+                <message>
+                    <xsl:value-of select="concat(&quot;Order Updated: &quot;, $Start/pfx:order/pfx:orderid, &quot;-&quot;, $Start/pfx:order/pfx:firstname, &quot;-ProcessId-&quot;, $_processContext/ns:ProcessContext/ProcessId)"/>
+                </message>
+                <xsl:if test="$Start/pfx:order/pfx:orderid">
+                    <msgCode>
+                        <xsl:value-of select="$Start/pfx:order/pfx:orderid"/>
+                    </msgCode>
+                </xsl:if>
+            </ns2:ActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Read File">
+        <pd:type>com.tibco.plugin.file.FileReadActivity</pd:type>
+        <pd:resourceType>ae.activities.FileReadActivity</pd:resourceType>
+        <pd:x>286</pd:x>
+        <pd:y>206</pd:y>
+        <config>
+            <encoding>text</encoding>
+        </config>
+        <pd:inputBindings>
+            <ns3:ReadActivityInputClass>
+                <fileName>
+                    <xsl:value-of select="&quot;C:\temp.txt&quot;"/>
+                </fileName>
+            </ns3:ReadActivityInputClass>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="createOrderService">
+        <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
+        <pd:resourceType>ae.process.subprocess</pd:resourceType>
+        <pd:x>370</pd:x>
+        <pd:y>41</pd:y>
+        <config>
+            <processName>/TestService/createOrderService.process</processName>
+        </config>
+        <pd:inputBindings/>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>Catch</pd:from>
+        <pd:to>LogandErrorHandler</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>LogandErrorHandler</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Log</pd:from>
+        <pd:to>createOrderService</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Log</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Start</pd:from>
+        <pd:to>Read File</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Read File</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>createOrderService</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

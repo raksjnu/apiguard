@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<pd:ProcessDefinition xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:pd="http://xmlns.tibco.com/bw/process/2003" xmlns:ns="http://www.tibco.com/pe/WriteToLogActivitySchema">
+    <pd:name>Service/Initialization_onstartup.process</pd:name>
+    <pd:startName>onStartup</pd:startName>
+    <pd:startX>0</pd:startX>
+    <pd:startY>0</pd:startY>
+    <pd:returnBindings/>
+    <pd:starter name="onStartup">
+        <pd:type>com.tibco.pe.core.OnStartupEventSource</pd:type>
+        <pd:resourceType>ae.activities.onStartup</pd:resourceType>
+        <pd:x>34</pd:x>
+        <pd:y>90</pd:y>
+        <config/>
+        <pd:inputBindings/>
+    </pd:starter>
+    <pd:endName>End</pd:endName>
+    <pd:endX>530</pd:endX>
+    <pd:endY>74</pd:endY>
+    <pd:errorSchemas/>
+    <pd:processVariables/>
+    <pd:targetNamespace>http://xmlns.example.com/1745419138158</pd:targetNamespace>
+    <pd:activity name="SetVariable_counter">
+        <pd:type>com.tibco.pe.core.SetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.setSharedVariable</pd:resourceType>
+        <pd:x>188</pd:x>
+        <pd:y>35</pd:y>
+        <config>
+            <variableConfig>/SharedVariables/SharedVariable_counter.sharedvariable</variableConfig>
+            <showResult>true</showResult>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <counter>
+                    <xsl:value-of select="1"/>
+                </counter>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="SetVariable_timestamp">
+        <pd:type>com.tibco.pe.core.SetSharedVariableActivity</pd:type>
+        <pd:resourceType>ae.activities.setSharedVariable</pd:resourceType>
+        <pd:x>186</pd:x>
+        <pd:y>144</pd:y>
+        <config>
+            <variableConfig>/SharedVariables/JobSharedVariable_timestamp.jobsharedvariable</variableConfig>
+            <showResult>true</showResult>
+        </config>
+        <pd:inputBindings>
+            <root>
+                <timestamp>
+                    <xsl:value-of select="current-dateTime()"/>
+                </timestamp>
+            </root>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:activity name="Log">
+        <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+        <pd:resourceType>ae.activities.log</pd:resourceType>
+        <pd:x>393</pd:x>
+        <pd:y>77</pd:y>
+        <config>
+            <role>User</role>
+        </config>
+        <pd:inputBindings>
+            <ns:ActivityInput>
+                <message>
+                    <xsl:value-of select="&quot;Counter shared variable and TImestamp job shared variable are initialized on start up of the service.&quot;"/>
+                </message>
+                <msgCode>
+                    <xsl:value-of select="000"/>
+                </msgCode>
+            </ns:ActivityInput>
+        </pd:inputBindings>
+    </pd:activity>
+    <pd:transition>
+        <pd:from>onStartup</pd:from>
+        <pd:to>SetVariable_counter</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>onStartup</pd:from>
+        <pd:to>SetVariable_timestamp</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>SetVariable_counter</pd:from>
+        <pd:to>Log</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>SetVariable_timestamp</pd:from>
+        <pd:to>Log</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Log</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+</pd:ProcessDefinition>

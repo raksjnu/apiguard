@@ -394,6 +394,12 @@ public class WordGenerator {
             return;
         }
 
+        // Create a map of all flows for recursion
+        Map<String, FlowInfo> allFlowsMap = new HashMap<>();
+        for (FlowWithSource item : allFlows) {
+            allFlowsMap.put(item.flow.getName(), item.flow);
+        }
+
         // 2.1 Integration Diagrams (config-ref only)
         if (genStructure) {
             createHeading2("Mule Project Flow Integration");
@@ -413,8 +419,9 @@ public class WordGenerator {
                 
                 try {
                     // Generate integration diagram (config-ref only, full names)
-                    int maxDepth = Integer.parseInt(config.getProperty("word.diagram.nested.component.max.depth", "0"));
-                    byte[] imageBytes = DiagramGenerator.generatePlantUmlImage(item.flow, maxDepth, true, true);
+                    // Use deeper default depth to allow visibility of nested integration points
+                    int maxDepth = Integer.parseInt(config.getProperty("word.diagram.nested.component.max.depth", "5"));
+                    byte[] imageBytes = DiagramGenerator.generatePlantUmlImage(item.flow, maxDepth, true, true, allFlowsMap);
                     if (imageBytes != null && imageBytes.length > 0) {
                         XWPFParagraph p = document.createParagraph();
                         XWPFRun r = p.createRun();
@@ -490,7 +497,8 @@ public class WordGenerator {
                 }
                 
                 try {
-                    int maxDepth = Integer.parseInt(config.getProperty("word.diagram.nested.component.max.depth", "0"));
+                    // Use deeper default depth for visual diagrams to show structural content
+                    int maxDepth = Integer.parseInt(config.getProperty("word.diagram.nested.component.max.depth", "5"));
                     boolean useFullNames = Boolean.parseBoolean(config.getProperty("word.diagram.element.fullname", "true"));
                     byte[] imageBytes = DiagramGenerator.generatePlantUmlImage(item.flow, maxDepth, useFullNames, false);
                     if (imageBytes != null && imageBytes.length > 0) {
@@ -790,6 +798,17 @@ public class WordGenerator {
         r.setText("References section is placeholder for any reference details team requires. It can have team playbook reference details or any other information for project.");
         r.setItalic(true);
         r.setColor("808080");
+        
+        addParagraphSpace();
+        
+        XWPFParagraph ref1 = document.createParagraph();
+        ref1.createRun().setText("• MuleSoft Documentation");
+        
+        XWPFParagraph ref2 = document.createParagraph();
+        ref2.createRun().setText("• MuleSoft Anypoint Platform");
+        
+        XWPFParagraph ref3 = document.createParagraph();
+        ref3.createRun().setText("• MuleSoft Knowledge Base");
         
         // No page break at the end
     }
@@ -1425,7 +1444,12 @@ public class WordGenerator {
     }
     
     private Path getOutputPath(AnalysisResult result) {
-        String dir = config.getProperty("framework.output.directory", "./output");
+        // Use output directory from result (set based on input source type)
+        String dir = result.getOutputDirectory();
+        if (dir == null || dir.isEmpty()) {
+            // Fallback to config if not set
+            dir = config.getProperty("framework.output.directory", "./output");
+        }
         String name = "design-doc";
         
         if (result.getProjectInfo() != null && result.getProjectInfo().getProjectName() != null) {
@@ -1433,7 +1457,7 @@ public class WordGenerator {
         }
         
         String ts = result.getStartTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
-        return Paths.get(dir, String.format("%s_%s.docx", name, ts));
+        return Paths.get(dir, String.format("%s_Analysis_Document_%s.docx", name, ts));
     }
     
     private boolean getBooleanConfig(String key, boolean defaultValue) {
