@@ -363,7 +363,7 @@ public class TibcoDiagramGenerator {
         Element activity = activityMap.get(nodeName);
         if (activity == null) {
             // Not an activity (could be Start/End) - follow transitions
-            logger.debug("Node '{}' is not an activity, following transitions", nodeName);
+
             List<String> successors = transitions.get(nodeName);
             if (successors != null) {
                 for (String successor : successors) {
@@ -374,7 +374,7 @@ public class TibcoDiagramGenerator {
         }
         
         String type = getTagValue(activity, "pd:type");
-        logger.debug("Processing activity '{}' with type '{}'", nodeName, type);
+
         
         // Check if this is a Group or Catch - render as partition
         if (type != null && (type.contains("LoopGroup") || type.contains("CriticalSectionGroup") || type.contains("CatchActivity"))) {
@@ -415,7 +415,7 @@ public class TibcoDiagramGenerator {
         
         // Check if activity is integration-relevant
         boolean isRelevant = type != null && isIntegrationRelevant(activity, projectRoot, relevanceCache);
-        logger.debug("Activity '{}' is relevant: {}", nodeName, isRelevant);
+
         
         if (isRelevant) {
             if (type.contains("CallProcessActivity")) {
@@ -533,7 +533,7 @@ public class TibcoDiagramGenerator {
         // Check successor relevance to avoid rendering arrows to non-connectors
         List<String> successors = transitions.get(nodeName);
         if (successors != null && isRelevant) {
-            logger.debug("Following {} transitions from relevant node '{}'", successors.size(), nodeName);
+
             
             // Filter successors to only include relevant ones for rendering
             List<String> relevantSuccessors = new ArrayList<>();
@@ -545,7 +545,7 @@ public class TibcoDiagramGenerator {
                         relevantSuccessors.add(successor);
                     } else {
                         // Continue traversal through non-relevant node without rendering arrow
-                        logger.debug("Skipping arrow to non-relevant successor '{}', continuing traversal", successor);
+
                         traverseProcess(sb, successor, activityMap, transitions, processed, projectRoot, visited, relevanceCache, depth, groups);
                     }
                 } else {
@@ -593,7 +593,7 @@ public class TibcoDiagramGenerator {
             }
         } else if (successors != null && !isRelevant) {
             // Non-relevant node - skip rendering but continue traversal to find next relevant node
-            logger.debug("Skipping arrows from non-relevant node '{}', continuing traversal", nodeName);
+
             for (String successor : successors) {
                 traverseProcess(sb, successor, activityMap, transitions, processed, projectRoot, visited, relevanceCache, depth, groups);
             }
@@ -638,7 +638,7 @@ public class TibcoDiagramGenerator {
             for (int i = 0; i < groupActivities.getLength(); i++) {
                 Element groupAct = (Element) groupActivities.item(i);
                 if (isIntegrationRelevant(groupAct, projectRoot, cache)) {
-                    logger.debug("Group '{}' contains relevant activities", activity.getAttribute("name"));
+
                     return true;
                 }
             }
@@ -1382,7 +1382,7 @@ public class TibcoDiagramGenerator {
             // Check if it looks like a process path
             if (candidate.startsWith("/") || candidate.contains(".process")) {
                 paths.add(candidate);
-                logger.debug("Extracted process path from XPath: {}", candidate);
+
             }
         }
         
@@ -1396,7 +1396,7 @@ public class TibcoDiagramGenerator {
         // First check exclusion patterns (if matched, NOT a connector)
         for (String excludePattern : excludePatterns) {
             if (t.contains(excludePattern.toLowerCase().trim())) {
-                logger.debug("isConnector('{}') = false (matched exclusion pattern: '{}')", type, excludePattern);
+
                 return false;
             }
         }
@@ -1404,12 +1404,12 @@ public class TibcoDiagramGenerator {
         // Then check inclusion patterns
         for (String pattern : connectorPatterns) {
             if (t.contains(pattern.toLowerCase().trim())) {
-                logger.debug("isConnector('{}') = true (matched pattern: '{}')", type, pattern);
+
                 return true;
             }
         }
         
-        logger.debug("isConnector('{}') = false (no pattern match)", type);
+
         return false;
     }
     
