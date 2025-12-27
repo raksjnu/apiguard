@@ -1,0 +1,568 @@
+﻿<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:email="http://www.mulesoft.org/schema/mule/email"
+	xmlns:os="http://www.mulesoft.org/schema/mule/os"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd">
+
+	    <!-- Flow 0: Session Validation & Notification Trigger -->
+    <flow name="raksanalyzer-root-flow">
+        <http:listener path="/raksanalyzer" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        
+        <!-- Capture session ID from query param -->
+        <set-variable variableName="sessionId" value="#[attributes.queryParams.session]"/>
+        
+        <!-- Logic: If session exists, use it. If not, create anonymous. Then trigger notification and redirect to main. -->
+        <choice>
+            <when expression="#[vars.sessionId != null]">
+                <logger level="INFO" message="#['Existing session detected: ' ++ vars.sessionId]"/>
+                <!-- Verify session validity -->
+                <os:contains key="#[vars.sessionId]" objectStore="User_Session_Store" target="sessionExists"/>
+                <choice>
+                    <when expression="#[!vars.sessionExists]">
+                        <logger level="WARN" message="Session ID provided but not found in store. Creating new anonymous session."/>
+                        <flow-ref name="raks-create-anonymous-session-subflow"/>
+                    </when>
+                    <otherwise>
+                        <logger level="DEBUG" message="Session valid."/>
+                    </otherwise>
+                </choice>
+            </when>
+            <otherwise>
+                <logger level="INFO" message="No session provided. Creating anonymous session."/>
+                <flow-ref name="raks-create-anonymous-session-subflow"/>
+            </otherwise>
+        </choice>
+        
+        <!-- Async Launch Notification -->
+        <async>
+            <flow-ref name="raks-send-launch-notification-flow"/>
+        </async>
+        
+        <!-- Redirect to Main UI (Index) with Session -->
+        <set-variable variableName="redirectLocation" value="#['/apiguard/raksanalyzer/index.html?session=' ++ vars.sessionId]"/>
+        <set-payload value="#['&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=' ++ vars.redirectLocation ++ '&quot;&gt;&lt;/head&gt;&lt;body&gt;Redirecting...&lt;/body&gt;&lt;/html&gt;']" mimeType="text/html"/>
+    </flow>
+
+    <sub-flow name="raks-create-anonymous-session-subflow">
+        <set-variable variableName="sessionId" value="#[uuid()]"/>
+        <set-variable variableName="sessionStartTime" value="#[now()]"/>
+        <os:store key="#[vars.sessionId]" objectStore="User_Session_Store">
+            <os:value><![CDATA[#[output application/java --- {
+                name: 'Anonymous User',
+                email: '${notification.email.to}',
+                company: 'N/A',
+                ipAddress: attributes.headers['x-forwarded-for'] default attributes.remoteAddress,
+                userAgent: attributes.headers['user-agent'],
+                startTime: vars.sessionStartTime,
+                validationRun: false
+            }]]]></os:value>
+        </os:store>
+        <logger level="INFO" message="#['Created anonymous session: ' ++ vars.sessionId]"/>
+    </sub-flow>
+    
+    <flow name="raks-send-launch-notification-flow">
+         <os:retrieve key="#[vars.sessionId]" objectStore="User_Session_Store" target="sessionData">
+            <os:default-value><![CDATA[#[{
+                name: 'Unknown',
+                email: '${notification.email.to}',
+                company: 'N/A'
+            }]]]></os:default-value>
+        </os:retrieve>
+        
+        <email:send config-ref="Email_SMTP" 
+                    subject="#['${notification.email.subject}' replace '{name}' with vars.sessionData.name replace '{emailId}' with vars.sessionData.email ++ ' - Launched RaksAnalyzer']"
+                    toAddresses="#['${notification.email.to}' splitBy ',']"
+                    fromAddress="RaksAnalyzer &lt;${notification.email.from}&gt;">
+            <email:body contentType="text/html">
+                <email:content><![CDATA[#[output text/plain --- "User " ++ vars.sessionData.name ++ " (" ++ vars.sessionData.email ++ ") from " ++ vars.sessionData.company ++ " launched RaksAnalyzer."]]]></email:content>
+            </email:body>
+        </email:send>
+        <error-handler>
+            <on-error-continue>
+                <logger level="WARN" message="Failed to send launch notification"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+
+	<!-- Flow to serve RaksAnalyzer UI (index/guide) -->
+	<flow name="raksanalyzer-ui-flow" doc:id="raksanalyzer-ui-flow-id">
+		<http:listener doc:name="Listener" doc:id="raks-listener-id" config-ref="HTTP_Listener_config" path="/raksanalyzer/*">
+			<http:response >
+				<http:headers ><![CDATA[#[
+                    {
+                        "Content-Type": vars.mimeType default "text/html",
+                        "Cache-Control": "public, max-age=3600"
+                    }
+                ]]]></http:headers>
+			</http:response>
+		</http:listener>
+		
+		<set-variable variableName="resourcePath" value="#[attributes.relativePath replace '/raksanalyzer/' with '']" doc:name="Extract Path"/>
+		
+		<!-- Determine MIME type based on extension -->
+        <set-variable variableName="mimeType" value="#[
+            if (vars.resourcePath endsWith '.css') 'text/css'
+            else if (vars.resourcePath endsWith '.js') 'application/javascript'
+            else if (vars.resourcePath endsWith '.png') 'image/png'
+            else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
+            else if (vars.resourcePath endsWith '.jpg') 'image/jpeg'
+            else 'text/html'
+        ]"/>
+		
+		<choice doc:name="Route UI vs API">
+			<when expression="#[vars.resourcePath == '' or vars.resourcePath == 'index' or vars.resourcePath == 'index.html']">
+				<!-- Serve Index Page -->
+				<file:read doc:name="Read Raks Index" path="${raksanalyzer.web.dir}/index.html" config-ref="File_Config"/>
+				<!-- Here we would inject config if needed, similar to portal templates -->
+			</when>
+			<when expression="#[vars.resourcePath == 'guide' or vars.resourcePath == 'guide.html']">
+				<!-- Serve Guide Page -->
+				<file:read doc:name="Read Raks Guide" path="${raksanalyzer.web.dir}/guide.html" config-ref="File_Config"/>
+			</when>
+            <when expression="#[vars.resourcePath startsWith 'api/samples']">
+                <!-- Sample File Download -->
+				<set-variable variableName="fileName" value="#[vars.resourcePath replace 'api/samples/' with '']"/>
+                 <!-- In a real scenario, we'd map this to the embedded resource or file system -->
+                 <!-- For this wrapper, assuming samples extracted to web folder or using java invoke to get resource -->
+                 <http:request method="GET" doc:name="Proxy to resource or simple read" config-ref="Self_HTTP_Request_Config" path="/assets/raksanalyzer/samples/{fileName}">
+                 	<http:uri-params ><![CDATA[#[{ fileName: vars.fileName }]]]></http:uri-params>
+                 </http:request>
+            </when>
+			<otherwise>
+				<!-- Static Assets -->
+				<logger level="INFO" message="#['Reading static asset: ' ++ vars.resourcePath ++ ' from ' ++ p('raksanalyzer.web.dir') ++ '/' ++ vars.resourcePath]"/>
+				<file:read doc:name="Read Asset" path="#[p('raksanalyzer.web.dir') ++ '/' ++ vars.resourcePath]" config-ref="File_Config"/>
+			</otherwise>
+		</choice>
+	</flow>
+
+	<!-- Flow to handle ALL API requests -->
+	<flow name="raksanalyzer-api-flow" doc:id="raksanalyzer-api-flow-id">
+		<http:listener doc:name="Listener" config-ref="HTTP_Listener_config" path="/raksanalyzer/api/*" allowedMethods="GET, POST">
+			<http:response statusCode="#[vars.httpStatus default 200]" >
+                <http:headers><![CDATA[#[{
+                    "Content-Type": vars.contentType default "application/json",
+                    "Content-Disposition": vars.contentDisposition default null
+                }]]]></http:headers>
+            </http:response>
+		</http:listener>
+		
+        <set-variable variableName="apiPath" value="#[attributes.relativePath replace '/raksanalyzer/api/' with '']"/>
+        
+        <choice>
+            <!-- UPLOAD ENDPOINT -->
+            <when expression="#[vars.apiPath startsWith 'upload/']">
+                <!-- Handle Multipart Upload -->
+                 <!-- Extract Parts -->
+                <set-variable variableName="uploadId" value="#[uuid()]"/>
+                <set-variable variableName="workingDir" value="#[p('raksanalyzer.work.dir') ++ '/' ++ vars.uploadId]"/>
+                <file:create-directory directoryPath="#[vars.workingDir]" config-ref="File_Config"/>
+                
+                <!-- Explicitly extract parts using DataWeave -->
+                <ee:transform doc:name="Extract Multipart Data">
+                    <ee:message>
+                    </ee:message>
+                    <ee:variables>
+                        <ee:set-variable variableName="inputPart"><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.file.content]]></ee:set-variable>
+                        <ee:set-variable variableName="inputFilename"><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts.file.headers['Content-Disposition'].filename]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+                
+                <file:write path="#[vars.workingDir ++ '/' ++ vars.inputFilename]" config-ref="File_Config">
+                    <file:content >#[vars.inputPart]</file:content>
+                </file:write>
+                
+                <!-- Return Success JSON -->
+                <set-payload value="#[output application/json --- {
+                    'success': true, 
+                    'tempPath': (vars.workingDir ++ '/' ++ vars.inputFilename) replace '\\' with '/',
+                    'uploadId': vars.uploadId
+                }]" mimeType="application/json"/>
+            </when>
+
+            <!-- CONFIG ENDPOINT -->
+            <when expression="#[vars.apiPath == 'config' and attributes.method == 'GET']">
+                <ee:transform doc:name="Get Config">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "localInputEnabled": p('raksanalyzer.input.local.enabled') == "true"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+
+            <!-- ANALYZE ENDPOINT (JSON Payload) -->
+            <when expression="#[vars.apiPath == 'analyze' and attributes.method == 'POST']">
+                
+                <!-- Extract uploadId from payload (ensure it's a string without quotes) -->
+                <ee:transform>
+                    <ee:variables>
+                        <ee:set-variable variableName="uploadId"><![CDATA[%dw 2.0
+output application/java
+---
+payload.uploadId default null]]></ee:set-variable>
+                    </ee:variables>
+                </ee:transform>
+                
+                <!-- Invoke Analysis with path from JSON payload -->
+                <java:invoke-static doc:name="Invoke RaksAnalyzer" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="analyze(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,java.lang.String)">
+					<java:args ><![CDATA[#[{
+						arg0: payload.inputPath,
+						arg1: payload.configFilePath,
+						arg2: p('raksanalyzer.work.dir') ++ '/reports',
+						arg3: p('raksanalyzer.work.dir'),
+						arg4: payload.generateExcel default true,
+						arg5: payload.generateWord default true,
+						arg6: payload.generatePdf default true,
+						arg7: vars.uploadId
+					}]]]></java:args>
+				</java:invoke-static>
+				
+				<!-- Response -->
+				<ee:transform doc:name="Transform Result">
+					<ee:message >
+						<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+					</ee:message>
+				</ee:transform>
+            </when>
+            
+            <!-- FILE DOWNLOAD ENDPOINT (CloudHub compatible) -->
+            <when expression="#[vars.apiPath startsWith 'analyze/download/']">
+                <logger level="INFO" message="#['Download request for: ' ++ vars.apiPath]"/>
+                
+                <!-- Extract file path from URL -->
+                <set-variable variableName="requestedFile" value="#[vars.apiPath replace 'analyze/download/' with '']"/>
+                <set-variable variableName="filePath" value="#[p('raksanalyzer.work.dir') ++ '/reports/' ++ vars.requestedFile]"/>
+                
+                <logger level="INFO" message="#['Attempting to serve file: ' ++ vars.filePath]"/>
+                
+                <!-- Read file -->
+                <try>
+                    <file:read path="#[vars.filePath]" config-ref="File_Config"/>
+                    
+                    <!-- Set appropriate content type based on extension -->
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[#[payload]]]></ee:set-payload>
+                        </ee:message>
+                        <ee:variables>
+                            <ee:set-variable variableName="contentType"><![CDATA[%dw 2.0
+output application/java
+---
+if (vars.requestedFile endsWith '.docx') 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+else if (vars.requestedFile endsWith '.pdf') 'application/pdf'
+else if (vars.requestedFile endsWith '.xlsx') 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+else 'application/octet-stream']]></ee:set-variable>
+                            <ee:set-variable variableName="fileName"><![CDATA[#[vars.requestedFile]]]></ee:set-variable>
+                        </ee:variables>
+                    </ee:transform>
+                    
+                    <!-- Set download headers based on query parameter -->
+                    <set-variable variableName="httpStatus" value="200"/>
+                    <set-variable variableName="contentDisposition" value="#[if (attributes.queryParams.inline == 'true') 'inline' else 'attachment; filename=&quot;' ++ vars.fileName ++ '&quot;']"/>
+                    
+                    <error-handler>
+                        <on-error-propagate type="FILE:FILE_NOT_FOUND">
+                            <logger level="ERROR" message="#['File not found: ' ++ vars.filePath]"/>
+                            <set-payload value="#[output application/json --- { 'error': 'File not found' }]"/>
+                            <set-variable variableName="httpStatus" value="404"/>
+                        </on-error-propagate>
+                    </error-handler>
+                </try>
+            </when>            
+            <!-- EMAIL SENDING ENDPOINT -->
+            <when expression="#[vars.apiPath == 'analyze/send-email']">
+                <logger level="INFO" message="Email send request received"/>
+                
+                <!-- Check if email is enabled -->
+                <choice>
+                    <when expression="#['${raksanalyzer.email.enabled}' == 'true']">
+                        <!-- Parse request -->
+                        <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    recipientEmail: payload.email,
+    excelPath: payload.excelPath,
+    wordPath: payload.wordPath,
+    pdfPath: payload.pdfPath,
+    projectName: payload.projectName default "Analysis"
+}]]></ee:set-payload>
+                            </ee:message>
+                        </ee:transform>
+                        
+                        <!-- Call email flow -->
+                        <flow-ref name="send-raksanalyzer-email-flow"/>
+                        
+                        <!-- Success response -->
+                        <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: "success",
+    message: "Email sent successfully"
+}]]></ee:set-payload>
+                            </ee:message>
+                        </ee:transform>
+                    </when>
+                    <otherwise>
+                        <!-- Email disabled -->
+                        <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: "disabled",
+    message: "Email functionality is disabled"
+}]]></ee:set-payload>
+                            </ee:message>
+                        </ee:transform>
+                    </otherwise>
+                </choice>
+            </when>
+
+            
+            <!-- MOCK CONFIG ENDPOINTS -->
+            <when expression="#[vars.apiPath == 'config/framework']">
+                <set-payload value='{"defaultProjectPath": ""}' mimeType="application/json"/>
+            </when>
+            <when expression="#[vars.apiPath == 'config/environments']">
+                <set-payload value='[{"code":"DEV","displayName":"Development"},{"code":"QA","displayName":"QA"}]' mimeType="application/json"/>
+            </when>
+            <when expression="#[vars.apiPath == 'config/ui-labels']">
+                <set-payload value='{"ui.app.title":"RaksAnalyzer"}' mimeType="application/json"/>
+            </when>
+            
+            <!-- DEFAULT / 404 -->
+            <otherwise>
+                <set-payload value='{"status": "error", "message": "Endpoint not found"}' mimeType="application/json"/>
+                <set-variable variableName="httpStatus" value="404"/>
+            </otherwise>
+        </choice>
+	</flow>
+    <!-- Flow: Send RaksAnalyzer Documents via Email -->
+    <flow name="send-raksanalyzer-email-flow">
+        <logger level="INFO" message="Sending RaksAnalyzer documents via email..."/>
+        <set-variable variableName="inputPayload" value="#[payload]"/>
+        <set-variable variableName="projectName" value="#[vars.inputPayload.projectName]"/>
+        <set-variable variableName="excelPath" value="#[vars.inputPayload.excelPath]"/>
+        <set-variable variableName="wordPath" value="#[vars.inputPayload.wordPath]"/>
+        <set-variable variableName="pdfPath" value="#[vars.inputPayload.pdfPath]"/>
+        
+        <!-- Read document files and build attachments -->
+        <!-- Read document files and build attachments -->
+        <!-- Read document files and build attachments -->
+        <set-variable variableName="emailAttachments" value="#[{}]"/>
+        
+        <!-- Attach Excel if provided -->
+        <choice>
+            <when expression="#[vars.excelPath != null and vars.excelPath != '']">
+                <try>
+                    <set-variable variableName="excelRealFilename" value="#[((vars.excelPath replace '\\' with '/') splitBy '/')[-1]]"/>
+                    <logger level="INFO" message="#['Reading Excel attachment from: ' ++ p('raksanalyzer.work.dir') ++ '/reports/' ++ vars.excelRealFilename]"/>
+                    <file:read path="#[p('raksanalyzer.work.dir') ++ '/reports/' ++ vars.excelRealFilename]" target="excelContent" config-ref="File_Config"/>
+                    
+                    <set-variable variableName="emailAttachments" value="#[output application/java --- vars.emailAttachments ++ {(vars.projectName ++ '.xlsx'): vars.excelContent}]"/>
+                    <error-handler>
+                        <on-error-continue>
+                             <logger level="WARN" message="#['Failed to attach Excel file: ' ++ vars.excelRealFilename ++ ' - ' ++ error.description]"/>
+                        </on-error-continue>
+                    </error-handler>
+                </try>
+            </when>
+        </choice>
+        
+        <!-- Attach Word if provided -->
+        <choice>
+            <when expression="#[vars.wordPath != null and vars.wordPath != '']">
+                <try>
+                    <set-variable variableName="wordRealFilename" value="#[((vars.wordPath replace '\\' with '/') splitBy '/')[-1]]"/>
+                    <logger level="INFO" message="#['Reading Word attachment from: ' ++ p('raksanalyzer.work.dir') ++ '/reports/' ++ vars.wordRealFilename]"/>
+                    <file:read path="#[p('raksanalyzer.work.dir') ++ '/reports/' ++ vars.wordRealFilename]" target="wordContent" config-ref="File_Config"/>
+                    
+                    <set-variable variableName="emailAttachments" value="#[output application/java --- vars.emailAttachments ++ {(vars.projectName ++ '.docx'): vars.wordContent}]"/>
+                    <error-handler>
+                        <on-error-continue>
+                             <logger level="WARN" message="#['Failed to attach Word file: ' ++ vars.wordRealFilename ++ ' - ' ++ error.description]"/>
+                        </on-error-continue>
+                    </error-handler>
+                </try>
+            </when>
+        </choice>
+        
+        <!-- Attach PDF if provided -->
+        <choice>
+            <when expression="#[vars.pdfPath != null and vars.pdfPath != '']">
+                <try>
+                    <set-variable variableName="pdfRealFilename" value="#[((vars.pdfPath replace '\\' with '/') splitBy '/')[-1]]"/>
+                    <logger level="INFO" message="#['Reading PDF attachment from: ' ++ p('raksanalyzer.work.dir') ++ '/reports/' ++ vars.pdfRealFilename]"/>
+                    <file:read path="#[p('raksanalyzer.work.dir') ++ '/reports/' ++ vars.pdfRealFilename]" target="pdfContent" config-ref="File_Config"/>
+                    
+                    <set-variable variableName="emailAttachments" value="#[output application/java --- vars.emailAttachments ++ {(vars.projectName ++ '.pdf'): vars.pdfContent}]"/>
+                    <error-handler>
+                         <on-error-continue>
+                             <logger level="WARN" message="#['Failed to attach PDF file: ' ++ vars.pdfRealFilename ++ ' - ' ++ error.description]"/>
+                        </on-error-continue>
+                    </error-handler>
+                </try>
+            </when>
+        </choice>
+        
+        <!-- Build email body with timezone-aware timestamp -->
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="emailBody"><![CDATA[%dw 2.0
+output text/plain
+---
+"<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        .container { max-width: 700px; margin: 20px auto; background: white; }
+        .header { background: #663399; color: white; padding: 15px; text-align: center; }
+        .section { margin: 0; padding: 20px; border-bottom: 1px solid #e0e0e0; }
+        .label { font-weight: bold; color: #663399; }
+        .footer { background: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <!-- Logo removed for reliability -->
+            <h2 style='margin: 0;'> RaksAnalyzer Analysis Documents</h2>
+        </div>
+        
+        <div class='section'>
+            <h3 style='color: #663399; margin-top: 0;'>Project Analysis Complete</h3>
+            <p>Please find attached the analysis documents for project: <strong>" ++ payload.projectName ++ "</strong></p>
+            <p><span class='label'>Generated:</span> " ++ (now() >> "${raksanalyzer.email.timezone}") as String {format: "yyyy-MM-dd HH:mm:ss z"} ++ "</p>
+        </div>
+        
+        <div class='footer'>
+            <p style='margin: 0;'>This is an automated email from RaksAnalyzer</p>
+            <p style='margin: 5px 0 0 0;'> 2025 RAKS - Universal Document Generation Framework</p>
+        </div>
+    </div>
+</body>
+</html>"]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        
+        <!-- Send email -->
+        <email:send config-ref="Email_SMTP"
+                    subject="#['${raksanalyzer.email.subject}' replace '{projectName}' with vars.inputPayload.projectName]"
+                    toAddresses="#[[vars.inputPayload.recipientEmail]]"
+                    ccAddresses="#['${raksanalyzer.email.cc}' splitBy ',']"
+                    fromAddress="RaksAnalyzer &lt;${notification.email.from}&gt;">
+            <email:body contentType="text/html">
+                <email:content>#[vars.emailBody]</email:content>
+            </email:body>
+            <email:attachments>#[vars.emailAttachments]</email:attachments>
+        </email:send>
+        
+        <logger level="INFO" message="Email sent successfully"/>
+        
+        <error-handler>
+            <on-error-propagate>
+                <logger level="ERROR" message="#['Failed to send email: ' ++ error.description]"/>
+                <set-payload value="#[output application/json --- {status: 'error', message: error.description}]"/>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+
+
+    <!-- Flow: Workspace Cleanup Scheduler -->
+    <flow name="cleanup-raksanalyzer-workspace-flow">
+        <scheduler>
+            <scheduling-strategy>
+                <cron expression="${workspace.cleanup.schedule}"/>
+            </scheduling-strategy>
+        </scheduler>
+        
+        <logger level="INFO" message="Starting RaksAnalyzer workspace cleanup..."/>
+        
+        <choice>
+            <when expression="#['${workspace.cleanup.enabled}' == 'true']">
+                <!-- Get working directory -->
+                <set-variable variableName="workingDir" value="#['${raksanalyzer.work.dir}']"/>
+                <set-variable variableName="retentionDays" value="#['${workspace.cleanup.retention.days}' as Number]"/>
+                <set-variable variableName="retentionHours" value="#[vars.retentionDays * 24]"/>
+                <set-variable variableName="cutoffTime" value="#[now() - (vars.retentionHours as Number) * |PT1H|]"/>
+                
+                <logger level="INFO" message="#['Cleaning up RaksAnalyzer directories older than ' ++ vars.retentionDays ++ ' days']"/>
+                
+                <!-- List all session directories -->
+                <try>
+                    <file:list directoryPath="#[vars.workingDir]" config-ref="File_Config"/>
+                    
+                    <!-- Filter and delete old directories -->
+                    <foreach>
+                        <set-variable variableName="dirPath" value="#[vars.workingDir ++ '/' ++ payload.attributes.fileName]"/>
+                        <set-variable variableName="dirModified" value="#[payload.attributes.lastModifiedTime]"/>
+                        
+                        <choice>
+                            <when expression="#[vars.dirModified &lt; vars.cutoffTime]">
+                                <logger level="INFO" message="#['Deleting old RaksAnalyzer workspace: ' ++ payload.attributes.fileName]"/>
+                                <try>
+                                    <file:delete path="#[vars.dirPath]" config-ref="File_Config"/>
+                                    <error-handler>
+                                        <on-error-continue>
+                                            <logger level="WARN" message="#['Failed to delete workspace: ' ++ payload.attributes.fileName ++ ' - ' ++ error.description]"/>
+                                        </on-error-continue>
+                                    </error-handler>
+                                </try>
+                            </when>
+                            <otherwise>
+                                <logger level="DEBUG" message="#['Workspace directory is recent: ' ++ payload.attributes.fileName ++ ', skipping cleanup']"/>
+                            </otherwise>
+                        </choice>
+                    </foreach>
+                    
+                    <logger level="INFO" message="RaksAnalyzer workspace cleanup completed"/>
+                    
+                    <error-handler>
+                        <on-error-continue type="FILE:ILLEGAL_PATH">
+                            <logger level="WARN" message="#['Working directory does not exist yet: ' ++ vars.workingDir]"/>
+                        </on-error-continue>
+                    </error-handler>
+                </try>
+            </when>
+            <otherwise>
+                <logger level="INFO" message="RaksAnalyzer workspace cleanup is disabled"/>
+            </otherwise>
+        </choice>
+        
+        <error-handler>
+            <on-error-continue>
+                <logger level="ERROR" message="#['RaksAnalyzer workspace cleanup failed: ' ++ error.description]"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+</mule>
+

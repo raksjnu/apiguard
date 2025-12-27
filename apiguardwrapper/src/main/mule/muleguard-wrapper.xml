@@ -1,0 +1,953 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+	xmlns:compression="http://www.mulesoft.org/schema/mule/compression" 
+	xmlns:java="http://www.mulesoft.org/schema/mule/java" 
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" 
+	xmlns:os="http://www.mulesoft.org/schema/mule/os" 
+	xmlns:email="http://www.mulesoft.org/schema/mule/email" 
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" 
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/mule/compression/current/mule-compression.xsd">
+
+    <!-- Flow 0: Root Path Redirect & Notification Trigger -->
+    <flow name="muleguard-root-flow">
+        <!-- Listens on /muleguard which equates to /apiguard/muleguard due to base path -->
+        <http:listener path="/muleguard" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        
+        <!-- Capture session ID from query param -->
+        <set-variable variableName="sessionId" value="#[attributes.queryParams.session]"/>
+        
+        <!-- Logic: If session exists, use it. If not, create anonymous. Then trigger notification and redirect to main. -->
+        <choice>
+            <when expression="#[vars.sessionId != null]">
+                <logger level="INFO" message="#['Existing session detected: ' ++ vars.sessionId]"/>
+                <!-- Verify session validity (optional, but good practice) -->
+                <os:contains key="#[vars.sessionId]" objectStore="User_Session_Store" target="sessionExists"/>
+                <choice>
+                    <when expression="#[!vars.sessionExists]">
+                        <logger level="WARN" message="Session ID provided but not found in store. Creating new anonymous session."/>
+                        <flow-ref name="create-anonymous-session-subflow"/>
+                    </when>
+                    <otherwise>
+                        <logger level="DEBUG" message="Session valid."/>
+                    </otherwise>
+                </choice>
+            </when>
+            <otherwise>
+                <logger level="INFO" message="No session provided. Creating anonymous session."/>
+                <flow-ref name="create-anonymous-session-subflow"/>
+            </otherwise>
+        </choice>
+        
+        <!-- Async Launch Notification -->
+        <async>
+            <flow-ref name="send-launch-notification-flow"/>
+        </async>
+        
+        <!-- Redirect to Main Page with Session -->
+        <set-variable variableName="redirectLocation" value="#['/apiguard/muleguard/main?session=' ++ vars.sessionId]"/>
+        <set-payload value="#['&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=' ++ vars.redirectLocation ++ '&quot;&gt;&lt;/head&gt;&lt;body&gt;Redirecting...&lt;/body&gt;&lt;/html&gt;']" mimeType="text/html"/>
+    </flow>
+
+    <sub-flow name="create-anonymous-session-subflow">
+        <set-variable variableName="sessionId" value="#[uuid()]"/>
+        <set-variable variableName="sessionStartTime" value="#[now()]"/>
+        <os:store key="#[vars.sessionId]" objectStore="User_Session_Store">
+            <os:value><![CDATA[#[output application/java --- {
+                name: 'Anonymous User',
+                email: '${notification.email.to}',
+                company: 'N/A',
+                ipAddress: attributes.headers['x-forwarded-for'] default attributes.remoteAddress,
+                userAgent: attributes.headers['user-agent'],
+                startTime: vars.sessionStartTime,
+                validationRun: false
+            }]]]></os:value>
+        </os:store>
+        <logger level="INFO" message="#['Created anonymous session: ' ++ vars.sessionId]"/>
+    </sub-flow>
+    
+    <flow name="send-launch-notification-flow">
+         <os:retrieve key="#[vars.sessionId]" objectStore="User_Session_Store" target="sessionData">
+            <os:default-value><![CDATA[#[{
+                name: 'Unknown',
+                email: '${notification.email.to}',
+                company: 'N/A'
+            }]]]></os:default-value>
+        </os:retrieve>
+        
+        <email:send config-ref="Email_SMTP" 
+                    subject="#['${notification.email.subject}' replace '{name}' with vars.sessionData.name replace '{emailId}' with vars.sessionData.email ++ ' - Launched MuleGuard']"
+                    toAddresses="#[(p('notification.email.to') default '') splitBy ',']"
+                    fromAddress="MuleGuard &lt;${notification.email.from}&gt;">
+            <email:body contentType="text/html">
+                <email:content><![CDATA[#[output text/plain --- "User " ++ vars.sessionData.name ++ " (" ++ vars.sessionData.email ++ ") from " ++ vars.sessionData.company ++ " launched MuleGuard."]]]></email:content>
+            </email:body>
+        </email:send>
+        <error-handler>
+            <on-error-continue>
+                <logger level="WARN" message="Failed to send launch notification"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+
+    <!-- Flow 3: Main Landing Page -->
+    <flow name="main-landing-page-flow">
+        <!-- Listens on /muleguard/main which equates to /apiguard/muleguard/main -->
+        <http:listener path="/muleguard/main" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response>
+                <http:headers>#[{
+                    "Content-Type": "text/html; charset=UTF-8"
+                }]</http:headers>
+            </http:response>
+        </http:listener>
+        <!-- Inject configuration for GUI -->
+        <set-variable variableName="localInputEnabled" value="${muleguard.input.local.enabled}"/>
+        <set-variable variableName="registrationRequired" value="${registration.required}"/>
+        <!-- Determine readonly mode based on property or other logic if needed -->
+        <parse-template location="web/muleguard/index.html"/>
+    </flow>
+
+    <!-- Flow 4: Static Resource Serving (Logo, CSS, etc) -->
+    <!-- Flow 4: Static Resource Serving (Logo, CSS, etc) -->
+    <flow name="static-resource-flow">
+        <http:listener path="/muleguard/web/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response>
+                <http:headers><![CDATA[#[
+                    output application/java
+                    ---
+                    {
+                        "Content-Type": vars.mimeType default "application/octet-stream"
+                    }
+                ]]]></http:headers>
+            </http:response>
+        </http:listener>
+        <set-variable variableName="resourcePath" value="#[attributes.relativePath replace '/muleguard/web/' with '']"/>
+        
+        <!-- Determine MIME type based on extension -->
+        <set-variable variableName="mimeType" value="#[
+            if (vars.resourcePath endsWith '.html') 'text/html; charset=UTF-8'
+            else if (vars.resourcePath endsWith '.css') 'text/css; charset=UTF-8'
+            else if (vars.resourcePath endsWith '.js') 'application/javascript; charset=UTF-8'
+            else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
+            else if (vars.resourcePath endsWith '.png') 'image/png'
+            else if (vars.resourcePath endsWith '.jpg') 'image/jpeg'
+            else if (vars.resourcePath endsWith '.json') 'application/json; charset=UTF-8'
+            else 'application/octet-stream'
+        ]"/>
+
+        <set-payload value="#[readUrl('classpath://web/muleguard/' ++ vars.resourcePath, 'application/octet-stream')]"/>
+    </flow>
+
+    <!-- Flow 4.5: Session Validation Endpoint -->
+    <flow name="session-validation-flow">
+        <http:listener path="/muleguard/validate-session" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        
+        <!-- Get session ID from query parameter -->
+        <set-variable variableName="sessionId" value="#[attributes.queryParams.session]"/>
+        
+        <!-- Try to retrieve session from Object Store -->
+        <try>
+            <os:retrieve key="#[vars.sessionId]" objectStore="User_Session_Store"/>
+            
+            <!-- Session exists - return valid -->
+            <ee:transform>
+                <ee:message>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{valid: true, sessionId: vars.sessionId}]]></ee:set-payload>
+                </ee:message>
+            </ee:transform>
+            
+            <error-handler>
+                <on-error-continue type="OS:KEY_NOT_FOUND">
+                    <!-- Session not found - return invalid -->
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{valid: false, message: "Session expired or not found"}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </on-error-continue>
+            </error-handler>
+        </try>
+    </flow>
+
+    <!-- Flow 5: Validation Trigger (Local & ZIP Modes) -->
+    <flow name="validation-trigger-flow">
+        <http:listener path="/muleguard/validate" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
+        
+        <!-- Detect content type and extract data accordingly -->
+        <set-variable variableName="contentType" value="#[attributes.headers['content-type'] default 'unknown']"/>
+        
+        <choice>
+            <!-- Handle Multipart Form Data - Extract ALL parts upfront in ONE operation -->
+            <when expression="#[vars.contentType contains 'multipart/form-data']">
+                <logger level="INFO" message="Processing multipart/form-data request"/>
+                
+                <!-- Debug: Log available part names -->
+                <logger level="INFO" message="#['Available multipart parts: ' ++ (payload.parts pluck $$ joinBy ', ')]"/>
+                
+                <!-- Extract all parts in a SINGLE DataWeave operation to prevent stream consumption -->
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    userSessionId: payload.parts.session.content default null,
+    validationMode: payload.parts.mode.content default null,
+    pathContent: payload.parts.path.content default null,
+    zipFileContent: payload.parts.zipFile.content default null,
+    zipFilename: payload.parts.zipFile.headers['Content-Disposition'].filename default "Uploaded ZIP File",
+    customRulesContent: payload.parts.customRules.content default null,
+    attachReports: payload.parts.attachReports.content default null,
+    attachInput: payload.parts.attachInput.content default null,
+    attachProject: payload.parts.attachProject.content default null
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                
+                <!-- Now extract from the transformed payload into variables (Multipart safe) -->
+                <!-- Fix: Use correct keys matching JS FormData ('session', 'mode') -->
+                <set-variable variableName="userSessionId" value="#[trim(payload.userSessionId default '')]"/>
+                <set-variable variableName="validationMode" value="#[trim(payload.validationMode default '')]"/>
+                <set-variable variableName="pathContent" value="#[trim(payload.pathContent default '')]"/>
+                <set-variable variableName="zipFileContent" value="#[payload.zipFileContent]"/>
+                <set-variable variableName="zipFilename" value="#[payload.zipFilename]"/>
+                <set-variable variableName="customRulesContent" value="#[payload.customRulesContent]"/>
+                
+                <!-- Auto-detect base URL from request headers -->
+                <set-variable variableName="baseUrl" 
+                              value="#[(attributes.headers['x-forwarded-proto'] default 'http') ++ '://' ++ (attributes.headers['x-forwarded-host'] default attributes.headers.host)]"/>
+                <set-variable variableName="isMultipart" value="#[true]"/>
+                
+                <!-- Extract attachment preferences (default to 'false' if missing/unchecked) -->
+                <set-variable variableName="userWantsReportAttachment" 
+                              value="#[trim(payload.attachReports default 'false')]"/>
+                <set-variable variableName="userWantsInputAttachment" 
+                              value="#[trim(payload.attachInput default 'false')]"/>
+                <set-variable variableName="userWantsProjectAttachment" 
+                              value="#[trim(payload.attachProject default 'false')]"/>
+
+                <!-- Debug: Log extracted values -->
+                <logger level="INFO" message="#['Extracted - sessionId: ' ++ (vars.userSessionId default 'null') ++ ', mode: ' ++ (vars.validationMode default 'null') ++ ', path: ' ++ (vars.pathContent default 'N/A') ++ ', zipFile: ' ++ (vars.zipFileContent != null) ++ ', customRules: ' ++ (vars.customRulesContent != null) ++ ', Attach[Report=' ++ vars.userWantsReportAttachment ++ ', Input=' ++ vars.userWantsInputAttachment ++ ', LocalProject=' ++ vars.userWantsProjectAttachment ++ ']']"/>
+            </when>
+            
+            <!-- Handle JSON (if ever needed for API calls) -->
+            <when expression="#[vars.contentType contains 'application/json']">
+                <logger level="INFO" message="Processing application/json request"/>
+                <set-variable variableName="userSessionId" value="#[payload.session default null]"/>
+                <set-variable variableName="validationMode" value="#[payload.mode default null]"/>
+                <set-variable variableName="pathContent" value="#[payload.path default null]"/>
+                <set-variable variableName="zipFileContent" value="#[null]"/>
+                <set-variable variableName="customRulesContent" value="#[null]"/>
+                <set-variable variableName="isMultipart" value="#[false]"/>
+            </when>
+            
+            <!-- Unsupported content type -->
+            <otherwise>
+                <logger level="ERROR" message="#['Unsupported content type: ' ++ vars.contentType]"/>
+                <raise-error type="MULEGUARD:UNSUPPORTED_CONTENT_TYPE" description="Unsupported content type"/>
+            </otherwise>
+        </choice>
+        
+        <!-- Validate required fields are present -->
+        <choice>
+            <when expression="#[vars.userSessionId == null or vars.validationMode == null]">
+                <logger level="ERROR" message="#['Missing required fields - userSessionId: ' ++ (vars.userSessionId != null) ++ ', validationMode: ' ++ (vars.validationMode != null)]"/>
+                <raise-error type="MULEGUARD:MISSING_REQUIRED_FIELDS" description="Missing required fields: session and/or mode"/>
+            </when>
+            <otherwise>
+                <logger level="DEBUG" message="Required fields present, proceeding with validation"/>
+            </otherwise>
+        </choice>
+        
+        <choice>
+            <!-- Local Folder Mode -->
+            <when expression="#[trim(vars.validationMode as String) == 'local']">
+                <set-variable variableName="projectPath" value="#[vars.pathContent]"/>
+                <set-variable variableName="displayPath" value="#[vars.pathContent]"/>
+                
+                <!-- Handle custom rules if provided -->
+                <choice>
+                    <when expression="#[vars.customRulesContent != null]">
+                        <!-- Create temp workspace for custom rules -->
+                        <set-variable variableName="tempWorkspaceDir" 
+                            value="#['${muleguard.workspace.dir}' ++ '/' ++ uuid()]"/>
+                        <file:create-directory directoryPath="#[vars.tempWorkspaceDir]" config-ref="File_Config"/>
+                        
+                        <!-- Save custom rules -->
+                        <file:write path="#[vars.tempWorkspaceDir ++ '/rules.yaml']" mode="OVERWRITE" config-ref="File_Config">
+                            <file:content>#[vars.customRulesContent]</file:content>
+                        </file:write>
+                        <set-variable variableName="customRulesPath" value="#[vars.tempWorkspaceDir ++ '/rules.yaml']"/>
+                    </when>
+                    <otherwise>
+                        <set-variable variableName="customRulesPath" value="#[null]"/>
+                    </otherwise>
+                </choice>
+            </when>
+            
+            <!-- ZIP Upload Mode -->
+            <when expression="#[trim(vars.validationMode as String) == 'zip']">
+                <!-- ZIP mode only works with multipart/form-data -->
+                <choice>
+                    <when expression="#[vars.isMultipart and vars.zipFileContent != null]">
+                        <!-- Use userSessionId for workspace to match Object Store key -->
+                        
+                        <!-- CloudHub-compatible working directory -->
+                        <set-variable variableName="workingDir" 
+                            value="#[p('muleguard.work.dir') ++ '/' ++ vars.userSessionId]"/>
+                        
+                                                <!-- Delete existing directory if present to allow re-runs -->
+                        <try>
+                            <file:delete path="#[vars.workingDir]" config-ref="File_Config"/>
+                            <logger level="INFO" message="#['Deleted existing working directory: ' ++ vars.workingDir]"/>
+                            <error-handler>
+                                <on-error-continue type="ANY">
+                                    <logger level="DEBUG" message="Working directory does not exist yet or cannot be deleted (ignoring error)"/>
+                                </on-error-continue>
+                            </error-handler>
+                        </try>
+                        
+                        <!-- Create working directory -->
+                        <file:create-directory directoryPath="#[vars.workingDir]" config-ref="File_Config"/>
+
+                        <!-- Save ZIP to file first (persisted for email attachment) -->
+                        <set-variable variableName="zipFilePath" value="#[vars.workingDir ++ '/input.zip']"/>
+                        <file:write path="#[vars.zipFilePath]" config-ref="File_Config">
+                            <file:content>#[vars.zipFileContent]</file:content>
+                        </file:write>
+
+                        <!-- Read back for extraction (stream was consumed) -->
+                        <file:read path="#[vars.zipFilePath]" target="savedZipContent" config-ref="File_Config"/>
+
+                        <!-- Extract ZIP using Java ZipExtractor -->
+                        <java:invoke-static class="com.raks.muleguard.wrapper.ZipExtractor" 
+                                            method="extractZip(java.io.InputStream, String)">
+                            <java:args>#[{
+                                arg0: vars.savedZipContent,
+                                arg1: vars.workingDir ++ '/extracted'
+                            }]</java:args>
+                        </java:invoke-static>
+                        
+                        <!-- Store extracted path -->
+                        <set-variable variableName="extractedPath" value="#[payload]"/>
+                        
+                        <!-- Set project path for validation -->
+                        <set-variable variableName="projectPath" value="#[vars.extractedPath]"/>
+                        <set-variable variableName="displayPath" value="#[vars.zipFilename]"/>
+                        
+                        <logger level="INFO" message="#['ZIP extracted to: ' ++ vars.projectPath]"/>
+                        
+                        <!-- Handle custom rules if provided -->
+                        <choice>
+                            <when expression="#[vars.customRulesContent != null]">
+                                <!-- Save custom rules to working directory -->
+                                <file:write path="#[vars.workingDir ++ '/rules.yaml']" mode="OVERWRITE" config-ref="File_Config">
+                                    <file:content>#[vars.customRulesContent]</file:content>
+                                </file:write>
+                                <set-variable variableName="customRulesPath" value="#[vars.workingDir ++ '/rules.yaml']"/>
+                                <logger level="INFO" message="#['Custom rules saved to: ' ++ vars.customRulesPath]"/>
+                            </when>
+                            <otherwise>
+                                <set-variable variableName="customRulesPath" value="#[null]"/>
+                            </otherwise>
+                        </choice>
+                    </when>
+                    <otherwise>
+                        <!-- JSON cannot upload ZIP files or ZIP file missing -->
+                        <logger level="ERROR" message="ZIP mode requires multipart/form-data with a ZIP file"/>
+                        <raise-error type="MULEGUARD:ZIP_REQUIRES_MULTIPART" description="ZIP upload mode requires multipart/form-data content type with a ZIP file"/>
+                    </otherwise>
+                </choice>
+            </when>
+            
+            <!-- Invalid mode -->
+            <otherwise>
+                <logger level="ERROR" message="#['Invalid validation mode: ' ++ vars.validationMode]"/>
+                <raise-error type="MULEGUARD:INVALID_MODE" description="#['Invalid validation mode: ' ++ vars.validationMode ++ '. Must be local or zip']"/>
+            </otherwise>
+        </choice>
+        
+        <!-- Generate timestamped report directory name -->
+        <choice>
+            <when expression="#['${report.timestamp.enabled}' == 'true']">
+                <set-variable variableName="reportTimestamp" 
+                              value="#[now() as String {format: '${report.timestamp.format}'}]"/>
+                <set-variable variableName="reportDirName" 
+                              value="#['muleguard-reports-' ++ vars.reportTimestamp]"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="reportDirName" value="muleguard-reports"/>
+            </otherwise>
+        </choice>
+
+        <!-- Invoke MuleGuard with optional custom rules -->
+        <java:invoke-static class="com.raks.muleguard.wrapper.MuleGuardInvoker" 
+                            method="validate(String, String, String, String)">
+            <java:args>#[{
+                arg0: vars.projectPath,
+                arg1: vars.customRulesPath,
+                arg2: vars.displayPath,
+                arg3: vars.reportDirName
+            }]</java:args>
+        </java:invoke-static>
+        
+        <set-variable variableName="validationResults" value="#[payload]"/>
+        
+        <!-- Set paths for email attachments -->
+        <set-variable variableName="reportPath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName ++ '/CONSOLIDATED-REPORT.html']"/>
+        <set-variable variableName="reportsFolderPath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName]"/>
+        
+        <choice>
+            <when expression="#[vars.validationMode == 'zip' and vars.zipWorkspace != null]">
+                <set-variable variableName="zipFilePath" value="#[vars.zipWorkspace ++ '/input.zip']"/>
+            </when>
+            <otherwise>
+                <logger level="DEBUG" message="Not using zip mode or zip workspace not set, skipping input zip path assignment"/>
+            </otherwise>
+        </choice>
+        
+        <!-- Attachment preferences extracted at start of flow -->
+        
+        <logger level="INFO" message="#['DEBUG: Attachment Prefs - Report: ' ++ (vars.userWantsReportAttachment default 'null') ++ ', Input: ' ++ (vars.userWantsInputAttachment default 'null') ++ ', Project: ' ++ (vars.userWantsProjectAttachment default 'null')]"/>
+
+        <!-- Store project path for report serving as concatenated string -->
+        <os:store key="#[vars.userSessionId]" objectStore="Report_Path_Store">
+            <os:value>#[vars.projectPath ++ '||' ++ vars.reportDirName]</os:value>
+        </os:store>
+        
+        <!-- Send email notification after validation -->
+        <async>
+            <flow-ref name="send-usage-notification-flow"/>
+        </async>
+        
+        <!-- Return session ID -->
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json indent=false
+---
+{
+    status: "success", 
+    sessionId: vars.validationSessionId default vars.userSessionId, 
+    mode: vars.validationMode, 
+    reportsPath: vars.projectPath ++ "/" ++ vars.reportDirName, 
+    customRules: vars.customRulesPath != null,
+    baseUrl: vars.baseUrl
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <error-handler>
+            <on-error-continue type="MULEGUARD:UNSUPPORTED_CONTENT_TYPE">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json indent=false
+---
+{status: "error", message: "Unsupported content type. Use multipart/form-data or application/json"}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+            <on-error-continue type="ANY">
+                <logger level="ERROR" message="#['Validation flow error: ' ++ error.description]"/>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json indent=false
+---
+{status: "error", message: error.description default "An error occurred during validation"}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+
+    <!-- Flow 6: Send Usage Notification Email -->
+    <flow name="send-usage-notification-flow">
+        <!-- Retrieve user session data from Object Store -->
+        <os:retrieve key="#[vars.userSessionId]" objectStore="User_Session_Store">
+            <os:default-value><![CDATA[#[{
+                name: 'Anonymous User',
+                email: 'unknown@unknown.com',
+                company: 'N/A',
+                ipAddress: 'N/A',
+                userAgent: 'N/A',
+                startTime: now(),
+                validationRun: false
+            }]]]></os:default-value>
+        </os:retrieve>
+        <set-variable variableName="sessionData" value="#[payload]"/>
+        
+        <!-- Build comprehensive email body -->
+
+        
+        <!-- Three-level attachment control: Admin > User > Default -->
+        <!-- Fix: Explicitly check for string 'true' from payload to avoid false positives -->
+        <!-- Fix: Added null check for vars.userWants... default logic works only if it is null, but we handled that in previous flow -->
+        <set-variable variableName="shouldAttachReports" 
+                      value="#[
+                          '${notification.attach.reports.enabled}' == 'true' and 
+                          ((vars.userWantsReportAttachment default '${notification.attach.reports.default}') == 'true')
+                      ]"/>
+
+        <set-variable variableName="shouldAttachInput" 
+                      value="#[
+                          '${notification.attach.zipproject.enabled}' == 'true' and 
+                          vars.validationMode == 'zip' and
+                          ((vars.userWantsInputAttachment default '${notification.attach.zipproject.default}') == 'true')
+                      ]"/>
+
+        <set-variable variableName="shouldAttachProject" 
+                      value="#[
+                          '${notification.attach.localproject.enabled}' == 'true' and 
+                          vars.validationMode == 'local' and
+                          ((vars.userWantsProjectAttachment default '${notification.attach.localproject.default}') == 'true')
+                      ]"/>
+        
+        <logger level="INFO" message="#['DEBUG: Attach Decision - Reports: ' ++ vars.shouldAttachReports ++ ', Input: ' ++ vars.shouldAttachInput ++ ' (Path: ' ++ (vars.zipFilePath default 'None') ++ '), Project: ' ++ vars.shouldAttachProject]"/>    
+
+        <!-- Prepare email attachments and calculate total size -->
+        <set-variable variableName="emailAttachments" value="#[{ 'logo.png': readUrl('classpath://web/logo.png', 'application/octet-stream') }]"/>
+        <set-variable variableName="totalAttachmentSize" value="#[0]"/>
+        <set-variable variableName="tempAttachments" value="#[[]]"/>
+        
+        <!-- Note: Reports folder compression skipped due to Mule compression module limitations -->
+        <!-- Users can access reports via the web interface instead -->
+        <logger level="INFO" message="Reports available at web interface (compression skipped)"/>
+        
+        <!-- Compress reports folder using Java ZipExtractor -->
+        <set-variable variableName="reportsZipPath" value="#[vars.validationResults.reportsPath ++ '.zip']"/>
+        <java:invoke-static doc:name="Zip Reports" class="com.raks.muleguard.wrapper.ZipExtractor" method="zipDirectory(java.lang.String,java.lang.String)" target="zipResult">
+            <java:args><![CDATA[#[{
+                arg0: vars.validationResults.reportsPath,
+                arg1: vars.reportsZipPath
+            }]]]></java:args>
+        </java:invoke-static>
+        
+        <!-- Attach Reports ZIP if enabled -->
+        <choice>
+            <when expression="#[vars.shouldAttachReports]">
+                <try>
+                    <file:read path="#[vars.reportsZipPath]" target="reportsZipContent" config-ref="File_Config"/>
+                    <set-variable variableName="reportsZipSize" value="#[output application/java --- sizeOf(vars.reportsZipContent)]"/>
+                    <set-variable variableName="totalAttachmentSize" value="#[output application/java --- vars.totalAttachmentSize + vars.reportsZipSize]"/>
+                    
+                    <set-variable variableName="emailAttachments" value="#[output application/java --- vars.emailAttachments ++ {
+                        (vars.reportDirName ++ '.zip'): vars.reportsZipContent
+                    }]"/>
+                    <logger level="INFO" message="#['Attached reports ZIP (' ++ vars.reportsZipSize ++ ' bytes)']"/>
+                    
+                    <error-handler>
+                        <on-error-continue>
+                            <logger level="WARN" message="#['Failed to attach reports ZIP: ' ++ error.description]"/>
+                        </on-error-continue>
+                    </error-handler>
+                </try>
+            </when>
+            <otherwise>
+                <logger level="DEBUG" message="Report attachment not requested or disabled, skipping attachment"/>
+            </otherwise>
+        </choice>
+
+        <!-- Attach Input ZIP if enabled (FIX: Added this missing block) -->
+        <choice>
+            <when expression="#[vars.shouldAttachInput and vars.zipFilePath != null]">
+                <try>
+                    <file:read path="#[vars.zipFilePath]" target="inputZipContent" config-ref="File_Config"/>
+                    <set-variable variableName="inputZipSize" value="#[output application/java --- sizeOf(vars.inputZipContent)]"/>
+                    <set-variable variableName="totalAttachmentSize" value="#[output application/java --- vars.totalAttachmentSize + vars.inputZipSize]"/>
+                    
+                    <set-variable variableName="emailAttachments" value="#[output application/java --- vars.emailAttachments ++ {
+                        'input-project.zip': vars.inputZipContent
+                    }]"/>
+                    <logger level="INFO" message="#['Attached input ZIP (' ++ vars.inputZipSize ++ ' bytes)']"/>
+                    
+                    <error-handler>
+                        <on-error-continue>
+                            <logger level="WARN" message="#['Failed to attach input ZIP: ' ++ error.description]"/>
+                        </on-error-continue>
+                    </error-handler>
+                </try>
+            </when>
+            <otherwise>
+                <logger level="DEBUG" message="Input ZIP attachment not requested or disabled, skipping attachment"/>
+            </otherwise>
+        </choice>
+
+        <!-- Final size check: Skip all attachments if total exceeds limit -->
+        <choice>
+            <when expression="#[vars.totalAttachmentSize &lt; ('${notification.max.attachment.size.mb}' as Number * 1048576)]">
+                 <!-- Attachments already added to vars.emailAttachments -->
+                <logger level="INFO" message="#['Attaching ' ++ sizeOf(vars.emailAttachments) ++ ' file(s) (total: ' ++ vars.totalAttachmentSize ++ ' bytes)']"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="emailAttachments" value="#[{}]"/>
+                <logger level="WARN" message="#['Total attachments exceed size limit (' ++ vars.totalAttachmentSize ++ ' bytes), skipping all attachments']"/>
+            </otherwise>
+        </choice>
+
+        <!-- Build comprehensive email body (MOVED here to have access to vars.emailAttachments) -->
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+"<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        .container { max-width: 700px; margin: 20px auto; background: white; }
+        .header { background: #663399; color: white; padding: 25px; text-align: center; }
+        .section { margin: 0; padding: 20px; border-bottom: 1px solid #e0e0e0; }
+        .label { font-weight: bold; color: #663399; width: 180px; display: inline-block; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        td { padding: 10px 5px; border-bottom: 1px solid #f0f0f0; }
+        .highlight { background: #f9f4ff; padding: 15px; border-radius: 5px; margin: 10px 0; }
+        .link { color: #0078d4; text-decoration: none; font-weight: bold; }
+        .footer { background: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+        .stats-grid { display: table; width: 100%; margin-top: 15px; }
+        .stat-box { display: table-cell; padding: 15px; text-align: center; border-right: 1px solid #e0e0e0; }
+        .stat-box:last-child { border-right: none; }
+        .stat-number { font-size: 24px; font-weight: bold; color: #663399; display: block; }
+        .stat-label { font-size: 12px; color: #666; margin-top: 5px; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <img src='cid:logo.png' alt='MuleGuard' style='height: 50px; display: block; margin: 0 auto 10px auto;'/>
+            <h2 style='margin: 0;'>🛡️ MuleGuard Validation Report</h2>
+        </div>
+        
+        <div class='section'>
+            <h3 style='color: #663399; margin-top: 0;'>👤 User Information</h3>
+            <table>
+                <tr><td class='label'>Name:</td><td>" ++ vars.sessionData.name ++ "</td></tr>
+                <tr><td class='label'>Email:</td><td>" ++ vars.sessionData.email ++ "</td></tr>
+                <tr><td class='label'>Company:</td><td>" ++ vars.sessionData.company ++ "</td></tr>
+                <tr><td class='label'>IP Address:</td><td>" ++ vars.sessionData.ipAddress ++ "</td></tr>
+            </table>
+        </div>
+        
+        <div class='section'>
+            <h3 style='color: #663399; margin-top: 0;'>📦 Validation Details</h3>
+            <table>
+                <tr><td class='label'>Mode:</td><td><strong>" ++ upper(vars.validationMode) ++ "</strong></td></tr>
+                <tr><td class='label'>Session ID:</td><td><code>" ++ vars.userSessionId ++ "</code></td></tr>
+                <tr><td class='label'>Project Path:</td><td>" ++ vars.displayPath ++ "</td></tr>
+                <tr><td class='label'>Custom Rules:</td><td>" ++ (if (vars.customRulesPath != null) "Yes" else "No") ++ "</td></tr>
+                <tr><td class='label'>Timestamp:</td><td>" ++ now() as String {format: "yyyy-MM-dd HH:mm:ss"} ++ "</td></tr>
+            </table>
+        </div>
+        
+        <div class='section'>
+            <h3 style='color: #663399; margin-top: 0;'>📊 Results Summary</h3>
+            <div class='highlight'>
+                <table style='width: 100%; border-collapse: collapse;'>
+                    <tr>
+                        <td class='label' style='width: 40%; padding: 8px; border-bottom: 1px solid #ddd;'>Overall Status:</td>
+                        <td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong style='font-size: 18px; color: " ++ (if (vars.validationResults.status == "PASS") "#28a745" else if (vars.validationResults.status == "FAIL") "#dc3545" else "#ffc107") ++ ";'>" ++ vars.validationResults.status ++ "</strong></td>
+                    </tr>
+                    <tr>
+                        <td class='label' style='padding: 8px; border-bottom: 1px solid #ddd;'>Rules Passed:</td>
+                        <td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong style='color: #28a745;'>" ++ (sizeOf(vars.validationResults.passed default []) as String) ++ "</strong></td>
+                    </tr>
+                    <tr>
+                        <td class='label' style='padding: 8px; border-bottom: 1px solid #ddd;'>Rules Failed:</td>
+                        <td style='padding: 8px; border-bottom: 1px solid #ddd;'><strong style='color: " ++ (if (sizeOf(vars.validationResults.failed default []) > 0) "#dc3545" else "#28a745") ++ ";'>" ++ (sizeOf(vars.validationResults.failed default []) as String) ++ "</strong></td>
+                    </tr>
+                    <tr>
+                        <td class='label' style='padding: 8px;'>Rules Skipped:</td>
+                        <td style='padding: 8px;'><strong style='color: #ffc107;'>" ++ (sizeOf(vars.validationResults.skipped default []) as String) ++ "</strong></td>
+                    </tr>
+                </table>
+                <p style='margin: 15px 0 0 0; color: #666; font-size: 13px;'>📊 <em>View the consolidated report for detailed API-level pass/fail counts, rule violations, and compliance scores.</em></p>
+            </div>
+        </div>
+        
+        
+        <div class='section'>
+            <h3 style='color: #663399; margin-top: 0;'>📎 Attachments</h3>
+            <p>" ++ (if (sizeOf(vars.emailAttachments default {}) > 0) 
+                '✅ Please check the report details in attachment of the email.'
+            else if (vars.attachmentSkippedMessage != null)
+                '⚠️ ' ++ vars.attachmentSkippedMessage
+            else
+                '❌ No attachments (reports available via web interface)') ++ "</p>
+        </div>
+        
+        
+        " ++ 
+        "<div class='section'>
+            <h3 style='color: #663399; margin-top: 0;'>🔗 View Full Report Online</h3>
+            <div class='highlight'>
+                <p style='margin: 0;'>Click the link below to view the complete validation report:</p>
+                <p style='margin: 10px 0 0 0;'><a href='" ++ vars.baseUrl ++ "/muleguard/reports/" ++ vars.userSessionId ++ "/CONSOLIDATED-REPORT.html' class='link'>📊 View Consolidated Report</a></p>
+                <p style='font-size: 11px; color: #999; margin-top: 8px;'>⏱️ <em>Note: This link will remain active for the duration of your session. Reports are automatically cleaned up after session expiry.</em></p>
+            </div>
+        </div>"
+         ++ "
+        
+        <div class='footer'>
+            <p style='margin: 0;'>This is an automated notification from MuleGuard</p>
+            <p style='margin: 5px 0 0 0;'>© 2025 RAKS - MuleSoft Application Validation Tool</p>
+        </div>
+    </div>
+</body>
+</html>"]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <!-- Send email with conditional attachments -->
+        <choice>
+            <when expression="#[sizeOf(vars.emailAttachments) > 0]">
+                <!-- Send with attachments -->
+                <email:send config-ref="Email_SMTP" 
+                            subject="#['${notification.email.subject}' replace '{name}' with vars.sessionData.name replace '{emailId}' with vars.sessionData.email]"
+                            toAddresses="#[(vars.sessionData.email default p('notification.email.to')) splitBy ',']"
+                            ccAddresses="#[p('notification.email.to') splitBy ',']"
+                            fromAddress="MuleGuard &lt;${notification.email.from}&gt;">
+                    <email:body contentType="text/html">
+                        <email:content>#[payload]</email:content>
+                    </email:body>
+                    <email:attachments>#[vars.emailAttachments]</email:attachments>
+                </email:send>
+            </when>
+            <otherwise>
+                <!-- Send without attachments -->
+                <email:send config-ref="Email_SMTP" 
+                            subject="#['${notification.email.subject}' replace '{name}' with vars.sessionData.name replace '{emailId}' with vars.sessionData.email]"
+                            toAddresses="#[(vars.sessionData.email default p('notification.email.to')) splitBy ',']"
+                            ccAddresses="#[p('notification.email.to') splitBy ',']"
+                            fromAddress="MuleGuard &lt;${notification.email.from}&gt;">
+                    <email:body contentType="text/html">
+                        <email:content>#[payload]</email:content>
+                    </email:body>
+                </email:send>
+            </otherwise>
+        </choice>
+        
+        <logger level="INFO" message="Usage notification email sent successfully"/>
+
+        <!-- Cleanup temporary report ZIP -->
+        <try>
+            <file:delete path="#[vars.reportsZipPath]" config-ref="File_Config"/>
+            <logger level="DEBUG" message="Temporary reports ZIP deleted"/>
+            <error-handler>
+                <on-error-continue>
+                     <logger level="DEBUG" message="Reports ZIP cleanup skipped (not found)"/>
+                </on-error-continue>
+            </error-handler>
+        </try>
+        
+        <error-handler>
+            <on-error-continue>
+                <logger level="ERROR" message="Failed to send usage notification email"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+
+    <!-- Flow 7: Serve Reports for ZIP Mode -->
+    <flow name="serve-report-flow">
+        <http:listener path="/muleguard/reports/*" 
+                       config-ref="HTTP_Listener_config" 
+                       allowedMethods="GET"/>
+        
+        <!-- Extract sessionId and file path from requestPath -->
+        <!-- Path format: /apiguard/muleguard/reports/{sessionId}/{filePath} -->
+        <set-variable variableName="pathParts" value="#[attributes.requestPath splitBy '/' filter ($ != '')]"/>
+        <set-variable variableName="sessionId" value="#[vars.pathParts[3]]"/>
+        <set-variable variableName="requestedPath" value="#[vars.pathParts[4 to -1] joinBy '/']"/>
+        
+        <logger level="INFO" message="#['Serving report - sessionId: ' ++ vars.sessionId ++ ', file: ' ++ vars.requestedPath]"/>
+        
+        <!-- Retrieve project path from Object Store -->
+        <os:retrieve key="#[vars.sessionId]" objectStore="Report_Path_Store" target="reportPathString"/>
+        
+        <!-- Split the concatenated string -->
+        <set-variable variableName="pathParts" value="#[vars.reportPathString splitBy '||']"/>
+        
+        <!-- Build full file path using stored project path -->
+        <set-variable variableName="fullPath" 
+                      value="#[vars.pathParts[0] ++ '/' ++ vars.pathParts[1] ++ '/' ++ vars.requestedPath]"/>
+        
+        <logger level="INFO" message="#['Serving report file: ' ++ vars.fullPath]"/>
+        
+        <!-- Determine content type based on file extension -->
+        <set-variable variableName="contentType" value="#[
+            if (vars.requestedPath endsWith '.html') 'text/html; charset=UTF-8'
+            else if (vars.requestedPath endsWith '.css') 'text/css; charset=UTF-8'
+            else if (vars.requestedPath endsWith '.js') 'application/javascript; charset=UTF-8'
+            else if (vars.requestedPath endsWith '.png') 'image/png'
+            else if ((vars.requestedPath endsWith '.jpg') or (vars.requestedPath endsWith '.jpeg')) 'image/jpeg'
+            else if (vars.requestedPath endsWith '.svg') 'image/svg+xml'
+            else if (vars.requestedPath endsWith '.gif') 'image/gif'
+            else if (vars.requestedPath endsWith '.json') 'application/json'
+            else 'application/octet-stream'
+        ]"/>
+        
+        <!-- Read file with proper mime type -->
+        <file:read path="#[vars.fullPath]" config-ref="File_Config" outputMimeType="#[vars.contentType]"/>
+        
+        <error-handler>
+            <on-error-propagate type="FILE:FILE_NOT_FOUND">
+                <logger level="WARN" message="#['Report file not found: ' ++ vars.fullPath]"/>
+                <set-payload value='{"error": "Report file not found"}' mimeType="application/json"/>
+            </on-error-propagate>
+            <on-error-propagate type="ANY">
+                <logger level="ERROR" message="#['Error serving report: ' ++ error.description]"/>
+                <set-payload value='{"error": "Error serving report"}' mimeType="application/json"/>
+            </on-error-propagate>
+        </error-handler>
+    </flow>
+
+    <!-- Flow 8: Workspace Cleanup Scheduler -->
+    <flow name="cleanup-workspace-flow">
+        <scheduler>
+            <scheduling-strategy>
+                <cron expression="${workspace.cleanup.schedule}"/>
+            </scheduling-strategy>
+        </scheduler>
+        
+        <logger level="INFO" message="Starting workspace cleanup..."/>
+        
+        <choice>
+            <when expression="#['${workspace.cleanup.enabled}' == 'true']">
+                <!-- Get workspace directory -->
+                <set-variable variableName="workspaceDir" value="#[p('app.home') ++ '/workspace']"/>
+                <set-variable variableName="retentionDays" value="#['${workspace.cleanup.retention.days}' as Number]"/>
+                <set-variable variableName="retentionHours" value="#[vars.retentionDays * 24]"/>
+                <set-variable variableName="cutoffTime" value="#[now() - (vars.retentionHours as Number) * |PT1H|]"/>
+                
+                <logger level="INFO" message="#['Cleaning up workspace directories older than ' ++ vars.retentionDays ++ ' days']"/>
+                
+                <!-- List all session directories -->
+                <file:list directoryPath="#[vars.workspaceDir]" config-ref="File_Config"/>
+                
+                <!-- Filter and delete old directories -->
+                <foreach>
+                    <set-variable variableName="dirPath" value="#[vars.workspaceDir ++ '/' ++ payload.attributes.fileName]"/>
+                    <set-variable variableName="dirModified" value="#[payload.attributes.lastModifiedTime]"/>
+                    
+                    <choice>
+                        <when expression="#[vars.dirModified &lt; vars.cutoffTime]">
+                            <logger level="INFO" message="#['Deleting old workspace: ' ++ payload.attributes.fileName]"/>
+                            <try>
+                                <file:delete path="#[vars.dirPath]" config-ref="File_Config"/>
+                                <error-handler>
+                                    <on-error-continue>
+                                        <logger level="WARN" message="#['Failed to delete workspace: ' ++ payload.attributes.fileName ++ ' - ' ++ error.description]"/>
+                                    </on-error-continue>
+                                </error-handler>
+                            </try>
+                        </when>
+                        <otherwise>
+                            <logger level="DEBUG" message="#['Workspace directory is recent: ' ++ payload.attributes.fileName ++ ', skipping cleanup']"/>
+                        </otherwise>
+                    </choice>
+                </foreach>
+                
+                <logger level="INFO" message="Workspace cleanup completed"/>
+            </when>
+            <otherwise>
+                <logger level="INFO" message="Workspace cleanup is disabled"/>
+            </otherwise>
+        </choice>
+        
+        <error-handler>
+            <on-error-continue>
+                <logger level="ERROR" message="#['Workspace cleanup failed: ' ++ error.description]"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+
+
+    <!-- Flow 8: Send Registration Notification Email -->
+    <flow name="send-registration-notification-flow">
+        <choice>
+            <when expression="#['${notification.registration.email.enabled}' == 'true']">
+                <logger level="INFO" message="Sending registration notification email..."/>
+                
+                <!-- Attach Logo -->
+                <set-variable variableName="registrationEmailAttachments" value="#[{ 'logo.png': readUrl('classpath://web/logo.png', 'application/octet-stream') }]"/>
+
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+"<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 20px auto; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .header { background: #663399; color: white; padding: 25px; text-align: center; }
+        .section { padding: 25px; border-bottom: 1px solid #e0e0e0; }
+        .label { font-weight: bold; color: #663399; width: 140px; display: inline-block; }
+        table { border-collapse: collapse; width: 100%; }
+        td { padding: 12px 5px; border-bottom: 1px solid #f0f0f0; }
+        tr:last-child td { border-bottom: none; }
+        .footer { background: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <img src='cid:logo.png' alt='MuleGuard' style='height: 50px; display: block; margin: 0 auto 10px auto;'/>
+            <h2 style='margin: 0;'>New User Registration</h2>
+        </div>
+        
+        <div class='section'>
+            <p>A new user has registered to use the MuleGuard application.</p>
+            <table>
+                <tr><td class='label'>Name:</td><td>" ++ vars.userName ++ "</td></tr>
+                <tr><td class='label'>Email:</td><td>" ++ vars.userEmail ++ "</td></tr>
+                <tr><td class='label'>Company:</td><td>" ++ vars.userCompany ++ "</td></tr>
+                <tr><td class='label'>IP Address:</td><td>" ++ vars.userIpAddress ++ "</td></tr>
+                <tr><td class='label'>Session Start:</td><td>" ++ vars.sessionStartTime ++ "</td></tr>
+            </table>
+        </div>
+        
+        <div class='footer'>
+             <p style='margin: 0;'>MuleGuard Notification System</p>
+        </div>
+    </div>
+</body>
+</html>"]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+
+                <email:send config-ref="Email_SMTP" fromAddress="${notification.email.from}" 
+                            subject="#['MuleGuard Tool Registered by ' ++ vars.userName ++ ' : ' ++ vars.userEmail ++ (if (vars.userCompany != null and vars.userCompany != 'N/A' and vars.userCompany != '') ' - ' ++ vars.userCompany else '')]" 
+                            toAddresses="#['${notification.email.to}' splitBy ',']">
+                    <email:body contentType="text/html"/>
+                    <email:attachments>#[vars.registrationEmailAttachments]</email:attachments>
+                </email:send>
+                <logger level="INFO" message="Registration notification sent."/>
+            </when>
+            <otherwise>
+                <logger level="DEBUG" message="Registration email disabled."/>
+            </otherwise>
+        </choice>
+        <error-handler>
+            <on-error-continue>
+                <logger level="WARN" message="#['Failed to send registration email: ' ++ error.description]"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+</mule>

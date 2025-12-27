@@ -17,7 +17,7 @@ import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDDocume
 import org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.vandeseer.easytable.RepeatedHeaderTableDrawer;
+
 import org.vandeseer.easytable.TableDrawer;
 import org.vandeseer.easytable.structure.Row;
 import org.vandeseer.easytable.structure.Table;
@@ -76,8 +76,7 @@ public class TibcoPdfGenerator {
     private List<TibcoGlobalVariable> currentProperties;
     private List<TOCEntry> tocEntries;
     
-    // Track last header for auto-repeat on new pages
-    private String lastHeaderText = null;
+
     
 
     private static class TOCEntry {
@@ -1581,7 +1580,7 @@ public class TibcoPdfGenerator {
         }
         
         // Track this header for potential redraw on new page
-        lastHeaderText = title;
+
         contentStream.beginText();
         contentStream.setFont(fontBold, FONT_SIZE_H2);
         contentStream.setNonStrokingColor(Color.BLACK);

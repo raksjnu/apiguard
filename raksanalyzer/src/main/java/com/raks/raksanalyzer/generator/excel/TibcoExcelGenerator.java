@@ -864,12 +864,14 @@ public class TibcoExcelGenerator {
     }
     
 
-    
     /**
      * Save workbook to file.
      */
     private String saveWorkbook(AnalysisResult result) throws IOException {
-        String outputDir = config.getProperty("excel.output.directory", "output");
+        String outputDir = result.getOutputDirectory();
+        if (outputDir == null) {
+            outputDir = config.getProperty("excel.output.directory", "output");
+        }
         Path outputPath = Paths.get(outputDir);
         
         if (!Files.exists(outputPath)) {

@@ -600,32 +600,12 @@ public class TibcoDiagramGenerator {
         }
     }
     
-    private boolean isStarter(String name, List<Element> starters) {
-        for(Element s : starters) if(s.getAttribute("name").equals(name)) return true;
-        return false;
-    }
 
-    private List<String> findRelevantSuccessors(String current, Map<String, List<String>> adj, Set<String> relevantNodes, Set<String> visited) {
-        List<String> result = new ArrayList<>();
-        if (visited.contains(current)) return result;
-        visited.add(current);
-        
-        List<String> neighbors = adj.get(current);
-        if (neighbors == null) return result;
-        
-        for (String next : neighbors) {
-            if (relevantNodes.contains(next)) {
-                result.add(next);
-            } else {
-                // Recursively search
-                result.addAll(findRelevantSuccessors(next, adj, relevantNodes, visited));
-            }
-        }
-        return result;
-    }
+
+
 
     private boolean isIntegrationRelevant(Element activity, File projectRoot, Map<String, Boolean> cache) {
-        String name = activity.getAttribute("name");
+
         
         // 1. Direct Connectors
         String type = getTagValue(activity, "pd:type");
@@ -1091,7 +1071,6 @@ public class TibcoDiagramGenerator {
         }
 
         // Special Styling for Spawn/Override (Moved here to work inside groups too)
-        boolean renderedSpecial = false;
         if (type != null && type.contains("CallProcessActivity")) {
              String dynamicOverride = getDynamicOverride(activity);
              String spawnConfig = getConfigValue(activity, "spawn");
@@ -1277,58 +1256,7 @@ public class TibcoDiagramGenerator {
         return false;
     }
 
-    // --- Integration Diagram Logic ---
 
-    private void discoverConnections(File processFile, String parentId, File projectRoot, 
-                                   Set<String> visitedProcesses, Set<String> nodes, Set<String> edges, int depth) {
-        if (!processFile.exists() || visitedProcesses.contains(processFile.getAbsolutePath())) return;
-        visitedProcesses.add(processFile.getAbsolutePath());
-        
-        // Limit depth to avoid massive diagrams? User said "end to end", so maybe full depth.
-        if (depth > 10) return; 
-
-        try {
-            DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
-            dbFactory.setNamespaceAware(true);
-            DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
-            Document doc = dBuilder.parse(processFile);
-            
-            NodeList activities = doc.getElementsByTagNameNS("*", "activity");
-            for (int i = 0; i < activities.getLength(); i++) {
-                Element activity = (Element) activities.item(i);
-                String type = getTagValue(activity, "pd:type");
-                String name = activity.getAttribute("name");
-                
-                // 1. Sub-Process Call
-                if (type.contains("CallProcessActivity")) {
-                    String subProcessPath = getConfigValue(activity, "processName");
-                    if (subProcessPath != null) {
-                         if (subProcessPath.startsWith("/")) subProcessPath = subProcessPath.substring(1);
-                         
-                         // Create Edge
-                         String subProcId = sanitizeId(subProcessPath);
-                         nodes.add("rectangle \"" + new File(subProcessPath).getName() + "\" as " + subProcId + " <<Process>>");
-                         edges.add(parentId + " ..> " + subProcId); // Dashed arrow for call
-                         
-                         // Recurse
-                         File subFile = new File(projectRoot, subProcessPath);
-                         discoverConnections(subFile, subProcId, projectRoot, visitedProcesses, nodes, edges, depth + 1);
-                    }
-                }
-                // 2. Connector (Loose detection based on type)
-                else if (isConnector(type)) {
-                    String connId = sanitizeId(name + "_" + depth + "_" + i);
-                    String stereotype = getConnectorStereotype(type);
-                    
-                    nodes.add("database \"" + name + "\" as " + connId + " " + stereotype);
-                    edges.add(parentId + " --> " + connId);
-                }
-            }
-            
-        } catch (Exception e) {
-            logger.warn("Failed to parse for integration: {}", processFile.getName());
-        }
-    }
 
     // --- Helpers ---
 
@@ -1506,22 +1434,9 @@ public class TibcoDiagramGenerator {
         return "<&puzzle-piece>";
     }
     
-    private String getConnectorStereotype(String type) {
-        // Extract token after last '.'
-        if (type == null || type.isEmpty()) return "<<Activity>>";
-        
-        String simpleName = type;
-        if (type.contains(".")) {
-            simpleName = type.substring(type.lastIndexOf('.') + 1);
-        }
-        
-        return "<<" + simpleName + ">>";
-    }
 
-    private String sanitizeId(String name) {
-        if (name == null) return "null_id";
-        return name.replaceAll("[^a-zA-Z0-9]", "_");
-    }
+
+
 
     private byte[] renderPng(String puml) throws IOException {
         SourceStringReader reader = new SourceStringReader(puml);

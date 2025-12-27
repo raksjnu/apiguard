@@ -16,6 +16,7 @@ public class FileExtractionUtil {
     
     /**
      * Extract ZIP file to temporary directory.
+     * Uses user.dir as base temp directory (for standalone usage).
      * 
      * @param zipPath Path to ZIP file
      * @param uploadId Unique upload identifier
@@ -23,8 +24,21 @@ public class FileExtractionUtil {
      * @throws IOException if extraction fails
      */
     public static Path extractZip(Path zipPath, String uploadId) throws IOException {
+        return extractZip(zipPath, uploadId, System.getProperty("user.dir"));
+    }
+    
+    /**
+     * Extract ZIP file to temporary directory.
+     * 
+     * @param zipPath Path to ZIP file
+     * @param uploadId Unique upload identifier
+     * @param baseTempDir Base temporary directory (from Mule flow)
+     * @return Path to extracted project root
+     * @throws IOException if extraction fails
+     */
+    public static Path extractZip(Path zipPath, String uploadId, String baseTempDir) throws IOException {
         logger.info("Extracting ZIP file: {}", zipPath);
-        Path tempDir = createTempDirectory(uploadId);
+        Path tempDir = createTempDirectory(uploadId, baseTempDir);
         
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(zipPath.toFile()))) {
             ZipEntry entry;
@@ -53,8 +67,7 @@ public class FileExtractionUtil {
     
     /**
      * Extract JAR file and locate source code in META-INF/mule-src/.
-     * This handles Mule Studio exported JAR files which contain source code
-     * nested inside META-INF/mule-src/{projectName}/.
+     * Uses user.dir as base temp directory (for standalone usage).
      * 
      * @param jarPath Path to JAR file
      * @param uploadId Unique upload identifier
@@ -62,8 +75,23 @@ public class FileExtractionUtil {
      * @throws IOException if extraction fails
      */
     public static Path extractJar(Path jarPath, String uploadId) throws IOException {
+        return extractJar(jarPath, uploadId, System.getProperty("user.dir"));
+    }
+    
+    /**
+     * Extract JAR file and locate source code in META-INF/mule-src/.
+     * This handles Mule Studio exported JAR files which contain source code
+     * nested inside META-INF/mule-src/{projectName}/.
+     * 
+     * @param jarPath Path to JAR file
+     * @param uploadId Unique upload identifier
+     * @param baseTempDir Base temporary directory (from Mule flow)
+     * @return Path to extracted project root
+     * @throws IOException if extraction fails
+     */
+    public static Path extractJar(Path jarPath, String uploadId, String baseTempDir) throws IOException {
         logger.info("Extracting JAR file: {}", jarPath);
-        Path tempDir = createTempDirectory(uploadId);
+        Path tempDir = createTempDirectory(uploadId, baseTempDir);
         
         boolean foundMuleSrc = false;
         
@@ -110,8 +138,7 @@ public class FileExtractionUtil {
     
     /**
      * Extract TIBCO EAR file and nested .par and .sar archives.
-     * EAR files contain Process Archives (.par) and Shared Archives (.sar)
-     * which are also ZIP files that need to be extracted.
+     * Uses user.dir as base temp directory (for standalone usage).
      * 
      * @param earPath Path to EAR file
      * @param uploadId Unique upload identifier
@@ -119,8 +146,23 @@ public class FileExtractionUtil {
      * @throws IOException if extraction fails
      */
     public static Path extractEar(Path earPath, String uploadId) throws IOException {
+        return extractEar(earPath, uploadId, System.getProperty("user.dir"));
+    }
+    
+    /**
+     * Extract TIBCO EAR file and nested .par and .sar archives.
+     * EAR files contain Process Archives (.par) and Shared Archives (.sar)
+     * which are also ZIP files that need to be extracted.
+     * 
+     * @param earPath Path to EAR file
+     * @param uploadId Unique upload identifier
+     * @param baseTempDir Base temporary directory (from Mule flow)
+     * @return Path to extracted project root (common folder with merged contents)
+     * @throws IOException if extraction fails
+     */
+    public static Path extractEar(Path earPath, String uploadId, String baseTempDir) throws IOException {
         logger.info("Extracting TIBCO EAR file: {}", earPath);
-        Path tempDir = createTempDirectory(uploadId);
+        Path tempDir = createTempDirectory(uploadId, baseTempDir);
         
         // Step 1: Extract EAR file (standard ZIP extraction)
         logger.info("Step 1: Extracting EAR archive");
@@ -239,19 +281,19 @@ public class FileExtractionUtil {
     
     /**
      * Create unique temporary directory for upload.
-     * Uses a temp folder relative to the application's working directory,
-     * compatible with wrapper deployment (similar to MuleGuard).
+     * Uses the base temp directory provided by the caller (Mule flow).
      * 
      * @param uploadId Unique upload identifier
+     * @param baseTempDir Base temporary directory path
      * @return Path to created temp directory
      * @throws IOException if directory creation fails
      */
-    private static Path createTempDirectory(String uploadId) throws IOException {
-        // Use temp folder relative to current working directory (wrapper-compatible)
-        Path baseTempDir = Paths.get(System.getProperty("user.dir"), "temp", "uploads");
-        Files.createDirectories(baseTempDir);
+    private static Path createTempDirectory(String uploadId, String baseTempDir) throws IOException {
+        // Use provided base temp directory from Mule flow
+        Path tempUploadsDir = Paths.get(baseTempDir, "temp", "uploads");
+        Files.createDirectories(tempUploadsDir);
         
-        Path uploadDir = baseTempDir.resolve(uploadId);
+        Path uploadDir = tempUploadsDir.resolve(uploadId);
         Files.createDirectories(uploadDir);
         
         logger.debug("Created temp directory: {}", uploadDir);
@@ -260,12 +302,23 @@ public class FileExtractionUtil {
     
     /**
      * Cleanup temporary directory and all its contents.
+     * Uses user.dir as base temp directory (for standalone usage).
      * 
      * @param uploadId Unique upload identifier
      */
     public static void cleanupTempDirectory(String uploadId) {
+        cleanupTempDirectory(uploadId, System.getProperty("user.dir"));
+    }
+    
+    /**
+     * Cleanup temporary directory and all its contents.
+     * 
+     * @param uploadId Unique upload identifier
+     * @param baseTempDir Base temporary directory path
+     */
+    public static void cleanupTempDirectory(String uploadId, String baseTempDir) {
         try {
-            Path uploadDir = Paths.get(System.getProperty("user.dir"), "temp", "uploads", uploadId);
+            Path uploadDir = Paths.get(baseTempDir, "temp", "uploads", uploadId);
             
             if (Files.exists(uploadDir)) {
                 deleteRecursively(uploadDir);

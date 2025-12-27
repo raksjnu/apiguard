@@ -1,0 +1,196 @@
+/* Raks ApiGuard Common Theme - Framed Design */
+:root {
+    --raks-purple: #663399;
+    /* Truist Purple */
+    --raks-light-purple: #F3E5F5;
+    --raks-bg: #f0f0f0;
+    --raks-font: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    --raks-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+body {
+    font-family: var(--raks-font);
+    background-color: var(--raks-bg);
+    margin: 0;
+    padding: 20px;
+    color: #333;
+    box-sizing: border-box;
+}
+
+/* Framed Container - Dynamic 98% Width */
+.raks-frame {
+    background-color: white;
+    border: 5px solid var(--raks-purple);
+    border-radius: 8px;
+    max-width: 1200px;
+    margin: 0 auto;
+    box-shadow: var(--raks-shadow);
+    overflow: hidden;
+}
+
+/* Header - White with Purple Text */
+.raks-header {
+    background-color: white;
+    padding: 1.5rem 2rem;
+    display: flex;
+    align-items: center;
+    border-bottom: 3px solid var(--raks-purple);  /* Solid purple border */
+}
+
+.raks-header .logo {
+    height: 40px;
+    margin-right: 1.5rem;
+}
+
+.raks-header h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    font-weight: 600;
+    color: var(--raks-purple);
+}
+
+/* Content Area */
+.raks-content {
+    padding: 2rem;
+}
+
+.raks-content h2 {
+    color: var(--raks-purple);           /* Purple headings */
+    margin-top: 0;
+    margin-bottom: 0.5rem;
+}
+
+.raks-content h3 {
+    color: var(--raks-purple);           /* Purple subheadings */
+    margin-top: 1.5rem;
+}
+
+.raks-content p {
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+/* Footer */
+.raks-footer {
+    text-align: center;
+    padding: 1rem 2rem;
+    background: #f9f9f9;
+    color: var(--raks-purple);                    /* Purple text */
+    border-top: 3px solid var(--raks-purple);     /* Solid purple border */
+    font-size: 0.9rem;
+}
+
+/* Form Elements */
+.form-group {
+    margin: 20px 0;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+    color: var(--raks-purple);           /* Purple labels */
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #ddd;
+    border-radius: 6px;
+    font-size: 16px;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: var(--raks-purple);
+}
+
+/* Buttons */
+button, .btn-primary {
+    background: var(--raks-purple);
+    color: white;
+    padding: 15px 40px;
+    font-size: 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+button:hover:not(:disabled) {
+    background: #7d4fb2;
+}
+
+button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
+
+.btn-secondary {
+    background: #f0f0f0;
+    color: #333;
+    border: 2px solid #e0e0e0;
+}
+
+.btn-secondary:hover {
+    background: #e0e0e0;
+}
+
+/* Radio and Checkbox Groups */
+.radio-group, .checkbox-group {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.radio-group label, .checkbox-group label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: normal;
+    cursor: pointer;
+}
+
+/* Progress Bar */
+.progress-bar {
+    width: 100%;
+    height: 30px;
+    background: #f0f0f0;
+    border-radius: 15px;
+    overflow: hidden;
+    margin: 20px 0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: var(--raks-purple);
+    width: 0%;
+    transition: width 0.5s;
+}
+
+/* Results */
+.results {
+    display: grid;
+    gap: 20px;
+}
+
+.result-item {
+    padding: 20px;
+    background: #f8f8f8;
+    border-radius: 8px;
+    border-left: 4px solid var(--raks-purple);
+}
+
+.result-item h4 {
+    margin-bottom: 15px;
+    color: var(--raks-purple);
+}
+
+small {
+    display: block;
+    margin-top: 5px;
+    color: #666;
+    font-size: 0.9em;
+}

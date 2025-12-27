@@ -1,0 +1,15 @@
+{
+    "minMuleVersion": "4.9.1",
+    "javaSpecificationVersions": [
+        "17"
+    ],
+    "classLoaderModelLoaderDescriptor": {
+        "id": "mule",
+        "attributes": {
+            "exportedPackages": [
+                "javax.activation",
+                "com.raks.muleguard.wrapper"
+            ]
+        }
+    }
+}

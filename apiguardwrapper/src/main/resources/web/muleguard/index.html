@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>MuleGuard - Main</title>
+    <style>
+        body {
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            background: white;
+            border: 5px solid #663399;
+            border-radius: 8px;
+            padding: 40px;
+            margin: 50px auto;
+            max-width: 800px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .logo {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo img {
+            height: 80px;
+            margin-bottom: 10px;
+        }
+
+        h1 {
+            color: #663399;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+
+        .mode-selector {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 6px;
+        }
+
+        .mode-selector label {
+            display: block;
+            margin: 15px 0;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        input[type="text"],
+        input[type="file"] {
+            width: 100%;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #663399;
+        }
+
+        .optional-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f0f0ff;
+            border-left: 4px solid #663399;
+            border-radius: 4px;
+        }
+
+        .optional-section label {
+            font-weight: bold;
+            color: #663399;
+        }
+
+        button {
+            background: #663399;
+            color: white;
+            padding: 15px 40px;
+            font-size: 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 20px;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #7d4fb2;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            justify-content: space-between;
+        }
+
+        .nav-button {
+            background: #663399;
+            color: white;
+            padding: 12px 10px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+            flex: 1;
+            transition: background 0.3s;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .nav-button:hover {
+            background: #7d4fb2;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #663399;
+        }
+
+        /* Custom Modal Dialog */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-dialog {
+            background: white;
+            border-radius: 8px;
+            padding: 0;
+            max-width: 600px;
+            width: 90%;
+            border: 3px solid #663399;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            background: #663399;
+            color: white;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .modal-header img {
+            height: 24px;
+            width: auto;
+        }
+
+        .modal-body {
+            padding: 25px 30px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .modal-body a {
+            color: #0078d4;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .modal-body a:hover {
+            text-decoration: underline;
+        }
+
+        .modal-footer {
+            padding: 15px 30px;
+            text-align: center;
+            border-top: 1px solid #ddd;
+            background: #f9f9f9;
+        }
+
+        .modal-button {
+            background: #0078d4;
+            color: white;
+            border: none;
+            padding: 6px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 13px;
+            min-width: 80px;
+        }
+
+        .modal-button:hover {
+            background: #005a9e;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div class="logo">
+            <img src="/apiguard/muleguard/web/logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;">
+            <h1>MuleGuard</h1>
+        </div>
+
+        <p class="subtitle">Comprehensive MuleSoft Application Validation Tool</p>
+
+        <div class="mode-selector optional-section">
+            <label>Choose Input Method:</label>
+            <label>
+                <input type="radio" name="mode" value="local" checked onchange="toggleMode()">
+                &#128193; Local Folder Path
+            </label>
+            <label>
+                <input type="radio" name="mode" value="zip" onchange="toggleMode()">
+                &#128230; Upload ZIP File
+            </label>
+        </div>
+
+        <div id="localInput" class="optional-section">
+            <label>Mule Projects Folder: <a href="/apiguard/muleguard/web/muleapp1.zip" download="muleapp1.zip"
+                    style="margin-left: 10px; font-size: 0.9em; color: #663399; text-decoration: underline;">(Download
+                    Sample Project)</a></label>
+            <input type="text" id="folderPath" placeholder="Enter folder path (e.g., C:\projects\muleapis)">
+        </div>
+
+        <div id="zipInput" class="optional-section hidden">
+            <label>Select ZIP File: <a href="/apiguard/muleguard/web/muleapp1.zip" download="muleapp1.zip"
+                    style="margin-left: 10px; font-size: 0.9em; color: #663399; text-decoration: underline;">(Download
+                    Sample Project)</a></label>
+            <input type="file" id="zipFile" accept=".zip">
+            <small>ZIP should contain root folder with API and config folders</small>
+        </div>
+
+        <div class="optional-section">
+            <label>Optional: Custom Rules File <a href="/apiguard/muleguard/web/sample-rules.yaml" download="rules.yaml"
+                    style="margin-left: 10px; font-size: 0.9em; color: #663399; text-decoration: underline;">(Download
+                    Sample Rules)</a></label>
+            <input type="file" id="customRules" accept=".yaml,.yml">
+            <small>If not provided, default rules from MuleGuard JAR will be used</small>
+        </div>
+
+        <!-- Email Notification Options -->
+        <div class="optional-section" style="margin-top: 20px;">
+            <strong style="color: #663399;">&#128231; Email Notification Options</strong>
+
+            <div style="margin-top: 15px;">
+                <label style="display: block; margin: 10px 0; cursor: pointer;">
+                    <input type="checkbox" id="attachReports" checked>
+                    Attach validation reports (compressed folder)
+                </label>
+
+                <label id="attachInputLabel" style="display: none; margin: 10px 0; cursor: pointer;">
+                    <input type="checkbox" id="attachInput" checked>
+                    Attach input ZIP file
+                </label>
+
+                <label id="attachProjectLabel" style="display: none; margin: 10px 0; cursor: pointer;">
+                    <input type="checkbox" id="attachProject">
+                    Attach project folder (compressed)
+                </label>
+
+                <p id="adminOverrideNote"
+                    style="display: none; color: #ff6600; font-size: 13px; margin-top: 15px; font-style: italic;">
+                    &#9888;&#65039; Note: Administrator has overridden attachment options via server configuration.
+                </p>
+            </div>
+        </div>
+
+        <button onclick="runValidation()">&#128640; Run MuleGuard</button>
+
+        <div class="button-group">
+            <a href="/apiguard/muleguard/web/checklist.html" class="nav-button"
+                title="View all validation checklist items">Checklist</a>
+            <a href="#" class="nav-button" title="Mulesoft Runtime Upgrade Project Runbook">Runbook</a>
+            <a href="/apiguard/muleguard/web/rule_guide.html" class="nav-button"
+                title="Guide to all MuleGuard validation rules">Rule Guide</a>
+            <a href="/apiguard/muleguard/web/help.html" class="nav-button"
+                title="View help and documentation about MuleGuard">Help</a>
+        </div>
+
+        <div id="loading" class="hidden loading">
+            <p>&#8987; Running validation...</p>
+            <p>This may take a few minutes depending on the number of APIs.</p>
+        </div>
+    </div>
+
+    <script>
+        // Inject configuration from Mule
+        const isLocalInputEnabled = "#[vars.localInputEnabled default 'true']";
+        const registrationRequired = "#[vars.registrationRequired default 'true']";
+
+        // Get session ID from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session');
+
+        // Validate session on page load
+        if (!sessionId) {
+            // No session ID in URL
+            if (registrationRequired === 'false') {
+                // Registration not required - redirect to root to create anonymous session
+                window.location.href = '/apiguard/muleguard';
+            } else {
+                // Registration required - redirect to registration page
+                window.location.href = '/apiguard/muleguard/start';
+            }
+        } else {
+            // Session ID exists - server already validated it, just update nav links
+            updateNavLinks(sessionId);
+        }
+
+        function updateNavLinks(sessionId) {
+            document.querySelectorAll('.nav-button').forEach(link => {
+                const href = link.getAttribute('href');
+                if (href && href !== '#' && !href.includes('session=')) {
+                    link.setAttribute('href', href + (href.includes('?') ? '&' : '?') + 'session=' + sessionId);
+                }
+            });
+        }
+
+        // Initialize UI based on configuration
+        document.addEventListener('DOMContentLoaded', function () {
+            if (isLocalInputEnabled === false || isLocalInputEnabled === 'false') {
+                // Hide Local Option
+                const localLabel = document.querySelector('input[value="local"]').parentElement;
+                if (localLabel) localLabel.style.display = 'none';
+
+                // Select Zip Option
+                const zipRadio = document.querySelector('input[value="zip"]');
+                if (zipRadio) {
+                    zipRadio.checked = true;
+                    toggleMode(); // Update UI
+                }
+            }
+        });
+
+        function toggleMode() {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            document.getElementById('localInput').classList.toggle('hidden', mode !== 'local');
+            document.getElementById('zipInput').classList.toggle('hidden', mode !== 'zip');
+
+            // Show/hide attachment options based on mode
+            if (mode === 'zip') {
+                document.getElementById('attachInputLabel').style.display = 'block';
+                document.getElementById('attachProjectLabel').style.display = 'none';
+            } else {
+                document.getElementById('attachInputLabel').style.display = 'none';
+                document.getElementById('attachProjectLabel').style.display = 'block';
+            }
+        }
+
+        function runValidation() {
+            const mode = document.querySelector('input[name="mode"]:checked').value;
+            const formData = new FormData();
+            let path = ''; // Declare at function scope
+
+            formData.append('mode', mode);
+            formData.append('session', sessionId);
+
+            if (mode === 'local') {
+                path = document.getElementById('folderPath').value;
+                if (!path) {
+                    showAlert('Please enter a folder path');
+                    return;
+                }
+                formData.append('path', path);
+            } else {
+                const file = document.getElementById('zipFile').files[0];
+                if (!file) {
+                    showAlert('Please select a ZIP file');
+                    return;
+                }
+                formData.append('zipFile', file);
+            }
+
+            // Add custom rules if provided
+            const customRules = document.getElementById('customRules').files[0];
+            if (customRules) {
+                formData.append('customRules', customRules);
+            }
+
+            // Add email attachment preferences
+            formData.append('attachReports', document.getElementById('attachReports').checked);
+            formData.append('attachInput', document.getElementById('attachInput').checked);
+            formData.append('attachProject', document.getElementById('attachProject').checked);
+
+            document.getElementById('loading').classList.remove('hidden');
+
+            fetch('/apiguard/muleguard/validate', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('loading').classList.add('hidden');
+                    if (data.status === 'success') {
+                        let message;
+
+                        if (data.mode === 'zip') {
+                            // ZIP mode: Show clickable browser link
+                            const reportUrl = `${data.baseUrl}/apiguard/muleguard/reports/${data.sessionId}/CONSOLIDATED-REPORT.html`;
+
+                            message = `<div style="text-align: center;">
+<div style="font-size: 18px; margin-bottom: 20px; color: #28a745; font-weight: bold;">
+✅ Validation Complete!
+</div>
+
+<div style="text-align: left; margin-bottom: 15px;">
+<strong style="color: #663399;">Report Details:</strong>
+</div>
+
+<div style="background: #f9f4ff; padding: 15px; margin: 0 auto 20px auto; max-width: 90%; border: 1px solid #663399; border-radius: 4px;">
+<div style="font-size: 12px; color: #666; margin-bottom: 8px;">Your report is ready!</div>
+<div style="font-size: 13px; color: #333; margin-bottom: 10px;">
+Click the button below to view your validation report in the browser.
+</div>
+</div>
+
+<a href="${reportUrl}" target="_blank" 
+   style="display: inline-block; background: #28a745; color: white; text-decoration: none; padding: 8px 20px; border-radius: 4px; font-size: 14px; margin-bottom: 15px; font-weight: bold;">
+&#128202; View Report
+</a>
+
+<div style="font-size: 12px; color: #999; margin-top: 15px;">
+Redirecting to registration page...
+</div>
+</div>`;
+                        } else {
+                            // Local mode: Show file path with copy button
+                            const normalizedPath = data.reportsPath.replace(/\\/g, '/');
+                            const reportFile = normalizedPath + '/CONSOLIDATED-REPORT.html';
+
+                            message = `<div style="text-align: center;">
+<div style="font-size: 18px; margin-bottom: 20px; color: #28a745; font-weight: bold;">
+✅ Validation Complete!
+</div>
+
+<div style="text-align: left; margin-bottom: 15px;">
+<strong style="color: #663399;">Report Details:</strong>
+</div>
+
+<div style="background: #f9f4ff; padding: 15px; margin: 0 auto 20px auto; max-width: 90%; border: 1px solid #663399; border-radius: 4px;">
+<div style="font-size: 12px; color: #666; margin-bottom: 8px;">Reports generated at:</div>
+<div style="font-family: monospace; font-size: 13px; word-break: break-all; color: #333;">
+${reportFile}
+</div>
+</div>
+
+<button onclick="copyReportPath(event, '${reportFile.replace(/'/g, "\\'")}');" 
+        style="background: #0078d4; color: white; border: none; padding: 6px 16px; border-radius: 4px; cursor: pointer; font-size: 13px; margin-bottom: 15px; display: inline-block;">
+📋 Copy Report Path
+</button>
+
+<div style="font-size: 12px; color: #666; margin-bottom: 15px;">
+Copy the path above and paste it in your file explorer or browser address bar to open the report.
+</div>
+
+<div style="font-size: 12px; color: #999;">
+Redirecting to registration page...
+</div>
+</div>`;
+                        }
+
+                        showAlert(message, true); // true = HTML mode
+                        // Redirect to main page with session after modal closes
+                        window.pendingRedirect = '/apiguard/muleguard/main?session=' + sessionId;
+                    } else {
+                        showAlert('Error: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    showAlert('Error: ' + error.message);
+                    document.getElementById('loading').classList.add('hidden');
+                });
+        }
+    </script>
+
+    <!-- Custom Modal Dialog -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <img src="/apiguard/muleguard/web/logo.svg" alt="🛡️" style="height: 24px; width: auto;"
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';">
+                <span style="display: none; font-size: 20px;">🛡️</span>
+                <span>MuleGuard says</span>
+            </div>
+            <div class="modal-body" id="modalMessage"></div>
+            <div class="modal-footer">
+                <button class="modal-button" onclick="closeModal()">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showAlert(message, isHtml = false) {
+            const modalBody = document.getElementById('modalMessage');
+            if (isHtml) {
+                modalBody.innerHTML = message;
+            } else {
+                modalBody.textContent = message;
+            }
+            document.getElementById('customModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('customModal').style.display = 'none';
+            // Check if we need to redirect after closing
+            if (window.pendingRedirect) {
+                window.location.href = window.pendingRedirect;
+                window.pendingRedirect = null;
+            }
+        }
+
+        function copyReportPath(event, path) {
+            const button = event.target;
+            navigator.clipboard.writeText(path).then(() => {
+                // Change button text temporarily to show success
+                button.textContent = '&#9989; Copied!';
+                setTimeout(() => {
+                    button.textContent = '&#128203; Copy Report Path';
+                }, 2000);
+            }).catch(err => {
+                showAlert('Failed to copy: ' + err.message);
+            });
+        }
+    </script>
+</body>
+
+</html>

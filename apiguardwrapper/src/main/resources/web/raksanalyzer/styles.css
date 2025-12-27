@@ -1,0 +1,19 @@
+/* Page-specific styles for RaksAnalyzer */
+/* Imports the main Raks theme */
+
+/* Additional page-specific styles can be added here */
+h3 {
+    color: #663399;
+    margin-top: 2rem;
+}
+
+/* Email button - change color when email is entered */
+#sendEmail.email-ready {
+    background-color: #663399 !important;
+    color: white !important;
+    border-color: #663399 !important;
+}
+
+#sendEmail.email-ready:hover {
+    background-color: #552288 !important;
+}

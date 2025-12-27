@@ -148,6 +148,13 @@
             <version>${logback.version}</version>
         </dependency>
 
+        <!-- Log4j 2 to SLF4J Adapter (for POI 5.x which uses Log4j 2 API) -->
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-to-slf4j</artifactId>
+            <version>2.22.1</version>
+        </dependency>
+
         <!-- JGit for Git integration -->
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
@@ -209,14 +216,20 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>com.raks.raksanalyzer.Application</mainClass>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer"/>
                             </transformers>
                             <filters>
                                 <filter>
                                     <artifact>*:*</artifact>
                                     <excludes>
+                                        <exclude>module-info.class</exclude>
                                         <exclude>META-INF/*.SF</exclude>
                                         <exclude>META-INF/*.DSA</exclude>
                                         <exclude>META-INF/*.RSA</exclude>
+                                        <exclude>META-INF/LICENSE*</exclude>
+                                        <exclude>META-INF/NOTICE*</exclude>
+                                        <exclude>META-INF/MANIFEST.MF</exclude>
+                                        <exclude>META-INF/DEPENDENCIES</exclude>
                                     </excludes>
                                 </filter>
                             </filters>

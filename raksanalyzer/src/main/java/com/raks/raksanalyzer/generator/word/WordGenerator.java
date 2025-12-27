@@ -186,19 +186,31 @@ public class WordGenerator {
                 }
             }
             
-            // Try to load from classpath
-            InputStream templateStream = getClass().getClassLoader().getResourceAsStream(templatePath);
+            // Strategy 2: Context ClassLoader (Best for Mule/Webapps)
+            ClassLoader ctxLoader = Thread.currentThread().getContextClassLoader();
+            InputStream templateStream = ctxLoader.getResourceAsStream(templatePath);
+            
+            if (templateStream == null) {
+                 // Strategy 3: Class's ClassLoader
+                 templateStream = getClass().getClassLoader().getResourceAsStream(templatePath);
+            }
+
+            if (templateStream == null) {
+                 // Strategy 4: Component Class (absolute path)
+                 templateStream = getClass().getResourceAsStream("/" + templatePath);
+            }
+
             if (templateStream != null) {
-                logger.info("Loading Word template from classpath: {}", templatePath);
+                logger.info("Loaded Word template from classpath: {}", templatePath);
                 return new XWPFDocument(templateStream);
             }
             
             // Fallback to new document
-            logger.warn("Template not found, creating new document: {}", templatePath);
+            logger.warn("Template NOT found in file system or classpath. Path checked: '{}'. Creating empty document.", templatePath);
             return new XWPFDocument();
             
         } catch (Exception e) {
-            logger.warn("Failed to load template, creating new document: {}", e.getMessage());
+            logger.warn("Failed to load template, creating new document. Error: {}", e.getMessage());
             return new XWPFDocument();
         }
     }

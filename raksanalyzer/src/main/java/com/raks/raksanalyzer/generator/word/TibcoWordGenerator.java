@@ -123,11 +123,23 @@ public class TibcoWordGenerator {
         if (useTemplate && Files.exists(Paths.get(templatePath))) {
             try (FileInputStream fis = new FileInputStream(templatePath)) {
                 document = new XWPFDocument(fis);
-                logger.info("Loaded Tibco Word template: {}", templatePath);
+            logger.info("Loaded Tibco Word template from file: {}", templatePath);
             }
         } else {
-            document = new XWPFDocument();
-            logger.info("Created new Tibco Word document (template not found)");
+            // Try to load from classpath
+            InputStream templateStream = getClass().getClassLoader().getResourceAsStream(templatePath);
+            if (templateStream != null) {
+                try {
+                    document = new XWPFDocument(templateStream);
+                    logger.info("Loaded Tibco Word template from classpath: {}", templatePath);
+                } catch (IOException e) {
+                    logger.error("Failed to load template from classpath", e);
+                    document = new XWPFDocument();
+                }
+            } else {
+                document = new XWPFDocument();
+                logger.info("Created new Tibco Word document (template not found: {})", templatePath);
+            }
         }
     }
     

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RaksAnalyzer - Universal Document Generator</title>
+    <link rel="stylesheet" href="assets/css/raks-theme.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="raks-frame">
+        <header class="raks-header" style="display: flex; align-items: center; justify-content: space-between;">
+            <div style="display: flex; align-items: center;">
+                <img src="assets/images/logo.svg" alt="RAKS Logo" class="logo">
+                <h1 id="appTitle" style="margin: 0; margin-left: 10px;">RaksAnalyzer</h1>
+            </div>
+            <a href="guide.html" target="_blank" class="btn-primary" style="text-decoration: none; display: flex; align-items: center; gap: 8px; padding: 10px 20px; font-size: 16px;">
+                <span>📘</span> Guide / Help
+            </a>
+        </header>
+
+        <main class="raks-content">
+            <h2 id="appSubtitle">Universal Document Generation Framework</h2>
+            <p id="appDescription">Analyze and document your Mule, Tibco, and other technology projects</p>
+
+            <form id="analysisForm" enctype="multipart/form-data">
+                <!-- Project Type Selection -->
+                <div class="form-group">
+                    <label for="projectType" id="labelProjectType">Project Technology Type</label>
+                    <select id="projectType" name="projectType" required>
+                        <option value="MULE">Mule 4.x Application</option>
+                        <option value="TIBCO_BW5" selected>Tibco BusinessWorks 5.x</option>
+                        <option value="TIBCO_BW6">Tibco BusinessWorks 6.x</option>
+                        <option value="SPRING_BOOT">Spring Boot Application</option>
+                    </select>
+                </div>
+
+                <!-- Execution Mode -->
+                <div class="form-group">
+                    <label for="executionMode" id="labelExecutionMode">Document Generation Execution Mode</label>
+                    <select id="executionMode" name="executionMode" required>
+                        <option value="FULL">Full (Analyze + Generate Documents)</option>
+                        <option value="ANALYZE_ONLY">Analyze Only (Excel Report)</option>
+                        <option value="GENERATE_ONLY">Generate Only (Word Document)</option>
+                    </select>
+                </div>
+
+                <!-- Environment Selection -->
+                <div class="form-group">
+                    <label for="environmentScope" id="labelEnvironmentScope">Environment Analysis Scope</label>
+                    <select id="environmentScope" name="environmentScope" required>
+                        <option value="ALL">All Environments</option>
+                        <option value="CUSTOM">Select Specific Environments</option>
+                    </select>
+                </div>
+
+                <div id="customEnvs" class="form-group" style="display: none;">
+                    <label id="labelSelectEnvironments">Select Environments</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" name="envs" value="local"> Local</label>
+                        <label><input type="checkbox" name="envs" value="dev"> Development</label>
+                        <label><input type="checkbox" name="envs" value="qa"> QA</label>
+                        <label><input type="checkbox" name="envs" value="uat"> UAT</label>
+                        <label><input type="checkbox" name="envs" value="prod"> Production</label>
+                        <label><input type="checkbox" name="envs" value="dr"> DR (Disaster Recovery)</label>
+                    </div>
+                </div>
+                
+                <!-- Configuration File (Optional) -->
+                <div class="form-group">
+                    <label for="configFile">Configuration File (Optional)</label>
+                    <input type="file" id="configFile" name="configFile" accept=".xml,.properties,.yaml">
+                    <small>Upload environment properties or TIBCO config XML (Max 10MB). Leave empty to use defaults.</small>
+                </div>
+
+                <!-- Input Source -->
+                <div class="form-group">
+                    <label id="labelInputSource">Project Input Source</label>
+                    <div class="radio-group">
+                        <label><input type="radio" name="inputSource" value="folder" checked> Local Folder</label>
+                        <label><input type="radio" name="inputSource" value="zip"> Upload ZIP File</label>
+                        <label><input type="radio" name="inputSource" value="jar"> Upload Archive File (.jar/.ear)</label>
+                        <label><input type="radio" name="inputSource" value="git"> Git Repository</label>
+                    </div>
+                </div>
+
+                <!-- Local Folder -->
+                <div id="folderSection" class="form-group">
+                    <label for="folderPath">Project Folder Path</label>
+                    <input type="text" id="folderPath" name="folderPath" placeholder="C:\projects\my-project">
+                    <small>Enter the full path to your project folder</small>
+                </div>
+
+                <!-- Output Format Selection -->
+                <div class="form-group">
+                    <label>Output Formats</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="generatePdf" name="generatePdf"> 📄 PDF Document (Recommended for large projects)</label>
+                        <label><input type="checkbox" id="generateWord" name="generateWord" checked> 📝 Word Document</label>
+                        <label><input type="checkbox" id="generateExcel" name="generateExcel"> 📊 Excel Spreadsheet</label>
+                    </div>
+                    <small>Select one or more output formats. PDF is recommended to avoid corruption issues with large projects.</small>
+                </div>
+
+                <!-- ZIP File Upload -->
+                <div id="zipSection" class="form-group" style="display: none;">
+                    <label for="zipFile" id="labelProjectFile">Project ZIP File</label>
+                    <input type="file" id="zipFile" name="zipFile" accept=".zip">
+                    <small>Upload your project source code as a ZIP file (Max 500MB)</small>
+                </div>
+
+                <!-- JAR File Upload -->
+                <div id="jarSection" class="form-group" style="display: none;">
+                    <label for="jarFile">Project Archive File</label>
+                    <input type="file" id="jarFile" name="jarFile" accept=".jar,.ear">
+                    <small>Upload your project archive file (.jar or .ear) - Max 500MB</small>
+                </div>
+
+                <!-- Git Repository -->
+                <div id="gitSection" class="form-group" style="display: none;">
+                    <label for="gitUrl">Git Repository URL</label>
+                    <input type="url" id="gitUrl" name="gitUrl" placeholder="https://github.com/user/repo.git">
+                    <label for="gitBranch">Branch (optional)</label>
+                    <input type="text" id="gitBranch" name="gitBranch" placeholder="main">
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" class="btn-primary">Generate Documents</button>
+            </form>
+
+            <!-- Progress Section -->
+            <div id="progressSection" style="display: none;">
+                <h3>Processing...</h3>
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+                <p id="progressMessage">Initializing...</p>
+            </div>
+
+            <!-- Results Section -->
+            <div id="resultsSection" style="display: none;">
+                <h3>✅ Documents Generated Successfully!</h3>
+                <div style="margin-bottom: 20px;">
+                    <span id="outputLocation" style="color: #663399; font-weight: bold;"></span>
+                    <button id="openFolder" class="btn-small" style="margin-left: 10px;">📂 Open Folder</button>
+                </div>
+                
+                <div class="results">
+                    <div id="excelResult" class="result-item" style="display: none;">
+                        <h4>📊 Excel Analysis Report</h4>
+                        <p id="excelFileName" style="font-size: 0.9em; color: #666;"></p>
+                        <div class="button-group">
+                            <button id="openExcel" class="btn-secondary">Open Excel</button>
+                            <a href="#" id="downloadExcel" class="link-small">Download</a>
+                        </div>
+                    </div>
+                    <div id="wordResult" class="result-item" style="display: none;">
+                        <h4>📄 Word Design Document</h4>
+                        <p id="wordFileName" style="font-size: 0.9em; color: #666;"></p>
+                        <div class="button-group">
+                            <button id="openWord" class="btn-secondary">Open Word</button>
+                            <a href="#" id="downloadWord" class="link-small">Download</a>
+                        </div>
+                    </div>
+                    <div id="pdfResult" class="result-item" style="display: none;">
+                        <h4>📑 PDF Document</h4>
+                        <p id="pdfFileName" style="font-size: 0.9em; color: #666;"></p>
+                        <div class="button-group">
+                            <button id="openPdf" class="btn-secondary">Open PDF</button>
+                            <a href="#" id="downloadPdf" class="link-small">Download</a>
+                        </div>
+                    </div>
+                    <div class="result-item">
+                        <h4>📧 Email Documents</h4>
+                        <input type="email" id="emailAddress" placeholder="your@email.com">
+                        <button id="sendEmail" class="btn-secondary">Send via Email</button>
+                    </div>
+                </div>
+                <button id="startAgain" class="btn-primary" style="margin-top: 20px;">🔄 Start Again</button>
+            </div>
+        </main>
+
+        <footer class="raks-footer">
+            <p id="footerText">RaksAnalyzer | Powered by ApiGuard</p>
+        </footer>
+    </div>
+
+    <script src="app.js?v=1.3"></script>
+</body>
+</html>

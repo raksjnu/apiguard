@@ -18,6 +18,13 @@ RaksAnalyzer is a powerful tool designed to reverse-engineer and document middle
 - **Java 17** or higher (Required)
 - Maven 3.8+ (for building from source)
 
+## ⚠️ Important Limitation
+
+**Single Project Per Upload**: The current version processes **one project per upload** (ZIP/EAR/JAR/Git).
+- If your ZIP/EAR contains multiple projects, only the first detected project will be analyzed
+- For local folder analysis, each project is analyzed separately
+- **Future Enhancement**: Multi-project support is planned for the next phase
+
 ## ⚡ Quick Start
 
 ### GUI Mode (Default)

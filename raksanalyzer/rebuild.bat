@@ -23,7 +23,7 @@ echo   Building RaksAnalyzer
 echo ============================================================
 echo.
 
-call mvn clean package -DskipTests
+call mvn clean install -DskipTests
 
 if %ERRORLEVEL% EQU 0 (
     echo.
