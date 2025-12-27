@@ -107,6 +107,8 @@
 			<groupId>com.raks</groupId>
 			<artifactId>raksanalyzer</artifactId>
 			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/raksanalyzer.jar</systemPath>
 			<exclusions>
 				<exclusion>
 					<groupId>ch.qos.logback</groupId>
@@ -134,6 +136,8 @@
 			<groupId>com.raks</groupId>
 			<artifactId>muleguard</artifactId>
 			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/muleguard.jar</systemPath>
 		</dependency>
 	</dependencies>
 

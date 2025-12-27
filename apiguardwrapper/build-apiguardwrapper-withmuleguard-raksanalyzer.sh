@@ -39,6 +39,21 @@ if [ -d "$SCRIPT_DIR/../raksanalyzer" ]; then
         echo "[ERROR] RaksAnalyzer build failed!"
         exit 1
     fi
+    
+    # Copy raksanalyzer JAR to apiguardwrapper/lib
+    echo ""
+    echo "[INFO] Copying raksanalyzer JAR to lib folder..."
+    RAKS_JAR="$HOME/.m2/repository/com/raks/raksanalyzer/1.0.0/raksanalyzer-1.0.0.jar"
+    if [ -f "$RAKS_JAR" ]; then
+        cp "$RAKS_JAR" "$SCRIPT_DIR/lib/raksanalyzer.jar"
+        if [ $? -eq 0 ]; then
+            echo "[INFO] raksanalyzer.jar copied successfully"
+        else
+            echo "[WARN] Failed to copy raksanalyzer JAR"
+        fi
+    else
+        echo "[WARN] raksanalyzer JAR not found in .m2 repository"
+    fi
 else
     echo "[ERROR] RaksAnalyzer project not found at ../raksanalyzer"
     exit 1
@@ -56,6 +71,21 @@ if [ -d "$SCRIPT_DIR/../muleguard" ]; then
         echo ""
         echo "[ERROR] MuleGuard build failed!"
         exit 1
+    fi
+    
+    # Copy muleguard JAR to apiguardwrapper/lib
+    echo ""
+    echo "[INFO] Copying muleguard JAR to lib folder..."
+    MULEGUARD_JAR="$HOME/.m2/repository/com/raks/muleguard/1.0.0/muleguard-1.0.0.jar"
+    if [ -f "$MULEGUARD_JAR" ]; then
+        cp "$MULEGUARD_JAR" "$SCRIPT_DIR/lib/muleguard.jar"
+        if [ $? -eq 0 ]; then
+            echo "[INFO] muleguard.jar copied successfully"
+        else
+            echo "[WARN] Failed to copy muleguard JAR"
+        fi
+    else
+        echo "[WARN] muleguard JAR not found in .m2 repository"
     fi
 else
     echo "[ERROR] MuleGuard project not found at ../muleguard"

@@ -38,17 +38,33 @@ public class SampleResource {
              return Response.status(Response.Status.NOT_FOUND).entity("Sample file not found: " + fileName).build();
         }
 
-        // Load from classpath resources
+        // Load from classpath resources with multiple classloader strategies
+        // This ensures compatibility with both standalone Java and Mule runtime
         String resourcePath = "samples/" + fileName;
         InputStream inputStream = getClass().getClassLoader().getResourceAsStream(resourcePath);
         
+        // Fallback 1: Try thread context classloader (works better in Mule/container environments)
         if (inputStream == null) {
-            logger.error("Sample file not found in resources: {}", resourcePath);
+            logger.debug("Trying thread context classloader for: {}", resourcePath);
+            inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(resourcePath);
+        }
+        
+        // Fallback 2: Try system classloader
+        if (inputStream == null) {
+            logger.debug("Trying system classloader for: {}", resourcePath);
+            inputStream = ClassLoader.getSystemResourceAsStream(resourcePath);
+        }
+        
+        if (inputStream == null) {
+            logger.error("Sample file not found in resources after trying all classloaders: {}", resourcePath);
             return Response.status(Response.Status.NOT_FOUND).entity("Sample resource missing: " + fileName).build();
         }
 
+        // Make final for use in lambda
+        final InputStream finalInputStream = inputStream;
+        
         StreamingOutput fileStream = output -> {
-            try (InputStream is = inputStream) {
+            try (InputStream is = finalInputStream) {
                 byte[] buffer = new byte[8192];
                 int bytesRead;
                 while ((bytesRead = is.read(buffer)) != -1) {

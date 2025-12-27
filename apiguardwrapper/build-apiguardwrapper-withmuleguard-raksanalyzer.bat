@@ -44,6 +44,21 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
         pause
         exit /b 1
     )
+    
+    REM Copy raksanalyzer JAR to apiguardwrapper/lib
+    echo.
+    echo [INFO] Copying raksanalyzer JAR to lib folder...
+    set "RAKS_JAR=%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar"
+    if exist "%RAKS_JAR%" (
+        copy /Y "%RAKS_JAR%" "%SCRIPT_DIR%lib\raksanalyzer.jar" >nul
+        if errorlevel 1 (
+            echo [WARN] Failed to copy raksanalyzer JAR
+        ) else (
+            echo [INFO] raksanalyzer.jar copied successfully
+        )
+    ) else (
+        echo [WARN] raksanalyzer JAR not found in .m2 repository
+    )
 ) else (
     echo [ERROR] RaksAnalyzer project not found at ..\raksanalyzer
     pause
@@ -63,6 +78,21 @@ if exist "%SCRIPT_DIR%..\muleguard" (
         echo [ERROR] MuleGuard build failed!
         pause
         exit /b 1
+    )
+    
+    REM Copy muleguard JAR to apiguardwrapper/lib
+    echo.
+    echo [INFO] Copying muleguard JAR to lib folder...
+    set "MULEGUARD_JAR=%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar"
+    if exist "%MULEGUARD_JAR%" (
+        copy /Y "%MULEGUARD_JAR%" "%SCRIPT_DIR%lib\muleguard.jar" >nul
+        if errorlevel 1 (
+            echo [WARN] Failed to copy muleguard JAR
+        ) else (
+            echo [INFO] muleguard.jar copied successfully
+        )
+    ) else (
+        echo [WARN] muleguard JAR not found in .m2 repository
     )
 ) else (
     echo [ERROR] MuleGuard project not found at ..\muleguard
