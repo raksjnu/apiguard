@@ -35,11 +35,15 @@ public class RuleConfig {
         private String content;
         private int score;
         private String description;
+        private String extractionRegex;
+        private String contentRegex;
 
         public String getFile() { return file; }
         public String getContent() { return content; }
         public int getScore() { return score; }
         public String getDescription() { return description; }
+        public String getExtractionRegex() { return extractionRegex; }
+        public String getContentRegex() { return contentRegex; }
     }
     
     public static class MetadataRule {
@@ -47,10 +51,12 @@ public class RuleConfig {
         private String file;        // e.g. "pom.xml"
         private String content;     // e.g. "spring-security"
         private String value;       // e.g. "Implemented"
+        private boolean caseInsensitive = true; // Default to case-insensitive
         
         public String getCategory() { return category; }
         public String getFile() { return file; }
         public String getContent() { return content; }
         public String getValue() { return value; }
+        public boolean isCaseInsensitive() { return caseInsensitive; }
     }
 }

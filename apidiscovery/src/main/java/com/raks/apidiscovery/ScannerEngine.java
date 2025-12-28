@@ -107,8 +107,15 @@ public class ScannerEngine {
                         } else {
                             try {
                                 String fileContent = Files.readString(path);
-                                if (fileContent.contains(contentToFind)) {
-                                    found = true;
+                                // Case-insensitive matching
+                                if (rule.isCaseInsensitive()) {
+                                    if (fileContent.toLowerCase().contains(contentToFind.toLowerCase())) {
+                                        found = true;
+                                    }
+                                } else {
+                                    if (fileContent.contains(contentToFind)) {
+                                        found = true;
+                                    }
                                 }
                             } catch (IOException e) { /* ignore */ }
                         }
@@ -122,13 +129,27 @@ public class ScannerEngine {
                     String existing = report.getMetadata().get(rule.getCategory());
                     if (existing == null) {
                         report.addMetadata(rule.getCategory(), rule.getValue());
-                    } else {
+                    } else if (!existing.contains(rule.getValue())) {
+                         // Avoid duplicate values
                         report.addMetadata(rule.getCategory(), existing + ", " + rule.getValue());
                     }
                 }
             }
+            
+            // Post-scan: Fill in missing categories with Defaults
+            ensureMetadataPresent(report, "Logging", "Best Practices Followed (No prohibited patterns found)");
+            ensureMetadataPresent(report, "Documentation", "None Detected");
+            ensureMetadataPresent(report, "Security", "No Specific Framework Detected");
+            ensureMetadataPresent(report, "PII Risk", "None Detected (Safe)");
+            
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+    
+    private void ensureMetadataPresent(DiscoveryReport report, String category, String defaultValue) {
+        if (!report.getMetadata().containsKey(category)) {
+            report.addMetadata(category, defaultValue);
         }
     }
 }

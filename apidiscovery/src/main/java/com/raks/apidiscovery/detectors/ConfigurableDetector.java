@@ -21,25 +21,36 @@ public class ConfigurableDetector implements ApiDetector {
     @Override
     public boolean scan(File repoRoot, DiscoveryReport report) {
         // 1. Check Project Markers (Is this the right tech?)
-        boolean matchesTech = false;
+        boolean matchesTech = true;
         
-        for (RuleConfig.Marker marker : rule.getProjectMarkers()) {
-            if (checkFileExistsAndContains(repoRoot, marker.getFile(), marker.getContent())) {
-                matchesTech = true;
-                report.setTechnology(rule.getTechnology());
-                String proof = "Found " + marker.getFile();
-                if (marker.getContent() != null && !marker.getContent().isEmpty()) {
-                    proof += " containing '" + marker.getContent() + "'";
-                }
-                report.addEvidence(proof);
-                break; // One marker is enough to identify the tech
-            }
-        }
-
-        if (!matchesTech) {
+        if (rule.getProjectMarkers() == null || rule.getProjectMarkers().isEmpty()) {
             return false;
         }
 
+        // Strict "AND" logic: ALL markers must be present
+        for (RuleConfig.Marker marker : rule.getProjectMarkers()) {
+            if (!checkFileExistsAndContains(repoRoot, marker.getFile(), marker.getContent())) {
+                matchesTech = false;
+                break;
+            }
+        }
+
+        if (matchesTech) {
+            report.setTechnology(rule.getTechnology());
+            StringBuilder proof = new StringBuilder("Identified by presence of: ");
+            for (RuleConfig.Marker m : rule.getProjectMarkers()) {
+                proof.append(m.getFile());
+                if (m.getContent() != null && !m.getContent().isEmpty()) {
+                    proof.append(" (contains '").append(m.getContent()).append("')");
+                }
+                proof.append(", ");
+            }
+            if (proof.length() > 2) proof.setLength(proof.length() - 2);
+            report.addEvidence(proof.toString());
+        } else {
+            return false;
+        }
+        
         // 2. Scan for API Indicators (Score it)
         try (Stream<Path> paths = Files.walk(repoRoot.toPath())) {
             List<Path> allFiles = paths.filter(Files::isRegularFile).toList();

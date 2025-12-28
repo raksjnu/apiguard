@@ -12,7 +12,6 @@ http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/fil
 http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
 http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
 
-	<!-- Flow: API Discovery Config - Return default configuration -->
 	<flow name="apidiscovery-config-flow">
 		<http:listener path="/apidiscovery/api/config" config-ref="HTTP_Listener_config" allowedMethods="GET">
 			<http:response>
@@ -33,14 +32,13 @@ output application/json
 		</ee:transform>
 	</flow>
 
-	<!-- Flow: API Discovery Root - Serve index.html directly -->
 	<flow name="apidiscovery-root-flow">
 		<http:listener path="/apidiscovery" config-ref="HTTP_Listener_config" allowedMethods="GET">
 			<http:response>
 				<http:headers><![CDATA[#[
                     {
                         "Content-Type": "text/html",
-                        "Cache-Control": "public, max-age=3600"
+                        "Cache-Control": "no-cache, no-store, must-revalidate"
                     }
                 ]]]></http:headers>
 			</http:response>
@@ -49,14 +47,13 @@ output application/json
 		<file:read doc:name="Read API Discovery Index" path="${apidiscovery.web.dir}/index.html" config-ref="File_Config"/>
 	</flow>
 
-	<!-- Flow: Serve API Discovery UI and Static Resources -->
 	<flow name="apidiscovery-ui-flow">
 		<http:listener path="/apidiscovery/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
 			<http:response>
 				<http:headers><![CDATA[#[
                     {
                         "Content-Type": vars.mimeType default "text/html",
-                        "Cache-Control": "public, max-age=3600"
+                        "Cache-Control": "no-cache, no-store, must-revalidate"
                     }
                 ]]]></http:headers>
 			</http:response>
@@ -64,7 +61,6 @@ output application/json
 		
 		<set-variable variableName="resourcePath" value="#[attributes.relativePath replace '/apidiscovery/' with '']"/>
 		
-		<!-- Determine MIME type -->
         <set-variable variableName="mimeType" value="#[
             if (vars.resourcePath endsWith '.css') 'text/css'
             else if (vars.resourcePath endsWith '.js') 'application/javascript'
@@ -75,20 +71,21 @@ output application/json
 		
 		<choice>
 			<when expression="#[vars.resourcePath startsWith 'api/']">
-				<!-- API endpoint - route to appropriate flow -->
 				<logger level="INFO" message="#['API call detected: ' ++ vars.resourcePath]"/>
 				<set-payload value='{"error": "Use specific API endpoints"}'/>
 			</when>
 			<when expression="#[vars.resourcePath == '' or vars.resourcePath == 'index.html']">
 				<file:read path="${apidiscovery.web.dir}/index.html" config-ref="File_Config"/>
 			</when>
+            <when expression="#[vars.resourcePath == 'rules-config.json']">
+                 <file:read path="${apidiscovery.web.dir}/rules-config.json" config-ref="File_Config"/>
+            </when>
 			<otherwise>
 				<file:read path="#[p('apidiscovery.web.dir') ++ '/' ++ vars.resourcePath]" config-ref="File_Config"/>
 			</otherwise>
 		</choice>
 	</flow>
 
-	<!-- API Flow: Start Scan -->
 	<flow name="apidiscovery-api-scan-flow">
 		<http:listener path="/apidiscovery/api/scan" config-ref="HTTP_Listener_config" allowedMethods="POST">
 			<http:response>
@@ -152,7 +149,6 @@ output application/json
 		</error-handler>
 	</flow>
 
-	<!-- API Flow: Get Progress -->
 	<flow name="apidiscovery-api-progress-flow">
 		<http:listener path="/apidiscovery/api/progress" config-ref="HTTP_Listener_config" allowedMethods="GET">
 			<http:response>
@@ -185,7 +181,6 @@ output application/json
 		</ee:transform>
 	</flow>
 
-	<!-- API Flow: List Scans -->
 	<flow name="apidiscovery-api-list-flow">
 		<http:listener path="/apidiscovery/api/scans/list" config-ref="HTTP_Listener_config" allowedMethods="GET">
 			<http:response>
@@ -210,7 +205,6 @@ payload]]></ee:set-payload>
 		</ee:transform>
 	</flow>
 
-	<!-- API Flow: Delete Scan -->
 	<flow name="apidiscovery-api-delete-flow">
 		<http:listener path="/apidiscovery/api/scans/delete" config-ref="HTTP_Listener_config" allowedMethods="POST">
 			<http:response>
@@ -223,16 +217,14 @@ payload]]></ee:set-payload>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
-payload]]></ee:set-payload>
+(payload.folders default []) map ((item) -> item as String)]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		
-		<set-variable variableName="scanName" value="#[payload.scanName]"/>
-		
 		<java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" 
-			method="deleteScan(String,String)">
+			method="deleteScans(java.util.List,String)">
 			<java:args>#[{
-				arg0: vars.scanName,
+				arg0: payload,
 				arg1: p('apidiscovery.temp.dir')
 			}]</java:args>
 		</java:invoke-static>
@@ -242,14 +234,11 @@ payload]]></ee:set-payload>
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/json
 ---
-{
-	success: payload
-}]]></ee:set-payload>
+payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</flow>
 
-	<!-- API Flow: View Scan -->
 	<flow name="apidiscovery-api-view-flow">
 		<http:listener path="/apidiscovery/api/scans/view" config-ref="HTTP_Listener_config" allowedMethods="GET">
 			<http:response>

@@ -35,7 +35,7 @@ echo [1/2] Building ^& Packaging API Discovery...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\apidiscovery" (
     cd /d "%SCRIPT_DIR%..\apidiscovery"
-    call mvn clean package -DskipTests
+    call mvn clean install -DskipTests
     
     if errorlevel 1 (
         echo.

@@ -29,7 +29,7 @@ public class GitLabUploader {
              // Fallback for running from target dir
              testDataDir = new File("../test-data/gitlab-simulated-group");
              if (!testDataDir.exists()) {
-                 testDataDir = new File("C:\\raks\\apiguard\\apidiscovery\\test-data\\gitlab-simulated-group");
+                 testDataDir = new File(System.getProperty("java.io.tmpdir"), "gitlab-simulated-group");
              }
         }
         

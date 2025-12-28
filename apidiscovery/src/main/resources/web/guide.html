@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Discovery Guide - RAKS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #663399;
+            --secondary-color: #f4f6f8;
+            --text-color: #333;
+            --border-color: #e0e0e0;
+            --sidebar-width: 300px;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            color: var(--text-color);
+        }
+
+        /* Header (Matching Tool) */
+        header {
+            background-color: #5a2d82;
+            color: white;
+            padding: 0.5rem 2rem;
+            display: flex;
+            justify-content: space-between; /* Match tool layout */
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            height: 60px;
+            box-sizing: border-box;
+        }
+
+        .main-container {
+            display: flex;
+            margin-top: 60px; /* Offset for header */
+            height: calc(100vh - 60px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: #f9fafb;
+            border-right: 1px solid var(--border-color);
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .sidebar h3 {
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            color: #888;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar li {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+            color: #555;
+            font-weight: 500;
+        }
+
+        .sidebar li:hover {
+            background-color: #eef2ff;
+            color: var(--primary-color);
+        }
+
+        .sidebar li.active {
+            background-color: #eef2ff;
+            color: var(--primary-color);
+            border-left: 3px solid var(--primary-color);
+        }
+
+        /* Content Area */
+        .content {
+            flex: 1;
+            padding: 3rem 4rem;
+            overflow-y: auto;
+            background-color: white;
+        }
+
+        pre {
+            background: #f8f9fa;
+            color: #2c3e50;
+            padding: 1.5rem;
+            border-radius: 6px;
+            overflow-x: auto;
+            border: 1px solid #e9ecef;
+            border-left: 4px solid var(--primary-color);
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .rule-card {
+            background: #fff;
+            border: 1px solid var(--border-color);
+            border-top: 4px solid var(--primary-color); /* Purple top border */
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+
+        .rule-card h2 {
+            margin-top: 0;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 1rem;
+            color: var(--primary-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+            border: 1px solid #eee;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.75rem;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: var(--primary-color);
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .loading {
+             text-align: center;
+             padding: 4rem;
+             color: #666;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <img src="/apiguard/apidiscovery/assets/logo.svg" alt="RAKS Logo" style="height: 40px; background: white; padding: 2px; border-radius: 4px;">
+            <div>
+                <div style="font-size: 1.5rem; font-weight: bold;">API Discovery Rules</div>
+                <div style="font-size: 0.8rem; opacity: 0.9;">Configuration Reference</div>
+            </div>
+        </div>
+        <div>
+           <a href="/apiguard/apidiscovery/index.html" style="color:white; text-decoration:none; opacity:0.8;">&larr; Back to Tool</a>
+        </div>
+    </header>
+
+    <div class="main-container">
+        <!-- Sidebar -->
+        <div class="sidebar" id="sidebar">
+            <div class="loading">Loading Rules...</div>
+        </div>
+
+        <!-- Content -->
+        <div class="content" id="content">
+             <div style="text-align: center; margin-top: 5rem; color: #888;">
+                 <h3>Select a Rule Category from the sidebar to view details.</h3>
+                 <p>This information is dynamically loaded from <code>rules-config.json</code></p>
+             </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+             fetch('rules-config.json')
+                .then(response => response.json())
+                .then(config => {
+                    renderSidebar(config);
+                })
+                .catch(err => {
+                    document.getElementById('sidebar').innerHTML = `<div style="color:red; padding:1rem;">Error loading rules config: ${err.message}</div>`;
+                });
+        });
+
+        function renderSidebar(config) {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.innerHTML = ''; // Clear loading
+
+            // 1. Technologies Section
+            const techHeader = document.createElement('h3');
+            techHeader.innerText = "Technology Detection Rules";
+            sidebar.appendChild(techHeader);
+
+            const techList = document.createElement('ul');
+            config.rules.forEach((rule, index) => {
+                const li = document.createElement('li');
+                li.innerText = rule.technology;
+                li.onclick = () => showTechnologyDetails(rule, li);
+                techList.appendChild(li);
+            });
+            sidebar.appendChild(techList);
+
+            // 2. Governance & Metadata Section
+            const govHeader = document.createElement('h3');
+            govHeader.innerText = "Governance & Risk Checks";
+            sidebar.appendChild(govHeader);
+
+            const govList = document.createElement('ul');
+            const categories = [...new Set(config.metadata_rules.map(r => r.category))].sort();
+            
+            categories.forEach(cat => {
+                 const li = document.createElement('li');
+                 li.innerText = cat;
+                 li.onclick = () => showGovernanceDetails(cat, config.metadata_rules, li);
+                 govList.appendChild(li);
+            });
+            sidebar.appendChild(govList);
+        }
+
+        function setActive(element) {
+            document.querySelectorAll('.sidebar li').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+        }
+
+        function showTechnologyDetails(rule, element) {
+            setActive(element);
+            const content = document.getElementById('content');
+            
+            // Build HTML for Indicators
+            let indicatorsHtml = rule.api_indicators.map(ind => `
+                <tr>
+                    <td><code>${ind.file}</code></td>
+                    <td>${ind.content || ind.content_regex || '(Content Check)'}</td>
+                    <td>${ind.description}</td>
+                    <td><span class="badge" style="background:${ind.score > 50 ? '#d1fae5' : '#f3f4f6'}">${ind.score} pts</span></td>
+                </tr>
+            `).join('');
+
+             content.innerHTML = `
+                <div class="rule-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>${rule.technology}</h2>
+                        <span class="tag tag-tech">Technology Detection</span>
+                    </div>
+                    
+                    <p>Rules used to identify <strong>${rule.technology}</strong> projects in the repository.</p>
+
+                    <h3>📂 Project Markers</h3>
+                    <ul>
+                        ${rule.project_markers.map(m => `<li>File <code>${m.file}</code> contains <code>${m.content || '(Any Content)'}</code></li>`).join('')}
+                    </ul>
+
+                    <h3>🔍 API Indicators</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>File Pattern</th>
+                                <th>Match Content</th>
+                                <th>Description</th>
+                                <th>Score</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${indicatorsHtml}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="rule-card">
+                    <h3>JSON Configuration</h3>
+                    <pre>${JSON.stringify(rule, null, 2)}</pre>
+                </div>
+            `;
+        }
+
+        function showGovernanceDetails(category, allRules, element) {
+            setActive(element);
+            const content = document.getElementById('content');
+            const rules = allRules.filter(r => r.category === category);
+            
+            let tagClass = 'tag-gov';
+            if (category.includes('Risk')) tagClass = 'tag-risk';
+
+            let rows = rules.map(rule => `
+                <tr>
+                    <td><code>${rule.file}</code></td>
+                    <td>${rule.content || rule.contentRegex || '(Existence Check)'}</td>
+                    <td><strong>${rule.value}</strong></td>
+                    <td>${rule.caseInsensitive ? 'Yes' : 'No'}</td>
+                </tr>
+            `).join('');
+
+            content.innerHTML = `
+                <div class="rule-card">
+                     <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>${category}</h2>
+                        <span class="tag ${tagClass}">${category}</span>
+                    </div>
+                    <p>These rules check for compliance, security risks, or documentation standards.</p>
+
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Target File</th>
+                                <th>Search Pattern</th>
+                                <th>Finding Description</th>
+                                <th>Case Insensitive</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rows}
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="rule-card">
+                    <h3>JSON Configuration</h3>
+                    <pre>${JSON.stringify(rules, null, 2)}</pre>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

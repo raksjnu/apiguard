@@ -14,6 +14,7 @@
             --success-color: #28a745;
             --warning-color: #ffc107;
             --danger-color: #dc3545;
+            --header-bg: #5a2d82;
         }
 
         body {
@@ -25,13 +26,19 @@
         }
 
         header {
-            background-color: var(--primary-color);
+            background-color: var(--header-bg);
             color: white;
-            padding: 1rem 2rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            width: 100%;
+        }
+
+        .header-inner {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0.5rem 1rem;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         .container {
@@ -163,8 +170,19 @@
 </head>
 <body>
     <header>
-        <div style="font-size: 1.5rem; font-weight: bold;">API Discovery Tool</div>
-        <div>v1.0</div>
+        <div class="header-inner">
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <img src="/apiguard/apidiscovery/assets/logo.svg" alt="RAKS Logo" style="height: 40px; background: white; padding: 2px; border-radius: 4px;">
+                <div>
+                    <div style="font-size: 1.5rem; font-weight: bold;">API Discovery Tool</div>
+                </div>
+            </div>
+            <div>
+                <a href="/apiguard/apidiscovery/guide.html" target="_blank" style="background-color: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;">
+                    <span>📘</span> Guide / Help
+                </a>
+            </div>
+        </div>
     </header>
 
     <div class="container">
@@ -176,7 +194,7 @@
             </p>
             <div class="form-group">
                 <label for="scanSource">Source (Local Path or GitLab URL)</label>
-                <input type="text" id="scanSource" placeholder="e.g. C:\raks\workspace OR https://gitlab.com/raks-group" value="https://gitlab.com/raks-group">
+                <input type="text" id="scanSource" placeholder="e.g. C:\raks\workspace OR https://gitlab.com/raks-group" value="https://gitlab.com/raks-group" style="width: 100%; box-sizing: border-box;">
             </div>
             <div class="form-group">
                 <label for="accessToken">GitLab Access Token (Optional for Local)</label>
@@ -294,7 +312,7 @@
                         // Reload scan list
                         loadPreviousScans();
                         document.getElementById('loadingModal').style.display = 'none';
-                        alert("Scan completed! Check 'All Scans' tab to view results.");
+                        alert("Scan completed! Check 'Manage Previous Scans' section below to view results.");
                     }
                 }, 1000);
                 
@@ -355,38 +373,41 @@
                 `;
                 tbody.appendChild(row);
 
-                // Details Row
+                // Detail Row
                 const detailRow = document.createElement('tr');
                 detailRow.id = `detail-${index}`;
-                detailRow.className = 'details-row';
-                
-                // Format Metadata
-                let qualityHtml = '';
-                if (repo.metadata && Object.keys(repo.metadata).length > 0) {
-                    qualityHtml = '<strong>Metadata Scanning Results:</strong><ul style="list-style-type: square; color: #444;">';
-                    for (const [key, value] of Object.entries(repo.metadata)) {
-                        let color = 'black';
-                        if (key.includes('Risk') || key.includes('PII')) color = 'red';
-                        if (key.includes('Security')) color = 'green';
-                        qualityHtml += `<li><strong style="color:${color}">${key}:</strong> ${value}</li>`;
-                    }
-                    qualityHtml += '</ul>';
-                } else {
-                    qualityHtml = '<p>No specific metadata found.</p>';
-                }
+                detailRow.style.display = 'none';
 
                 detailRow.innerHTML = `
                     <td colspan="5">
                         <div class="details-content">
-                            <div style="display:flex; gap: 2rem;">
-                                <div style="flex:1">
-                                    <strong>API Identification Evidence:</strong>
-                                    <ul>${repo.evidence.map(e => `<li>${e}</li>`).join('')}</ul>
-                                    <strong>Capabilities Detected:</strong>
-                                     <ul>${repo.indicators.length > 0 ? repo.indicators.map(i => `<li>${i}</li>`).join('') : '<li>No API signatures found</li>'}</ul>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                                <!-- Column 1: Evidence & Capabilities -->
+                                <div>
+                                    <h4 style="margin-top:0; color: var(--primary-color);">🔍 Identification & Capabilities</h4>
+                                    <strong>Evidence:</strong>
+                                    <ul style="margin-top:0.5rem; padding-left:1.2rem;">${repo.evidence.map(e => `<li>${e}</li>`).join('')}</ul>
+                                    <strong>Capabilities:</strong>
+                                     <ul style="margin-top:0.5rem; padding-left:1.2rem;">${repo.indicators.length > 0 ? repo.indicators.map(i => `<li>${i}</li>`).join('') : '<li>No API signatures found</li>'}</ul>
                                 </div>
-                                <div style="flex:1; border-left: 1px solid #ccc; padding-left: 1rem;">
-                                    ${qualityHtml}
+
+                                <!-- Column 2: Governance Dashboard -->
+                                <div>
+                                    <h4 style="margin-top:0; color: var(--primary-color);">⚖️ Governance Standards</h4>
+                                    <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #eee;">
+                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Standards', 'RESTful Architecture')}
+                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Documentation', 'API Documentation')}
+                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Gateway', 'API Gateway Managed')}
+                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Security', 'Security Enforcement')}
+                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Versioning', 'Semantic Versioning')}
+                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Logging', 'Centralized Logging')}
+                                    </div>
+                                </div>
+
+                                <!-- Column 3: Other Metadata -->
+                                <div>
+                                    <h4 style="margin-top:0; color: var(--primary-color);">📋 Risk & Settings</h4>
+                                    ${renderOtherMetadata(repo.metadata)}
                                 </div>
                             </div>
                         </div>
@@ -400,6 +421,40 @@
             document.getElementById('identifiedApis').innerText = apiCount;
             document.getElementById('avgConfidence').innerText = data.length > 0 ? Math.round(totalScore / data.length) + '%' : '0%';
         }
+        
+        function renderGovernanceCheck(metadata, key, label) {
+            const exists = metadata && metadata[key];
+            const statusIcon = exists ? '✅' : '❌';
+            const statusColor = exists ? 'green' : '#dc3545';
+            const statusText = exists ? metadata[key] : 'Not Detected';
+            
+            return `
+                <div style="margin-bottom: 0.75rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 0.5rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem;">
+                        <span style="font-weight:600; color:#444;">${label}</span>
+                        <span style="font-size:1.2rem;">${statusIcon}</span>
+                    </div>
+                    <div style="font-size:0.85rem; color:${statusColor};">${statusText}</div>
+                </div>
+            `;
+        }
+
+        function renderOtherMetadata(metadata) {
+            if (!metadata || Object.keys(metadata).length === 0) return '<p>No data.</p>';
+            
+            let html = '<ul style="padding-left:1.2rem;">';
+            for (const [key, value] of Object.entries(metadata)) {
+                if (key.startsWith('Governance:')) continue; // Skip governance items as they are in the middle column
+                
+                let color = '#333';
+                if (key.includes('Risk') && !value.includes('Safe')) color = '#dc3545'; // Red for Risk
+                if (value.includes('Safe') || value.includes('Best Practice')) color = '#28a745'; // Green for Safe
+                
+                html += `<li style="margin-bottom:0.5rem;"><strong>${key}:</strong> <span style="color:${color}">${value}</span></li>`;
+            }
+            html += '</ul>';
+            return html;
+        }
 
         function toggleDetails(index) {
             const row = document.getElementById(`detail-${index}`);
@@ -412,6 +467,12 @@
 
         async function loadPreviousScans() {
             try {
+                // Show loading modal
+                document.getElementById('loadingTitle').innerText = "Loading Scans...";
+                document.getElementById('loadingMessage').innerText = "Fetching previous scan results...";
+                document.getElementById('progressBar').style.display = 'none'; // Hide progress bar for simple load
+                document.getElementById('loadingModal').style.display = 'flex';
+
                 const response = await fetch('/apiguard/apidiscovery/api/scans/list');
                 const scans = await response.json();
                 
@@ -425,7 +486,15 @@
                 let html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
                 scans.forEach(scan => {
                     const date = new Date(scan.lastModified);
-                    const dateStr = date.toLocaleString();
+                    const dateStr = date.toLocaleString('en-US', { 
+                        year: 'numeric', 
+                        month: 'numeric', 
+                        day: 'numeric', 
+                        hour: 'numeric', 
+                        minute: 'numeric', 
+                        second: 'numeric',
+                        timeZoneName: 'short' 
+                    });
                     html += `
                         <label style="display: flex; align-items: center; padding: 0.5rem; border: 1px solid #eee; border-radius: 4px; background: #f9f9f9;">
                             <input type="checkbox" value="${scan.name}" style="margin-right: 0.75rem;">
@@ -441,6 +510,10 @@
                 container.innerHTML = html;
             } catch (error) {
                 alert('Failed to load scans: ' + error.message);
+            } finally {
+                // Hide modal
+                document.getElementById('loadingModal').style.display = 'none';
+                document.getElementById('progressBar').style.display = 'block'; // Reset for scans
             }
         }
 

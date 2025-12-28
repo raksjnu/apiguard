@@ -117,6 +117,26 @@ public class ApiDiscoveryService {
         
         return false;
     }
+
+    public static java.util.Map<String, java.util.List<String>> deleteScans(java.util.List<String> scanNames, String tempDir) {
+        java.util.Map<String, java.util.List<String>> result = new java.util.HashMap<>();
+        java.util.List<String> deleted = new java.util.ArrayList<>();
+        java.util.List<String> failed = new java.util.ArrayList<>();
+        
+        if (scanNames != null) {
+            for (String scanName : scanNames) {
+                if (deleteScan(scanName, tempDir)) {
+                    deleted.add(scanName);
+                } else {
+                    failed.add(scanName);
+                }
+            }
+        }
+        
+        result.put("deleted", deleted);
+        result.put("failed", failed);
+        return result;
+    }
     
     /**
      * View scan results
