@@ -1,11 +1,10 @@
 @echo off
 REM ===================================================================
-REM ApiGuard Wrapper - Complete Dependency Build Script
+REM ApiGuard Wrapper - Build Script with RaksAnalyzer Only
 REM ===================================================================
 REM This script:
 REM 1. Builds and Installs RaksAnalyzer (Dependency)
-REM 2. Builds and Installs MuleGuard (Dependency)
-REM 3. Builds the ApiGuardWrapper Mule application
+REM 2. Builds the ApiGuardWrapper Mule application
 REM ===================================================================
 
 setlocal
@@ -27,12 +26,12 @@ REM --------------------------
 
 echo.
 echo ============================================================
-echo   ApiGuard Wrapper - Full Dependency Build
+echo   ApiGuard Wrapper - Build with RaksAnalyzer Only
 echo ============================================================
 echo.
 
 REM Step 1: Build & Install RaksAnalyzer
-echo [1/3] Building ^& Installing RaksAnalyzer...
+echo [1/2] Building ^& Installing RaksAnalyzer...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\raksanalyzer" (
     cd /d "%SCRIPT_DIR%..\raksanalyzer"
@@ -55,34 +54,9 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
     exit /b 1
 )
 
-REM Step 2: Build & Install MuleGuard
+REM Step 2: Build ApiGuardWrapper
 echo.
-echo [2/3] Building ^& Installing MuleGuard...
-echo ============================================================
-if exist "%SCRIPT_DIR%..\muleguard" (
-    cd /d "%SCRIPT_DIR%..\muleguard"
-    call mvn clean install -DskipTests
-    
-    if errorlevel 1 (
-        echo.
-        echo [ERROR] MuleGuard build failed!
-        pause
-        exit /b 1
-    )
-    
-    REM Copy muleguard JAR to apiguardwrapper/lib
-    echo.
-    echo [INFO] Copying muleguard JAR to lib folder...
-    cmd /c "if exist "%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar" (xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1 && echo [INFO] muleguard-1.0.0.jar copied successfully || echo [WARN] Failed to copy muleguard JAR) else (echo [WARN] muleguard JAR not found in .m2 repository)"
-) else (
-    echo [ERROR] MuleGuard project not found at ..\muleguard
-    pause
-    exit /b 1
-)
-
-REM Step 3: Build ApiGuardWrapper
-echo.
-echo [3/3] Building ApiGuardWrapper...
+echo [2/2] Building ApiGuardWrapper...
 echo ============================================================
 cd /d "%SCRIPT_DIR%"
 call mvn clean package -DskipTests
