@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raks API Discovery Tool</title>
+    <style>
+        :root {
+            --primary-color: #6B3FA0; /* Raks Purple */
+            --secondary-color: #8A4EBC;
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-color: #333;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 0;
+            color: var(--text-color);
+        }
+
+        header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            margin-bottom: 2rem;
+            border: 3px solid #7b2cbf;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border-top: 4px solid var(--primary-color);
+            border: 3px solid #7b2cbf;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 0.5rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .badge-api { background-color: #d4edda; color: #155724; }
+        .badge-batch { background-color: #fff3cd; color: #856404; }
+        .badge-lib { background-color: #e2e3e5; color: #383d41; }
+
+        .score-high { color: var(--success-color); font-weight: bold; }
+        .score-med { color: var(--warning-color); font-weight: bold; }
+        .score-low { color: #999; font-weight: bold; }
+
+        .details-row {
+            background-color: #f8f9fa;
+            display: none;
+        }
+
+        .details-content {
+            padding: 1rem;
+            margin-left: 1rem;
+            border-left: 3px solid var(--primary-color);
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div style="font-size: 1.5rem; font-weight: bold;">API Discovery Tool</div>
+        <div>v1.0</div>
+    </header>
+
+    <div class="container">
+        <!-- Input Section -->
+        <div class="card">
+            <h2>🔍 Smart Discovery Scan</h2>
+            <p style="color: #666; margin-bottom: 1rem;">
+                Enter a local directory path OR a GitLab URL. We'll verify and scan it automatically.
+            </p>
+            <div class="form-group">
+                <label for="scanSource">Source (Local Path or GitLab URL)</label>
+                <input type="text" id="scanSource" placeholder="e.g. C:\raks\workspace OR https://gitlab.com/raks-group" value="https://gitlab.com/raks-group">
+            </div>
+            <div class="form-group">
+                <label for="accessToken">GitLab Access Token (Optional for Local)</label>
+                <input type="password" id="accessToken" placeholder="glpat-...">
+            </div>
+            <button onclick="runSmartScan()">🚀 Start Discovery</button>
+        </div>
+
+        <!-- Manage Previous Scans Section -->
+        <div class="card">
+            <h2>📁 Manage Previous Scans</h2>
+            <p style="color: #666; margin-bottom: 1rem;">
+                View and manage previously scanned results. Select scans to delete or keep for comparison.
+            </p>
+            <div style="margin-bottom: 1rem;">
+                <button onclick="loadPreviousScans()" style="background-color: #6c757d;">🔄 Refresh List</button>
+                <button onclick="deleteSelectedScans()" style="background-color: #dc3545; margin-left: 0.5rem;">🗑️ Delete Selected</button>
+            </div>
+            <div id="scanListContainer" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 1rem;">
+                <p style="color: #999; text-align: center;">Click "Refresh List" to load previous scans</p>
+            </div>
+        </div>
+
+        <!-- Loading Modal Popup -->
+        <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
+            <div style="background: white; padding: 2rem 3rem; border-radius: 12px; text-align: center; min-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
+                <div class="spinner" style="margin: 0 auto 1rem;"></div>
+                <h3 id="loadingTitle" style="margin-bottom: 0.5rem; color: #333;">Scanning repositories...</h3>
+                <p id="loadingMessage" style="color: #666; margin-bottom: 1rem;">Please wait, this may take a minute.</p>
+                <div style="background: #e0e0e0; border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 0.5rem;">
+                    <div id="progressBar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s;"></div>
+                </div>
+                <p id="progressPercent" style="font-weight: bold; color: var(--primary-color);">0%</p>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div id="resultsArea" style="display: none;">
+            <div style="margin-bottom: 1rem; padding: 0.75rem; background: #f0f0f0; border-radius: 4px;">
+                <span id="scanFolderName" style="color: #333; font-weight: bold; font-size: 1.2rem;"></span>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalRepos">0</div>
+                    <div class="stat-label">Total Repositories</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="identifiedApis">0</div>
+                    <div class="stat-label">Identified APIs</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgConfidence">0%</div>
+                    <div class="stat-label">Avg Confidence</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Discovery Results</h2>
+                <table id="resultsTable">
+                    <thead>
+                        <tr>
+                            <th>Repository</th>
+                            <th>Technology</th>
+                            <th>Classification</th>
+                            <th>Confidence</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be added here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentScanId = null;
+        
+        async function runSmartScan() {
+            const source = document.getElementById('scanSource').value;
+            const token = document.getElementById('accessToken').value;
+            
+            if (!source) {
+                alert("Please enter a Source path or URL.");
+                return;
+            }
+            
+            document.getElementById('loadingModal').style.display = 'flex';
+            document.getElementById('resultsArea').style.display = 'none';
+
+            try {
+                // Call Java Backend (POST)
+                const response = await fetch('/apiguard/apidiscovery/api/scan', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ source: source, token: token })
+                });
+                
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert("Scan Error: " + data.error);
+                    document.getElementById('loadingModal').style.display = 'none';
+                    return;
+                }
+                
+                // Store scan ID and start progress polling
+                currentScanId = data.scanId;
+                const progressInterval = setInterval(async () => {
+                    const progress = await checkProgress();
+                    if (progress && progress.complete) {
+                        clearInterval(progressInterval);
+                        // Reload scan list
+                        loadPreviousScans();
+                        document.getElementById('loadingModal').style.display = 'none';
+                        alert("Scan completed! Check 'All Scans' tab to view results.");
+                    }
+                }, 1000);
+                
+            } catch (error) {
+                alert("Network/Server Error: " + error);
+                document.getElementById('loadingModal').style.display = 'none';
+            }
+        }
+        
+        async function checkProgress() {
+            try {
+                const response = await fetch('/apiguard/apidiscovery/api/progress?scanId=' + currentScanId);
+                const progress = await response.json();
+                
+                if (progress.message) {
+                    document.getElementById('loadingMessage').textContent = progress.message;
+                }
+                if (progress.percent !== undefined) {
+                    document.getElementById('progressBar').style.width = progress.percent + '%';
+                    document.getElementById('progressPercent').textContent = progress.percent + '%';
+                }
+                
+                return progress;
+            } catch (error) {
+                // Ignore errors during progress polling
+                return null;
+            }
+        }
+
+        function renderResults(data) {
+            const tbody = document.querySelector('#resultsTable tbody');
+            tbody.innerHTML = '';
+
+            let apiCount = 0;
+            let totalScore = 0;
+            
+            data.forEach((repo, index) => {
+                if(repo.classification === 'API Service') apiCount++;
+                totalScore += repo.confidenceScore;
+
+                // Main Row
+                const row = document.createElement('tr');
+                
+                let badgeClass = 'badge-lib';
+                if(repo.classification === 'API Service') badgeClass = 'badge-api';
+                if(repo.classification.includes('Batch')) badgeClass = 'badge-batch';
+                
+                let scoreClass = 'score-low';
+                if(repo.confidenceScore >= 70) scoreClass = 'score-high';
+                else if(repo.confidenceScore > 0) scoreClass = 'score-med';
+
+                row.innerHTML = `
+                    <td><strong>${repo.repoName}</strong><br><small style="color:#666">${repo.repoPath}</small></td>
+                    <td>${repo.technology}</td>
+                    <td><span class="badge ${badgeClass}">${repo.classification}</span></td>
+                    <td class="${scoreClass}">${repo.confidenceScore}%</td>
+                    <td><button style="padding:0.25rem 0.5rem; font-size:0.8rem;" onclick="toggleDetails(${index})">Details</button></td>
+                `;
+                tbody.appendChild(row);
+
+                // Details Row
+                const detailRow = document.createElement('tr');
+                detailRow.id = `detail-${index}`;
+                detailRow.className = 'details-row';
+                
+                // Format Metadata
+                let qualityHtml = '';
+                if (repo.metadata && Object.keys(repo.metadata).length > 0) {
+                    qualityHtml = '<strong>Metadata Scanning Results:</strong><ul style="list-style-type: square; color: #444;">';
+                    for (const [key, value] of Object.entries(repo.metadata)) {
+                        let color = 'black';
+                        if (key.includes('Risk') || key.includes('PII')) color = 'red';
+                        if (key.includes('Security')) color = 'green';
+                        qualityHtml += `<li><strong style="color:${color}">${key}:</strong> ${value}</li>`;
+                    }
+                    qualityHtml += '</ul>';
+                } else {
+                    qualityHtml = '<p>No specific metadata found.</p>';
+                }
+
+                detailRow.innerHTML = `
+                    <td colspan="5">
+                        <div class="details-content">
+                            <div style="display:flex; gap: 2rem;">
+                                <div style="flex:1">
+                                    <strong>API Identification Evidence:</strong>
+                                    <ul>${repo.evidence.map(e => `<li>${e}</li>`).join('')}</ul>
+                                    <strong>Capabilities Detected:</strong>
+                                     <ul>${repo.indicators.length > 0 ? repo.indicators.map(i => `<li>${i}</li>`).join('') : '<li>No API signatures found</li>'}</ul>
+                                </div>
+                                <div style="flex:1; border-left: 1px solid #ccc; padding-left: 1rem;">
+                                    ${qualityHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(detailRow);
+            });
+
+            // Update Stats
+            document.getElementById('totalRepos').innerText = data.length;
+            document.getElementById('identifiedApis').innerText = apiCount;
+            document.getElementById('avgConfidence').innerText = data.length > 0 ? Math.round(totalScore / data.length) + '%' : '0%';
+        }
+
+        function toggleDetails(index) {
+            const row = document.getElementById(`detail-${index}`);
+            if (row.style.display === 'table-row') {
+                row.style.display = 'none';
+            } else {
+                row.style.display = 'table-row';
+            }
+        }
+
+        async function loadPreviousScans() {
+            try {
+                const response = await fetch('/apiguard/apidiscovery/api/scans/list');
+                const scans = await response.json();
+                
+                const container = document.getElementById('scanListContainer');
+                
+                if (scans.length === 0) {
+                    container.innerHTML = '<p style="color: #999; text-align: center;">No previous scans found</p>';
+                    return;
+                }
+                
+                let html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
+                scans.forEach(scan => {
+                    const date = new Date(scan.lastModified);
+                    const dateStr = date.toLocaleString();
+                    html += `
+                        <label style="display: flex; align-items: center; padding: 0.5rem; border: 1px solid #eee; border-radius: 4px; background: #f9f9f9;">
+                            <input type="checkbox" value="${scan.name}" style="margin-right: 0.75rem;">
+                            <div style="flex: 1;">
+                                <strong>${scan.name}</strong><br>
+                                <small style="color: #666;">${dateStr}</small>
+                            </div>
+                            <button onclick="viewScanResults('${scan.name}'); event.stopPropagation();" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color);">👁️ View Results</button>
+                        </label>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (error) {
+                alert('Failed to load scans: ' + error.message);
+            }
+        }
+
+        async function deleteSelectedScans() {
+            const checkboxes = document.querySelectorAll('#scanListContainer input[type="checkbox"]:checked');
+            const selectedFolders = Array.from(checkboxes).map(cb => cb.value);
+            
+            if (selectedFolders.length === 0) {
+                alert('Please select at least one scan to delete');
+                return;
+            }
+            
+            if (!confirm(`Are you sure you want to delete ${selectedFolders.length} scan(s)?\n\n${selectedFolders.join('\n')}\n\nThis action cannot be undone.`)) {
+                return;
+            }
+            
+            try {
+                const response = await fetch('/apiguard/apidiscovery/api/scans/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ folders: selectedFolders })
+                });
+                
+                const result = await response.json();
+                
+                if (result.deleted.length > 0) {
+                    alert(`Successfully deleted ${result.deleted.length} scan(s)`);
+                }
+                if (result.failed.length > 0) {
+                    alert(`Failed to delete ${result.failed.length} scan(s): ${result.failed.join(', ')}`);
+                }
+                
+                // Reload the list
+                loadPreviousScans();
+            } catch (error) {
+                alert('Failed to delete scans: ' + error.message);
+            }
+        }
+
+        async function viewScanResults(scanName) {
+            try {
+                document.getElementById('loadingModal').style.display = 'flex';
+                document.getElementById('resultsArea').style.display = 'none';
+                
+                const response = await fetch('/apiguard/apidiscovery/api/scans/view?scanName=' + encodeURIComponent(scanName));
+                const data = await response.json();
+                
+                if (data.error) {
+                    alert('Error loading scan: ' + data.error);
+                    document.getElementById('loadingModal').style.display = 'none';
+                    return;
+                }
+                
+                // Handle new response format
+                const reports = data.reports || data;
+                const actualScanName = data.scanFolder || scanName;
+                
+                // Display scan folder name
+                document.getElementById('scanFolderName').textContent = '📁 Scan: ' + actualScanName;
+                
+                // Display results using existing renderResults function
+                renderResults(reports);
+                document.getElementById('resultsArea').style.display = 'block';
+                document.getElementById('loadingModal').style.display = 'none';
+                
+                // Scroll to results
+                document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                alert('Failed to load scan results: ' + error.message);
+                document.getElementById('loadingModal').style.display = 'none';
+            }
+        }
+        
+        // Load configuration on page load
+        window.addEventListener('DOMContentLoaded', async function() {
+            console.log('[API Discovery] Loading configuration...');
+            try {
+                const response = await fetch('/apiguard/apidiscovery/api/config');
+                if (!response.ok) {
+                    console.error('[API Discovery] Config fetch failed:', response.status);
+                    return;
+                }
+                const config = await response.json();
+                console.log('[API Discovery] Config loaded:', config);
+                
+                // Populate default values
+                const sourceField = document.getElementById('scanSource');
+                const tokenField = document.getElementById('accessToken');
+                
+                if (config.defaultGroup && sourceField) {
+                    sourceField.value = config.defaultGroup;
+                    console.log('[API Discovery] Set default group:', config.defaultGroup);
+                }
+                if (config.defaultToken && tokenField) {
+                    tokenField.value = config.defaultToken;
+                    console.log('[API Discovery] Set default token (length):', config.defaultToken.length);
+                }
+            } catch (error) {
+                console.error('[API Discovery] Failed to load config:', error);
+                // Continue without defaults
+            }
+        });
+    </script>
+</body>
+</html>

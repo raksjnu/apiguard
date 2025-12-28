@@ -132,7 +132,8 @@
             { name: "{{tool.2.name}}", desc: "{{tool.2.description}}", url: "{{tool.2.url}}", enabled: "{{tool.2.enabled}}" },
             { name: "{{tool.3.name}}", desc: "{{tool.3.description}}", url: "{{tool.3.url}}", enabled: "{{tool.3.enabled}}" },
             { name: "{{tool.4.name}}", desc: "{{tool.4.description}}", url: "{{tool.4.url}}", enabled: "{{tool.4.enabled}}" },
-            { name: "{{tool.5.name}}", desc: "{{tool.5.description}}", url: "{{tool.5.url}}", enabled: "{{tool.5.enabled}}" }
+            { name: "{{tool.5.name}}", desc: "{{tool.5.description}}", url: "{{tool.5.url}}", enabled: "{{tool.5.enabled}}" },
+            { name: "{{tool.6.name}}", desc: "{{tool.6.description}}", url: "{{tool.6.url}}", enabled: "{{tool.6.enabled}}" }
         ];
 
         const grid = document.getElementById('tool-grid');
@@ -146,11 +147,12 @@
                 card.style.cursor = 'pointer';
                 card.onclick = function(e) {
                     e.preventDefault();
-                    alert('🚧 ' + tool.name + ' is not enabled yet.\n\nThis tool is currently under development and will be available in a future release.');
+                    alert('🚧 ' + tool.name + ' is not enabled yet.\\n\\nThis tool is currently under development and will be available in a future release.');
                     return false;
                 };
             } else {
                 card.href = tool.url;
+                // Always open in new tab
                 card.target = "_blank";
             }
             

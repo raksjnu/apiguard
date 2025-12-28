@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+
+	<!-- Flow: Startup - Initialize API Discovery Server in Background -->
+	<flow name="apidiscovery-startup-flow" initialState="started">
+		<scheduler doc:name="Scheduler">
+			<scheduling-strategy>
+				<fixed-frequency frequency="1" timeUnit="DAYS" startDelay="2"/>
+			</scheduling-strategy>
+		</scheduler>
+		
+		<logger level="INFO" message="Starting API Discovery Server on port ${apidiscovery.server.port}"/>
+		
+		<!-- Start API Discovery Server using non-blocking starter -->
+		<try doc:name="Try">
+			<java:invoke-static doc:name="Start API Discovery Server" 
+				class="com.raks.apidiscovery.ApiDiscoveryServerStarter" 
+				method="startServer()"/>
+			<error-handler>
+				<on-error-continue enableNotifications="true" logException="true">
+					<logger level="ERROR" message="Failed to start API Discovery server: #[error.description]"/>
+				</on-error-continue>
+			</error-handler>
+		</try>
+		
+		<logger level="INFO" message="API Discovery Server startup completed"/>
+	</flow>
+
+	<!-- Flow: Root Path - Serve index.html directly -->
+	<flow name="apidiscovery-root-flow">
+		<http:listener path="/" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+		
+		<logger level="INFO" message="Serving API Discovery root page"/>
+		
+		<!-- Proxy to API Discovery server for index.html -->
+		<http:request method="GET" 
+			url="http://localhost:${apidiscovery.server.port}/"
+			config-ref="API_Discovery_Request_Config"/>
+	</flow>
+
+	<!-- Flow: Proxy all requests to API Discovery Server -->
+	<flow name="apidiscovery-proxy-flow">
+		<http:listener path="/*" config-ref="HTTP_Listener_config" allowedMethods="GET,POST,PUT,DELETE"/>
+		
+		<logger level="DEBUG" message="#['Proxying request: ' ++ attributes.requestPath]"/>
+		
+		<!-- Proxy to API Discovery server -->
+		<http:request method="#[attributes.method]" 
+			url="#['http://localhost:${apidiscovery.server.port}' ++ attributes.requestPath ++ (if (attributes.queryString != null) '?' ++ attributes.queryString else '')]"
+			config-ref="API_Discovery_Request_Config">
+			<http:body><![CDATA[#[payload]]]></http:body>
+			<http:headers><![CDATA[#[attributes.headers]]]></http:headers>
+		</http:request>
+	</flow>
+	
+	<!-- HTTP Request Config for API Discovery -->
+	<http:request-config name="API_Discovery_Request_Config" doc:name="API Discovery Request Config">
+		<http:request-connection host="localhost" port="${apidiscovery.server.port}"/>
+	</http:request-config>
+
+</mule>
+

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:soapkit="http://www.mulesoft.org/schema/mule/soapkit" xmlns="http://www.mulesoft.org/schema/mule/core">
+    <soapkit:config name="Soap_Kit_config" wsdlLocation="service.wsdl" inboundValidationEnabled="true"/>
+    <flow name="api-main">
+        <http:listener path="/soap/service" config-ref="HTTP_Listener_config"/>
+        <soapkit:router config-ref="Soap_Kit_config"/>
+    </flow>
+</mule>

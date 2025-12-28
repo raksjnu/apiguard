@@ -1,0 +1,42 @@
+{
+  "rules": [
+    {
+      "technology": "MuleSoft 4",
+      "project_markers": [
+        { "file": "pom.xml", "content": "mule-maven-plugin" },
+        { "file": "mule-artifact.json", "content": "" } 
+      ],
+      "api_indicators": [
+        { "file": "*.xml", "content": "http:listener", "score": 100, "description": "HTTP Listener found" },
+        { "file": "*.xml", "content": "apikit:router", "score": 100, "description": "APIKit Router found" },
+        { "file": "*.xml", "content": "soapkit:router", "score": 100, "description": "SOAPKit Router found" },
+        { "file": "*.xml", "content": "batch:job", "score": 0, "description": "Batch Job detected" },
+        { "file": "*.xml", "content": "jms:listener", "score": 0, "description": "JMS Listener detected" }
+      ]
+    },
+    {
+      "technology": "Spring Boot",
+      "project_markers": [
+        { "file": "pom.xml", "content": "spring-boot-starter-web" },
+        { "file": "build.gradle", "content": "spring-boot-starter-web" }
+      ],
+      "api_indicators": [
+        { "file": "*.java", "content": "@RestController", "score": 100, "description": "Spring RestController found" },
+        { "file": "pom.xml", "content": "springdoc", "score": 20, "description": "OpenAPI/Swagger Dependency" },
+        { "file": "*.java", "content": "@Scheduled", "score": 0, "description": "Scheduled Task detected" }
+      ]
+    },
+    { "technology": "Tibco BW 5", "project_markers": [ { "file": "*.archive", "content": "" } ], "api_indicators": [ { "file": "*.archive", "content": "transport_http", "score": 100, "description": "HTTP Transport" } ] },
+    { "technology": "Python Flask", "project_markers": [ { "file": "requirements.txt", "content": "flask" } ], "api_indicators": [ { "file": "*.py", "content": "@app.route", "score": 100, "description": "Flask Route" } ] }
+  ],
+  "metadata_rules": [
+    { "category": "Documentation", "file": "README.md", "content": "", "value": "Present" },
+    { "category": "Security", "file": "pom.xml", "content": "spring-security", "value": "Spring Security Configured" },
+    { "category": "Security", "file": "pom.xml", "content": "mule-secure-configuration-property", "value": "Mule Secure Properties Configured" },
+    { "category": "Logging", "file": "*.xml", "content": "Log4j2", "value": "Log4j2 Configured" },
+    { "category": "Logging", "file": "*.java", "content": "System.out.println", "value": "Plain Text Logging (Bad Practice)" },
+    { "category": "PII Risk", "file": "*.java", "content": "ssn", "value": "Potential PII (SSN) in Code" },
+    { "category": "PII Risk", "file": "*.xml", "content": "password", "value": "Hardcoded Password Risk" },
+    { "category": "Scaffolding", "file": ".gitignore", "content": "", "value": "Git Ignore Present" }
+  ]
+}
