@@ -7,6 +7,8 @@ import com.raks.apidiscovery.model.DiscoveryReport;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 
+import org.eclipse.jgit.util.FS;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -52,6 +54,15 @@ public class GitLabConnector {
             // Create temp directory for cloning
             File tempCloneDir = new File(System.getProperty("java.io.tmpdir"), "apidiscovery_clone_" + System.currentTimeMillis());
             tempCloneDir.mkdirs();
+            
+            // FIX: Set JGit User Home to temp directory to avoid permission errors on CloudHub
+            // CloudHub /usr/src/app/.config is often read-only or non-existent for the user
+            try {
+                FS.DETECTED.setUserHome(tempCloneDir);
+                System.out.println("[GitLab] Set JGit User Home to: " + tempCloneDir.getAbsolutePath());
+            } catch (Exception e) {
+                System.err.println("[GitLab] Failed to set JGit User Home: " + e.getMessage());
+            }
             
             try {
                 for (GitLabProject p : projects) {
