@@ -6,11 +6,16 @@
 	xmlns:file="http://www.mulesoft.org/schema/mule/file"
 	xmlns:java="http://www.mulesoft.org/schema/mule/java"
 	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:os="http://www.mulesoft.org/schema/mule/os"
+    xmlns:email="http://www.mulesoft.org/schema/mule/email"
+
 	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
 http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
 http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
 http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
-http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/email http://www.mulesoft.org/schema/mule/email/current/mule-email.xsd">
 
 	<flow name="apidiscovery-config-flow">
 		<http:listener path="/apidiscovery/api/config" config-ref="HTTP_Listener_config" allowedMethods="GET">
@@ -38,8 +43,9 @@ output application/json
 				<http:headers><![CDATA[#[
                     {
                         "Content-Type": "text/html",
-                        "Cache-Control": "no-cache, no-store, must-revalidate"
-                    }
+                        "Cache-Control": "no-cache, no-store, must-revalidate",
+                        "Set-Cookie": if (attributes.queryParams.session != null) "APIGUARD_SESSION=" ++ attributes.queryParams.session ++ "; Path=/; HttpOnly" else null
+                    } filterObject ($ != null)
                 ]]]></http:headers>
 			</http:response>
 		</http:listener>
@@ -119,6 +125,28 @@ payload]]></ee:set-payload>
 		</java:invoke-static>
 		
 		<set-variable variableName="scanId" value="#[payload]"/>
+		
+		<!-- Retrieve Scan Folder Name (e.g., Scan_20251228_154510) for Email -->
+		<java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="getProgress(String)" target="scanProgress">
+			<java:args>#[{
+				arg0: vars.scanId
+			}]</java:args>
+		</java:invoke-static>
+		<set-variable variableName="scanName" value="#[vars.scanProgress.scanFolder]"/>
+		
+        <!-- Trigger Async Email Notification -->
+        <async>
+             <logger level="INFO" message="#['[DEBUG] Checking API Discovery email config. apidiscovery.email.enabled: ' ++ p('apidiscovery.email.enabled')]"/>
+             <choice>
+                <when expression="#[p('apidiscovery.email.enabled') == 'true']">
+                    <logger level="INFO" message="[DEBUG] Email enabled. Invoking notification flow."/>
+                    <flow-ref name="apidiscovery-send-notification-flow"/>
+                </when>
+                <otherwise>
+                    <logger level="INFO" message="[DEBUG] API Discovery email notification disabled or property not matching 'true'"/>
+                </otherwise>
+             </choice>
+        </async>
 		
 		<ee:transform>
 			<ee:message>
@@ -265,5 +293,108 @@ payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 	</flow>
+
+    <!-- NEW: API Discovery Email Notification Flow -->
+    <flow name="apidiscovery-send-notification-flow">
+        <!-- Input vars: scanId, source, group, token(length) -->
+        
+        <!-- Try to get session from Cookie if not explicitly passed -->
+        <set-variable variableName="cookieSessionId" value="#[if (attributes.headers['cookie'] != null) (attributes.headers['cookie'] scan /APIGUARD_SESSION=([^;]+)/)[0][1] else null]"/>
+        <set-variable variableName="sessionId" value="#[vars.sessionId default vars.cookieSessionId default 'UNKNOWN']"/>
+        
+        <choice>
+            <when expression="#[vars.sessionId != 'UNKNOWN']">
+                <os:retrieve key="#[vars.sessionId]" objectStore="User_Session_Store" target="sessionData">
+                    <os:default-value><![CDATA[#[{
+                        name: 'Unknown User',
+                        email: 'N/A',
+                        company: 'N/A'
+                    }]]]></os:default-value>
+                </os:retrieve>
+            </when>
+            <otherwise>
+                <logger level="WARN" message="[DEBUG] No session ID found in variables or cookies. Using default unknown user."/>
+                <set-variable variableName="sessionData" value="#[{
+                    name: 'Unknown User',
+                    email: 'N/A',
+                    company: 'N/A'
+                }]"/>
+            </otherwise>
+        </choice>
+        
+        <!-- Use vars.scanName (Scan_YYYYMMDD...) if available, otherwise fallback to vars.scanId -->
+        <set-variable variableName="displayScanId" value="#[vars.scanName default vars.scanId]"/>
+        
+        <logger level="INFO" message="#['Sending API Discovery notification for scan: ' ++ vars.displayScanId ++ ' User: ' ++ vars.sessionData.name]"/>
+        
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+"<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+        .container { max-width: 700px; margin: 20px auto; background: white; }
+        .header { background: #663399; color: white; padding: 25px; text-align: center; }
+        .section { margin: 0; padding: 20px; border-bottom: 1px solid #e0e0e0; }
+        .label { font-weight: bold; color: #663399; width: 180px; display: inline-block; }
+        table { border-collapse: collapse; width: 100%; margin-top: 10px; }
+        td { padding: 10px 5px; border-bottom: 1px solid #f0f0f0; }
+        .footer { background: #f9f9f9; padding: 15px; text-align: center; font-size: 12px; color: #666; }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2 style='margin: 0;'>🔍 API Discovery Scan Started</h2>
+        </div>
+        
+        <div class='section'>
+            <h3 style='color: #663399; margin-top: 0;'>👤 User Information</h3>
+            <table>
+                <tr><td class='label'>Name:</td><td>" ++ vars.sessionData.name ++ "</td></tr>
+                <tr><td class='label'>Email:</td><td>" ++ vars.sessionData.email ++ "</td></tr>
+                <tr><td class='label'>Company:</td><td>" ++ vars.sessionData.company ++ "</td></tr>
+            </table>
+        </div>
+        
+        <div class='section'>
+            <h3 style='color: #663399; margin-top: 0;'>📦 Scan Details</h3>
+            <table>
+                <tr><td class='label'>Scan ID:</td><td><code>" ++ vars.displayScanId ++ "</code></td></tr>
+                <tr><td class='label'>Source:</td><td>" ++ vars.source ++ "</td></tr>
+                <tr><td class='label'>GitLab Group:</td><td>" ++ (if (vars.group != null and vars.group != '') vars.group else 'N/A') ++ "</td></tr>
+                <tr><td class='label'>Start Time:</td><td>" ++ now() as String {format: "yyyy-MM-dd HH:mm:ss z"} ++ "</td></tr>
+            </table>
+        </div>
+        
+        <div class='footer'>
+            <p style='margin: 0;'>This is an automated notification from API Discovery Tool</p>
+            <p style='margin: 5px 0 0 0;'>© 2025 RAKS - API Governance Suite</p>
+        </div>
+    </div>
+</body>
+</html>"]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <try>
+            <email:send config-ref="Email_SMTP" 
+                        subject="#['${apidiscovery.email.subject}' ++ ' - ' ++ vars.displayScanId]"
+                        toAddresses="#[p('notification.email.to') splitBy ',']"
+                        fromAddress="ApiDiscovery &lt;${notification.email.from}&gt;">
+                <email:body contentType="text/html">
+                    <email:content>#[payload]</email:content>
+                </email:body>
+            </email:send>
+            <error-handler>
+                <on-error-continue>
+                    <logger level="WARN" message="#['Failed to send API Discovery email: ' ++ error.description]"/>
+                </on-error-continue>
+            </error-handler>
+        </try>
+    </flow>
 
 </mule>
