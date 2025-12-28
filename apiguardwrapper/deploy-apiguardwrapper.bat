@@ -8,11 +8,14 @@ set "PREFERRED_JAVA_HOME=C:\Program Files\Java\jdk-17"
 if exist "%PREFERRED_JAVA_HOME%" (
     set "JAVA_HOME=%PREFERRED_JAVA_HOME%"
     set "PATH=%JAVA_HOME%\bin;%PATH%"
-    echo [INFO] Using Preferred JDK 17 at: %JAVA_HOME%
 ) else (
     echo [WARN] Preferred JDK 17 not found at: %PREFERRED_JAVA_HOME%
     echo [INFO] Falling back to system JAVA_HOME: %JAVA_HOME%
 )
+REM --------------------------
+
+REM --- Mule Runtime Configuration ---
+set "PREFERRED_MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.1"
 REM --------------------------
 
 REM ===================================================================
@@ -23,12 +26,17 @@ REM Configure the JAR file path
 set "JAR_PATH=%~dp0target\apiguardwrapper-1.0.0-mule-application.jar"
 set "APP_NAME=apiguardwrapper.jar"
 
-REM Configure Mule Runtime location (Relative to script location)
-REM If you need a different location, set MULE_RUNTIME_HOME environment variable
+REM Configure Mule Runtime location
+REM Priority: 1) MULE_RUNTIME_HOME env var, 2) PREFERRED_MULE_HOME, 3) Relative path
 if defined MULE_RUNTIME_HOME (
     set "MULE_HOME=%MULE_RUNTIME_HOME%"
+    echo [INFO] Using MULE_RUNTIME_HOME: %MULE_HOME%
+) else if exist "%PREFERRED_MULE_HOME%" (
+    set "MULE_HOME=%PREFERRED_MULE_HOME%"
+    echo [INFO] Using Preferred Mule Runtime at: %MULE_HOME%
 ) else (
     set "MULE_HOME=%~dp0..\mule-enterprise-standalone-4.10.1"
+    echo [INFO] Using relative Mule Runtime at: %MULE_HOME%
 )
 
 set "MULE_APPS=%MULE_HOME%\apps"

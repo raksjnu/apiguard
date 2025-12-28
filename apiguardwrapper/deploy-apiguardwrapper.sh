@@ -16,16 +16,25 @@ if [ -d "$PREFERRED_JAVA_HOME" ]; then
 fi
 # --------------------------
 
+# --- Mule Runtime Configuration ---
+PREFERRED_MULE_HOME="C:/raks/mule-enterprise-standalone-4.10.1"
+# --------------------------
+
 # Configure the JAR file path
 JAR_PATH="$SCRIPT_DIR/target/apiguardwrapper-1.0.0-mule-application.jar"
 APP_NAME="apiguardwrapper.jar"
 
-# Configure Mule Runtime location (Relative to script location)
-# If you need a different location, set MULE_RUNTIME_HOME environment variable
+# Configure Mule Runtime location
+# Priority: 1) MULE_RUNTIME_HOME env var, 2) PREFERRED_MULE_HOME, 3) Relative path
 if [ -n "$MULE_RUNTIME_HOME" ]; then
     MULE_HOME="$MULE_RUNTIME_HOME"
+    echo "[INFO] Using MULE_RUNTIME_HOME: $MULE_HOME"
+elif [ -d "$PREFERRED_MULE_HOME" ]; then
+    MULE_HOME="$PREFERRED_MULE_HOME"
+    echo "[INFO] Using Preferred Mule Runtime at: $MULE_HOME"
 else
     MULE_HOME="$SCRIPT_DIR/../mule-enterprise-standalone-4.10.1"
+    echo "[INFO] Using relative Mule Runtime at: $MULE_HOME"
 fi
 
 MULE_APPS="$MULE_HOME/apps"
