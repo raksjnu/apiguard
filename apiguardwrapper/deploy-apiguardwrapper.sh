@@ -20,14 +20,12 @@ fi
 JAR_PATH="$SCRIPT_DIR/target/apiguardwrapper-1.0.0-mule-application.jar"
 APP_NAME="apiguardwrapper.jar"
 
-# Configure Mule Runtime location (Relative first, then absolute fallback)
-# Note: Using mixed path separators can be tricky in Git Bash, but we try standard relative.
-MULE_HOME="$SCRIPT_DIR/../mule/mule-enterprise-standalone-4.10.1"
-
-# Check if it exists
-if [ ! -d "$MULE_HOME" ]; then
-    # Fallback absolute
-    MULE_HOME="C:/raks/mule-enterprise-standalone-4.10.1"
+# Configure Mule Runtime location (Relative to script location)
+# If you need a different location, set MULE_RUNTIME_HOME environment variable
+if [ -n "$MULE_RUNTIME_HOME" ]; then
+    MULE_HOME="$MULE_RUNTIME_HOME"
+else
+    MULE_HOME="$SCRIPT_DIR/../mule-enterprise-standalone-4.10.1"
 fi
 
 MULE_APPS="$MULE_HOME/apps"

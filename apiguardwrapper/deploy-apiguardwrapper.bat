@@ -23,9 +23,13 @@ REM Configure the JAR file path
 set "JAR_PATH=%~dp0target\apiguardwrapper-1.0.0-mule-application.jar"
 set "APP_NAME=apiguardwrapper.jar"
 
-REM Configure Mule Runtime location (Relative first, then absolute fallback)
-set "MULE_HOME=%~dp0..\mule\mule-enterprise-standalone-4.10.1"
-if not exist "%MULE_HOME%" set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.1"
+REM Configure Mule Runtime location (Relative to script location)
+REM If you need a different location, set MULE_RUNTIME_HOME environment variable
+if defined MULE_RUNTIME_HOME (
+    set "MULE_HOME=%MULE_RUNTIME_HOME%"
+) else (
+    set "MULE_HOME=%~dp0..\mule-enterprise-standalone-4.10.1"
+)
 
 set "MULE_APPS=%MULE_HOME%\apps"
 
