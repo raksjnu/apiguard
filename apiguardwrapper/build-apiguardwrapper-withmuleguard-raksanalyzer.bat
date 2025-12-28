@@ -50,7 +50,7 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
     echo [INFO] Copying raksanalyzer JAR to lib folder...
     set "RAKS_JAR=%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar"
     if exist "%RAKS_JAR%" (
-        copy /Y "%RAKS_JAR%" "%SCRIPT_DIR%lib\raksanalyzer.jar" >nul
+        powershell -Command "Copy-Item '%RAKS_JAR%' '%SCRIPT_DIR%lib\raksanalyzer.jar' -Force" >nul 2>&1
         if errorlevel 1 (
             echo [WARN] Failed to copy raksanalyzer JAR
         ) else (
@@ -85,7 +85,7 @@ if exist "%SCRIPT_DIR%..\muleguard" (
     echo [INFO] Copying muleguard JAR to lib folder...
     set "MULEGUARD_JAR=%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar"
     if exist "%MULEGUARD_JAR%" (
-        copy /Y "%MULEGUARD_JAR%" "%SCRIPT_DIR%lib\muleguard.jar" >nul
+        powershell -Command "Copy-Item '%MULEGUARD_JAR%' '%SCRIPT_DIR%lib\muleguard.jar' -Force" >nul 2>&1
         if errorlevel 1 (
             echo [WARN] Failed to copy muleguard JAR
         ) else (
