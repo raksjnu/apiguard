@@ -8,6 +8,7 @@ document.addEventListener('DOMContentLoaded', function() {
     loadConfiguration();
     loadDynamicLabels();
     initConfiguration();
+    handleUrlParameters(); // Handle ?type=mule or ?type=tibco from portal tiles
 });
 
 let currentExcelPath = null;
@@ -21,21 +22,45 @@ async function initConfiguration() {
         if (response.ok) {
             const config = await response.json();
             
-            // Apply Local Input Configuration
+            // Apply Local Input Configuration - disable instead of hide
             if (config.localInputEnabled === false) {
                 const localOption = document.querySelector('input[name="inputSource"][value="folder"]');
-                const localLabel = localOption.parentElement;
+                const gitOption = document.querySelector('input[name="inputSource"][value="git"]');
                 
-                // Hide option
-                localLabel.style.display = 'none';
+                // Disable local folder option
+                if (localOption) {
+                    localOption.disabled = true;
+                    const localLabel = localOption.parentElement;
+                    localLabel.style.opacity = '0.5';
+                    localLabel.style.cursor = 'not-allowed';
+                    localLabel.title = 'Local folder input is only available in standalone mode';
+                }
                 
-                // If it was checked, switch to ZIP
-                if (localOption.checked) {
+                // Disable git option
+                if (gitOption) {
+                    gitOption.disabled = true;
+                    const gitLabel = gitOption.parentElement;
+                    gitLabel.style.opacity = '0.5';
+                    gitLabel.style.cursor = 'not-allowed';
+                    gitLabel.title = 'Git repository input is only available in standalone mode';
+                }
+                
+                // If local was checked, switch to ZIP
+                if (localOption && localOption.checked) {
                     localOption.checked = false;
                     const zipOption = document.querySelector('input[name="inputSource"][value="zip"]');
                     if (zipOption) {
                         zipOption.checked = true;
-                        // Trigger change event to update UI
+                        zipOption.dispatchEvent(new Event('change'));
+                    }
+                }
+                
+                // If git was checked, switch to ZIP
+                if (gitOption && gitOption.checked) {
+                    gitOption.checked = false;
+                    const zipOption = document.querySelector('input[name="inputSource"][value="zip"]');
+                    if (zipOption) {
+                        zipOption.checked = true;
                         zipOption.dispatchEvent(new Event('change'));
                     }
                 }
@@ -43,6 +68,31 @@ async function initConfiguration() {
         }
     } catch (error) {
         console.warn('Failed to load dynamic configuration:', error);
+    }
+}
+
+/**
+ * Handle URL parameters to pre-select technology type
+ * Supports ?type=mule or ?type=tibco from portal tiles
+ */
+function handleUrlParameters() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const typeParam = urlParams.get('type');
+    
+    console.log('[URL-PARAM] Type parameter:', typeParam);
+    
+    if (typeParam) {
+        const projectTypeSelect = document.getElementById('projectType');
+        
+        if (typeParam.toLowerCase() === 'mule') {
+            console.log('[URL-PARAM] Setting to MULE');
+            projectTypeSelect.value = 'MULE';
+        } else if (typeParam.toLowerCase() === 'tibco') {
+            console.log('[URL-PARAM] Setting to TIBCO_BW5');
+            projectTypeSelect.value = 'TIBCO_BW5';
+        }
+        
+        console.log('[URL-PARAM] Final value:', projectTypeSelect.value);
     }
 }
 
@@ -57,6 +107,17 @@ function setupEventHandlers() {
     const gitSection = document.getElementById('gitSection');
     const progressSection = document.getElementById('progressSection');
     const resultsSection = document.getElementById('resultsSection');
+    
+    // Project type validation for disabled options
+    const projectTypeSelect = document.getElementById('projectType');
+    projectTypeSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        if (selectedOption.disabled) {
+            alert('🚧 ' + selectedOption.text + ' is not enabled yet.\\n\\nPlease select Mule 4.x Application or Tibco BusinessWorks 5.x.');
+            // Reset to Mule
+            this.value = 'MULE';
+        }
+    });
     
     // Toggle custom environment selection
     environmentScope.addEventListener('change', function() {

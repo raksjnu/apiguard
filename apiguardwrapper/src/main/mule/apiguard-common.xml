@@ -49,7 +49,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 
 	<!-- Missing Configs Validation Fix -->
 	<file:config name="File_Config" doc:name="File Config">
-		<file:connection workingDir="${mule.home}/apps/${app.name}" />
+		<file:connection workingDir="${app.home}" />
 	</file:config>
 
 	<http:request-config name="Self_HTTP_Request_Config" doc:name="Self HTTP Request configuration" >

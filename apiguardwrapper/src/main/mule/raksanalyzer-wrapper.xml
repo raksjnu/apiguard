@@ -47,8 +47,9 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
             <flow-ref name="raks-send-launch-notification-flow"/>
         </async>
         
-        <!-- Redirect to Main UI (Index) with Session -->
-        <set-variable variableName="redirectLocation" value="#['/apiguard/raksanalyzer/index.html?session=' ++ vars.sessionId]"/>
+        <!-- Redirect to Main UI (Index) with Session - preserve existing query params like ?type=tibco -->
+        <set-variable variableName="existingParams" value="#[attributes.queryString default '']"/>
+        <set-variable variableName="redirectLocation" value="#['/apiguard/raksanalyzer/index.html' ++ (if (vars.existingParams != '') '?' ++ vars.existingParams ++ '&amp;session=' ++ vars.sessionId else '?session=' ++ vars.sessionId)]"/>
         <set-payload value="#['&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=' ++ vars.redirectLocation ++ '&quot;&gt;&lt;/head&gt;&lt;body&gt;Redirecting...&lt;/body&gt;&lt;/html&gt;']" mimeType="text/html"/>
     </flow>
 
@@ -128,15 +129,7 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
 				<!-- Serve Guide Page -->
 				<file:read doc:name="Read Raks Guide" path="${raksanalyzer.web.dir}/guide.html" config-ref="File_Config"/>
 			</when>
-            <when expression="#[vars.resourcePath startsWith 'api/samples']">
-                <!-- Sample File Download -->
-				<set-variable variableName="fileName" value="#[vars.resourcePath replace 'api/samples/' with '']"/>
-                 <!-- In a real scenario, we'd map this to the embedded resource or file system -->
-                 <!-- For this wrapper, assuming samples extracted to web folder or using java invoke to get resource -->
-                 <http:request method="GET" doc:name="Proxy to resource or simple read" config-ref="Self_HTTP_Request_Config" path="/assets/raksanalyzer/samples/{fileName}">
-                 	<http:uri-params ><![CDATA[#[{ fileName: vars.fileName }]]]></http:uri-params>
-                 </http:request>
-            </when>
+
 			<otherwise>
 				<!-- Static Assets -->
 				<logger level="INFO" message="#['Reading static asset: ' ++ vars.resourcePath ++ ' from ' ++ p('raksanalyzer.web.dir') ++ '/' ++ vars.resourcePath]"/>
@@ -156,9 +149,27 @@ http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/cu
             </http:response>
 		</http:listener>
 		
-        <set-variable variableName="apiPath" value="#[attributes.relativePath replace '/raksanalyzer/api/' with '']"/>
+        <set-variable variableName="apiPath" value="#[attributes.relativePath replace '/raksanalyzer/api/' with '']" />
         
         <choice>
+            <!-- SAMPLE DOWNLOAD ENDPOINT -->
+            <when expression="#[vars.apiPath startsWith 'samples/']">
+                <set-variable variableName="fileName" value="#[vars.apiPath replace 'samples/' with '']" />
+                <!-- Load sample file from classpath (same approach as MuleGuard) -->
+                <set-payload value="#[readUrl('classpath://samples/' ++ vars.fileName, 'application/octet-stream')]"/>
+				
+				<!-- Set content type and force download -->
+				<set-variable variableName="contentType" value="#[
+					if (vars.fileName endsWith '.properties') 'text/plain'
+					else if (vars.fileName endsWith '.zip') 'application/zip'
+					else if (vars.fileName endsWith '.jar') 'application/java-archive'
+					else if (vars.fileName endsWith '.ear') 'application/x-ear'
+					else if (vars.fileName endsWith '.xml') 'application/xml'
+					else 'application/octet-stream'
+				]"/>
+				<set-variable variableName="contentDisposition" value="#['attachment; filename=&quot;' ++ vars.fileName ++ '&quot;']"/>
+            </when>
+            
             <!-- UPLOAD ENDPOINT -->
             <when expression="#[vars.apiPath startsWith 'upload/']">
                 <!-- Handle Multipart Upload -->

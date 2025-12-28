@@ -128,10 +128,11 @@
     <script>
         // Tool tiles configuration - populated from mule-app.properties
         const tools = [
-            { name: "{{tool.1.name}}", desc: "{{tool.1.description}}", url: "{{tool.1.url}}" },
-            { name: "{{tool.2.name}}", desc: "{{tool.2.description}}", url: "{{tool.2.url}}" },
-            { name: "{{tool.3.name}}", desc: "{{tool.3.description}}", url: "{{tool.3.url}}" },
-            { name: "{{tool.4.name}}", desc: "{{tool.4.description}}", url: "{{tool.4.url}}" }
+            { name: "{{tool.1.name}}", desc: "{{tool.1.description}}", url: "{{tool.1.url}}", enabled: "{{tool.1.enabled}}" },
+            { name: "{{tool.2.name}}", desc: "{{tool.2.description}}", url: "{{tool.2.url}}", enabled: "{{tool.2.enabled}}" },
+            { name: "{{tool.3.name}}", desc: "{{tool.3.description}}", url: "{{tool.3.url}}", enabled: "{{tool.3.enabled}}" },
+            { name: "{{tool.4.name}}", desc: "{{tool.4.description}}", url: "{{tool.4.url}}", enabled: "{{tool.4.enabled}}" },
+            { name: "{{tool.5.name}}", desc: "{{tool.5.description}}", url: "{{tool.5.url}}", enabled: "{{tool.5.enabled}}" }
         ];
 
         const grid = document.getElementById('tool-grid');
@@ -139,8 +140,8 @@
             const card = document.createElement('a');
             card.className = 'tool-card';
             
-            // Check if tool is disabled (URL is # or empty)
-            if (tool.url === '#' || tool.url === '' || !tool.url) {
+            // Check if tool is disabled
+            if (tool.enabled === 'false' || tool.url === '#' || tool.url === '' || !tool.url) {
                 card.href = 'javascript:void(0)';
                 card.style.cursor = 'pointer';
                 card.onclick = function(e) {
