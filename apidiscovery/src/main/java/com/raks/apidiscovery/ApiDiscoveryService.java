@@ -1,6 +1,7 @@
 package com.raks.apidiscovery;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.raks.apidiscovery.connector.GitLabConnector;
 import com.raks.apidiscovery.model.DiscoveryReport;
 
@@ -154,9 +155,20 @@ public class ApiDiscoveryService {
             throw new IOException("Scan folder not found: " + scanName);
         }
         
-        // Find all JSON report files
+        // 1. Try reading consolidated results
+        File resultsFile = new File(scanFolder, "scan_results.json");
+        if (resultsFile.exists()) {
+             try {
+                String content = new String(java.nio.file.Files.readAllBytes(resultsFile.toPath()));
+                return gson.fromJson(content, new TypeToken<List<DiscoveryReport>>(){}.getType());
+             } catch (Exception e) {
+                 System.err.println("Failed to parse consolidated results: " + e.getMessage());
+             }
+        }
+        
+        // Find all JSON report files (Legacy Fallback)
         List<DiscoveryReport> reports = new ArrayList<>();
-        File[] jsonFiles = scanFolder.listFiles((dir, name) -> name.endsWith(".json"));
+        File[] jsonFiles = scanFolder.listFiles((dir, name) -> name.endsWith(".json") && !name.equals("scan_results.json"));
         
         if (jsonFiles != null) {
             for (File jsonFile : jsonFiles) {
@@ -226,7 +238,10 @@ public class ApiDiscoveryService {
             progress.setPercent(30);
             
             GitLabConnector connector = new GitLabConnector();
-            reports = connector.scanGroup(cleanGroup, token, scanFolder, new File(tempDir));
+            reports = connector.scanGroup(cleanGroup, token, scanFolder, new File(tempDir), (msg, pct) -> {
+                progress.setMessage(msg);
+                progress.setPercent(pct);
+            });
         } else {
             throw new IllegalArgumentException("Source not found locally and no GitLab Token provided");
         }
@@ -240,20 +255,14 @@ public class ApiDiscoveryService {
             outputDir.mkdirs();
         }
         
-        int reportIndex = 1;
-        for (DiscoveryReport report : reports) {
-            String filename = String.format("%s_%d.json", 
-                report.getRepoName().replaceAll("[^a-zA-Z0-9]", "_"), 
-                reportIndex++);
-            File reportFile = new File(outputDir, filename);
-            
-            try {
-                String json = gson.toJson(report);
-                java.nio.file.Files.write(reportFile.toPath(), json.getBytes());
-                System.out.println("Saved report: " + reportFile.getAbsolutePath());
-            } catch (IOException e) {
-                System.err.println("Failed to save report: " + e.getMessage());
-            }
+        // Consolidate reports into one JSON file
+        try {
+            File resultsFile = new File(outputDir, "scan_results.json");
+            String json = gson.toJson(reports);
+            java.nio.file.Files.write(resultsFile.toPath(), json.getBytes());
+            System.out.println("Saved consolidated report: " + resultsFile.getAbsolutePath());
+        } catch (IOException e) {
+            System.err.println("Failed to save report: " + e.getMessage());
         }
         
         // CLEANUP: Delete downloaded repository folders to save space
@@ -262,16 +271,16 @@ public class ApiDiscoveryService {
         if (everything != null) {
             for (File file : everything) {
                 if (file.isDirectory()) {
-                    System.out.println("Cleaning up repo details: " + file.getName());
+                    // System.out.println("Cleaning up repo details: " + file.getName());
 
                     boolean deleted = deleteDirectory(file);
                     if (!deleted) {
-                        System.err.println("WARN: Failed to delete directory: " + file.getAbsolutePath());
+                        // System.err.println("WARN: Failed to delete directory: " + file.getAbsolutePath());
                         // Try forcing garbage collection and retry (sometimes helps with Windows file locks)
                         System.gc();
                         try { Thread.sleep(2000); } catch (InterruptedException e) {} // Wait 2 seconds for OS handles
                         if (!deleteDirectory(file)) {
-                            System.err.println("ERROR: Retry deletion failed for: " + file.getAbsolutePath());
+                            // System.err.println("ERROR: Retry deletion failed for: " + file.getAbsolutePath());
                             // List lingering files to help debug
                             try {
                                 java.nio.file.Files.walk(file.toPath())

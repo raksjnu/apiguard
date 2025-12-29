@@ -297,7 +297,8 @@ public class ApiDiscoveryTool {
                 GitLabConnector connector = new GitLabConnector();
                 // Pass scanId (folder name) to connector
                 // Use getTempDir() for standalone execution
-                reports = connector.scanGroup(cleanGroup, token, scanId, getTempDir());
+                setScanFolder(scanId); // Set folder name for saving results explicitly
+                reports = connector.scanGroup(cleanGroup, token, scanId, getTempDir(), ApiDiscoveryTool::updateProgress);
                 
             } else {
                  updateProgress("Error: Invalid source", 0);
@@ -348,14 +349,14 @@ public class ApiDiscoveryTool {
                      if (files != null) {
                          for (File file : files) {
                              if (file.isDirectory()) {
-                                 System.out.println("Cleaning up repo details: " + file.getName());
+                                 // System.out.println("Cleaning up repo details: " + file.getName());
                                  // Use robust delete
                                  if (!deleteDirectory(file)) {
                                      // Retry once
                                      System.gc();
                                      try { Thread.sleep(2000); } catch (Exception e) {}
                                      if (!deleteDirectory(file)) {
-                                         System.err.println("WARN: Failed to cleanup: " + file.getAbsolutePath());
+                                         // System.err.println("WARN: Failed to cleanup: " + file.getAbsolutePath());
                                      }
                                  }
                              }

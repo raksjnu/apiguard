@@ -3,11 +3,10 @@ package com.raks.apidiscovery.connector;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.raks.apidiscovery.ScannerEngine;
-import com.raks.apidiscovery.ApiDiscoveryTool;
+// import com.raks.apidiscovery.ApiDiscoveryTool; // DECOUPLED
 import com.raks.apidiscovery.model.DiscoveryReport;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-
 import org.eclipse.jgit.util.FS;
 
 import java.io.BufferedReader;
@@ -17,6 +16,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 public class GitLabConnector {
 
@@ -36,20 +36,20 @@ public class GitLabConnector {
         }
     }
 
-    public List<DiscoveryReport> scanGroup(String groupPath, String token, String scanFolderName, File parentTempDir) {
+    public List<DiscoveryReport> scanGroup(String groupPath, String token, String scanFolderName, File parentTempDir, BiConsumer<String, Integer> progressCallback) {
         List<DiscoveryReport> allReports = new ArrayList<>();
         ScannerEngine engine = new ScannerEngine();
         
-        System.out.println("[GitLab] Connecting to GitLab Group: " + groupPath);
+        // System.out.println("[GitLab] Connecting to GitLab Group: " + groupPath);
 
         try {
             // 1. Fetch Projects from GitLab API
-            System.out.println("[GitLab] Fetching project list from API...");
+            // System.out.println("[GitLab] Fetching project list from API...");
             List<GitLabProject> projects = fetchProjects(groupPath, token);
-            System.out.println("[GitLab] Found " + projects.size() + " projects in group.");
+            // System.out.println("[GitLab] Found " + projects.size() + " projects in group.");
 
             if (projects.isEmpty()) {
-                System.out.println("[GitLab] No projects found in group: " + groupPath);
+                // System.out.println("[GitLab] No projects found in group: " + groupPath);
                 DiscoveryReport emptyReport = new DiscoveryReport();
                 emptyReport.setRepoName("No Projects Found");
                 emptyReport.setRepoPath(groupPath);
@@ -65,42 +65,50 @@ public class GitLabConnector {
             int currentProject = 0;
             
             // Create temp directory for cloning (Use Scan_Timestamp format for History Persistence)
-            // String scanFolderName = "Scan_" + System.currentTimeMillis(); // NOW PASSED IN
             File tempDir = (parentTempDir != null) ? parentTempDir : new File("temp");
             if (!tempDir.exists()) tempDir.mkdirs();
             
+            // Create temp directory logs
+            // System.out.println("[GitLab] Target Temp Dir: " + tempDir.getAbsolutePath());
+            
             File tempCloneDir = new File(tempDir, scanFolderName);
-            tempCloneDir.mkdirs();
+            if (tempCloneDir.mkdirs()) {
+                 // System.out.println("[GitLab] Created clone dir: " + tempCloneDir.getAbsolutePath());
+            } else {
+                 // System.out.println("[GitLab] Clone dir already exists or failed: " + tempCloneDir.getAbsolutePath());
+            }
             
-            // Set the scan folder name in the Tool context so it can be returned
-            ApiDiscoveryTool.setScanFolder(scanFolderName);
+            // ApiDiscoveryTool.setScanFolder(scanFolderName); // REMOVED TO PREVENT HANG IN MULE
             
-            // FIX: Set JGit User Home to temp directory to avoid permission errors on CloudHub
-            // CloudHub /usr/src/app/.config is often read-only or non-existent for the user
+            // JGit User Home Logic
             try {
-                // Fix for CloudHub: Set User Home to writable temp dir
-                // Skip on Windows to prevent file locking hangs
                 if (!System.getProperty("os.name").toLowerCase().contains("win")) {
                     FS.DETECTED.setUserHome(tempDir);
-                    // System.out.println("[GitLab] Set JGit User Home to: " + tempDir.getAbsolutePath());
                 } else {
-                    // System.out.println("[GitLab] Windows detected: Skipping JGit UserHome override.");
+                     // System.out.println("[GitLab] Skipping JGit UserHome on Windows.");
                 }
             } catch (Exception e) {
                 System.err.println("[GitLab] Failed to set JGit User Home: " + e.getMessage());
             }
             
             try {
+                // System.out.println("[GitLab] Starting project loop. Total: " + totalProjects);
                 for (GitLabProject p : projects) {
                     currentProject++;
+                    // System.out.println("[GitLab] Loop iteration: " + currentProject + " for " + p.name);
+                    
                     int percent = 10 + (int)((currentProject / (float)totalProjects) * 80);
-                    ApiDiscoveryTool.updateProgress("Scanning " + p.name + " (" + currentProject + "/" + totalProjects + ")", percent);
-                    System.out.println("[GitLab] Processing " + currentProject + "/" + totalProjects + ": " + p.name);
+                    // Decoupled progress update
+                    if (progressCallback != null) {
+                        progressCallback.accept("Scanning " + p.name + " (" + currentProject + "/" + totalProjects + ")", percent);
+                    }
+                    
+                    // System.out.println("[GitLab] Processing " + currentProject + "/" + totalProjects + ": " + p.name);
                     
                     try {
                         // Clone the repository
                         File repoDir = new File(tempCloneDir, p.name);
-                        System.out.println("[GitLab] Cloning " + p.name + " to " + repoDir.getAbsolutePath());
+                        // System.out.println("[GitLab] Cloning " + p.name + " to " + repoDir.getAbsolutePath());
                         
                         try (Git git = Git.cloneRepository()
                             .setURI(p.http_url_to_repo)
@@ -124,7 +132,6 @@ public class GitLabConnector {
                         try { Thread.sleep(500); } catch (InterruptedException e) {}
 
                         // 4. Immediately delete .git folder to prevent persistent locks
-                        // Since we only need the source code for scanning, the git history is a liability on Windows.
                         File gitDir = new File(repoDir, ".git");
                         if (gitDir.exists()) {
                            // System.out.println("[GitLab] Removing .git folder to free locks...");
@@ -132,7 +139,7 @@ public class GitLabConnector {
                         }
                         
                         // Scan the cloned repository
-                        System.out.println("[GitLab] Scanning " + p.name);
+                        // System.out.println("[GitLab] Scanning " + p.name);
                         DiscoveryReport report = engine.scanRepository(repoDir);
                         report.setRepoName(p.name);
                         report.setRepoPath(p.web_url);
@@ -140,7 +147,7 @@ public class GitLabConnector {
                         report.addMetadata("visibility", p.visibility != null ? p.visibility : "unknown");
                         
                         allReports.add(report);
-                        System.out.println("[GitLab] Completed scan for: " + p.name + " - " + report.getTechnology());
+                        // System.out.println("[GitLab] Completed scan for: " + p.name + " - " + report.getTechnology());
                         
                     } catch (Exception e) {
                         System.err.println("[GitLab] Failed to clone/scan " + p.name + ": " + e.getMessage());
@@ -161,7 +168,10 @@ public class GitLabConnector {
                 // deleteDirectory(tempCloneDir); // REMOVED FOR HISTORY PERSISTENCE
             }
             
-            ApiDiscoveryTool.updateProgress("Finalizing results...", 95);
+            // Final progress update
+            if (progressCallback != null) {
+                progressCallback.accept("Finalizing results...", 95);
+            }
             System.out.println("[GitLab] Scan complete. Processed " + allReports.size() + " projects.");
             
         } catch (Exception e) {
@@ -186,7 +196,7 @@ public class GitLabConnector {
         String encodedPath = groupPath.replace("/", "%2F");
         String urlString = GITLAB_API_BASE + "/groups/" + encodedPath + "/projects?include_subgroups=true&per_page=100";
         
-        System.out.println("[GitLab] API Request: " + urlString);
+        // System.out.println("[GitLab] API Request: " + urlString);
         
         URL url = new URL(urlString);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -196,7 +206,7 @@ public class GitLabConnector {
         conn.setReadTimeout(HTTP_TIMEOUT_MS);
         
         int responseCode = conn.getResponseCode();
-        System.out.println("[GitLab] API Response Code: " + responseCode);
+        // System.out.println("[GitLab] API Response Code: " + responseCode);
         
         if (responseCode != 200) {
             String errorMessage = "GitLab API Failed: " + responseCode + " " + conn.getResponseMessage();
@@ -219,7 +229,7 @@ public class GitLabConnector {
         try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
             Gson gson = new Gson();
             List<GitLabProject> projects = gson.fromJson(br, new TypeToken<List<GitLabProject>>(){}.getType());
-            System.out.println("[GitLab] Successfully parsed " + (projects != null ? projects.size() : 0) + " projects");
+            // System.out.println("[GitLab] Successfully parsed " + (projects != null ? projects.size() : 0) + " projects");
             return projects != null ? projects : new ArrayList<>();
         }
     }
@@ -247,7 +257,7 @@ public class GitLabConnector {
             System.gc();
             try { Thread.sleep(100); } catch (Exception e) {}
             if (!file.delete()) {
-                 System.err.println("[GitLab] Failed to delete: " + file.getAbsolutePath());
+                 // System.err.println("[GitLab] Failed to delete: " + file.getAbsolutePath());
             }
         }
     }
