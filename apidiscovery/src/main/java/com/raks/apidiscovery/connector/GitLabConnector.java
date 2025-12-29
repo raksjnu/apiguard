@@ -78,8 +78,14 @@ public class GitLabConnector {
             // FIX: Set JGit User Home to temp directory to avoid permission errors on CloudHub
             // CloudHub /usr/src/app/.config is often read-only or non-existent for the user
             try {
-                FS.DETECTED.setUserHome(tempDir);
-                // System.out.println("[GitLab] Set JGit User Home to: " + tempDir.getAbsolutePath());
+                // Fix for CloudHub: Set User Home to writable temp dir
+                // Skip on Windows to prevent file locking hangs
+                if (!System.getProperty("os.name").toLowerCase().contains("win")) {
+                    FS.DETECTED.setUserHome(tempDir);
+                    // System.out.println("[GitLab] Set JGit User Home to: " + tempDir.getAbsolutePath());
+                } else {
+                    // System.out.println("[GitLab] Windows detected: Skipping JGit UserHome override.");
+                }
             } catch (Exception e) {
                 System.err.println("[GitLab] Failed to set JGit User Home: " + e.getMessage());
             }
