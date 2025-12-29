@@ -297,7 +297,8 @@ public class ApiDiscoveryTool {
                 
                 GitLabConnector connector = new GitLabConnector();
                 // Pass scanId (folder name) to connector
-                reports = connector.scanGroup(cleanGroup, token, scanId);
+                // Use getTempDir() for standalone execution
+                reports = connector.scanGroup(cleanGroup, token, scanId, getTempDir());
                 
             } else {
                  updateProgress("Error: Invalid source", 0);
@@ -309,7 +310,7 @@ public class ApiDiscoveryTool {
             try {
                 String folderName = getScanFolderName();
                 // Ensure folder exists (crucial for Local scans which might not have created it yet)
-                File tempDir = new File("temp");
+                File tempDir = getTempDir();
                 if (!tempDir.exists()) tempDir.mkdirs();
                 File scanDir = new File(tempDir, folderName);
                 if (!scanDir.exists()) scanDir.mkdirs();
@@ -341,7 +342,7 @@ public class ApiDiscoveryTool {
 
             // CLEANUP: Delete downloaded repository folders to save space (Keep only JSON)
             try {
-                 File tempDir = new File("temp");
+                 File tempDir = getTempDir();
                  File scanDir = new File(tempDir, scanId);
                  if (scanDir.exists()) {
                      File[] files = scanDir.listFiles();
@@ -392,7 +393,7 @@ public class ApiDiscoveryTool {
         public void handle(HttpExchange t) throws IOException {
             if ("GET".equalsIgnoreCase(t.getRequestMethod())) {
                 try {
-                    File tempDir = new File("temp");
+                    File tempDir = getTempDir();
                     List<Map<String, Object>> scanFolders = new ArrayList<>();
                     
                     if (tempDir.exists() && tempDir.isDirectory()) {
@@ -462,7 +463,7 @@ public class ApiDiscoveryTool {
                     List<String> deleted = new ArrayList<>();
                     List<String> failed = new ArrayList<>();
                     
-                    File tempDir = new File("temp");
+                    File tempDir = getTempDir();
                     
                     for (String folderName : folderNames) {
                         File folder = new File(tempDir, folderName);
@@ -533,7 +534,7 @@ public class ApiDiscoveryTool {
                         return;
                     }
                     
-                    File tempDir = new File("temp");
+                    File tempDir = getTempDir();
                     File scanFolder = new File(tempDir, scanName);
                     
                     // Accept both old (scan_) and new (Scan_) format folders
@@ -646,5 +647,11 @@ public class ApiDiscoveryTool {
                  os.close();
             }
         }
+    }
+    // Helper to get configurable temp directory
+    public static File getTempDir() {
+        String customHome = System.getProperty("apidiscovery.home");
+        File baseDir = (customHome != null && !customHome.isEmpty()) ? new File(customHome) : new File(".");
+        return new File(baseDir, "temp");
     }
 }

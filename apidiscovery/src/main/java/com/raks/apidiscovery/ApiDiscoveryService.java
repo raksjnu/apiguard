@@ -226,7 +226,7 @@ public class ApiDiscoveryService {
             progress.setPercent(30);
             
             GitLabConnector connector = new GitLabConnector();
-            reports = connector.scanGroup(cleanGroup, token, scanFolder);
+            reports = connector.scanGroup(cleanGroup, token, scanFolder, new File(tempDir));
         } else {
             throw new IllegalArgumentException("Source not found locally and no GitLab Token provided");
         }

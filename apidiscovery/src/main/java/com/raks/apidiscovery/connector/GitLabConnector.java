@@ -36,7 +36,7 @@ public class GitLabConnector {
         }
     }
 
-    public List<DiscoveryReport> scanGroup(String groupPath, String token, String scanFolderName) {
+    public List<DiscoveryReport> scanGroup(String groupPath, String token, String scanFolderName, File parentTempDir) {
         List<DiscoveryReport> allReports = new ArrayList<>();
         ScannerEngine engine = new ScannerEngine();
         
@@ -66,7 +66,7 @@ public class GitLabConnector {
             
             // Create temp directory for cloning (Use Scan_Timestamp format for History Persistence)
             // String scanFolderName = "Scan_" + System.currentTimeMillis(); // NOW PASSED IN
-            File tempDir = new File("temp");
+            File tempDir = (parentTempDir != null) ? parentTempDir : new File("temp");
             if (!tempDir.exists()) tempDir.mkdirs();
             
             File tempCloneDir = new File(tempDir, scanFolderName);
