@@ -308,7 +308,7 @@ public class ApiDiscoveryService {
                     try {
                         java.nio.file.Files.delete(file);
                     } catch (IOException e) {
-                        System.err.println("FAILED to delete file: " + file + " (" + e.getMessage() + ")");
+                        // System.err.println("FAILED to delete file: " + file + " (" + e.getMessage() + ")");
                         throw e;
                     }
                     return java.nio.file.FileVisitResult.CONTINUE;

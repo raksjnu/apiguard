@@ -30,7 +30,7 @@ public class GitLabConnector {
             org.eclipse.jgit.storage.file.WindowCacheConfig config = new org.eclipse.jgit.storage.file.WindowCacheConfig();
             config.setPackedGitMMAP(false);
             config.install();
-            System.out.println("[GitLab] JGit Memory Mapping disabled (Windows compatibility)");
+            // System.out.println("[GitLab] JGit Memory Mapping disabled (Windows compatibility)");
         } catch (Exception e) {
             System.err.println("[GitLab] Failed to configure JGit: " + e.getMessage());
         }
@@ -79,7 +79,7 @@ public class GitLabConnector {
             // CloudHub /usr/src/app/.config is often read-only or non-existent for the user
             try {
                 FS.DETECTED.setUserHome(tempDir);
-                System.out.println("[GitLab] Set JGit User Home to: " + tempDir.getAbsolutePath());
+                // System.out.println("[GitLab] Set JGit User Home to: " + tempDir.getAbsolutePath());
             } catch (Exception e) {
                 System.err.println("[GitLab] Failed to set JGit User Home: " + e.getMessage());
             }

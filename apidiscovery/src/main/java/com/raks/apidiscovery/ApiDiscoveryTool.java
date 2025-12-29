@@ -96,7 +96,6 @@ public class ApiDiscoveryTool {
     private static boolean deleteDirectory(File directory) {
         if (!directory.exists()) return true;
         try {
-            System.out.println("[CLEANUP] Deleting: " + directory.getAbsolutePath());
             java.nio.file.Path path = directory.toPath();
             java.nio.file.Files.walkFileTree(path, new java.nio.file.SimpleFileVisitor<java.nio.file.Path>() {
                 @Override
@@ -104,7 +103,7 @@ public class ApiDiscoveryTool {
                     try {
                         java.nio.file.Files.delete(file);
                     } catch (IOException e) {
-                        System.err.println("[CLEANUP] Failed to delete file: " + file + " Error: " + e.getMessage());
+                        // System.err.println("[CLEANUP] Failed to delete file: " + file + " Error: " + e.getMessage());
                         throw e;
                     }
                     return java.nio.file.FileVisitResult.CONTINUE;
@@ -114,7 +113,7 @@ public class ApiDiscoveryTool {
                     try {
                          java.nio.file.Files.delete(dir);
                     } catch (IOException e) {
-                        System.err.println("[CLEANUP] Failed to delete dir: " + dir + " Error: " + e.getMessage());
+                        // System.err.println("[CLEANUP] Failed to delete dir: " + dir + " Error: " + e.getMessage());
                         throw e;
                     }
                     return java.nio.file.FileVisitResult.CONTINUE;
@@ -335,7 +334,7 @@ public class ApiDiscoveryTool {
             try {
                 org.eclipse.jgit.lib.RepositoryCache.clear();
                 // org.eclipse.jgit.storage.file.WindowCache.getInstance().cleanup(); // Not available in this version
-                System.out.println("[CLEANUP] JGit caches cleared.");
+                // System.out.println("[CLEANUP] JGit caches cleared.");
             } catch (Exception e) {
                 System.err.println("[CLEANUP] Failed to clear JGit cache: " + e.getMessage());
             }
