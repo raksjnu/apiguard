@@ -155,8 +155,9 @@ public class ApiDiscoveryTool {
                         return;
                     }
                     
-                    // Generate Scan ID
-                    String scanId = "Scan_" + System.currentTimeMillis();
+                    // Generate Scan ID (Format: Scan_YYYYMMDD_HHmmss)
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss");
+                    String scanId = "Scan_" + sdf.format(new java.util.Date());
                     
                     // Start Async Scan
                     String finalToken = token;
@@ -225,7 +226,7 @@ public class ApiDiscoveryTool {
                         }
                     }
                 }
-                setScanFolder(scanId); // For local scans, we might want to save result differently, but keeping compatible
+                setScanFolder(scanId); // Set folder name for saving results
             } 
             // 2. Otherwise, treat as GitLab (if token provided)
             else if (token != null && !token.isEmpty()) {
@@ -243,12 +244,36 @@ public class ApiDiscoveryTool {
                 if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
                 
                 GitLabConnector connector = new GitLabConnector();
-                // Connector will handle progress updates internally if we update it
-                reports = connector.scanGroup(cleanGroup, token);
+                // Pass scanId (folder name) to connector
+                reports = connector.scanGroup(cleanGroup, token, scanId);
                 
             } else {
                  updateProgress("Error: Invalid source", 0);
                  return;
+            }
+
+            
+            // SAVE RESULTS TO FILE (Fix for Local Scan Persistence & History Performance)
+            try {
+                String folderName = getScanFolderName();
+                // Ensure folder exists (crucial for Local scans which might not have created it yet)
+                File tempDir = new File("temp");
+                if (!tempDir.exists()) tempDir.mkdirs();
+                File scanDir = new File(tempDir, folderName);
+                if (!scanDir.exists()) scanDir.mkdirs();
+                
+                Gson gson = new Gson();
+                String jsonResults = gson.toJson(reports);
+                
+                java.nio.file.Files.write(
+                    new File(scanDir, "scan_results.json").toPath(), 
+                    jsonResults.getBytes(StandardCharsets.UTF_8)
+                );
+                System.out.println("Saved scan results to: " + scanDir.getAbsolutePath());
+                
+            } catch (Exception e) {
+                System.err.println("Failed to save scan results: " + e.getMessage());
+                e.printStackTrace();
             }
             
             updateProgress("Scan complete!", 100);
@@ -437,7 +462,19 @@ public class ApiDiscoveryTool {
                         return;
                     }
                     
-                    // Re-scan all repositories in this folder
+                    // OPTIMIZATION: Check for pre-calculated results file first
+                    File resultsFile = new File(scanFolder, "scan_results.json");
+                    if (resultsFile.exists()) {
+                         byte[] bytes = java.nio.file.Files.readAllBytes(resultsFile.toPath());
+                         t.getResponseHeaders().set("Content-Type", "application/json");
+                         t.sendResponseHeaders(200, bytes.length);
+                         try (OutputStream os = t.getResponseBody()) {
+                             os.write(bytes);
+                         }
+                         return;
+                    }
+
+                    // Fallback: Re-scan all repositories in this folder (Legacy behavior)
                     List<DiscoveryReport> reports = new ArrayList<>();
                     File[] repos = scanFolder.listFiles(File::isDirectory);
                     

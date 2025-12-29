@@ -24,7 +24,7 @@ public class GitLabConnector {
     private static final int HTTP_TIMEOUT_MS = 30000; // 30 seconds
     private static final int GIT_CLONE_TIMEOUT_SEC = 120; // 2 minutes per repo
 
-    public List<DiscoveryReport> scanGroup(String groupPath, String token) {
+    public List<DiscoveryReport> scanGroup(String groupPath, String token, String scanFolderName) {
         List<DiscoveryReport> allReports = new ArrayList<>();
         ScannerEngine engine = new ScannerEngine();
         
@@ -53,7 +53,7 @@ public class GitLabConnector {
             int currentProject = 0;
             
             // Create temp directory for cloning (Use Scan_Timestamp format for History Persistence)
-            String scanFolderName = "Scan_" + System.currentTimeMillis();
+            // String scanFolderName = "Scan_" + System.currentTimeMillis(); // NOW PASSED IN
             File tempDir = new File("temp");
             if (!tempDir.exists()) tempDir.mkdirs();
             
