@@ -141,7 +141,6 @@ public class ApiDiscoveryTool {
                     
                     Gson gson = new Gson();
                     Map<String, String> request = gson.fromJson(jsonBuilder.toString(), new TypeToken<Map<String, String>>(){}.getType());
-                    List<DiscoveryReport> reports = new ArrayList<>();
                     
                     String source = request.getOrDefault("source", request.get("path")); 
                     String token = request.get("token");
@@ -156,63 +155,28 @@ public class ApiDiscoveryTool {
                         return;
                     }
                     
-                    File localFile = new File(source);
+                    // Generate Scan ID
+                    String scanId = "Scan_" + System.currentTimeMillis();
                     
-                    // 1. Check if it's a valid local directory
-                    if (localFile.exists() && localFile.isDirectory()) {
-                        System.out.println("Detected Local Directory: " + source);
-                        reports.add(engine.scanRepository(localFile));
-                        
-                        File[] subs = localFile.listFiles(File::isDirectory);
-                        if (subs != null) {
-                            for (File sub : subs) {
-                                if (!sub.getName().startsWith(".")) {
-                                    reports.add(engine.scanRepository(sub));
-                                }
-                            }
-                        }
-                    } 
-                    // 2. Otherwise, treat as GitLab (if token provided)
-                    else if (token != null && !token.isEmpty()) {
-                        System.out.println("Detected GitLab Source: " + source);
-                        
-                        // Clean URL
-                        String cleanGroup = source.trim();
-                        if (cleanGroup.startsWith("https://gitlab.com/")) {
-                            cleanGroup = cleanGroup.substring("https://gitlab.com/".length());
-                        } else if (cleanGroup.startsWith("http://gitlab.com/")) {
-                            cleanGroup = cleanGroup.substring("http://gitlab.com/".length());
-                        }
-                        if (cleanGroup.endsWith("/")) cleanGroup = cleanGroup.substring(0, cleanGroup.length() - 1);
-                        if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
-                        
-                        try {
-                            GitLabConnector connector = new GitLabConnector();
-                            reports = connector.scanGroup(cleanGroup, token);
-                        } catch (Exception e) {
-                            e.printStackTrace();
-                            sendError(t, 500, "{\"error\": \"GitLab Scan Failed: " + e.getMessage().replace("\"", "'") + "\"}");
-                            return;
-                        }
-                    } else {
-                         sendError(t, 400, "{\"error\": \"Source not found locally (path does not exist) and no GitLab Token provided.\"}");
-                         return;
-                    }
+                    // Start Async Scan
+                    String finalToken = token;
+                    new Thread(() -> {
+                        runAsyncScan(source, finalToken, scanId);
+                    }).start();
 
-                    // Add scan folder info to response
+                    // Return immediately
                     Map<String, Object> response = new java.util.HashMap<>();
-                    response.put("reports", reports);
-                    response.put("scanFolder", getScanFolderName());
+                    response.put("status", "started");
+                    response.put("scanId", scanId);
+                    response.put("message", "Scan started in background");
                     
                     String jsonResponse = gson.toJson(response);
                     t.getResponseHeaders().set("Content-Type", "application/json");
-                    t.sendResponseHeaders(200, jsonResponse.getBytes().length);
+                    byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+                    t.sendResponseHeaders(200, bytes.length);
                     try (OutputStream os = t.getResponseBody()) {
-                        os.write(jsonResponse.getBytes());
+                        os.write(bytes);
                     }
-                    
-                    // Clear progress after scan completes
-                    clearProgress();
                     
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -223,13 +187,75 @@ public class ApiDiscoveryTool {
             }
         }
 
-     private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
+        private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
              t.getResponseHeaders().set("Content-Type", "application/json");
              byte[] bytes = jsonMessage.getBytes(StandardCharsets.UTF_8);
              t.sendResponseHeaders(code, bytes.length);
              OutputStream os = t.getResponseBody();
              os.write(bytes);
              os.close();
+        }
+    }
+
+    // Async Scan Logic
+    private static void runAsyncScan(String source, String token, String scanId) {
+        System.out.println("Starting Async Scan: " + scanId);
+        updateProgress("Initializing scan...", 0);
+        
+        try {
+            List<DiscoveryReport> reports = new ArrayList<>();
+            File localFile = new File(source);
+            
+            // 1. Check if it's a valid local directory
+            if (localFile.exists() && localFile.isDirectory()) {
+                System.out.println("Detected Local Directory: " + source);
+                updateProgress("Scanning local directory...", 10);
+                
+                reports.add(engine.scanRepository(localFile));
+                
+                File[] subs = localFile.listFiles(File::isDirectory);
+                if (subs != null) {
+                    int total = subs.length;
+                    int count = 0;
+                    for (File sub : subs) {
+                        count++;
+                        if (!sub.getName().startsWith(".")) {
+                            updateProgress("Scanning " + sub.getName(), 10 + (int)((count / (float)total) * 80));
+                            reports.add(engine.scanRepository(sub));
+                        }
+                    }
+                }
+                setScanFolder(scanId); // For local scans, we might want to save result differently, but keeping compatible
+            } 
+            // 2. Otherwise, treat as GitLab (if token provided)
+            else if (token != null && !token.isEmpty()) {
+                System.out.println("Detected GitLab Source: " + source);
+                updateProgress("Connecting to GitLab...", 5);
+                
+                // Clean URL
+                String cleanGroup = source.trim();
+                if (cleanGroup.startsWith("https://gitlab.com/")) {
+                    cleanGroup = cleanGroup.substring("https://gitlab.com/".length());
+                } else if (cleanGroup.startsWith("http://gitlab.com/")) {
+                    cleanGroup = cleanGroup.substring("http://gitlab.com/".length());
+                }
+                if (cleanGroup.endsWith("/")) cleanGroup = cleanGroup.substring(0, cleanGroup.length() - 1);
+                if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
+                
+                GitLabConnector connector = new GitLabConnector();
+                // Connector will handle progress updates internally if we update it
+                reports = connector.scanGroup(cleanGroup, token);
+                
+            } else {
+                 updateProgress("Error: Invalid source", 0);
+                 return;
+            }
+            
+            updateProgress("Scan complete!", 100);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            updateProgress("Error: " + e.getMessage(), 0);
         }
     }
 
@@ -389,8 +415,10 @@ public class ApiDiscoveryTool {
                     if (query != null) {
                         for (String param : query.split("&")) {
                             String[] pair = param.split("=");
-                            if (pair.length == 2 && "scan".equals(pair[0])) {
-                                scanName = pair[1];
+                            if (pair.length == 2) {
+                                if ("scan".equals(pair[0]) || "scanName".equals(pair[0])) {
+                                    scanName = pair[1];
+                                }
                             }
                         }
                     }
@@ -458,14 +486,16 @@ public class ApiDiscoveryTool {
                 Map<String, Object> progress = new java.util.HashMap<>();
                 progress.put("message", currentProgress);
                 progress.put("percent", progressPercent);
+                progress.put("complete", progressPercent >= 100);
                 
                 Gson gson = new Gson();
                 String jsonResponse = gson.toJson(progress);
                 
                 t.getResponseHeaders().set("Content-Type", "application/json");
-                t.sendResponseHeaders(200, jsonResponse.getBytes().length);
+                byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+                t.sendResponseHeaders(200, bytes.length);
                 try (OutputStream os = t.getResponseBody()) {
-                    os.write(jsonResponse.getBytes());
+                    os.write(bytes);
                 }
             }
         }

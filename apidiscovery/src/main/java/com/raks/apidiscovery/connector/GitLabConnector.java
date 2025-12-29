@@ -3,6 +3,7 @@ package com.raks.apidiscovery.connector;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.raks.apidiscovery.ScannerEngine;
+import com.raks.apidiscovery.ApiDiscoveryTool;
 import com.raks.apidiscovery.model.DiscoveryReport;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
@@ -51,9 +52,16 @@ public class GitLabConnector {
             int totalProjects = projects.size();
             int currentProject = 0;
             
-            // Create temp directory for cloning
-            File tempCloneDir = new File(System.getProperty("java.io.tmpdir"), "apidiscovery_clone_" + System.currentTimeMillis());
+            // Create temp directory for cloning (Use Scan_Timestamp format for History Persistence)
+            String scanFolderName = "Scan_" + System.currentTimeMillis();
+            File tempDir = new File("temp");
+            if (!tempDir.exists()) tempDir.mkdirs();
+            
+            File tempCloneDir = new File(tempDir, scanFolderName);
             tempCloneDir.mkdirs();
+            
+            // Set the scan folder name in the Tool context so it can be returned
+            ApiDiscoveryTool.setScanFolder(scanFolderName);
             
             // FIX: Set JGit User Home to temp directory to avoid permission errors on CloudHub
             // CloudHub /usr/src/app/.config is often read-only or non-existent for the user
@@ -67,6 +75,8 @@ public class GitLabConnector {
             try {
                 for (GitLabProject p : projects) {
                     currentProject++;
+                    int percent = 10 + (int)((currentProject / (float)totalProjects) * 80);
+                    ApiDiscoveryTool.updateProgress("Scanning " + p.name + " (" + currentProject + "/" + totalProjects + ")", percent);
                     System.out.println("[GitLab] Processing " + currentProject + "/" + totalProjects + ": " + p.name);
                     
                     try {
@@ -79,7 +89,7 @@ public class GitLabConnector {
                             .setDirectory(repoDir)
                             .setCredentialsProvider(new UsernamePasswordCredentialsProvider("oauth2", token))
                             .setDepth(1) // Shallow clone for performance
-                            .setTimeout(60) // 60 second timeout
+                            .setTimeout(GIT_CLONE_TIMEOUT_SEC)
                             .call();
                         
                         git.close();
@@ -110,10 +120,11 @@ public class GitLabConnector {
                 }
             } finally {
                 // Cleanup cloned repositories
-                System.out.println("[GitLab] Cleaning up temp clone directory: " + tempCloneDir.getAbsolutePath());
-                deleteDirectory(tempCloneDir);
+                // System.out.println("[GitLab] Cleaning up temp clone directory: " + tempCloneDir.getAbsolutePath());
+                // deleteDirectory(tempCloneDir); // REMOVED FOR HISTORY PERSISTENCE
             }
             
+            ApiDiscoveryTool.updateProgress("Finalizing results...", 95);
             System.out.println("[GitLab] Scan complete. Processed " + allReports.size() + " projects.");
             
         } catch (Exception e) {
@@ -173,22 +184,6 @@ public class GitLabConnector {
             List<GitLabProject> projects = gson.fromJson(br, new TypeToken<List<GitLabProject>>(){}.getType());
             System.out.println("[GitLab] Successfully parsed " + (projects != null ? projects.size() : 0) + " projects");
             return projects != null ? projects : new ArrayList<>();
-        }
-    }
-
-    private void deleteDirectory(File directory) {
-        if (directory.exists()) {
-            File[] files = directory.listFiles();
-            if (files != null) {
-                for (File file : files) {
-                    if (file.isDirectory()) {
-                        deleteDirectory(file);
-                    } else {
-                        file.delete();
-                    }
-                }
-            }
-            directory.delete();
         }
     }
 
