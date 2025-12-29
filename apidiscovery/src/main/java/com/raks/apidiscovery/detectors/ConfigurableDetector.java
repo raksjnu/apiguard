@@ -53,7 +53,9 @@ public class ConfigurableDetector implements ApiDetector {
         
         // 2. Scan for API Indicators (Score it)
         try (Stream<Path> paths = Files.walk(repoRoot.toPath())) {
-            List<Path> allFiles = paths.filter(Files::isRegularFile).toList();
+            List<Path> allFiles = paths.filter(Files::isRegularFile)
+                                       .filter(p -> !p.toString().contains(".git")) // Exclude .git internals
+                                       .toList();
 
             for (RuleConfig.Indicator indicator : rule.getApiIndicators()) {
                 String filePattern = indicator.getFile().replace("*", ".*");
@@ -107,6 +109,7 @@ public class ConfigurableDetector implements ApiDetector {
         // Handle Wildcards (e.g., *.archive)
         try (Stream<Path> paths = Files.walk(root.toPath())) {
              return paths.filter(Files::isRegularFile)
+                  .filter(p -> !p.toString().contains(".git"))
                  .anyMatch(path -> {
                      String name = path.getFileName().toString();
                      // Simple suffix match

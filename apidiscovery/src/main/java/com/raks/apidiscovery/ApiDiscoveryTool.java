@@ -60,6 +60,16 @@ public class ApiDiscoveryTool {
         server.setExecutor(null); // default executor
         server.start();
         
+        // FAIL-SAFE: Globally disable JGit MMAP (Windows File Locking Fix)
+        try {
+            org.eclipse.jgit.storage.file.WindowCacheConfig config = new org.eclipse.jgit.storage.file.WindowCacheConfig();
+            config.setPackedGitMMAP(false);
+            config.install();
+            System.out.println("[INIT] JGit Memory Mapping disabled.");
+        } catch (Exception e) {
+            System.err.println("[INIT] Failed to configure JGit: " + e.getMessage());
+        }
+
         System.out.println("Server started at http://localhost:" + PORT);
         System.out.println("Open your browser to access the dashboard.");
     }
@@ -81,6 +91,40 @@ public class ApiDiscoveryTool {
     public static void clearProgress() {
         currentProgress = "";
         progressPercent = 0;
+    }
+
+    private static boolean deleteDirectory(File directory) {
+        if (!directory.exists()) return true;
+        try {
+            System.out.println("[CLEANUP] Deleting: " + directory.getAbsolutePath());
+            java.nio.file.Path path = directory.toPath();
+            java.nio.file.Files.walkFileTree(path, new java.nio.file.SimpleFileVisitor<java.nio.file.Path>() {
+                @Override
+                public java.nio.file.FileVisitResult visitFile(java.nio.file.Path file, java.nio.file.attribute.BasicFileAttributes attrs) throws IOException {
+                    try {
+                        java.nio.file.Files.delete(file);
+                    } catch (IOException e) {
+                        System.err.println("[CLEANUP] Failed to delete file: " + file + " Error: " + e.getMessage());
+                        throw e;
+                    }
+                    return java.nio.file.FileVisitResult.CONTINUE;
+                }
+                @Override
+                public java.nio.file.FileVisitResult postVisitDirectory(java.nio.file.Path dir, IOException exc) throws IOException {
+                    try {
+                         java.nio.file.Files.delete(dir);
+                    } catch (IOException e) {
+                        System.err.println("[CLEANUP] Failed to delete dir: " + dir + " Error: " + e.getMessage());
+                        throw e;
+                    }
+                    return java.nio.file.FileVisitResult.CONTINUE;
+                }
+            });
+            return true;
+        } catch (IOException e) {
+             System.err.println("[CLEANUP] Critical Failure deleting " + directory.getName() + ": " + e.getMessage());
+             return false;
+        }
     }
 
     // Handler for Serving UI (index.html)
@@ -284,6 +328,44 @@ public class ApiDiscoveryTool {
                 e.printStackTrace();
             }
             
+            updateProgress("Finalizing results...", 95);
+
+            // FORCE RELEASE: Clear JGit internal caches to release file handles
+            try {
+                org.eclipse.jgit.lib.RepositoryCache.clear();
+                // org.eclipse.jgit.storage.file.WindowCache.getInstance().cleanup(); // Not available in this version
+                System.out.println("[CLEANUP] JGit caches cleared.");
+            } catch (Exception e) {
+                System.err.println("[CLEANUP] Failed to clear JGit cache: " + e.getMessage());
+            }
+
+            // CLEANUP: Delete downloaded repository folders to save space (Keep only JSON)
+            try {
+                 File tempDir = new File("temp");
+                 File scanDir = new File(tempDir, scanId);
+                 if (scanDir.exists()) {
+                     File[] files = scanDir.listFiles();
+                     if (files != null) {
+                         for (File file : files) {
+                             if (file.isDirectory()) {
+                                 System.out.println("Cleaning up repo details: " + file.getName());
+                                 // Use robust delete
+                                 if (!deleteDirectory(file)) {
+                                     // Retry once
+                                     System.gc();
+                                     try { Thread.sleep(2000); } catch (Exception e) {}
+                                     if (!deleteDirectory(file)) {
+                                         System.err.println("WARN: Failed to cleanup: " + file.getAbsolutePath());
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+            } catch (Exception e) {
+                System.err.println("Cleanup failed: " + e.getMessage());
+            }
+
             updateProgress("Scan complete!", 100);
             
         } catch (Exception e) {
@@ -415,17 +497,7 @@ public class ApiDiscoveryTool {
             }
         }
         
-        private boolean deleteDirectory(File file) {
-            if (file.isDirectory()) {
-                File[] files = file.listFiles();
-                if (files != null) {
-                    for (File f : files) {
-                        deleteDirectory(f);
-                    }
-                }
-            }
-            return file.delete();
-        }
+
         
         private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
             t.getResponseHeaders().set("Content-Type", "application/json");

@@ -23,6 +23,18 @@ public class GitLabConnector {
     private static final String GITLAB_API_BASE = "https://gitlab.com/api/v4";
     private static final int HTTP_TIMEOUT_MS = 30000; // 30 seconds
     private static final int GIT_CLONE_TIMEOUT_SEC = 120; // 2 minutes per repo
+    
+    // Static block to disable JGit memory mapping (fixes Windows file locking)
+    static {
+        try {
+            org.eclipse.jgit.storage.file.WindowCacheConfig config = new org.eclipse.jgit.storage.file.WindowCacheConfig();
+            config.setPackedGitMMAP(false);
+            config.install();
+            System.out.println("[GitLab] JGit Memory Mapping disabled (Windows compatibility)");
+        } catch (Exception e) {
+            System.err.println("[GitLab] Failed to configure JGit: " + e.getMessage());
+        }
+    }
 
     public List<DiscoveryReport> scanGroup(String groupPath, String token, String scanFolderName) {
         List<DiscoveryReport> allReports = new ArrayList<>();
@@ -66,8 +78,8 @@ public class GitLabConnector {
             // FIX: Set JGit User Home to temp directory to avoid permission errors on CloudHub
             // CloudHub /usr/src/app/.config is often read-only or non-existent for the user
             try {
-                FS.DETECTED.setUserHome(tempCloneDir);
-                System.out.println("[GitLab] Set JGit User Home to: " + tempCloneDir.getAbsolutePath());
+                FS.DETECTED.setUserHome(tempDir);
+                System.out.println("[GitLab] Set JGit User Home to: " + tempDir.getAbsolutePath());
             } catch (Exception e) {
                 System.err.println("[GitLab] Failed to set JGit User Home: " + e.getMessage());
             }
@@ -84,15 +96,34 @@ public class GitLabConnector {
                         File repoDir = new File(tempCloneDir, p.name);
                         System.out.println("[GitLab] Cloning " + p.name + " to " + repoDir.getAbsolutePath());
                         
-                        Git git = Git.cloneRepository()
+                        try (Git git = Git.cloneRepository()
                             .setURI(p.http_url_to_repo)
                             .setDirectory(repoDir)
                             .setCredentialsProvider(new UsernamePasswordCredentialsProvider("oauth2", token))
                             .setDepth(1) // Shallow clone for performance
                             .setTimeout(GIT_CLONE_TIMEOUT_SEC)
-                            .call();
+                            .call()) {
+                            
+                            // AGGRESSIVE JGit CLEANUP FOR WINDOWS
+                            // 1. Disable cache-keeping for this repo
+                            git.getRepository().getConfig().setInt("core", null, "repositoryCacheExpireAfter", 0);
+                            git.getRepository().getConfig().save();
+                            
+                            // 2. Explicitly close
+                            git.getRepository().close();
+                        }
                         
-                        git.close();
+                        // 3. Force GC to release any mapped byte buffers (DirectBuffers)
+                        System.gc();
+                        try { Thread.sleep(500); } catch (InterruptedException e) {}
+
+                        // 4. Immediately delete .git folder to prevent persistent locks
+                        // Since we only need the source code for scanning, the git history is a liability on Windows.
+                        File gitDir = new File(repoDir, ".git");
+                        if (gitDir.exists()) {
+                           // System.out.println("[GitLab] Removing .git folder to free locks...");
+                           deleteDirectory(gitDir);
+                        }
                         
                         // Scan the cloned repository
                         System.out.println("[GitLab] Scanning " + p.name);
@@ -184,6 +215,34 @@ public class GitLabConnector {
             List<GitLabProject> projects = gson.fromJson(br, new TypeToken<List<GitLabProject>>(){}.getType());
             System.out.println("[GitLab] Successfully parsed " + (projects != null ? projects.size() : 0) + " projects");
             return projects != null ? projects : new ArrayList<>();
+        }
+    }
+
+    private void deleteDirectory(File file) {
+        if (!file.exists()) return;
+        
+        // Fix for Windows: Force writable to delete read-only files (common with JGit)
+        if (!file.canWrite()) {
+            file.setWritable(true);
+        }
+        
+        if (file.isDirectory()) {
+            File[] files = file.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    deleteDirectory(f);
+                }
+            }
+        }
+        
+        // Retry deletion logic
+        if (!file.delete()) {
+            // Last resort: GC and sleep for stubborn locks
+            System.gc();
+            try { Thread.sleep(100); } catch (Exception e) {}
+            if (!file.delete()) {
+                 System.err.println("[GitLab] Failed to delete: " + file.getAbsolutePath());
+            }
         }
     }
 

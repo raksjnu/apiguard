@@ -263,7 +263,23 @@ public class ApiDiscoveryService {
             for (File file : everything) {
                 if (file.isDirectory()) {
                     System.out.println("Cleaning up repo details: " + file.getName());
-                    deleteDirectory(file);
+
+                    boolean deleted = deleteDirectory(file);
+                    if (!deleted) {
+                        System.err.println("WARN: Failed to delete directory: " + file.getAbsolutePath());
+                        // Try forcing garbage collection and retry (sometimes helps with Windows file locks)
+                        System.gc();
+                        try { Thread.sleep(2000); } catch (InterruptedException e) {} // Wait 2 seconds for OS handles
+                        if (!deleteDirectory(file)) {
+                            System.err.println("ERROR: Retry deletion failed for: " + file.getAbsolutePath());
+                            // List lingering files to help debug
+                            try {
+                                java.nio.file.Files.walk(file.toPath())
+                                    .forEach(p -> System.err.println("  - Remaining: " + p));
+                            } catch (IOException ex) {}
+                        }
+                    }
+
                 }
             }
         }
@@ -282,17 +298,38 @@ public class ApiDiscoveryService {
     }
     
     private static boolean deleteDirectory(File directory) {
-        File[] files = directory.listFiles();
-        if (files != null) {
-            for (File file : files) {
-                if (file.isDirectory()) {
-                    deleteDirectory(file);
-                } else {
-                    file.delete();
+        if (!directory.exists()) return true;
+        
+        try {
+            java.nio.file.Path path = directory.toPath();
+            java.nio.file.Files.walkFileTree(path, new java.nio.file.SimpleFileVisitor<java.nio.file.Path>() {
+                @Override
+                public java.nio.file.FileVisitResult visitFile(java.nio.file.Path file, java.nio.file.attribute.BasicFileAttributes attrs) throws IOException {
+                    try {
+                        java.nio.file.Files.delete(file);
+                    } catch (IOException e) {
+                        System.err.println("FAILED to delete file: " + file + " (" + e.getMessage() + ")");
+                        throw e;
+                    }
+                    return java.nio.file.FileVisitResult.CONTINUE;
                 }
-            }
+
+                @Override
+                public java.nio.file.FileVisitResult postVisitDirectory(java.nio.file.Path dir, IOException exc) throws IOException {
+                    try {
+                        java.nio.file.Files.delete(dir);
+                    } catch (IOException e) {
+                        System.err.println("FAILED to delete dir: " + dir + " (" + e.getMessage() + ")");
+                        throw e;
+                    }
+                    return java.nio.file.FileVisitResult.CONTINUE;
+                }
+            });
+            return true;
+        } catch (IOException e) {
+            System.err.println("Error deleting directory struct: " + e.getMessage());
+            return false;
         }
-        return directory.delete();
     }
     
     /**

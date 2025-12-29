@@ -87,7 +87,9 @@ public class ScannerEngine {
         if (this.metadataRules == null || this.metadataRules.isEmpty()) return;
 
         try (Stream<Path> paths = Files.walk(repoRoot.toPath())) {
-            List<Path> allFiles = paths.filter(Files::isRegularFile).toList();
+            List<Path> allFiles = paths.filter(Files::isRegularFile)
+                                       .filter(p -> !p.toString().contains(".git")) // Exclude .git internals
+                                       .toList();
             
             for (RuleConfig.MetadataRule rule : this.metadataRules) {
                 String filePattern = rule.getFile();
