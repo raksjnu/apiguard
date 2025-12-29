@@ -256,6 +256,18 @@ public class ApiDiscoveryService {
             }
         }
         
+        // CLEANUP: Delete downloaded repository folders to save space
+        // Keep only the JSON reports
+        File[] everything = outputDir.listFiles();
+        if (everything != null) {
+            for (File file : everything) {
+                if (file.isDirectory()) {
+                    System.out.println("Cleaning up repo details: " + file.getName());
+                    deleteDirectory(file);
+                }
+            }
+        }
+        
         // Mark as complete
         progress.setMessage("Scan completed successfully");
         progress.setPercent(100);
