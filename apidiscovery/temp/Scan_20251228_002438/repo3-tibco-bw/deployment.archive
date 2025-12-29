@@ -1,4 +1,0 @@
-# This represents a TIBCO archive
-# Contains reference to HTTP Transport
-transport_http=enabled
-http_port=8080
