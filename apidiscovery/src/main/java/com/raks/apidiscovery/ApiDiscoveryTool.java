@@ -107,6 +107,14 @@ public class ApiDiscoveryTool {
                 t.getResponseHeaders().add("Pragma", "no-cache");
                 t.getResponseHeaders().add("Expires", "0");
                 
+                if (path.endsWith(".html")) t.getResponseHeaders().set("Content-Type", "text/html");
+                else if (path.endsWith(".css")) t.getResponseHeaders().set("Content-Type", "text/css");
+                else if (path.endsWith(".js")) t.getResponseHeaders().set("Content-Type", "application/javascript");
+                else if (path.endsWith(".json")) t.getResponseHeaders().set("Content-Type", "application/json");
+                else if (path.endsWith(".svg")) t.getResponseHeaders().set("Content-Type", "image/svg+xml");
+                else if (path.endsWith(".png")) t.getResponseHeaders().set("Content-Type", "image/png");
+                else if (path.endsWith(".jpg") || path.endsWith(".jpeg")) t.getResponseHeaders().set("Content-Type", "image/jpeg");
+                
                 t.sendResponseHeaders(200, bytes.length);
                 OutputStream os = t.getResponseBody();
                 os.write(bytes);
