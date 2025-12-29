@@ -172,13 +172,13 @@
     <header>
         <div class="header-inner">
             <div style="display: flex; align-items: center; gap: 1rem;">
-                <img src="/apiguard/apidiscovery/assets/logo.svg" alt="RAKS Logo" style="height: 40px; background: white; padding: 2px; border-radius: 4px;">
+                <img src="/assets/logo.svg" alt="RAKS Logo" style="height: 40px; background: white; padding: 2px; border-radius: 4px;">
                 <div>
                     <div style="font-size: 1.5rem; font-weight: bold;">API Discovery Tool</div>
                 </div>
             </div>
             <div>
-                <a href="/apiguard/apidiscovery/guide.html" target="_blank" style="background-color: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;">
+                <a href="/guide.html" target="_blank" style="background-color: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;">
                     <span>📘</span> Guide / Help
                 </a>
             </div>
@@ -289,7 +289,7 @@
 
             try {
                 // Call Java Backend (POST)
-                const response = await fetch('/apiguard/apidiscovery/api/scan', {
+                const response = await fetch('/api/scan', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ source: source, token: token })
@@ -324,7 +324,7 @@
         
         async function checkProgress() {
             try {
-                const response = await fetch('/apiguard/apidiscovery/api/progress?scanId=' + currentScanId);
+                const response = await fetch('/api/progress?scanId=' + currentScanId);
                 const progress = await response.json();
                 
                 if (progress.message) {
@@ -473,7 +473,7 @@
                 document.getElementById('progressBar').style.display = 'none'; // Hide progress bar for simple load
                 document.getElementById('loadingModal').style.display = 'flex';
 
-                const response = await fetch('/apiguard/apidiscovery/api/scans/list');
+                const response = await fetch('/api/scans/list');
                 const scans = await response.json();
                 
                 const container = document.getElementById('scanListContainer');
@@ -531,7 +531,7 @@
             }
             
             try {
-                const response = await fetch('/apiguard/apidiscovery/api/scans/delete', {
+                const response = await fetch('/api/scans/delete', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ folders: selectedFolders })
@@ -558,7 +558,7 @@
                 document.getElementById('loadingModal').style.display = 'flex';
                 document.getElementById('resultsArea').style.display = 'none';
                 
-                const response = await fetch('/apiguard/apidiscovery/api/scans/view?scanName=' + encodeURIComponent(scanName));
+                const response = await fetch('/api/scans/view?scanName=' + encodeURIComponent(scanName));
                 const data = await response.json();
                 
                 if (data.error) {
@@ -591,7 +591,7 @@
         window.addEventListener('DOMContentLoaded', async function() {
             console.log('[API Discovery] Loading configuration...');
             try {
-                const response = await fetch('/apiguard/apidiscovery/api/config');
+                const response = await fetch('/api/config');
                 if (!response.ok) {
                     console.error('[API Discovery] Config fetch failed:', response.status);
                     return;

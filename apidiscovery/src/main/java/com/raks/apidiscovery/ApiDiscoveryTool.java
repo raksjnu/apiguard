@@ -55,6 +55,7 @@ public class ApiDiscoveryTool {
         server.createContext("/api/scans/delete", new ScanDeleteHandler());
         server.createContext("/api/scans/view", new ScanViewHandler());
         server.createContext("/api/progress", new ProgressHandler());
+        server.createContext("/api/config", new ConfigHandler());
         
         server.setExecutor(null); // default executor
         server.start();
@@ -222,11 +223,12 @@ public class ApiDiscoveryTool {
             }
         }
 
-        private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
+     private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
              t.getResponseHeaders().set("Content-Type", "application/json");
-             t.sendResponseHeaders(code, jsonMessage.length());
+             byte[] bytes = jsonMessage.getBytes(StandardCharsets.UTF_8);
+             t.sendResponseHeaders(code, bytes.length);
              OutputStream os = t.getResponseBody();
-             os.write(jsonMessage.getBytes());
+             os.write(bytes);
              os.close();
         }
     }
@@ -465,6 +467,36 @@ public class ApiDiscoveryTool {
                 try (OutputStream os = t.getResponseBody()) {
                     os.write(jsonResponse.getBytes());
                 }
+            }
+        }
+    }
+
+    // Handler for Config
+    static class ConfigHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if ("GET".equalsIgnoreCase(t.getRequestMethod())) {
+                Map<String, String> config = new java.util.HashMap<>();
+                config.put("defaultGroup", loadConfig("gitlab.default.group"));
+                config.put("defaultToken", loadConfig("gitlab.token"));
+                
+                Gson gson = new Gson();
+                String jsonResponse = gson.toJson(config);
+                
+                t.getResponseHeaders().set("Content-Type", "application/json");
+                byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+                t.sendResponseHeaders(200, bytes.length);
+                OutputStream os = t.getResponseBody();
+                os.write(bytes);
+                os.close();
+            } else {
+                 String jsonMessage = "{\"error\": \"Method Not Allowed\"}";
+                 t.getResponseHeaders().set("Content-Type", "application/json");
+                 byte[] bytes = jsonMessage.getBytes(StandardCharsets.UTF_8);
+                 t.sendResponseHeaders(405, bytes.length);
+                 OutputStream os = t.getResponseBody();
+                 os.write(bytes);
+                 os.close();
             }
         }
     }
