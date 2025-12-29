@@ -3,14 +3,17 @@ setlocal
 cd /d "%~dp0"
 
 REM --- Java Version Check ---
-set "PREFERRED_JAVA_HOME=C:\Program Files\Java\jdk-17"
+if not defined JAVA_HOME (
+    set "PREFERRED_JAVA_HOME=C:\Program Files\Java\jdk-17"
+    if exist "%PREFERRED_JAVA_HOME%" (
+        set "JAVA_HOME=%PREFERRED_JAVA_HOME%"
+    )
+)
 
-if exist "%PREFERRED_JAVA_HOME%" (
-    set "JAVA_HOME=%PREFERRED_JAVA_HOME%"
+if defined JAVA_HOME (
     set "PATH=%JAVA_HOME%\bin;%PATH%"
 ) else (
-    echo [WARN] Preferred JDK 17 not found at: %PREFERRED_JAVA_HOME%
-    echo [INFO] Falling back to system JAVA_HOME: %JAVA_HOME%
+    echo [INFO] JAVA_HOME not set. Using java from system PATH.
 )
 REM --------------------------
 

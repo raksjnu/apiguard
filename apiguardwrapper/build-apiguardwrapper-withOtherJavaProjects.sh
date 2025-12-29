@@ -14,11 +14,18 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
 # --- Java Version Check ---
-PREFERRED_JAVA_HOME="C:/Program Files/Java/jdk-17" 
-if [ -d "$PREFERRED_JAVA_HOME" ]; then
-    export JAVA_HOME="$PREFERRED_JAVA_HOME"
+if [ -z "$JAVA_HOME" ]; then
+    PREFERRED_JAVA_HOME="C:/Program Files/Java/jdk-17" 
+    if [ -d "$PREFERRED_JAVA_HOME" ]; then
+        export JAVA_HOME="$PREFERRED_JAVA_HOME"
+    fi
+fi
+
+if [ -n "$JAVA_HOME" ]; then
     export PATH="$JAVA_HOME/bin:$PATH"
-    echo "[INFO] Using Preferred JDK 17 at: $JAVA_HOME"
+    echo "[INFO] Using JAVA_HOME: $JAVA_HOME"
+else
+    echo "[INFO] JAVA_HOME not set. Using java from system PATH."
 fi
 
 echo ""
