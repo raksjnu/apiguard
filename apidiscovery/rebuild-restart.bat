@@ -4,8 +4,11 @@ REM   API Discovery Tool - Rebuild & Restart
 REM ==========================================
 
 REM Set JAVA_HOME to JDK 17
-set JAVA_HOME=C:\Program Files\Java\jdk-17
-set PATH=%JAVA_HOME%\bin;%PATH%
+REM Set JAVA_HOME if not already set
+if not defined JAVA_HOME (
+    set "JAVA_HOME=C:\Program Files\Java\jdk-17"
+)
+set "PATH=%JAVA_HOME%\bin;%PATH%"
 
 echo.
 echo ==========================================

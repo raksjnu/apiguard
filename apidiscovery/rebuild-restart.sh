@@ -3,9 +3,21 @@
 #   API Discovery Tool - Rebuild & Restart
 # ==========================================
 
-# Set JAVA_HOME to JDK 17
-export JAVA_HOME="/c/Program Files/Java/jdk-17"
-export PATH="$JAVA_HOME/bin:$PATH"
+# Set JAVA_HOME (User can edit this specific path if needed)
+CUSTOM_JAVA_HOME="/c/Program Files/Java/jdk-17"
+
+# Logic to find Java
+if [ -d "$CUSTOM_JAVA_HOME" ]; then
+    export JAVA_HOME="$CUSTOM_JAVA_HOME"
+    export PATH="$JAVA_HOME/bin:$PATH"
+elif [ -x "/usr/libexec/java_home" ]; then
+    # MacOS way
+    export JAVA_HOME=$(/usr/libexec/java_home)
+    export PATH="$JAVA_HOME/bin:$PATH"
+else
+    # Fallback to system java or assume it's in PATH
+    echo "[INFO] Using system Default Java"
+fi
 
 echo ""
 echo "=========================================="

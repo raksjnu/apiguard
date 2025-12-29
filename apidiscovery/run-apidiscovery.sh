@@ -8,6 +8,22 @@ echo "=========================================="
 echo "   API Discovery Tool - Launcher"
 echo "=========================================="
 echo ""
+# Set JAVA_HOME (User can edit this specific path if needed)
+CUSTOM_JAVA_HOME="/c/Program Files/Java/jdk-17"
+
+# Logic to find Java
+if [ -d "$CUSTOM_JAVA_HOME" ]; then
+    export JAVA_HOME="$CUSTOM_JAVA_HOME"
+    export PATH="$JAVA_HOME/bin:$PATH"
+elif [ -x "/usr/libexec/java_home" ]; then
+    # MacOS way
+    export JAVA_HOME=$(/usr/libexec/java_home)
+    export PATH="$JAVA_HOME/bin:$PATH"
+else
+    # Fallback to system java or assume it's in PATH
+    echo "[INFO] Using system Default Java"
+fi
+
 
 # Kill any existing process on port 8085
 echo "[INFO] Checking for existing process on port 8085..."
@@ -36,7 +52,7 @@ fi
 echo ""
 echo "[INFO] Starting API Discovery Tool..."
 echo ""
-java -jar target/apidiscovery-1.0.0-with-raks.jar
+java -jar "target/apidiscovery-1.0.0-with-raks.jar"
 
 # Check exit code
 if [ $? -ne 0 ]; then
