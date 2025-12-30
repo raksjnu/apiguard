@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom serialNumber="urn:uuid:6c525672-0ec0-4bfc-b4bd-51957ad1c0a1" version="1" xmlns="http://cyclonedx.org/schema/bom/1.4">
+<bom serialNumber="urn:uuid:2e568531-208b-4ae2-afdf-d1f4a09f9475" version="1" xmlns="http://cyclonedx.org/schema/bom/1.4">
   <metadata>
-    <timestamp>2025-12-30T23:10:46Z</timestamp>
+    <timestamp>2025-12-30T23:18:53Z</timestamp>
     <tools>
       <tool>
         <vendor>OWASP Foundation</vendor>
@@ -99,32 +99,39 @@
       <purl>pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar</purl>
       <externalReferences><reference type="website"><url>https://github.com/eclipse-ee4j/jaf/jakarta.activation</url></reference><reference type="distribution"><url>https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/</url></reference><reference type="issue-tracker"><url>https://github.com/eclipse-ee4j/jaf/issues/</url></reference><reference type="mailing-list"><url>https://dev.eclipse.org/mhonarc/lists/jakarta.ee-community/</url></reference><reference type="vcs"><url>https://github.com/eclipse-ee4j/jaf/jakarta.activation</url></reference></externalReferences>
     </component>
-    <component type="library" bom-ref="pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar">
+    <component type="library" bom-ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar">
       <publisher>The Apache Software Foundation</publisher>
       <group>org.apache.commons</group>
       <name>commons-lang3</name>
-      <version>3.12.0</version>
+      <version>3.17.0</version>
       <description>Apache Commons Lang, a package of Java utility classes for the
   classes that are in java.lang's hierarchy, or are considered to be so
-  standard as to justify existence in java.lang.</description>
+  standard as to justify existence in java.lang.
+
+  The code is tested using the latest revision of the JDK for supported
+  LTS releases: 8, 11, 17 and 21 currently.
+  See https://github.com/apache/commons-lang/blob/master/.github/workflows/maven.yml
+  
+  Please ensure your build environment is up-to-date and kindly report any build issues.</description>
       <scope>required</scope>
       <hashes>
-        <hash alg="MD5">19fe50567358922bdad277959ea69545</hash>
-        <hash alg="SHA-1">c6842c86792ff03b9f1d1fe2aab8dc23aa6c6f0e</hash>
-        <hash alg="SHA-256">d919d904486c037f8d193412da0c92e22a9fa24230b9d67a57855c5c31c7e94e</hash>
-        <hash alg="SHA-512">fbdbc0943cb3498b0148e86a39b773f97c8e6013740f72dbc727faeabea402073e2cc8c4d68198e5fc6b08a13b7700236292e99d4785f2c9989f2e5fac11fd81</hash>
-        <hash alg="SHA-384">c34b8a0e0eba2168ad56fedeb7a1d710b6f1d3f1ce6aae99a4e0247bd120efbbadc8dcb2f731045b8a16e3efd30604dc</hash>
-        <hash alg="SHA3-384">8ad6ebe7754bf0caa8cda7e59c0e95360d76e06a7ad6aeec5637985519dbd1dd06e7eed04711039f36ec4c49de280def</hash>
-        <hash alg="SHA3-256">18ef639b2aeeb5aedffb18dbf20c79f33e300d99fb31b131689639cc470e6e4c</hash>
-        <hash alg="SHA3-512">fbea96114dcf4f31cfaaa99987be756ddda3a6c74f8c835461997df794d54b92da1f60fe5c3f1f2a43cb8c5f5db7f4048bef77c70993673c7a93f3660fffc8da</hash>
+        <hash alg="MD5">7730df72b7fdff4a3a32d89a314f826a</hash>
+        <hash alg="SHA-1">b17d2136f0460dcc0d2016ceefca8723bdf4ee70</hash>
+        <hash alg="SHA-256">6ee731df5c8e5a2976a1ca023b6bb320ea8d3539fbe64c8a1d5cb765127c33b4</hash>
+        <hash alg="SHA-512">dfd5ff7fe7f852b9caabc81e5a00e20616f98405085f059b64dc2121feb5fa6cb327e11a3d2f954c079811c31f6fd484e90f932d45078796fbfa7dbf1f1eb5aa</hash>
+        <hash alg="SHA-384">c6ed55a5c2b05332890a43a3ea73b30f42dc23c92ebd054a8b0d29ca8f49fb9361f7325cfa90715be457804b087221b5</hash>
+        <hash alg="SHA3-384">bb9e148a87928c3053bcccee361d5d8d81b3c6ea41a390d96c615afd242409f909361c945f3b4238a297e4ebb2ed413b</hash>
+        <hash alg="SHA3-256">f28f34565f25dd65fd1a47916e917df9e3ff2c6721897ea57391a238227c96a2</hash>
+        <hash alg="SHA3-512">4c8e7a5f10d091bb240e7eb59287d0e4e4420e7a2d2be2b8060111e479540ffae89040377c99ec7f458cd54e1ac0ed0778951cd1f34d5d90571b8a303fbb9baf</hash>
       </hashes>
       <licenses>
         <license>
           <id>Apache-2.0</id>
+          <url>https://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
       </licenses>
-      <purl>pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar</purl>
-      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-lang/</url></reference><reference type="build-system"><url>https://builds.apache.org/</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/LANG</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf?p=commons-lang.git</url></reference></externalReferences>
+      <purl>pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar</purl>
+      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-lang/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-parent/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/LANG</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf?p=commons-lang.git</url></reference></externalReferences>
     </component>
     <component type="library" bom-ref="pkg:maven/org.springframework/spring-beans@5.3.32?type=jar">
       <publisher>Spring IO</publisher>
@@ -292,31 +299,32 @@
       <purl>pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar</purl>
       <externalReferences><reference type="website"><url>https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-sockets-connector</url></reference><reference type="distribution"><url>http://www.mulesoft.org/display/MULE/Download</url></reference><reference type="vcs"><url>https://github.com/mulesoft/mule-ce-extensions-parent/mule-sockets-connector</url></reference></externalReferences>
     </component>
-    <component type="library" bom-ref="pkg:maven/commons-io/commons-io@2.11.0?type=jar">
+    <component type="library" bom-ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar">
       <publisher>The Apache Software Foundation</publisher>
       <group>commons-io</group>
       <name>commons-io</name>
-      <version>2.11.0</version>
+      <version>2.18.0</version>
       <description>The Apache Commons IO library contains utility classes, stream implementations, file filters,
 file comparators, endian transformation classes, and much more.</description>
       <scope>required</scope>
       <hashes>
-        <hash alg="MD5">3b4b7ccfaeceeac240b804839ee1a1ca</hash>
-        <hash alg="SHA-1">a2503f302b11ebde7ebc3df41daebe0e4eea3689</hash>
-        <hash alg="SHA-256">961b2f6d87dbacc5d54abf45ab7a6e2495f89b75598962d8c723cea9bc210908</hash>
-        <hash alg="SHA-512">5bd78eed456ede30119319c5bed8e3e4c443b6fd7bdb3a7a5686647bd83094d0c3e2832a7575cfb60e4ef25f08106b93476939d3adcfecf5533cc030b3039e10</hash>
-        <hash alg="SHA-384">114f1e324d90ad887c177876d410f5787a8e8da6c48d4b2862d365802c0efded3a88cb24046976bf6276cadad3712f0f</hash>
-        <hash alg="SHA3-384">80288c03ad4d80d69f91d056ffc5570d49a9c76bf54ad2dff0121ecde26a560df76d05156f281f5c6db2a38ff07a873d</hash>
-        <hash alg="SHA3-256">5adfb5ccaf5f21a549422f426118a9542673926fcd18c68390cf813e791dcf6c</hash>
-        <hash alg="SHA3-512">7573f47f0babb53cefdc7c2309a0b982d800139064537b0797da442853d081010ad7c3c74a500598a0f800639a5d540eca21963ea652c68613907059bd4278c2</hash>
+        <hash alg="MD5">8cce74ccf461cd6502ae04c908eca917</hash>
+        <hash alg="SHA-1">44084ef756763795b31c578403dd028ff4a22950</hash>
+        <hash alg="SHA-256">f3ca0f8d63c40e23a56d54101c60d5edee136b42d84bfb85bc7963093109cf8b</hash>
+        <hash alg="SHA-512">786778529435d8a14ab6ce2176cdf2b9ee6585a71893b785f26257122166dcefc7c4af3f612eda3974b06c16d06fc357178bf28b9b74010e9bc04c33221adc2f</hash>
+        <hash alg="SHA-384">4be7ad9b352412ddad3eb00f2e44f1236216d3e713546d34d71f3aa8e589b06636abf22dad0c28e11a0cd7b54ea0496a</hash>
+        <hash alg="SHA3-384">d003d33c2cd37806d9d8f0576b65fd51fc1f02bfed7716279474556ef98abfaaddb5b5622762b64458bec6b57f77ceca</hash>
+        <hash alg="SHA3-256">89019fd824ce65aa33554a848dce2ca47f09c3a261fd22c699342d99579e91d9</hash>
+        <hash alg="SHA3-512">6edaba8f76bd3e96421ae3611fb32414b064c5ef2fdefd7402f3052c5849e06aa6dfdd218a6df97b25cdd7997df0c9d643af960c4294f2e89dffb052b4b9d8cd</hash>
       </hashes>
       <licenses>
         <license>
           <id>Apache-2.0</id>
+          <url>https://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
       </licenses>
-      <purl>pkg:maven/commons-io/commons-io@2.11.0?type=jar</purl>
-      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-io/</url></reference><reference type="build-system"><url>https://builds.apache.org/</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/IO</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf?p=commons-io.git</url></reference></externalReferences>
+      <purl>pkg:maven/commons-io/commons-io@2.18.0?type=jar</purl>
+      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-io/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-parent/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/IO</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf?p=commons-io.git</url></reference></externalReferences>
     </component>
     <component type="library" bom-ref="pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&amp;type=jar">
       <publisher>MuleSoft, Inc.</publisher>
@@ -1024,7 +1032,7 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
       <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar"/>
       <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"/>
       <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-beans@5.3.32?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-context@5.3.32?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-context-support@5.3.32?type=jar"/>
@@ -1034,12 +1042,12 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
     </dependency>
     <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
-      <dependency ref="pkg:maven/commons-io/commons-io@2.11.0?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"/>
+      <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
-    <dependency ref="pkg:maven/commons-io/commons-io@2.11.0?type=jar"/>
-    <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"/>
+    <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
+    <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
     <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"/>
     <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
     <dependency ref="pkg:maven/org.springframework/spring-beans@5.3.32?type=jar">
@@ -1072,21 +1080,21 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
     </dependency>
     <dependency ref="pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&amp;type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"/>
-      <dependency ref="pkg:maven/commons-io/commons-io@2.11.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+      <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar"/>
-      <dependency ref="pkg:maven/commons-io/commons-io@2.11.0?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"/>
+      <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar"/>
     <dependency ref="pkg:maven/org.mule.connectors/mule-email-connector@1.7.3?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar"/>
       <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"/>
-      <dependency ref="pkg:maven/commons-io/commons-io@2.11.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+      <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar"/>
@@ -1114,7 +1122,7 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
     <dependency ref="pkg:maven/org.glassfish.jaxb/txw2@2.3.8?type=jar"/>
     <dependency ref="pkg:maven/com.sun.istack/istack-commons-runtime@3.0.12?type=jar"/>
     <dependency ref="pkg:maven/org.mule.module/mule-java-module@2.0.0?classifier=mule-plugin&amp;type=jar">
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-core@5.3.32?type=jar"/>
     </dependency>

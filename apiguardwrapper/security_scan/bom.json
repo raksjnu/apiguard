@@ -1,10 +1,10 @@
 {
   "bomFormat" : "CycloneDX",
   "specVersion" : "1.4",
-  "serialNumber" : "urn:uuid:6c525672-0ec0-4bfc-b4bd-51957ad1c0a1",
+  "serialNumber" : "urn:uuid:2e568531-208b-4ae2-afdf-d1f4a09f9475",
   "version" : 1,
   "metadata" : {
-    "timestamp" : "2025-12-30T23:10:46Z",
+    "timestamp" : "2025-12-30T23:18:53Z",
     "tools" : [
       {
         "vendor" : "OWASP Foundation",
@@ -258,51 +258,52 @@
       "publisher" : "The Apache Software Foundation",
       "group" : "org.apache.commons",
       "name" : "commons-lang3",
-      "version" : "3.12.0",
-      "description" : "Apache Commons Lang, a package of Java utility classes for the classes that are in java.lang's hierarchy, or are considered to be so standard as to justify existence in java.lang.",
+      "version" : "3.17.0",
+      "description" : "Apache Commons Lang, a package of Java utility classes for the classes that are in java.lang's hierarchy, or are considered to be so standard as to justify existence in java.lang. The code is tested using the latest revision of the JDK for supported LTS releases: 8, 11, 17 and 21 currently. See https://github.com/apache/commons-lang/blob/master/.github/workflows/maven.yml Please ensure your build environment is up-to-date and kindly report any build issues.",
       "scope" : "required",
       "hashes" : [
         {
           "alg" : "MD5",
-          "content" : "19fe50567358922bdad277959ea69545"
+          "content" : "7730df72b7fdff4a3a32d89a314f826a"
         },
         {
           "alg" : "SHA-1",
-          "content" : "c6842c86792ff03b9f1d1fe2aab8dc23aa6c6f0e"
+          "content" : "b17d2136f0460dcc0d2016ceefca8723bdf4ee70"
         },
         {
           "alg" : "SHA-256",
-          "content" : "d919d904486c037f8d193412da0c92e22a9fa24230b9d67a57855c5c31c7e94e"
+          "content" : "6ee731df5c8e5a2976a1ca023b6bb320ea8d3539fbe64c8a1d5cb765127c33b4"
         },
         {
           "alg" : "SHA-512",
-          "content" : "fbdbc0943cb3498b0148e86a39b773f97c8e6013740f72dbc727faeabea402073e2cc8c4d68198e5fc6b08a13b7700236292e99d4785f2c9989f2e5fac11fd81"
+          "content" : "dfd5ff7fe7f852b9caabc81e5a00e20616f98405085f059b64dc2121feb5fa6cb327e11a3d2f954c079811c31f6fd484e90f932d45078796fbfa7dbf1f1eb5aa"
         },
         {
           "alg" : "SHA-384",
-          "content" : "c34b8a0e0eba2168ad56fedeb7a1d710b6f1d3f1ce6aae99a4e0247bd120efbbadc8dcb2f731045b8a16e3efd30604dc"
+          "content" : "c6ed55a5c2b05332890a43a3ea73b30f42dc23c92ebd054a8b0d29ca8f49fb9361f7325cfa90715be457804b087221b5"
         },
         {
           "alg" : "SHA3-384",
-          "content" : "8ad6ebe7754bf0caa8cda7e59c0e95360d76e06a7ad6aeec5637985519dbd1dd06e7eed04711039f36ec4c49de280def"
+          "content" : "bb9e148a87928c3053bcccee361d5d8d81b3c6ea41a390d96c615afd242409f909361c945f3b4238a297e4ebb2ed413b"
         },
         {
           "alg" : "SHA3-256",
-          "content" : "18ef639b2aeeb5aedffb18dbf20c79f33e300d99fb31b131689639cc470e6e4c"
+          "content" : "f28f34565f25dd65fd1a47916e917df9e3ff2c6721897ea57391a238227c96a2"
         },
         {
           "alg" : "SHA3-512",
-          "content" : "fbea96114dcf4f31cfaaa99987be756ddda3a6c74f8c835461997df794d54b92da1f60fe5c3f1f2a43cb8c5f5db7f4048bef77c70993673c7a93f3660fffc8da"
+          "content" : "4c8e7a5f10d091bb240e7eb59287d0e4e4420e7a2d2be2b8060111e479540ffae89040377c99ec7f458cd54e1ac0ed0778951cd1f34d5d90571b8a303fbb9baf"
         }
       ],
       "licenses" : [
         {
           "license" : {
-            "id" : "Apache-2.0"
+            "id" : "Apache-2.0",
+            "url" : "https://www.apache.org/licenses/LICENSE-2.0"
           }
         }
       ],
-      "purl" : "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+      "purl" : "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar",
       "externalReferences" : [
         {
           "type" : "website",
@@ -310,7 +311,7 @@
         },
         {
           "type" : "build-system",
-          "url" : "https://builds.apache.org/"
+          "url" : "https://github.com/apache/commons-parent/actions"
         },
         {
           "type" : "distribution",
@@ -330,7 +331,7 @@
         }
       ],
       "type" : "library",
-      "bom-ref" : "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"
+      "bom-ref" : "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"
     },
     {
       "publisher" : "Spring IO",
@@ -777,51 +778,52 @@
       "publisher" : "The Apache Software Foundation",
       "group" : "commons-io",
       "name" : "commons-io",
-      "version" : "2.11.0",
+      "version" : "2.18.0",
       "description" : "The Apache Commons IO library contains utility classes, stream implementations, file filters, file comparators, endian transformation classes, and much more.",
       "scope" : "required",
       "hashes" : [
         {
           "alg" : "MD5",
-          "content" : "3b4b7ccfaeceeac240b804839ee1a1ca"
+          "content" : "8cce74ccf461cd6502ae04c908eca917"
         },
         {
           "alg" : "SHA-1",
-          "content" : "a2503f302b11ebde7ebc3df41daebe0e4eea3689"
+          "content" : "44084ef756763795b31c578403dd028ff4a22950"
         },
         {
           "alg" : "SHA-256",
-          "content" : "961b2f6d87dbacc5d54abf45ab7a6e2495f89b75598962d8c723cea9bc210908"
+          "content" : "f3ca0f8d63c40e23a56d54101c60d5edee136b42d84bfb85bc7963093109cf8b"
         },
         {
           "alg" : "SHA-512",
-          "content" : "5bd78eed456ede30119319c5bed8e3e4c443b6fd7bdb3a7a5686647bd83094d0c3e2832a7575cfb60e4ef25f08106b93476939d3adcfecf5533cc030b3039e10"
+          "content" : "786778529435d8a14ab6ce2176cdf2b9ee6585a71893b785f26257122166dcefc7c4af3f612eda3974b06c16d06fc357178bf28b9b74010e9bc04c33221adc2f"
         },
         {
           "alg" : "SHA-384",
-          "content" : "114f1e324d90ad887c177876d410f5787a8e8da6c48d4b2862d365802c0efded3a88cb24046976bf6276cadad3712f0f"
+          "content" : "4be7ad9b352412ddad3eb00f2e44f1236216d3e713546d34d71f3aa8e589b06636abf22dad0c28e11a0cd7b54ea0496a"
         },
         {
           "alg" : "SHA3-384",
-          "content" : "80288c03ad4d80d69f91d056ffc5570d49a9c76bf54ad2dff0121ecde26a560df76d05156f281f5c6db2a38ff07a873d"
+          "content" : "d003d33c2cd37806d9d8f0576b65fd51fc1f02bfed7716279474556ef98abfaaddb5b5622762b64458bec6b57f77ceca"
         },
         {
           "alg" : "SHA3-256",
-          "content" : "5adfb5ccaf5f21a549422f426118a9542673926fcd18c68390cf813e791dcf6c"
+          "content" : "89019fd824ce65aa33554a848dce2ca47f09c3a261fd22c699342d99579e91d9"
         },
         {
           "alg" : "SHA3-512",
-          "content" : "7573f47f0babb53cefdc7c2309a0b982d800139064537b0797da442853d081010ad7c3c74a500598a0f800639a5d540eca21963ea652c68613907059bd4278c2"
+          "content" : "6edaba8f76bd3e96421ae3611fb32414b064c5ef2fdefd7402f3052c5849e06aa6dfdd218a6df97b25cdd7997df0c9d643af960c4294f2e89dffb052b4b9d8cd"
         }
       ],
       "licenses" : [
         {
           "license" : {
-            "id" : "Apache-2.0"
+            "id" : "Apache-2.0",
+            "url" : "https://www.apache.org/licenses/LICENSE-2.0"
           }
         }
       ],
-      "purl" : "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+      "purl" : "pkg:maven/commons-io/commons-io@2.18.0?type=jar",
       "externalReferences" : [
         {
           "type" : "website",
@@ -829,7 +831,7 @@
         },
         {
           "type" : "build-system",
-          "url" : "https://builds.apache.org/"
+          "url" : "https://github.com/apache/commons-parent/actions"
         },
         {
           "type" : "distribution",
@@ -849,7 +851,7 @@
         }
       ],
       "type" : "library",
-      "bom-ref" : "pkg:maven/commons-io/commons-io@2.11.0?type=jar"
+      "bom-ref" : "pkg:maven/commons-io/commons-io@2.18.0?type=jar"
     },
     {
       "publisher" : "MuleSoft, Inc.",
@@ -2705,7 +2707,7 @@
         "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
         "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar",
         "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar",
-        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar",
         "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar",
         "pkg:maven/org.springframework/spring-context@5.3.32?type=jar",
         "pkg:maven/org.springframework/spring-context-support@5.3.32?type=jar",
@@ -2718,8 +2720,8 @@
       "ref" : "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
       "dependsOn" : [
         "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar",
-        "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
-        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"
+        "pkg:maven/commons-io/commons-io@2.18.0?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"
       ]
     },
     {
@@ -2727,11 +2729,11 @@
       "dependsOn" : [ ]
     },
     {
-      "ref" : "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+      "ref" : "pkg:maven/commons-io/commons-io@2.18.0?type=jar",
       "dependsOn" : [ ]
     },
     {
-      "ref" : "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+      "ref" : "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar",
       "dependsOn" : [ ]
     },
     {
@@ -2798,8 +2800,8 @@
       "ref" : "pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&type=jar",
       "dependsOn" : [
         "pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&type=jar",
-        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
-        "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar",
+        "pkg:maven/commons-io/commons-io@2.18.0?type=jar",
         "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"
       ]
     },
@@ -2807,8 +2809,8 @@
       "ref" : "pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&type=jar",
       "dependsOn" : [
         "pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar",
-        "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
-        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"
+        "pkg:maven/commons-io/commons-io@2.18.0?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"
       ]
     },
     {
@@ -2820,8 +2822,8 @@
       "dependsOn" : [
         "pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar",
         "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar",
-        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
-        "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar",
+        "pkg:maven/commons-io/commons-io@2.18.0?type=jar",
         "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"
       ]
     },
@@ -2873,7 +2875,7 @@
     {
       "ref" : "pkg:maven/org.mule.module/mule-java-module@2.0.0?classifier=mule-plugin&type=jar",
       "dependsOn" : [
-        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar",
         "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar",
         "pkg:maven/org.springframework/spring-core@5.3.32?type=jar"
       ]

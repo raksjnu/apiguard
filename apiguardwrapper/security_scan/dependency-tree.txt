@@ -2,7 +2,7 @@ com.raks.apiguard:apiguardwrapper:mule-application:1.0.0
 +- org.mule.connectors:mule-http-connector:jar:mule-plugin:1.9.2:compile
 |  +- org.mule.modules:mule-module-cors-kernel:jar:1.1.2:compile
 |  +- com.sun.activation:jakarta.activation:jar:1.2.2:compile
-|  +- org.apache.commons:commons-lang3:jar:3.12.0:compile
+|  +- org.apache.commons:commons-lang3:jar:3.17.0:compile
 |  +- org.springframework:spring-beans:jar:5.3.32:compile
 |  +- org.springframework:spring-context:jar:5.3.32:compile
 |  +- org.springframework:spring-context-support:jar:5.3.32:compile
@@ -10,7 +10,7 @@ com.raks.apiguard:apiguardwrapper:mule-application:1.0.0
 |  +- org.mule.sdk:mule-sdk-compatibility-api:jar:0.7.4:compile
 |  \- org.mule.sdk:mule-sdk-api:jar:0.7.0:compile
 +- org.mule.connectors:mule-sockets-connector:jar:mule-plugin:1.2.2:compile
-|  \- commons-io:commons-io:jar:2.11.0:compile
+|  \- commons-io:commons-io:jar:2.18.0:compile
 +- org.mule.connectors:mule-file-connector:jar:mule-plugin:1.5.2:compile
 |  \- org.mule.modules:mule-module-file-extension-common:jar:mule-plugin:1.4.3:compile
 |     \- com.sun.activation:javax.activation:jar:1.2.0:compile
