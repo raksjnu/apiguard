@@ -12,9 +12,9 @@ fi
 
 echo "[INFO] Using Java at: $JAVA_HOME"
 
-# Recursively find all pom.xml files
+# Recursively find all pom.xml files (excluding 'target' folders)
 echo "[INFO] Searching for Maven projects..."
-find . -name "pom.xml" -type f | while read -r pom_file; do
+find . -type d -name "target" -prune -o -name "pom.xml" -type f -print | while read -r pom_file; do
     project_dir=$(dirname "$pom_file")
     
     echo ""
