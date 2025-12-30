@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom serialNumber="urn:uuid:dd51f49e-de00-4089-8ddc-58c1ccc4dd24" version="1" xmlns="http://cyclonedx.org/schema/bom/1.4">
+<bom serialNumber="urn:uuid:3717391f-7edb-404f-ba23-d96adb3c60b2" version="1" xmlns="http://cyclonedx.org/schema/bom/1.4">
   <metadata>
-    <timestamp>2025-12-30T23:43:19Z</timestamp>
+    <timestamp>2025-12-30T23:48:38Z</timestamp>
     <tools>
       <tool>
         <vendor>OWASP Foundation</vendor>
@@ -301,6 +301,23 @@ file comparators, endian transformation classes, and much more.</description>
       <purl>pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar</purl>
       <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-lang/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-lang/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/LANG</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf/commons-lang.git</url></reference></externalReferences>
     </component>
+    <component type="library" bom-ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar">
+      <group>org.mule.modules</group>
+      <name>mule-module-cors-kernel</name>
+      <version>1.1.3</version>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">a6b5c849bd5c906db98da845bed374d4</hash>
+        <hash alg="SHA-1">44165f4b8d3cdf9aa361b5d905ba400a0b21e536</hash>
+        <hash alg="SHA-256">2631cfa02c959ffffc35e463d1051778abea99835e031ca994568c011f5482a6</hash>
+        <hash alg="SHA-512">03293309dfa7deb3c23576c44db28c1c546af9b7246f656af7d3a08786dffba058f6320d143cb9d9eb39f5f46eba5f28fa430b40e102dcc75583d7526fb52a42</hash>
+        <hash alg="SHA-384">bf5b9b198508a75c9103d12a7358757158a2e1717819097161d72c34db80409d339d553e68c9e6b344c5ea997e96331f</hash>
+        <hash alg="SHA3-384">c0e500a173a7283a55ac107e8deb04f59ba47126c4153ed9ab120e21a39fc0ea1e3dcec26f1bb9fe3c075f5e977964fe</hash>
+        <hash alg="SHA3-256">f82c61b933d60b18ae5b1ce3b65fd8af95f0bc1c231303c44a82ce8bfcf308f1</hash>
+        <hash alg="SHA3-512">d74467d9a94004b1cea2b38846e4d505c49f43523f4194a9bbe334fd3c1436032649ccfdbbe01665ec9ba78a4d05087e761ff84e3a377a1cdfa2e415bd53645a</hash>
+      </hashes>
+      <purl>pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar</purl>
+    </component>
     <component type="library" bom-ref="pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&amp;type=jar">
       <publisher>MuleSoft, Inc.</publisher>
       <group>org.mule.connectors</group>
@@ -326,31 +343,6 @@ file comparators, endian transformation classes, and much more.</description>
       </licenses>
       <purl>pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&amp;type=jar</purl>
       <externalReferences><reference type="website"><url>https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-http-connector</url></reference><reference type="distribution"><url>http://www.mulesoft.org/display/MULE/Download</url></reference><reference type="vcs"><url>https://github.com/mulesoft/mule-ce-extensions-parent/mule-http-connector</url></reference></externalReferences>
-    </component>
-    <component type="library" bom-ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar">
-      <publisher>MuleSoft, Inc.</publisher>
-      <group>org.mule.modules</group>
-      <name>mule-module-cors-kernel</name>
-      <version>1.1.2</version>
-      <description>Mule is the runtime engine of Anypoint™ Platform. It is the industry’s only unified platform that combines data and application integration across legacy systems, SaaS applications, and APIs with hybrid deployment options for maximum flexibility.</description>
-      <scope>required</scope>
-      <hashes>
-        <hash alg="MD5">e57d2c8ac6d0dfaf9252431bf4fdf8f8</hash>
-        <hash alg="SHA-1">7e951a264bb07235bd1eb368bc0c5b5844744ef0</hash>
-        <hash alg="SHA-256">407e3ca28021600aa3d710e1e0fd37911bf69ea65a66930c991f457259ce7089</hash>
-        <hash alg="SHA-512">3b9ccece4b618d783adbb8a91c9b94c1fd67897d54ef43d9f499bffecd2892a085a159dfba5a2b9ac975d20cd76d8025a917574e8656a4feae7961f040ded3a4</hash>
-        <hash alg="SHA-384">a7d70a51065476c26038b254bf560788ea3972cd961d79ab17aa017e0b052361f2bfb8cde5eebf8049eb35f1298e565f</hash>
-        <hash alg="SHA3-384">802fc5aa9c2d1c2f21a51f78f0d1aa8c7d3b6bcc3332cc16f5e6426f799930fbddc8def5163e0bc191fb26b1dd9d5c5c</hash>
-        <hash alg="SHA3-256">61c697fd7e43cbdcef9785727860b1a1044b76148641cdb3b1d867f92562d0b6</hash>
-        <hash alg="SHA3-512">6411e51948a3f2f3dd1f805818b076f75cad90568580b6a5dba801f5f60be3c624c3befb08f090c9c232b3e511b1263b16f7d0dd5ae4c884b9756d356704c4d8</hash>
-      </hashes>
-      <licenses>
-        <license>
-          <id>Apache-2.0</id>
-        </license>
-      </licenses>
-      <purl>pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar</purl>
-      <externalReferences><reference type="website"><url>https://developer.mulesoft.com/mule-module-cors-kernel/</url></reference><reference type="distribution"><url>http://www.mulesoft.org/display/MULE/Download</url></reference><reference type="issue-tracker"><url>https://www.mulesoft.org/jira/projects/MULE/issues/</url></reference><reference type="vcs"><url>https://github.com/mulesoft/mule/mule-module-cors-kernel</url></reference></externalReferences>
     </component>
     <component type="library" bom-ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar">
       <publisher>Eclipse Foundation</publisher>
@@ -965,14 +957,14 @@ file comparators, endian transformation classes, and much more.</description>
       <description>Universal Document Generation Framework for Mule, Tibco, and other technologies</description>
       <scope>required</scope>
       <hashes>
-        <hash alg="MD5">645c1cbff2c1985b91db1c19e5579690</hash>
-        <hash alg="SHA-1">9d5298a5c313ab129c6f1edbcc270cfccbce3e4d</hash>
-        <hash alg="SHA-256">24a581d21615638b722958f6ef0007778738d913d17bbab0e43d5c4e4df183f2</hash>
-        <hash alg="SHA-512">1d6d36990b0214affc5652502e645c1ab2b477b7d8cbdcfff2490e3fe05a30c3720149654d92f228d00d8004ccc43f82fbb5403722d9af28a24c588ad2507747</hash>
-        <hash alg="SHA-384">2359740d357d567a8651aa5858cf38f0557c4b24955d55ca498b870a30363f782070886ac72aef1b42e157f3e386b0da</hash>
-        <hash alg="SHA3-384">3f91125933805898f736d9245dbb7c1fe4a5044dc547f7d985b015e6fb744559d516183ea241cc0a56fe43fa1314459e</hash>
-        <hash alg="SHA3-256">ae13b00e367f46c81e081bb2239a2bb89aab6b22f70189756b2fb4cac75bda5f</hash>
-        <hash alg="SHA3-512">e9dcc23514702799172cc4da97ba600076384132d6e5c26231e08d296c09fe3d09b705003d15fb13c4219c15cb974da4f54cdd4d11c07e5198d5e600837c803c</hash>
+        <hash alg="MD5">af2ae8ff1e4240ad72d43ee86fe93961</hash>
+        <hash alg="SHA-1">24751eb8f74ff88af92d0de07ac97bdaf638eb90</hash>
+        <hash alg="SHA-256">22a538afd985977c2a326585e0791d8fb00cb4f2a3bcceccb307e9319b2b7c39</hash>
+        <hash alg="SHA-512">68fb55cee565382ee1de4abb8c45d321c8e1ef949ac974efa9d000d37d6eeb6de68e9d57114498a658f2e29e9453cdd81dcfb9615909bab41dc64fb7a6ebe5ff</hash>
+        <hash alg="SHA-384">d4aa94fe958c6d02ed8ce8580103ab6c2059b989ae3229c35a4ad0640b607ae46ba08c24f39d402588607f358772d49c</hash>
+        <hash alg="SHA3-384">4dd1284c6f73fc90079df4527bd9b8be8a3e9299d504f650e9274a68a11feaeb20d49ba6203ccd3f60f4dbd9c5b3c56a</hash>
+        <hash alg="SHA3-256">8d7f14086d7fe91da4f16aa8df6057214f0e09078eb8669a67000a56d4510049</hash>
+        <hash alg="SHA3-512">e90e44e9c9f27260fb41b9ada145da049ee9c0d96389a34f9d5f8c268e626b3ec7d8a88f13595fa92d16fe8758f4b353beb49885ccb09b410dd3d46d5768538a</hash>
       </hashes>
       <licenses/>
       <purl>pkg:maven/com.raks/raksanalyzer@1.0.0?type=jar</purl>
@@ -1023,6 +1015,7 @@ file comparators, endian transformation classes, and much more.</description>
       <dependency ref="pkg:maven/org.springframework/spring-expression@5.3.39?type=jar"/>
       <dependency ref="pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar"/>
       <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
+      <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar"/>
       <dependency ref="pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&amp;type=jar"/>
       <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar"/>
       <dependency ref="pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&amp;type=jar"/>
@@ -1064,9 +1057,10 @@ file comparators, endian transformation classes, and much more.</description>
     <dependency ref="pkg:maven/commons-codec/commons-codec@1.17.1?type=jar"/>
     <dependency ref="pkg:maven/commons-io/commons-io@2.16.1?type=jar"/>
     <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
+    <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar"/>
     <dependency ref="pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar"/>
-      <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"/>
+      <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar"/>
       <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
       <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar"/>
@@ -1078,7 +1072,6 @@ file comparators, endian transformation classes, and much more.</description>
       <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
-    <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"/>
     <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
     <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar">
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
