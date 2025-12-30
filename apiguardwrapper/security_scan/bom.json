@@ -1,0 +1,2946 @@
+{
+  "bomFormat" : "CycloneDX",
+  "specVersion" : "1.4",
+  "serialNumber" : "urn:uuid:6c525672-0ec0-4bfc-b4bd-51957ad1c0a1",
+  "version" : 1,
+  "metadata" : {
+    "timestamp" : "2025-12-30T23:10:46Z",
+    "tools" : [
+      {
+        "vendor" : "OWASP Foundation",
+        "name" : "CycloneDX Maven plugin",
+        "version" : "2.7.9",
+        "hashes" : [
+          {
+            "alg" : "MD5",
+            "content" : "8e595cdb67f17e4b41e046456970591d"
+          },
+          {
+            "alg" : "SHA-1",
+            "content" : "69e8ca804520d09ce4657e7235bae84d01cbffa6"
+          },
+          {
+            "alg" : "SHA-256",
+            "content" : "aa09074fe5aa403c008cd4fc7ef8ce41cd244489337f16b3e91a3914158a4db8"
+          },
+          {
+            "alg" : "SHA-512",
+            "content" : "1488a8112da8e675813d7585f57c5efb178aed32901118186ee12d0e4ae3d19c53774c7f860bf70d17d70f050119b69443a2637cf641675b4b5d9cdcdd69b89b"
+          },
+          {
+            "alg" : "SHA-384",
+            "content" : "b097295dfbf10887abc6eec58d4d0822cde5a73d1f5c1cf183a57bf569016ad5ced9d34efae3e574d82bb62837540c6c"
+          },
+          {
+            "alg" : "SHA3-384",
+            "content" : "289f9520bd73a2031276248a6ef8f0891c691062c2d1ea86a2bc9ea8db2c52377d92a53be9957179e71aee3deda26a8c"
+          },
+          {
+            "alg" : "SHA3-256",
+            "content" : "32b50a7efe5d491a4039c0017eca3cf49d98b55fc66d06b3dd06209487323474"
+          },
+          {
+            "alg" : "SHA3-512",
+            "content" : "1daf813da53e5d5cda4d0302ff3a5e388aa45d96ebe6dcbe240f35d33f14b1e6390f6bbe7f21f3ed8cf96ebd9f5516a08b18487b7339715109c81cebfc1563df"
+          }
+        ]
+      }
+    ],
+    "component" : {
+      "group" : "com.raks.apiguard",
+      "name" : "apiguardwrapper",
+      "version" : "1.0.0",
+      "licenses" : [ ],
+      "purl" : "pkg:maven/com.raks.apiguard/apiguardwrapper@1.0.0?type=mule-application",
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.raks.apiguard/apiguardwrapper@1.0.0?type=mule-application"
+    },
+    "properties" : [
+      {
+        "name" : "maven.goal",
+        "value" : "makeAggregateBom"
+      },
+      {
+        "name" : "maven.scopes",
+        "value" : "compile,provided,runtime,system"
+      }
+    ]
+  },
+  "components" : [
+    {
+      "group" : "org.mule.connectors",
+      "name" : "mule-http-connector",
+      "version" : "1.9.2",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "03d6402f86d184c362d5b921f82b8cd0"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "847816df559543886d0f193614839d9ef1d5f92e"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "ff741766e262a140977d494b4f72664e9f48ad679e28a70ace4a1d107c1daa60"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "fbadb93d4ff1015f5c5aed1edb120ab6a86ca8d7f6788dd0c513f9a3f0d3dc2dcdca8faaa0e5e90e3eb125e4b453cffbcb1b4d548526629d96b8907fdee9c36b"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "05a003e8a952329a089a59665bc6c758b88ee1f701233aaf5b643490e2a926c767af7dc2154e10ea6a0fab68654946a9"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "64679290636318dc93387a3ca5aaa9b6e62fedcf686286d723ff726678c73f45df25b065c8f74d1dda67dc029adcade3"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "d5ef59fd40722c74cefcab17328eadb005e952f495e8fb8a7027d78f7a207d82"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "2e6ff4a432a8be541c4680091cd8f8b348fa4849658c3d25451d2d52b116d8aae5dd3c60c33f58422b0636aee5cb2d2d11cc5bac9087174dc5317f42b0f22c94"
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.connectors/mule-http-connector@1.9.2?classifier=mule-plugin&type=jar",
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.connectors/mule-http-connector@1.9.2?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.modules",
+      "name" : "mule-module-cors-kernel",
+      "version" : "1.1.2",
+      "description" : "Mule is the runtime engine of Anypoint™ Platform. It is the industry’s only unified platform that combines data and application integration across legacy systems, SaaS applications, and APIs with hybrid deployment options for maximum flexibility.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "e57d2c8ac6d0dfaf9252431bf4fdf8f8"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "7e951a264bb07235bd1eb368bc0c5b5844744ef0"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "407e3ca28021600aa3d710e1e0fd37911bf69ea65a66930c991f457259ce7089"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "3b9ccece4b618d783adbb8a91c9b94c1fd67897d54ef43d9f499bffecd2892a085a159dfba5a2b9ac975d20cd76d8025a917574e8656a4feae7961f040ded3a4"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "a7d70a51065476c26038b254bf560788ea3972cd961d79ab17aa017e0b052361f2bfb8cde5eebf8049eb35f1298e565f"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "802fc5aa9c2d1c2f21a51f78f0d1aa8c7d3b6bcc3332cc16f5e6426f799930fbddc8def5163e0bc191fb26b1dd9d5c5c"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "61c697fd7e43cbdcef9785727860b1a1044b76148641cdb3b1d867f92562d0b6"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "6411e51948a3f2f3dd1f805818b076f75cad90568580b6a5dba801f5f60be3c624c3befb08f090c9c232b3e511b1263b16f7d0dd5ae4c884b9756d356704c4d8"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://developer.mulesoft.com/mule-module-cors-kernel/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://www.mulesoft.org/jira/projects/MULE/issues/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule/mule-module-cors-kernel"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"
+    },
+    {
+      "publisher" : "Eclipse Foundation",
+      "group" : "com.sun.activation",
+      "name" : "jakarta.activation",
+      "version" : "1.2.2",
+      "description" : "Jakarta Activation",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "0b8bee3bf29b9a015f8b992035581a7c"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "74548703f9851017ce2f556066659438019e7eb5"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "02156773e4ae9d048d14a56ad35d644bee9f1052a791d072df3ded3c656e6e1a"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "8bd94a4370b827e3904f31253b022e5c1851896d3b616ca7daebfef259238cedc56d4ced32c74f24a13c3e2295b0ea012af5d04656b7f713cc53a2f18d5e2cf7"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "1cb0aff8b73ba52a9931b2cf13c75a1ce6665fb826bf97ede66db75c532136aa189fb53a1925e62b6eef572309ef3b9a"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "83801332576d931f4091ba65ea240d49c23e3b93dae939ce2eed63de943f80f251a4347638b99900de5b831796b12590"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "5363211b59dfaff6e1973e93548e5e4062189c6d0f43d7802627ebeb7b7ff37d"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "0c7b62a3432b19ffad02eafffc7e598391cd32b1313d075f94cda09913402770b4ba2314716625571f266431067229c93cec36e17c3ea598623542988634ca0a"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/eclipse-ee4j/jaf/jakarta.activation"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/eclipse-ee4j/jaf/issues/"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://dev.eclipse.org/mhonarc/lists/jakarta.ee-community/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/eclipse-ee4j/jaf/jakarta.activation"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"
+    },
+    {
+      "publisher" : "The Apache Software Foundation",
+      "group" : "org.apache.commons",
+      "name" : "commons-lang3",
+      "version" : "3.12.0",
+      "description" : "Apache Commons Lang, a package of Java utility classes for the classes that are in java.lang's hierarchy, or are considered to be so standard as to justify existence in java.lang.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "19fe50567358922bdad277959ea69545"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "c6842c86792ff03b9f1d1fe2aab8dc23aa6c6f0e"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "d919d904486c037f8d193412da0c92e22a9fa24230b9d67a57855c5c31c7e94e"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "fbdbc0943cb3498b0148e86a39b773f97c8e6013740f72dbc727faeabea402073e2cc8c4d68198e5fc6b08a13b7700236292e99d4785f2c9989f2e5fac11fd81"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "c34b8a0e0eba2168ad56fedeb7a1d710b6f1d3f1ce6aae99a4e0247bd120efbbadc8dcb2f731045b8a16e3efd30604dc"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "8ad6ebe7754bf0caa8cda7e59c0e95360d76e06a7ad6aeec5637985519dbd1dd06e7eed04711039f36ec4c49de280def"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "18ef639b2aeeb5aedffb18dbf20c79f33e300d99fb31b131689639cc470e6e4c"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "fbea96114dcf4f31cfaaa99987be756ddda3a6c74f8c835461997df794d54b92da1f60fe5c3f1f2a43cb8c5f5db7f4048bef77c70993673c7a93f3660fffc8da"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://commons.apache.org/proper/commons-lang/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "https://builds.apache.org/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository.apache.org/service/local/staging/deploy/maven2"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://issues.apache.org/jira/browse/LANG"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://mail-archives.apache.org/mod_mbox/commons-user/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://gitbox.apache.org/repos/asf?p=commons-lang.git"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"
+    },
+    {
+      "publisher" : "Spring IO",
+      "group" : "org.springframework",
+      "name" : "spring-beans",
+      "version" : "5.3.32",
+      "description" : "Spring Beans",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "26ab7195f3c29751545eb317dcc50ffc"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "71a4d51820d614f6f72d379493c0f32657974c59"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "0d664fd9090b43854899669768def68e80d1aa83ccf9e3608964dd286cf0812d"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "9ae605e8e5b6dfcb6d8bb8ca1f00b7a5e7a72959d3fd6e59e9449c4478b6972297269cbad0adc2ae917da4e1edaa8d1d1b4a562cb92943d495bdcbccbfce34dc"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "788f6987313c6f46c0276b5a06e99b7779970323309481488646322da4cbaf14099f5b454dad6676f37efd9ecd9dd11b"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "62fdb508bf13182a86e8171d7c71f3df18af48f5db75038d469ee76d8f2755ebbdcd7510144f80d40281eb9b6fefb69b"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "23ca6e8ff094a1c505fc005cd3f5e0724a0e1bfb5c51b1cbe46c024383442e5c"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "701b2302de779a6d1b94e0f7430e79aebba99b945560ce74aa3090de2cf1ee79af38410a26e50a6b15f85bbf2aba7ff4ec750aa8da3acae492ffc8c0cb593dab"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/spring-projects/spring-framework/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar"
+    },
+    {
+      "publisher" : "Spring IO",
+      "group" : "org.springframework",
+      "name" : "spring-context",
+      "version" : "5.3.32",
+      "description" : "Spring Context",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "a26554b4b6b0c97a06c6b7787743a905"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "eced4842ef45bbd4a91c529016cce4ef82f2108f"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "dfd80477b59e6461a9a1aefc64cfd830737721468260d8ccfdec0979fe9adfa6"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "599e3136e829dafb4f8c1b616c4d0ce85eec1cf598cda15d34c1809046c27615544db869a90a6a18b96500ebc6127d0d3e4fc269b146ee14c23a00a6b798e5f9"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "7b61aabb116a8b061ae62337043b1851df17bd3c8220798d859ce7f16929ff022329a67904455169e0a7a32938a43ab3"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "812e25b09814b0c5ebfa23abbfe90890354843911bb4710085c4317f2933087e96a6c7ac0779ed4fcc633dbb777393b9"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "c54859452e9234872a203534696fdc28093d5224114ff6e23da3ea66249f93f8"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "1b1810296af79df81a5a02a0b4b5b3c4f9dab702a70cf0d5cd9edfd4b96df7e8552ab5bdf5be18a1af1920f05e1f11d35ef9072f9db82e78ca3292fb43c2c337"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.springframework/spring-context@5.3.32?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/spring-projects/spring-framework/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.springframework/spring-context@5.3.32?type=jar"
+    },
+    {
+      "publisher" : "Spring IO",
+      "group" : "org.springframework",
+      "name" : "spring-context-support",
+      "version" : "5.3.32",
+      "description" : "Spring Context Support",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "69bcc6e4a853f24b7f7c307261d64af8"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "ce815bccda3d0147cf016d0b134704ea454cc483"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "ac3b482d67f2b27bd090be483e889b9338c4323a2af235e65baca167232ddbe6"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "6ad0e0ee47e4e926a023c290537fd65e49d4ddd88c63aa1736bee3b8c006934a73c42895dfc429092c12d4c3965b5e86b779c89c27261f786bf2aa545cf24809"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "39322e40d6eda55d3634f1047f9e1419b8f9578b7b0ba7f0179f6e87bbf16b0da804b5a591059290d4b495a90855d964"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "c215d8336fbc5292125bc880a9758a98da3588f382d04e00c51aaf91d754ab0510f8b0c9627415b69c2194416271231f"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "78eaa44fa97a3d2b0c9eb1a06e57cb41770b839b40ca7032a57925979013cfa1"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "4297ac5318b24e68f8cfc9fc0c240601165dc82616bb61cbab2592153e2cfe100ac584436d894977bc7fa185ceb9d6a602c27c75f6e88869abfd25cc61a3822c"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.springframework/spring-context-support@5.3.32?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/spring-projects/spring-framework/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.springframework/spring-context-support@5.3.32?type=jar"
+    },
+    {
+      "publisher" : "Spring IO",
+      "group" : "org.springframework",
+      "name" : "spring-core",
+      "version" : "5.3.32",
+      "description" : "Spring Core",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "de057df922d1f52cb028515d74c61b38"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "50eca89542c407395a58c72097a6cc17b28e718a"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "e2ac75fd816e2c0c058a737cf66f869b0adf5a2747e58fd85dac98fbd4292f10"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "88d7f38991c0182e008618e684efae4a799c229ef41b1642164752e40f91677ce52242de5b5cb655f16ee27c46f8f43265a6543a5709ffe461afaa724b23dda5"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "cb62ebca6b8142769885acc17a5a3bb17f2bb33629c26ced4169a0def26d6da3276da30acbb7dcbabd4fb4e509ca4044"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "3060281483d9f58ecbf1919aa955e62896d73f1046ff944e07ed2ec2fdb4bbafb740fd81f949f97414ddf68da2fc2e72"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "4efd26a8c6f4453666e2285be2d2bebc3fde18467ad40397ece69a82064199aa"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "121cb87987ef6ab820ec0c23b790e254dd98812bbeb89ca173e5154a4a3d5eff0ec9b91e457344fd31642e8da572defb890880f93fb6fdd3f56cef98b2352695"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.springframework/spring-core@5.3.32?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/spring-projects/spring-framework/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.springframework/spring-core@5.3.32?type=jar"
+    },
+    {
+      "group" : "org.mule.sdk",
+      "name" : "mule-sdk-compatibility-api",
+      "version" : "0.7.4",
+      "description" : "Compatibility API for the Mule SDK.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "1fcbb91e65415f43cd17ab06ad115a98"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "92e38eb2b94b2f7a009b20e5752e4dd3c8d7b868"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "f9152eb930a8d50cd51828668928b7d5bf1c65169a34176f95a17bd8ccf450b9"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "28083df8f221be24b02701e11b3d736f128ec353382ffd868d223c23742cfa1b01de841b0f772193ac4973294300a9d70632f3d58bf46f002df700c21ad4d4fb"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "52aaf56e2fe9918c6f836d94203d1489135e4d70f8cc0b1fbd446e0af5a01407cf8cef5e1d82929e798492324f27a30b"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "b3a6da086a87a89a48f76f05dec31376f5ed4564ce5642d438b3053824649a7854143489d56c713235e1a5d425f1de3d"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "74b555387cee3a7f3026e8afa43a2ca43fab5884c2db3974738a0f5ef6209ce6"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "bb7d20b6c7cce393360b252fc7f625f914b19d8132c7e32e2b5a55b3ea8fdf544d62f809692ed1b4a4df5d77344dcdfc70424f56d570914bc66f4f039c79d1db"
+        }
+      ],
+      "licenses" : [ ],
+      "purl" : "pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-sdk-api/mule-sdk-compatibility-api"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository-master.mulesoft.org/nexus/content/repositories/releases"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar"
+    },
+    {
+      "group" : "org.mule.sdk",
+      "name" : "mule-sdk-api",
+      "version" : "0.7.0",
+      "description" : "API for Mule SDK.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "90811795307b55e6b8a469e2d0930ec8"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "88a58603ba14d55ce44bc93dc28b5872396720f0"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "ddc4cb01be087144f713b0d6ebcad1746d135c86f0cdcf590f84ee338acd6d99"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "93824f96ba1ea0e5f739b0cd9e22534f5c07d25eba780aa712e60095823342c956378a8c967096af2900ad791c259c22febd6b4d16cd5c8b0eda454581b9f076"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "9b6a57b974f243e22003b006428f2290e0fa9ef0920324aa372662acf2a542e428ebad0478cfcaa9ea44b0697de710a1"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "c7201a4f95d328b917616b27efb454910c9cec49cdd346548a9e561dff939f194aa389952a8f5527870f306837df373b"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "48b1261cf20d78ce38b4471807d0454f7971a447f2495d4050ea968600f2dd18"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "4149c7da28670d57e4feab5d37551417c671dab101a050472057642c8f3059e06eeea012bafd849f7914af8cf605b8361d9e64a26e4569794d20cf9ac3d6d1a2"
+        }
+      ],
+      "licenses" : [ ],
+      "purl" : "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-sdk-api/mule-sdk-api"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository-master.mulesoft.org/nexus/content/repositories/releases"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.connectors",
+      "name" : "mule-sockets-connector",
+      "version" : "1.2.2",
+      "description" : "A Mule extension that provides functionality to manage TCP and UDP connections",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "b0dbd1e68f1100bfd1f97fe188a0647c"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "4f9fcaa87887b558dfe84543943d13a2c4728e8c"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "8df8e811923bc6ddf831f513dcc2b896485d10f58053bf562c20cc67ed4d96ce"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "89128fa840c2ee7e340ff4a7735a21b2c57cdfd429f1bc0512895b3711c8890885dbb0bcae95a4778abff2ff5af2e92a697dd1f543e11b2952bc0acf9157e9f5"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "cee7d06070fe9d52e9ae1c31783f147ed5289efc0115a22b04a115c3cff81b75a5437534d9dbf80ba29563d16c4e2a5a"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "12983580e755c2c4a20243ce5486a1db730eb4920ca8fe4abeb8b05c37cc24655bf70f03aae7eabf1e1616562667e17e"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "d2031486dd64603c747bb42729fef6c78499de48c34f892a41ce8b496e4267a1"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "33dcf5e499c12a121e2bf31cc556180c226b866f32b9724a57c540da5d713e10b81cd8324c85d083eec826570af77f8ad985ebfb8673337d7bd45d917f170fd7"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-sockets-connector"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule-ce-extensions-parent/mule-sockets-connector"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "The Apache Software Foundation",
+      "group" : "commons-io",
+      "name" : "commons-io",
+      "version" : "2.11.0",
+      "description" : "The Apache Commons IO library contains utility classes, stream implementations, file filters, file comparators, endian transformation classes, and much more.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "3b4b7ccfaeceeac240b804839ee1a1ca"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "a2503f302b11ebde7ebc3df41daebe0e4eea3689"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "961b2f6d87dbacc5d54abf45ab7a6e2495f89b75598962d8c723cea9bc210908"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "5bd78eed456ede30119319c5bed8e3e4c443b6fd7bdb3a7a5686647bd83094d0c3e2832a7575cfb60e4ef25f08106b93476939d3adcfecf5533cc030b3039e10"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "114f1e324d90ad887c177876d410f5787a8e8da6c48d4b2862d365802c0efded3a88cb24046976bf6276cadad3712f0f"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "80288c03ad4d80d69f91d056ffc5570d49a9c76bf54ad2dff0121ecde26a560df76d05156f281f5c6db2a38ff07a873d"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "5adfb5ccaf5f21a549422f426118a9542673926fcd18c68390cf813e791dcf6c"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "7573f47f0babb53cefdc7c2309a0b982d800139064537b0797da442853d081010ad7c3c74a500598a0f800639a5d540eca21963ea652c68613907059bd4278c2"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://commons.apache.org/proper/commons-io/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "https://builds.apache.org/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository.apache.org/service/local/staging/deploy/maven2"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://issues.apache.org/jira/browse/IO"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://mail-archives.apache.org/mod_mbox/commons-user/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://gitbox.apache.org/repos/asf?p=commons-io.git"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/commons-io/commons-io@2.11.0?type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.connectors",
+      "name" : "mule-file-connector",
+      "version" : "1.5.2",
+      "description" : "A Mule extension that provides functionality to manage files in a local file system",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "bdb12121284aeefe32c876b8ceeb9228"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "3dae665af1ee1864c870d149642adba6834aa5e6"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "236fe8296c78d13c0d234cebc299b9a8612b20f0026378d6ba33bcd9d157485f"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "c04057641278656337d875e2219aaafc37dc3912b3cf402d7b3315e5afb217e15553c7e327c6c2709fed186d7704cfc1d79091babbb270cd41169094cf27f955"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "b8d228d89660cbfc2344e48e529636917bed923be9c687300f3d08263c84e6838832623ecefb4edb5844057e0367e135"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "041360efc16b134d29a532dc58ed1f9ea6b23edbaca58ff6490a6e04b977b81f5b93f7aacbb1cee4a48db6f6fefba9cd"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "41d4e489f531ae8b2a2bff8ab7db4a173efa9eed92070bae1b5624aff145f00d"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "edf4e4cadeca161092b68f46a798f3316c06c6ba95851091424a55931c9b779c3bdf589bad18f7fb6c2025387d4f51614ca82c1f3136bda1ef67f636963c8fcc"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-file-connector"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule-ce-extensions-parent/mule-file-connector"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.modules",
+      "name" : "mule-module-file-extension-common",
+      "version" : "1.4.3",
+      "description" : "Reusable components for extensions built using Mule's SDK which operate over file systems (e.g: file, ftp, sftp, etc)",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "0b435ef0df5ff010b0a9fb1759e2a9bb"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "08b34f0e07c41f7b00cb958260b03e732a63e85d"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "ee623dd9f81923d49b8c3a5bb9e2a75769dcf14724959ca158c2140c00223e18"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "bfa5607c2918c2c0f997e54076b28023573240d79f93d54679394ad9c52d6270368b221acaae4a0b742711b8fdb43f5e4bbb2a8af5a16a6d64907b94a8eff1b2"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "d0cf8630c899d61f60440d1ec3f442ef9237d524de647ca123b8c4612fa54210660675c70d3d0bdc578930bb7cf686eb"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "6a31fcba870329b840d17bfbc7875b7d95c29cf929263ac8be703920e6918cabfa25a2acc9221e64a04752fb12c0b0dc"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "2f113b9be1fd8abb69cdf39e41e0e832caabcf84347fe66ebd25f9e444153f61"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "0717bb36935c4f2280e37991be7cfe32fef059c1c1c6db31e7bbfe8b7dd3a9338a970e6a39d9a8f1bc45eb8b8735a149f676e04f7515546c08c6beb49a79af72"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://developer.mulesoft.com/mule-modules/mule-module-file-extension-common/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://www.mulesoft.org/jira/projects/MULE/issues/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule/mule-modules/mule-module-file-extension-common"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "Oracle",
+      "group" : "com.sun.activation",
+      "name" : "javax.activation",
+      "version" : "1.2.0",
+      "description" : "JavaBeans Activation Framework",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "be7c430df50b330cffc4848a3abedbfb"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "bf744c1e2776ed1de3c55c8dac1057ec331ef744"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "993302b16cd7056f21e779cc577d175a810bb4900ef73cd8fbf2b50f928ba9ce"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "b4cbdd8fd1703e4b2e1e691db78fbcf2232d836f740d1821c4c191a14f9472508e27a40d06e4b6b153964af68032959c22945ba169a0ca4018b7748162f420a6"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "7e64f03db2d4f9bacde713ca8aadfcf55e327d92b3cfa54b8cb2f2ffa0cc478d3c7e16f23230ae8266f0dace035142d4"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "b41aa6abfccc16e1f21760b4b3dbec7422f917fcd0c072d109c3024b1c40793820820940dfe07bfa50e00b47c3a0d504"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "ab6207acdd72036b3a5c6e647776b7466e089212602962d87eeb2ac1845508a1"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "e9fea84495f286e0f0ec1de6d002cae9e4676b0d2a9ac4706d155ac6d5ed515a76f3fcf0b8c22161f3cb456e048cce9171e3e42edc83888776173c8e2004a035"
+        }
+      ],
+      "licenses" : [
+        {
+          "expression" : "(CDDL-1.0 OR GPL-2.0-with-classpath-exception)"
+        }
+      ],
+      "purl" : "pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://java.net/all/javax.activation/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://maven.java.net/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/javaee/activation/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/javaee/activation/javax.activation"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.connectors",
+      "name" : "mule-email-connector",
+      "version" : "1.7.3",
+      "description" : "A Mule extension that provides functionality to send and receive emails through POP3, IMAP and SMTP",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "edac074b4d1fd66b5445c9bb60120437"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "14079b4fb07a0eb33a3761fa30513bb457b43f74"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "39f47ec48a3817a12ed79faf126d2519247040e289696d6a196507a7983d5752"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "e80cc67e356a5aecb143fc4235d602d11689118280565a7009c041e3d6cfcc3299055ded9f1d27bd2b554f3538ad690cea2a4318ae62a1826904ff7d2d923369"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "6b22484455ac2d97ef4860bc48bc2734d9e73f43bdce0b4bbac19dec009011b5dc6b6b8abd96a2db525925e64b6e1f06"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "e12e36862dd7c3346f2c482a12e0dc6366f5069042e7b8520fb8b1fe403459d1c9b43bbf2c5adaf5776ff4d2fb838e78"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "2ecc950735be7ce041499f860a6e990b52b1b73d4804d691f36d173953634609"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "40630a0f94b3231fffc1e0c670e06112b1467b4d3d486f49ab0742a006977b19009e7821881ced077d651fee90837f90a66adae6507ac5bd02441706a2d2f7a2"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.connectors/mule-email-connector@1.7.3?classifier=mule-plugin&type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-email-connector"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule-ce-extensions-parent/mule-email-connector"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.connectors/mule-email-connector@1.7.3?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "Oracle",
+      "group" : "com.sun.mail",
+      "name" : "jakarta.mail",
+      "version" : "1.6.7",
+      "description" : "Jakarta Mail API",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "17eb378c9dd574be23e71014ce9d5d30"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "319df0e9d536c1a01acdfe49b6e82b97d2393073"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "1b258ef45fae93059b65d0a0dd109e59ab93e8cd8a735ff66b2ba85f870d5150"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "3f392a6ae3eada47c37b67d92f3cf39c609a5309fcc97eb271bcf079d0d01f5973c0d32458a875ac1186092a113bb452439f7b7b0edd58a5b3aba5f775e9a001"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "868a5f77973668eb2af92c8a32fca8b0d80860be3489249b4e93246eda5711aad64eefe0f97ec436c57e2cb0cc89f9e8"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "83395046d0ad4d01c7ca16fb35a0591bb26367583e65dcbf4f11b9be80241c117ab61859e4e4f4c31883caf6539613af"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "1c64d48a7aadd0b7a75fd93d642da723921763ddb215bd78cdbe05d01e80541b"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "dc6c43c485a5b8eefc8211862b44195bfa1d830ba4f4029b7fc68eaf08dccb8909a9cb93772fd81a3b7c785cbc873c046c10d1c391040282cb58595bdd0ed3d2"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "EPL-2.0"
+          }
+        },
+        {
+          "license" : {
+            "id" : "GPL-2.0-with-classpath-exception"
+          }
+        },
+        {
+          "license" : {
+            "id" : "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "http://eclipse-ee4j.github.io/mail/jakarta.mail"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/eclipse-ee4j/mail/issues"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://dev.eclipse.org/mhonarc/lists/jakarta.ee-community/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/eclipse-ee4j/mail/jakarta.mail"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.connectors",
+      "name" : "mule-objectstore-connector",
+      "version" : "1.2.4",
+      "description" : "A Mule connector that provides functionality to access, create and manage Object stores",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "079ca443d25b7ce7d0dc7d2a5274bcb1"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "9872b7712ecfb1ca457a08ce368b4ec58d029289"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "aa8626a72808328729d45b356440e58138aec37d30ff4e085e6f582180fc73ad"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "7ae9896fbc45157dca557470ab2506ad0ffec4bc9acfc07411a395d55f359f56758aa796c63143e105e3b98ff81a07b70bfc677d374a5a508d2d1f89ebacd7b7"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "f16625bb5bc6939b88bef28009ca102f462bdb606e2fedcbdc6bb7e653f07bca379499a5d9ff6efc0862edae75bc76fd"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "36ff453a8a772968ebd364c8814002e1eed52326d8582548bf451d8b00dae4c38d1c54accf1969e1d129b8d8c30bc65b"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "e5a8461b89c79287216dfa220b17bfab9fab7f1332c37b4657d7d49acf3b237d"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "56742e3e2fc47ad0efd1933897173a70b52aa0266030349221d5cf0099d7a2dc7c1c9f79725fac874bf8ac64d12eb44dfc4e1c0515e80c9939f7cca9e34960bd"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.connectors/mule-objectstore-connector@1.2.4?classifier=mule-plugin&type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-objectstore-connector"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule-ce-extensions-parent/mule-objectstore-connector"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.connectors/mule-objectstore-connector@1.2.4?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "Eclipse Foundation",
+      "group" : "jakarta.xml.bind",
+      "name" : "jakarta.xml.bind-api",
+      "version" : "2.3.3",
+      "description" : "Jakarta XML Binding API",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "61286918ca0192e9f87d1358aef718dd"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "48e3b9cfc10752fba3521d6511f4165bea951801"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "c04539f472e9a6dd0c7685ea82d677282269ab8e7baca2e14500e381e0c6cec5"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "adf6436a7a9dc6f64b97127861d7a89b78e82bea67f72bda800ef285163adcd84dbf006f679108a2a8c2eed013e0b771da2354087e0845479ff2b6318b881442"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "bad8b9f52bf7a7e1d3974cb305a69c093fb32d2131539c18d34e471e3ec32bdd9dd136bb4b38bb14d84e99c562f208c7"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "8131aaf65f996cfa2c3f7d406caab3acf3e6650bcbbcd5595f8a457a211810ff110c1923876e068831a07388ddc26f33"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "a9e4179a6bfa8b363b9fd4f32f8892c4a7954ed1695d3f33ccef73ceffcaa1d4"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "9ecbc0f4aa9cff28d519cbf74c8234b5180ae6ff0d6de4efe2de126b3251d466a5ddb878e70b9968095a843c82721c93a4dec53bfe09e3700f4cfe2e38bcac0a"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@2.3.3?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-api/jakarta.xml.bind-api"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-api/issues"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://dev.eclipse.org/mhonarc/lists/jaxb-dev"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-api.git/jakarta.xml.bind-api"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@2.3.3?type=jar"
+    },
+    {
+      "publisher" : "Eclipse Foundation",
+      "group" : "jakarta.activation",
+      "name" : "jakarta.activation-api",
+      "version" : "1.2.2",
+      "description" : "Jakarta Activation API jar",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "1cbb480310fa1987f9db7a3ed7118af7"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "99f53adba383cb1bf7c3862844488574b559621f"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "a187a939103aef5849a7af84bd7e27be2d120c410af291437375ffe061f4f09d"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "e3d846ff5f62ad9fef514f0726846c63d4aa74b2bb8f60c76258dba37701f83ae75872401071bf40da40697d43a8a6e36d08fa4ef39fe70797fb6f2b1712599f"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "3e25702596eca7dd48f904b3985d64b4b394d162d3884a907d8b2ee647542808713a42a02f0eeff2c07518a206cc91cf"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "07196bf6c1ba4fe3e14e7690b521d3a156ee136a0b34d93f7a20d485c528c25ed5eeaec013172b08bdc63800fa94fe5d"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "5010f77dbc8c2a28269c7b5b662732ec4a01806f3af9af0b5a12882670303b6e"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "6e63931ef5638e4919b210ef3fffc731d3b91a34bd88cf4b4410e583e28d9e8652377b74dbdb63ba4b7b11b68ded509200737527412984c9d5bc6e5b4b938993"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/jakarta.activation/jakarta.activation-api@1.2.2?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/eclipse-ee4j/jaf/jakarta.activation-api"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/eclipse-ee4j/jaf/issues/"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://dev.eclipse.org/mhonarc/lists/jakarta.ee-community/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/eclipse-ee4j/jaf/jakarta.activation-api"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/jakarta.activation/jakarta.activation-api@1.2.2?type=jar"
+    },
+    {
+      "publisher" : "Eclipse Foundation",
+      "group" : "org.glassfish.jaxb",
+      "name" : "jaxb-runtime",
+      "version" : "2.3.8",
+      "description" : "JAXB (JSR 222) Reference Implementation",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "a2db810cf9eb5fab9e3ac13fc27adbd7"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "c90a335a07c60db986f29d35b0f8ac0a18f0f989"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "9e535d3b504b4ce09f3b78478ead09486c3a676ebe33c3102b7a1f88317d05b3"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "de2a649ba3adbb98b4401faab84c7ba20a5611ade37ce425b85ffe8effc58080a9f88d613b52568e2db952f2878c066214812615efebe2f9ede3cd725257957e"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "3a2e48655a0bbd65a38d9ae2e7c556c9aef4a41ff599a0defac4b11c6304ce2789ee795aee3e4880cee7074980e53ee5"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "bfa2cafe5475f60335c17413e8657b83f78e71d3adb3480e49e0ebb3ef157fa07b78ff5d8dd8345c31ff3bd556b9ef45"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "2c78efa856aa350d0f39edfd21a391a3df1973bbed979152e749bf0585edae15"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "1f7aba046ec63f8d496e2447433bb80609334bb8eddcd2a564c3a6834d86252620b4a29409c912676746b5132202348ecd411bf250e3dd799845749d4d998800"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.glassfish.jaxb/jaxb-runtime@2.3.8?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://eclipse-ee4j.github.io/jaxb-ri/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-ri/issues"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://accounts.eclipse.org/mailing-list/jaxb-impl-dev"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-ri.git/jaxb-runtime-parent/jaxb-runtime"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.glassfish.jaxb/jaxb-runtime@2.3.8?type=jar"
+    },
+    {
+      "publisher" : "Eclipse Foundation",
+      "group" : "org.glassfish.jaxb",
+      "name" : "txw2",
+      "version" : "2.3.8",
+      "description" : "TXW is a library that allows you to write XML documents.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "d14d98be8f76fdfa4cfa8a2769ca360b"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "66e0297f1196f0d15a776e699de1b8e6ac5d44dd"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "b10b729087255ff255d82d9cb826b4f993cf112e972ec3ade21a5dd1852fa5d2"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "1d87b2294270812bccf08aee639e2bdad9b8520eb1f09bc2af5a754311e7a9a7bbf2ece230b751de503587ebd69c04448783dbf3119645028dff37d2cb3b3fc2"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "19a8aa79bf9eac88cc20e0acbccf5f23ced3cd878c7593629e6417520b89044d61d9b972f6324b0c51dcbaf82cdbe79b"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "15c7115c155a655dae40bd203248c16450272af5c73db24deb9457dff79244646b31fd66639c8cd975137ee4cbdd13cd"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "43efbba7b6498f41046b744af95d7575bb3bbd98febae6ce216d43601f0dd328"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "633ff396e28426a26b7dd9eb33d6b6506932f51f324ea682c0eb49c984d149624ba0955521603e7bafbb9fe8ca923baf5406108ea1dca301bcadda80358723e6"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.glassfish.jaxb/txw2@2.3.8?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://eclipse-ee4j.github.io/jaxb-ri/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-ri/issues"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://accounts.eclipse.org/mailing-list/jaxb-impl-dev"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-ri.git/jaxb-txw-parent/txw2"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.glassfish.jaxb/txw2@2.3.8?type=jar"
+    },
+    {
+      "publisher" : "Eclipse Foundation",
+      "group" : "com.sun.istack",
+      "name" : "istack-commons-runtime",
+      "version" : "3.0.12",
+      "description" : "istack common utility code",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "1952bd76321f8580cfaa57e332a68287"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "cbbe1a62b0cc6c85972e99d52aaee350153dc530"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "27d85fc134c9271d5c79d3300fc4669668f017e72409727c428f54f2417f04cd"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "af36b11cc0d82b7f62c64941f4e7d441d25cb9f3c4b3e08753d038c388e5a09364b5dac9127f29a9b8df6d96034133caadab6d74371077478d2f301605913460"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "ad8ba1f6538e087915b1e7fbf4a7a60b006ebecc4ab52986c10dfe88ae11ae7eb6e1f302bee06f70b16ec316f001375b"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "2207c7e1570860d6300ef3157905498efaf26ba85566b053495f583b20c755cc07d6855b2d79136ab4d6544635e39f4d"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "50a425e524a6ee81110ecd86190d039a84d46aa3c45855310fe4f95abba3c21e"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "286997280ee0885c456686cf91c601e600106138f39eb81fc27381868f7ede0d1521cdf22c420331b1a961ed2f1ba1887a9ae05073f4364e3ffc297f40f0de53"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "BSD-3-Clause"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/com.sun.istack/istack-commons-runtime@3.0.12?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://projects.eclipse.org/projects/ee4j/istack-commons/istack-commons-runtime"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-istack-commons/issues"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://dev.eclipse.org/mhonarc/lists/jaxb-impl-dev"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/eclipse-ee4j/jaxb-istack-commons/istack-commons-runtime"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.sun.istack/istack-commons-runtime@3.0.12?type=jar"
+    },
+    {
+      "publisher" : "HeroDevs, Inc.",
+      "group" : "org.springframework",
+      "name" : "spring-aop",
+      "version" : "5.3.39-spring-framework-5.3.45",
+      "description" : "Spring AOP",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "ffacbbe83592fc06264b30b0d673fd29"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "715c7bd9eaf9505501935c4af0a6648fd5f96dbc"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "20ef60c5c99efb3a015c75c3b1e37e7a69e198fc2d11db8caa664973e4cba51d"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "f2cdb04bd9fdf194a9e79a00c70c0a80de39f25f83c9e4bf9fde6450884e7774eb6224d0218e2796a29d3b2f8fbc2e2b9c7b9dd26d997f30beb4a69af6636c93"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "9d4f1702df16aacbbedece2e49160de7deceb4ce96c2c6eef3bf178c4a2181e3332c9c3531f598415dad0db19a77a0ae"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "357c42cf8468d7c458a2f33c4b582fa01de95a19c95d16917ee1a7787f532b3dd4571c513e2d13f2ef2e040c9f189eb7"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "8979715f3cba1903483588655ace128b05a849dd26a38f08061b4d97b495e203"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "c2946d34631b84afa86726a8e62e89a212dc8393dfc6953198298040371bc43e5136f644f278ef219a9400e542828258d5d47c69e6c35d4a2172ae54660f3c75"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "HeroDevs NES License",
+            "url" : "https://docs.herodevs.com"
+          }
+        },
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.springframework/spring-aop@5.3.39-spring-framework-5.3.45?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://herodevs.com/support"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/spring-projects/spring-framework/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.springframework/spring-aop@5.3.39-spring-framework-5.3.45?type=jar"
+    },
+    {
+      "publisher" : "HeroDevs, Inc.",
+      "group" : "org.springframework",
+      "name" : "spring-expression",
+      "version" : "5.3.39-spring-framework-5.3.45",
+      "description" : "Spring Expression Language (SpEL)",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "61478a16bee4abf12012223506bbd637"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "f4bc755d1ac5a378c596760b23939d61bd1843dd"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "f580f6d5a522e5c139f923a6ed5171406f071ce317c50c2bd12336add293eb70"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "0fc7ee16ce39accdd8b711a6ccc9c9c2de4a68766b2779b95412616e6215aed663b963af1de01352b022009afb634de8b6794dea7e586ab1ef4dae6a3262be69"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "a212b5610ca5e5466dc0fe73245dcf647253a5a9b89c340ea4645808ed591d384899f2d346dc2dd72e8d399bb24a91df"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "cf471ec0bddf7d323380cb9e4c01e08a7dc1062650cd280ab01879a48f41beedee79c7d71e60ba2c485fa7f7505f8e22"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "88a77cf5d3e17c7b8478a239cf185331f10961bf7e5ed34a9a46392b6a8d97b8"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "06390e24ff16c552cec4f4c728383d499869026247de777cfd98fba2b78ddfeb8789fa40cd1cb4b38ce87469d6b1e616b643c5a77e312d4539ee1c3f829a8c05"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "HeroDevs NES License",
+            "url" : "https://docs.herodevs.com"
+          }
+        },
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.springframework/spring-expression@5.3.39-spring-framework-5.3.45?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://herodevs.com/support"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/spring-projects/spring-framework/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.springframework/spring-expression@5.3.39-spring-framework-5.3.45?type=jar"
+    },
+    {
+      "publisher" : "HeroDevs, Inc.",
+      "group" : "org.springframework",
+      "name" : "spring-jcl",
+      "version" : "5.3.39-spring-framework-5.3.45",
+      "description" : "Spring Commons Logging Bridge",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "c9e80771c7c147d802ffb12bfb06f7c5"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "6cb08af1bdd8dc3f99c1dcde2c92f45688a95e80"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "2713d34980e5dc83aab17877a1c1b49a978c7e17e873066d84ba983a8214ab24"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "fcdd7022b21302d3b41a8ac6904c2f7b3a05a5f3bf7e151771325a066d10a36ff0728dbca047544174d445a5d0476495cc6af52038efb725eb0d6c76f3711410"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "90176bcdf5ea402ee5cb947cac0d9c6c3cdd3537bfa1240e76522dddc7a907a7c86dde503fa110c6f974863ce927f1c9"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "ad83a97e5666877362c6ac90abd845d562d7c53972a6a51772e7a0e6ad0b4e191f3c7fdecbae8ac1af83fb1b8a2d4978"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "e0159fe8ac69dfb4946b69ecabd883dde59a4d6c5f0381095e7fb8704f83edf0"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "a23bfaefe08ca3d49c6f8bb1b170e949ae9c48c1c17abd86ee808a6e23edf5b1e91e10da4bea253bae7abde54abef0a35d7d9e19b09d3c7c157e8e4d353c55c9"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "HeroDevs NES License",
+            "url" : "https://docs.herodevs.com"
+          }
+        },
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.springframework/spring-jcl@5.3.39-spring-framework-5.3.45?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://herodevs.com/support"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/spring-projects/spring-framework/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/spring-projects/spring-framework"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.springframework/spring-jcl@5.3.39-spring-framework-5.3.45?type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.module",
+      "name" : "mule-java-module",
+      "version" : "2.0.0",
+      "description" : "Mule modules that augment the core Mule functionality through the Mule Extension API",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "bfcdbcb70be95609a83fd5bd886473e1"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "58bcfd01fe97931867cb917e0565470253beff68"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "87a30588cdbd7a541841a2daa5aaade32a06a601e13a096cb2d73719eb12bc1e"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "e95ce64926646da703f2767ff5d3cfddb06626620b35236b92975a8f9583dab5b9301687addc43cb783c04012d293e2913ec33031136244cf86ac939a99ef3aa"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "913a877a558dbed901b658d2a9ea1fdf892040bebb085a3d0ef4ed1117f38e91e777cb1543dd61c3fe1f81ca512cd79e"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "fdc353c7420c01d2b87ae6c2f7daad112b7bdc1eda8f260d8fd5549a690122ed474d942957a9e330bf70b241961e954d"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "6177959bf64b61d4f9e8cc0a8ecff3cc20b6ac7d756f337da715c2cbca5752ee"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "d8229cf86f1135aa84fd523ccc50258c00dced4a2967bf3dfce6d568652edbb5bf295a9a4b41f8f3aaea3c192ec0a009c6e5dc3558c1fd7d0f89def2de56d64d"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.module/mule-java-module@2.0.0?classifier=mule-plugin&type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-extensions-parent/mule4-connectors-parent/mule-java-module"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository-master.mulesoft.org/nexus/content/repositories/releases"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule-java-module/mule-java-module"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.module/mule-java-module@2.0.0?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.modules",
+      "name" : "mule-compression-module",
+      "version" : "2.2.3",
+      "description" : "A Mule module that provides functionality for managing compressed files",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "8bdda5296d78753b23d00aa92e5b7196"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "3a6535fcfe069b2f61bf23558d3a0b02fc63ddc5"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "c1976cea7e9b7bfb54d203283e91a3a144d7f1caa4fbd71e1db108504c545cad"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "e1e7fecd6aef05b125c711129f1b9f7e3496963e0caf7cbe0e02302218d667208b5ec947ce8ec1d160085210e12284b1a2443ef54bd04bdd45eca93eac8fce41"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "d819394e0e0aa8cee4652e332ad23e2dec2b39b158475d2ec6399949de7a73143d01a66eda342de0f2afad2410315afb"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "921b156cdd0a23227cdc8c6e22987b7bf6b5feb6949215279a37e20ba5bea03d246bc33caf1302b209694d620bd997bf"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "90a1009d58b391c665ef4a458687e3e0470e6cc0aa09faa910cf3f1254265d61"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "6f8fbbfb4605d785164dbc259fa1a582ec4ffa5856f15143ffd58c820f3aa296fea4317cc3028bcb70e60c23a1a6048a68fc8a3605ddc74bb8a0668194a0fa34"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.modules/mule-compression-module@2.2.3?classifier=mule-plugin&type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-compression-module"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule-ce-extensions-parent/mule-compression-module"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.modules/mule-compression-module@2.2.3?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "The Apache Software Foundation",
+      "group" : "org.apache.commons",
+      "name" : "commons-compress",
+      "version" : "1.23.0",
+      "description" : "Apache Commons Compress software defines an API for working with compression and archive formats. These include: bzip2, gzip, pack200, lzma, xz, Snappy, traditional Unix Compress, DEFLATE, DEFLATE64, LZ4, Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "96b88349958aeaa15cdf6e5e877bdced"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "4af2060ea9b0c8b74f1854c6cafe4d43cfc161fc"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "c267f17160e9ef662b4d78b7f29dca7c82b15c5cff2cb6a9865ef4ab3dd5b787"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "e1ee5b7526ca1b6b67b3a6671d13899048f078bf0e73c1e9c601d947dcc9fd5c78cec9592b2a7a586faf4a7fba1c6885f679375cc2f06680a13ecfdad1ed41dd"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "10e49e696c18750c37eee7807aca1ef28fadf2c9da6eabb3b5443bb0e1fa8ebd6638addb2042f27e9a9874495eb10d1c"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "fe9088b53e6a4e89332b61320b31f206b9217f3eb0adc66968a7d82c020ff263b39b686bcef6ef672d14954515edc514"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "9e2ed6dd76655e6c27cd0e4e27a00c32f6e08ad058be4865a33268781484424f"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "30b82c3fe576ed24cd82f2941c5bceccd8ceca3b868b91d0f8cdc2d64ac801101c47519ef4984a7af3b5f1a18e5e87bc6572ac8d21f4b91e689d3cd2e0f14694"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0",
+            "url" : "https://www.apache.org/licenses/LICENSE-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.apache.commons/commons-compress@1.23.0?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://commons.apache.org/proper/commons-compress/"
+        },
+        {
+          "type" : "build-system",
+          "url" : "https://github.com/apache/commons-parent/actions"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://repository.apache.org/service/local/staging/deploy/maven2"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://issues.apache.org/jira/browse/COMPRESS"
+        },
+        {
+          "type" : "mailing-list",
+          "url" : "https://mail-archives.apache.org/mod_mbox/commons-user/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://gitbox.apache.org/repos/asf?p=commons-compress.git"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.apache.commons/commons-compress@1.23.0?type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "com.mulesoft.modules",
+      "name" : "mule-secure-configuration-property-module",
+      "version" : "1.2.6",
+      "description" : "Mule extension for loading encrypted properties",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "f58b190547c428978d13e37a08bd01ed"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "d258674719986069be2dccf676fc887c56cba662"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "55e664c8edbf943b3eb34ac11600fa1afc634d9fd084811273fcdb37ead00da9"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "ea706ef27a22436284e39ec596d1ebc464acbc10fee60a3a791e7456ecebc823bcaeb74876cd5430b07cee6beddda1322d818748a5507ba9b71e56b6342b1261"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "013728391221052b8237556e5dedc058b77bd8a78fb5cedc076ce134782a4e4d3287eb03ad20db1570a2f7332bd19643"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "f1098bcdf88f0b55bbb27a2475dc264050f8ad43d01d5cff214dfadeaaf8528989cdc45fde496c396444a7db0cf9df7d"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "9fdbec75059a8cfaa7fcab8a1dc6e95c3b92d8d060424b0b6a439dac0f376a40"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "ec70cb8d95c68f011cef2ae714f1e0916ada03fc5768ca51e5958e8b592f088c5ca9b9ae7e09b53c21a0bc3ff99de33031a4ce612f7287d37457a6f40d54990b"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/com.mulesoft.modules/mule-secure-configuration-property-module@1.2.6?classifier=mule-plugin&type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-ee-core-modules-parent/mule-secure-configuration-property-module"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.com/mule-esb-enterprise-trial-download"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule-ee-core-modules-parent/mule-secure-configuration-property-module"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.mulesoft.modules/mule-secure-configuration-property-module@1.2.6?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule",
+      "name" : "mule-encryption",
+      "version" : "1.3.0",
+      "description" : "Support for encryption and decryption",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "0fca84d9d567417cf3a7d86f664820cc"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "027e7bd3a02869b8679ac4496b60de0cd42fa182"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "b493aed17764958d7fc287a8520449240306444f4c91137dc3998380f8580cc4"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "8dfcae05d940f0f580ef62f4336c05bf1ee2b93c193e3ed3c65abe03b96fe7af0c4bc8630c53dded1caade1c06ad279fa439856b3e24e480e4cf83a90be78c48"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "cedc390b16751f84b8096d114be84408341659a4c217adff7dcccbaaf65715ca8800038c19b86d6cee2c1b9edee08ea7"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "6dded0d29e3b1e64b7e3b8c1391ff0c1e10469803ba72b0f60cb6714c2e439ee6b79dacd2ed6e125c4abdb9e93c265a3"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "02618673ad921fc4883b385f06119f22df3e78fa03d1aee7360f6f2061fb4175"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "caa5d14267eee65c4484af19f7f4e1de0f7792c0766b09708b7d03503429d1818730a28365458f51ae35eea18377e2426577f8fe5b556202a0a048feeeef0fb3"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "CPAL v1.0",
+            "url" : "http://www.mulesoft.com/CPAL"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule/mule-encryption@1.3.0?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "http://www.mulesoft.org/jira/browse/MULE"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule-maven-client"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule/mule-encryption@1.3.0?type=jar"
+    },
+    {
+      "group" : "org.bouncycastle",
+      "name" : "bcpg-jdk18on",
+      "version" : "1.74",
+      "description" : "The Bouncy Castle Java API for handling the OpenPGP protocol. This jar contains the OpenPGP API for JDK 1.8 and up. The APIs can be used in conjunction with a JCE/JCA provider such as the one provided with the Bouncy Castle Cryptography APIs.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "dfa0cc3ff0813c1fa058e5ce5a68b3e8"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "08af7527e1e13b4fcfc55ff81b99becd12f319c7"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "9066751647747f745dd41f66dcb961b6a8babf53f0006edc79fe0efd2b3a5931"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "ad9d0495bb1464e318074b84233fe7f2bf00340888d62678326a3ec3e690b7efd99cb219c6dbd9eb121c530ceb174bcfbdf191753b6fd7457063487462d2dc96"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "bed43342e7f26b5d59c1dc13637c0fb8e790ae6754289406206ba713cc1aa7ce9e08eee5a5a6c8973f00dca2b18d3b35"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "25627a91f7597288dd50189dce41007e4380ba03d2becc8e771a7793e3d0b44170ae2183d5fd515c5aec20f8aef78498"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "714664ac5b5764d5cdd3bc6175ba98666ee88789403d50bfbefbcf07c0231723"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "c91cc128e3baa79b15707194302d44756e94c80e54c2872c9cd9a95afe2108b55e892fc800934444c9e9b327fede36e9e8bfdd9e18acfb578ad996d5e7f98bd0"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "Bouncy Castle Licence",
+            "url" : "https://www.bouncycastle.org/licence.html"
+          }
+        },
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.bouncycastle/bcpg-jdk18on@1.74?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://www.bouncycastle.org/java.html"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/bcgit/bc-java/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/bcgit/bc-java"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.bouncycastle/bcpg-jdk18on@1.74?type=jar"
+    },
+    {
+      "group" : "org.bouncycastle",
+      "name" : "bcprov-jdk18on",
+      "version" : "1.74",
+      "description" : "The Bouncy Castle Crypto package is a Java implementation of cryptographic algorithms. This jar contains JCE provider and lightweight API for the Bouncy Castle Cryptography APIs for JDK 1.8 and up.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "b441bbeeb92a6eac2f7da72cec7928ad"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "8753dedf57165efdb1a7a69a90fe49a77353efb9"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "56ede1472d78dc47b8a16fc5e90c02b9eeb970b55d8b5b8bfe760311907821e9"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "6fa34feb3dcdfc26a655e5d8d42d4d20891f4e4cd92ce140721ab68b6bf48eaa8db08d2b7ac0e7784332bab866a447609790c8f46c598eef544b17155d2733e4"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "1cd0028f397010cc58abc1d8d4b2de806c38b26673b7251c57719252c682238654fe4d15be287089938af73168357cff"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "5f45b2a05718e2a47b876079eb1aca102e982574cb4a5427c68d3934cba9ad95e12ac76deca0339f4120b3f2ac4f2517"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "3f8bc3098ef1f512f384a09cc3f77eb0373b2caa074fbf020e1ab259788a21d8"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "b0950e2789bbb21d5fffa9f363913bd355f2522de3f0cfd85805885ea9299427a6fcfed894e7258012536fc814c214defe7441fda8d23bb25490bdcb821b1bae"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "Bouncy Castle Licence",
+            "url" : "https://www.bouncycastle.org/licence.html"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.74?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://www.bouncycastle.org/java.html"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/bcgit/bc-java/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/bcgit/bc-java"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.74?type=jar"
+    },
+    {
+      "group" : "org.bouncycastle",
+      "name" : "bcpkix-jdk18on",
+      "version" : "1.74",
+      "description" : "The Bouncy Castle Java APIs for CMS, PKCS, EAC, TSP, CMP, CRMF, OCSP, and certificate generation. This jar contains APIs for JDK 1.8 and up. The APIs can be used in conjunction with a JCE/JCA provider such as the one provided with the Bouncy Castle Cryptography APIs.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "7da0d30d2699eb7d767939fa9cafe278"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "a197fb87f0697c1925e7248865ee84516fdb6d9c"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "8f200d681a15b7be037c2781f75878ccc5a63b0f292553be27d4d836c991fe37"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "de13a248c97f91ebc856354231fb922cb1ccc7caed63943879451421d32cf2eef6421bb3773188fe649187b37292af60fc380eed1415bf644972430187c04a74"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "718d4745ca5c58a0fb0d3168b06075e0ffa968252ae7db5b2f40f42be73aa40b4aef681049db482fe6db7c97da6cff77"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "1955371febc5d8d52d379bc9498ce8feb7152782e1c5d24ef3c8dc42654cd245afeb38beeeb2fe2d38292e0088293ff9"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "92fb23ce0d8c29cc3e8578ec30dc6de6af0c67b9b1641697917272cd1a240ce2"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "38bb4ddda28d0d991e02351c4fd9a9b508e84af1006bedc2c8ba3bd2e4204d7542802cbdff8160d897d22571fd5591bcf5748baa79d569fcab22292febfb18a5"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "Bouncy Castle Licence",
+            "url" : "https://www.bouncycastle.org/licence.html"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.bouncycastle/bcpkix-jdk18on@1.74?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://www.bouncycastle.org/java.html"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/bcgit/bc-java/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/bcgit/bc-java"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.bouncycastle/bcpkix-jdk18on@1.74?type=jar"
+    },
+    {
+      "group" : "org.bouncycastle",
+      "name" : "bcutil-jdk18on",
+      "version" : "1.74",
+      "description" : "The Bouncy Castle Java APIs for ASN.1 extension and utility APIs used to support bcpkix and bctls. This jar contains APIs for JDK 1.8 and up.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "9fc7343de45876e44ec83aae3ff1e8e0"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "929723bc9ef128aadba955929f701393bc6a153b"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "30ee7c495b090f0024b9a7e1e32f548e502206c406d7497d1bf72960f92b4987"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "a25ea5b74fcbf22ffef75861990c2815f9077751a6ada52e5eb0849dd93e4252d145edf190b7990aabcbd9b225a8ae2b7fb3ad719f5b565f2cf91d085f84d4a5"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "6b61bc0e5155dba72b5ce682809e32e990f38e59cf7cffc58645a34bd4104ec2258817bea083d84a54dc49e20680042c"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "3ac45f4c84c533cb4adc6d61fb260b2ec90e2a70b87e32e23f25d2d75f81bdce95aa83b2d19eda128a8daaec9dcc69a9"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "73fd6031f2469cc1b6e2b496a478af7c853c1e322ede741ce6021df295160f2f"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "0aedad4dc19a42def4a772e5545c637459a5dd347a43104651f9e16b55764e3cb53d49b1b121dc0450ba13fecc959d3d370e77179f881cfae38e3cdfa428550a"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "name" : "Bouncy Castle Licence",
+            "url" : "https://www.bouncycastle.org/licence.html"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.bouncycastle/bcutil-jdk18on@1.74?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://www.bouncycastle.org/java.html"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/bcgit/bc-java/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/bcgit/bc-java"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.bouncycastle/bcutil-jdk18on@1.74?type=jar"
+    },
+    {
+      "publisher" : "Jonathan Hedley",
+      "group" : "org.jsoup",
+      "name" : "jsoup",
+      "version" : "1.17.2",
+      "description" : "jsoup is a Java library that simplifies working with real-world HTML and XML. It offers an easy-to-use API for URL fetching, data parsing, extraction, and manipulation using DOM API methods, CSS, and xpath selectors. jsoup implements the WHATWG HTML5 specification, and parses HTML to the same DOM as modern browsers.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "d9dd58c3f8a09f45e57d85e78993be6e"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "1e75b08d7019546a954f1e359477f916f537a34d"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "f60b33b38e9d7ac93eaaa68a6c70f706bb99036494b2e2add2bfee11d09ac6f5"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "a36e1b9f52ef61963a7d80f3bc13d62d9a513576d031fa4bb244b6155565d53d54527ae8b3d281815c65712c5a6ad97cf8fa6b4a13e5ca43c5233f6c1858e710"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "6a6c77987f726f7b2e152f85f8e1a0eb839bbf9dade8e86a245c92ee94a208f413d8eeba2cd1efe46c09daf4b1bff3be"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "040b6dd19d53fe1a06060f8257111696b074fae1c2b7353cd4c48d71abe3ea4a61777937a04ea1bc93509b3c00d729e6"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "f6ceb561f903f5d48b576ff82e52bb2b85017b57b7f5a0c6ccf25d31b5cfa33b"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "fe66606e7f77dcf5dc82f82943c0f168456e53fed79a296c4f961ec80b0b3f4e3c684713e5a62d83e8526e69f80058cc0fcf1929537befcd4fd59cb2ac2961c8"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "MIT"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.jsoup/jsoup@1.17.2?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://jsoup.org/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "https://oss.sonatype.org/service/local/staging/deploy/maven2/"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://github.com/jhy/jsoup/issues"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/jhy/jsoup"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.jsoup/jsoup@1.17.2?type=jar"
+    },
+    {
+      "group" : "com.raks",
+      "name" : "raksanalyzer",
+      "version" : "1.0.0",
+      "description" : "Universal Document Generation Framework for Mule, Tibco, and other technologies",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "3fc57b516a2096d378f3616d4056229e"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "225b82bec7912f35789a3133da453e487f498d52"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "c56ce36bdac99ff56c9d5cba0aa1265e0e797a94580765ca1be3bdf081e23a28"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "6dcf22e20015e0b2e8664badce0da84c971c11a725569d075f82d0552bfc145bf58ed02d9e11892b0a471b2b7ef93ce681e6e519779cf2c8767ced3d3219723d"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "db6f76ed8c530cf1b927cf40e763903bc0668e2003027616b5c5278e9a352c44234e9b342431fdf76ca0d9e1591c027a"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "39286b02779e808891dbadbd136ae4074fe8f3d604392ef647559b7c4cabffa3a5477d60895bad829cf0b06f22abf232"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "a6226ad75071300e8f9f4a33e890ea47217715ea989ed85b78bf605fec108d15"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "7e1168ae575f30c60d248f1da26264c03ff546fa0a06b33e8ac2bb1eed25c1188865220937e4a475e9d60791ccef6a5adf75c4c16c980bc76db1b4b7f44500c9"
+        }
+      ],
+      "licenses" : [ ],
+      "purl" : "pkg:maven/com.raks/raksanalyzer@1.0.0?type=jar",
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.raks/raksanalyzer@1.0.0?type=jar"
+    },
+    {
+      "group" : "com.raks",
+      "name" : "muleguard",
+      "version" : "1.0.0",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "5f4ddd427e8b7f9e79ae0a8d8838137a"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "450a867d9cb350706c533b9c9c76ac6d4980f51c"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "44805325247c2c6bdc478b581148af32ee789a84f4737c96904c0cd54f6d0fb2"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "9bd514e18aeb30528f5b1c94590fa7b70c350e98b546f2c03e3d151154ffb969920ff12570a1673308ac618cd1f3c387a36ff7e89046ed92c15f72083fca1f2b"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "c193d565d358603738dd72b0b6c73641aa94d32b779d530d52a9f88d68a8b0331a73f3e5d4523121b88013e8ad7d5e63"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "f6b29e9f2ccfce700c27a50085c087b6e8aa8c91d6f44844dc446afc8e4c1039147af0211606fbd814c68c0307313220"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "fc12e06b1f7d7b85771507049806c07bc6bb3a66633f0b7a696e85bd3c256b42"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "ee115cb34787090d2096fa8aee517124a8455cadc7eee393cda31abe50bee2f828c031fa886464b5ba4ebe94a63b403a3c2e43fe1dbd013a9c93509fe6179af1"
+        }
+      ],
+      "licenses" : [ ],
+      "purl" : "pkg:maven/com.raks/muleguard@1.0.0?type=jar",
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.raks/muleguard@1.0.0?type=jar"
+    },
+    {
+      "group" : "com.raks",
+      "name" : "apidiscovery",
+      "version" : "1.0.0",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "f94f482fb3c326b7a3a208198cb0f5c6"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "a3084c900e9d473d1884a3dfa72a69b85a95f154"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "3d3d2b44273a2f430f0695371b61adae05cdfaa1bac6a5afdb0be982d3dd2dcf"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "5d0376fe5fcd29e252fa2133d59eab3324835ff51f526854b3dfb9cf584a5fc6b85fe778780324e3afce3aeeab003964711ed99e758261bc2ff32f955d9f6230"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "ff7833a970e697c7d32c38690754b078dc426b4e5e74d4d4a39849bb5a108bb7778b3d67d7a1748757b5d852a9456274"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "cb8f0a1d6ed003a3472c00321c31547e887a6c73a59638adc56449816e15ec46b02856b4c60de611d82ae38833dd90ec"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "f69a1d6e6214cba1135f257f5579ee1964fc685e387639a5eece8a87ea4d2274"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "536ebe2dcf2d62dc0363c56367f73fe1f165f156ef96638efef31d5dc71cca3113aa01e0b9ad3fc81bdec425465ee8e3524f0d102dab28bc3ad39154c9d9e1bb"
+        }
+      ],
+      "licenses" : [ ],
+      "purl" : "pkg:maven/com.raks/apidiscovery@1.0.0?type=jar",
+      "type" : "library",
+      "bom-ref" : "pkg:maven/com.raks/apidiscovery@1.0.0?type=jar"
+    }
+  ],
+  "dependencies" : [
+    {
+      "ref" : "pkg:maven/com.raks.apiguard/apiguardwrapper@1.0.0?type=mule-application",
+      "dependsOn" : [
+        "pkg:maven/org.mule.connectors/mule-http-connector@1.9.2?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.mule.connectors/mule-email-connector@1.7.3?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.mule.connectors/mule-objectstore-connector@1.2.4?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.mule.module/mule-java-module@2.0.0?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.mule.modules/mule-compression-module@2.2.3?classifier=mule-plugin&type=jar",
+        "pkg:maven/com.mulesoft.modules/mule-secure-configuration-property-module@1.2.6?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.jsoup/jsoup@1.17.2?type=jar",
+        "pkg:maven/com.raks/raksanalyzer@1.0.0?type=jar",
+        "pkg:maven/com.raks/muleguard@1.0.0?type=jar",
+        "pkg:maven/com.raks/apidiscovery@1.0.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.connectors/mule-http-connector@1.9.2?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar",
+        "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+        "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-context@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-context-support@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-core@5.3.32?type=jar",
+        "pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar",
+        "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar",
+        "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.springframework/spring-core@5.3.32?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.springframework/spring-core@5.3.32?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.springframework/spring-jcl@5.3.39-spring-framework-5.3.45?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.springframework/spring-jcl@5.3.39-spring-framework-5.3.45?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.springframework/spring-context@5.3.32?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.springframework/spring-aop@5.3.39-spring-framework-5.3.45?type=jar",
+        "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-core@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-expression@5.3.39-spring-framework-5.3.45?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.springframework/spring-aop@5.3.39-spring-framework-5.3.45?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-core@5.3.32?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.springframework/spring-expression@5.3.39-spring-framework-5.3.45?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.springframework/spring-core@5.3.32?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.springframework/spring-context-support@5.3.32?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-context@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-core@5.3.32?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+        "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+        "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar",
+        "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.connectors/mule-email-connector@1.7.3?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar",
+        "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar",
+        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+        "pkg:maven/commons-io/commons-io@2.11.0?type=jar",
+        "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.connectors/mule-objectstore-connector@1.2.4?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@2.3.3?type=jar",
+        "pkg:maven/org.glassfish.jaxb/jaxb-runtime@2.3.8?type=jar",
+        "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar",
+        "pkg:maven/org.springframework/spring-context@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-aop@5.3.39-spring-framework-5.3.45?type=jar",
+        "pkg:maven/org.springframework/spring-core@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-beans@5.3.32?type=jar",
+        "pkg:maven/org.springframework/spring-expression@5.3.39-spring-framework-5.3.45?type=jar",
+        "pkg:maven/org.springframework/spring-jcl@5.3.39-spring-framework-5.3.45?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@2.3.3?type=jar",
+      "dependsOn" : [
+        "pkg:maven/jakarta.activation/jakarta.activation-api@1.2.2?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/jakarta.activation/jakarta.activation-api@1.2.2?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.glassfish.jaxb/jaxb-runtime@2.3.8?type=jar",
+      "dependsOn" : [
+        "pkg:maven/jakarta.xml.bind/jakarta.xml.bind-api@2.3.3?type=jar",
+        "pkg:maven/org.glassfish.jaxb/txw2@2.3.8?type=jar",
+        "pkg:maven/com.sun.istack/istack-commons-runtime@3.0.12?type=jar",
+        "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.glassfish.jaxb/txw2@2.3.8?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/com.sun.istack/istack-commons-runtime@3.0.12?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.module/mule-java-module@2.0.0?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.apache.commons/commons-lang3@3.12.0?type=jar",
+        "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar",
+        "pkg:maven/org.springframework/spring-core@5.3.32?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.modules/mule-compression-module@2.2.3?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.apache.commons/commons-compress@1.23.0?type=jar",
+        "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.apache.commons/commons-compress@1.23.0?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/com.mulesoft.modules/mule-secure-configuration-property-module@1.2.6?classifier=mule-plugin&type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.mule/mule-encryption@1.3.0?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule/mule-encryption@1.3.0?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.bouncycastle/bcpg-jdk18on@1.74?type=jar",
+        "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.74?type=jar",
+        "pkg:maven/org.bouncycastle/bcpkix-jdk18on@1.74?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.bouncycastle/bcpg-jdk18on@1.74?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.74?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.74?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.bouncycastle/bcpkix-jdk18on@1.74?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.74?type=jar",
+        "pkg:maven/org.bouncycastle/bcutil-jdk18on@1.74?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.bouncycastle/bcutil-jdk18on@1.74?type=jar",
+      "dependsOn" : [
+        "pkg:maven/org.bouncycastle/bcprov-jdk18on@1.74?type=jar"
+      ]
+    },
+    {
+      "ref" : "pkg:maven/org.jsoup/jsoup@1.17.2?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/com.raks/raksanalyzer@1.0.0?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/com.raks/muleguard@1.0.0?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/com.raks/apidiscovery@1.0.0?type=jar",
+      "dependsOn" : [ ]
+    }
+  ]
+}
