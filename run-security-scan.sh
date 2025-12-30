@@ -12,6 +12,9 @@ fi
 
 echo "[INFO] Using Java at: $JAVA_HOME"
 
+# NVD API Key (Set here to avoid 403 errors)
+export NVD_API_KEY="2e1b33c4-166a-4698-bf6f-686cf046d8fe"
+
 # Check if first argument is a specific path
 if [ -n "$1" ] && [ -d "$1" ] && [ -f "$1/pom.xml" ]; then
     echo "[INFO] Target Path Provided: $1"
@@ -82,10 +85,10 @@ process_project() {
     echo "[3/3] Checking for CVEs (OWASP Dependency Check)..."
     # Note: First run will download huge CVE database.
     if [ -n "$NVD_API_KEY" ]; then
-        mvn org.owasp:dependency-check-maven:8.4.3:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=$NVD_API_KEY
+        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=$NVD_API_KEY
     else
         echo "[WARNING] NVD_API_KEY not set. You may experience 403 errors."
-        mvn org.owasp:dependency-check-maven:8.4.3:check -B -Dformat=HTML -DautoUpdate=true
+        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true
     fi
     
     echo ""

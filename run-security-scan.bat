@@ -1,6 +1,12 @@
 @echo off
 setlocal
 
+REM Initialize Default Scope
+set "SCAN_ROOT=%~dp0."
+
+REM NVD API Key (Set here to avoid 403 errors)
+set "NVD_API_KEY=2e1b33c4-166a-4698-bf6f-686cf046d8fe"
+
 echo ========================================================
 echo       Starting Security ^& License Audit
 echo ========================================================
@@ -17,8 +23,9 @@ REM Recursively find all pom.xml files
 REM Check if first argument is a specific path
 if exist "%~1\pom.xml" (
     echo [INFO] Target Path Provided: "%~1"
+    set "SCAN_ROOT=%~dp0%~1"
     call :scan_project "%~1\pom.xml"
-    goto :end
+    goto :generate_report
 )
 
 REM Default to Shallow Scan, enable Recursive with -recursive or -r
@@ -39,7 +46,7 @@ if "%RECURSIVE_MODE%"=="true" (
     )
 )
 
-goto :end
+goto :generate_report
 
 :scan_project
     set "POM_FILE=%~1"
@@ -72,13 +79,13 @@ goto :end
     echo [3/3] Checking for CVEs (OWASP Dependency Check)...
     REM Note: First run will download huge CVE database. If 403 Forbidden, set NVD_API_KEY env var.
     if defined NVD_API_KEY (
-        call mvn org.owasp:dependency-check-maven:8.4.3:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=%NVD_API_KEY%
+        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=%NVD_API_KEY% -DfailOnError=false
     ) else (
         echo [WARNING] NVD_API_KEY not set. You may experience 403 errors.
-        call mvn org.owasp:dependency-check-maven:8.4.3:check -B -Dformat=HTML -DautoUpdate=true
+        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DfailOnError=false
     )
     
-    echo ""
+    echo.
     echo "[REPORT] Reports generated in target/"
     echo "  - Dependencies: target/dependency-list.txt"
     echo "  - Licenses:     target/site/generated-sources/license/THIRD-PARTY.txt"
@@ -91,17 +98,18 @@ goto :end
     echo [SKIP] Skipping target directory: "%POM_PATH%"
     exit /b
 
-:end
+:generate_report
 
 echo.
 echo ========================================================
 echo       Scan Completed. Generating HTML Dashboard...
 echo ========================================================
 
-powershell -ExecutionPolicy Bypass -File "%~dp0generate-security-report.ps1" -RootPath "%~dp0."
+powershell -ExecutionPolicy Bypass -File "%~dp0generate-security-report.ps1" -RootPath "%SCAN_ROOT%"
 
 echo.
 echo ========================================================
 echo       Audit Completed
 echo ========================================================
 pause
+goto :eof
