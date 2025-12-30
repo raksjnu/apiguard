@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Audit Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 8px; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; border-left: 5px solid #3498db; padding-left: 10px; }
+        h3 { color: #7f8c8d; margin-top: 20px; margin-bottom: 10px; }
+        .timestamp { color: #7f8c8d; font-size: 0.9em; float: right; }
+        .audit-item { background: #fff; border: 1px solid #e9ecef; padding: 20px; margin-bottom: 30px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .path { font-family: monospace; color: #666; margin-bottom: 15px; font-size: 0.9em; }
+        
+        /* Tables */
+        table { border-collapse: collapse; width: 100%; font-size: 0.9em; margin-bottom: 15px; }
+        th { background-color: #f8f9fa; text-align: left; padding: 10px; border-bottom: 2px solid #ddd; color: #444; }
+        td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        tr:hover { background-color: #f1f1f1; }
+        
+        /* Status Tags */
+        .tag { padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; display: inline-block; }
+        .tag-pass { background-color: #e6ffed; color: #2ea44f; }
+        .tag-fail { background-color: #ffeef0; color: #cb2431; }
+        .tag-warn { background-color: #fff8c5; color: #b08800; }
+        
+        .section-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        iframe { border: 1px solid #eee; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <span class="timestamp">Generated: 2025-12-30 16:24:15</span>
+    <h1>Security Audit & License Compliance Report</h1>    <div class="summary">
+        <p><strong>Project:</strong> r_TibcoDocGen_Mule4Code</p>
+        <p><strong>Path:</strong> <code>C:\raks\apiguard\reference\tibco_projects\r_TibcoDocGen_Mule4Code</code></p>
+    </div>
+    <div class="audit-item"><p class='tag tag-warn'>No dependency info available.</p>        <h3>Vulnerabilities (OWASP)</h3>
+        <p class='tag tag-fail'>Scan Failed: Report not found.</p>
+        <div style="background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 4px; margin-top: 5px; font-size: 0.9em;">
+            <strong>Possible Cause:</strong> NVD API connection failed (403 Forbidden).<br>
+            <strong>Fix:</strong> Obtain a free <a href="https://nvd.nist.gov/developers/request-an-api-key">NVD API Key</a> and run:
+            <br>
+            <code>set NVD_API_KEY=your-key-here</code>
+            <br>
+            Then re-run the scan.
+        </div>    </div>
+</div>
+</body>
+</html>
