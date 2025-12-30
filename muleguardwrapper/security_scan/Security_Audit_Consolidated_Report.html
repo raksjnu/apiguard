@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Audit Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 8px; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; border-left: 5px solid #3498db; padding-left: 10px; }
+        h3 { color: #7f8c8d; margin-top: 20px; margin-bottom: 10px; }
+        .timestamp { color: #7f8c8d; font-size: 0.9em; float: right; }
+        .audit-item { background: #fff; border: 1px solid #e9ecef; padding: 20px; margin-bottom: 30px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .path { font-family: monospace; color: #666; margin-bottom: 15px; font-size: 0.9em; }
+        
+        /* Tables */
+        table { border-collapse: collapse; width: 100%; font-size: 0.9em; margin-bottom: 15px; }
+        th { background-color: #f8f9fa; text-align: left; padding: 10px; border-bottom: 2px solid #ddd; color: #444; }
+        td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        tr:hover { background-color: #f1f1f1; }
+        
+        /* Status Tags */
+        .tag { padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; display: inline-block; }
+        .tag-pass { background-color: #e6ffed; color: #2ea44f; }
+        .tag-fail { background-color: #ffeef0; color: #cb2431; }
+        .tag-warn { background-color: #fff8c5; color: #b08800; }
+        
+        .section-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        iframe { border: 1px solid #eee; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <span class="timestamp">Generated: 2025-12-30 16:42:35</span>
+    <h1>Security Audit & License Compliance Report</h1>    <div class="summary">
+        <p><strong>Project:</strong> muleguardwrapper</p>
+        <p><strong>Path:</strong> <code>C:\raks\apiguard\muleguardwrapper</code></p>
+    </div>
+    <div class="audit-item"><h3>Dependency Tree</h3><div style='max-height: 300px; overflow-y: auto; background: #fafafa; border: 1px solid #ddd; padding: 10px; font-family: monospace; white-space: pre;'>com.raks:muleguardwrapper:mule-application:1.0.0
++- org.mule.connectors:mule-email-connector:jar:mule-plugin:1.7.3:compile
+|  +- com.sun.mail:jakarta.mail:jar:1.6.7:compile
+|  +- org.apache.commons:commons-lang3:jar:3.12.0:compile
+|  +- commons-io:commons-io:jar:2.18.0:compile
+|  \- org.mule.sdk:mule-sdk-api:jar:0.7.0:compile
++- org.mule.connectors:mule-http-connector:jar:mule-plugin:1.9.2:compile
+|  +- org.mule.connectors:mule-sockets-connector:jar:mule-plugin:1.2.4:compile
+|  +- org.mule.modules:mule-module-cors-kernel:jar:1.1.2:compile
+|  +- org.springframework:spring-beans:jar:5.3.32:compile
+|  +- org.springframework:spring-context:jar:5.3.32:compile
+|  |  +- org.springframework:spring-aop:jar:5.3.32:compile
+|  |  \- org.springframework:spring-expression:jar:5.3.32:compile
+|  +- org.springframework:spring-context-support:jar:5.3.32:compile
+|  +- org.springframework:spring-core:jar:5.3.32:compile
+|  |  \- org.springframework:spring-jcl:jar:5.3.32:compile
+|  \- org.mule.sdk:mule-sdk-compatibility-api:jar:0.7.4:compile
++- org.mule.connectors:mule-file-connector:jar:mule-plugin:1.5.2:compile
+|  \- org.mule.modules:mule-module-file-extension-common:jar:mule-plugin:1.4.3:compile
+|     \- com.sun.activation:javax.activation:jar:1.2.0:compile
++- org.mule.module:mule-java-module:jar:mule-plugin:2.0.0:compile
++- org.mule.connectors:mule-objectstore-connector:jar:mule-plugin:1.2.4:compile
+|  +- jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.3:compile
+|  |  \- jakarta.activation:jakarta.activation-api:jar:1.2.2:compile
+|  \- org.glassfish.jaxb:jaxb-runtime:jar:2.3.8:compile
+|     +- org.glassfish.jaxb:txw2:jar:2.3.8:compile
+|     \- com.sun.istack:istack-commons-runtime:jar:3.0.12:compile
++- org.mule.modules:mule-compression-module:jar:mule-plugin:2.2.3:compile
+|  \- org.apache.commons:commons-compress:jar:1.27.1:compile
+|     \- commons-codec:commons-codec:jar:1.17.1:compile
++- com.sun.activation:jakarta.activation:jar:2.0.1:compile
++- com.mulesoft.modules:mule-secure-configuration-property-module:jar:mule-plugin:1.2.6:compile
+|  \- org.mule:mule-encryption:jar:1.3.0:compile
+|     +- org.bouncycastle:bcpg-jdk18on:jar:1.74:compile
+|     +- org.bouncycastle:bcprov-jdk18on:jar:1.74:compile
+|     \- org.bouncycastle:bcpkix-jdk18on:jar:1.74:compile
+|        \- org.bouncycastle:bcutil-jdk18on:jar:1.74:compile
++- com.raks:muleguard:jar:1.0.0:system
+\- org.jsoup:jsoup:jar:1.17.2:compile
+</div><h3>SBOM</h3><p>Generated CycloneDX SBOM: <a href='security_scan/bom.xml' target='_blank'>bom.xml</a></p><h3>License Compliance</h3><table><thead><tr><th>License</th><th>Library</th><th>Enterprise Status</th></tr></thead><tbody><tr><td><strong>CPAL v1.0</strong></td><td>Mule Secure Configuration Property Extension<br><small>com.mulesoft.modules:mule-secure-configuration-property-module:1.2.6 - https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-ee-core-modules-parent/mule-secure-configuration-property-module</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>EDL 1.0</strong></td><td>Jakarta Activation<br><small>com.sun.activation:jakarta.activation:2.0.1 - https://github.com/eclipse-ee4j/jaf/jakarta.activation</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>CDDL/GPLv2+CE</strong></td><td>JavaBeans Activation Framework<br><small>com.sun.activation:javax.activation:1.2.0 - http://java.net/all/javax.activation/</small></td><td><span class='tag tag-fail' title='Requires derivative works to be open source (viral).'>Copyleft (Restricted)</span></td></tr><tr><td><strong>Eclipse Distribution License - v 1.0</strong></td><td>istack common utility code runtime<br><small>com.sun.istack:istack-commons-runtime:3.0.12 - https://projects.eclipse.org/projects/ee4j/istack-commons/istack-commons-runtime</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>EDL 1.0</strong></td><td>(EPL 2.0)<br><small>GPL2 w/ CPE</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Apache-2.0</strong></td><td>Apache Commons Codec<br><small>commons-codec:commons-codec:1.17.1 - https://commons.apache.org/proper/commons-codec/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache-2.0</strong></td><td>Apache Commons IO<br><small>commons-io:commons-io:2.18.0 - https://commons.apache.org/proper/commons-io/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>EDL 1.0</strong></td><td>Jakarta Activation API jar<br><small>jakarta.activation:jakarta.activation-api:1.2.2 - https://github.com/eclipse-ee4j/jaf/jakarta.activation-api</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Eclipse Distribution License - v 1.0</strong></td><td>Jakarta XML Binding API<br><small>jakarta.xml.bind:jakarta.xml.bind-api:2.3.3 - https://github.com/eclipse-ee4j/jaxb-api/jakarta.xml.bind-api</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Apache-2.0</strong></td><td>Apache Commons Compress<br><small>org.apache.commons:commons-compress:1.27.1 - https://commons.apache.org/proper/commons-compress/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Apache Commons Lang<br><small>org.apache.commons:commons-lang3:3.12.0 - https://commons.apache.org/proper/commons-lang/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache Software License, Version 2.0</strong></td><td>(Bouncy Castle Licence) Bouncy Castle OpenPGP API<br><small>org.bouncycastle:bcpg-jdk18on:1.74 - https://www.bouncycastle.org/java.html</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Bouncy Castle Licence</strong></td><td>Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs<br><small>org.bouncycastle:bcpkix-jdk18on:1.74 - https://www.bouncycastle.org/java.html</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Bouncy Castle Licence</strong></td><td>Bouncy Castle Provider<br><small>org.bouncycastle:bcprov-jdk18on:1.74 - https://www.bouncycastle.org/java.html</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Bouncy Castle Licence</strong></td><td>Bouncy Castle ASN.1 Extension and Utility APIs<br><small>org.bouncycastle:bcutil-jdk18on:1.74 - https://www.bouncycastle.org/java.html</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Eclipse Distribution License - v 1.0</strong></td><td>JAXB Runtime<br><small>org.glassfish.jaxb:jaxb-runtime:2.3.8 - https://eclipse-ee4j.github.io/jaxb-ri/</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Eclipse Distribution License - v 1.0</strong></td><td>TXW2 Runtime<br><small>org.glassfish.jaxb:txw2:2.3.8 - https://eclipse-ee4j.github.io/jaxb-ri/</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>The MIT License</strong></td><td>jsoup Java HTML Parser<br><small>org.jsoup:jsoup:1.17.2 - https://jsoup.org/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>Mule Cryptographic Module<br><small>org.mule:mule-encryption:1.3.0 - no url defined</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>Email Connector<br><small>org.mule.connectors:mule-email-connector:1.7.3 - https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-email-connector</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>File Connector<br><small>org.mule.connectors:mule-file-connector:1.5.2 - https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-file-connector</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>HTTP Connector<br><small>org.mule.connectors:mule-http-connector:1.9.2 - https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-http-connector</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>ObjectStore Connector<br><small>org.mule.connectors:mule-objectstore-connector:1.2.4 - https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-objectstore-connector</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>Sockets Connector<br><small>org.mule.connectors:mule-sockets-connector:1.2.4 - https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-sockets-connector</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>Mule Java Module<br><small>org.mule.module:mule-java-module:2.0.0 - https://github.com/mulesoft/mule-extensions-parent/mule4-connectors-parent/mule-java-module</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>Compression Module<br><small>org.mule.modules:mule-compression-module:2.2.3 - https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-compression-module</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>The Apache Software License, Version 2.0</strong></td><td>API Gateway Cors Kernel<br><small>org.mule.modules:mule-module-cors-kernel:1.1.2 - https://developer.mulesoft.com/mule-module-cors-kernel/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>CPAL v1.0</strong></td><td>Mule File Extension Common<br><small>org.mule.modules:mule-module-file-extension-common:1.4.3 - https://developer.mulesoft.com/mule-modules/mule-module-file-extension-common/</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Unknown license</strong></td><td>Mule SDK API<br><small>org.mule.sdk:mule-sdk-api:0.7.0 - https://github.com/mulesoft/mule-sdk-api/mule-sdk-api</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Unknown license</strong></td><td>Mule SDK Compatibility API<br><small>org.mule.sdk:mule-sdk-compatibility-api:0.7.4 - https://github.com/mulesoft/mule-sdk-api/mule-sdk-compatibility-api</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Spring AOP<br><small>org.springframework:spring-aop:5.3.32 - https://github.com/spring-projects/spring-framework</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Spring Beans<br><small>org.springframework:spring-beans:5.3.32 - https://github.com/spring-projects/spring-framework</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Spring Context<br><small>org.springframework:spring-context:5.3.32 - https://github.com/spring-projects/spring-framework</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Spring Context Support<br><small>org.springframework:spring-context-support:5.3.32 - https://github.com/spring-projects/spring-framework</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Spring Core<br><small>org.springframework:spring-core:5.3.32 - https://github.com/spring-projects/spring-framework</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Spring Expression Language<br><small>SpEL</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Spring Commons Logging Bridge<br><small>org.springframework:spring-jcl:5.3.32 - https://github.com/spring-projects/spring-framework</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr></tbody></table>        <h3>Vulnerabilities (OWASP)</h3>
+        <p class='tag tag-fail'>Scan Failed: Report not found.</p>
+        <div style="background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 4px; margin-top: 5px; font-size: 0.9em;">
+            <strong>Possible Cause:</strong> NVD API connection failed (403 Forbidden). / Scan configuration error.
+        </div>    </div>
+</div>
+</body>
+</html>
