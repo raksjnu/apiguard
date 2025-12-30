@@ -58,10 +58,16 @@ goto :generate_report
     echo [DEBUG] Path: "%POM_PATH%"
     
     echo Processing "%POM_FILE%" | findstr /i "\\target\\" >nul
-    if not errorlevel 1 (
-        echo [DEBUG] Target directory detected.
-        goto :skip_target
-    )
+    if not errorlevel 1 goto :skip_target
+
+    echo Processing "%POM_FILE%" | findstr /i "\\test-data\\" >nul
+    if not errorlevel 1 goto :skip_target
+
+    echo Processing "%POM_FILE%" | findstr /i "\\testdata\\" >nul
+    if not errorlevel 1 goto :skip_target
+
+    echo Processing "%POM_FILE%" | findstr /i "\\reference\\" >nul
+    if not errorlevel 1 goto :skip_target
     
     echo.
     echo --------------------------------------------------------

@@ -30,7 +30,7 @@ fi
 
 if [ "$RECURSIVE_MODE" = true ]; then
     echo "[INFO] Mode: RECURSIVE (Finding all pom.xml files nested deep)"
-    find . -type d -name "target" -prune -o -name "pom.xml" -type f -print | while read -r pom_file; do
+    find . -type d \( -name "target" -o -name "test-data" -o -name "testdata" -o -name "reference" \) -prune -o -name "pom.xml" -type f -print | while read -r pom_file; do
         process_project "$pom_file"
     done
 else
