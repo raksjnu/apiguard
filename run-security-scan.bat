@@ -20,10 +20,10 @@ if "%1"=="-recursive" set RECURSIVE_MODE=true
 if "%1"=="-r" set RECURSIVE_MODE=true
 
 if "%RECURSIVE_MODE%"=="true" (
-    echo [INFO] Mode: RECURSIVE (Finding all pom.xml files nested deep)
+    echo [INFO] Mode: RECURSIVE "(Finding all pom.xml files nested deep)"
     for /r %%i in (pom.xml) do call :scan_project "%%i"
 ) else (
-    echo [INFO] Mode: SHALLOW (Scanning immediate sub-folders only)
+    echo [INFO] Mode: SHALLOW "(Scanning immediate sub-folders only)"
     echo [INFO] Use "run-security-scan.bat -r" to scan recursively.
     
     for /d %%d in (*) do (
@@ -36,6 +36,8 @@ goto :end
 :scan_project
     set "POM_FILE=%~1"
     set "POM_PATH=%~dp1"
+    
+    if not exist "%POM_FILE%" exit /b
     
     echo [DEBUG] Found POM file: "%POM_FILE%"
     echo [DEBUG] Path: "%POM_PATH%"
