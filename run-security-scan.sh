@@ -12,6 +12,13 @@ fi
 
 echo "[INFO] Using Java at: $JAVA_HOME"
 
+# Check if first argument is a specific path
+if [ -n "$1" ] && [ -d "$1" ] && [ -f "$1/pom.xml" ]; then
+    echo "[INFO] Target Path Provided: $1"
+    process_project "$1/pom.xml"
+    exit 0
+fi
+
 # Default to Shallow Scan, enable Recursive with -r or --recursive
 RECURSIVE_MODE=false
 if [[ "$1" == "-r" || "$1" == "--recursive" ]]; then
@@ -26,6 +33,7 @@ if [ "$RECURSIVE_MODE" = true ]; then
 else
     echo "[INFO] Mode: SHALLOW (Scanning immediate sub-folders only)"
     echo "[INFO] Use '$0 --recursive' to scan recursively."
+    echo "[INFO] Use '$0 <path>' to scan a specific project."
     
     # Iterate over immediate directories
     for d in */; do

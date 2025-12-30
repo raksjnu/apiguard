@@ -14,6 +14,13 @@ if "%JAVA_HOME%"=="" (
 echo [INFO] Using Java at: %JAVA_HOME%
 
 REM Recursively find all pom.xml files
+REM Check if first argument is a specific path
+if exist "%~1\pom.xml" (
+    echo [INFO] Target Path Provided: "%~1"
+    call :scan_project "%~1\pom.xml"
+    goto :end
+)
+
 REM Default to Shallow Scan, enable Recursive with -recursive or -r
 set RECURSIVE_MODE=false
 if "%1"=="-recursive" set RECURSIVE_MODE=true
@@ -25,6 +32,7 @@ if "%RECURSIVE_MODE%"=="true" (
 ) else (
     echo [INFO] Mode: SHALLOW "(Scanning immediate sub-folders only)"
     echo [INFO] Use "run-security-scan.bat -r" to scan recursively.
+    echo [INFO] Use "run-security-scan.bat <path>" to scan a specific project.
     
     for /d %%d in (*) do (
         if exist "%%d\pom.xml" call :scan_project "%%d\pom.xml"
