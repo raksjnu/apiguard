@@ -114,6 +114,23 @@ powershell -ExecutionPolicy Bypass -File "%~dp0generate-security-report.ps1" -Ro
 
 echo.
 echo ========================================================
+echo       Committing Report to Git...
+echo ========================================================
+
+set "REPORT_FILE=%SCAN_ROOT%\Security_Audit_Consolidated_Report.html"
+
+if exist "%REPORT_FILE%" (
+    echo [INFO] Found report: %REPORT_FILE%
+    git add "%REPORT_FILE%"
+    git commit -m "chore: Update Security Audit Report [skip ci]" "%REPORT_FILE%"
+    echo [INFO] Pushing changes...
+    git push origin master
+) else (
+    echo [WARNING] Report file not found, skipping commit.
+)
+
+echo.
+echo ========================================================
 echo       Audit Completed
 echo ========================================================
 pause

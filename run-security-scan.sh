@@ -55,7 +55,32 @@ echo "========================================================"
 
 # Get the directory where the script is located
 SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
-bash "$SCRIPT_DIR/generate-security-report.sh" "$SCRIPT_DIR"
+
+# Determine Report Path based on logic similar to batch (SCAN_ROOT logic needed or just use current dir logic)
+# In the shell script, if $1 is set, that's the root. Else it's current dir.
+SCAN_ROOT="."
+if [ -n "$1" ] && [ -d "$1" ]; then
+    SCAN_ROOT="$1"
+fi
+
+bash "$SCRIPT_DIR/generate-security-report.sh" "$SCAN_ROOT"
+
+echo ""
+echo "========================================================"
+echo "      Committing Report to Git..."
+echo "========================================================"
+
+REPORT_FILE="$SCAN_ROOT/Security_Audit_Consolidated_Report.html"
+
+if [ -f "$REPORT_FILE" ]; then
+    echo "[INFO] Found report: $REPORT_FILE"
+    git add "$REPORT_FILE"
+    git commit -m "chore: Update Security Audit Report [skip ci]" "$REPORT_FILE"
+    echo "[INFO] Pushing changes..."
+    git push origin master
+else
+    echo "[WARNING] Report file not found, skipping commit."
+fi
 
 echo ""
 echo "========================================================"
