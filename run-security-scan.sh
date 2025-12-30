@@ -43,6 +43,22 @@ else
     done
 fi
 
+fi
+
+echo ""
+echo "========================================================"
+echo "      Scan Completed. Generating HTML Dashboard..."
+echo "========================================================"
+
+# Get the directory where the script is located
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+bash "$SCRIPT_DIR/generate-security-report.sh" "$SCRIPT_DIR"
+
+echo ""
+echo "========================================================"
+echo "      Audit Completed"
+echo "========================================================"
+
 exit 0
 
 # Function to extract processing logic
