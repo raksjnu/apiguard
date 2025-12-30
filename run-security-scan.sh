@@ -101,11 +101,13 @@ process_project() {
     # Generate local script
     local script_file="security_scan/run-local-scan.sh"
     echo "#!/bin/bash" > "$script_file"
+    echo "cd .." >> "$script_file"
     echo "export NVD_API_KEY=\"$NVD_API_KEY\"" >> "$script_file"
-    echo "mvn org.owasp:dependency-check-maven:12.1.0:check -Dformat=HTML -DoutputDirectory=. -DautoUpdate=true -DnvdApiKey=\$NVD_API_KEY -DfailOnError=false -DossindexAnalyzerEnabled=false" >> "$script_file"
-    echo "mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -DoutputDirectory=." >> "$script_file"
-    echo "mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -Dlicense.useMissingFile -Dlicense.outputDirectory=." >> "$script_file"
-    echo "mvn dependency:tree -DoutputFile=dependency-tree.txt" >> "$script_file"
+    echo "mvn org.owasp:dependency-check-maven:12.1.0:check -Dformat=HTML -DoutputDirectory=security_scan -DautoUpdate=true -DnvdApiKey=\$NVD_API_KEY -DfailOnError=false -DossindexAnalyzerEnabled=false" >> "$script_file"
+    echo "if [ -f \"target/dependency-check-report.html\" ]; then mv \"target/dependency-check-report.html\" \"security_scan/\"; fi" >> "$script_file"
+    echo "mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -DoutputDirectory=security_scan" >> "$script_file"
+    echo "mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -Dlicense.useMissingFile -Dlicense.outputDirectory=security_scan" >> "$script_file"
+    echo "mvn dependency:tree -DoutputFile=security_scan/dependency-tree.txt" >> "$script_file"
     chmod +x "$script_file"
     
     echo "[1/4] Generating Dependency Tree..."

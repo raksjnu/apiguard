@@ -81,12 +81,15 @@ goto :generate_report
     
     REM Create a project-specific scan script in the folder
     echo @echo off > "%SCAN_OUT%\run-local-scan.bat"
+    echo pushd .. >> "%SCAN_OUT%\run-local-scan.bat"
     echo set "NVD_API_KEY=%NVD_API_KEY%" >> "%SCAN_OUT%\run-local-scan.bat"
-    echo mvn org.owasp:dependency-check-maven:12.1.0:check -Dformat=HTML -DoutputDirectory=. -DautoUpdate=true -DnvdApiKey=%%NVD_API_KEY%% -DfailOnError=false -DossindexAnalyzerEnabled=false >> "%SCAN_OUT%\run-local-scan.bat"
-    echo mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -DoutputDirectory=. >> "%SCAN_OUT%\run-local-scan.bat"
-    echo mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -Dlicense.useMissingFile -Dlicense.outputDirectory=. >> "%SCAN_OUT%\run-local-scan.bat"
-    echo mvn dependency:tree -DoutputFile=dependency-tree.txt >> "%SCAN_OUT%\run-local-scan.bat"
+    echo mvn org.owasp:dependency-check-maven:12.1.0:check -Dformat=HTML -DoutputDirectory=security_scan -DautoUpdate=true -DnvdApiKey=%%NVD_API_KEY%% -DfailOnError=false -DossindexAnalyzerEnabled=false >> "%SCAN_OUT%\run-local-scan.bat"
+    echo if exist "target\dependency-check-report.html" move /Y "target\dependency-check-report.html" "security_scan\" >> "%SCAN_OUT%\run-local-scan.bat"
+    echo mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -DoutputDirectory=security_scan >> "%SCAN_OUT%\run-local-scan.bat"
+    echo mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -Dlicense.useMissingFile -Dlicense.outputDirectory=security_scan >> "%SCAN_OUT%\run-local-scan.bat"
+    echo mvn dependency:tree -DoutputFile=security_scan\dependency-tree.txt >> "%SCAN_OUT%\run-local-scan.bat"
     echo echo Scan Complete. >> "%SCAN_OUT%\run-local-scan.bat"
+    echo popd >> "%SCAN_OUT%\run-local-scan.bat"
         
     echo [1/4] Generating Dependency Tree...
     call mvn dependency:tree -B -DoutputFile="%SCAN_OUT%\dependency-tree.txt"
