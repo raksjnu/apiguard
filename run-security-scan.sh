@@ -67,20 +67,14 @@ bash "$SCRIPT_DIR/generate-security-report.sh" "$SCAN_ROOT"
 
 echo ""
 echo "========================================================"
-echo "      Committing Report to Git..."
+echo "      Committing Reports to Git..."
 echo "========================================================"
 
-REPORT_FILE="$SCAN_ROOT/Security_Audit_Consolidated_Report.html"
-
-if [ -f "$REPORT_FILE" ]; then
-    echo "[INFO] Found report: $REPORT_FILE"
-    git add "$REPORT_FILE"
-    git commit -m "chore: Update Security Audit Report [skip ci]" "$REPORT_FILE"
-    echo "[INFO] Pushing changes..."
-    git push origin master
-else
-    echo "[WARNING] Report file not found, skipping commit."
-fi
+echo "[INFO] Adding all generated Security Reports..."
+git add "**/Security_Audit_Consolidated_Report.html"
+git commit -m "chore: Update Security Audit Reports [skip ci]"
+echo "[INFO] Pushing changes..."
+git push origin master
 
 echo ""
 echo "========================================================"

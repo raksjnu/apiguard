@@ -2,7 +2,6 @@ param (
     [string]$RootPath = "."
 )
 
-$OutputFile = "$RootPath\Security_Audit_Consolidated_Report.html"
 $Date = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
 
 # Heuristics for License Safety
@@ -13,8 +12,8 @@ function Get-LicenseStatus {
     return "warn"
 }
 
-# Header
-$HtmlContent = @"
+# Template for Header
+$HeaderTemplate = @"
 <!DOCTYPE html>
 <html>
 <head>
@@ -49,27 +48,28 @@ $HtmlContent = @"
 <div class="container">
     <span class="timestamp">Generated: $Date</span>
     <h1>Security Audit & License Compliance Report</h1>
-    
-    <div class="summary">
-        <p><strong>Scan Scope:</strong> <code>$RootPath</code></p>
-    </div>
 "@
 
 # Find POM files (excluding target)
 $PomFiles = Get-ChildItem -Path $RootPath -Filter "pom.xml" -Recurse | Where-Object { $_.FullName -notmatch "\\target\\" }
 
 if ($PomFiles.Count -eq 0) {
-    $HtmlContent += "<p>No Maven projects found in the specified path.</p>"
+    Write-Host "No Maven projects found in the specified path."
 }
 
 foreach ($Pom in $PomFiles) {
     $ProjectDir = $Pom.Directory.FullName
     $ProjectName = $Pom.Directory.Name
+    $OutputFile = Join-Path $ProjectDir "Security_Audit_Consolidated_Report.html"
     
+    # Initialize Content with Header
+    $HtmlContent = $HeaderTemplate
     $HtmlContent += @"
+    <div class="summary">
+        <p><strong>Project:</strong> $ProjectName</p>
+        <p><strong>Path:</strong> <code>$ProjectDir</code></p>
+    </div>
     <div class="audit-item">
-        <h2>Project: $ProjectName</h2>
-        <div class="path">$ProjectDir</div>
 "@
 
     # 1. Dependency Table
@@ -80,7 +80,7 @@ foreach ($Pom in $PomFiles) {
         
         $Lines = Get-Content $DepFile
         foreach ($Line in $Lines) {
-            # Parse Maven dependency list format: standard lines usually start with 4 spaces or are raw
+            # Parse Maven dependency list format
             if ($Line -match "^\s*([\w\.-]+):([\w\.-]+):([\w\.-]+):([\w\.-]+):([\w\.-]+)") {
                 $G = $matches[1]
                 $A = $matches[2]
@@ -125,7 +125,8 @@ foreach ($Pom in $PomFiles) {
     # 3. CVEs
     $CveFile = Join-Path $ProjectDir "target/dependency-check-report.html"
     if (Test-Path $CveFile) {
-        $CveLink = "file:///$($CveFile.Replace('\', '/'))"
+        # Create a relative link to target/dependency-check-report.html
+        $CveLink = "target/dependency-check-report.html"
         $HtmlContent += @"
         <h3>Vulnerabilities (OWASP)</h3>
         <p><a href="$CveLink" target="_blank">Open Full OWASP Report</a></p>
@@ -146,14 +147,13 @@ foreach ($Pom in $PomFiles) {
 "@
     }
 
-    $HtmlContent += "</div>" # End Project Div
-}
-
-$HtmlContent += @"
+    $HtmlContent += @"
+    </div>
 </div>
 </body>
 </html>
 "@
-
-$HtmlContent | Set-Content $OutputFile
-Write-Host "Report generated at: $OutputFile"
+    
+    $HtmlContent | Set-Content $OutputFile
+    Write-Host "Report generated for $ProjectName at: $OutputFile"
+}
