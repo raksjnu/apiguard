@@ -203,6 +203,18 @@
             const sidebar = document.getElementById('sidebar');
             sidebar.innerHTML = ''; // Clear loading
 
+            // 0. Usage Guide Section (New)
+            const usageHeader = document.createElement('h3');
+            usageHeader.innerText = "About & Usage";
+            sidebar.appendChild(usageHeader);
+
+            const usageList = document.createElement('ul');
+            const usageLi = document.createElement('li');
+            usageLi.innerText = "Tool Overview & Usage";
+            usageLi.onclick = () => showUsageResult(usageLi);
+            usageList.appendChild(usageLi);
+            sidebar.appendChild(usageList);
+
             // 1. Technologies Section
             const techHeader = document.createElement('h3');
             techHeader.innerText = "Technology Detection Rules";
@@ -232,6 +244,82 @@
                  govList.appendChild(li);
             });
             sidebar.appendChild(govList);
+        }
+
+        function showUsageResult(element) {
+            setActive(element);
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="rule-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>ℹ️ About the Tool</h2>
+                        <span class="tag tag-tech">Overview</span>
+                    </div>
+                    <p>The <strong>API Discovery Tool</strong> is a specialized scanning engine designed to analyze code repositories and discover API ecosystems. It automatically detects technologies, identifies API endpoints, and enforces governance standards across your codebase.</p>
+                    
+                    <h3>Key Capabilities</h3>
+                    <ul>
+                        <li><strong>🔍 Technology Detection:</strong> Automatically identifies project types (MuleSoft, Spring Boot, TIBCO, Python, etc.) using signature-based file matching.</li>
+                        <li><strong>🛡️ Governance & Compliance:</strong> Checks for mandatory files (README, Jenkinsfile, .gitignore) and coding standards.</li>
+                        <li><strong>🔒 Risk Assessment:</strong> Scans for security vulnerabilities, PII patterns, and hardcoded credentials.</li>
+                        <li><strong>📊 API Identification:</strong> Identifies the presence of API frameworks (REST, SOAP, JMS) and classifies repositories based on their likelihood of being services.</li>
+                    </ul>
+                </div>
+
+                <div class="rule-card">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <h2>🚀 Usage Guide</h2>
+                        <span class="tag tag-tech">Documentation</span>
+                    </div>
+                    <p>The API Discovery Tool can be run in two modes: <strong>Web GUI</strong> (default) and <strong>Command Line Interface (CLI)</strong>.</p>
+                    
+                    <h3>1. Web GUI Mode (Interactive)</h3>
+                    <p>This is the standard mode for visual interaction. It starts a local web server.</p>
+                    <pre>java -jar apidiscovery-1.0.0.jar</pre>
+                    <p>Once started, open <code>http://localhost:8085</code> in your browser.</p>
+
+                    <h3>2. CLI Mode (Automation / CI/CD)</h3>
+                    <p>Run scans directly from the terminal without starting the web server. Useful for pipelines.</p>
+                    
+                    <h4>Command Format</h4>
+                    <pre>java -jar apidiscovery-1.0.0.jar -source &lt;path&gt; [-token &lt;token&gt;] [-output &lt;file&gt;]</pre>
+
+                    <h4>Examples</h4>
+                    <p><strong>Scan Local Directory:</strong></p>
+                    <pre>java -jar apidiscovery-1.0.0.jar -source "C:/workspace"</pre>
+                    
+                    <p><strong>Scan GitLab Group:</strong></p>
+                    <pre>java -jar apidiscovery-1.0.0.jar -source "https://gitlab.com/my-group" -token "glpat-..." -output "results.json"</pre>
+                    
+                    <h4>Arguments</h4>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Flag</th>
+                                <th>Description</th>
+                                <th>Required?</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>-source</code></td>
+                                <td>Local path (e.g., <code>C:\\code</code>) or GitLab URL</td>
+                                <td>Yes</td>
+                            </tr>
+                            <tr>
+                                <td><code>-token</code></td>
+                                <td>GitLab Personal Access Token (for URL sources)</td>
+                                <td>Yes (if URL)</td>
+                            </tr>
+                            <tr>
+                                <td><code>-output</code></td>
+                                <td>Path to save JSON report (default: <code>scan_results.json</code>)</td>
+                                <td>No</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            `;
         }
 
         function setActive(element) {

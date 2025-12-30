@@ -29,6 +29,12 @@ public class ApiDiscoveryTool {
     private static volatile String currentScanFolder = "";
 
     public static void main(String[] args) throws IOException {
+        // CLI MODE CHECK
+        if (args.length > 0) {
+            runCliScan(args);
+            return;
+        }
+
         System.out.println("==========================================");
         System.out.println("   Raks ApiDiscovery Tool v1.0");
         System.out.println("==========================================");
@@ -61,17 +67,180 @@ public class ApiDiscoveryTool {
         server.start();
         
         // FAIL-SAFE: Globally disable JGit MMAP (Windows File Locking Fix)
+        disableJGitMmap();
+
+        System.out.println("Server started at http://localhost:" + PORT);
+        System.out.println("Open your browser to access the dashboard.");
+    }
+
+    private static void disableJGitMmap() {
         try {
             org.eclipse.jgit.storage.file.WindowCacheConfig config = new org.eclipse.jgit.storage.file.WindowCacheConfig();
             config.setPackedGitMMAP(false);
             config.install();
-            System.out.println("[INIT] JGit Memory Mapping disabled.");
+            // System.out.println("[INIT] JGit Memory Mapping disabled.");
         } catch (Exception e) {
             System.err.println("[INIT] Failed to configure JGit: " + e.getMessage());
         }
+    }
 
-        System.out.println("Server started at http://localhost:" + PORT);
-        System.out.println("Open your browser to access the dashboard.");
+    // CLI LOGIC
+    private static void runCliScan(String[] args) {
+        String source = null;
+        String token = null;
+        String output = "scan_results.json";
+        
+        // Generate Scan ID for consistent naming
+        java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss");
+        String scanId = "Scan_" + sdf.format(new java.util.Date());
+
+        // Parse Args
+        for (int i = 0; i < args.length; i++) {
+            if ("-source".equals(args[i]) && i + 1 < args.length) {
+                source = args[i + 1];
+                i++;
+            } else if ("-token".equals(args[i]) && i + 1 < args.length) {
+                token = args[i + 1];
+                i++;
+            } else if ("-output".equals(args[i]) && i + 1 < args.length) {
+                output = args[i + 1];
+                i++;
+            } else if ("-help".equals(args[i])) {
+                printHelp();
+                return;
+            }
+        }
+
+        if (source == null) {
+            System.err.println("Error: -source argument is required.");
+            printHelp();
+            System.exit(1);
+        }
+
+        System.out.println("==========================================");
+        System.out.println("   Raks ApiDiscovery CLI");
+        System.out.println("==========================================");
+        System.out.println("Source: " + source);
+        System.out.println("Output: " + output);
+        System.out.println("------------------------------------------");
+
+        disableJGitMmap();
+        engine = new ScannerEngine();
+        
+        try {
+            List<DiscoveryReport> reports = new ArrayList<>();
+            File localFile = new File(source);
+            
+            // 1. Local Directory Scan
+            if (localFile.exists() && localFile.isDirectory()) {
+                System.out.println("[INFO] Scanning local directory...");
+                reports.add(engine.scanRepository(localFile));
+                
+                File[] subs = localFile.listFiles(File::isDirectory);
+                if (subs != null) {
+                    int count = 0;
+                    for (File sub : subs) {
+                         if (!sub.getName().startsWith(".")) {
+                             count++;
+                             System.out.print("\r[INFO] Scanning sub-folder " + count + "/" + subs.length + ": " + sub.getName() + "          ");
+                             reports.add(engine.scanRepository(sub));
+                         }
+                    }
+                    System.out.println(); // New line after progress
+                }
+            } 
+            // 2. GitLab Scan
+            else if (source.startsWith("http")) {
+                 if (token == null || token.isEmpty()) {
+                     // Try loading from config if not provided
+                     token = loadConfig("gitlab.token");
+                 }
+                 
+                 if (token == null || token.isEmpty()) {
+                     System.err.println("[ERROR] Token required for GitLab scan. Use -token <token>.");
+                     System.exit(1);
+                 }
+
+                 System.out.println("[INFO] Connecting to GitLab...");
+                 GitLabConnector connector = new GitLabConnector();
+                 
+                 
+                 // Use the pre-generated scanId
+                 // java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss");
+                 // String scanId = "Scan_" + sdf.format(new java.util.Date());
+                 
+                 // Progress callback for CLI
+                 java.util.function.BiConsumer<String, Integer> cliProgress = (msg, pct) -> {
+                     System.out.print("\r[PROGRESS] " + pct + "% - " + msg + "                         ");
+                 };
+
+                 reports = connector.scanGroup(source, token, scanId, getTempDir(), cliProgress);
+                 System.out.println(); // New line after progress call
+                 
+                 // Cleanup happens automatically in connector logic now? 
+                 // Actually connector returns reports, cleanup logic in ApiDiscoveryService/Tool usually handles the rest.
+                 // We need to ensure we clean up the downloaded repos if they were temp.
+                 // Re-using specific cleanup logic for CLI might be needed if GitLabConnector doesn't do it all.
+                 // Based on implementation plan, GitLabConnector does *not* delete if we want history. 
+                 // But for CLI, we might want to clean up temp unless user specifies otherwise? 
+                 // Let's stick to the consistent behavior: It leaves artifacts in temp/Scan_... 
+                 // But for CLI user expects 'scan_results.json' at -output path.
+            } else {
+                System.err.println("[ERROR] Invalid source. Must be a directory path or URL.");
+                System.exit(1);
+            }
+            
+            // SAVE RESULTS
+            Gson gson = new Gson();
+            String jsonResults = gson.toJson(reports);
+            
+            File outputFile = new File(output);
+            if (outputFile.exists() && outputFile.isDirectory()) {
+                // Create timestamped folder: output/Scan_YYYYMMDD_HHmmss/scan_results.json
+                File subDir = new File(outputFile, scanId);
+                subDir.mkdirs();
+                outputFile = new File(subDir, "scan_results.json");
+            } else if (outputFile.getParentFile() != null) {
+                outputFile.getParentFile().mkdirs();
+            }
+            
+            java.nio.file.Files.write(outputFile.toPath(), jsonResults.getBytes(StandardCharsets.UTF_8));
+            System.out.println("[SUCCESS] Results saved to: " + outputFile.getAbsolutePath());
+            
+            // PRINT SUMMARY
+            printSummary(reports);
+            
+        } catch (Exception e) {
+            System.err.println("[ERROR] Scan failed: " + e.getMessage());
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
+
+    private static void printHelp() {
+        System.out.println("Usage: java -jar apidiscovery.jar -source <path_or_url> [-token <token>] [-output <file_path>]");
+        System.out.println("Options:");
+        System.out.println("  -source  : Local directory path or GitLab Group URL");
+        System.out.println("  -token   : GitLab API Token (required for URL)");
+        System.out.println("  -output  : Path to save JSON results (default: scan_results.json)");
+    }
+
+    private static void printSummary(List<DiscoveryReport> reports) {
+        System.out.println("\n-------------------------------------------------------------");
+        System.out.printf("%-40s | %-30s%n", "Project Name", "Technology");
+        System.out.println("-------------------------------------------------------------");
+        for (DiscoveryReport r : reports) {
+            String name = r.getRepoName();
+            if (name == null) name = "Unknown";
+            if (name.length() > 37) name = name.substring(0, 37) + "..";
+            
+            String tech = r.getTechnology();
+            if (tech == null) tech = "N/A";
+            
+            System.out.printf("%-40s | %-30s%n", name, tech);
+        }
+        System.out.println("-------------------------------------------------------------");
+        System.out.println("Total Projects: " + reports.size());
     }
     
     public static void updateProgress(String message, int percent) {
