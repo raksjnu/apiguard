@@ -19,9 +19,9 @@
         <maven.compiler.target>17</maven.compiler.target>
         
         <!-- Dependency Versions -->
-        <jetty.version>11.0.18</jetty.version>
+        <jetty.version>11.0.24</jetty.version>
         <jersey.version>3.1.5</jersey.version>
-        <poi.version>5.2.5</poi.version>
+        <poi.version>5.4.0</poi.version>
         <pdfbox.version>3.0.1</pdfbox.version>
         <jackson.version>2.16.1</jackson.version>
         <snakeyaml.version>2.2</snakeyaml.version>
@@ -182,6 +182,12 @@
             <groupId>net.sourceforge.plantuml</groupId>
             <artifactId>plantuml</artifactId>
             <version>1.2023.13</version>
+        </dependency>
+        <!-- Commons Compress (Explicit upgrade for security) -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+            <version>1.27.1</version>
         </dependency>
     </dependencies>
 
