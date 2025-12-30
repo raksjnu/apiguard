@@ -85,10 +85,10 @@ process_project() {
     echo "[3/3] Checking for CVEs (OWASP Dependency Check)..."
     # Note: First run will download huge CVE database.
     if [ -n "$NVD_API_KEY" ]; then
-        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=$NVD_API_KEY
+        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=$NVD_API_KEY -DossindexAnalyzerEnabled=false
     else
         echo "[WARNING] NVD_API_KEY not set. You may experience 403 errors."
-        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true
+        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DossindexAnalyzerEnabled=false
     fi
     
     echo ""

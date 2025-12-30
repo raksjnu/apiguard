@@ -77,12 +77,11 @@ goto :generate_report
     call mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -B -Dlicense.useMissingFile -Dlicense.outputDirectory=target/site
     
     echo [3/3] Checking for CVEs (OWASP Dependency Check)...
-    REM Note: First run will download huge CVE database. If 403 Forbidden, set NVD_API_KEY env var.
     if defined NVD_API_KEY (
-        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=%NVD_API_KEY% -DfailOnError=false
+        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=%NVD_API_KEY% -DfailOnError=false -DossindexAnalyzerEnabled=false
     ) else (
         echo [WARNING] NVD_API_KEY not set. You may experience 403 errors.
-        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DfailOnError=false
+        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DfailOnError=false -DossindexAnalyzerEnabled=false
     )
     
     echo.
