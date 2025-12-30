@@ -6,8 +6,8 @@ cd "$SCRIPT_DIR"
 if [ -n "$JAVA_HOME" ]; then
     echo "[INFO] Using existing JAVA_HOME: $JAVA_HOME"
 else
-    if [ -d "/usr/lib/jvm/jdk-17" ]; then
-        export JAVA_HOME="/usr/lib/jvm/jdk-17"
+    if [ -d "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home" ]; then
+        export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home"
     elif [ -d "/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home" ]; then
         export JAVA_HOME="/Library/Java/JavaVirtualMachines/jdk-17.jdk/Contents/Home"
     fi
@@ -17,7 +17,7 @@ fi
 
 MULE_HOME="$SCRIPT_DIR/mule/mule-enterprise-standalone-4.10.1"
 if [ ! -d "$MULE_HOME" ]; then
-    MULE_HOME="/c/raks/mule-enterprise-standalone-4.10.1"
+    MULE_HOME="/Users/raks/Library/CloudStorage/OneDrive-IBM/Documents/GitHub/mule-enterprise-standalone-4.10.1"
 fi
 export MULE_HOME
 export MULE_BASE="$MULE_HOME"
