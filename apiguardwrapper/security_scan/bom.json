@@ -1,10 +1,10 @@
 {
   "bomFormat" : "CycloneDX",
   "specVersion" : "1.4",
-  "serialNumber" : "urn:uuid:820e246a-7b6f-4113-90f1-b6de51eaf052",
+  "serialNumber" : "urn:uuid:49cb05a9-a4ea-41a8-82c7-b0ba6db4cedc",
   "version" : 1,
   "metadata" : {
-    "timestamp" : "2025-12-30T23:55:17Z",
+    "timestamp" : "2025-12-30T23:57:21Z",
     "tools" : [
       {
         "vendor" : "OWASP Foundation",
@@ -780,15 +780,6 @@
       "bom-ref" : "pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"
     },
     {
-      "group" : "org.mule.modules",
-      "name" : "mule-module-cors-kernel",
-      "version" : "1.2.0",
-      "scope" : "required",
-      "purl" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar",
-      "type" : "library",
-      "bom-ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar"
-    },
-    {
       "publisher" : "MuleSoft, Inc.",
       "group" : "org.mule.connectors",
       "name" : "mule-http-connector",
@@ -854,6 +845,76 @@
       ],
       "type" : "library",
       "bom-ref" : "pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&type=jar"
+    },
+    {
+      "publisher" : "MuleSoft, Inc.",
+      "group" : "org.mule.modules",
+      "name" : "mule-module-cors-kernel",
+      "version" : "1.1.2",
+      "description" : "Mule is the runtime engine of Anypoint™ Platform. It is the industry’s only unified platform that combines data and application integration across legacy systems, SaaS applications, and APIs with hybrid deployment options for maximum flexibility.",
+      "scope" : "required",
+      "hashes" : [
+        {
+          "alg" : "MD5",
+          "content" : "e57d2c8ac6d0dfaf9252431bf4fdf8f8"
+        },
+        {
+          "alg" : "SHA-1",
+          "content" : "7e951a264bb07235bd1eb368bc0c5b5844744ef0"
+        },
+        {
+          "alg" : "SHA-256",
+          "content" : "407e3ca28021600aa3d710e1e0fd37911bf69ea65a66930c991f457259ce7089"
+        },
+        {
+          "alg" : "SHA-512",
+          "content" : "3b9ccece4b618d783adbb8a91c9b94c1fd67897d54ef43d9f499bffecd2892a085a159dfba5a2b9ac975d20cd76d8025a917574e8656a4feae7961f040ded3a4"
+        },
+        {
+          "alg" : "SHA-384",
+          "content" : "a7d70a51065476c26038b254bf560788ea3972cd961d79ab17aa017e0b052361f2bfb8cde5eebf8049eb35f1298e565f"
+        },
+        {
+          "alg" : "SHA3-384",
+          "content" : "802fc5aa9c2d1c2f21a51f78f0d1aa8c7d3b6bcc3332cc16f5e6426f799930fbddc8def5163e0bc191fb26b1dd9d5c5c"
+        },
+        {
+          "alg" : "SHA3-256",
+          "content" : "61c697fd7e43cbdcef9785727860b1a1044b76148641cdb3b1d867f92562d0b6"
+        },
+        {
+          "alg" : "SHA3-512",
+          "content" : "6411e51948a3f2f3dd1f805818b076f75cad90568580b6a5dba801f5f60be3c624c3befb08f090c9c232b3e511b1263b16f7d0dd5ae4c884b9756d356704c4d8"
+        }
+      ],
+      "licenses" : [
+        {
+          "license" : {
+            "id" : "Apache-2.0"
+          }
+        }
+      ],
+      "purl" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar",
+      "externalReferences" : [
+        {
+          "type" : "website",
+          "url" : "https://developer.mulesoft.com/mule-module-cors-kernel/"
+        },
+        {
+          "type" : "distribution",
+          "url" : "http://www.mulesoft.org/display/MULE/Download"
+        },
+        {
+          "type" : "issue-tracker",
+          "url" : "https://www.mulesoft.org/jira/projects/MULE/issues/"
+        },
+        {
+          "type" : "vcs",
+          "url" : "https://github.com/mulesoft/mule/mule-module-cors-kernel"
+        }
+      ],
+      "type" : "library",
+      "bom-ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"
     },
     {
       "publisher" : "Eclipse Foundation",
@@ -2652,7 +2713,6 @@
         "pkg:maven/org.springframework/spring-expression@5.3.39?type=jar",
         "pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar",
         "pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar",
-        "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar",
         "pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&type=jar",
         "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
         "pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&type=jar",
@@ -2726,14 +2786,10 @@
       "dependsOn" : [ ]
     },
     {
-      "ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar",
-      "dependsOn" : [ ]
-    },
-    {
       "ref" : "pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&type=jar",
       "dependsOn" : [
         "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
-        "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar",
+        "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar",
         "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar",
         "pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar",
         "pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar",
@@ -2750,6 +2806,10 @@
     },
     {
       "ref" : "pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar",
+      "dependsOn" : [ ]
+    },
+    {
+      "ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar",
       "dependsOn" : [ ]
     },
     {
