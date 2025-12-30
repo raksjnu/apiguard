@@ -1,10 +1,10 @@
 {
   "bomFormat" : "CycloneDX",
   "specVersion" : "1.4",
-  "serialNumber" : "urn:uuid:3717391f-7edb-404f-ba23-d96adb3c60b2",
+  "serialNumber" : "urn:uuid:820e246a-7b6f-4113-90f1-b6de51eaf052",
   "version" : 1,
   "metadata" : {
-    "timestamp" : "2025-12-30T23:48:38Z",
+    "timestamp" : "2025-12-30T23:55:17Z",
     "tools" : [
       {
         "vendor" : "OWASP Foundation",
@@ -782,45 +782,11 @@
     {
       "group" : "org.mule.modules",
       "name" : "mule-module-cors-kernel",
-      "version" : "1.1.3",
+      "version" : "1.2.0",
       "scope" : "required",
-      "hashes" : [
-        {
-          "alg" : "MD5",
-          "content" : "a6b5c849bd5c906db98da845bed374d4"
-        },
-        {
-          "alg" : "SHA-1",
-          "content" : "44165f4b8d3cdf9aa361b5d905ba400a0b21e536"
-        },
-        {
-          "alg" : "SHA-256",
-          "content" : "2631cfa02c959ffffc35e463d1051778abea99835e031ca994568c011f5482a6"
-        },
-        {
-          "alg" : "SHA-512",
-          "content" : "03293309dfa7deb3c23576c44db28c1c546af9b7246f656af7d3a08786dffba058f6320d143cb9d9eb39f5f46eba5f28fa430b40e102dcc75583d7526fb52a42"
-        },
-        {
-          "alg" : "SHA-384",
-          "content" : "bf5b9b198508a75c9103d12a7358757158a2e1717819097161d72c34db80409d339d553e68c9e6b344c5ea997e96331f"
-        },
-        {
-          "alg" : "SHA3-384",
-          "content" : "c0e500a173a7283a55ac107e8deb04f59ba47126c4153ed9ab120e21a39fc0ea1e3dcec26f1bb9fe3c075f5e977964fe"
-        },
-        {
-          "alg" : "SHA3-256",
-          "content" : "f82c61b933d60b18ae5b1ce3b65fd8af95f0bc1c231303c44a82ce8bfcf308f1"
-        },
-        {
-          "alg" : "SHA3-512",
-          "content" : "d74467d9a94004b1cea2b38846e4d505c49f43523f4194a9bbe334fd3c1436032649ccfdbbe01665ec9ba78a4d05087e761ff84e3a377a1cdfa2e415bd53645a"
-        }
-      ],
-      "purl" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar",
+      "purl" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar",
       "type" : "library",
-      "bom-ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar"
+      "bom-ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar"
     },
     {
       "publisher" : "MuleSoft, Inc.",
@@ -2686,7 +2652,7 @@
         "pkg:maven/org.springframework/spring-expression@5.3.39?type=jar",
         "pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar",
         "pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar",
-        "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar",
+        "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar",
         "pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&type=jar",
         "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
         "pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&type=jar",
@@ -2760,14 +2726,14 @@
       "dependsOn" : [ ]
     },
     {
-      "ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar",
+      "ref" : "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar",
       "dependsOn" : [ ]
     },
     {
       "ref" : "pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&type=jar",
       "dependsOn" : [
         "pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&type=jar",
-        "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.3?type=jar",
+        "pkg:maven/org.mule.modules/mule-module-cors-kernel@1.2.0?type=jar",
         "pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar",
         "pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar",
         "pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar",

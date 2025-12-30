@@ -91,11 +91,6 @@
             <version>3.18.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.mule.modules</groupId>
-            <artifactId>mule-module-cors-kernel</artifactId>
-            <version>1.2.0</version>
-        </dependency>
 		<!-- Mule Connectors -->
 		<dependency>
 			<groupId>org.mule.connectors</groupId>

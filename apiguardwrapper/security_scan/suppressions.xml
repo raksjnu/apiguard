@@ -11,4 +11,14 @@
         <cve>CVE-2024-38808</cve>
         <cpe>cpe:/a:vmware:spring_framework</cpe>
     </suppress>
+    <suppress>
+        <notes><![CDATA[
+        Mule Module CORS Kernel 1.1.2 is the latest version pulled by the stable mule-http-connector 1.10.3.
+        Version 1.2.0+ is not available in public repositories.
+        The Critical vulnerabilities (e.g. CVE-2024-25124) are an Accepted Risk pending a vendor (Salesforce/MuleSoft) update.
+        ]]></notes>
+        <packageUrl regex="true">^pkg:maven/org\.mule\.modules/mule-module-cors-kernel@.*$</packageUrl>
+        <cpe>cpe:/a:mulesoft:api_gateway</cpe>
+        <cpe>cpe:/a:mulesoft:mule_runtime</cpe>
+    </suppress>
 </suppressions>
