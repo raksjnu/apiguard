@@ -1,24 +1,18 @@
 com.raks:muleguardwrapper:mule-application:1.0.0
 +- org.mule.connectors:mule-email-connector:jar:mule-plugin:1.7.3:compile
 |  +- com.sun.mail:jakarta.mail:jar:1.6.7:compile
-|  +- org.apache.commons:commons-lang3:jar:3.17.0:compile
+|  +- org.apache.commons:commons-lang3:jar:3.18.0:compile
 |  +- commons-io:commons-io:jar:2.18.0:compile
 |  \- org.mule.sdk:mule-sdk-api:jar:0.7.0:compile
-+- org.mule.connectors:mule-http-connector:jar:mule-plugin:1.9.2:compile
-|  +- org.mule.connectors:mule-sockets-connector:jar:mule-plugin:1.2.4:compile
++- org.mule.connectors:mule-http-connector:jar:mule-plugin:1.10.3:compile
+|  +- org.mule.connectors:mule-sockets-connector:jar:mule-plugin:1.2.5:compile
 |  +- org.mule.modules:mule-module-cors-kernel:jar:1.1.2:compile
-|  +- org.springframework:spring-beans:jar:5.3.32:compile
-|  +- org.springframework:spring-context:jar:5.3.32:compile
-|  |  +- org.springframework:spring-aop:jar:5.3.32:compile
-|  |  \- org.springframework:spring-expression:jar:5.3.32:compile
-|  +- org.springframework:spring-context-support:jar:5.3.32:compile
-|  +- org.springframework:spring-core:jar:5.3.32:compile
-|  |  \- org.springframework:spring-jcl:jar:5.3.32:compile
 |  \- org.mule.sdk:mule-sdk-compatibility-api:jar:0.7.4:compile
 +- org.mule.connectors:mule-file-connector:jar:mule-plugin:1.5.2:compile
 |  \- org.mule.modules:mule-module-file-extension-common:jar:mule-plugin:1.4.3:compile
 |     \- com.sun.activation:javax.activation:jar:1.2.0:compile
 +- org.mule.module:mule-java-module:jar:mule-plugin:2.0.0:compile
+|  \- org.springframework:spring-core:jar:5.3.39:compile
 +- org.mule.connectors:mule-objectstore-connector:jar:mule-plugin:1.2.4:compile
 |  +- jakarta.xml.bind:jakarta.xml.bind-api:jar:2.3.3:compile
 |  |  \- jakarta.activation:jakarta.activation-api:jar:1.2.2:compile
