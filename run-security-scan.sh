@@ -12,10 +12,35 @@ fi
 
 echo "[INFO] Using Java at: $JAVA_HOME"
 
-# Recursively find all pom.xml files (excluding 'target' folders)
-echo "[INFO] Searching for Maven projects..."
-find . -type d -name "target" -prune -o -name "pom.xml" -type f -print | while read -r pom_file; do
-    project_dir=$(dirname "$pom_file")
+# Default to Shallow Scan, enable Recursive with -r or --recursive
+RECURSIVE_MODE=false
+if [[ "$1" == "-r" || "$1" == "--recursive" ]]; then
+    RECURSIVE_MODE=true
+fi
+
+if [ "$RECURSIVE_MODE" = true ]; then
+    echo "[INFO] Mode: RECURSIVE (Finding all pom.xml files nested deep)"
+    find . -type d -name "target" -prune -o -name "pom.xml" -type f -print | while read -r pom_file; do
+        process_project "$pom_file"
+    done
+else
+    echo "[INFO] Mode: SHALLOW (Scanning immediate sub-folders only)"
+    echo "[INFO] Use '$0 --recursive' to scan recursively."
+    
+    # Iterate over immediate directories
+    for d in */; do
+        if [ -f "${d}pom.xml" ]; then
+            process_project "${d}pom.xml"
+        fi
+    done
+fi
+
+exit 0
+
+# Function to extract processing logic
+process_project() {
+    local pom_file="$1"
+    local project_dir=$(dirname "$pom_file")
     
     echo ""
     echo "--------------------------------------------------------"
@@ -41,7 +66,7 @@ find . -type d -name "target" -prune -o -name "pom.xml" -type f -print | while r
     echo "  - CVEs:         target/dependency-check-report.html"
     
     popd > /dev/null
-done
+}
 
 echo ""
 echo "========================================================"
