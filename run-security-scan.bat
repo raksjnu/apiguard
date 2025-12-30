@@ -75,26 +75,42 @@ goto :generate_report
     echo --------------------------------------------------------
     
     pushd "%POM_PATH%"
+    
+    set "SCAN_OUT=security_scan"
+    if not exist "%SCAN_OUT%" mkdir "%SCAN_OUT%"
+    
+    REM Create a project-specific scan script in the folder
+    echo @echo off > "%SCAN_OUT%\run-local-scan.bat"
+    echo set "NVD_API_KEY=%NVD_API_KEY%" >> "%SCAN_OUT%\run-local-scan.bat"
+    echo mvn org.owasp:dependency-check-maven:12.1.0:check -Dformat=HTML -DoutputDirectory=. -DautoUpdate=true -DnvdApiKey=%%NVD_API_KEY%% -DfailOnError=false -DossindexAnalyzerEnabled=false >> "%SCAN_OUT%\run-local-scan.bat"
+    echo mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -DoutputDirectory=. >> "%SCAN_OUT%\run-local-scan.bat"
+    echo mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -Dlicense.useMissingFile -Dlicense.outputDirectory=. >> "%SCAN_OUT%\run-local-scan.bat"
+    echo mvn dependency:tree -DoutputFile=dependency-tree.txt >> "%SCAN_OUT%\run-local-scan.bat"
+    echo echo Scan Complete. >> "%SCAN_OUT%\run-local-scan.bat"
         
-    echo [1/3] listing Dependencies...
-    call mvn dependency:list -B -DoutputFile=target/dependency-list.txt -Dsort=true
+    echo [1/4] Generating Dependency Tree...
+    call mvn dependency:tree -B -DoutputFile="%SCAN_OUT%\dependency-tree.txt"
+
+    echo [2/4] Generating SBOM (CycloneDX)...
+    call mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -B -DoutputDirectory="%SCAN_OUT%"
     
-    echo [2/3] Generating License Report...
-    call mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -B -Dlicense.useMissingFile -Dlicense.outputDirectory=target/site
+    echo [3/4] Generating License Report...
+    call mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -B -Dlicense.useMissingFile -Dlicense.outputDirectory="%SCAN_OUT%"
     
-    echo [3/3] Checking for CVEs (OWASP Dependency Check)...
+    echo [4/4] Checking for CVEs (OWASP Dependency Check)...
     if defined NVD_API_KEY (
-        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=%NVD_API_KEY% -DfailOnError=false -DossindexAnalyzerEnabled=false
+        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DoutputDirectory="%SCAN_OUT%" -DautoUpdate=true -DnvdApiKey=%NVD_API_KEY% -DfailOnError=false -DossindexAnalyzerEnabled=false
     ) else (
         echo [WARNING] NVD_API_KEY not set. You may experience 403 errors.
-        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DfailOnError=false -DossindexAnalyzerEnabled=false
+        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DoutputDirectory="%SCAN_OUT%" -DautoUpdate=true -DfailOnError=false -DossindexAnalyzerEnabled=false
     )
     
     echo.
-    echo "[REPORT] Reports generated in target/"
-    echo "  - Dependencies: target/dependency-list.txt"
-    echo "  - Licenses:     target/site/generated-sources/license/THIRD-PARTY.txt"
-    echo "  - CVEs:         target/dependency-check-report.html"
+    echo "[REPORT] Reports generated in %SCAN_OUT%/"
+    echo "  - Tree:         %SCAN_OUT%\dependency-tree.txt"
+    echo "  - SBOM:         %SCAN_OUT%\bom.xml"
+    echo "  - Licenses:     %SCAN_OUT%\THIRD-PARTY.txt"
+    echo "  - CVEs:         %SCAN_OUT%\dependency-check-report.html"
     
     popd > nul
     exit /b

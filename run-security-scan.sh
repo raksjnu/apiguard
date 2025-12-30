@@ -84,6 +84,7 @@ echo "========================================================"
 exit 0
 
 # Function to extract processing logic
+# Function to extract processing logic
 process_project() {
     local pom_file="$1"
     local project_dir=$(dirname "$pom_file")
@@ -95,26 +96,41 @@ process_project() {
     
     pushd "$project_dir" > /dev/null
     
-    echo "[1/3] Listing Dependencies..."
-    mvn dependency:list -B -DoutputFile=target/dependency-list.txt -Dsort=true
+    mkdir -p "security_scan"
     
-    echo "[2/3] Generating License Report..."
-    mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -B -Dlicense.useMissingFile -Dlicense.outputDirectory=target/site
+    # Generate local script
+    local script_file="security_scan/run-local-scan.sh"
+    echo "#!/bin/bash" > "$script_file"
+    echo "export NVD_API_KEY=\"$NVD_API_KEY\"" >> "$script_file"
+    echo "mvn org.owasp:dependency-check-maven:12.1.0:check -Dformat=HTML -DoutputDirectory=. -DautoUpdate=true -DnvdApiKey=\$NVD_API_KEY -DfailOnError=false -DossindexAnalyzerEnabled=false" >> "$script_file"
+    echo "mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -DoutputDirectory=." >> "$script_file"
+    echo "mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -Dlicense.useMissingFile -Dlicense.outputDirectory=." >> "$script_file"
+    echo "mvn dependency:tree -DoutputFile=dependency-tree.txt" >> "$script_file"
+    chmod +x "$script_file"
     
-    echo "[3/3] Checking for CVEs (OWASP Dependency Check)..."
-    # Note: First run will download huge CVE database.
+    echo "[1/4] Generating Dependency Tree..."
+    mvn dependency:tree -B -DoutputFile="security_scan/dependency-tree.txt"
+    
+    echo "[2/4] Generating SBOM (CycloneDX)..."
+    mvn org.cyclonedx:cyclonedx-maven-plugin:2.7.9:makeAggregateBom -B -DoutputDirectory="security_scan"
+    
+    echo "[3/4] Generating License Report..."
+    mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -B -Dlicense.useMissingFile -Dlicense.outputDirectory="security_scan"
+    
+    echo "[4/4] Checking for CVEs (OWASP Dependency Check)..."
     if [ -n "$NVD_API_KEY" ]; then
-        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=$NVD_API_KEY -DossindexAnalyzerEnabled=false
+        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DoutputDirectory="security_scan" -DautoUpdate=true -DnvdApiKey=$NVD_API_KEY -DossindexAnalyzerEnabled=false
     else
         echo "[WARNING] NVD_API_KEY not set. You may experience 403 errors."
-        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DossindexAnalyzerEnabled=false
+        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DoutputDirectory="security_scan" -DautoUpdate=true -DossindexAnalyzerEnabled=false
     fi
     
     echo ""
-    echo "[REPORT] Reports generated in $project_dir/target/"
-    echo "  - Dependencies: target/dependency-list.txt"
-    echo "  - Licenses:     target/site/generated-sources/license/THIRD-PARTY.txt"
-    echo "  - CVEs:         target/dependency-check-report.html"
+    echo "[REPORT] Reports generated in $project_dir/security_scan/"
+    echo "  - Tree:         security_scan/dependency-tree.txt"
+    echo "  - SBOM:         security_scan/bom.xml"
+    echo "  - Licenses:     security_scan/THIRD-PARTY.txt"
+    echo "  - CVEs:         security_scan/dependency-check-report.html"
     
     popd > /dev/null
 }

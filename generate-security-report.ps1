@@ -72,31 +72,25 @@ foreach ($Pom in $PomFiles) {
     <div class="audit-item">
 "@
 
-    # 1. Dependency Table
-    $DepFile = Join-Path $ProjectDir "target/dependency-list.txt"
-    if (Test-Path $DepFile) {
-        $HtmlContent += "<h3>Dependencies</h3>"
-        $HtmlContent += "<table><thead><tr><th>Group ID</th><th>Artifact ID</th><th>Type</th><th>Version</th><th>Scope</th></tr></thead><tbody>"
-        
-        $Lines = Get-Content $DepFile
-        foreach ($Line in $Lines) {
-            # Parse Maven dependency list format
-            if ($Line -match "^\s*([\w\.-]+):([\w\.-]+):([\w\.-]+):([\w\.-]+):([\w\.-]+)") {
-                $G = $matches[1]
-                $A = $matches[2]
-                $T = $matches[3]
-                $V = $matches[4]
-                $S = $matches[5]
-                $HtmlContent += "<tr><td>$G</td><td>$A</td><td>$T</td><td>$V</td><td><span class='tag tag-warn'>$S</span></td></tr>"
-            }
-        }
-        $HtmlContent += "</tbody></table>"
+    # 1. Dependency Tree (Replaces List)
+    $TreeFile = Join-Path $ProjectDir "security_scan/dependency-tree.txt"
+    if (Test-Path $TreeFile) {
+        $HtmlContent += "<h3>Dependency Tree</h3>"
+        $TreeContent = Get-Content $TreeFile | Out-String
+        $HtmlContent += "<div style='max-height: 300px; overflow-y: auto; background: #fafafa; border: 1px solid #ddd; padding: 10px; font-family: monospace; white-space: pre;'>$TreeContent</div>"
     } else {
-        $HtmlContent += "<p class='tag tag-warn'>No dependency info available.</p>"
+        $HtmlContent += "<p class='tag tag-warn'>No dependency tree available.</p>"
     }
 
-    # 2. License Analysis
-    $LicFile = Join-Path $ProjectDir "target/site/generated-sources/license/THIRD-PARTY.txt"
+    # 2. SBOM
+    $SbomFile = Join-Path $ProjectDir "security_scan/bom.xml"
+    if (Test-Path $SbomFile) {
+        $HtmlContent += "<h3>SBOM</h3>"
+        $HtmlContent += "<p>Generated CycloneDX SBOM: <a href='security_scan/bom.xml' target='_blank'>bom.xml</a></p>"
+    }
+
+    # 3. License Analysis
+    $LicFile = Join-Path $ProjectDir "security_scan/THIRD-PARTY.txt"
     if (Test-Path $LicFile) {
         $HtmlContent += "<h3>License Compliance</h3>"
         $HtmlContent += "<table><thead><tr><th>License</th><th>Library</th><th>Enterprise Status</th></tr></thead><tbody>"
@@ -122,27 +116,22 @@ foreach ($Pom in $PomFiles) {
         $HtmlContent += "</tbody></table>"
     }
 
-    # 3. CVEs
-    $CveFile = Join-Path $ProjectDir "target/dependency-check-report.html"
+    # 4. CVEs
+    $CveFile = Join-Path $ProjectDir "security_scan/dependency-check-report.html"
     if (Test-Path $CveFile) {
-        # Create a relative link to target/dependency-check-report.html
-        $CveLink = "target/dependency-check-report.html"
+        # Create a relative link
+        $CveLink = "security_scan/dependency-check-report.html"
         $HtmlContent += @"
         <h3>Vulnerabilities (OWASP)</h3>
         <p><a href="$CveLink" target="_blank">Open Full OWASP Report</a></p>
-        <iframe src="$CveLink" width="100%" height="400"></iframe>
+        <iframe src="$CveLink" width="100%" height="600"></iframe>
 "@
     } else {
         $HtmlContent += @"
         <h3>Vulnerabilities (OWASP)</h3>
         <p class='tag tag-fail'>Scan Failed: Report not found.</p>
         <div style="background: #fff3cd; padding: 10px; border: 1px solid #ffeeba; border-radius: 4px; margin-top: 5px; font-size: 0.9em;">
-            <strong>Possible Cause:</strong> NVD API connection failed (403 Forbidden).<br>
-            <strong>Fix:</strong> Obtain a free <a href="https://nvd.nist.gov/developers/request-an-api-key">NVD API Key</a> and run:
-            <br>
-            <code>set NVD_API_KEY=your-key-here</code>
-            <br>
-            Then re-run the scan.
+            <strong>Possible Cause:</strong> NVD API connection failed (403 Forbidden). / Scan configuration error.
         </div>
 "@
     }
