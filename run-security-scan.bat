@@ -23,7 +23,7 @@ goto :end
     set "POM_FILE=%~1"
     set "POM_PATH=%~dp1"
     
-    echo Processing %POM_FILE% | findstr /i "\\target\\" >nul
+    echo Processing "%POM_FILE%" | findstr /i "\\target\\" >nul
     if errorlevel 1 (
         echo.
         echo --------------------------------------------------------
