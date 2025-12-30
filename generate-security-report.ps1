@@ -50,8 +50,13 @@ $HeaderTemplate = @"
     <h1>Security Audit & License Compliance Report</h1>
 "@
 
-# Find POM files (excluding target)
-$PomFiles = Get-ChildItem -Path $RootPath -Filter "pom.xml" -Recurse | Where-Object { $_.FullName -notmatch "\\target\\" }
+# Find POM files (excluding target, test-data, reference)
+$PomFiles = Get-ChildItem -Path $RootPath -Filter "pom.xml" -Recurse | Where-Object { 
+    $_.FullName -notmatch "\\target\\" -and 
+    $_.FullName -notmatch "\\test-data\\" -and 
+    $_.FullName -notmatch "\\testdata\\" -and 
+    $_.FullName -notmatch "\\reference\\" 
+}
 
 if ($PomFiles.Count -eq 0) {
     Write-Host "No Maven projects found in the specified path."
@@ -60,7 +65,15 @@ if ($PomFiles.Count -eq 0) {
 foreach ($Pom in $PomFiles) {
     $ProjectDir = $Pom.Directory.FullName
     $ProjectName = $Pom.Directory.Name
-    $OutputFile = Join-Path $ProjectDir "security_scan/Security_Audit_Consolidated_Report.html"
+    
+    # Ensure security_scan directory exists before writing
+    $ScanDir = Join-Path $ProjectDir "security_scan"
+    if (-not (Test-Path $ScanDir)) {
+        Write-Host "Skipping $ProjectName (No security_scan directory found)"
+        continue
+    }
+    
+    $OutputFile = Join-Path $ScanDir "Security_Audit_Consolidated_Report.html"
     
     # Initialize Content with Header
     $HtmlContent = $HeaderTemplate
@@ -73,7 +86,7 @@ foreach ($Pom in $PomFiles) {
 "@
 
     # 1. Dependency Tree (Replaces List)
-    $TreeFile = Join-Path $ProjectDir "security_scan/dependency-tree.txt"
+    $TreeFile = Join-Path $ScanDir "dependency-tree.txt"
     if (Test-Path $TreeFile) {
         $HtmlContent += "<h3>Dependency Tree</h3>"
         $TreeContent = Get-Content $TreeFile | Out-String
@@ -83,14 +96,14 @@ foreach ($Pom in $PomFiles) {
     }
 
     # 2. SBOM
-    $SbomFile = Join-Path $ProjectDir "security_scan/bom.xml"
+    $SbomFile = Join-Path $ScanDir "bom.xml"
     if (Test-Path $SbomFile) {
         $HtmlContent += "<h3>SBOM</h3>"
-        $HtmlContent += "<p>Generated CycloneDX SBOM: <a href='security_scan/bom.xml' target='_blank'>bom.xml</a></p>"
+        $HtmlContent += "<p>Generated CycloneDX SBOM: <a href='bom.xml' target='_blank'>bom.xml</a></p>"
     }
 
     # 3. License Analysis
-    $LicFile = Join-Path $ProjectDir "security_scan/THIRD-PARTY.txt"
+    $LicFile = Join-Path $ScanDir "THIRD-PARTY.txt"
     if (Test-Path $LicFile) {
         $HtmlContent += "<h3>License Compliance</h3>"
         $HtmlContent += "<table><thead><tr><th>License</th><th>Library</th><th>Enterprise Status</th></tr></thead><tbody>"
@@ -117,10 +130,10 @@ foreach ($Pom in $PomFiles) {
     }
 
     # 4. CVEs
-    $CveFile = Join-Path $ProjectDir "security_scan/dependency-check-report.html"
+    $CveFile = Join-Path $ScanDir "dependency-check-report.html"
     if (Test-Path $CveFile) {
-        # Create a relative link
-        $CveLink = "security_scan/dependency-check-report.html"
+        # Create a link relative to the HTML file (which is in the same folder)
+        $CveLink = "dependency-check-report.html"
         $HtmlContent += @"
         <h3>Vulnerabilities (OWASP)</h3>
         <p><a href="$CveLink" target="_blank">Open Full OWASP Report</a></p>
