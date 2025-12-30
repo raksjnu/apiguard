@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom serialNumber="urn:uuid:a59aeb7e-29c0-448f-b4eb-28293cc3d287" version="1" xmlns="http://cyclonedx.org/schema/bom/1.4">
+<bom serialNumber="urn:uuid:b06c275b-4306-4d63-a82e-e0ff3405b606" version="1" xmlns="http://cyclonedx.org/schema/bom/1.4">
   <metadata>
-    <timestamp>2025-12-30T23:20:54Z</timestamp>
+    <timestamp>2025-12-30T23:26:40Z</timestamp>
     <tools>
       <tool>
         <vendor>OWASP Foundation</vendor>
@@ -99,11 +99,11 @@
       <purl>pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar</purl>
       <externalReferences><reference type="website"><url>https://github.com/eclipse-ee4j/jaf/jakarta.activation</url></reference><reference type="distribution"><url>https://jakarta.oss.sonatype.org/service/local/staging/deploy/maven2/</url></reference><reference type="issue-tracker"><url>https://github.com/eclipse-ee4j/jaf/issues/</url></reference><reference type="mailing-list"><url>https://dev.eclipse.org/mhonarc/lists/jakarta.ee-community/</url></reference><reference type="vcs"><url>https://github.com/eclipse-ee4j/jaf/jakarta.activation</url></reference></externalReferences>
     </component>
-    <component type="library" bom-ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar">
+    <component type="library" bom-ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar">
       <publisher>The Apache Software Foundation</publisher>
       <group>org.apache.commons</group>
       <name>commons-lang3</name>
-      <version>3.17.0</version>
+      <version>3.18.0</version>
       <description>Apache Commons Lang, a package of Java utility classes for the
   classes that are in java.lang's hierarchy, or are considered to be so
   standard as to justify existence in java.lang.
@@ -115,14 +115,14 @@
   Please ensure your build environment is up-to-date and kindly report any build issues.</description>
       <scope>required</scope>
       <hashes>
-        <hash alg="MD5">7730df72b7fdff4a3a32d89a314f826a</hash>
-        <hash alg="SHA-1">b17d2136f0460dcc0d2016ceefca8723bdf4ee70</hash>
-        <hash alg="SHA-256">6ee731df5c8e5a2976a1ca023b6bb320ea8d3539fbe64c8a1d5cb765127c33b4</hash>
-        <hash alg="SHA-512">dfd5ff7fe7f852b9caabc81e5a00e20616f98405085f059b64dc2121feb5fa6cb327e11a3d2f954c079811c31f6fd484e90f932d45078796fbfa7dbf1f1eb5aa</hash>
-        <hash alg="SHA-384">c6ed55a5c2b05332890a43a3ea73b30f42dc23c92ebd054a8b0d29ca8f49fb9361f7325cfa90715be457804b087221b5</hash>
-        <hash alg="SHA3-384">bb9e148a87928c3053bcccee361d5d8d81b3c6ea41a390d96c615afd242409f909361c945f3b4238a297e4ebb2ed413b</hash>
-        <hash alg="SHA3-256">f28f34565f25dd65fd1a47916e917df9e3ff2c6721897ea57391a238227c96a2</hash>
-        <hash alg="SHA3-512">4c8e7a5f10d091bb240e7eb59287d0e4e4420e7a2d2be2b8060111e479540ffae89040377c99ec7f458cd54e1ac0ed0778951cd1f34d5d90571b8a303fbb9baf</hash>
+        <hash alg="MD5">48b9886957920a4cdb602780ca345087</hash>
+        <hash alg="SHA-1">fb14946f0e39748a6571de0635acbe44e7885491</hash>
+        <hash alg="SHA-256">4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720</hash>
+        <hash alg="SHA-512">c2c9d497fc1be411050f4011b2407764b78aa098eb42925af8a197eabdbc25b507f09fb898805e9bed4815f35236a508ee5b096e36f363df4d407232d50fc832</hash>
+        <hash alg="SHA-384">4fb3f101106e4ce3666d5c15d276ba86f7683a0ef35f0384edfcd579ea454275edbb7400795d265ec3a38e39997e79b8</hash>
+        <hash alg="SHA3-384">aada7e3612cf3f6190a19fa7c3db74df1e13ec56b300be9bb4317d261d5877c84ab59ba9a09168becdbd82cd41961395</hash>
+        <hash alg="SHA3-256">306d286d0bd7549c203cc802fd755d354c4f7926fa023f4e83623ba1a6261250</hash>
+        <hash alg="SHA3-512">f6f1ecc684e309d7b9fc5c343792508fee935cd2119d962721662c5af88e4864ba6f47a863e083714f315f926c156de1970cd2fb577449bdfdc7bf98a4a451fa</hash>
       </hashes>
       <licenses>
         <license>
@@ -130,8 +130,8 @@
           <url>https://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
       </licenses>
-      <purl>pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar</purl>
-      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-lang/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-parent/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/LANG</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf?p=commons-lang.git</url></reference></externalReferences>
+      <purl>pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar</purl>
+      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-lang/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-lang/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/LANG</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf/commons-lang.git</url></reference></externalReferences>
     </component>
     <component type="library" bom-ref="pkg:maven/org.springframework/spring-beans@5.3.32?type=jar">
       <publisher>Spring IO</publisher>
@@ -748,25 +748,25 @@ file comparators, endian transformation classes, and much more.</description>
       <purl>pkg:maven/org.mule.modules/mule-compression-module@2.2.3?classifier=mule-plugin&amp;type=jar</purl>
       <externalReferences><reference type="website"><url>https://github.com/mulesoft/mule-extensions-parent/mule-core-modules-parent/mule-compression-module</url></reference><reference type="distribution"><url>http://www.mulesoft.org/display/MULE/Download</url></reference><reference type="vcs"><url>https://github.com/mulesoft/mule-ce-extensions-parent/mule-compression-module</url></reference></externalReferences>
     </component>
-    <component type="library" bom-ref="pkg:maven/org.apache.commons/commons-compress@1.23.0?type=jar">
+    <component type="library" bom-ref="pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar">
       <publisher>The Apache Software Foundation</publisher>
       <group>org.apache.commons</group>
       <name>commons-compress</name>
-      <version>1.23.0</version>
-      <description>Apache Commons Compress software defines an API for working with
-compression and archive formats.  These include: bzip2, gzip, pack200,
-lzma, xz, Snappy, traditional Unix Compress, DEFLATE, DEFLATE64, LZ4,
+      <version>1.27.1</version>
+      <description>Apache Commons Compress defines an API for working with
+compression and archive formats. These include bzip2, gzip, pack200,
+LZMA, XZ, Snappy, traditional Unix Compress, DEFLATE, DEFLATE64, LZ4,
 Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
       <scope>required</scope>
       <hashes>
-        <hash alg="MD5">96b88349958aeaa15cdf6e5e877bdced</hash>
-        <hash alg="SHA-1">4af2060ea9b0c8b74f1854c6cafe4d43cfc161fc</hash>
-        <hash alg="SHA-256">c267f17160e9ef662b4d78b7f29dca7c82b15c5cff2cb6a9865ef4ab3dd5b787</hash>
-        <hash alg="SHA-512">e1ee5b7526ca1b6b67b3a6671d13899048f078bf0e73c1e9c601d947dcc9fd5c78cec9592b2a7a586faf4a7fba1c6885f679375cc2f06680a13ecfdad1ed41dd</hash>
-        <hash alg="SHA-384">10e49e696c18750c37eee7807aca1ef28fadf2c9da6eabb3b5443bb0e1fa8ebd6638addb2042f27e9a9874495eb10d1c</hash>
-        <hash alg="SHA3-384">fe9088b53e6a4e89332b61320b31f206b9217f3eb0adc66968a7d82c020ff263b39b686bcef6ef672d14954515edc514</hash>
-        <hash alg="SHA3-256">9e2ed6dd76655e6c27cd0e4e27a00c32f6e08ad058be4865a33268781484424f</hash>
-        <hash alg="SHA3-512">30b82c3fe576ed24cd82f2941c5bceccd8ceca3b868b91d0f8cdc2d64ac801101c47519ef4984a7af3b5f1a18e5e87bc6572ac8d21f4b91e689d3cd2e0f14694</hash>
+        <hash alg="MD5">1db4bd87b0082044c6e7a6af0b977a3e</hash>
+        <hash alg="SHA-1">a19151084758e2fbb6b41eddaa88e7b8ff4e6599</hash>
+        <hash alg="SHA-256">293d80f54b536b74095dcd7ea3cf0a29bbfc3402519281332495f4420d370d16</hash>
+        <hash alg="SHA-512">5e1fcf9f552ab86beceef6743609e97d700dcbaa5b5ee58858e765c1238cd4dbca2852e1eb415bc2a09dad478d31197ddf09b2ba148dd30be8c9ecd565775226</hash>
+        <hash alg="SHA-384">307707c885a45c1725e940b9e42d75871d47442fcc31ec9d8fa56af2e1a2372eed178ebf86c61b5a577465a2674c0f1f</hash>
+        <hash alg="SHA3-384">b87d7b7f6f0db51fcfb4bf0adf31795dc0083564dcc524df345fbbe3546c8357b61ebef793654003a5bcc2e7368bc3a4</hash>
+        <hash alg="SHA3-256">39b8fb032df8934793dddf257ec49d0d7cd16a75e45bea716a21aa0278901621</hash>
+        <hash alg="SHA3-512">40f6d1a9074546b05b42b3841c95b23e21df6f3e2bbe8bbe2905e9676ae51da768df315819cdffaa4f703ea3aec7aeb89f8f3b07c82ea2df3a936d425d606634</hash>
       </hashes>
       <licenses>
         <license>
@@ -774,8 +774,37 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
           <url>https://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
       </licenses>
-      <purl>pkg:maven/org.apache.commons/commons-compress@1.23.0?type=jar</purl>
+      <purl>pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar</purl>
       <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-compress/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-parent/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/COMPRESS</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf?p=commons-compress.git</url></reference></externalReferences>
+    </component>
+    <component type="library" bom-ref="pkg:maven/commons-codec/commons-codec@1.17.1?type=jar">
+      <publisher>The Apache Software Foundation</publisher>
+      <group>commons-codec</group>
+      <name>commons-codec</name>
+      <version>1.17.1</version>
+      <description>The Apache Commons Codec component contains encoders and decoders for
+     various formats such as Base16, Base32, Base64, digest, and Hexadecimal. In addition to these
+     widely used encoders and decoders, the codec package also maintains a
+     collection of phonetic encoding utilities.</description>
+      <scope>required</scope>
+      <hashes>
+        <hash alg="MD5">7b3438ab4c6d91e0066d410947e43f3e</hash>
+        <hash alg="SHA-1">973638b7149d333563584137ebf13a691bb60579</hash>
+        <hash alg="SHA-256">f9f6cb103f2ddc3c99a9d80ada2ae7bf0685111fd6bffccb72033d1da4e6ff23</hash>
+        <hash alg="SHA-512">a7db98db470e6ad338266ff442fbdfbc277ba1d07a591336f7d15dc49fdac884da7dac04d806628b12437f993d8b5e6a4b800a66590ff11936dbf8bedcd8e860</hash>
+        <hash alg="SHA-384">ef0b8e0fbea5ee057b2c39114ff862a057d207d4dd6b4fd2f5ca96bfc039e76274f1dd02ddf985f1fa965736a522f5c5</hash>
+        <hash alg="SHA3-384">ac30c88a6c4bbdfa79cb697cd179627d2addae842e48e2ab167c4f9c5475d05ef4743f58fbed254dd7abc6f3877644fe</hash>
+        <hash alg="SHA3-256">f3fe1daf04e63f556d72f4f59f149327b65d899d6afe1de770b42faae2e323df</hash>
+        <hash alg="SHA3-512">29901c3e6394dd87f13a91b5432c678ac144cb6c86271b06c57c73c0480b23a4688d0266e2dd04abf5e1d148a2e80e1215dd87d2cb5ffbf2c023409f4f5f8f86</hash>
+      </hashes>
+      <licenses>
+        <license>
+          <id>Apache-2.0</id>
+          <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+        </license>
+      </licenses>
+      <purl>pkg:maven/commons-codec/commons-codec@1.17.1?type=jar</purl>
+      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-codec/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-parent/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/CODEC</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://github.com/apache/commons-codec</url></reference></externalReferences>
     </component>
     <component type="library" bom-ref="pkg:maven/com.mulesoft.modules/mule-secure-configuration-property-module@1.2.6?classifier=mule-plugin&amp;type=jar">
       <publisher>MuleSoft, Inc.</publisher>
@@ -1032,7 +1061,7 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
       <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar"/>
       <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"/>
       <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-beans@5.3.32?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-context@5.3.32?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-context-support@5.3.32?type=jar"/>
@@ -1043,11 +1072,11 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
     <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
-    <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+    <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
     <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"/>
     <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
     <dependency ref="pkg:maven/org.springframework/spring-beans@5.3.32?type=jar">
@@ -1080,20 +1109,20 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
     </dependency>
     <dependency ref="pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&amp;type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar"/>
     <dependency ref="pkg:maven/org.mule.connectors/mule-email-connector@1.7.3?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar"/>
       <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     </dependency>
@@ -1122,15 +1151,20 @@ Brotli, Zstandard and ar, cpio, jar, tar, zip, dump, 7z, arj.</description>
     <dependency ref="pkg:maven/org.glassfish.jaxb/txw2@2.3.8?type=jar"/>
     <dependency ref="pkg:maven/com.sun.istack/istack-commons-runtime@3.0.12?type=jar"/>
     <dependency ref="pkg:maven/org.mule.module/mule-java-module@2.0.0?classifier=mule-plugin&amp;type=jar">
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.17.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-core@5.3.32?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.modules/mule-compression-module@2.2.3?classifier=mule-plugin&amp;type=jar">
-      <dependency ref="pkg:maven/org.apache.commons/commons-compress@1.23.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     </dependency>
-    <dependency ref="pkg:maven/org.apache.commons/commons-compress@1.23.0?type=jar"/>
+    <dependency ref="pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar">
+      <dependency ref="pkg:maven/commons-codec/commons-codec@1.17.1?type=jar"/>
+      <dependency ref="pkg:maven/commons-io/commons-io@2.18.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
+    </dependency>
+    <dependency ref="pkg:maven/commons-codec/commons-codec@1.17.1?type=jar"/>
     <dependency ref="pkg:maven/com.mulesoft.modules/mule-secure-configuration-property-module@1.2.6?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule/mule-encryption@1.3.0?type=jar"/>
     </dependency>
