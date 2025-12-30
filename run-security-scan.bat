@@ -102,8 +102,10 @@ goto :generate_report
         call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DoutputDirectory="%SCAN_OUT%" -DautoUpdate=true -DnvdApiKey=%NVD_API_KEY% -DfailOnError=false -DossindexAnalyzerEnabled=false
     ) else (
         echo [WARNING] NVD_API_KEY not set. You may experience 403 errors.
-        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DoutputDirectory="%SCAN_OUT%" -DautoUpdate=true -DfailOnError=false -DossindexAnalyzerEnabled=false
+        call mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DfailOnError=false -DossindexAnalyzerEnabled=false
     )
+    
+    if exist "target\dependency-check-report.html" move /Y "target\dependency-check-report.html" "%SCAN_OUT%\" >nul
     
     echo.
     echo "[REPORT] Reports generated in %SCAN_OUT%/"

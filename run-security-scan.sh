@@ -122,7 +122,11 @@ process_project() {
         mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DoutputDirectory="security_scan" -DautoUpdate=true -DnvdApiKey=$NVD_API_KEY -DossindexAnalyzerEnabled=false
     else
         echo "[WARNING] NVD_API_KEY not set. You may experience 403 errors."
-        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DoutputDirectory="security_scan" -DautoUpdate=true -DossindexAnalyzerEnabled=false
+        mvn org.owasp:dependency-check-maven:12.1.0:check -B -Dformat=HTML -DautoUpdate=true -DossindexAnalyzerEnabled=false
+    fi
+    
+    if [ -f "target/dependency-check-report.html" ]; then
+        mv "target/dependency-check-report.html" "security_scan/"
     fi
     
     echo ""
