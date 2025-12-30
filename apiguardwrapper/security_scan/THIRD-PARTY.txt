@@ -10,7 +10,7 @@ Lists of 36 third-party dependencies.
      (EDL 1.0) Jakarta Activation API jar (jakarta.activation:jakarta.activation-api:1.2.2 - https://github.com/eclipse-ee4j/jaf/jakarta.activation-api)
      (Eclipse Distribution License - v 1.0) Jakarta XML Binding API (jakarta.xml.bind:jakarta.xml.bind-api:2.3.3 - https://github.com/eclipse-ee4j/jaxb-api/jakarta.xml.bind-api)
      (Apache-2.0) Apache Commons Compress (org.apache.commons:commons-compress:1.27.1 - https://commons.apache.org/proper/commons-compress/)
-     (Apache-2.0) Apache Commons Lang (org.apache.commons:commons-lang3:3.16.0 - https://commons.apache.org/proper/commons-lang/)
+     (Apache-2.0) Apache Commons Lang (org.apache.commons:commons-lang3:3.18.0 - https://commons.apache.org/proper/commons-lang/)
      (Apache Software License, Version 2.0) (Bouncy Castle Licence) Bouncy Castle OpenPGP API (org.bouncycastle:bcpg-jdk18on:1.74 - https://www.bouncycastle.org/java.html)
      (Bouncy Castle Licence) Bouncy Castle PKIX, CMS, EAC, TSP, PKCS, OCSP, CMP, and CRMF APIs (org.bouncycastle:bcpkix-jdk18on:1.74 - https://www.bouncycastle.org/java.html)
      (Bouncy Castle Licence) Bouncy Castle Provider (org.bouncycastle:bcprov-jdk18on:1.74 - https://www.bouncycastle.org/java.html)

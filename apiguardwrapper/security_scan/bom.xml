@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bom serialNumber="urn:uuid:be3357c9-54ce-4d4c-a8d8-9f898e46ea76" version="1" xmlns="http://cyclonedx.org/schema/bom/1.4">
+<bom serialNumber="urn:uuid:dd51f49e-de00-4089-8ddc-58c1ccc4dd24" version="1" xmlns="http://cyclonedx.org/schema/bom/1.4">
   <metadata>
-    <timestamp>2025-12-30T23:40:14Z</timestamp>
+    <timestamp>2025-12-30T23:43:19Z</timestamp>
     <tools>
       <tool>
         <vendor>OWASP Foundation</vendor>
@@ -267,11 +267,11 @@ file comparators, endian transformation classes, and much more.</description>
       <purl>pkg:maven/commons-io/commons-io@2.16.1?type=jar</purl>
       <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-io/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-parent/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/IO</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf?p=commons-io.git</url></reference></externalReferences>
     </component>
-    <component type="library" bom-ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar">
+    <component type="library" bom-ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar">
       <publisher>The Apache Software Foundation</publisher>
       <group>org.apache.commons</group>
       <name>commons-lang3</name>
-      <version>3.16.0</version>
+      <version>3.18.0</version>
       <description>Apache Commons Lang, a package of Java utility classes for the
   classes that are in java.lang's hierarchy, or are considered to be so
   standard as to justify existence in java.lang.
@@ -283,14 +283,14 @@ file comparators, endian transformation classes, and much more.</description>
   Please ensure your build environment is up-to-date and kindly report any build issues.</description>
       <scope>required</scope>
       <hashes>
-        <hash alg="MD5">67bc6dbd753fc276d69aeb4cfa205e15</hash>
-        <hash alg="SHA-1">3eb54effe40946dfb06dc5cd6c7ce4116cd51ea4</hash>
-        <hash alg="SHA-256">08709dd74d602b705ce4017d26544210056a4ba583d5b20c09373406fe7a00f8</hash>
-        <hash alg="SHA-512">2dcb5b9403ae6de1be75d06d10b3c0af34465199781878dd4161d00c30eb47a63e7c5cce0317fb301646aac7dc9cb0a6e197e66b45a1177f2c235342d9bb2732</hash>
-        <hash alg="SHA-384">a2bd4e9d396145632bca41fa383ebae67a7c76b44cb01b7f37394b73fa615634d270fa573ce3028d5b12fb20de431f74</hash>
-        <hash alg="SHA3-384">309d7b001238ce78212740e55a228ba8d9ab19cfbb8162a9cafdc15e916f3cb8c913b1b6af48f34fce89774d005781e2</hash>
-        <hash alg="SHA3-256">17dbe2a4e41bf23a861e5f91600cd7b57fa2714fad07faf78a39220fe62ed8dc</hash>
-        <hash alg="SHA3-512">20b1addc31652cb5e7326e3c89fac75f587d3b4169c0784a6e638721530cfdb812e87632bf8f7030b34c5b9eed64ca8af602de218fdde307acd1df114a8ab44f</hash>
+        <hash alg="MD5">48b9886957920a4cdb602780ca345087</hash>
+        <hash alg="SHA-1">fb14946f0e39748a6571de0635acbe44e7885491</hash>
+        <hash alg="SHA-256">4eeeae8d20c078abb64b015ec158add383ac581571cddc45c68f0c9ae0230720</hash>
+        <hash alg="SHA-512">c2c9d497fc1be411050f4011b2407764b78aa098eb42925af8a197eabdbc25b507f09fb898805e9bed4815f35236a508ee5b096e36f363df4d407232d50fc832</hash>
+        <hash alg="SHA-384">4fb3f101106e4ce3666d5c15d276ba86f7683a0ef35f0384edfcd579ea454275edbb7400795d265ec3a38e39997e79b8</hash>
+        <hash alg="SHA3-384">aada7e3612cf3f6190a19fa7c3db74df1e13ec56b300be9bb4317d261d5877c84ab59ba9a09168becdbd82cd41961395</hash>
+        <hash alg="SHA3-256">306d286d0bd7549c203cc802fd755d354c4f7926fa023f4e83623ba1a6261250</hash>
+        <hash alg="SHA3-512">f6f1ecc684e309d7b9fc5c343792508fee935cd2119d962721662c5af88e4864ba6f47a863e083714f315f926c156de1970cd2fb577449bdfdc7bf98a4a451fa</hash>
       </hashes>
       <licenses>
         <license>
@@ -298,8 +298,8 @@ file comparators, endian transformation classes, and much more.</description>
           <url>https://www.apache.org/licenses/LICENSE-2.0</url>
         </license>
       </licenses>
-      <purl>pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar</purl>
-      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-lang/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-parent/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/LANG</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf?p=commons-lang.git</url></reference></externalReferences>
+      <purl>pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar</purl>
+      <externalReferences><reference type="website"><url>https://commons.apache.org/proper/commons-lang/</url></reference><reference type="build-system"><url>https://github.com/apache/commons-lang/actions</url></reference><reference type="distribution"><url>https://repository.apache.org/service/local/staging/deploy/maven2</url></reference><reference type="issue-tracker"><url>https://issues.apache.org/jira/browse/LANG</url></reference><reference type="mailing-list"><url>https://mail-archives.apache.org/mod_mbox/commons-user/</url></reference><reference type="vcs"><url>https://gitbox.apache.org/repos/asf/commons-lang.git</url></reference></externalReferences>
     </component>
     <component type="library" bom-ref="pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&amp;type=jar">
       <publisher>MuleSoft, Inc.</publisher>
@@ -1022,6 +1022,7 @@ file comparators, endian transformation classes, and much more.</description>
       <dependency ref="pkg:maven/org.springframework/spring-aop@5.3.39?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-expression@5.3.39?type=jar"/>
       <dependency ref="pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&amp;type=jar"/>
       <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar"/>
       <dependency ref="pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&amp;type=jar"/>
@@ -1058,23 +1059,23 @@ file comparators, endian transformation classes, and much more.</description>
     <dependency ref="pkg:maven/org.apache.commons/commons-compress@1.27.1?type=jar">
       <dependency ref="pkg:maven/commons-codec/commons-codec@1.17.1?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.16.1?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/commons-codec/commons-codec@1.17.1?type=jar"/>
     <dependency ref="pkg:maven/commons-io/commons-io@2.16.1?type=jar"/>
-    <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar"/>
+    <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
     <dependency ref="pkg:maven/org.mule.connectors/mule-http-connector@1.10.3?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar"/>
       <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"/>
       <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-compatibility-api@0.7.4?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.connectors/mule-sockets-connector@1.2.2?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.16.1?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     <dependency ref="pkg:maven/org.mule.modules/mule-module-cors-kernel@1.1.2?type=jar"/>
@@ -1084,20 +1085,20 @@ file comparators, endian transformation classes, and much more.</description>
     </dependency>
     <dependency ref="pkg:maven/org.mule.connectors/mule-file-connector@1.5.2?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&amp;type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.16.1?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/org.mule.modules/mule-module-file-extension-common@1.4.3?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.16.1?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
     </dependency>
     <dependency ref="pkg:maven/com.sun.activation/javax.activation@1.2.0?type=jar"/>
     <dependency ref="pkg:maven/org.mule.connectors/mule-email-connector@1.7.3?classifier=mule-plugin&amp;type=jar">
       <dependency ref="pkg:maven/com.sun.mail/jakarta.mail@1.6.7?type=jar"/>
       <dependency ref="pkg:maven/com.sun.activation/jakarta.activation@1.2.2?type=jar"/>
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/commons-io/commons-io@2.16.1?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
     </dependency>
@@ -1126,7 +1127,7 @@ file comparators, endian transformation classes, and much more.</description>
     <dependency ref="pkg:maven/org.glassfish.jaxb/txw2@2.3.8?type=jar"/>
     <dependency ref="pkg:maven/com.sun.istack/istack-commons-runtime@3.0.12?type=jar"/>
     <dependency ref="pkg:maven/org.mule.module/mule-java-module@2.0.0?classifier=mule-plugin&amp;type=jar">
-      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.16.0?type=jar"/>
+      <dependency ref="pkg:maven/org.apache.commons/commons-lang3@3.18.0?type=jar"/>
       <dependency ref="pkg:maven/org.mule.sdk/mule-sdk-api@0.7.0?type=jar"/>
       <dependency ref="pkg:maven/org.springframework/spring-core@5.3.39?type=jar"/>
     </dependency>
