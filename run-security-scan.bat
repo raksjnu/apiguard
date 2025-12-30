@@ -98,7 +98,7 @@ echo ========================================================
 echo       Scan Completed. Generating HTML Dashboard...
 echo ========================================================
 
-powershell -ExecutionPolicy Bypass -File "%~dp0generate-security-report.ps1" -RootPath "%~dp0"
+powershell -ExecutionPolicy Bypass -File "%~dp0generate-security-report.ps1" -RootPath "%~dp0."
 
 echo.
 echo ========================================================
