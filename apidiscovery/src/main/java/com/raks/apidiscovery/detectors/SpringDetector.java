@@ -1,41 +1,30 @@
 package com.raks.apidiscovery.detectors;
-
 import com.raks.apidiscovery.model.DiscoveryReport;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
-
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.stream.Stream;
-
 public class SpringDetector implements ApiDetector {
-
     @Override
     public boolean scan(File repoRoot, DiscoveryReport report) {
         boolean isSpring = false;
-        
-        // 1. Check POM for Spring Web
         File pomFile = new File(repoRoot, "pom.xml");
         if (pomFile.exists()) {
             try (FileReader reader = new FileReader(pomFile)) {
                 MavenXpp3Reader mavenReader = new MavenXpp3Reader();
                 Model model = mavenReader.read(reader);
-                
-                // Check Dependencies
                 if (model.getDependencies() != null) {
                     boolean hasSpringWeb = model.getDependencies().stream()
                         .anyMatch(d -> d.getArtifactId().contains("spring-boot-starter-web"));
-                    
                     if (hasSpringWeb) {
                         isSpring = true;
                         report.setTechnology("Spring Boot");
                         report.addEvidence("Found spring-boot-starter-web in pom.xml");
                     }
-                    
-                    // Check for Swagger/OpenAPI deps
                      boolean hasSwagger = model.getDependencies().stream()
                         .anyMatch(d -> d.getArtifactId().contains("springdoc") || d.getArtifactId().contains("swagger"));
                      if (hasSwagger) {
@@ -44,11 +33,8 @@ public class SpringDetector implements ApiDetector {
                      }
                 }
             } catch (Exception e) {
-                // Ignore
             }
         }
-
-        // 2. Scan Java files for RestController
         if (isSpring) {
             try (Stream<Path> paths = Files.walk(repoRoot.toPath())) {
                 paths.filter(p -> p.toString().endsWith(".java")).forEach(path -> {
@@ -62,7 +48,6 @@ public class SpringDetector implements ApiDetector {
                             }
                         }
                     } catch (IOException e) {
-                        // ignore
                     }
                 });
             } catch (IOException e) {
@@ -70,7 +55,6 @@ public class SpringDetector implements ApiDetector {
             }
             return true;
         }
-        
         return false;
     }
 }

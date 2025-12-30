@@ -1,18 +1,14 @@
 package com.org.propertyutil;
-
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
-
 import org.apache.commons.io.FileUtils;
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.api.errors.InvalidRemoteException;
 import org.eclipse.jgit.api.errors.TransportException;
 import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
-
 public class GitCloneBranch {
-
 	public String GitCloneRepo(String Gituri, String username, String password, String branch, String reviewCode, String mulehome)
 			throws IOException, InvalidRemoteException, TransportException, GitAPIException {
 		String repoUrl = Gituri;
@@ -20,7 +16,6 @@ public class GitCloneBranch {
 		File tempDir = new File(mulehome);
 		tempDir.mkdirs();
 		System.out.println("Clone Dir: " + tempDir.toString());
-
 		try {
 			System.out.println("Cloning " + repoUrl + " into " + repoUrl);
 			Git.cloneRepository().setURI(repoUrl).setBranch(branch).setDirectory(tempDir)
@@ -30,7 +25,6 @@ public class GitCloneBranch {
 			if ((tempDir.listFiles().length) < 2) {
 				throw new Exception("Invalid Branch");
 			}
-
 		} catch (GitAPIException e) {
 			System.out.println("Exception occured while cloning repo");
 			e.printStackTrace();
@@ -41,7 +35,4 @@ public class GitCloneBranch {
 		}
 		return status + "," + tempDir + "\\";
 	}
-	
 }
-
-

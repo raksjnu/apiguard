@@ -1,8 +1,5 @@
 package com.tibcodocgen;
-
-
 import java.io.File;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -18,14 +15,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-
 import org.apache.poi.xwpf.usermodel.IBodyElement;
 import org.apache.poi.xwpf.usermodel.XWPFAbstractSDT;
 import org.apache.poi.xwpf.usermodel.XWPFDocument;
@@ -35,13 +30,10 @@ import org.apache.poi.xwpf.usermodel.XWPFSDT;
 import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.apache.xmlbeans.XmlCursor;
-
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
 public class GenerateDesignDoc {
-
 	static XWPFParagraph new_par;
 	static XWPFParagraph new_par5;
 	public String projectname = null;
@@ -61,8 +53,6 @@ public class GenerateDesignDoc {
 	static String infilesize = null;
 	public XWPFDocument xdoc = null;
 	public FileOutputStream out = null;
-	
-
 	public static final String TEXT = "#text";
 	public static final String Headers = "Headers";
 	public static final String NameValuePair = "NameValuePair";
@@ -82,9 +72,7 @@ public class GenerateDesignDoc {
 	public static String sharedconn_regex = null;
 	public static String prjname = null;
 	public static String outstring = "failed";
-
 	public String  Gendoc(String mulehome,String apphome,String infilename,String outfilename,String EarLocation,String DocLocation) throws FileNotFoundException, IOException {
-
 		XWPFParagraph componentSectionParagraph = null;
 		XWPFParagraph globalSectionParagraph = null;
 		XWPFParagraph adpterSectionParagraph = null;
@@ -103,19 +91,10 @@ public class GenerateDesignDoc {
 		prjname = null;
 		starterlist = new ArrayList<starterobj>();
 		Date dateobj = new Date();
-
 		try {
-			
-			//String infolder = rp.property().getProperty("earinfolder").toString();
 			String infolder = EarLocation;
-			
-			//String outfolder = rp.property().getProperty("outfolder").toString();
 			String outfolder = DocLocation;
-			//String templatepath2  = GenerateDesignDoc.class.getResource("template/").getPath();
-			//System.out.println(templatepath2);
-			//String templatepath = rp.property().getProperty("templatepath").toString();
 			String templatepath = mulehome+"/apps/"+apphome+"/properties/classes/template/TDD_template.docx";
-			
 			String processpara_num = rp.property().getProperty("processpara_num").toString();
 			String sharedconnpara_num = rp.property().getProperty("sharedconnpara_num").toString();
 			String adapterconnpara_num = rp.property().getProperty("adapterconnpara_num").toString();
@@ -130,19 +109,13 @@ public class GenerateDesignDoc {
 			filelist = null;
 			FileUtil.filelist = new ArrayList<String>();
 			filelist = FileUtil.listFilesAndFilesSubDirectories(infolder, infilename);
-			
-
 			if ((filelist.size()) != 0) {
-
 					if (filelist.toArray()[0].toString().contains(System.getProperty("file.separator"))) {
 						 prjname = null;
 						 prjpath = filelist.toArray()[0].toString().replace(System.getProperty("file.separator"), "/");
 						String[] splittedprjName1 = prjpath.split("/");
-
 						 prjname = splittedprjName1[splittedprjName1.length - 1];
-						 
 						projectname = prjname.split(".ear")[0];
-
 						File file = new File(infolder + projectname + ".ear");
 						double bytes = file.length();
 						double kilobytes = (bytes / 1024);
@@ -154,36 +127,24 @@ public class GenerateDesignDoc {
 						FileUtil.unzip(zipFilePath, destDir);
 						String zippath = infolder + projectname + "/";
 						FileUtil.filelist = new ArrayList<String>();
-						
-						
 						 ArrayList<String> processlist = FileUtil.listFilesAndFilesSubDirectories(zippath, ".*.par");
-						
 						for (int r = 0; r < processlist.size(); r++) {
 							FileUtil.rename(processlist.toArray()[r].toString(), processlist.toArray()[r].toString().split(".par")[0]+".zip");
 							FileUtil.unzip(processlist.toArray()[r].toString().split(".par")[0]+".zip", zippath+((processlist.toArray()[r].toString().substring(processlist.toArray()[r].toString().lastIndexOf(System.getProperty("file.separator"))+1)).split("\\."))[0]);
-							
 						}
 						FileUtil.filelist = new ArrayList<String>();
 						 ArrayList<String> sharedlist = FileUtil.listFilesAndFilesSubDirectories(zippath, ".*.sar");
 						for (int r = 0; r < sharedlist.size(); r++) {
 							FileUtil.rename(sharedlist.toArray()[r].toString(), sharedlist.toArray()[r].toString().split(".sar")[0]+".zip");
 							FileUtil.unzip(sharedlist.toArray()[r].toString().split(".sar")[0]+".zip", zippath+((sharedlist.toArray()[r].toString().substring(sharedlist.toArray()[r].toString().lastIndexOf(System.getProperty("file.separator"))+1)).split("\\."))[0]);
-							
 						}
 						FileUtil.filelist = new ArrayList<String>();
 						 ArrayList<String> adpterlist = FileUtil.listFilesAndFilesSubDirectories(zippath, ".*.aar");
 						for (int r = 0; r < adpterlist.size(); r++) {
 							FileUtil.rename(adpterlist.toArray()[r].toString(), adpterlist.toArray()[r].toString().split(".aar")[0]+".zip");
 							FileUtil.unzip(adpterlist.toArray()[r].toString().split(".aar")[0]+".zip", zippath+"adapter/"+((adpterlist.toArray()[r].toString().substring(adpterlist.toArray()[r].toString().lastIndexOf(System.getProperty("file.separator"))+1)).split("\\."))[0]);
-							
 						}
-						 
 						fis = new FileInputStream(templatepath);
-//						 ClassLoader classloader =
-//									org.apache.xmlbeans.XmlOptions.class.getClassLoader();
-//									URL res = classloader.getResource(
-//									         "org/apache/xmlbeans/XmlOptions.class");
-
 						 xdoc = new XWPFDocument(fis);
 						 ClassLoader classloader =
 									org.apache.xmlbeans.XmlOptions.class.getClassLoader();
@@ -194,11 +155,9 @@ public class GenerateDesignDoc {
 						@SuppressWarnings("rawtypes")
 						Iterator iterator = xdoc.getBodyElementsIterator();
 						List<XWPFAbstractSDT> sdts = new ArrayList<XWPFAbstractSDT>();
-
 						for (@SuppressWarnings("rawtypes")
 						Iterator iterator2 = iterator; iterator2.hasNext();) {
 							IBodyElement e = (IBodyElement) iterator2.next();
-
 							if (e instanceof XWPFSDT) {
 								XWPFSDT sdt = (XWPFSDT) e;
 								sdts.add(sdt);
@@ -206,7 +165,6 @@ public class GenerateDesignDoc {
 								XWPFParagraph p = (XWPFParagraph) e;
 								if (p.getText().equals(rp.property().getProperty("processpara").toString())) {
 									componentSectionParagraph = p;
-								
 								} else if (p.getText().equals(rp.property().getProperty("globalpara").toString())) {
 									globalSectionParagraph = p;
 								} else if (p.getText().equals(rp.property().getProperty("sharedconnpara").toString())) {
@@ -222,7 +180,6 @@ public class GenerateDesignDoc {
 								}
 							}
 						}
-
 						if (componentSectionParagraph != null && processlist.toArray().length != 0) {
 							FileUtil.filelist = new ArrayList<String>();
 							processlist = new ArrayList<String>();
@@ -238,7 +195,6 @@ public class GenerateDesignDoc {
 									cursor = new_par.getCTP().newCursor();
 									new_par = xdoc.insertNewParagraph(cursor);
 								}
-
 								org.w3c.dom.Document xmldocument;
 								DocumentBuilder builder = readDoc();
 								xmldocument = builder.parse(new File((String) processlist.toArray()[x]));
@@ -250,7 +206,6 @@ public class GenerateDesignDoc {
 								titleRun9.setBold(true);
 								compSecPara_Format(titleRun9);
 								String filepath = processlist.toArray()[x].toString().replace(System.getProperty("file.separator"), "/");
-								
 								String[] splittedprocesspath = filepath.split("/"+prjname.split(".ear")[0]+"/");	
 								String processpath = null;
 								for(int ek=0 ; ek < splittedprocesspath[splittedprocesspath.length - 1].split("/").length;ek++) {
@@ -258,45 +213,31 @@ public class GenerateDesignDoc {
 									processpath= splittedprocesspath[splittedprocesspath.length - 1].split("/")[ek];
 									}else if ( ek>1){
 										processpath= processpath+"/"+ splittedprocesspath[splittedprocesspath.length - 1].split("/")[ek];
-										
 									}
 								}
-								
-								
-								
 								String[] splittedFileName = filepath.split("/");
 								String processname = splittedFileName[splittedFileName.length - 1];
 								titleRun9.setText(processpara_num+"." + (x + 1) + "." + processname);
-
 								NodeList mChildList = xmldocument.getChildNodes().item(0).getChildNodes();
-
 								XmlCursor cursor10 = new_par.getCTP().newCursor();
 								XWPFParagraph new_par10 = xdoc.insertNewParagraph(cursor10);
 								XWPFRun titleRun10 = new_par10.createRun();
 								titleRun10.addBreak();
 								titleRun10.setFontSize(14);
 								titleRun10.setText("Process  file path: " + processpath);
-
 								transitionFlow(xdoc, xmldocument);
-
 								int count = 1;
 								for (int i = 0; i < mChildList.getLength(); i++) {
 									Node node = mChildList.item(i);
-									
 									strconfig = null;
-									
 									if((node.getNodeName().equals(starter))) {
 										starterobj strter = new starterobj();
 											startercount++;
 											String[] ActivityNameAr = node.getChildNodes().item(3).getTextContent()
 													.toString().split("\\.");
 											String ActivityName = ActivityNameAr[ActivityNameAr.length - 1];
-											
 											strter.setPath(processpath);
 											strter.setType(ActivityName);
-
-											
-
 											XPath xPath =  XPathFactory.newInstance().newXPath();
 											for(int ib=0;ib<straterconf.split(",").length;ib++) {
 									         String expression = ".//"+straterconf.split(",")[ib];	 
@@ -309,21 +250,13 @@ public class GenerateDesignDoc {
 															}else {
 																strconfig = strconfig+"@$@"+ straterconf.split(",")[ib] +"=@@="+nodeList.item(0).getTextContent() ;
 															}
-									            	 
 									             }
 									         }
 											}
-											
 											strter.setConfig(strconfig);
-											
 											starterlist.add(strter);
-											
 									}
-									
-									
-									
 									if ((node.getNodeName().equals(starter) || (node.getNodeName().equals("pd:activity")) || (node.getNodeName().equals("pd:group")))) {
-										
 										XmlCursor cursor5 = new_par.getCTP().newCursor();
 										new_par5 = xdoc.insertNewParagraph(cursor5);
 										new_par5.setStyle("Heading2");
@@ -336,15 +269,12 @@ public class GenerateDesignDoc {
 										titleRun2.setText(processpara_num+"." + (x + 1) + "." + count + ". "
 												+ node.getAttributes().getNamedItem("name").getNodeValue() + " ( "
 												+ ActivityName + " )");
-										
 										String binding = "" ;
 										if(ActivityName.equals("RestAdapter")) {
-																					
 											NodeList nChildListaaa = node.getChildNodes();
 											for (int j = 0; j < nChildListaaa.getLength(); j++) {
 												Node node1 = nChildListaaa.item(j);
 												if ((node1.getNodeName()).equals(config)) {
-													
 													NodeList nChildListaab = node1.getChildNodes();
 													for (int k = 0; k < nChildListaab.getLength(); k++) {
 														Node node2 = nChildListaab.item(k);
@@ -360,7 +290,6 @@ public class GenerateDesignDoc {
 																			NodeList nChildListaae = node4.getChildNodes();
 																			for (int n = 0; n < nChildListaae.getLength(); n++) {
 																				Node node5 = nChildListaae.item(n);
-																				
 																				if((!node5.getNodeName().equals(TEXT)&&node5.hasAttributes())) {
 																					starterobj strter = new starterobj();
 																				strter.setType(ActivityName+" ("+processpath+")");
@@ -370,22 +299,17 @@ public class GenerateDesignDoc {
 																				if ((node5.getNodeName()).equals("ns0:resources")) {
 																					NodeList nChildListaaf = node5.getChildNodes();
 																					for (int o = 0; o < nChildListaaf.getLength(); o++) {
-																						//String binding = "" ;
 																						Node node6 = nChildListaaf.item(o);
 																						if((!node6.getNodeName().equals(TEXT)&&(node6.hasAttributes()&& node6.getNodeName().equals("ns0:resource")))) {
-														
 																							if(binding == "") {
 																							binding =binding+"/"+node6.getAttributes().item(1).getNodeValue()+"####";
 																							}else {
-																								
 																								binding =binding+"@@@@/"+node6.getAttributes().item(1).getNodeValue()+"####";
 																							}
-																							
 																						}
 																						if ((node6.getNodeName()).equals("ns0:resource")) {
 																							NodeList nChildListaag = node6.getChildNodes();
 																							for (int p = 0; p < nChildListaag.getLength(); p++) {
-																								
 																								Node node7 = nChildListaag.item(p);
 																								if((!node7.getNodeName().equals(TEXT)&&(node7.hasAttributes()&& node7.getNodeName().equals("ns0:method")))) {
 																									if(pp==0 || binding.endsWith("####")) {
@@ -395,53 +319,34 @@ public class GenerateDesignDoc {
 																										binding =binding+"@===@"+node7.getAttributes().item(0).getNodeValue()+"&&"+node7.getAttributes().item(1).getNodeValue();
 																										pp++;
 																										}
-																									
 																								}
-																					
 																								if ((node7.getNodeName()).equals("ns0:method")) {
 																									NodeList nChildListaah = node7.getChildNodes();
 																									for (int q = 0; q < nChildListaah.getLength(); q++) {
 																										Node node8 = nChildListaah.item(q);
 																										if((!node8.getNodeName().equals(TEXT)&&(node8.hasAttributes() && node8.getNodeName().equals("Binding")))) {
 																											binding =binding+"&&"+node8.getAttributes().item(0).getNodeValue();
-																											
 																									}
-																									
 																								}
-																								
 																							}
-																							
 																						}
 																					}
-																					
 																				}
-																				
 																			}
 																				strter.setBinding(binding);
 																				starterlist.add(strter);	
 																		}
-
-																		
-																				
 																			}
 																	}
-																	
 																}
 																}
-															
 														}
 														}
 												}
 											}
-											
-											
 										}
 										}
-										
-										
-
 										NodeList nChildLista = node.getChildNodes();
-
 										for (int j = 0; j < nChildLista.getLength(); j++) {
 											Node node1 = nChildLista.item(j);
 											if ((node1.getNodeName()).equals(config)) {
@@ -466,12 +371,10 @@ public class GenerateDesignDoc {
 															XWPFTableRow row2 = tableOne.createRow();
 															row2.getCell(0).setText(node2.getNodeName());
 															row2.getCell(1).setText(node2.getTextContent());
-
 														} else if (!(node2.getNodeName().equals(TEXT)
 																&& !(node2.getNodeName()).equals(Headers))
 																&& (ActivityName
 																		.equals(new String("MapperActivity")))) {
-
 															NodeList nChildListc = node2.getChildNodes();
 															for (int l = 0; l < nChildListc.getLength(); l++) {
 																Node node3 = nChildListc.item(l);
@@ -506,12 +409,9 @@ public class GenerateDesignDoc {
 												tableOne2.setWidth("100%");
 												inputBindings(node1, tableOne2);
 											}
-
-
 										if((node.getNodeName().equals("pd:group") && (node1.getNodeName()).equals("pd:activity"))) {
 											count++;
 											activitiescount++;
-											
 											XmlCursor cursor51 = new_par.getCTP().newCursor();
 											new_par5 = xdoc.insertNewParagraph(cursor51);
 											new_par5.setStyle("Heading2");
@@ -528,8 +428,6 @@ public class GenerateDesignDoc {
 											for (int s = 0; s < nChildLista1.getLength(); s++) {
 												Node node2 = nChildLista1.item(s);
 												if ((node2.getNodeName()).equals(config)) {
-													
-
 													XmlCursor cursor32 = new_par.getCTP().newCursor();
 													XWPFParagraph new_par32 = xdoc.insertNewParagraph(cursor32);
 													XWPFRun titleRun32 = new_par32.createRun();
@@ -551,15 +449,12 @@ public class GenerateDesignDoc {
 																XWPFTableRow row22 = tableOne2.createRow();
 																row22.getCell(0).setText(node22.getNodeName());
 																row22.getCell(1).setText(node22.getTextContent());
-
 															} else if (!(node22.getNodeName().equals(TEXT)
 																	&& !(node22.getNodeName()).equals(Headers))
 																	&& (ActivityName1
 																			.equals(new String("MapperActivity")))) {
-
 																NodeList nChildListw = node2.getChildNodes();
 																for (int w = 0; w < nChildListw.getLength(); w++) {
-																	
 																	Node node32 = nChildListw.item(w);
 																	if(node32.hasAttributes()) {
 																	if (!(node32.getNodeName().equals(TEXT) && node32.getAttributes().item(0).getNodeValue().isEmpty())) {
@@ -580,8 +475,6 @@ public class GenerateDesignDoc {
 															}
 														}
 													}
-													
-													
 												}
 												if ((node2.getNodeName()).equals(inputBindings)) {
 													XmlCursor cursor31 = new_par.getCTP().newCursor();
@@ -595,25 +488,17 @@ public class GenerateDesignDoc {
 													compSecPara_rowDetails(tableOneRowOne21);
 													tableOne21.setWidth("100%");
 													inputBindings(node2, tableOne21);
-													
 												}
 											}
-
 										}
-											
-											
 										}
 										count++;
 										activitiescount++;
-
 									}
-
 								}
 								proccesscount++;
-								
 							}
 						}
-
 						if (sharedSectionParagraph != null && sharedlist.toArray().length != 0) {
 							FileUtil.filelist = new ArrayList<String>();
 							 ArrayList<String> filelistq = FileUtil
@@ -628,7 +513,6 @@ public class GenerateDesignDoc {
 									cursor = new_par.getCTP().newCursor();
 									new_par = xdoc.insertNewParagraph(cursor);
 								}
-
 								org.w3c.dom.Document xmldocument;
 								DocumentBuilder builder = readDoc();
 								xmldocument = builder.parse(new File((String) filelistq.toArray()[x]));
@@ -654,7 +538,6 @@ public class GenerateDesignDoc {
 								titleRun10.addBreak();
 								NodeList nChildList1 = xmldocument.getChildNodes();
 								NodeList nChildList = nChildList1.item(0).getChildNodes();
-
 								for (int j = 0; j < nChildList.getLength(); j++) {
 									Node node1 = nChildList.item(j);
 									if ((node1.getNodeName()).equals(config)) {
@@ -680,12 +563,6 @@ public class GenerateDesignDoc {
 								sharedconncount++;
 							}
 						}
-						
-						
-						
-						
-						//===================================================Adapter config========
-						
 						if (adpterSectionParagraph != null && adpterlist.toArray().length != 0) {
 							FileUtil.filelist = new ArrayList<String>();
 							 ArrayList<String> filelistq = FileUtil
@@ -700,10 +577,6 @@ public class GenerateDesignDoc {
 									cursor = new_par.getCTP().newCursor();
 									new_par = xdoc.insertNewParagraph(cursor);
 								}
-
-								//org.w3c.dom.Document xmldocument;
-								//DocumentBuilder builder = readDoc();
-								
 								XmlCursor cursor9 = new_par.getCTP().newCursor();
 								XWPFParagraph new_par9 = xdoc.insertNewParagraph(cursor9);
 								new_par9.setStyle("Heading2");
@@ -729,7 +602,6 @@ public class GenerateDesignDoc {
 								((org.w3c.dom.Document) xmldocument).getDocumentElement().normalize();
 								NodeList nChildList1 = xmldocument.getChildNodes();
 								NodeList nChildList = nChildList1.item(0).getChildNodes();
-
 								XmlCursor cursor6 = new_par.getCTP().newCursor();
 								XWPFTable tableOne = xdoc.insertNewTbl(cursor6);
 								tableOne.setWidth("100%");
@@ -752,7 +624,6 @@ public class GenerateDesignDoc {
 													row2.getCell(0).setText(
 															nChildListc.item(1).getTextContent().replace("/", "."));
 													row2.getCell(1).setText(nChildListc.item(3).getTextContent());
-													
 												}
 											}
 										}
@@ -761,24 +632,17 @@ public class GenerateDesignDoc {
 								adacount++;
 							}
 						}
-						
-						
-						
-
 						if (globalSectionParagraph != null) {
 							XmlCursor cursor;
 							cursor = globalSectionParagraph.getCTP().newCursor();
 							cursor.toNextSibling();
 							new_par = xdoc.insertNewParagraph(cursor);
-
 							org.w3c.dom.Document xmldocument;
 							DocumentBuilder builder = readDoc();
 							xmldocument = builder.parse(new File(infolder + projectname + "/TIBCO.xml"));
 							((org.w3c.dom.Document) xmldocument).getDocumentElement().normalize();
-
 							NodeList nChildList1 = xmldocument.getChildNodes();
 							NodeList nChildList = nChildList1.item(0).getChildNodes();
-
 							XmlCursor cursor6 = new_par.getCTP().newCursor();
 							XWPFTable tableOne = xdoc.insertNewTbl(cursor6);
 							tableOne.setWidth("100%");
@@ -808,7 +672,6 @@ public class GenerateDesignDoc {
 								}
 							}
 						}
-						
 						if (referSectionParagraph != null) {
 							XmlCursor cursor;
 							cursor = referSectionParagraph.getCTP().newCursor();
@@ -818,14 +681,10 @@ public class GenerateDesignDoc {
 							titleRun9.addBreak();
 							titleRun9.setText(rp.property().getProperty("reference").toString());
 						}
-
 						int serviceagnt = 0;
 						if(serviceSectionParagraph != null) {
-							
 							int strtcount = 1;
-							
 							XmlCursor cursor;
-							
 								cursor = serviceSectionParagraph.getCTP().newCursor();
 								cursor.toNextSibling();
 								new_par = xdoc.insertNewParagraph(cursor);
@@ -834,7 +693,6 @@ public class GenerateDesignDoc {
 								XWPFRun titleRun9 = new_par9.createRun();
 								titleRun9.setBold(true);
 								titleRun9.setText("Service Agent and other HTTP services");
-							
 								XmlCursor cursor12 = new_par9.getCTP().newCursor();
 								cursor12.toNextSibling();
 								XWPFTable tableTwo = xdoc.insertNewTbl(cursor12);
@@ -845,23 +703,16 @@ public class GenerateDesignDoc {
 								tableOneRowOneTwo.addNewTableCell().setText("implementation");
 								introSecPara_Format(tableOneRowOneTwo);
 								tableOneRowOneTwo.getCell(2).setColor("c6e5f5");
-								
-								
-								
 							FileUtil.filelist = new ArrayList<String>();
 							processlist = new ArrayList<String>();
 							processlist = FileUtil.listFilesAndFilesSubDirectories(infolder + projectname ,
 									".*.serviceagent");
 							for (int x = 0; x < processlist.size(); x++) {
-								
-								
-								
 								org.w3c.dom.Document xmldocument;
 								DocumentBuilder builder = readDoc();
 								xmldocument = builder.parse(new File((String) processlist.toArray()[x]));
 								((org.w3c.dom.Document) xmldocument).getDocumentElement().normalize();
 								String filepath = processlist.toArray()[x].toString().replace(System.getProperty("file.separator"), "/");
-
 								String[] splittedprocesspath = filepath.split("/"+prjname.split(".ear")[0]+"/");	
 								String processpath = null;
 								for(int ek=0 ; ek < splittedprocesspath[splittedprocesspath.length - 1].split("/").length;ek++) {
@@ -869,14 +720,11 @@ public class GenerateDesignDoc {
 									processpath= splittedprocesspath[splittedprocesspath.length - 1].split("/")[ek];
 									}else if ( ek>1){
 										processpath= processpath+"/"+ splittedprocesspath[splittedprocesspath.length - 1].split("/")[ek];
-										
 									}
 								}
-
 								String[] splittedFileName = filepath.split("/");
 								String processname = splittedFileName[splittedFileName.length - 1];
 								NodeList mChildList = xmldocument.getChildNodes().item(0).getChildNodes();
-								
 								for (int i = 0; i < mChildList.getLength(); i++) {
 									Node node = mChildList.item(i);
 									if ((node.getNodeName()).equals(config)) {
@@ -909,82 +757,55 @@ public class GenerateDesignDoc {
 																					Node node7 = nChildListaag.item(g);
 																					if ((node7.getNodeName()).equals("operations")) {
 																						NodeList nChildListaah = node7.getChildNodes();
-																						
 																						for (int h = 0; h < nChildListaah.getLength(); h++) {
 																							Node node8 = nChildListaah.item(h);
 																							if(node8.getNodeName().equals("row")&&node8.hasAttributes()) {
-
 																								XWPFTableRow row7 = tableTwo.createRow();
-																								
 																								row7.getCell(0).setText(processname.split(".serviceagent")[0]+" (" +processpath+" )");
 																								row7.getCell(1).setText(node8.getAttributes().item(1).getNodeValue());
 																								row7.getCell(2).setText(node8.getAttributes().item(0).getNodeValue());
-	
 																							}
-																							
 																						}
-																						
 																					}
-																					
 																				}
-																				
 																			}
 																		}
 																		}
 																	}
 																	}
-																	
-																	
 																}
-																
 															}
 														}
-														
-														
 													}
-
-													
 												}
 											}
 											}
-											
-										
 									}
-									
 								}
-								
 								strtcount++;
 								serviceagnt++;
-								
 							}
-	
 							for (starterobj starter : starterlist) {
 								if(starter.getType().contains("RestAdapter") || starter.getType().equals("SOAPEventSourceUI") || starter.getType().equals("httpEventSource")) {							
 									if(starter.getType().contains("RestAdapter")) {
-
 								for(int k= 0; k<starter.getBinding().split("@@@@").length;k++) {
-
 									String operations=(starter.getBinding().split("@@@@")[k]).split("####")[1];
 							 if(!((operations).contains("@===@"))) {
 									 XWPFTableRow row8 = tableTwo.createRow();
 									 row8.getCell(0).setText(starter.getType());
 									 row8.getCell(1).setText(((operations).split("&&")[0])+"("+ ((operations).split("&&")[1])+" )");
 									 row8.getCell(2).setText(((operations).split("&&")[2])); 
-									 
 								 }else {
 									 String[] ops= ((operations).split("@===@"));
 									for(int l=0;l<ops.length;l++) {
 										 XWPFTableRow row9 = tableTwo.createRow();
 										 row9.getCell(0).setText(starter.getType());
-										//row7.getCell(0).setText(ops[l].split("&&")[0]);
 										 row9.getCell(1).setText(ops[l].split("&&")[0]+"( "+ops[l].split("&&")[1]+" )");
 										 row9.getCell(2).setText(ops[l].split("&&")[2]);
-
 									}
 								 }
 								}
 								}
-								
 								if((starter.getType().equals("SOAPEventSourceUI") || starter.getType().equals("httpEventSource"))&&starter.getConfig() != null) {
 							    	String[] values = starter.getConfig().toString().split("@\\$@");
 							    	   XWPFTableRow row7 = tableTwo.createRow();
@@ -1000,23 +821,16 @@ public class GenerateDesignDoc {
 							    	}
 							     }
 							     row7.getCell(2).setText(config);
-						    	 
 						     }
-								
-								
 								strtcount++;
 								}
 							}
-							
 							XmlCursor cursor11 = new_par.getCTP().newCursor();
 							cursor11.toNextSibling();
 							XWPFParagraph new_par2 = xdoc.insertNewParagraph(cursor11);
-							//new_par2.setStyle("Heading3");
 							XWPFRun titleRun10 = new_par2.createRun();
-							//titleRun10.addBreak();
 							titleRun10.setBold(true);
 							titleRun10.setText("Other starters details");
-							
 							XmlCursor cursor13 = new_par2.getCTP().newCursor();
 							cursor13.toNextSibling();
 							XWPFTable tableThree = xdoc.insertNewTbl(cursor13);
@@ -1026,14 +840,10 @@ public class GenerateDesignDoc {
 							tableOneRowOneThree.addNewTableCell().setText("Process Name");
 							tableOneRowOneThree.addNewTableCell().setText("Config");
 							introSecPara_Format(tableOneRowOneThree);
-							
 							tableOneRowOneThree.getCell(2).setColor("c6e5f5");
-							
 							for (starterobj starter : starterlist) {
 								if((!starter.getType().contains("RestAdapter")) && (!starter.getType().equals("SOAPEventSourceUI")) && (!starter.getType().equals("httpEventSource"))) {
-						
 						    if(starter.getConfig() != null) {
-
 							    	String[] values = starter.getConfig().toString().split("@\\$@");
 							    	   XWPFTableRow row7 = tableThree.createRow();
 								        row7.getCell(0).setText(starter.getType());
@@ -1046,21 +856,12 @@ public class GenerateDesignDoc {
 							    	else {
 							    		config = config+" , "+(values[w]).split("=@@=")[0] + "="+ (values[w]).split("=@@=")[1];
 							    	}
-
 							     }
 							     row7.getCell(2).setText(config);
-						     
-						     
-								
 						    }}
 						     strtcount++;
-						        
 							}
 						}
-						
-						
-						
-						
 						if (introSectionParagraph != null) {
 							XmlCursor cursor;
 							cursor = introSectionParagraph.getCTP().newCursor();
@@ -1112,25 +913,19 @@ public class GenerateDesignDoc {
 							XWPFTableRow row5 = tableOne.createRow();
 							row5.getCell(0).setText("GVs");
 							row5.getCell(1).setText("" + gvcount);
-							
 						}
 						startercount=0;
-
 						File directory = new File(outfolder);
 					    if (! directory.exists()){
 					        directory.mkdir();
 					    }
-
 						FileOutputStream out = new FileOutputStream(
 								outfolder + outfilename);
 						xdoc.write(out);
 						out.close();
 						xdoc.close();
-
-						
 						File projectpath = new File(destDir);
 						FileUtil.deleteDirectory(projectpath);
-
 						FileUtil.rename(infolder + projectname + ".zip", infolder + projectname + ".ear");
 						System.out.println(
 								"Desgin Document is created at " + System.getProperty("user.dir").replace(System.getProperty("file.separator"), "/")
@@ -1149,7 +944,6 @@ public class GenerateDesignDoc {
 		}
 		return outstring;
 	}
-
 	private static void transitionFlow(XWPFDocument xdoc, org.w3c.dom.Document xmldocument) {NodeList nList = xmldocument.getElementsByTagName(transition);
 	String Trns5 = new String();
 	String Trns6 = new String();
@@ -1173,7 +967,6 @@ public class GenerateDesignDoc {
 	  int dupcount =new Integer(0);
 	  String refinal = null;
 		try {
-		
 			for (int tr = 0; tr < stratList.getLength(); tr++) {
 			Node node8 = stratList.item(tr);
 			if(node8.hasAttributes()) {
@@ -1186,10 +979,8 @@ public class GenerateDesignDoc {
 				Node node8 = GroupList.item(tr);
 				if(node8.hasAttributes()) {
 					groupArray.add(node8.getAttributes().item(0).getNodeValue());
-				
 				}
 			}
-			
 		  for (int tr = 0; tr < nList.getLength(); tr++) { 
 			  Node node8 = nList.item(tr);
 			  Element eElement = (Element) node8; 
@@ -1198,37 +989,29 @@ public class GenerateDesignDoc {
 		  Trns5 = "Start";
 		  Trns6 =new String(eElement.getElementsByTagName("pd:to").item(0).getTextContent());
 		  }
-
 		  else{
 			  if(!eElement.getElementsByTagName("pd:from").item(0).getTextContent().equals("start") && !eElement.getElementsByTagName("pd:to").item(0).getTextContent().equals("end")){
 			  Trns5 =new String(eElement.getElementsByTagName("pd:from").item(0).getTextContent());
 			  Trns6 =new String(eElement.getElementsByTagName("pd:to").item(0).getTextContent());
 			  }
 		  }
-
 		  if ((hm.containsKey(Trns5))) {
 			  Trns5 = Trns5+"_0_"+Trns6+"@";
 			  Trns6 =new String(eElement.getElementsByTagName("pd:to").item(0).getTextContent());
 		  }
-
 		  if(!Trns5.equals(null)&& !Trns5.equals("")&&!Trns6.equals(null)&&!Trns6.equals("")) {
 		  hm.put(Trns5, Trns6); 
 		  }
 		  } }
-
 		  Set<String> start = hm.keySet()
                      .stream()
                      .filter(s -> s.startsWith("Start") && s.endsWith("@")&& s.contains("_0_"))
                      .collect(Collectors.toSet());
-		  
 			 Set<String> dupkey = hm.keySet()
                      .stream()
                      .filter(s -> (!(s.startsWith("Start"))) && (s.endsWith("@") && s.contains("_0_")))
                      .collect(Collectors.toSet());
-			
 		  for (int tr = 0; tr < 1000; tr++) {
-			
-			  
 			  if(((mapkey != null &&(mapkey.startsWith("Start"))) || (tr==0 && hm.containsKey("Start"))) || (startArray.size() != 0 && (tr == 0 && hm.containsKey(startArray.toArray()[tr])))) {
 				  if (mapkey.startsWith("Start")){
 				  		mapkey = hm.get(mapkey);
@@ -1246,24 +1029,20 @@ public class GenerateDesignDoc {
 					mapkey = hm.get(stratNamenode.getTextContent());
 			  		 Finalmap = stratNamenode.getTextContent()+transsepartor+ mapkey;
 				}
-
 			  }
 			  else {
 				  mapvalue = hm.get(mapkey);
 				  Finalmap = Finalmap +transsepartor+ mapvalue;
 				  refinal = Finalmap;
 				  mapkey = mapvalue;
-				  
 				  if(mapvalue != null) {
 				  if ((mapvalue.equals(new String("End")) && Finalmap != null && Finalmap != "")|| !hm.containsKey(mapvalue)) {
-					
 					  titleRun11.addBreak();
 						titleRun11.setFontSize(12);
 						titleRun11.setColor("031E70");
 						titleRun11.setText(transheader+" "+ Finalmap);
 						titleRun11.addBreak();
 					 if(start.toArray().length != 0 && start.toArray().length > count && mapvalue.equals(new String("End"))) {
-					 
 					  mapkey=start.toArray()[count].toString();
 					  count ++;
 					  refinal = Finalmap;
@@ -1271,34 +1050,25 @@ public class GenerateDesignDoc {
 					 if((dupkey.toArray().length != 0 && dupcount < dupkey.toArray().length) && mapvalue.equals(new String("End"))) {
 						  mapkey=dupkey.toArray()[dupcount].toString();
 						  Finalmap = refinal.split(mapkey.split("_0_")[0])[0]+ mapkey.split("_0_")[0];
-						  
 						  mapkey=(dupkey.toArray()[dupcount].toString().split("_0_")[1]).split("@")[0];
 						  Finalmap=Finalmap+transsepartor+mapkey;
 						  dupcount ++;
 						  refinal = Finalmap;
-
 						  }
 					 else{
-						 
 					 if(hm.containsKey("Catch")) {
 						 mapkey = hm.get("Catch");
 						 Finalmap= "Catch" + transsepartor+mapkey;
 						 refinal = Finalmap;
 						 hm.remove("Catch");
-
 					 }
 					 }		 
-					 
-
 				  }
-		  
 				  }
 				  if(groupArray.contains(mapvalue)) {
 					  NodeList GroupList2 = xmldocument.getElementsByTagName("pd:group");
 					  for (int tr2 = 0; tr2 < GroupList2.getLength(); tr2++) {
 							Node node7 = GroupList2.item(tr2);
-							
-							
 							if(node7.hasAttributes() && node7.getAttributes().item(0).getNodeValue().equals(mapvalue)) {
 								NodeList nChildList = node7.getChildNodes();
 								 hm2 =new HashMap<String,String>();  
@@ -1309,7 +1079,6 @@ public class GenerateDesignDoc {
 										for(int tr4 = 0; tr4 < yChildList.getLength(); tr4++) {
 											 Node node9 = yChildList.item(tr4);
 											if(node9.getNodeName().equals("pd:from") && !node9.getNodeName().equals(TEXT)) {
-												
 												 Trns5 =new String(node9.getTextContent().toString());	
 											}
 											if(node9.getNodeName().equals("pd:to") && !node9.getNodeName().equals(TEXT)) {
@@ -1319,29 +1088,21 @@ public class GenerateDesignDoc {
 										 if ((hm2.containsKey(Trns5))) {
 											  Trns5 = Trns5+"_0_"+Trns6+"@";
 										  }
-
 										if(!Trns5.equals(null)&& !Trns5.equals("")&&!Trns6.equals(null)&&!Trns6.equals("") ) {
 											hm2.put(Trns5, Trns6); 
 										}
-										
 									}
-
-									
 								}
 							}
 						}
-					  
-					  
 					  Set<String> start2 = hm2.keySet()
 			                     .stream()
 			                     .filter(s -> s.startsWith("start") && s.endsWith("@")&& s.contains("_0_"))
 			                     .collect(Collectors.toSet());
-					  
 						 Set<String> dupkey2 = hm2.keySet()
 			                     .stream()
 			                     .filter(s -> (!(s.startsWith("start"))) && (s.endsWith("@") && s.contains("_0_")))
 			                     .collect(Collectors.toSet());
-					  
 						 int count2 =new Integer(0);
 						  int dupcount2 =new Integer(0);
 					  for (int tr5 = 0; tr5 < 500; tr5++) {
@@ -1349,8 +1110,6 @@ public class GenerateDesignDoc {
 							  Finalmap = Finalmap +groupsepartor_start+" start";
 							  groupmapkey="start";
 						  }else {
-							  
-							  
 							  groupmapkey=hm2.get(groupmapkey);
 							  groupmapvalue=hm2.get(groupmapkey);
 							  if(groupmapvalue != null) {
@@ -1361,9 +1120,7 @@ public class GenerateDesignDoc {
 								  }else {
 								  Finalmap=Finalmap+transsepartor+"end "+groupsepartor_end; 
 								  }
-								  
 								  if(start2.toArray().length != 0 && start2.toArray().length > count2 && groupmapvalue.equals(new String("end"))) {
-										 
 									  groupmapkey=start2.toArray()[count2].toString();
 									  start2.remove(start2.toArray()[count2].toString());
 									  count2 ++;
@@ -1372,44 +1129,35 @@ public class GenerateDesignDoc {
 									 if((dupkey2.toArray().length != 0 && dupcount2 < dupkey2.toArray().length) && groupmapvalue.equals(new String("end"))) {
 										 groupmapkey=dupkey2.toArray()[dupcount].toString();
 										  Finalmap = refinal.split(groupmapkey.split("_0_")[0])[0]+ groupmapkey.split("_0_")[0];
-										  
 										  groupmapkey=(dupkey2.toArray()[dupcount2].toString().split("_0_")[1]).split("@")[0];
 										  Finalmap=Finalmap+transsepartor+groupmapkey;
 										  dupkey2.remove(dupkey2.toArray()[dupcount].toString());
 										  dupcount2 ++;
 										  refinal = Finalmap;
-										  
 										  }
 									 else{
-										 
 									 if(hm2.containsKey("Catch")) {
 										 groupmapkey = hm.get("Catch");
 										 Finalmap= "Catch" + transsepartor+groupmapkey;
 										 refinal = Finalmap;
 										 hm2.remove("Catch");
-
 									 }
 									 }	
 							  }}
-
 						  }
 						  }
-						  
 					  }
 				  }
 			  }
-
 			  }
 		  }
 		  Finalmap = new String();
 		  refinal = new String();
 		  hm =new HashMap<String,String>();   
 		}
-		
 	 catch (Exception e) {
 		e.printStackTrace();
 	}}
-
 	private static void inputBindings(Node node1, XWPFTable tableOne2) {
 		if (node1.hasChildNodes()) {
 			NodeList nChildListb = node1.getChildNodes();
@@ -1422,20 +1170,17 @@ public class GenerateDesignDoc {
 							XWPFTableRow tableOneRowOne01 = tableOne2.createRow();
 							tableOneRowOne01.getCell(0).setText(node2.getNodeName());
 							tableOneRowOne01.getCell(1).setText(node2.getAttributes().item(0).getNodeValue());
-					
 						}
 						if (node2.getAttributes().getLength() == 2 && node2.getAttributes().item(1).getNodeName().equals("select")) {
 								XWPFTableRow tableOneRowOne01 = tableOne2.createRow();
 								tableOneRowOne01.getCell(0).setText(node2.getAttributes().item(0).getNodeValue());
 								tableOneRowOne01.getCell(1).setText(node2.getAttributes().item(1).getNodeValue());
-						
 						}
 					}
 					if (node2.hasChildNodes()) {
 						NodeList nChildListc = node2.getChildNodes();
 						for (int l = 0; l < nChildListc.getLength(); l++) {
 							Node node3 = nChildListc.item(l);
-
 							if (!(node3.getNodeName()).equals(TEXT)) {
 								if (node3.hasAttributes() && !(node3.getNodeName()).equals(variable)
 										&& node3.getNodeName().startsWith("xsl:")) {
@@ -1447,7 +1192,6 @@ public class GenerateDesignDoc {
 												.setText(node2.getNodeName() + "/" + node3.getNodeName());
 										tableOneRowOne02.getCell(1)
 												.setText(node3.getAttributes().item(0).getNodeValue());
-
 									}
 									if (node3.getAttributes().getLength() == 2
 											&& node3.getNodeName().startsWith("xsl:")) {
@@ -1465,7 +1209,6 @@ public class GenerateDesignDoc {
 									for (int m = 0; m < nChildListd.getLength(); m++) {
 										Node node4 = nChildListd.item(m);
 										if (!(node4.getNodeName()).equals(TEXT)) {
-											//if (node4.hasAttributes()
 													if (node4.hasAttributes()
 													&& !(node4.getNodeName()).equals(variable)
 													&& node4.getNodeName().startsWith("xsl:")) {
@@ -1489,7 +1232,6 @@ public class GenerateDesignDoc {
 													}
 												}
 											}
-											
 											if (node4.hasChildNodes()) {
 												NodeList nChildListe = node4.getChildNodes();
 												for (int n = 0; n < nChildListe.getLength(); n++) {
@@ -1723,12 +1465,10 @@ public class GenerateDesignDoc {
 						}
 					} else if (node2.hasAttributes() && node2.getAttributes().item(0) != null) {
 						if(node2.getAttributes().getLength() == 2 && node2.getAttributes().item(1).getNodeName().equals("select")&& (node2.getNodeName()).equals(variable)) {
-							
 							XWPFTableRow row2 = tableOne2.createRow();
 							row2.getCell(0).setText(node2.getAttributes().item(0).getNodeValue());
 							row2.getCell(1).setText(node2.getAttributes().item(1).getNodeValue());
 						}
-						
 						else {
 						XWPFTableRow row2 = tableOne2.createRow();
 						row2.getCell(0).setText(node2.getNodeName());
@@ -1739,37 +1479,31 @@ public class GenerateDesignDoc {
 			}
 		}
 	}
-
 	private static void introSecPara_Format(XWPFTableRow tableOneRowOne2) {
 		tableOneRowOne2.getCell(0).setColor("c6e5f5");
 		tableOneRowOne2.getCell(1).setColor("c6e5f5");
 	}
-
 	private static DocumentBuilder readDoc() throws ParserConfigurationException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
 		builder = factory.newDocumentBuilder();
 		return builder;
 	}
-
 	private static void compSecPara(XWPFRun titleRun3) {
 		titleRun3.setColor("0003CC");
 		titleRun3.setFontFamily("Calibri Light (Headings)");
 		titleRun3.setFontSize(16);
 		titleRun3.setTextPosition(20);
 	}
-
 	private static void compSecPara_Format(XWPFRun titleRun9) {
 		titleRun9.setFontSize(16);
 		titleRun9.setColor("0003CC");
 		titleRun9.setFontFamily("Calibri Light (Headings)");
 	}
-
 	private static void compSecPara_rowDetails(XWPFTableRow tableOneRowOne2) {
 		tableOneRowOne2.getCell(0).setColor("c6e5f5");
 		tableOneRowOne2.getCell(0).setText("Attribute Name");
 		tableOneRowOne2.addNewTableCell().setText("Attribute Value");
 		tableOneRowOne2.getCell(1).setColor("c6e5f5");
 	}
-	
 }

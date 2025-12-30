@@ -1,11 +1,9 @@
 package com.raks.apidiscovery;
-
 import com.google.gson.Gson;
 import com.raks.apidiscovery.model.DiscoveryReport;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpServer;
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -19,27 +17,20 @@ import java.util.List;
 import java.util.Map;
 import com.google.gson.reflect.TypeToken;
 import com.raks.apidiscovery.connector.GitLabConnector;
-
 public class ApiDiscoveryTool {
-
     private static int PORT = 8085;
     private static ScannerEngine engine;
     private static volatile String currentProgress = "";
     private static volatile int progressPercent = 0;
     private static volatile String currentScanFolder = "";
-
     public static void main(String[] args) throws IOException {
-        // CLI MODE CHECK
         if (args.length > 0) {
             runCliScan(args);
             return;
         }
-
         System.out.println("==========================================");
         System.out.println("   Raks ApiDiscovery Tool v1.0");
         System.out.println("==========================================");
-        
-        // Load port from config
         String portStr = loadConfig("server.port");
         if (portStr != null && !portStr.isEmpty()) {
             try {
@@ -48,13 +39,8 @@ public class ApiDiscoveryTool {
                 System.err.println("[WARN] Invalid server.port in config, using default: 8085");
             }
         }
-        
         engine = new ScannerEngine();
-
-        // Start HTTP Server
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
-        
-        // Contexts
         server.createContext("/", new StaticFileHandler());
         server.createContext("/api/scan", new ScanApiHandler());
         server.createContext("/api/scans/list", new ScanListHandler());
@@ -62,39 +48,27 @@ public class ApiDiscoveryTool {
         server.createContext("/api/scans/view", new ScanViewHandler());
         server.createContext("/api/progress", new ProgressHandler());
         server.createContext("/api/config", new ConfigHandler());
-        
-        server.setExecutor(null); // default executor
+        server.setExecutor(null); 
         server.start();
-        
-        // FAIL-SAFE: Globally disable JGit MMAP (Windows File Locking Fix)
         disableJGitMmap();
-
         System.out.println("Server started at http://localhost:" + PORT);
         System.out.println("Open your browser to access the dashboard.");
     }
-
     private static void disableJGitMmap() {
         try {
             org.eclipse.jgit.storage.file.WindowCacheConfig config = new org.eclipse.jgit.storage.file.WindowCacheConfig();
             config.setPackedGitMMAP(false);
             config.install();
-            // System.out.println("[INIT] JGit Memory Mapping disabled.");
         } catch (Exception e) {
             System.err.println("[INIT] Failed to configure JGit: " + e.getMessage());
         }
     }
-
-    // CLI LOGIC
     private static void runCliScan(String[] args) {
         String source = null;
         String token = null;
         String output = "scan_results.json";
-        
-        // Generate Scan ID for consistent naming
         java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss");
         String scanId = "Scan_" + sdf.format(new java.util.Date());
-
-        // Parse Args
         for (int i = 0; i < args.length; i++) {
             if ("-source".equals(args[i]) && i + 1 < args.length) {
                 source = args[i + 1];
@@ -110,32 +84,25 @@ public class ApiDiscoveryTool {
                 return;
             }
         }
-
         if (source == null) {
             System.err.println("Error: -source argument is required.");
             printHelp();
             System.exit(1);
         }
-
         System.out.println("==========================================");
         System.out.println("   Raks ApiDiscovery CLI");
         System.out.println("==========================================");
         System.out.println("Source: " + source);
         System.out.println("Output: " + output);
         System.out.println("------------------------------------------");
-
         disableJGitMmap();
         engine = new ScannerEngine();
-        
         try {
             List<DiscoveryReport> reports = new ArrayList<>();
             File localFile = new File(source);
-            
-            // 1. Local Directory Scan
             if (localFile.exists() && localFile.isDirectory()) {
                 System.out.println("[INFO] Scanning local directory...");
                 reports.add(engine.scanRepository(localFile));
-                
                 File[] subs = localFile.listFiles(File::isDirectory);
                 if (subs != null) {
                     int count = 0;
@@ -146,77 +113,47 @@ public class ApiDiscoveryTool {
                              reports.add(engine.scanRepository(sub));
                          }
                     }
-                    System.out.println(); // New line after progress
+                    System.out.println(); 
                 }
             } 
-            // 2. GitLab Scan
             else if (source.startsWith("http")) {
                  if (token == null || token.isEmpty()) {
-                     // Try loading from config if not provided
                      token = loadConfig("gitlab.token");
                  }
-                 
                  if (token == null || token.isEmpty()) {
                      System.err.println("[ERROR] Token required for GitLab scan. Use -token <token>.");
                      System.exit(1);
                  }
-
                  System.out.println("[INFO] Connecting to GitLab...");
                  GitLabConnector connector = new GitLabConnector();
-                 
-                 
-                 // Use the pre-generated scanId
-                 // java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss");
-                 // String scanId = "Scan_" + sdf.format(new java.util.Date());
-                 
-                 // Progress callback for CLI
                  java.util.function.BiConsumer<String, Integer> cliProgress = (msg, pct) -> {
                      System.out.print("\r[PROGRESS] " + pct + "% - " + msg + "                         ");
                  };
-
                  reports = connector.scanGroup(source, token, scanId, getTempDir(), cliProgress);
-                 System.out.println(); // New line after progress call
-                 
-                 // Cleanup happens automatically in connector logic now? 
-                 // Actually connector returns reports, cleanup logic in ApiDiscoveryService/Tool usually handles the rest.
-                 // We need to ensure we clean up the downloaded repos if they were temp.
-                 // Re-using specific cleanup logic for CLI might be needed if GitLabConnector doesn't do it all.
-                 // Based on implementation plan, GitLabConnector does *not* delete if we want history. 
-                 // But for CLI, we might want to clean up temp unless user specifies otherwise? 
-                 // Let's stick to the consistent behavior: It leaves artifacts in temp/Scan_... 
-                 // But for CLI user expects 'scan_results.json' at -output path.
+                 System.out.println(); 
             } else {
                 System.err.println("[ERROR] Invalid source. Must be a directory path or URL.");
                 System.exit(1);
             }
-            
-            // SAVE RESULTS
             Gson gson = new Gson();
             String jsonResults = gson.toJson(reports);
-            
             File outputFile = new File(output);
             if (outputFile.exists() && outputFile.isDirectory()) {
-                // Create timestamped folder: output/Scan_YYYYMMDD_HHmmss/scan_results.json
                 File subDir = new File(outputFile, scanId);
                 subDir.mkdirs();
                 outputFile = new File(subDir, "scan_results.json");
             } else if (outputFile.getParentFile() != null) {
                 outputFile.getParentFile().mkdirs();
             }
-            
             java.nio.file.Files.write(outputFile.toPath(), jsonResults.getBytes(StandardCharsets.UTF_8));
             System.out.println("[SUCCESS] Results saved to: " + outputFile.getAbsolutePath());
-            
-            // PRINT SUMMARY
             printSummary(reports);
-            
         } catch (Exception e) {
             System.err.println("[ERROR] Scan failed: " + e.getMessage());
             e.printStackTrace();
             System.exit(1);
         }
     }
-
     private static void printHelp() {
         System.out.println("Usage: java -jar apidiscovery.jar -source <path_or_url> [-token <token>] [-output <file_path>]");
         System.out.println("Options:");
@@ -224,7 +161,6 @@ public class ApiDiscoveryTool {
         System.out.println("  -token   : GitLab API Token (required for URL)");
         System.out.println("  -output  : Path to save JSON results (default: scan_results.json)");
     }
-
     private static void printSummary(List<DiscoveryReport> reports) {
         System.out.println("\n-------------------------------------------------------------");
         System.out.printf("%-40s | %-30s%n", "Project Name", "Technology");
@@ -233,35 +169,28 @@ public class ApiDiscoveryTool {
             String name = r.getRepoName();
             if (name == null) name = "Unknown";
             if (name.length() > 37) name = name.substring(0, 37) + "..";
-            
             String tech = r.getTechnology();
             if (tech == null) tech = "N/A";
-            
             System.out.printf("%-40s | %-30s%n", name, tech);
         }
         System.out.println("-------------------------------------------------------------");
         System.out.println("Total Projects: " + reports.size());
     }
-    
     public static void updateProgress(String message, int percent) {
         currentProgress = message;
         progressPercent = percent;
         System.out.println("[PROGRESS] " + percent + "% - " + message);
     }
-    
     public static void setScanFolder(String folderName) {
         currentScanFolder = folderName;
     }
-    
     public static String getScanFolderName() {
         return currentScanFolder;
     }
-    
     public static void clearProgress() {
         currentProgress = "";
         progressPercent = 0;
     }
-
     private static boolean deleteDirectory(File directory) {
         if (!directory.exists()) return true;
         try {
@@ -272,7 +201,6 @@ public class ApiDiscoveryTool {
                     try {
                         java.nio.file.Files.delete(file);
                     } catch (IOException e) {
-                        // System.err.println("[CLEANUP] Failed to delete file: " + file + " Error: " + e.getMessage());
                         throw e;
                     }
                     return java.nio.file.FileVisitResult.CONTINUE;
@@ -282,7 +210,6 @@ public class ApiDiscoveryTool {
                     try {
                          java.nio.file.Files.delete(dir);
                     } catch (IOException e) {
-                        // System.err.println("[CLEANUP] Failed to delete dir: " + dir + " Error: " + e.getMessage());
                         throw e;
                     }
                     return java.nio.file.FileVisitResult.CONTINUE;
@@ -294,18 +221,12 @@ public class ApiDiscoveryTool {
              return false;
         }
     }
-
-    // Handler for Serving UI (index.html)
     static class StaticFileHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
             String path = t.getRequestURI().getPath();
             if (path.equals("/")) path = "/index.html";
-            
-            // Allow basic resource loading
             InputStream is = getClass().getResourceAsStream("/web" + path);
-            
-
             if (is == null) {
                 String response = "404 Not Found";
                 t.sendResponseHeaders(404, response.length());
@@ -314,11 +235,9 @@ public class ApiDiscoveryTool {
                 os.close();
             } else {
                 byte[] bytes = is.readAllBytes();
-                // Add Cache-Control to prevent browser caching of old UI
                 t.getResponseHeaders().add("Cache-Control", "no-cache, no-store, must-revalidate");
                 t.getResponseHeaders().add("Pragma", "no-cache");
                 t.getResponseHeaders().add("Expires", "0");
-                
                 if (path.endsWith(".html")) t.getResponseHeaders().set("Content-Type", "text/html");
                 else if (path.endsWith(".css")) t.getResponseHeaders().set("Content-Type", "text/css");
                 else if (path.endsWith(".js")) t.getResponseHeaders().set("Content-Type", "application/javascript");
@@ -326,7 +245,6 @@ public class ApiDiscoveryTool {
                 else if (path.endsWith(".svg")) t.getResponseHeaders().set("Content-Type", "image/svg+xml");
                 else if (path.endsWith(".png")) t.getResponseHeaders().set("Content-Type", "image/png");
                 else if (path.endsWith(".jpg") || path.endsWith(".jpeg")) t.getResponseHeaders().set("Content-Type", "image/jpeg");
-                
                 t.sendResponseHeaders(200, bytes.length);
                 OutputStream os = t.getResponseBody();
                 os.write(bytes);
@@ -334,12 +252,9 @@ public class ApiDiscoveryTool {
             }
         }
     }
-
-    // Handler for Scanning API
     static class ScanApiHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
-            // Handle CORS (if needed) or just POST
             if ("OPTIONS".equalsIgnoreCase(t.getRequestMethod())) {
                 t.getResponseHeaders().add("Access-Control-Allow-Origin", "*");
                 t.getResponseHeaders().add("Access-Control-Allow-Methods", "POST, GET, OPTIONS");
@@ -347,10 +262,8 @@ public class ApiDiscoveryTool {
                 t.sendResponseHeaders(204, -1);
                 return;
             }
-
             if ("POST".equalsIgnoreCase(t.getRequestMethod())) {
                 try {
-                    // Read Request Body
                     InputStreamReader isr = new InputStreamReader(t.getRequestBody(), StandardCharsets.UTF_8);
                     BufferedReader br = new BufferedReader(isr);
                     StringBuilder jsonBuilder = new StringBuilder();
@@ -358,39 +271,27 @@ public class ApiDiscoveryTool {
                     while ((line = br.readLine()) != null) {
                         jsonBuilder.append(line);
                     }
-                    
                     Gson gson = new Gson();
                     Map<String, String> request = gson.fromJson(jsonBuilder.toString(), new TypeToken<Map<String, String>>(){}.getType());
-                    
                     String source = request.getOrDefault("source", request.get("path")); 
                     String token = request.get("token");
-                    
-                    // Fallback to default token from config
                     if ((token == null || token.trim().isEmpty())) {
                         token = loadConfig("gitlab.token");
                     }
-                    
                     if (source == null || source.trim().isEmpty()) {
                         sendError(t, 400, "{\"error\": \"Missing 'source' parameter\"}");
                         return;
                     }
-                    
-                    // Generate Scan ID (Format: Scan_YYYYMMDD_HHmmss)
                     java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss");
                     String scanId = "Scan_" + sdf.format(new java.util.Date());
-                    
-                    // Start Async Scan
                     String finalToken = token;
                     new Thread(() -> {
                         runAsyncScan(source, finalToken, scanId);
                     }).start();
-
-                    // Return immediately
                     Map<String, Object> response = new java.util.HashMap<>();
                     response.put("status", "started");
                     response.put("scanId", scanId);
                     response.put("message", "Scan started in background");
-                    
                     String jsonResponse = gson.toJson(response);
                     t.getResponseHeaders().set("Content-Type", "application/json");
                     byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
@@ -398,7 +299,6 @@ public class ApiDiscoveryTool {
                     try (OutputStream os = t.getResponseBody()) {
                         os.write(bytes);
                     }
-                    
                 } catch (Exception e) {
                     e.printStackTrace();
                     sendError(t, 500, "{\"error\": \"Internal Server Error: " + e.getMessage() + "\"}");
@@ -407,7 +307,6 @@ public class ApiDiscoveryTool {
                 sendError(t, 405, "{\"error\": \"Method Not Allowed\"}");
             }
         }
-
         private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
              t.getResponseHeaders().set("Content-Type", "application/json");
              byte[] bytes = jsonMessage.getBytes(StandardCharsets.UTF_8);
@@ -417,23 +316,16 @@ public class ApiDiscoveryTool {
              os.close();
         }
     }
-
-    // Async Scan Logic
     private static void runAsyncScan(String source, String token, String scanId) {
         System.out.println("Starting Async Scan: " + scanId);
         updateProgress("Initializing scan...", 0);
-        
         try {
             List<DiscoveryReport> reports = new ArrayList<>();
             File localFile = new File(source);
-            
-            // 1. Check if it's a valid local directory
             if (localFile.exists() && localFile.isDirectory()) {
                 System.out.println("Detected Local Directory: " + source);
                 updateProgress("Scanning local directory...", 10);
-                
                 reports.add(engine.scanRepository(localFile));
-                
                 File[] subs = localFile.listFiles(File::isDirectory);
                 if (subs != null) {
                     int total = subs.length;
@@ -446,14 +338,11 @@ public class ApiDiscoveryTool {
                         }
                     }
                 }
-                setScanFolder(scanId); // Set folder name for saving results
+                setScanFolder(scanId); 
             } 
-            // 2. Otherwise, treat as GitLab (if token provided)
             else if (token != null && !token.isEmpty()) {
                 System.out.println("Detected GitLab Source: " + source);
                 updateProgress("Connecting to GitLab...", 5);
-                
-                // Clean URL
                 String cleanGroup = source.trim();
                 if (cleanGroup.startsWith("https://gitlab.com/")) {
                     cleanGroup = cleanGroup.substring("https://gitlab.com/".length());
@@ -462,54 +351,36 @@ public class ApiDiscoveryTool {
                 }
                 if (cleanGroup.endsWith("/")) cleanGroup = cleanGroup.substring(0, cleanGroup.length() - 1);
                 if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
-                
                 GitLabConnector connector = new GitLabConnector();
-                // Pass scanId (folder name) to connector
-                // Use getTempDir() for standalone execution
-                setScanFolder(scanId); // Set folder name for saving results explicitly
+                setScanFolder(scanId); 
                 reports = connector.scanGroup(cleanGroup, token, scanId, getTempDir(), ApiDiscoveryTool::updateProgress);
-                
             } else {
                  updateProgress("Error: Invalid source", 0);
                  return;
             }
-
-            
-            // SAVE RESULTS TO FILE (Fix for Local Scan Persistence & History Performance)
             try {
                 String folderName = getScanFolderName();
-                // Ensure folder exists (crucial for Local scans which might not have created it yet)
                 File tempDir = getTempDir();
                 if (!tempDir.exists()) tempDir.mkdirs();
                 File scanDir = new File(tempDir, folderName);
                 if (!scanDir.exists()) scanDir.mkdirs();
-                
                 Gson gson = new Gson();
                 String jsonResults = gson.toJson(reports);
-                
                 java.nio.file.Files.write(
                     new File(scanDir, "scan_results.json").toPath(), 
                     jsonResults.getBytes(StandardCharsets.UTF_8)
                 );
                 System.out.println("Saved scan results to: " + scanDir.getAbsolutePath());
-                
             } catch (Exception e) {
                 System.err.println("Failed to save scan results: " + e.getMessage());
                 e.printStackTrace();
             }
-            
             updateProgress("Finalizing results...", 95);
-
-            // FORCE RELEASE: Clear JGit internal caches to release file handles
             try {
                 org.eclipse.jgit.lib.RepositoryCache.clear();
-                // org.eclipse.jgit.storage.file.WindowCache.getInstance().cleanup(); // Not available in this version
-                // System.out.println("[CLEANUP] JGit caches cleared.");
             } catch (Exception e) {
                 System.err.println("[CLEANUP] Failed to clear JGit cache: " + e.getMessage());
             }
-
-            // CLEANUP: Delete downloaded repository folders to save space (Keep only JSON)
             try {
                  File tempDir = getTempDir();
                  File scanDir = new File(tempDir, scanId);
@@ -518,14 +389,10 @@ public class ApiDiscoveryTool {
                      if (files != null) {
                          for (File file : files) {
                              if (file.isDirectory()) {
-                                 // System.out.println("Cleaning up repo details: " + file.getName());
-                                 // Use robust delete
                                  if (!deleteDirectory(file)) {
-                                     // Retry once
                                      System.gc();
                                      try { Thread.sleep(2000); } catch (Exception e) {}
                                      if (!deleteDirectory(file)) {
-                                         // System.err.println("WARN: Failed to cleanup: " + file.getAbsolutePath());
                                      }
                                  }
                              }
@@ -535,15 +402,12 @@ public class ApiDiscoveryTool {
             } catch (Exception e) {
                 System.err.println("Cleanup failed: " + e.getMessage());
             }
-
             updateProgress("Scan complete!", 100);
-            
         } catch (Exception e) {
             e.printStackTrace();
             updateProgress("Error: " + e.getMessage(), 0);
         }
     }
-
     private static String loadConfig(String key) {
         try (InputStream input = ApiDiscoveryTool.class.getClassLoader().getResourceAsStream("config.properties")) {
             if (input == null) return null;
@@ -555,8 +419,6 @@ public class ApiDiscoveryTool {
             return null;
         }
     }
-
-    // Handler for Listing Scan Folders
     static class ScanListHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -564,12 +426,10 @@ public class ApiDiscoveryTool {
                 try {
                     File tempDir = getTempDir();
                     List<Map<String, Object>> scanFolders = new ArrayList<>();
-                    
                     if (tempDir.exists() && tempDir.isDirectory()) {
                         File[] folders = tempDir.listFiles(File::isDirectory);
                         if (folders != null) {
                             for (File folder : folders) {
-                                // Show both old (scan_) and new (Scan_) format folders
                                 if (folder.getName().toLowerCase().startsWith("scan")) {
                                     Map<String, Object> info = new java.util.HashMap<>();
                                     info.put("name", folder.getName());
@@ -580,13 +440,9 @@ public class ApiDiscoveryTool {
                             }
                         }
                     }
-                    
-                    // Sort by lastModified descending (newest first)
                     scanFolders.sort((a, b) -> Long.compare((Long)b.get("lastModified"), (Long)a.get("lastModified")));
-                    
                     Gson gson = new Gson();
                     String jsonResponse = gson.toJson(scanFolders);
-                    
                     t.getResponseHeaders().set("Content-Type", "application/json");
                     t.sendResponseHeaders(200, jsonResponse.getBytes().length);
                     try (OutputStream os = t.getResponseBody()) {
@@ -600,7 +456,6 @@ public class ApiDiscoveryTool {
                 sendError(t, 405, "{\"error\": \"Method Not Allowed\"}");
             }
         }
-        
         private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
             t.getResponseHeaders().set("Content-Type", "application/json");
             t.sendResponseHeaders(code, jsonMessage.length());
@@ -609,8 +464,6 @@ public class ApiDiscoveryTool {
             os.close();
         }
     }
-
-    // Handler for Deleting Scan Folders
     static class ScanDeleteHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -623,20 +476,15 @@ public class ApiDiscoveryTool {
                     while ((line = br.readLine()) != null) {
                         jsonBuilder.append(line);
                     }
-                    
                     Gson gson = new Gson();
                     Map<String, Object> request = gson.fromJson(jsonBuilder.toString(), new TypeToken<Map<String, Object>>(){}.getType());
                     List<String> folderNames = (List<String>) request.get("folders");
-                    
                     Map<String, Object> result = new java.util.HashMap<>();
                     List<String> deleted = new ArrayList<>();
                     List<String> failed = new ArrayList<>();
-                    
                     File tempDir = getTempDir();
-                    
                     for (String folderName : folderNames) {
                         File folder = new File(tempDir, folderName);
-                        // Accept both old (scan_) and new (Scan_) format folders
                         if (folder.exists() && folder.isDirectory() && folderName.toLowerCase().startsWith("scan")) {
                             if (deleteDirectory(folder)) {
                                 deleted.add(folderName);
@@ -647,11 +495,9 @@ public class ApiDiscoveryTool {
                             failed.add(folderName);
                         }
                     }
-                    
                     result.put("deleted", deleted);
                     result.put("failed", failed);
                     result.put("status", "success");
-                    
                     String jsonResponse = gson.toJson(result);
                     t.getResponseHeaders().set("Content-Type", "application/json");
                     t.sendResponseHeaders(200, jsonResponse.getBytes().length);
@@ -666,9 +512,6 @@ public class ApiDiscoveryTool {
                 sendError(t, 405, "{\"error\": \"Method Not Allowed\"}");
             }
         }
-        
-
-        
         private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
             t.getResponseHeaders().set("Content-Type", "application/json");
             t.sendResponseHeaders(code, jsonMessage.length());
@@ -677,8 +520,6 @@ public class ApiDiscoveryTool {
             os.close();
         }
     }
-
-    // Handler for Viewing Scan Results
     static class ScanViewHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -686,7 +527,6 @@ public class ApiDiscoveryTool {
                 try {
                     String query = t.getRequestURI().getQuery();
                     String scanName = null;
-                    
                     if (query != null) {
                         for (String param : query.split("&")) {
                             String[] pair = param.split("=");
@@ -697,22 +537,16 @@ public class ApiDiscoveryTool {
                             }
                         }
                     }
-                    
                     if (scanName == null || scanName.isEmpty()) {
                         sendError(t, 400, "{\"error\": \"Missing scan parameter\"}");
                         return;
                     }
-                    
                     File tempDir = getTempDir();
                     File scanFolder = new File(tempDir, scanName);
-                    
-                    // Accept both old (scan_) and new (Scan_) format folders
                     if (!scanFolder.exists() || !scanFolder.isDirectory() || !scanName.toLowerCase().startsWith("scan")) {
                         sendError(t, 404, "{\"error\": \"Scan folder not found\"}");
                         return;
                     }
-                    
-                    // OPTIMIZATION: Check for pre-calculated results file first
                     File resultsFile = new File(scanFolder, "scan_results.json");
                     if (resultsFile.exists()) {
                          byte[] bytes = java.nio.file.Files.readAllBytes(resultsFile.toPath());
@@ -723,11 +557,8 @@ public class ApiDiscoveryTool {
                          }
                          return;
                     }
-
-                    // Fallback: Re-scan all repositories in this folder (Legacy behavior)
                     List<DiscoveryReport> reports = new ArrayList<>();
                     File[] repos = scanFolder.listFiles(File::isDirectory);
-                    
                     if (repos != null) {
                         for (File repo : repos) {
                             if (!repo.getName().startsWith(".")) {
@@ -738,10 +569,8 @@ public class ApiDiscoveryTool {
                             }
                         }
                     }
-                    
                     Gson gson = new Gson();
                     String jsonResponse = gson.toJson(reports);
-                    
                     t.getResponseHeaders().set("Content-Type", "application/json");
                     t.sendResponseHeaders(200, jsonResponse.getBytes().length);
                     try (OutputStream os = t.getResponseBody()) {
@@ -755,7 +584,6 @@ public class ApiDiscoveryTool {
                 sendError(t, 405, "{\"error\": \"Method Not Allowed\"}");
             }
         }
-        
         private void sendError(HttpExchange t, int code, String jsonMessage) throws IOException {
             t.getResponseHeaders().set("Content-Type", "application/json");
             t.sendResponseHeaders(code, jsonMessage.length());
@@ -764,8 +592,6 @@ public class ApiDiscoveryTool {
             os.close();
         }
     }
-    
-    // Handler for Progress Updates
     static class ProgressHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -774,10 +600,8 @@ public class ApiDiscoveryTool {
                 progress.put("message", currentProgress);
                 progress.put("percent", progressPercent);
                 progress.put("complete", progressPercent >= 100);
-                
                 Gson gson = new Gson();
                 String jsonResponse = gson.toJson(progress);
-                
                 t.getResponseHeaders().set("Content-Type", "application/json");
                 byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
                 t.sendResponseHeaders(200, bytes.length);
@@ -787,8 +611,6 @@ public class ApiDiscoveryTool {
             }
         }
     }
-
-    // Handler for Config
     static class ConfigHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange t) throws IOException {
@@ -796,10 +618,8 @@ public class ApiDiscoveryTool {
                 Map<String, String> config = new java.util.HashMap<>();
                 config.put("defaultGroup", loadConfig("gitlab.default.group"));
                 config.put("defaultToken", loadConfig("gitlab.token"));
-                
                 Gson gson = new Gson();
                 String jsonResponse = gson.toJson(config);
-                
                 t.getResponseHeaders().set("Content-Type", "application/json");
                 byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
                 t.sendResponseHeaders(200, bytes.length);
@@ -817,7 +637,6 @@ public class ApiDiscoveryTool {
             }
         }
     }
-    // Helper to get configurable temp directory
     public static File getTempDir() {
         String customHome = System.getProperty("apidiscovery.home");
         File baseDir = (customHome != null && !customHome.isEmpty()) ? new File(customHome) : new File(".");

@@ -1,10 +1,8 @@
 package com.raks.muleguard.gui;
-
 import com.sun.net.httpserver.HttpServer;
 import com.sun.net.httpserver.HttpHandler;
 import com.sun.net.httpserver.HttpExchange;
 import com.raks.muleguard.MuleGuardMain;
-
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.file.Files;
@@ -12,16 +10,12 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-
 public class MuleGuardGUI {
-
-    private static int PORT = 8080; // Default starting port
+    private static int PORT = 8080; 
     private static final int PORT_START = 8080;
     private static final int PORT_END = 8089;
-    private static String lastProjectPath = null; // Track last validated project path
-
+    private static String lastProjectPath = null; 
     public static void main(String[] args) {
-        // Allow port to be specified as command-line argument
         if (args.length > 0) {
             try {
                 PORT = Integer.parseInt(args[0]);
@@ -29,16 +23,13 @@ public class MuleGuardGUI {
                 System.err.println("Invalid port number: " + args[0] + ". Using default port 8080.");
             }
         }
-
         HttpServer server = null;
         int actualPort = PORT;
-
-        // Try to find an available port in the range
         for (int port = PORT; port <= PORT_END; port++) {
             try {
                 server = HttpServer.create(new InetSocketAddress(port), 0);
                 actualPort = port;
-                break; // Successfully bound to port
+                break; 
             } catch (java.net.BindException e) {
                 if (port == PORT_END) {
                     System.err.println("============================================================");
@@ -48,7 +39,6 @@ public class MuleGuardGUI {
                     System.err.println("============================================================");
                     return;
                 }
-                // Port in use, try next one
                 if (port == PORT) {
                     System.out.println("Port " + port + " is in use, trying next port...");
                 }
@@ -57,25 +47,16 @@ public class MuleGuardGUI {
                 return;
             }
         }
-
         if (server == null) {
             System.err.println("Failed to start GUI server - no available ports found.");
             return;
         }
-
         try {
             System.out.println("============================================================");
-
-            // Register a unified handler that serves both the GUI and reports
-            // This is necessary because HTTP server context matching is prefix-based
             server.createContext("/", new UnifiedHandler());
-
-            // API endpoint to run validation
             server.createContext("/api/validate", new ValidationHandler());
-
-            server.setExecutor(null); // Use default executor
+            server.setExecutor(null); 
             server.start();
-
             System.out.println("============================================================");
             System.out.println("          MuleGuard GUI Server Started");
             System.out.println("============================================================");
@@ -90,8 +71,6 @@ public class MuleGuardGUI {
             System.out.println("");
             System.out.println("  Press Ctrl+C to stop the server");
             System.out.println("============================================================");
-
-            // Try to open browser automatically
             try {
                 String os = System.getProperty("os.name").toLowerCase();
                 String url = "http://localhost:" + actualPort;
@@ -109,112 +88,79 @@ public class MuleGuardGUI {
                     pb.start();
                 }
             } catch (Exception e) {
-                // Silently fail if browser can't be opened
             }
-
         } catch (Exception e) {
             System.err.println("Failed to start GUI server: " + e.getMessage());
             e.printStackTrace();
         }
     }
-
-    // Unified handler that serves both the GUI form and report files
     static class UnifiedHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
             String query = exchange.getRequestURI().getQuery();
-
             System.out.println(
                     "[DEBUG] Received request: " + exchange.getRequestMethod() + " " + exchange.getRequestURI());
-
-            // Check if this is a report request
             boolean isReportRequest = path.startsWith("/report/") ||
                     (path.endsWith(".html") && !path.equals("/")) ||
                     (query != null && query.startsWith("path="));
-
             if (isReportRequest) {
-                // Delegate to report serving logic
                 serveReport(exchange, path, query);
             } else {
-                // Serve the GUI form
                 serveGUI(exchange);
             }
         }
-
         private void serveGUI(HttpExchange exchange) throws IOException {
             String html = generateHomePage();
             byte[] response = html.getBytes("UTF-8");
-
             exchange.getResponseHeaders().set("Content-Type", "text/html; charset=UTF-8");
             exchange.sendResponseHeaders(200, response.length);
-
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(response);
                 os.flush();
             }
             System.out.println("[DEBUG] Response sent: " + response.length + " bytes");
         }
-
         private void serveReport(HttpExchange exchange, String requestPath, String query) throws IOException {
             Path reportPath = null;
-
-            // If there's a query parameter with full path, use that
             if (query != null && query.startsWith("path=")) {
                 String fullPath = java.net.URLDecoder.decode(query.substring(5), "UTF-8");
                 reportPath = Paths.get(fullPath);
             } else {
-                // Extract the relative path
                 String relativePath;
                 if (requestPath.startsWith("/report/")) {
-                    // Path like /report/checklist.html
                     relativePath = requestPath.substring("/report/".length());
                 } else if (requestPath.startsWith("/") && requestPath.endsWith(".html")) {
-                    // Path like /CONSOLIDATED-REPORT.html or /checklist.html
-                    relativePath = requestPath.substring(1); // Remove leading /
+                    relativePath = requestPath.substring(1); 
                 } else {
-                    // Not a report request
                     exchange.sendResponseHeaders(404, -1);
                     return;
                 }
-
                 if (relativePath.isEmpty()) {
                     sendError(exchange, 400, "Missing report path");
                     return;
                 }
-
-                // Decode URL-encoded path
                 relativePath = java.net.URLDecoder.decode(relativePath, "UTF-8");
-
-                // Find the reports directory
                 Path reportsDir;
                 if (lastProjectPath != null) {
                     reportsDir = Paths.get(lastProjectPath).resolve("muleguard-reports");
                 } else {
-                    // Fallback to default location
                     reportsDir = Paths.get(System.getProperty("user.dir")).resolve("testData")
                             .resolve("muleguard-reports");
                 }
                 reportPath = reportsDir.resolve(relativePath).normalize();
-
-                // Security check: ensure the resolved path is still within the reports
-                // directory
                 if (!reportPath.startsWith(reportsDir)) {
                     sendError(exchange, 403, "Access denied");
                     return;
                 }
             }
-
             if (!Files.exists(reportPath)) {
                 System.err.println("[ERROR] Report not found: " + reportPath);
                 sendError(exchange, 404, "Report not found: " + reportPath.getFileName());
                 return;
             }
-
             try {
                 byte[] content = Files.readAllBytes(reportPath);
-
-                // Set content type based on file extension
                 String contentType = "text/html; charset=UTF-8";
                 String fileName = reportPath.getFileName().toString().toLowerCase();
                 if (fileName.endsWith(".css")) {
@@ -226,42 +172,28 @@ public class MuleGuardGUI {
                 } else if (fileName.endsWith(".svg")) {
                     contentType = "image/svg+xml; charset=UTF-8";
                 }
-
-                // For HTML files, rewrite relative links to use /report/ prefix
                 if (fileName.endsWith(".html")) {
                     String htmlContent = new String(content, "UTF-8");
-
-                    // Add <base> tag to set the base URL for all relative links
                     if (htmlContent.contains("<head>")) {
                         htmlContent = htmlContent.replace("<head>", "<head>\n<base href=\"/report/\">");
                         System.out.println("[DEBUG] Added base tag to: " + fileName);
                     }
-
-                    // Rewrite absolute paths that start with / but aren't /report/
                     htmlContent = htmlContent.replaceAll("href=\"/(?!report/)([^\"]+)\"", "href=\"/report/$1\"");
-
-                    // Rewrite relative href attributes
                     htmlContent = htmlContent.replaceAll("href=\"(?!http|/|#)([^\"]+)\"", "href=\"/report/$1\"");
-
-                    // Rewrite src attributes for relative resources
                     htmlContent = htmlContent.replaceAll("src=\"(?!http|/|#)([^\"]+)\"", "src=\"/report/$1\"");
-
                     System.out.println("[DEBUG] Rewrote HTML links for: " + fileName);
                     content = htmlContent.getBytes("UTF-8");
                 }
-
                 exchange.getResponseHeaders().set("Content-Type", contentType);
                 exchange.sendResponseHeaders(200, content.length);
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(content);
                 }
-
                 System.out.println("[DEBUG] Served report: " + reportPath.getFileName());
             } catch (IOException e) {
                 sendError(exchange, 500, "Error reading report: " + e.getMessage());
             }
         }
-
         private void sendError(HttpExchange exchange, int code, String message) throws IOException {
             byte[] response = message.getBytes("UTF-8");
             exchange.sendResponseHeaders(code, response.length);
@@ -269,12 +201,9 @@ public class MuleGuardGUI {
                 os.write(response);
             }
         }
-
         private String generateHomePage() {
             try {
-                // Get current directory as default
                 String defaultPath = System.getProperty("user.dir") + File.separator + "testData";
-
                 String htmlTemplate = """
                         <!DOCTYPE html>
                         <html>
@@ -423,7 +352,6 @@ public class MuleGuardGUI {
                                     <h1 style="margin-top: 15px;">MuleGuard</h1>
                                 </div>
                                 <p class="subtitle">Comprehensive MuleSoft Application Validation Tool</p>
-
                                 <form id="validationForm">
                                     <div class="form-group">
                                         <label for="projectPath">Mule Project Folders Location</label>
@@ -439,39 +367,29 @@ public class MuleGuardGUI {
                                             💡 You can use absolute path (e.g., C:\\projects\\muleapps) or relative path (e.g., ./testData)
                                         </div>
                                     </div>
-
                                     <button type="submit" id="validateBtn">
                                         🚀 Run Validation - MuleGuard
                                     </button>
                                 </form>
-
                                 <div class="spinner" id="spinner"></div>
-
                                 <div class="status" id="status"></div>
                             </div>
-
                             <script>
                                 const form = document.getElementById('validationForm');
                                 const validateBtn = document.getElementById('validateBtn');
                                 const spinner = document.getElementById('spinner');
                                 const status = document.getElementById('status');
-
                                 form.addEventListener('submit', async (e) => {
                                     e.preventDefault();
-
                                     const projectPath = document.getElementById('projectPath').value.trim();
-
                                     if (!projectPath) {
                                         showStatus('error', 'Please enter a project path');
                                         return;
                                     }
-
-                                    // Show loading state
                                     validateBtn.disabled = true;
                                     validateBtn.textContent = '⏳ Running Validation...';
                                     spinner.style.display = 'block';
                                     status.style.display = 'none';
-
                                     try {
                                         const response = await fetch('/api/validate', {
                                             method: 'POST',
@@ -480,9 +398,7 @@ public class MuleGuardGUI {
                                             },
                                             body: 'projectPath=' + encodeURIComponent(projectPath)
                                         });
-
                                         const result = await response.json();
-
                                         if (result.success) {
                                             showStatus('success',
                                                 '✅ Validation completed successfully!<br><br>' +
@@ -504,7 +420,6 @@ public class MuleGuardGUI {
                                         spinner.style.display = 'none';
                                     }
                                 });
-
                                 function showStatus(type, message) {
                                     status.className = 'status ' + type;
                                     status.innerHTML = message;
@@ -514,8 +429,6 @@ public class MuleGuardGUI {
                         </body>
                         </html>
                         """;
-
-                // Use replace instead of formatted to avoid issues with special characters
                 return htmlTemplate.replace("{{DEFAULT_PATH}}", defaultPath.replace("\\", "\\\\"));
             } catch (Exception e) {
                 System.err.println("[ERROR] Failed to generate HTML: " + e.getMessage());
@@ -525,31 +438,23 @@ public class MuleGuardGUI {
             }
         }
     }
-
     static class ValidationHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             System.out.println("[DEBUG] Validation request received: " + exchange.getRequestMethod());
-
             if (!"POST".equals(exchange.getRequestMethod())) {
                 sendResponse(exchange, 405, "{\"success\":false,\"message\":\"Method not allowed\"}");
                 return;
             }
-
-            // Read request body
             String body = new String(exchange.getRequestBody().readAllBytes());
             Map<String, String> params = parseFormData(body);
             String projectPath = params.get("projectPath");
-
             if (projectPath == null || projectPath.trim().isEmpty()) {
                 sendResponse(exchange, 400, "{\"success\":false,\"message\":\"Project path is required\"}");
                 return;
             }
-
             try {
                 System.out.println("[DEBUG] Project path received: " + projectPath);
-
-                // Run validation
                 Path path = Paths.get(projectPath);
                 if (!Files.exists(path)) {
                     System.err.println("[ERROR] Path does not exist: " + projectPath);
@@ -557,45 +462,30 @@ public class MuleGuardGUI {
                             "{\"success\":false,\"message\":\"Path does not exist: " + escapeJson(projectPath) + "\"}");
                     return;
                 }
-
                 System.out.println("[DEBUG] Path exists, starting validation...");
-
-                // Store the project path for report resolution
                 lastProjectPath = projectPath;
-
-                // Capture output to parse statistics
                 ByteArrayOutputStream baos = new ByteArrayOutputStream();
                 PrintStream ps = new PrintStream(baos);
                 PrintStream oldOut = System.out;
                 PrintStream oldErr = System.err;
-
-                // Run MuleGuard validation (System.exit has been disabled in MuleGuardMain)
                 try {
                     System.setOut(ps);
                     System.setErr(ps);
-
                     MuleGuardMain.main(new String[] { "-p", projectPath });
                     System.out.println("[DEBUG] Validation completed");
                 } catch (Exception e) {
                     System.err.println("[ERROR] Validation failed: " + e.getMessage());
                     e.printStackTrace();
-                    // Do not send response here, let the outer try-catch handle it if report is not
-                    // found
                 } finally {
                     System.setOut(oldOut);
                     System.setErr(oldErr);
                 }
-
-                // Parse output for statistics
                 String output = baos.toString();
                 System.out.println("[DEBUG] Captured output length: " + output.length());
-
                 int totalApis = countOccurrences(output, "Validating API:")
                         + countOccurrences(output, "Validating Config:");
                 int totalPassed = 0;
                 int totalFailed = 0;
-
-                // Parse each validation result line
                 String[] lines = output.split("\n");
                 for (String line : lines) {
                     if (line.contains("Passed:") && line.contains("Failed:")) {
@@ -607,34 +497,24 @@ public class MuleGuardGUI {
                             totalPassed += passed;
                             totalFailed += failed;
                         } catch (Exception e) {
-                            // Ignore parsing errors
                         }
                     }
                 }
-
                 int totalRules = totalPassed + totalFailed;
-
                 System.out.println("[DEBUG] Stats - APIs: " + totalApis + ", Rules: " + totalRules + ", Passed: "
                         + totalPassed + ", Failed: " + totalFailed);
-
-                // Find the generated report
                 Path reportPath = path.resolve("muleguard-reports").resolve("CONSOLIDATED-REPORT.html");
-
                 if (!Files.exists(reportPath)) {
                     System.err.println("[ERROR] Report not found at: " + reportPath);
                     sendResponse(exchange, 500, "{\"success\":false,\"message\":\"Report generation failed\"}");
                     return;
                 }
-
                 System.out.println("[DEBUG] Report found at: " + reportPath);
-
                 String response = String.format(
                         "{\"success\":true,\"message\":\"Validation completed\",\"reportPath\":\"%s\",\"totalApis\":%d,\"totalRules\":%d,\"passed\":%d,\"failed\":%d}",
                         reportPath.toAbsolutePath().toString().replace("\\", "\\\\"),
                         totalApis, totalRules, totalPassed, totalFailed);
-
                 sendResponse(exchange, 200, response);
-
             } catch (Exception e) {
                 System.err.println("[ERROR] Unexpected error in validation: " + e.getMessage());
                 e.printStackTrace();
@@ -646,22 +526,17 @@ public class MuleGuardGUI {
                 }
             }
         }
-
         private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
             byte[] responseBytes = response.getBytes("UTF-8");
-
             exchange.getResponseHeaders().set("Content-Type", "application/json; charset=UTF-8");
             exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
             exchange.sendResponseHeaders(statusCode, responseBytes.length);
-
             try (OutputStream os = exchange.getResponseBody()) {
                 os.write(responseBytes);
                 os.flush();
             }
-
             System.out.println("[DEBUG] Sent response: " + statusCode + ", " + responseBytes.length + " bytes");
         }
-
         private Map<String, String> parseFormData(String body) {
             Map<String, String> params = new HashMap<>();
             for (String pair : body.split("&")) {
@@ -672,13 +547,11 @@ public class MuleGuardGUI {
                                 java.net.URLDecoder.decode(kv[0], "UTF-8"),
                                 java.net.URLDecoder.decode(kv[1], "UTF-8"));
                     } catch (Exception e) {
-                        // Skip invalid pairs
                     }
                 }
             }
             return params;
         }
-
         private int countOccurrences(String str, String substring) {
             int count = 0;
             int index = 0;
@@ -688,7 +561,6 @@ public class MuleGuardGUI {
             }
             return count;
         }
-
         private String escapeJson(String s) {
             return s.replace("\\", "\\\\")
                     .replace("\"", "\\\"")
@@ -696,72 +568,50 @@ public class MuleGuardGUI {
                     .replace("\r", "\\r");
         }
     }
-
-    // Handler to serve report files
     static class ReportHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String requestPath = exchange.getRequestURI().getPath();
             String query = exchange.getRequestURI().getQuery();
-
             Path reportPath = null;
-
-            // If there's a query parameter with full path, use that
             if (query != null && query.startsWith("path=")) {
                 String fullPath = java.net.URLDecoder.decode(query.substring(5), "UTF-8");
                 reportPath = Paths.get(fullPath);
             } else {
-                // Extract the relative path
                 String relativePath;
                 if (requestPath.startsWith("/report/")) {
-                    // Path like /report/checklist.html
                     relativePath = requestPath.substring("/report/".length());
                 } else if (requestPath.startsWith("/") && requestPath.endsWith(".html")) {
-                    // Path like /CONSOLIDATED-REPORT.html or /checklist.html
-                    relativePath = requestPath.substring(1); // Remove leading /
+                    relativePath = requestPath.substring(1); 
                 } else {
-                    // Not a report request, let HomePageHandler handle it
                     exchange.sendResponseHeaders(404, -1);
                     return;
                 }
-
                 if (relativePath.isEmpty()) {
                     sendError(exchange, 400, "Missing report path");
                     return;
                 }
-
-                // Decode URL-encoded path
                 relativePath = java.net.URLDecoder.decode(relativePath, "UTF-8");
-
-                // Find the reports directory
                 Path reportsDir;
                 if (lastProjectPath != null) {
                     reportsDir = Paths.get(lastProjectPath).resolve("muleguard-reports");
                 } else {
-                    // Fallback to default location
                     reportsDir = Paths.get(System.getProperty("user.dir")).resolve("testData")
                             .resolve("muleguard-reports");
                 }
                 reportPath = reportsDir.resolve(relativePath).normalize();
-
-                // Security check: ensure the resolved path is still within the reports
-                // directory
                 if (!reportPath.startsWith(reportsDir)) {
                     sendError(exchange, 403, "Access denied");
                     return;
                 }
             }
-
             if (!Files.exists(reportPath)) {
                 System.err.println("[ERROR] Report not found: " + reportPath);
                 sendError(exchange, 404, "Report not found: " + reportPath.getFileName());
                 return;
             }
-
             try {
                 byte[] content = Files.readAllBytes(reportPath);
-
-                // Set content type based on file extension
                 String contentType = "text/html; charset=UTF-8";
                 String fileName = reportPath.getFileName().toString().toLowerCase();
                 if (fileName.endsWith(".css")) {
@@ -771,49 +621,28 @@ public class MuleGuardGUI {
                 } else if (fileName.endsWith(".xlsx")) {
                     contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 }
-
-                // For HTML files, rewrite relative links to use /report/ prefix
                 if (fileName.endsWith(".html")) {
                     String htmlContent = new String(content, "UTF-8");
-
-                    // Add <base> tag to set the base URL for all relative links
-                    // This ensures relative links are resolved relative to /report/ instead of the
-                    // query parameter path
                     if (htmlContent.contains("<head>")) {
                         htmlContent = htmlContent.replace("<head>", "<head>\n<base href=\"/report/\">");
                         System.out.println("[DEBUG] Added base tag to: " + fileName);
                     }
-
-                    // Rewrite absolute paths that start with / but aren't /report/ or http://
-                    // This fixes Dashboard and Checklist buttons that use
-                    // href="/CONSOLIDATED-REPORT.html"
                     htmlContent = htmlContent.replaceAll("href=\"/(?!report/)([^\"]+)\"", "href=\"/report/$1\"");
-
-                    // Also rewrite href attributes for relative links (but not already rewritten
-                    // ones)
-                    // Match href="something" but not href="http://", href="/", href="#", or
-                    // href="/report/"
                     htmlContent = htmlContent.replaceAll("href=\"(?!http|/|#)([^\"]+)\"", "href=\"/report/$1\"");
-
-                    // Rewrite src attributes for relative resources
                     htmlContent = htmlContent.replaceAll("src=\"(?!http|/|#)([^\"]+)\"", "src=\"/report/$1\"");
-
                     System.out.println("[DEBUG] Rewrote HTML links for: " + fileName);
                     content = htmlContent.getBytes("UTF-8");
                 }
-
                 exchange.getResponseHeaders().set("Content-Type", contentType);
                 exchange.sendResponseHeaders(200, content.length);
                 try (OutputStream os = exchange.getResponseBody()) {
                     os.write(content);
                 }
-
                 System.out.println("[DEBUG] Served report: " + reportPath.getFileName());
             } catch (IOException e) {
                 sendError(exchange, 500, "Error reading report: " + e.getMessage());
             }
         }
-
         private void sendError(HttpExchange exchange, int code, String message) throws IOException {
             byte[] response = message.getBytes("UTF-8");
             exchange.sendResponseHeaders(code, response.length);

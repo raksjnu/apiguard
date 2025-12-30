@@ -1,42 +1,29 @@
 package com.raks.raksanalyzer;
-
 import com.raks.raksanalyzer.util.TibcoConfigParser;
 import com.raks.raksanalyzer.domain.model.tibco.TibcoGlobalVariable;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-
 public class ReproCustomConfig {
     public static void main(String[] args) {
         try {
             System.out.println("Starting ReproCustomConfig Test...");
-            
-            // Setup Paths
             Path projectPath = Paths.get("testdata/customerOrder");
             Path customConfigPath = Paths.get("testdata/1.xml");
-            
             System.out.println("Project Path: " + projectPath.toAbsolutePath());
             System.out.println("Custom Config Path: " + customConfigPath.toAbsolutePath());
-            
-            // 1. Parse Global Variables with explicit custom config
             System.out.println("\n--- Parsing Global Variables ---");
             Map<String, List<TibcoGlobalVariable>> vars = TibcoConfigParser.parseGlobalVariables(projectPath, customConfigPath);
-            
-            // 2. Dump Results for httpConnection/httpport
             System.out.println("\n--- Checking Results ---");
             checkValue(vars, "httpConnection/httpport");
-            
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
-    
-    // Mimic TibcoAnalyzer.resolveGV
     private static void checkValue(Map<String, List<TibcoGlobalVariable>> globalVariables, String key) {
         System.out.println("--- Dumping matches for '" + key + "' ---");
         boolean matchFound = false;
-        
         for (Map.Entry<String, List<TibcoGlobalVariable>> entry : globalVariables.entrySet()) {
             String groupName = entry.getKey();
             for (TibcoGlobalVariable gv : entry.getValue()) {
@@ -48,7 +35,6 @@ public class ReproCustomConfig {
                 }
             }
         }
-        
         if (!matchFound) {
             System.out.println("No match found for key '" + key + "'");
         }

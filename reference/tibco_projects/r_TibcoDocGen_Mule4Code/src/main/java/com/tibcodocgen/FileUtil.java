@@ -1,5 +1,4 @@
 package com.tibcodocgen;
-
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -7,14 +6,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 public class FileUtil {
 	static ArrayList<String> filelist = new ArrayList<String>();
-	
 public static ArrayList<String> listFilesAndFilesSubDirectories(String directoryName,String extention) throws IOException{
-	//ArrayList<String> filelist = new ArrayList<String>();
 		File directory = new File(directoryName);
-  
         File[] fList = directory.listFiles();
         for (File file : fList){
             if (file.isFile() && file.getName().matches(extention)){
@@ -31,17 +26,8 @@ public static String getDataDir(Class c) {
     dir = new File(dir, "src");
     dir = new File(dir, "main");
     dir = new File(dir, "resources");
-//
-//    for (String s : c.getName().split("\\.")) {
-//        dir = new File(dir, s);
-//        if (dir.isDirectory() == false)
-//            dir.mkdir();
-//    }
-
-    //System.out.println("Using data directory: " + dir.toString());
     return dir.toString() + File.separator;
 }
-	
 	public static boolean deleteDirectory(File dir) throws IOException {
         if (dir.isDirectory()) {
             File[] children = dir.listFiles();
@@ -67,18 +53,13 @@ public static String getDataDir(Class c) {
         }
         return dir.delete();
     }
-
 	public static void rename(String source,String desti) throws IOException {
 		File file = new File(source);
         File newFile = new File(desti);
         if(file.renameTo(newFile)){
-
         }else{
-        	
         	throw new IOException("File Rename Failed");
-            
         }
-		
 	}
 	public static void unzip(String zipFilePath, String destDir) {
         File dir = new File(destDir);
@@ -107,11 +88,6 @@ public static String getDataDir(Class c) {
             fis.close();
         } catch (IOException e) {
            e.printStackTrace();
-        	
         }
-        
     }
-	
-
-
 }

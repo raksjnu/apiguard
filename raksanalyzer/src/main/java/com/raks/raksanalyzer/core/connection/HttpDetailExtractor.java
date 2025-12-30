@@ -1,38 +1,25 @@
 package com.raks.raksanalyzer.core.connection;
-
 import com.raks.raksanalyzer.domain.model.ComponentInfo;
 import com.raks.raksanalyzer.domain.model.ConnectorConfig;
 import com.raks.raksanalyzer.core.utils.PropertyResolver;
-
-/**
- * Extracts connection details for HTTP connectors (listener and request).
- */
 public class HttpDetailExtractor implements ConnectorDetailExtractor {
-    
     private final String connectorType;
-    
     public HttpDetailExtractor(String connectorType) {
         this.connectorType = connectorType;
     }
-    
     @Override
     public String extractDetails(ConnectorConfig config, ComponentInfo component, PropertyResolver propertyResolver) {
         if (config == null) {
             return "";
         }
-        
-        // Extract host and port from nested connection component
         String host = extractNestedAttribute(config, "listener-connection", "host", propertyResolver);
         if (host == null) {
             host = extractNestedAttribute(config, "request-connection", "host", propertyResolver);
         }
-        
         String port = extractNestedAttribute(config, "listener-connection", "port", propertyResolver);
         if (port == null) {
             port = extractNestedAttribute(config, "request-connection", "port", propertyResolver);
         }
-        
-        // Get path from component if available
         String path = "";
         if (component != null && component.getAttributes() != null) {
             String componentPath = component.getAttributes().get("path");
@@ -43,8 +30,6 @@ public class HttpDetailExtractor implements ConnectorDetailExtractor {
                 path = componentPath.startsWith("/") ? componentPath : "/" + componentPath;
             }
         }
-        
-        // Format: host:port/path
         StringBuilder result = new StringBuilder();
         if (host != null && !host.isEmpty()) {
             result.append(host);
@@ -55,23 +40,16 @@ public class HttpDetailExtractor implements ConnectorDetailExtractor {
         if (!path.isEmpty()) {
             result.append(path);
         }
-        
         return result.toString();
     }
-    
     @Override
     public String getConnectorType() {
         return connectorType;
     }
-    
-    /**
-     * Extracts an attribute from a nested component within the config.
-     */
     private String extractNestedAttribute(ConnectorConfig config, String nestedType, String attributeName, PropertyResolver resolver) {
         if (config.getNestedComponents() == null) {
             return null;
         }
-        
         for (ComponentInfo nested : config.getNestedComponents()) {
             if (nested.getType() != null && nested.getType().contains(nestedType)) {
                 String value = nested.getAttributes().get(attributeName);
@@ -81,8 +59,6 @@ public class HttpDetailExtractor implements ConnectorDetailExtractor {
                 return value;
             }
         }
-        
-        // Also check config attributes directly
         String value = config.getAttributes().get(attributeName);
         if (value != null && resolver != null) {
             value = resolver.resolve(value);

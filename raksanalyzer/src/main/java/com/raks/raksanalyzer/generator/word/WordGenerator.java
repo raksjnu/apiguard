@@ -1,12 +1,10 @@
 package com.raks.raksanalyzer.generator.word;
-
 import com.raks.raksanalyzer.core.config.ConfigurationManager;
 import com.raks.raksanalyzer.domain.model.*;
 import org.apache.poi.xwpf.usermodel.*;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -25,104 +23,67 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.util.HashSet;
-
-/**
- * Mule Word document generator - Complete restructure with proper hierarchy and numbering.
- * Generates documents based on template with configurable sections.
- */
 public class WordGenerator {
     private static final Logger logger = LoggerFactory.getLogger(WordGenerator.class);
-    
     private final ConfigurationManager config = ConfigurationManager.getInstance();
     private XWPFDocument document;
     private Set<String> processedFiles;
-    
-    // Section numbering management
     private List<Integer> sectionCounters;
-    
     public Path generate(AnalysisResult result) throws IOException {
         logger.info("Generating Mule Word document: {}", result.getAnalysisId());
         processedFiles = new HashSet<>();
         sectionCounters = new ArrayList<>();
-        sectionCounters.add(0); // Initialize with level 0
-        
+        sectionCounters.add(0); 
         try {
-            // Load template
-            // Load template
             document = loadTemplate();
-            
-            // Generate sections in order
             createCoverPage(result);
-            
             if (getBooleanConfig("mule.word.include.toc", true)) {
                 createTableOfContents();
             }
-            
             if (getBooleanConfig("mule.word.include.project.details", true)) {
                 createProjectInformationSection(result);
             }
-            
             if (getBooleanConfig("mule.word.include.flow.diagrams.placeholder", true)) {
                 createFlowDiagramSection(result);
             }
-            
             if (getBooleanConfig("mule.word.include.global.config", true)) {
                 createGlobalConfigurationSection(result);
             }
-            
             if (getBooleanConfig("mule.word.include.connector.configs", true)) {
                 createConnectorConfigurationsSection(result);
             }
-            
             if (getBooleanConfig("mule.word.include.mule.flows", true)) {
                 createMuleFlowsSection(result);
             }
-            
             if (getBooleanConfig("mule.word.include.mule.subflows", true)) {
                 createMuleSubFlowsSection(result);
             }
-            
             if (getBooleanConfig("mule.word.include.dataweave.files", true)) {
                 createDataWeaveFilesSection(result);
             }
-            
             if (getBooleanConfig("mule.word.include.other.resources", true)) {
                 createOtherResourcesSection(result);
             }
-            
             if (getBooleanConfig("mule.word.include.references.placeholder", true)) {
                 createReferencesPlaceholder();
             }
-            
-            // Add Footer (Text + Page Numbers)
             createFooter();
-            
-            // Force Word to update fields (TOC, page numbers) on opening
             document.enforceUpdateFields();
-            
-            // Save
             Path outputPath = getOutputPath(result);
             try (FileOutputStream out = new FileOutputStream(outputPath.toFile())) {
                 document.write(out);
             }
             document.close();
-            
             logger.info("Word document generated successfully: {}", outputPath);
             return outputPath;
-            
         } catch (Throwable e) {
             logger.error("Error generating Word document", e);
             throw new IOException("Failed to generate Word document", e);
         }
     }
-    
     private void createFooter() {
         XWPFFooter footer = document.createFooter(org.apache.poi.wp.usermodel.HeaderFooterType.DEFAULT);
-        
-        // Use a 3-column table to align Left (Empty), Center (Text), and Right (Page Num) on the same line
         XWPFTable table = footer.createTable(1, 3);
-        
-        // Remove table borders
         CTTblPr tblPr = table.getCTTbl().getTblPr();
         if (tblPr == null) tblPr = table.getCTTbl().addNewTblPr();
         CTTblBorders borders = tblPr.isSetTblBorders() ? tblPr.getTblBorders() : tblPr.addNewTblBorders();
@@ -132,52 +93,32 @@ public class WordGenerator {
         borders.addNewRight().setVal(STBorder.NONE);
         borders.addNewInsideH().setVal(STBorder.NONE);
         borders.addNewInsideV().setVal(STBorder.NONE);
-        
-        // Set table width to 100%
         CTTblWidth width = tblPr.isSetTblW() ? tblPr.getTblW() : tblPr.addNewTblW();
         width.setType(STTblWidth.PCT);
-        width.setW(BigInteger.valueOf(5000)); // 5000 = 100%
-        
-        // Cell 0: Left (Empty)
+        width.setW(BigInteger.valueOf(5000)); 
         XWPFParagraph pLeft = table.getRow(0).getCell(0).getParagraphs().get(0);
         pLeft.setAlignment(ParagraphAlignment.LEFT);
-        
-        // Cell 1: Center (Footer Text)
         XWPFParagraph pCenter = table.getRow(0).getCell(1).getParagraphs().get(0);
         pCenter.setAlignment(ParagraphAlignment.CENTER);
         XWPFRun rCenter = pCenter.createRun();
         rCenter.setText(config.getProperty("document.footer.text", "RaksAnalyzer ApiGuard Tool"));
-        rCenter.setColor("808080"); // Gray
+        rCenter.setColor("808080"); 
         rCenter.setFontSize(9);
-        
-        // Cell 2: Right (Page Numbers)
         XWPFParagraph pRight = table.getRow(0).getCell(2).getParagraphs().get(0);
         pRight.setAlignment(ParagraphAlignment.RIGHT);
-        
         XWPFRun rNum = pRight.createRun();
         rNum.setText("Page ");
         rNum.setFontSize(9);
-        
-        // Current Page
         pRight.getCTP().addNewFldSimple().setInstr("PAGE");
-        
         rNum = pRight.createRun();
         rNum.setText(" of ");
         rNum.setFontSize(9);
-        
-        // Total Pages
         pRight.getCTP().addNewFldSimple().setInstr("NUMPAGES");
     }
-    
-    /**
-     * Load Word template or create new document.
-     */
     private XWPFDocument loadTemplate() throws IOException {
         String templatePath = config.getProperty("mule.word.template.path", 
             "template/MuleSoft Project Documentation Template.docx");
-        
         try {
-            // Try to load from file system first
             Path templateFile = Paths.get(templatePath);
             if (Files.exists(templateFile)) {
                 logger.info("Loading Word template from: {}", templateFile);
@@ -185,61 +126,41 @@ public class WordGenerator {
                     return new XWPFDocument(fis);
                 }
             }
-            
-            // Strategy 2: Context ClassLoader (Best for Mule/Webapps)
             ClassLoader ctxLoader = Thread.currentThread().getContextClassLoader();
             InputStream templateStream = ctxLoader.getResourceAsStream(templatePath);
-            
             if (templateStream == null) {
-                 // Strategy 3: Class's ClassLoader
                  templateStream = getClass().getClassLoader().getResourceAsStream(templatePath);
             }
-
             if (templateStream == null) {
-                 // Strategy 4: Component Class (absolute path)
                  templateStream = getClass().getResourceAsStream("/" + templatePath);
             }
-
             if (templateStream != null) {
                 logger.info("Loaded Word template from classpath: {}", templatePath);
                 return new XWPFDocument(templateStream);
             }
-            
-            // Fallback to new document
             logger.warn("Template NOT found in file system or classpath. Path checked: '{}'. Creating empty document.", templatePath);
             return new XWPFDocument();
-            
         } catch (Exception e) {
             logger.warn("Failed to load template, creating new document. Error: {}", e.getMessage());
             return new XWPFDocument();
         }
     }
-    
-    // ==================== COVER PAGE ====================
-    
     private void createCoverPage(AnalysisResult result) {
         ProjectInfo projectInfo = result.getProjectInfo();
-        
         XWPFParagraph title = document.createParagraph();
         title.setAlignment(ParagraphAlignment.CENTER);
-        
-        // Title
         XWPFRun titleRun = title.createRun();
         titleRun.setText(config.getProperty("mule.common.cover.title", "Project Analysis Report"));
         titleRun.setBold(true);
         titleRun.setFontSize(24);
         titleRun.addBreak();
         titleRun.addBreak();
-        
-        // Project Name
         if (projectInfo != null) {
             XWPFRun projectRun = title.createRun();
             projectRun.setText(projectInfo.getProjectName());
             projectRun.setFontSize(18);
             projectRun.addBreak();
         }
-        
-        // Subtitle (if configured)
         String subtitle = config.getProperty("mule.common.cover.subtitle", "");
         if (!subtitle.isEmpty()) {
             XWPFRun subtitleRun = title.createRun();
@@ -247,8 +168,6 @@ public class WordGenerator {
             subtitleRun.setFontSize(14);
             subtitleRun.addBreak();
         }
-        
-        // Description
         String description = config.getProperty("mule.common.cover.description", 
             "Comprehensive analysis and documentation");
         XWPFRun descRun = title.createRun();
@@ -257,18 +176,12 @@ public class WordGenerator {
         descRun.setItalic(true);
         descRun.addBreak();
         descRun.addBreak();
-        
-        // Date
         XWPFRun dateRun = title.createRun();
         java.time.ZonedDateTime zdt = result.getStartTime().atZone(java.time.ZoneId.systemDefault());
         dateRun.setText(zdt.format(DateTimeFormatter.ofPattern("MMMM dd, yyyy HH:mm:ss z")));
         dateRun.setFontSize(12);
-        
         addPageBreak();
     }
-    
-    // ==================== TABLE OF CONTENTS ====================
-    
     private void createTableOfContents() {
         XWPFParagraph tocTitle = document.createParagraph();
         tocTitle.setAlignment(ParagraphAlignment.CENTER);
@@ -276,53 +189,37 @@ public class WordGenerator {
         run.setText("Table of Contents");
         run.setBold(true);
         run.setFontSize(18);
-        
         addParagraphSpace();
-        
-        // Add TOC field with corrected syntax
         XWPFParagraph tocPara = document.createParagraph();
         CTP ctP = tocPara.getCTP();
         CTSimpleField toc = ctP.addNewFldSimple();
-        // FIX: Corrected TOC instruction - removed extra backslashes
         toc.setInstr("TOC \\o \"1-3\" \\h \\z \\u");
-        
         addParagraphSpace();
         addPageBreak();
     }
-    
-    // ==================== PROJECT INFORMATION SECTION ====================
-    
     private void createProjectInformationSection(AnalysisResult result) {
         String sectionName = config.getProperty("mule.word.section.project.info", "Project Information");
         createHeading1(sectionName);
-        
-        // 1. Project Details (H2)
         if (getBooleanConfig("mule.word.include.project.details", true)) {
             String detailsName = config.getProperty("mule.word.section.project.details", "Project Details");
             createHeading2(detailsName);
             createProjectDetailsTable(result.getProjectInfo());
             addParagraphSpace();
         }
-        
-        // 2. POM Details (H2)
         if (getBooleanConfig("mule.word.include.pom.details", true)) {
             ProjectNode pomNode = findFileByName(result.getProjectStructure(), "pom.xml");
             if (pomNode != null) {
                 String pomName = config.getProperty("mule.word.section.pom.details", "POM Details");
                 createHeading2(pomName);
                 addPathSubtitle(pomNode);
-                
                 PomInfo pomInfo = (PomInfo) pomNode.getMetadata("pomInfo");
                 if (pomInfo != null) {
-                    // Basic Information (H3)
                     if (getBooleanConfig("mule.word.include.pom.basic.info", true)) {
                         String basicInfoName = config.getProperty("mule.word.subsection.pom.basic.info", "Basic Information");
                         createHeading3(basicInfoName);
                         createPomBasicInfoTable(pomInfo);
                         addParagraphSpace();
                     }
-                    
-                    // Properties (H3)
                     if (getBooleanConfig("mule.word.include.pom.properties", true) && 
                         pomInfo.getProperties() != null && !pomInfo.getProperties().isEmpty()) {
                         String propsName = config.getProperty("mule.word.subsection.pom.properties", "Properties");
@@ -330,16 +227,12 @@ public class WordGenerator {
                         createPomPropertiesTable(pomInfo.getProperties());
                         addParagraphSpace();
                     }
-                    
-                    // Plugins (H3)
                     if (getBooleanConfig("mule.word.include.pom.plugins", true) && !pomInfo.getPlugins().isEmpty()) {
                         String pluginsName = config.getProperty("mule.word.subsection.pom.plugins", "Plugins");
                         createHeading3(pluginsName);
                         createPluginsTable(pomInfo.getPlugins());
                         addParagraphSpace();
                     }
-                    
-                    // Dependencies (H3)
                     if (getBooleanConfig("mule.word.include.pom.dependencies", true) && !pomInfo.getDependencies().isEmpty()) {
                         String depsName = config.getProperty("mule.word.subsection.pom.dependencies", "Dependencies");
                         createHeading3(depsName);
@@ -350,8 +243,6 @@ public class WordGenerator {
                 processedFiles.add(pomNode.getAbsolutePath());
             }
         }
-        
-        // 3. Mule-artifact.json (H2)
         if (getBooleanConfig("mule.word.include.mule.artifact.json", true)) {
             ProjectNode muleArtifact = findFileByName(result.getProjectStructure(), "mule-artifact.json");
             if (muleArtifact != null) {
@@ -362,8 +253,6 @@ public class WordGenerator {
                 processedFiles.add(muleArtifact.getAbsolutePath());
             }
         }
-        
-        // 4. Release-info.json (H2) - if exists
         if (getBooleanConfig("mule.word.include.release.info.json", true)) {
             ProjectNode releaseInfo = findFileByName(result.getProjectStructure(), "releaseinfo.json");
             if (releaseInfo != null) {
@@ -374,29 +263,18 @@ public class WordGenerator {
                 processedFiles.add(releaseInfo.getAbsolutePath());
             }
         }
-        
         addPageBreak();
     }
-    
-    // ==================== FLOW DIAGRAMS PLACEHOLDER ====================
-    
-    // Section 2: Flow Structure and Diagrams
     private void createFlowDiagramSection(AnalysisResult result) {
         boolean genStructure = Boolean.parseBoolean(config.getProperty("mule.generate.flow.structure", "true"));
         boolean genDiagrams = Boolean.parseBoolean(config.getProperty("mule.generate.flow.diagrams", "true"));
-        
         if (!genStructure && !genDiagrams) return;
-        
         String sectionName = config.getProperty("mule.word.section.flow.diagrams", "Flow Diagrams");
         createHeading1(sectionName);
-        
-        // Collect flows and sub-flows
         List<FlowWithSource> allFlows = new ArrayList<>();
         collectFlowsByType(result.getProjectStructure(), "flow", allFlows);
         collectFlowsByType(result.getProjectStructure(), "sub-flow", allFlows);
-        
         allFlows.sort(Comparator.comparing(f -> f.flow.getName()));
-        
         if (allFlows.isEmpty()) {
             XWPFParagraph p = document.createParagraph();
             XWPFRun r = p.createRun();
@@ -405,72 +283,46 @@ public class WordGenerator {
             addPageBreak(); 
             return;
         }
-
-        // Create a map of all flows for recursion
         Map<String, FlowInfo> allFlowsMap = new HashMap<>();
         for (FlowWithSource item : allFlows) {
             allFlowsMap.put(item.flow.getName(), item.flow);
         }
-
-        // 2.1 Integration Diagrams (config-ref only)
         if (genStructure) {
             createHeading2("Mule Project Flow Integration");
-            
             for (FlowWithSource item : allFlows) {
                 createHeading3(item.flow.getName());
-                
-                // Add Path in italics
                 if (item.sourceFile != null) {
                     XWPFParagraph pathPara = document.createParagraph();
                     XWPFRun pathRun = pathPara.createRun();
                     pathRun.setItalic(true);
                     pathRun.setFontSize(9);
-                    pathRun.setColor("808080"); // Gray
+                    pathRun.setColor("808080"); 
                     pathRun.setText("Path: " + item.sourceFile.getRelativePath());
                 }
-                
                 try {
-                    // Generate integration diagram (config-ref only, full names)
-                    // Use deeper default depth to allow visibility of nested integration points
                     int maxDepth = Integer.parseInt(config.getProperty("word.diagram.nested.component.max.depth", "5"));
                     byte[] imageBytes = DiagramGenerator.generatePlantUmlImage(item.flow, maxDepth, true, true, allFlowsMap);
                     if (imageBytes != null && imageBytes.length > 0) {
                         XWPFParagraph p = document.createParagraph();
                         XWPFRun r = p.createRun();
-                        
-                        // Get Dimensions
                          BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
                          int width = img.getWidth();
                          int height = img.getHeight();
-                         
-                         // Convert to EMU (1 px = 9525 EMU)
                          int widthEMU = width * 9525;
                          int heightEMU = height * 9525;
-                         
-                         // Scale to Fit Width (approx 6 inches = 5486400 EMU)
-                         // Scale to Fit Height (approx 9 inches = 8229600 EMU for page height)
                          int maxWidthEMU = 5486400;
                          int maxHeightEMU = 8229600;
-                         
                          double scale = 1.0;
-                         
-                         // 1. Scale to fit width if needed
                          if (widthEMU > maxWidthEMU) {
                              scale = (double) maxWidthEMU / widthEMU;
                          }
-                         
-                         // 2. Check if scaled height fits, if not scale down further
                          int scaledHeightEMU = (int) (heightEMU * scale);
                          if (scaledHeightEMU > maxHeightEMU) {
                              scale = scale * ((double) maxHeightEMU / scaledHeightEMU);
                          }
-                         
-                         // Apply final scale
                          widthEMU = (int) (widthEMU * scale);
                          heightEMU = (int) (heightEMU * scale);
-                         
                          try (InputStream is = new ByteArrayInputStream(imageBytes)) {
-                             // PICTURE_TYPE_PNG = 6
                              r.addPicture(is, org.apache.poi.xwpf.usermodel.XWPFDocument.PICTURE_TYPE_PNG, "flow.png", widthEMU, heightEMU);
                          }
                     } else {
@@ -484,72 +336,47 @@ public class WordGenerator {
                     XWPFRun r = p.createRun();
                     r.setText("Error generating integration diagram: " + e.getMessage());
                 }
-                
-                
                 addParagraphSpace();
             }
         }
-        
-        // 2.2 Visual Diagrams
         if (genDiagrams) {
-            if (genStructure) addPageBreak(); // Separate page for diagrams
+            if (genStructure) addPageBreak(); 
             createHeading2(config.getProperty("mule.word.section.flow.diagram", "Mule Project Flow Diagram"));
-            
             for (FlowWithSource item : allFlows) {
                 createHeading3(item.flow.getName());
-                
-                // Add Path in italics
                 if (item.sourceFile != null) {
                     XWPFParagraph pathPara = document.createParagraph();
                     XWPFRun pathRun = pathPara.createRun();
                     pathRun.setItalic(true);
                     pathRun.setFontSize(9);
-                    pathRun.setColor("808080"); // Gray
+                    pathRun.setColor("808080"); 
                     pathRun.setText("Path: " + item.sourceFile.getRelativePath());
                 }
-                
                 try {
-                    // Use deeper default depth for visual diagrams to show structural content
                     int maxDepth = Integer.parseInt(config.getProperty("word.diagram.nested.component.max.depth", "5"));
                     boolean useFullNames = Boolean.parseBoolean(config.getProperty("word.diagram.element.fullname", "true"));
                     byte[] imageBytes = DiagramGenerator.generatePlantUmlImage(item.flow, maxDepth, useFullNames, false);
                     if (imageBytes != null && imageBytes.length > 0) {
                         XWPFParagraph p = document.createParagraph();
                         XWPFRun r = p.createRun();
-                        
-                        // Get Dimensions
                          BufferedImage img = ImageIO.read(new ByteArrayInputStream(imageBytes));
                          int width = img.getWidth();
                          int height = img.getHeight();
-                         
-                         // Convert to EMU (1 px = 9525 EMU)
                          int widthEMU = width * 9525;
                          int heightEMU = height * 9525;
-                         
-                         // Scale to Fit Width (approx 6 inches = 5486400 EMU)
-                         // Scale to Fit Height (approx 9 inches = 8229600 EMU for page height)
                          int maxWidthEMU = 5486400;
                          int maxHeightEMU = 8229600;
-                         
                          double scale = 1.0;
-                         
-                         // 1. Scale to fit width if needed
                          if (widthEMU > maxWidthEMU) {
                              scale = (double) maxWidthEMU / widthEMU;
                          }
-                         
-                         // 2. Check if scaled height fits, if not scale down further
                          int scaledHeightEMU = (int) (heightEMU * scale);
                          if (scaledHeightEMU > maxHeightEMU) {
                              scale = scale * ((double) maxHeightEMU / scaledHeightEMU);
                          }
-                         
-                         // Apply final scale
                          widthEMU = (int) (widthEMU * scale);
                          heightEMU = (int) (heightEMU * scale);
-                         
                          try (InputStream is = new ByteArrayInputStream(imageBytes)) {
-                             // PICTURE_TYPE_PNG = 6
                              r.addPicture(is, org.apache.poi.xwpf.usermodel.XWPFDocument.PICTURE_TYPE_PNG, "flow.png", widthEMU, heightEMU);
                          }
                     } else {
@@ -566,47 +393,30 @@ public class WordGenerator {
                 addParagraphSpace();
             }
         }
-        
         addPageBreak();
     }
-    
-    // ==================== GLOBAL CONFIGURATION SECTION ====================
-    
     private void createGlobalConfigurationSection(AnalysisResult result) {
         String sectionName = config.getProperty("mule.word.section.global.config", "Global Configuration");
         createHeading1(sectionName);
-        
-        // Get list of excluded properties files
         String excludedFilesStr = config.getProperty("mule.word.global.config.exclude.files", "");
         final Set<String> excludedFiles = new HashSet<>();
         if (!excludedFilesStr.isEmpty()) {
-            // Parse, trim, and add to set
             Arrays.stream(excludedFilesStr.split(","))
                 .map(String::trim)
                 .forEach(excludedFiles::add);
         }
-        
-        // Find all .properties files
         List<ProjectNode> propFiles = new ArrayList<>();
         collectFilesByExtension(result.getProjectStructure(), Arrays.asList(".properties"), propFiles);
-        
-        // Filter out excluded files
         propFiles = propFiles.stream()
             .filter(f -> !excludedFiles.contains(f.getName()))
             .collect(Collectors.toList());
-        
         if (!excludedFiles.isEmpty()) {
             logger.debug("Excluding properties files from Word document: {}", excludedFiles);
         }
-        
-        // Sort by name for consistent ordering
         propFiles.sort(Comparator.comparing(ProjectNode::getName));
-        
         for (ProjectNode propFile : propFiles) {
             createHeading2(propFile.getName());
             addPathSubtitle(propFile);
-            
-            // Render properties as table
             List<PropertyInfo> props = getPropertiesForFile(result, propFile.getRelativePath());
             if (!props.isEmpty()) {
                 createPropertiesTable(props, propFile.getRelativePath());
@@ -614,129 +424,75 @@ public class WordGenerator {
             addParagraphSpace();
             processedFiles.add(propFile.getAbsolutePath());
         }
-        
         addPageBreak();
     }
-    
-    // ==================== CONNECTOR CONFIGURATIONS SECTION ====================
-    
     private void createConnectorConfigurationsSection(AnalysisResult result) {
         String sectionName = config.getProperty("mule.word.section.connector.configs", "Connector Configurations");
         createHeading1(sectionName);
-        
-        // Collect all connector configs from all XML files
         List<ConnectorConfigWithSource> allConfigs = new ArrayList<>();
         collectAllConnectorConfigs(result.getProjectStructure(), allConfigs);
-        
-        // Sort by config name
         allConfigs.sort(Comparator.comparing(c -> c.config.getName()));
-        
         for (ConnectorConfigWithSource item : allConfigs) {
             createHeading2(item.config.getName());
             addPathSubtitle(item.sourceFile);
-            
-            // Create table with attributes
             createConnectorConfigAttributesTable(item.config);
             addParagraphSpace();
-            
-            // Render nested components hierarchically (like email:smtp-connection)
             if (item.config.getNestedComponents() != null && !item.config.getNestedComponents().isEmpty()) {
                 renderComponentsHierarchically(item.config.getNestedComponents());
             }
         }
-        
         addPageBreak();
     }
-    
-    // ==================== MULE FLOWS SECTION ====================
-    
     private void createMuleFlowsSection(AnalysisResult result) {
         String sectionName = config.getProperty("mule.word.section.mule.flows", "Mule Flows");
         createHeading1(sectionName);
-        
-        // Collect all flows (not sub-flows)
         List<FlowWithSource> allFlows = new ArrayList<>();
         collectFlowsByType(result.getProjectStructure(), "flow", allFlows);
-        
         for (FlowWithSource item : allFlows) {
             createHeading2(item.flow.getName());
             addPathSubtitle(item.sourceFile);
-            
-            // Render components with hierarchical numbering based on depth
             renderComponentsHierarchically(item.flow.getComponents());
         }
-        
         addPageBreak();
     }
-    
-    /**
-     * Render components with hierarchical numbering based on their depth.
-     */
     private void renderComponentsHierarchically(List<ComponentInfo> components) {
         int maxDepth = Integer.parseInt(config.getProperty("word.nested.component.max.depth", "3"));
-        
         for (ComponentInfo component : components) {
-            // Get depth (default to 0 if not set)
             int depth = 0;
             if (component.getAttributes() != null && component.getAttributes().containsKey("_depth")) {
                 try {
                     depth = Integer.parseInt(component.getAttributes().get("_depth"));
                 } catch (NumberFormatException e) {
-                    // Ignore, use default
                 }
             }
-            
-            // Skip if depth exceeds configured maximum
             if (depth > maxDepth) {
                 continue;
             }
-            
-            // Create heading at appropriate level (H3 for depth 0, H4 for depth 1, etc.)
             String componentTitle = component.getType();
             if (depth == 0) {
                 createHeading3(componentTitle);
             } else {
-                // For nested components, use H4 or lower
                 createHeading4(componentTitle, depth);
             }
-            
             createComponentAttributesTable(component);
             addParagraphSpace();
         }
     }
-    
-    /**
-     * Create heading level 4 or deeper based on depth.
-     */
     private void createHeading4(String text, int depth) {
-        // Increment at the correct level based on depth
-        // depth 1 -> level 3 (5.38.3.1)
-        // depth 2 -> level 4 (5.38.3.1.1)
-        // depth 3 -> level 5 (5.38.3.1.1.1)
-        int level = 2 + depth; // depth 1 = level 3, depth 2 = level 4, etc.
+        int level = 2 + depth; 
         incrementSection(level);
         String numberedText = getSectionNumber() + " " + text;
-        
-        // Use smaller font for deeper nesting
         int fontSize = Math.max(10, 12 - depth);
         createHeading(numberedText, "Heading4", level, fontSize, true);
     }
-    
-    // ==================== MULE SUB-FLOWS SECTION ====================
-    
     private void createMuleSubFlowsSection(AnalysisResult result) {
         String sectionName = config.getProperty("mule.word.section.mule.subflows", "Mule Sub-flows");
         createHeading1(sectionName);
-        
-        // Collect all sub-flows
         List<FlowWithSource> allSubFlows = new ArrayList<>();
         collectFlowsByType(result.getProjectStructure(), "sub-flow", allSubFlows);
-        
-        // Same structure as flows
         for (FlowWithSource item : allSubFlows) {
             createHeading2(item.flow.getName());
             addPathSubtitle(item.sourceFile);
-            
             for (ComponentInfo component : item.flow.getComponents()) {
                 String componentTitle = component.getType();
                 createHeading3(componentTitle);
@@ -744,22 +500,14 @@ public class WordGenerator {
                 addParagraphSpace();
             }
         }
-        
         addPageBreak();
     }
-    
-    // ==================== DATAWEAVE FILES SECTION ====================
-    
     private void createDataWeaveFilesSection(AnalysisResult result) {
         String sectionName = config.getProperty("mule.word.section.dataweave.files", "Mule DataWeave Files");
         createHeading1(sectionName);
-        
-        // Find all .dwl files
         List<ProjectNode> dwlFiles = new ArrayList<>();
         collectFilesByExtension(result.getProjectStructure(), Arrays.asList(".dwl"), dwlFiles);
-        
         dwlFiles.sort(Comparator.comparing(ProjectNode::getName));
-        
         for (ProjectNode dwlFile : dwlFiles) {
             createHeading2(dwlFile.getName());
             addPathSubtitle(dwlFile);
@@ -767,27 +515,17 @@ public class WordGenerator {
             addParagraphSpace();
             processedFiles.add(dwlFile.getAbsolutePath());
         }
-        
         addPageBreak();
     }
-    
-    // ==================== OTHER RESOURCES SECTION ====================
-    
     private void createOtherResourcesSection(AnalysisResult result) {
         String sectionName = config.getProperty("mule.word.section.other.resources", "Other Resources");
         createHeading1(sectionName);
-        
-        // Collect all files EXCEPT already processed ones
         List<ProjectNode> otherFiles = collectOtherFiles(result.getProjectStructure());
-        
         if (!otherFiles.isEmpty()) {
-            // Create table with Name and Relative Path columns
             String headerName = config.getProperty("mule.word.table.header.file.name", "File Name");
             String headerPath = config.getProperty("mule.word.table.header.relative.path", "Relative Path");
-            
             XWPFTable table = createFixedTable(otherFiles.size() + 1, 2, new int[]{40, 60});
             fillHeader(table, new String[]{headerName, headerPath});
-            
             int row = 1;
             for (ProjectNode file : otherFiles) {
                 XWPFTableRow tableRow = table.getRow(row++);
@@ -795,60 +533,40 @@ public class WordGenerator {
                 fillCellWithWrapping(tableRow.getCell(1), file.getRelativePath(), "60%");
             }
         }
-        
         addPageBreak();
     }
-    
-    // ==================== REFERENCES PLACEHOLDER ====================
-    
     private void createReferencesPlaceholder() {
         String sectionName = config.getProperty("mule.word.section.references", "References");
         createHeading1(sectionName);
-        
         XWPFParagraph p = document.createParagraph();
         XWPFRun r = p.createRun();
         r.setText("References section is placeholder for any reference details team requires. It can have team playbook reference details or any other information for project.");
         r.setItalic(true);
         r.setColor("808080");
-        
         addParagraphSpace();
-        
         XWPFParagraph ref1 = document.createParagraph();
         ref1.createRun().setText("• MuleSoft Documentation");
-        
         XWPFParagraph ref2 = document.createParagraph();
         ref2.createRun().setText("• MuleSoft Anypoint Platform");
-        
         XWPFParagraph ref3 = document.createParagraph();
         ref3.createRun().setText("• MuleSoft Knowledge Base");
-        
-        // No page break at the end
     }
-    
-    // ==================== HELPER CLASSES ====================
-    
     private static class ConnectorConfigWithSource {
         ConnectorConfig config;
         ProjectNode sourceFile;
-        
         ConnectorConfigWithSource(ConnectorConfig config, ProjectNode sourceFile) {
             this.config = config;
             this.sourceFile = sourceFile;
         }
     }
-    
     private static class FlowWithSource {
         FlowInfo flow;
         ProjectNode sourceFile;
-        
         FlowWithSource(FlowInfo flow, ProjectNode sourceFile) {
             this.flow = flow;
             this.sourceFile = sourceFile;
         }
     }
-    
-    // ==================== COLLECTION HELPERS ====================
-    
     @SuppressWarnings("unchecked")
     private void collectAllConnectorConfigs(ProjectNode node, List<ConnectorConfigWithSource> result) {
         if (node.getType() == ProjectNode.NodeType.FILE && node.getName().endsWith(".xml")) {
@@ -864,7 +582,6 @@ public class WordGenerator {
             }
         }
     }
-    
     @SuppressWarnings("unchecked")
     private void collectFlowsByType(ProjectNode node, String flowType, List<FlowWithSource> result) {
         if (node.getType() == ProjectNode.NodeType.FILE && node.getName().endsWith(".xml")) {
@@ -882,7 +599,6 @@ public class WordGenerator {
             }
         }
     }
-    
     private void collectFilesByExtension(ProjectNode node, List<String> extensions, List<ProjectNode> result) {
         if (node.getType() == ProjectNode.NodeType.FILE) {
             for (String ext : extensions) {
@@ -897,19 +613,15 @@ public class WordGenerator {
             }
         }
     }
-    
     private List<ProjectNode> collectOtherFiles(ProjectNode node) {
         List<ProjectNode> allFiles = new ArrayList<>();
         collectAllFiles(node, allFiles);
-        
-        // Filter out processed files
         return allFiles.stream()
             .filter(f -> !processedFiles.contains(f.getAbsolutePath()))
             .filter(f -> !f.getName().startsWith("."))
             .sorted(Comparator.comparing(ProjectNode::getName))
             .collect(Collectors.toList());
     }
-    
     private void collectAllFiles(ProjectNode node, List<ProjectNode> result) {
         if (node.getType() == ProjectNode.NodeType.FILE) {
             result.add(node);
@@ -919,7 +631,6 @@ public class WordGenerator {
             }
         }
     }
-    
     private ProjectNode findFileByName(ProjectNode root, String fileName) {
         if (root == null) return null;
         if (root.getType() == ProjectNode.NodeType.FILE && root.getName().equals(fileName)) {
@@ -933,35 +644,25 @@ public class WordGenerator {
         }
         return null;
     }
-    
     private List<PropertyInfo> getPropertiesForFile(AnalysisResult result, String relativePath) {
         List<PropertyInfo> props = new ArrayList<>();
-        // Normalize the search path to use forward slashes
         String normalizedSearchPath = relativePath.replace("\\", "/");
-        
         logger.debug("Looking for properties in file: {} (normalized: {})", relativePath, normalizedSearchPath);
-        
         for (PropertyInfo p : result.getProperties()) {
-            // Check all environment values with normalized paths
             for (String envKey : p.getEnvironmentValues().keySet()) {
                 String normalizedEnvKey = envKey.replace("\\", "/");
                 if (normalizedEnvKey.equals(normalizedSearchPath)) {
                     props.add(p);
                     logger.debug("Found property: {} in file: {}", p.getKey(), envKey);
-                    break; // Found match, no need to check other env keys for this property
+                    break; 
                 }
             }
         }
-        
         logger.debug("Found {} properties for file: {}", props.size(), relativePath);
         return props;
     }
-    
-    // ==================== TABLE CREATION METHODS ====================
-    
     private void createProjectDetailsTable(ProjectInfo info) {
         if (info == null) return;
-        
         XWPFTable table = createFixedTable(4, 2, new int[]{30, 70});
         fillHeader(table, new String[]{"Property", "Value"});
         int r = 1;
@@ -969,11 +670,8 @@ public class WordGenerator {
         fillRow(table.getRow(r++), "Version", info.getVersion());
         fillRow(table.getRow(r++), "Project Path", info.getProjectPath());
     }
-    
     private void createPomBasicInfoTable(PomInfo pomInfo) {
         if (pomInfo == null) return;
-        
-        // Count non-null fields to determine table size
         int rowCount = 0;
         if (pomInfo.getModelVersion() != null) rowCount++;
         if (pomInfo.getGroupId() != null) rowCount++;
@@ -982,14 +680,11 @@ public class WordGenerator {
         if (pomInfo.getPackaging() != null) rowCount++;
         if (pomInfo.getName() != null) rowCount++;
         if (pomInfo.getDescription() != null) rowCount++;
-        if (pomInfo.getParent() != null) rowCount += 3; // parent has 3 fields minimum
-        
+        if (pomInfo.getParent() != null) rowCount += 3; 
         if (rowCount == 0) return;
-        
         XWPFTable table = createFixedTable(rowCount + 1, 2, new int[]{30, 70});
         fillHeader(table, new String[]{"Property", "Value"});
         int r = 1;
-        
         if (pomInfo.getModelVersion() != null) {
             fillRow(table.getRow(r++), "Model Version", pomInfo.getModelVersion());
         }
@@ -1011,8 +706,6 @@ public class WordGenerator {
         if (pomInfo.getDescription() != null) {
             fillRow(table.getRow(r++), "Description", pomInfo.getDescription());
         }
-        
-        // Parent information
         if (pomInfo.getParent() != null) {
             PomInfo.ParentInfo parent = pomInfo.getParent();
             fillRow(table.getRow(r++), "Parent Group ID", parent.getGroupId());
@@ -1023,14 +716,11 @@ public class WordGenerator {
             }
         }
     }
-    
     private void createPomPropertiesTable(Map<String, String> props) {
         String headerKey = config.getProperty("mule.word.table.header.key", "Key");
         String headerValue = config.getProperty("mule.word.table.header.value", "Value");
-        
         XWPFTable table = createFixedTable(props.size() + 1, 2, new int[]{40, 60});
         fillHeader(table, new String[]{headerKey, headerValue});
-        
         int r = 1;
         for (Map.Entry<String, String> e : props.entrySet()) {
             XWPFTableRow row = table.getRow(r++);
@@ -1038,15 +728,12 @@ public class WordGenerator {
             fillCellWithWrapping(row.getCell(1), e.getValue(), "60%");
         }
     }
-    
     private void createPluginsTable(List<PomInfo.PluginInfo> plugins) {
         String headerGroupId = config.getProperty("mule.word.table.header.groupid", "GroupId");
         String headerArtifactId = config.getProperty("mule.word.table.header.artifactid", "ArtifactId");
         String headerVersion = config.getProperty("mule.word.table.header.version", "Version");
-        
         XWPFTable table = createFixedTable(plugins.size() + 1, 3, new int[]{40, 40, 20});
         fillHeader(table, new String[]{headerGroupId, headerArtifactId, headerVersion});
-        
         int r = 1;
         for (PomInfo.PluginInfo plugin : plugins) {
             XWPFTableRow row = table.getRow(r++);
@@ -1055,15 +742,12 @@ public class WordGenerator {
             fillCellWithWrapping(row.getCell(2), plugin.getVersion(), "20%");
         }
     }
-    
     private void createDependenciesTable(List<PomInfo.DependencyInfo> deps) {
         String headerGroupId = config.getProperty("mule.word.table.header.groupid", "GroupId");
         String headerArtifactId = config.getProperty("mule.word.table.header.artifactid", "ArtifactId");
         String headerVersion = config.getProperty("mule.word.table.header.version", "Version");
-        
         XWPFTable table = createFixedTable(deps.size() + 1, 3, new int[]{40, 40, 20});
         fillHeader(table, new String[]{headerGroupId, headerArtifactId, headerVersion});
-        
         int r = 1;
         for (PomInfo.DependencyInfo dep : deps) {
             XWPFTableRow row = table.getRow(r++);
@@ -1072,14 +756,11 @@ public class WordGenerator {
             fillCellWithWrapping(row.getCell(2), dep.getVersion(), "20%");
         }
     }
-    
     private void createPropertiesTable(List<PropertyInfo> props, String filePath) {
         String headerKey = config.getProperty("mule.word.table.header.key", "Key");
         String headerValue = config.getProperty("mule.word.table.header.value", "Value");
-        
         XWPFTable table = createFixedTable(props.size() + 1, 2, new int[]{40, 60});
         fillHeader(table, new String[]{headerKey, headerValue});
-        
         int r = 1;
         for (PropertyInfo p : props) {
             XWPFTableRow row = table.getRow(r++);
@@ -1088,17 +769,13 @@ public class WordGenerator {
             fillCellWithWrapping(row.getCell(1), val, "60%");
         }
     }
-    
     private void createConnectorConfigAttributesTable(ConnectorConfig connectorConfig) {
         String headerName = this.config.getProperty("mule.word.table.header.attribute.name", "Attribute Name");
         String headerValue = this.config.getProperty("mule.word.table.header.attribute.value", "Attribute Value");
-        
         Map<String, String> attrs = connectorConfig.getAttributes();
         if (attrs == null || attrs.isEmpty()) return;
-        
         XWPFTable table = createFixedTable(attrs.size() + 1, 2, new int[]{40, 60});
         fillHeader(table, new String[]{headerName, headerValue});
-        
         int r = 1;
         for (Map.Entry<String, String> e : attrs.entrySet()) {
             XWPFTableRow row = table.getRow(r++);
@@ -1106,86 +783,58 @@ public class WordGenerator {
             fillCellWithWrapping(row.getCell(1), e.getValue(), "60%");
         }
     }
-    
     private void createComponentAttributesTable(ComponentInfo component) {
         String headerName = config.getProperty("mule.word.table.header.attribute.name", "Attribute Name");
         String headerValue = config.getProperty("mule.word.table.header.attribute.value", "Attribute Value");
-        
         Map<String, String> attrs = component.getAttributes();
         if (attrs == null || attrs.isEmpty()) return;
-        
-        // Filter out doc:id if disabled
         boolean includeDocId = getBooleanConfig("analyzer.mule.component.attribute.doc_id.enabled", false);
-        
-        // Extract internal attributes
         String content = attrs.get("_content");
-        
-        // Filter out internal attributes (starting with _) and doc:id if disabled
         List<Map.Entry<String, String>> filteredAttrs = attrs.entrySet().stream()
-            .filter(e -> !e.getKey().startsWith("_")) // Remove internal attributes
+            .filter(e -> !e.getKey().startsWith("_")) 
             .filter(e -> includeDocId || !"doc:id".equals(e.getKey()))
             .collect(Collectors.toList());
-        
-        // If no attributes and no content, return
         if (filteredAttrs.isEmpty() && content == null) return;
-        
-        // Calculate table size (attributes + content row if exists)
         int rowCount = filteredAttrs.size() + (content != null ? 1 : 0);
         XWPFTable table = createFixedTable(rowCount + 1, 2, new int[]{40, 60});
         fillHeader(table, new String[]{headerName, headerValue});
-        
         int r = 1;
-        
-        // Add regular attributes
         for (Map.Entry<String, String> e : filteredAttrs) {
             XWPFTableRow row = table.getRow(r++);
             fillCellWithWrapping(row.getCell(0), e.getKey(), "40%");
             fillCellWithWrapping(row.getCell(1), e.getValue(), "60%");
         }
-        
-        // Add content row if exists
         if (content != null) {
-            // Strip CDATA wrapper if present
             if (content.trim().startsWith("<![CDATA[") && content.trim().endsWith("]]>")) {
                 content = content.trim();
                 content = content.substring(9, content.length() - 3);
-                
-                // Also strip Mule expression wrapper #[ ... ] if present inside CDATA
                 if (content.trim().startsWith("#[") && content.trim().endsWith("]")) {
                     content = content.trim();
                     content = content.substring(2, content.length() - 1);
                 }
             }
-            
             XWPFTableRow row = table.getRow(r);
             String cdataLabel = config.getProperty("word.cdata.label", "<![CDATA[#[...]]]>");
             fillCellWithWrapping(row.getCell(0), cdataLabel, "40%");
             fillCellWithWrapping(row.getCell(1), content, "60%");
         }
     }
-    
-    // ==================== FILE CONTENT RENDERING ====================
-    
     private void renderFileContentInBox(ProjectNode node) {
         if (!shouldIncludeFileContent(node.getName())) {
             return;
         }
-        
         try {
             String content = Files.readString(Paths.get(node.getAbsolutePath()), StandardCharsets.UTF_8);
             if (content.length() > 50000) {
                 content = content.substring(0, 50000) + "\n... (Content truncated)";
             }
-            
             String fileType = getFileExtension(node.getName());
             createContentBox(content, fileType);
-            
         } catch (Exception e) {
             XWPFParagraph p = document.createParagraph();
             p.createRun().setText("Error reading file content: " + e.getMessage());
         }
     }
-    
     private boolean shouldIncludeFileContent(String fileName) {
         String ext = getFileExtension(fileName);
         switch (ext) {
@@ -1202,59 +851,40 @@ public class WordGenerator {
             default: return false;
         }
     }
-    
     private void createContentBox(String content, String fileType) {
-        // Pretty-print content based on file type
         String formattedContent = prettyPrintContent(content, fileType);
-        
-        // Create a table with single cell for border effect
         XWPFTable table = document.createTable(1, 1);
         table.setWidth("100%");
-        
-        // Get the cell
         XWPFTableCell cell = table.getRow(0).getCell(0);
-        
-        // Set border style
         CTTcPr tcPr = cell.getCTTc().getTcPr();
         if (tcPr == null) {
             tcPr = cell.getCTTc().addNewTcPr();
         }
         CTTcBorders borders = tcPr.isSetTcBorders() ? tcPr.getTcBorders() : tcPr.addNewTcBorders();
-        
-        // Get border settings from config
         String borderColor = config.getProperty("mule.word.box.border.color", "000000");
         int borderSize = Integer.parseInt(config.getProperty("mule.word.box.border.size", "4"));
-        
         CTBorder borderStyle = CTBorder.Factory.newInstance();
         borderStyle.setVal(STBorder.SINGLE);
         borderStyle.setSz(BigInteger.valueOf(borderSize));
         borderStyle.setColor(borderColor);
-        
         borders.setTop(borderStyle);
         borders.setBottom(borderStyle);
         borders.setLeft(borderStyle);
         borders.setRight(borderStyle);
-        
-        // Add background color
         String bgColor = config.getProperty("mule.word.box.background.color", "F5F5F5");
         CTShd shd = tcPr.isSetShd() ? tcPr.getShd() : tcPr.addNewShd();
         shd.setFill(bgColor);
-        
-        // Clear default paragraph and add content
         cell.removeParagraph(0);
         XWPFParagraph p = cell.addParagraph();
         p.setSpacingBefore(100);
         p.setSpacingAfter(100);
-        
         XWPFRun r = p.createRun();
         r.setFontFamily("Courier New");
         r.setFontSize(9);
-        
         if (formattedContent != null) {
             String[] lines = formattedContent.split("\n");
             for (int i = 0; i < lines.length; i++) {
                 String line = lines[i].replace("\r", "");
-                // Replace tabs with 4 spaces for consistent rendering
                 line = line.replace("\t", "    ");
                 r.setText(line);
                 if (i < lines.length - 1) {
@@ -1262,11 +892,8 @@ public class WordGenerator {
                 }
             }
         }
-        
-        // Add spacing after the table
         document.createParagraph();
     }
-    
     private String prettyPrintContent(String content, String fileType) {
         try {
             if ("json".equals(fileType) && getBooleanConfig("mule.word.prettify.json", true)) {
@@ -1281,7 +908,6 @@ public class WordGenerator {
             return content;
         }
     }
-    
     private String prettyPrintJson(String json) {
         try {
             com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
@@ -1291,18 +917,15 @@ public class WordGenerator {
             return json;
         }
     }
-    
     private String prettyPrintXml(String xml) {
         try {
             javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
             javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
             org.w3c.dom.Document doc = builder.parse(new java.io.ByteArrayInputStream(xml.getBytes(StandardCharsets.UTF_8)));
-            
             javax.xml.transform.TransformerFactory transformerFactory = javax.xml.transform.TransformerFactory.newInstance();
             javax.xml.transform.Transformer transformer = transformerFactory.newTransformer();
             transformer.setOutputProperty(javax.xml.transform.OutputKeys.INDENT, "yes");
             transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "2");
-            
             java.io.StringWriter writer = new java.io.StringWriter();
             transformer.transform(new javax.xml.transform.dom.DOMSource(doc), new javax.xml.transform.stream.StreamResult(writer));
             return writer.toString();
@@ -1310,51 +933,41 @@ public class WordGenerator {
             return xml;
         }
     }
-    
     private String getFileExtension(String filename) {
         if (filename == null || !filename.contains(".")) {
             return "";
         }
         return filename.substring(filename.lastIndexOf(".") + 1).toLowerCase();
     }
-    
-    // ==================== HEADING CREATION ====================
-    
     private void createHeading1(String text) {
         incrementSection(0);
         String numberedText = getSectionNumber() + ". " + text;
         createHeading(numberedText, "Heading1", 0, 16, true);
     }
-    
     private void createHeading2(String text) {
         incrementSection(1);
         String numberedText = getSectionNumber() + " " + text;
         createHeading(numberedText, "Heading2", 1, 14, true);
     }
-    
     private void createHeading3(String text) {
         incrementSection(2);
         String numberedText = getSectionNumber() + " " + text;
         createHeading(numberedText, "Heading3", 2, 12, true);
     }
-    
     private void createHeading4(String text) {
         incrementSection(3);
         String numberedText = getSectionNumber() + " " + text;
         createHeading(numberedText, "Heading4", 3, 11, true);
     }
-    
     private void createHeading(String text, String styleId, int outlineLevel, int size, boolean bold) {
         XWPFParagraph p = document.createParagraph();
         p.setStyle(styleId);
         setOutlineLevel(p, outlineLevel);
-        
         XWPFRun r = p.createRun();
         r.setText(text);
         r.setBold(bold);
         r.setFontSize(size);
     }
-    
     private void setOutlineLevel(XWPFParagraph p, int level) {
         CTPPr ppr = p.getCTP().getPPr();
         if (ppr == null) ppr = p.getCTP().addNewPPr();
@@ -1362,56 +975,41 @@ public class WordGenerator {
         if (val == null) val = ppr.addNewOutlineLvl();
         val.setVal(BigInteger.valueOf(level));
     }
-    
-    // ==================== TABLE UTILITIES ====================
-    
     private XWPFTable createFixedTable(int rows, int cols, int[] colPercents) {
         XWPFTable table = document.createTable(rows, cols);
         table.setWidth("100%");
-        
         CTTblPr tblPr = table.getCTTbl().getTblPr();
         if (tblPr == null) tblPr = table.getCTTbl().addNewTblPr();
-        
         CTTblLayoutType layout = tblPr.isSetTblLayout() ? tblPr.getTblLayout() : tblPr.addNewTblLayout();
         layout.setType(STTblLayoutType.FIXED);
-        
         CTTblGrid grid = table.getCTTbl().getTblGrid();
         if (grid == null) grid = table.getCTTbl().addNewTblGrid();
-        
         for (int pct : colPercents) {
             grid.addNewGridCol().setW(BigInteger.valueOf((long)(9000 * (pct/100.0))));
         }
-        
         return table;
     }
-    
     private void fillHeader(XWPFTable table, String[] headers) {
-        String bgColor = config.getProperty("word.table.header.background.color", "E6E6FA"); // Lavender (Old Purple: 663399)
-        String textColor = config.getProperty("word.table.header.text.color", "000000"); // Black
-        
+        String bgColor = config.getProperty("word.table.header.background.color", "E6E6FA"); 
+        String textColor = config.getProperty("word.table.header.text.color", "000000"); 
         int rowHeight = Integer.parseInt(config.getProperty("word.table.row.height", "0"));
         XWPFTableRow row = table.getRow(0);
         if (rowHeight > 0) {
             row.setHeight(rowHeight);
         }
-        
         for (int i = 0; i < headers.length; i++) {
             XWPFTableCell cell = row.getCell(i);
             if (cell == null) cell = row.createCell();
             cell.setColor(bgColor);
-            
-            // Remove paragraph spacing for tighter fit
             XWPFParagraph p = cell.getParagraphs().get(0);
             p.setSpacingAfter(0);
             p.setSpacingBefore(0);
-            
             XWPFRun r = p.createRun();
             r.setText(headers[i]);
             r.setBold(true);
             r.setColor(textColor);
         }
     }
-    
     private void fillRow(XWPFTableRow row, String key, String value) {
         int rowHeight = Integer.parseInt(config.getProperty("word.table.row.height", "0"));
         if (rowHeight > 0) {
@@ -1420,32 +1018,22 @@ public class WordGenerator {
         fillCellWithWrapping(row.getCell(0), key, "30%");
         fillCellWithWrapping(row.getCell(1), value, "70%");
     }
-    
     private void fillCellWithWrapping(XWPFTableCell cell, String text, String width) {
         if (text == null) text = "";
-        
-        // Remove paragraph spacing for tighter fit
         if (!cell.getParagraphs().isEmpty()) {
             XWPFParagraph p = cell.getParagraphs().get(0);
             p.setSpacingAfter(0);
             p.setSpacingBefore(0);
         }
-        
-        // Simplest approach - no wrapping, no manipulation
         cell.setText(text);
         if (width != null) cell.setWidth(width);
     }
-    
-    // ==================== DOCUMENT UTILITIES ====================
-    
     private void addParagraphSpace() {
         document.createParagraph();
     }
-    
     private void addPageBreak() {
         document.createParagraph().createRun().addBreak(BreakType.PAGE);
     }
-    
     private void addPathSubtitle(ProjectNode node) {
         XWPFParagraph p = document.createParagraph();
         XWPFRun r = p.createRun();
@@ -1454,33 +1042,21 @@ public class WordGenerator {
         r.setFontSize(9);
         r.setColor("666666");
     }
-    
     private Path getOutputPath(AnalysisResult result) {
-        // Use output directory from result (set based on input source type)
         String dir = result.getOutputDirectory();
         if (dir == null || dir.isEmpty()) {
-            // Fallback to config if not set
             dir = config.getProperty("framework.output.directory", "./output");
         }
         String name = "design-doc";
-        
         if (result.getProjectInfo() != null && result.getProjectInfo().getProjectName() != null) {
             name = result.getProjectInfo().getProjectName().replaceAll("[^a-zA-Z0-9-_]", "_");
         }
-        
         String ts = result.getStartTime().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
         return Paths.get(dir, String.format("%s_Analysis_Document_%s.docx", name, ts));
     }
-    
     private boolean getBooleanConfig(String key, boolean defaultValue) {
         return Boolean.parseBoolean(config.getProperty(key, String.valueOf(defaultValue)));
     }
-    
-    // ==================== SECTION NUMBERING HELPERS ====================
-    
-    /**
-     * Get current section number as string (e.g., "1.2.3").
-     */
     private String getSectionNumber() {
         if (sectionCounters.isEmpty()) {
             return "";
@@ -1489,36 +1065,18 @@ public class WordGenerator {
             .map(String::valueOf)
             .collect(Collectors.joining("."));
     }
-    
-    /**
-     * Increment section counter at specified level (0-based).
-     * Level 0 = H1, Level 1 = H2, Level 2 = H3, etc.
-     */
     private void incrementSection(int level) {
-        // Ensure we have enough levels
         while (sectionCounters.size() <= level) {
             sectionCounters.add(0);
         }
-        
-        // Increment the counter at this level
         sectionCounters.set(level, sectionCounters.get(level) + 1);
-        
-        // Remove any deeper levels
         while (sectionCounters.size() > level + 1) {
             sectionCounters.remove(sectionCounters.size() - 1);
         }
     }
-    
-    /**
-     * Enter a subsection (add a new level).
-     */
     private void enterSubsection() {
         sectionCounters.add(0);
     }
-    
-    /**
-     * Exit a subsection (remove the deepest level).
-     */
     private void exitSubsection() {
         if (sectionCounters.size() > 1) {
             sectionCounters.remove(sectionCounters.size() - 1);

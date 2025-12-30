@@ -1,9 +1,7 @@
 package com.raks.apiurlcomparison;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.core.JsonProcessingException;
-
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -11,45 +9,31 @@ import java.io.PrintWriter;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-
 public class HtmlReportGenerator {
-
     private static final ObjectMapper mapper = new ObjectMapper();
-
     public static File generateJsonReport(List<ComparisonResult> results, String outputPath) throws IOException {
         if (results == null) {
             throw new IllegalArgumentException("Results list cannot be null for JSON report generation.");
         }
-
         File outputFile = new File(outputPath);
-        // If the provided path is a directory, append a default filename.
         if (outputFile.isDirectory()) {
             outputFile = new File(outputFile, "results.json");
         }
-
-        // Ensure the parent directory exists.
         File parentDir = outputFile.getParentFile();
         if (parentDir != null && !parentDir.exists()) {
             parentDir.mkdirs();
         }
-
-        mapper.enable(SerializationFeature.INDENT_OUTPUT); // Pretty print JSON
+        mapper.enable(SerializationFeature.INDENT_OUTPUT); 
         mapper.writeValue(outputFile, results);
         return outputFile;
     }
-
     public static File generateHtmlReport(List<ComparisonResult> results, String outputPath) throws IOException {
         File baseOutputFile = new File(outputPath);
-        // If the provided path is a directory, append a default filename to determine
-        // the base name.
         if (baseOutputFile.isDirectory()) {
             baseOutputFile = new File(baseOutputFile, "results.json");
         }
-
-        // Construct the HTML file path based on the resolved base file path.
         String htmlFileName = baseOutputFile.getName().replaceFirst("[.][^.]+$", "") + ".html";
         File htmlFile = new File(baseOutputFile.getParent(), htmlFileName);
-
         try (PrintWriter writer = new PrintWriter(new FileWriter(htmlFile))) {
             writer.println("<!DOCTYPE html>");
             writer.println("<html lang=\"en\">");
@@ -61,19 +45,14 @@ public class HtmlReportGenerator {
             writer.println("<body>");
             writer.println("<div class=\"container\">");
             writer.println("<h1>API Response Comparison Tool - APITestingGuard</h1>");
-
-            // --- Summaries ---
             String generationTimestamp = ZonedDateTime.now()
                     .format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z"));
             generateSummary(writer, results, generationTimestamp);
-
-            // --- Details Table ---
             writer.println("<h2>Iteration Details</h2>");
             writer.println("<table class=\"details-table\">");
             writer.println(
                     "<thead><tr><th>#</th><th>Operation</th><th>Status</th><th>Tokens</th><th>Details</th></tr></thead>");
             writer.println("<tbody>");
-
             int iteration = 1;
             for (ComparisonResult result : results) {
                 writer.println("<tr class=\"summary-row " + result.getStatus().toLowerCase() + "\">");
@@ -84,13 +63,9 @@ public class HtmlReportGenerator {
                 writer.println("<td><button onclick=\"toggleDetails('details-" + iteration
                         + "')\">Toggle Details</button></td>");
                 writer.println("</tr>");
-
-                // Collapsible details row
                 writer.println("<tr id=\"details-" + iteration + "\" class=\"details-row\" style=\"display:none;\">");
                 writer.println("<td colspan=\"5\">");
                 writer.println("<div class=\"details-content\">");
-
-                // Show baseline metadata if present
                 if (result.getBaselineServiceName() != null) {
                     writer.println("<div class=\"baseline-info\">");
                     writer.println("<h4>📊 Baseline Information</h4>");
@@ -114,7 +89,6 @@ public class HtmlReportGenerator {
                     writer.println("</div>");
                     writer.println("<hr>");
                 }
-
                 if ("ERROR".equals(result.getStatus())) {
                     writer.println("<p class=\"error-message\"><strong>Error:</strong> "
                             + escapeHtml(result.getErrorMessage()) + "</p>");
@@ -124,33 +98,24 @@ public class HtmlReportGenerator {
                     result.getDifferences().forEach(d -> writer.println("<li>" + escapeHtml(d) + "</li>"));
                     writer.println("</ul></div>");
                 }
-
                 writer.println("<div class=\"api-details\">");
-
-                // Determine if this is a baseline comparison
                 boolean isBaselineComparison = result.getBaselineServiceName() != null;
-
-                // Format API labels based on mode
                 String api1Label = isBaselineComparison ? "API Current" : "API 1";
                 String api2Label = isBaselineComparison ? "API Baseline" : "API 2";
-
                 writer.println(formatApiCallResult(api1Label, result.getApi1()));
                 writer.println(formatApiCallResult(api2Label, result.getApi2()));
-                writer.println("</div>"); // end api-details
-
+                writer.println("</div>"); 
                 writer.println("</div></td></tr>");
                 iteration++;
             }
-
             writer.println("</tbody></table>");
-            writer.println("</div>"); // Close container
+            writer.println("</div>"); 
             writer.println(getScript());
             writer.println("</body>");
             writer.println("</html>");
         }
         return htmlFile;
     }
-
     private static String formatApiCallResult(String apiName, ApiCallResult callResult) {
         if (callResult == null) {
             return "<div class=\"api-column\"><h3>" + apiName + "</h3><p>No call made.</p></div>";
@@ -169,28 +134,23 @@ public class HtmlReportGenerator {
         sb.append("</div>");
         return sb.toString();
     }
-
     private static String prettyPrintAndEscape(String content) {
         if (content == null || content.trim().isEmpty()) {
             return "[No Content]";
         }
-        // Try to pretty-print if it's JSON
         try {
             Object json = mapper.readValue(content, Object.class);
             String prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
             return escapeHtml(prettyJson);
         } catch (JsonProcessingException e) {
-            // Not JSON, just escape it
             return escapeHtml(content);
         }
     }
-
     private static String escapeHtml(String text) {
         if (text == null)
             return "";
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
-
     private static void generateSummary(PrintWriter writer, List<ComparisonResult> results,
             String generationTimestamp) {
         long matches = results.stream().filter(r -> "MATCH".equals(r.getStatus())).count();
@@ -200,41 +160,30 @@ public class HtmlReportGenerator {
                 .mapToLong(r -> (r.getApi1() != null ? r.getApi1().getDuration() : 0)
                         + (r.getApi2() != null ? r.getApi2().getDuration() : 0))
                 .sum();
-
-        // Check if this is a baseline operation
         String baselinePath = null;
         String baselineOperation = null;
         if (!results.isEmpty() && results.get(0).getBaselinePath() != null) {
             baselinePath = results.get(0).getBaselinePath();
-            // Determine if this is capture or compare based on whether api2 exists
             baselineOperation = results.get(0).getApi2() != null ? "Baseline Used" : "Baseline Captured";
         }
-
         writer.println("<div class=\"summary-container\">");
-
-        // Build execution summary content
         StringBuilder execSummary = new StringBuilder();
         execSummary.append("<div class=\"summary-box\"><h2>Execution Summary</h2>")
                 .append("<p><strong>Total Iterations:</strong> ").append(results.size()).append("</p>")
                 .append("<p><strong>Total API Call Duration:</strong> ").append(totalDuration).append(" ms</p>");
-
-        // Add baseline path if present
         if (baselinePath != null) {
             execSummary.append("<p><strong>").append(baselineOperation).append(":</strong> ")
                     .append(escapeHtml(baselinePath)).append("</p>");
         }
-
         execSummary.append("<p><strong>Report Generated At:</strong> ").append(generationTimestamp)
                 .append("</p></div>");
         writer.println(execSummary.toString());
-
         writer.println("<div class=\"summary-box\"><h2>Comparison Summary</h2>"
                 + "<p><strong>Matches:</strong> <span class=\"status-count match\">" + matches + "</span></p>"
                 + "<p><strong>Mismatches:</strong> <span class=\"status-count mismatch\">" + mismatches + "</span></p>"
                 + "<p><strong>Errors:</strong> <span class=\"status-count error\">" + errors + "</span></p></div>");
         writer.println("</div>");
     }
-
     private static String getScript() {
         return "<script>"
                 + "function toggleDetails(id) {"
@@ -247,7 +196,6 @@ public class HtmlReportGenerator {
                 + "}"
                 + "</script>";
     }
-
     private static String getStyles() {
         return "<style>"
                 + "body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #E3F2FD; color: #333333; }"

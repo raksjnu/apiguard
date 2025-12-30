@@ -1,8 +1,6 @@
 package com.muledocgen;
-
 import java.awt.image.BufferedImage;
 import java.io.File;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -21,7 +19,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
-
 import javax.imageio.ImageIO;
 import javax.imageio.stream.FileImageInputStream;
 import javax.imageio.stream.ImageInputStream;
@@ -33,7 +30,6 @@ import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
-
 import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.util.Units;
 import org.apache.poi.xwpf.usermodel.IBodyElement;
@@ -55,9 +51,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
 public class GenerateMuleDesignDoc {
-
 	static XWPFParagraph new_par;
 	static XWPFParagraph new_par5;
 	static String projectname = null;
@@ -67,11 +61,8 @@ public class GenerateMuleDesignDoc {
 	static int gvcount = 0;
 	static int sharedconncount = 0;
 	static ArrayList<String> filelist = new ArrayList<String>();
-	//static ArrayList<String> processlist = new ArrayList<String>();
-	//static ArrayList<String> processlist = null;
 	static ReadProperties rp = new ReadProperties();
 	static String infilesize = null;
-
 	public static final String TEXT = "#text";
 	public static final String Headers = "Headers";
 	public static final String NameValuePair = "NameValuePair";
@@ -82,37 +73,27 @@ public class GenerateMuleDesignDoc {
 	public static final String activity = "pd:activity";
 	public static final String config = "config";
 	public static final String variable = "xsl:variable";
-	
 	public static String outstring = "failed";
-	
 	public static String logo = "logo-leaf.png";
-	
 	public static String getConfigFiles() {
-		
 		InputStream inputStream;
-		
 		return "";
 	}
-	
 	static XWPFHyperlinkRun createHyperlinkRun(XWPFParagraph paragraph, String uri) {
 		  String rId = paragraph.getDocument().getPackagePart().addExternalRelationship(
 		    uri, 
 		    XWPFRelation.HYPERLINK.getRelation()
 		   ).getId();
-
 		  CTHyperlink cthyperLink=paragraph.getCTP().addNewHyperlink();
 		  cthyperLink.setId(rId);
 		  cthyperLink.addNewR();
-
 		  return new XWPFHyperlinkRun(
 		    cthyperLink,
 		    cthyperLink.getRArray(0),
 		    paragraph
 		   );
 		 }
-	
 	public static final String prettyPrint(Document xml) throws Exception {
-		
 		System.out.println("prettyPrint -- in Method");
 		Transformer tf = TransformerFactory.newInstance().newTransformer();
 		tf.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
@@ -121,11 +102,8 @@ public class GenerateMuleDesignDoc {
 		tf.transform(new DOMSource(xml), new StreamResult(out));
 		System.out.println(out.toString());
 		return out.toString();
-		
 	}
-	
 	public static void getChildNodes(Node node, XWPFDocument xdoc, XmlCursor cursor, String tocCounter, int childCount, String heading ) throws InvalidFormatException {
-		
 		String flowName = "";
 		if( node.getNodeName().equals("flow") || node.getNodeName().equals("sub-flow") ) {
 			NamedNodeMap map = node.getAttributes();
@@ -133,47 +111,24 @@ public class GenerateMuleDesignDoc {
 			flowName = attributeNode.getNodeValue();
 			flowName = flowName.toString();
 		}
-		
 		cursor = new_par.getCTP().newCursor();
-		
 		System.out.println("Child node : " + node.getNodeName());
-		//int childCount = 1;
 		XWPFParagraph new_par1 = xdoc.insertNewParagraph(cursor);
-		//new_par1.setStyle("Heading2");
 		new_par1.setStyle(heading);
 		XWPFRun titleRun = new_par1.createRun();
-		//titleRun.addBreak();
-		//titleRun.setText("2." + x + "." + childCount +" "+ node.getNodeName());
-		//int depth=2;
-		//double depthPercentage = 1/Math.sqrt(depth);
-		
 		childCount = childCount+1;
 		String elementName = node.getNodeName();
 		if( node.getNodeName().equals("flow") || node.getNodeName().equals("sub-flow") ) {
 			elementName = elementName+ " - "+flowName;
-			
 		}
-		//titleRun.setText(tocCounter+"." + childCount +" "+ node.getNodeName());
 		titleRun.setText(tocCounter+"." + childCount +" "+ elementName);
 		compSecPara(titleRun);	
-		 
 		cursor = new_par1.getCTP().newCursor();
-		
 		if( node.getNodeName().equals("flow") || node.getNodeName().equals("sub-flow") ) {
-			
 			XWPFParagraph new_par10 = xdoc.insertNewParagraph(cursor);
-			//new_par10.setPageBreak(true);
 			XWPFRun titleRun10 = new_par10.createRun();
-			//titleRun10.addBreak();
-			
 			cursor = new_par.getCTP().newCursor();
-			
-			
-			
-			//Path imagePath = Paths.get(ClassLoader.getSystemResource(logo).toURI());
-			//Path imagePath = Paths.get(ClassLoader.getSystemResource(processlist.get(i)).toURI());
 			try {
-				//String flowDiagramImages = rp.property().getProperty("mule.flowdiagrams.location").toString();
 				String mulehome = System.getenv("MULE_HOME").toString().replace(System.getProperty("file.separator"), "/");
 				String appname = "mule_designdoc_gen";
 				String flowDiagramImages = mulehome +"/apps/"+ appname + "/WorkingDirectory/Images/";
@@ -181,25 +136,17 @@ public class GenerateMuleDesignDoc {
 				flowDiagramImages= flowDiagramImages.toString().replace(System.getProperty("file.separator"), "/");
 				System.out.println("Image location : "+flowDiagramImages);
 				System.out.println("Flow Name : "+flowName);
-				//String prjpath = filelist.toArray()[r].toString().replace(System.getProperty("file.separator"), "/");
 				Path imagePath = Paths.get(flowDiagramImages+System.getProperty("file.separator")+flowName+".png");
 				System.out.println("Image Path : "+imagePath);
-				
 				BufferedImage bimg = ImageIO.read(new File(flowDiagramImages+System.getProperty("file.separator")+flowName+".png"));
 				int width          = bimg.getWidth();
 				int height         = bimg.getHeight();
 				System.out.println("Image Width : "+width);
 				System.out.println("Image height : "+height);
-				
-
-				
-				//XmlCursor cursor9_image1 = new_par.getCTP().newCursor();
 				XWPFParagraph image1 = xdoc.insertNewParagraph(cursor);
-				//XWPFParagraph image = document.createParagraph();
 				image1.setAlignment(ParagraphAlignment.CENTER);
 				XWPFRun imageRun = image1.createRun();
 				imageRun.setTextPosition(20);
-				
 				if (width<1000)
 			     {
 					imageRun.addPicture(Files.newInputStream(imagePath), XWPFDocument.PICTURE_TYPE_PNG,
@@ -210,54 +157,26 @@ public class GenerateMuleDesignDoc {
 				imageRun.addPicture(Files.newInputStream(imagePath), XWPFDocument.PICTURE_TYPE_PNG,
 						imagePath.getFileName().toString(), Units.toEMU(width/5), Units.toEMU(height/5));
 			     }
-				
 				cursor = new_par.getCTP().newCursor();
-				
 			}catch (IOException e) {
-				
-				// TODO: handle exception
 				System.out.println(e.getMessage());
 			}			
 		}
-		
-		
 		String tocCounterString = tocCounter+"." + childCount;
-		// get all the attributes of the node
 		XmlCursor cursorTable = new_par.getCTP().newCursor();
-				
 		getNodeAttributes(node, xdoc, cursorTable);
-		//String nextlevel = (childCount+
-		// Get all employees
 		NodeList nChildList = node.getChildNodes();
-		//int childCount1 = 1;
-		//childCount = childCount+0.1f;
 		int counterEx = 0;
 		for (int i = 0; i < nChildList.getLength(); i++) {
-			
 			childCount = i;
-			/*
-			if(i==0) {
-				
-				childCount=0;
-			}else {
-				
-				childCount++;
-			}
-			*/
 			if (nChildList.item(i).getNodeType() == Node.ELEMENT_NODE) {
-				
 				XmlCursor cursorChild = new_par.getCTP().newCursor();
-				//counterEx
 				getChildNodes(nChildList.item(i),xdoc, cursorChild, tocCounterString,counterEx,"Heading"+2);
-				//childCount = childCount+1;
 				counterEx++;
 			} else {
 				XmlCursor cursorChild = new_par.getCTP().newCursor();
-				// 4 is CDATA
-				//if (nChildList.item(i).getNodeType() == 4 || nChildList.item(i).getNodeType() == 3) {
 				if (nChildList.item(i).getNodeType() == 3 && nChildList.item(i).getNodeValue().trim().length()>0) {
 					System.out.println("Node Value : " + nChildList.item(i).getNodeValue());
-					
 					XmlCursor cursorChild1 = new_par.getCTP().newCursor();
 					XWPFTable tableOne = xdoc.insertNewTbl(cursorChild1);
 					tableOne.setWidth("95%");
@@ -265,91 +184,59 @@ public class GenerateMuleDesignDoc {
 					XWPFTableRow tableOneRowOne2 = tableOne.getRow(0);
 					tableOneRowOne2.getCell(0).setColor("c6e5f5");
 					tableOneRowOne2.getCell(0).setText(nChildList.item(i).getNodeValue());	
-					
 					XmlCursor cursorTable1 = new_par.getCTP().newCursor();
 					XWPFParagraph new_par11 = xdoc.insertNewParagraph(cursorTable1);
 					XWPFRun titleRun1 = new_par11.createRun();
 					titleRun1.addBreak();
-					
 					counterEx++;
 				}				
 			}
 		}
-		
 		childCount = childCount+1;
 	}
-
 	public static void getNodeAttributes(Node node, XWPFDocument xdoc, XmlCursor cursor) {
-		
 		NamedNodeMap map = node.getAttributes();
 		if(map.getLength() != 0) {
-			
 			XWPFTable tableOne = xdoc.insertNewTbl(cursor);
 			tableOne.setWidth("95%");
 			tableOne.setTableAlignment(TableRowAlign.CENTER);
 			XWPFTableRow tableOneRowOne2 = tableOne.getRow(0);
 			compSecPara_rowDetails(tableOneRowOne2);
-			
-			//NamedNodeMap map = node.getAttributes();
 			for (int i = 0; i < map.getLength(); i++) {
 				Node attributeNode = map.item(i);
 				System.out.println("         " + node.getNodeName() + " -- " + attributeNode.getNodeName() + " -- "
 						+ attributeNode.getNodeValue());
-				
 				XWPFTableRow row2 = tableOne.createRow();
 				row2.getCell(0).setText(attributeNode.getNodeName());
-				//row2.getCell(1).setText(node2.getTextContent());
 				row2.getCell(1).setText(attributeNode.getNodeValue());
 			}
-			
 			XmlCursor cursorTable = new_par.getCTP().newCursor();
-			
 			XWPFParagraph new_par1 = xdoc.insertNewParagraph(cursorTable);
-			//new_par1.setStyle("Heading2");
-			//new_par1.setStyle(heading);
 			XWPFRun titleRun = new_par1.createRun();
 			titleRun.addBreak();
 		}		
 	}
 	public static void main(String[] args) throws FileNotFoundException, IOException {
-		
 	}
 	public String  Gendoc(String mulehome,String apphome,String infilename,String outfilename,String inputLocation,String outputLocation,String serviceName) throws FileNotFoundException, IOException {
-
 		XWPFParagraph componentSectionParagraph = null;
 		XWPFParagraph globalSectionParagraph = null;
 		XWPFParagraph sharedSectionParagraph = null;
 		XWPFParagraph referSectionParagraph = null;
 		XWPFParagraph introSectionParagraph = null;
-		
 		ArrayList<String> processlist = null;
-		
 		XWPFParagraph flowDiagramParagraph = null;		
 		boolean isGlobalConfigDefined = false;
 		int tocCounter = 1;
 		float increment =0.1f;
-		
-		//processlist = new ArrayList<String>();
 		boolean firstDisplay = false;
-
 		try {
 			String infolder = inputLocation.toString().replace(System.getProperty("file.separator"), "/");
-			//String infolder = rp.property().getProperty("mule.zipinfolder").toString().replace(System.getProperty("file.separator"), "/");
-			
 			String outfolder = outputLocation + "/" ;
-			//String outfolder = rp.property().getProperty("outfolder").toString().replace(System.getProperty("file.separator"), "/");
-			//String templatepath = mulehome+"/apps/"+apphome+"/classes/template/TDD_template.docx";
-			
 			String templatepath = mulehome+"/apps/"+apphome+"/properties/classes/template/"+rp.property().getProperty("mule.templatepath.name").toString();
-			//String templatepath = mulehome+"/apps/"+apphome+"/classes/template/TDD_template_mule_V2.docx";
-			
-			
-			//String templatepath = rp.property().getProperty("mule.templatepath").toString().replace(System.getProperty("file.separator"), "/");
 			FileInputStream fis = null;
 			filelist = new ArrayList<String>();
-			//filelist = FileUtil.listFilesAndFilesSubDirectories(infolder, ".*zip");
 			filelist = FileUtil.listFilesAndFilesSubDirectories(infolder,infilename);
-			
 			if ((filelist.size()) != 0) {
 				for (int r = 0; r < filelist.size(); r++) {
 					if (filelist.toArray()[r].toString().contains(System.getProperty("file.separator"))) {
@@ -360,59 +247,31 @@ public class GenerateMuleDesignDoc {
 						sharedconncount = 0;
 						infilesize = null;
 						Date dateobj = new Date();
-
-						//String prjpath = filelist.toArray()[r].toString().replace("\\", "/");
 						String prjpath = filelist.toArray()[r].toString().replace(System.getProperty("file.separator"), "/");
 						String[] splittedprjName = prjpath.split("/");
 						String prjname = splittedprjName[splittedprjName.length - 1];
 						projectname = serviceName;
-						
 						File file = new File(infolder + projectname + ".zip");
 						double bytes = file.length();
 						double kilobytes = (bytes / 1024);
 						double megabytes = Math.round((kilobytes / 1024) * 100.0) / 100.0;
 						infilesize = megabytes + " MB";
-						//no need to unzip the file as the file is already in .zip format
-						//FileUtil.rename(infolder + projectname + ".ear", infolder + projectname + ".zip");
 						String zipFilePath = infolder + projectname + ".zip";
-						//String destDir = infolder + projectname;
 						String destDir = infolder;
 						String projectnameUnzip = null;
-						//projectname = FileUtil.unzip(zipFilePath, destDir);
 						FileUtil.unzip(zipFilePath, destDir);
-						//projectname = projectname
-						//projectname = serviceName;
-						
-						
 						String zippath = infolder + projectname + System.getProperty("file.separator");
-						
 						firstDisplay = false;
 						tocCounter =1;
 						isGlobalConfigDefined = false;
-
-						/*						
-							try {
-								FileUtil.rename(zippath + "Process Archive.par", zippath + "Process Archive.zip");
-								FileUtil.rename(zippath + "Shared Archive.sar", zippath + "Shared Archive.zip");
-							} catch (FileNotFoundException ex) {
-								throw ex;
-							}
-	
-							FileUtil.unzip(zippath + "Process Archive.zip", zippath + "process");
-							FileUtil.unzip(zippath + "Shared Archive.zip", zippath + "shared");							
-						*/
-						
 						fis = new FileInputStream(templatepath);
 						XWPFDocument xdoc = new XWPFDocument(fis);
-
 						@SuppressWarnings("rawtypes")
 						Iterator iterator = xdoc.getBodyElementsIterator();
 						List<XWPFAbstractSDT> sdts = new ArrayList<XWPFAbstractSDT>();
-
 						for (@SuppressWarnings("rawtypes")
 						Iterator iterator2 = iterator; iterator2.hasNext();) {
 							IBodyElement e = (IBodyElement) iterator2.next();
-
 							if (e instanceof XWPFSDT) {
 								XWPFSDT sdt = (XWPFSDT) e;
 								sdts.add(sdt);
@@ -430,47 +289,29 @@ public class GenerateMuleDesignDoc {
 								else if (p.getText().equals(rp.property().getProperty("mule.introduction.section").toString())) {
 									introSectionParagraph = p;
 								}
-								//mule.introduction.section
 							}
 						}
-						
 						FileUtil.filelist = new ArrayList<String>();
-						//filelist = FileUtil.listFilesAndFilesSubDirectories(infolder, infilename);
-						
-						//processlist = new ArrayList<String>();
-						//.replace(System.getProperty("file.separator"), "/")
-						//String muleDeployPropertiesFile = rp.property().getProperty("mule.app.location.deployFileName").toString();
-						//String muleFlowFilelocation=rp.property().getProperty("mule.app.location").toString();
-						
 						String muleDeployPropertiesFile = rp.property().getProperty("mule.app.location.deployFileName").toString().replace(System.getProperty("file.separator"), "/");
 						String muleFlowFilelocation=rp.property().getProperty("mule.app.location").toString().replace(System.getProperty("file.separator"), "/");
-						
-						//String effectivePath = infolder + projectname + "/"+muleDeployPropertiesFile;
 						String effectivePath = infolder + projectname + System.getProperty("file.separator")+muleDeployPropertiesFile;
-						// get the property value and print it out
 						Properties prop = new Properties();
 						InputStream inputStream;
 						inputStream=new FileInputStream(effectivePath);
-						//prop.load(new FileInputStream(effectivePath));
 						prop.load(inputStream);
 						String muleConfigFiles = prop.getProperty("config.resources");
-					
 						inputStream.close();
 						System.out.println("muleConfigFiles : " + muleConfigFiles);
 						StringTokenizer stringTokenizer = new StringTokenizer(muleConfigFiles, ",");
-						
 						String muleConfigFile = "";
 						processlist = new ArrayList<String>();
 						List nodesList = new ArrayList<Node>();
 						while (stringTokenizer.hasMoreTokens()) {
-							
 							muleConfigFile =stringTokenizer.nextToken();
 							System.out.println("muleConfigFile token: " + muleConfigFile);
 							System.out.println("config file with path : "+infolder + projectname + System.getProperty("file.separator")+muleFlowFilelocation+ muleConfigFile);
 							processlist.add(infolder + projectname + System.getProperty("file.separator") + muleFlowFilelocation + muleConfigFile);
-							
 						}
-						
 						if (componentSectionParagraph != null) {
 							tocCounter = tocCounter+1;
 							for (int x = 0; x < processlist.size(); x++) {
@@ -483,36 +324,20 @@ public class GenerateMuleDesignDoc {
 									cursor = new_par.getCTP().newCursor();
 									new_par = xdoc.insertNewParagraph(cursor);
 								}
-
 								org.w3c.dom.Document xmldocument;
 								DocumentBuilder builder = readDoc();
 								xmldocument = builder.parse(new File((String) processlist.toArray()[x]));
 								((org.w3c.dom.Document) xmldocument).getDocumentElement().normalize();
-								//XmlCursor cursor9 = new_par.getCTP().newCursor();
-								//XWPFParagraph new_par9 = xdoc.insertNewParagraph(cursor9);
-								//new_par9.setStyle("Heading1");
-								
-								//XWPFRun titleRun9 = new_par9.createRun();
-								//titleRun9.setBold(true);
-								//compSecPara_Format(titleRun9);
-								//String filepath = processlist.toArray()[x].toString().replace("\\", "/");
 								String filepath = processlist.toArray()[x].toString().replace(System.getProperty("file.separator"), "/");
-								
 								System.out.println(filepath);
-								//String[] splittedprocesspath = filepath.split("/process/");
 								String[] splittedprocesspath = filepath.split("/process/");
 								String processpath = splittedprocesspath[splittedprocesspath.length - 1];
-								//String[] splittedFileName = filepath.split("/");
 								String[] splittedFileName = filepath.split("/");
 								String processname = splittedFileName[splittedFileName.length - 1];
-								//titleRun9.setText(tocCounter+"." + (x + 1) + "." + processname);
-
 								NodeList nChildList1 = xmldocument.getChildNodes();
 								NodeList nChildList = nChildList1.item(0).getChildNodes();
-								
 								boolean displayPath = false;
 								for (int i = 0; i < nChildList.getLength(); i++) {				
-									
 									Node node = nChildList.item(i);
 									if (node.getNodeType() == Node.ELEMENT_NODE) {
 										if (node.getParentNode().getNodeName().equals("mule") ) {
@@ -523,78 +348,57 @@ public class GenerateMuleDesignDoc {
 										}
 									}
 								}
-
 								if(displayPath) {
-									
 									XmlCursor cursor10 = new_par.getCTP().newCursor();
 									XWPFParagraph new_par10 = xdoc.insertNewParagraph(cursor10);
-									
 									if(firstDisplay) {
 										new_par10.setPageBreak(true);
 									}
 									firstDisplay = true;
-									
 									XWPFRun titleRun10 = new_par10.createRun();
 									titleRun10.addBreak();
 									titleRun10.setFontSize(14);
 									int beginIndex = processpath.indexOf("/src/");
 									titleRun10.setText("Process file path: " + processpath.substring(beginIndex));
 								}
-								
-								
 								XmlCursor cursor11 = null;
 								int count = 1;
 								int childCount =1;
-								
 								for (int i = 0; i < nChildList.getLength(); i++) {
 									if(i ==0 ){
 										childCount = 0;
 									}else {
-										
 									}
 									cursor11 =new_par.getCTP().newCursor();
 									Node node = nChildList.item(i);
 									if (node.getNodeType() == Node.ELEMENT_NODE) {
 										if (node.getParentNode().getNodeName().equals("mule") ) {
 											if(node.getNodeName().equals("flow") || node.getNodeName().equals("sub-flow")){
-												
 												proccesscount++;
-												
 												if (x == 0) {
-													//tocCounter =2; // this is for Component
 												}
-												//getChildNodes(node,xdoc,cursor11, String.valueOf(2),childCount);
 												getChildNodes(node,xdoc,cursor11, String.valueOf(tocCounter),x,"Heading"+1);
 												childCount= childCount+1;
 											}else {
-												//adding Global Elements
 												nodesList.add(node);
 												sharedconncount++;
 											}
 										}																					
 									}									
 								}
-								
 								if(x == processlist.size()-1) {
-									//childCount =0;
 									tocCounter = 3;
-									//String tocCounterString = tocCounter+"." + 0 ;
 									String tocCounterString = String.valueOf(tocCounter) ;
 									if(!isGlobalConfigDefined) {
-										
 										XmlCursor cursor_s = new_par.getCTP().newCursor();
 										XWPFParagraph new_par10_s = xdoc.insertNewParagraph(cursor_s);
 										new_par10_s.setStyle("Heading1");
 										XWPFRun titleRun10_s = new_par10_s.createRun();
 										titleRun10_s.setBold(true);
 										compSecPara_Format(titleRun10_s);	
-										
 										titleRun10_s.setText(tocCounterString + " " + "Global Configuration");
-										
 										isGlobalConfigDefined = true;
-										
 									}		
-									
 									tocCounterString = String.valueOf(tocCounter);
 									childCount = 0;
 									for (int j = 0; j < nodesList.size(); j++) {
@@ -603,26 +407,18 @@ public class GenerateMuleDesignDoc {
 										}else {
 											childCount++;
 										}
-										//childCount= childCount+1;	
-										//Global Elements
 										XmlCursor cursor_s1 = new_par.getCTP().newCursor();
 										Node node =(Node)nodesList.get(j);
 										getChildNodes(node,xdoc,cursor_s1, tocCounterString,childCount,"Heading"+2);
-																		
 									}
 								}
-								
-								
 							}
 						}
-						
 						if(flowDiagramParagraph != null) {
 							XmlCursor cursor;
 							cursor = flowDiagramParagraph.getCTP().newCursor();
 							cursor.toNextSibling();
 							new_par = xdoc.insertNewParagraph(cursor);
-							//System.getProperty("file.separator")
-							//String flowDiagramImages = rp.property().getProperty("mule.flowdiagrams.location").toString();
 							String flowDiagramImages = rp.property().getProperty("mule.flowdiagrams.location").toString().replace(System.getProperty("file.separator"), "/");;
 							flowDiagramImages= flowDiagramImages+projectname+System.getProperty("file.separator") + rp.property().getProperty("mule.flowdiagrams.location.imagefolder").toString();
 							System.out.println("Image location : "+flowDiagramImages);
@@ -632,26 +428,19 @@ public class GenerateMuleDesignDoc {
 							XWPFRun titleRun9 = new_par9.createRun();
 							titleRun9.setBold(true);
 							compSecPara_Format(titleRun9);
-							
 							titleRun9.setText("2." + 1 + "." + muleConfigFile+ " Application Snapshot");
-
 							XmlCursor cursor9_image1 = new_par.getCTP().newCursor();
 							XWPFParagraph image1 = xdoc.insertNewParagraph(cursor9_image1);
-							//XWPFParagraph image = document.createParagraph();
 							image1.setAlignment(ParagraphAlignment.CENTER);
 							XWPFRun imageRun = image1.createRun();
 							imageRun.setTextPosition(20);
 							try {
 								int indexofXML = muleConfigFile.indexOf(".xml");
 								String flowSnapShotImage = muleConfigFile.substring(0, indexofXML);
-								
-								//Path imagePath = Paths.get(flowDiagramImages+"\\"+flowSnapShotImage+".png");
 								Path imagePath = Paths.get(flowDiagramImages+System.getProperty("file.separator")+flowSnapShotImage+".png");
-								
 								imageRun.addPicture(Files.newInputStream(imagePath), XWPFDocument.PICTURE_TYPE_PNG,
 										imagePath.getFileName().toString(), Units.toEMU(400), Units.toEMU(300));
 							} catch (Exception e) {
-								// TODO Auto-generated catch block
 								e.printStackTrace();
 							}
 						}
@@ -660,43 +449,30 @@ public class GenerateMuleDesignDoc {
 							cursor = referSectionParagraph.getCTP().newCursor();
 							cursor.toNextSibling();
 							new_par = xdoc.insertNewParagraph(cursor);
-							
-							//XWPFParagraph paragraph = document.createParagraph();
 							XWPFRun run = new_par.createRun();
 							run.setText("1. Refer to document ");
-
 						  	XWPFHyperlinkRun hyperlinkrun = createHyperlinkRun(new_par, "https://www.ibm.com");
 						  	hyperlinkrun.setText("API/Mulesoft best practices");
 							hyperlinkrun.setColor("0000FF");
 							hyperlinkrun.setUnderline(UnderlinePatterns.SINGLE);
-
 						  	run = new_par.createRun();
 						  	run.setText(" at API/C4E site.");
-						  
-						  	// ---- second link --------
 						  	cursor = new_par.getCTP().newCursor();
 						  	cursor.toNextSibling();
-							//cursor.toNextSibling();
 							new_par = xdoc.insertNewParagraph(cursor);
-							
-							//XWPFParagraph paragraph = document.createParagraph();
 							XWPFRun run1 = new_par.createRun();
 							run1.setText("2. Refer to  ");
-
 							XWPFHyperlinkRun hyperlinkrun1 = createHyperlinkRun(new_par, "https://www.ibm.com");
 							hyperlinkrun1.setText("Security/Encryption for 3rd party service integration");
 							hyperlinkrun1.setColor("0000FF");
 							hyperlinkrun1.setUnderline(UnderlinePatterns.SINGLE);
-
 							run1 = new_par.createRun();
 							run1.setText(".");
 						}
-
 						if (sharedSectionParagraph != null) {
 							FileUtil.filelist = new ArrayList<String>();
 							ArrayList<String> filelistq = FileUtil
 									.listFilesAndFilesSubDirectories(infolder + projectname, ".*.shared.*");
-
 							for (int x = 0; x < filelistq.size(); x++) {
 								XmlCursor cursor;
 								if (x == 0) {
@@ -707,7 +483,6 @@ public class GenerateMuleDesignDoc {
 									cursor = new_par.getCTP().newCursor();
 									new_par = xdoc.insertNewParagraph(cursor);
 								}
-
 								org.w3c.dom.Document xmldocument;
 								DocumentBuilder builder = readDoc();
 								xmldocument = builder.parse(new File((String) filelistq.toArray()[x]));
@@ -717,16 +492,12 @@ public class GenerateMuleDesignDoc {
 								new_par9.setStyle("Heading1");
 								XWPFRun titleRun9 = new_par9.createRun();
 								compSecPara_Format(titleRun9);
-								//String filepath = filelistq.toArray()[x].toString().replace("\\", "/");
 								String filepath = filelistq.toArray()[x].toString().replace(System.getProperty("file.separator"), "/");
-								
 								String[] splittedFileName = filepath.split("/");
 								String processname = splittedFileName[splittedFileName.length - 1];
-
 								titleRun9.setText("4." + (x + 1) + "." + processname);
 								NodeList nChildList1 = xmldocument.getChildNodes();
 								NodeList nChildList = nChildList1.item(0).getChildNodes();
-
 								for (int j = 0; j < nChildList.getLength(); j++) {
 									Node node1 = nChildList.item(j);
 									if ((node1.getNodeName()).equals(config)) {
@@ -751,21 +522,17 @@ public class GenerateMuleDesignDoc {
 								}sharedconncount++;
 							}
 						}
-
 						if (globalSectionParagraph != null) {
 							XmlCursor cursor;
 							cursor = globalSectionParagraph.getCTP().newCursor();
 							cursor.toNextSibling();
 							new_par = xdoc.insertNewParagraph(cursor);
-
 							org.w3c.dom.Document xmldocument;
 							DocumentBuilder builder = readDoc();
 							xmldocument = builder.parse(new File(infolder + projectname + System.getProperty("file.separator")+"TIBCO.xml"));
 							((org.w3c.dom.Document) xmldocument).getDocumentElement().normalize();
-
 							NodeList nChildList1 = xmldocument.getChildNodes();
 							NodeList nChildList = nChildList1.item(0).getChildNodes();
-
 							XmlCursor cursor6 = new_par.getCTP().newCursor();
 							XWPFTable tableOne = xdoc.insertNewTbl(cursor6);
 							tableOne.setWidth("100%");
@@ -804,7 +571,6 @@ public class GenerateMuleDesignDoc {
 							titleRun9.addBreak();
 							titleRun9.setText(rp.property().getProperty("reference").toString());
 						}
-						
 						if (introSectionParagraph != null) {
 							XmlCursor cursor;
 							cursor = introSectionParagraph.getCTP().newCursor();
@@ -820,7 +586,6 @@ public class GenerateMuleDesignDoc {
 							titleRun9.addBreak();
 							DateFormat dx = new SimpleDateFormat("dd-MMM-yyyy HH:mm:ss");
 							titleRun9.setText("Document created on: " + dx.format(dateobj));
-							
 							XmlCursor cursor3 = new_par.getCTP().newCursor();
 							cursor3.toNextSibling();
 							XWPFTable tableOne = xdoc.insertNewTbl(cursor3);
@@ -831,46 +596,23 @@ public class GenerateMuleDesignDoc {
 							tableOneRowOne2.addNewTableCell().setText("Count");
 							introSecPara_Format(tableOneRowOne2);
 							XWPFTableRow row2 = tableOne.createRow();
-
 							row2.getCell(0).setText("Processes/Flows");
 							row2.getCell(1).setText("" + proccesscount);
 							XWPFTableRow row3 = tableOne.createRow();
 							row3.getCell(0).setText("Global Elements");
 							row3.getCell(1).setText("" + sharedconncount);
-							/*
-							XWPFTableRow row4 = tableOne.createRow();
-							row4.getCell(0).setText("Activities");
-							row4.getCell(1).setText("" + activitiescount);
-							XWPFTableRow row5 = tableOne.createRow();
-							row5.getCell(0).setText("GVs");
-							row5.getCell(1).setText("" + gvcount);
-							*/
-							
 						}
-						
 						File directory = new File(outfolder);
 					    if (! directory.exists()){
 					        directory.mkdir();
 					    }
-						
-						//DateFormat df = new SimpleDateFormat("yyyyMMddHHmmss");
-						//String date = df.format(dateobj);
-						//FileOutputStream out = new FileOutputStream(
-						//		outfolder + projectname + "_Mulesoft_Design_Document_" + date + ".docx");
 						FileOutputStream out = new FileOutputStream(
 								outfolder + outfilename);
 						xdoc.write(out);
-						//xdoc.createTOC();
-						//xdoc.enforceUpdateFields();
 						out.close();
 						xdoc.close();
-						//File projectpath = new File(destDir + System.getProperty("file.separator")+projectname );
 						File projectpath = new File(destDir+System.getProperty("file.separator")+projectname);
 						FileUtil.deleteDirectory(projectpath);
-						//FileUtil.rename(infolder + projectname + ".zip", infolder + projectname + ".ear");
-//						System.out.println(
-//								"Mulesoft Design Document is created at " + System.getProperty("user.dir").replace(System.getProperty("file.separator"), "/")
-//										+ System.getProperty("file.separator") + outfolder + projectname + "_Design_Documnet" + date + ".docx");
 						System.out.println(
 								"Mule Design Document is created at " + System.getProperty("user.dir").replace(System.getProperty("file.separator"), "/")
 										+ "/" + outfolder.replace(System.getProperty("file.separator"), "/") + outfilename.replace(System.getProperty("file.separator"), "/") );
@@ -878,22 +620,13 @@ public class GenerateMuleDesignDoc {
 					}
 				}
 			} else {
-				
 				throw new FileNotFoundException("zip files not found in the src/main/resources/in folder");
-				
 			}
 		} catch (Exception e) {
-			
 			e.printStackTrace();
-			/*
-				FileUtil.rename(rp.property().getProperty("earinfolder").toString() + projectname + ".zip",
-					rp.property().getProperty("earinfolder").toString() + projectname + ".ear");
-			*/
 		}
-		
 		return outstring;
 	}
-
 	private static void inputBindings(Node node1, XWPFTable tableOne2) {
 		if(node1.hasChildNodes()) { 
 			NodeList nChildListb = node1.getChildNodes(); 
@@ -918,7 +651,6 @@ public class GenerateMuleDesignDoc {
 						NodeList nChildListc = node2.getChildNodes(); 
 						for(int l = 0; l < nChildListc.getLength(); l++) {
 							Node node3 = nChildListc.item(l); 
-
 							if (!(node3.getNodeName()).equals(TEXT)) { 
 								if(node3.getAttributes().getLength() != 0 && !(node3.getNodeName()).equals(variable) && node3.getNodeName().startsWith("xsl:")) {
 									if(node3.getAttributes().item(0).getNodeName().equals("test") || (node3.getAttributes().item(0).getNodeName().equals("select") && !(node3.getNodeName().equals("xsl:value-of")))) {
@@ -953,7 +685,6 @@ public class GenerateMuleDesignDoc {
 													}
 												}
 											}
-											//node4 = nChildListd.item(m);
 											if(node4.hasChildNodes()) {
 												NodeList nChildListe = node4.getChildNodes();
 												for(int n = 0; n < nChildListe.getLength(); n++) {
@@ -1062,12 +793,10 @@ public class GenerateMuleDesignDoc {
 				}
 			}			
 		}
-	
 	private static void introSecPara_Format(XWPFTableRow tableOneRowOne2) {
 		tableOneRowOne2.getCell(0).setColor("c6e5f5");
 		tableOneRowOne2.getCell(1).setColor("c6e5f5");
 	}	
-	
 	private static DocumentBuilder readDoc() throws ParserConfigurationException {
 		DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder;
@@ -1075,26 +804,21 @@ public class GenerateMuleDesignDoc {
 		builder = factory.newDocumentBuilder();
 		return builder;
 	}	
-	
 	private static void compSecPara(XWPFRun titleRun3) {
 		titleRun3.setColor("0003CC");
 		titleRun3.setFontFamily("Calibri Light (Headings)");
 		titleRun3.setFontSize(16);
 		titleRun3.setTextPosition(20);
 	}	
-	
 	private static void compSecPara_Format(XWPFRun titleRun9) {
 		titleRun9.setFontSize(16);
 		titleRun9.setColor("0003CC");
 		titleRun9.setFontFamily("Calibri Light (Headings)");
 	}
-	
-	
 	private static void compSecPara_rowDetails(XWPFTableRow tableOneRowOne2) {
 		tableOneRowOne2.getCell(0).setColor("c6e5f5");
 		tableOneRowOne2.getCell(0).setText("Attribute Name");
 		tableOneRowOne2.addNewTableCell().setText("Attribute Value");
 		tableOneRowOne2.getCell(1).setColor("c6e5f5");
 	}
-	
 }

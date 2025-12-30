@@ -1,8 +1,6 @@
 package com.raks.muleguard.checks;
-
 import com.raks.muleguard.model.Check;
 import com.raks.muleguard.model.CheckResult;
-
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -15,24 +13,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
-
-/**
- * XML XPath Not Exists Check - Validates that forbidden XPath expressions do
- * NOT match in XML files.
- * Fails if forbidden XPath expressions DO match.
- * 
- * Supports:
- * - Multiple XPath expressions with individual failure messages
- * - File pattern matching
- * - Property resolution (${property} references)
- * 
- * @author Rakesh Kumar (raksjnu@gmail.com)
- */
 public class XmlXPathNotExistsCheck extends AbstractCheck {
-
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
         @SuppressWarnings("unchecked")
@@ -41,44 +24,33 @@ public class XmlXPathNotExistsCheck extends AbstractCheck {
         List<Map<String, String>> xpathExpressions = (List<Map<String, String>>) check.getParams()
                 .get("xpathExpressions");
         Boolean propertyResolution = (Boolean) check.getParams().getOrDefault("propertyResolution", false);
-
-        // Validation
         if (filePatterns == null || filePatterns.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Configuration error: 'filePatterns' parameter is required");
         }
-
         if (xpathExpressions == null || xpathExpressions.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Configuration error: 'xpathExpressions' parameter is required");
         }
-
         List<String> failures = new ArrayList<>();
         List<Path> matchingFiles = new ArrayList<>();
-
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             matchingFiles = paths
                     .filter(Files::isRegularFile)
                     .filter(path -> matchesAnyPattern(path, filePatterns, projectRoot))
-                    .filter(path -> !shouldIgnorePath(projectRoot, path))  // Filter ignored folders
+                    .filter(path -> !shouldIgnorePath(projectRoot, path))  
                     .toList();
-
             if (matchingFiles.isEmpty()) {
-                // No files to check - pass (nothing forbidden found)
                 return CheckResult.pass(check.getRuleId(), check.getDescription(),
                         "No files found matching patterns (nothing to validate)");
             }
-
             for (Path file : matchingFiles) {
                 validateXPathsNotInFile(file, xpathExpressions, propertyResolution, projectRoot, failures);
             }
-
         } catch (IOException e) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Error scanning files: " + e.getMessage());
         }
-
-        // Fail if ANY forbidden XPath was found
         if (failures.isEmpty()) {
             String fileList = matchingFiles.stream()
                     .map(projectRoot::relativize)
@@ -91,7 +63,6 @@ public class XmlXPathNotExistsCheck extends AbstractCheck {
                     "Forbidden XPath expressions found:\n• " + String.join("\n• ", failures));
         }
     }
-
     private void validateXPathsNotInFile(Path file, List<Map<String, String>> xpathExpressions,
             boolean propertyResolution, Path projectRoot, List<String> failures) {
         try {
@@ -99,24 +70,18 @@ public class XmlXPathNotExistsCheck extends AbstractCheck {
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(file.toFile());
-
             XPathFactory xPathFactory = XPathFactory.newInstance();
             XPath xpath = xPathFactory.newXPath();
-
             for (Map<String, String> xpathExpr : xpathExpressions) {
                 String xpathString = xpathExpr.get("xpath");
                 String failureMessage = xpathExpr.getOrDefault("failureMessage",
                         "Forbidden XPath found: " + xpathString);
-
                 if (xpathString == null || xpathString.isEmpty()) {
-                    continue; // Skip invalid XPath
+                    continue; 
                 }
-
                 try {
                     NodeList nodes = (NodeList) xpath.evaluate(xpathString, doc, XPathConstants.NODESET);
-
                     if (nodes.getLength() > 0) {
-                        // Forbidden XPath found - this is a failure
                         failures.add(file.getFileName().toString() + ": " + failureMessage +
                                 " (found " + nodes.getLength() + " occurrence(s))");
                     }
@@ -125,15 +90,12 @@ public class XmlXPathNotExistsCheck extends AbstractCheck {
                             ": " + xpathString + " - " + e.getMessage());
                 }
             }
-
         } catch (Exception e) {
             failures.add("Error parsing XML file " + file.getFileName().toString() + ": " + e.getMessage());
         }
     }
-
     private boolean matchesAnyPattern(Path path, List<String> patterns, Path projectRoot) {
         String relativePath = projectRoot.relativize(path).toString().replace("\\", "/");
-
         for (String pattern : patterns) {
             if (matchesPattern(relativePath, pattern)) {
                 return true;
@@ -141,16 +103,13 @@ public class XmlXPathNotExistsCheck extends AbstractCheck {
         }
         return false;
     }
-
     private boolean matchesPattern(String path, String pattern) {
-        // Convert glob pattern to regex
         String regex = pattern
                 .replace(".", "\\.")
                 .replace("**/", ".*")
                 .replace("**", ".*")
                 .replace("*", "[^/]*")
                 .replace("?", ".");
-
         return path.matches(regex);
     }
 }

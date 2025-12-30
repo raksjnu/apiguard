@@ -1,5 +1,4 @@
 package com.tibcodocgen;
-
 public class starterobj {
 	String path;
 	String type;
@@ -29,5 +28,4 @@ public class starterobj {
 	public void setBinding(String binding) {
 		this.binding = binding;
 	}
-
 }
