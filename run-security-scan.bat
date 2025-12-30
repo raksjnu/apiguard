@@ -15,18 +15,22 @@ echo [INFO] Using Java at: %JAVA_HOME%
 
 REM Recursively find all pom.xml files
 echo [INFO] Searching for Maven projects...
-for /r %%i in (pom.xml) do (
-    set "POM_PATH=%%~dpi"
-    set "POM_FILE=%%i"
+for /r %%i in (pom.xml) do call :scan_project "%%i"
+
+goto :end
+
+:scan_project
+    set "POM_FILE=%~1"
+    set "POM_PATH=%~dp1"
     
-    echo "Processing %%i" | findstr /i "\\target\\" >nul
+    echo Processing %POM_FILE% | findstr /i "\\target\\" >nul
     if errorlevel 1 (
         echo.
         echo --------------------------------------------------------
-        echo Scanning Project: %%~dpi
+        echo Scanning Project: %POM_PATH%
         echo --------------------------------------------------------
         
-        pushd "%%~dpi"
+        pushd "%POM_PATH%"
             
         echo [1/3] listing Dependencies...
         call mvn dependency:list -DoutputFile=target/dependency-list.txt -Dsort=true
@@ -46,9 +50,11 @@ for /r %%i in (pom.xml) do (
         
         popd
     ) else (
-        echo [SKIP] Skipping target directory: %%~dpi
+        echo [SKIP] Skipping target directory: %POM_PATH%
     )
-)
+    exit /b
+
+:end
 
 echo.
 echo ========================================================
