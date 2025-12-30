@@ -60,7 +60,7 @@ if ($PomFiles.Count -eq 0) {
 foreach ($Pom in $PomFiles) {
     $ProjectDir = $Pom.Directory.FullName
     $ProjectName = $Pom.Directory.Name
-    $OutputFile = Join-Path $ProjectDir "Security_Audit_Consolidated_Report.html"
+    $OutputFile = Join-Path $ProjectDir "security_scan/Security_Audit_Consolidated_Report.html"
     
     # Initialize Content with Header
     $HtmlContent = $HeaderTemplate

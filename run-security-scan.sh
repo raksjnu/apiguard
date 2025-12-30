@@ -71,7 +71,7 @@ echo "      Committing Reports to Git..."
 echo "========================================================"
 
 echo "[INFO] Adding all generated Security Reports..."
-git add "**/Security_Audit_Consolidated_Report.html"
+git add "**/security_scan/Security_Audit_Consolidated_Report.html"
 git commit -m "chore: Update Security Audit Reports [skip ci]"
 echo "[INFO] Pushing changes..."
 git push origin master
