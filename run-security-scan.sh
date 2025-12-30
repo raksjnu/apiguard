@@ -58,14 +58,19 @@ process_project() {
     pushd "$project_dir" > /dev/null
     
     echo "[1/3] Listing Dependencies..."
-    mvn dependency:list -DoutputFile=target/dependency-list.txt -Dsort=true
+    mvn dependency:list -B -DoutputFile=target/dependency-list.txt -Dsort=true
     
     echo "[2/3] Generating License Report..."
-    mvn org.codehaus.mojo:license-maven-plugin:2.0.0:aggregate-add-third-party -Dlicense.useMissingFile -Dlicense.outputDirectory=target/site
+    mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -B -Dlicense.useMissingFile -Dlicense.outputDirectory=target/site
     
     echo "[3/3] Checking for CVEs (OWASP Dependency Check)..."
     # Note: First run will download huge CVE database.
-    mvn org.owasp:dependency-check-maven:8.4.3:check -Dformat=HTML -DautoUpdate=true
+    if [ -n "$NVD_API_KEY" ]; then
+        mvn org.owasp:dependency-check-maven:8.4.3:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=$NVD_API_KEY
+    else
+        echo "[WARNING] NVD_API_KEY not set. You may experience 403 errors."
+        mvn org.owasp:dependency-check-maven:8.4.3:check -B -Dformat=HTML -DautoUpdate=true
+    fi
     
     echo ""
     echo "[REPORT] Reports generated in $project_dir/target/"

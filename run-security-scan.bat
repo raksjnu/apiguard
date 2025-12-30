@@ -64,22 +64,27 @@ goto :end
     pushd "%POM_PATH%"
         
     echo [1/3] listing Dependencies...
-    call mvn dependency:list -DoutputFile=target/dependency-list.txt -Dsort=true
+    call mvn dependency:list -B -DoutputFile=target/dependency-list.txt -Dsort=true
     
     echo [2/3] Generating License Report...
-    call mvn org.codehaus.mojo:license-maven-plugin:2.0.0:aggregate-add-third-party -Dlicense.useMissingFile -Dlicense.outputDirectory=target/site
+    call mvn org.codehaus.mojo:license-maven-plugin:2.0.0:add-third-party -B -Dlicense.useMissingFile -Dlicense.outputDirectory=target/site
     
     echo [3/3] Checking for CVEs (OWASP Dependency Check)...
-    REM Note: First run will download huge CVE database.
-    call mvn org.owasp:dependency-check-maven:8.4.3:check -Dformat=HTML -DautoUpdate=true
+    REM Note: First run will download huge CVE database. If 403 Forbidden, set NVD_API_KEY env var.
+    if defined NVD_API_KEY (
+        call mvn org.owasp:dependency-check-maven:8.4.3:check -B -Dformat=HTML -DautoUpdate=true -DnvdApiKey=%NVD_API_KEY%
+    ) else (
+        echo [WARNING] NVD_API_KEY not set. You may experience 403 errors.
+        call mvn org.owasp:dependency-check-maven:8.4.3:check -B -Dformat=HTML -DautoUpdate=true
+    )
     
-    echo.
-    echo [REPORT] Reports generated in target/
-    echo   - Dependencies: target/dependency-list.txt
-    echo   - Licenses:     target/site/generated-sources/license/THIRD-PARTY.txt
-    echo   - CVEs:         target/dependency-check-report.html
+    echo ""
+    echo "[REPORT] Reports generated in target/"
+    echo "  - Dependencies: target/dependency-list.txt"
+    echo "  - Licenses:     target/site/generated-sources/license/THIRD-PARTY.txt"
+    echo "  - CVEs:         target/dependency-check-report.html"
     
-    popd
+    popd > nul
     exit /b
 
 :skip_target
@@ -87,6 +92,13 @@ goto :end
     exit /b
 
 :end
+
+echo.
+echo ========================================================
+echo       Scan Completed. Generating HTML Dashboard...
+echo ========================================================
+
+powershell -ExecutionPolicy Bypass -File "%~dp0generate-security-report.ps1" -RootPath "%~dp0"
 
 echo.
 echo ========================================================
