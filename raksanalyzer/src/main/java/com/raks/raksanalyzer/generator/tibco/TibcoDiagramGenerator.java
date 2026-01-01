@@ -68,11 +68,11 @@ public class TibcoDiagramGenerator {
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(processFile);
             String puml = generateFlowPuml(doc, processFile.getName());
-            logger.info("[FLOW PUML] Generated PUML for '{}', length: {} chars", processFile.getName(), puml.length());
-            logger.debug("[FLOW PUML] Content preview (first 500 chars): {}", puml.substring(0, Math.min(500, puml.length())));
+            // logger.debug("[FLOW PUML] Generated PUML for '{}', length: {} chars", processFile.getName(), puml.length());
+            // logger.debug("[FLOW PUML] Content preview (first 500 chars): {}", puml.substring(0, Math.min(500, puml.length())));
             byte[] pngBytes = renderPng(puml);
             if (pngBytes != null && pngBytes.length > 0) {
-                logger.info("[FLOW PNG] Successfully rendered PNG for '{}', size: {} bytes", processFile.getName(), pngBytes.length);
+                logger.debug("[FLOW PNG] Successfully rendered PNG for '{}', size: {} bytes", processFile.getName(), pngBytes.length);
             } else {
                 logger.warn("✗ Diagram generation returned empty/null for {}", processFile.getName());
             }
@@ -239,12 +239,12 @@ public class TibcoDiagramGenerator {
                 
                 if (label != null) {
                     transitionLabels.computeIfAbsent(from, k -> new HashMap<>()).put(to, label);
-                    logger.debug("[LABEL EXTRACTION] From '{}' to '{}': label='{}'", from, to, label);
+                    // logger.debug("[LABEL EXTRACTION] From '{}' to '{}': label='{}'", from, to, label);
                 } else {
-                    logger.debug("[LABEL EXTRACTION] From '{}' to '{}': NO LABEL", from, to);
+                    // logger.debug("[LABEL EXTRACTION] From '{}' to '{}': NO LABEL", from, to);
                 }
             }
-            logger.info("[LABEL EXTRACTION] Total transition labels extracted: {}", transitionLabels.size());
+            logger.debug("[LABEL EXTRACTION] Total transition labels extracted: {}", transitionLabels.size());
         }
         if (depth == 0 && starterElement != null) {
             String type = getTagValue(starterElement, "pd:type");
@@ -260,12 +260,12 @@ public class TibcoDiagramGenerator {
                 for (String successor : starterSuccessors) {
                     if (hasRelevantContentInPath(successor, activityMap, transitions, projectRoot, relevanceCache, new HashSet<>())) {
                         branchesWithContent.add(successor);
-                        logger.debug("[FORK] Branch to '{}' HAS relevant content", successor);
+                        // logger.debug("[FORK] Branch to '{}' HAS relevant content", successor);
                     } else {
-                        logger.debug("[FORK] Branch to '{}' has NO relevant content - SKIPPED", successor);
+                        // logger.debug("[FORK] Branch to '{}' has NO relevant content - SKIPPED", successor);
                     }
                 }
-                logger.info("[INTEGRATION FORK] Starter '{}' has {} total successors, {} with relevant content", startNode, starterSuccessors.size(), branchesWithContent.size());
+                logger.debug("[INTEGRATION FORK] Starter '{}' has {} total successors, {} with relevant content", startNode, starterSuccessors.size(), branchesWithContent.size());
                 if (branchesWithContent.size() > 1) {
                     sb.append("fork\n");
                     List<Set<String>> branchProcessedSets = new ArrayList<>();
@@ -276,10 +276,10 @@ public class TibcoDiagramGenerator {
                         
                         // Add transition label if available
                         String successor = branchesWithContent.get(i);
-                        logger.info("[INTEGRATION FORK] Rendering branch {} of {}: '{}'", i+1, branchesWithContent.size(), successor);
+                        logger.debug("[INTEGRATION FORK] Rendering branch {} of {}: '{}'", i+1, branchesWithContent.size(), successor);
                         if (transitionLabels.containsKey(startNode) && transitionLabels.get(startNode).containsKey(successor)) {
                              String label = transitionLabels.get(startNode).get(successor).replace("\"", "\\\"");
-                             logger.info("[INTEGRATION FORK] Adding label '{}' to branch '{}'", label, successor);
+                             logger.debug("[INTEGRATION FORK] Adding label '{}' to branch '{}'", label, successor);
                              sb.append("-> \"").append(label).append("\";\n");
                         } else {
                              logger.debug("[INTEGRATION FORK] No label for branch '{}'", successor);
@@ -394,10 +394,10 @@ public class TibcoDiagramGenerator {
                 partitionLabel = nodeName + " (" + groupType + ")";
             }
             
-            logger.info("[SECTION 2 GROUP] Rendering partition for group '{}' (type: {})", nodeName, groupType);
+            logger.debug("[SECTION 2 GROUP] Rendering partition for group '{}' (type: {})", nodeName, groupType);
             int beforeLen = sb.length();
             sb.append("partition \"").append(partitionLabel).append("\" {\n");
-            logger.info("[SECTION 2 PUML] Added: {}", sb.substring(beforeLen));
+            // logger.debug("[SECTION 2 PUML] Added: {}", sb.substring(beforeLen));
             
             // Render ALL activities within the group (not just connectors) to match TIBCO IDE
             NodeList groupActivities = activity.getElementsByTagNameNS("*", "activity");
@@ -441,7 +441,7 @@ public class TibcoDiagramGenerator {
                 // For now, let's trust the topology. Most groups end at a join or end of process.
                 
                 if (startNodes.size() > 1) {
-                    logger.info("[SECTION 2 GROUP] Group '{}' has {} internal start nodes - rendering internal fork", nodeName, startNodes.size());
+                    logger.debug("[SECTION 2 GROUP] Group '{}' has {} internal start nodes - rendering internal fork", nodeName, startNodes.size());
                     sb.append("fork\n");
                     int i = 0;
                     for (String startNode : startNodes) {
@@ -459,7 +459,7 @@ public class TibcoDiagramGenerator {
             }
             int beforeLen2 = sb.length();
             sb.append("}\n");
-            logger.info("[SECTION 2 PUML] Closed partition for '{}': {}", nodeName, sb.substring(beforeLen2, sb.length()));
+            logger.debug("[SECTION 2 PUML] Closed partition for '{}': {}", nodeName, sb.substring(beforeLen2, sb.length()));
             List<String> successors = transitions.get(nodeName);
             if (successors != null) {
                 if (successors.size() > 1) {
@@ -846,9 +846,9 @@ public class TibcoDiagramGenerator {
         sb.append("@enduml");
         String puml = sb.toString();
         try {
-            String filename = "flow_" + processName.replaceAll("[^a-zA-Z0-9]", "_") + ".puml";
-            java.nio.file.Files.writeString(java.nio.file.Paths.get(filename), puml);
-            logger.info("[FLOW DIAGRAM] Written to {}", filename);
+            // String filename = "flow_" + processName.replaceAll("[^a-zA-Z0-9]", "_") + ".puml";
+            // java.nio.file.Files.writeString(java.nio.file.Paths.get(filename), puml);
+            // logger.debug("[FLOW DIAGRAM] Written to {}", filename);
         } catch (Exception ex) {
             logger.error("Failed to write debug PUML", ex);
         }
@@ -922,7 +922,7 @@ public class TibcoDiagramGenerator {
                 for (int i = 0; i < successors.size(); i++) {
                     if (i > 0) sb.append("fork again\n");
                     String successor = successors.get(i);
-                    logger.debug("[FLOW FORK] Branch {} -> '{}'", i+1, successor);
+                    // logger.debug("[FLOW FORK] Branch {} -> '{}'", i+1, successor);
                     
                     // Check scope BEFORE rendering branch transition
                      if (allowedScope != null && !allowedScope.contains(successor)) {
@@ -1178,10 +1178,10 @@ public class TibcoDiagramGenerator {
         partitionLabel = groupName + " (" + groupType + ")";
     }
     
-    logger.info("[SECTION 3 GROUP] Rendering partition for group '{}'", groupName);
+    logger.debug("[SECTION 3 GROUP] Rendering partition for group '{}'", groupName);
     int beforeLen = sb.length();
     sb.append("partition \"").append(partitionLabel).append("\" {\n");
-    logger.info("[SECTION 3 PUML] Added: {}", sb.substring(beforeLen));
+    logger.debug("[SECTION 3 PUML] Added: {}", sb.substring(beforeLen));
         
         // Handle internal parallel paths (fork from group start)
         if (startTargets.size() > 1) {
@@ -1224,7 +1224,7 @@ public class TibcoDiagramGenerator {
           // Close partition wrapper
     int beforeLen2 = sb.length();
     sb.append("}\n");
-    logger.info("[SECTION 3 PUML] Closed partition for '{}': {}", groupName, sb.substring(beforeLen2, sb.length()));
+    logger.debug("[SECTION 3 PUML] Closed partition for '{}': {}", groupName, sb.substring(beforeLen2, sb.length()));
          // Island Detection (Dead Nodes) - Coverage Guarantee
         Set<String> unvisited = new LinkedHashSet<>(scope);
         unvisited.removeAll(processed);

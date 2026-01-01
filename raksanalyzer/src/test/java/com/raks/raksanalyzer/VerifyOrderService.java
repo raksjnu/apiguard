@@ -18,9 +18,9 @@ public class VerifyOrderService {
         
         String puml = generator.generateFlowPuml(doc, "orderServiceFILE");
         
-        File debugOut = new File("target/debug_orderservice.puml");
-        java.nio.file.Files.writeString(debugOut.toPath(), puml);
-        System.out.println("Written PUML to " + debugOut.getAbsolutePath());
+        // File debugOut = new File("target/debug_orderservice.puml");
+        // java.nio.file.Files.writeString(debugOut.toPath(), puml);
+        // System.out.println("Written PUML to " + debugOut.getAbsolutePath());
         
         // Inspect "1=2" surroundings
         int index = puml.indexOf("1=2");
@@ -35,8 +35,8 @@ public class VerifyOrderService {
         } else {
             sb.append("Label '1=2' not found in PUML!\n");
         }
-        File debugChars = new File("target/debug_chars.txt");
-        java.nio.file.Files.writeString(debugChars.toPath(), sb.toString());
-        System.out.println("Written chars to " + debugChars.getAbsolutePath());
+        // File debugChars = new File("target/debug_chars.txt");
+        // java.nio.file.Files.writeString(debugChars.toPath(), sb.toString());
+        // System.out.println("Written chars to " + debugChars.getAbsolutePath());
     }
 }

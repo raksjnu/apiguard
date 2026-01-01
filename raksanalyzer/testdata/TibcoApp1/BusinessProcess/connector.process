@@ -130,7 +130,7 @@ public class connectorJavaEventSource extends JavaProcessStarter {
             <pd:serializable>false</pd:serializable>
             <pd:indexSlot>test</pd:indexSlot>
             <pd:outSlot>testwriteoutput</pd:outSlot>
-            <pd:activityOutputName>Write File</pd:activityOutputName>
+            <pd:activityOutputName/>
             <pd:repeatCondition>1=2</pd:repeatCondition>
             <pd:accumulateOutput>true</pd:accumulateOutput>
         </config>
@@ -138,7 +138,23 @@ public class connectorJavaEventSource extends JavaProcessStarter {
         <pd:expanded>true</pd:expanded>
         <pd:transition>
             <pd:from>start</pd:from>
+            <pd:to>Sleep</pd:to>
+            <pd:xpathDescription>sleepflag</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
             <pd:to>Java Code</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>javaflag</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Sleep</pd:from>
+            <pd:to>end</pd:to>
             <pd:lineType>Default</pd:lineType>
             <pd:lineColor>-16777216</pd:lineColor>
             <pd:conditionType>always</pd:conditionType>
@@ -153,8 +169,16 @@ public class connectorJavaEventSource extends JavaProcessStarter {
         <pd:activity name="Java Code">
             <pd:type>com.tibco.plugin.java.JavaActivity</pd:type>
             <pd:resourceType>ae.javapalette.javaActivity</pd:resourceType>
-            <pd:x>248</pd:x>
-            <pd:y>295</pd:y>
+            <pd:x>255</pd:x>
+            <pd:y>216</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+        <pd:activity name="Sleep">
+            <pd:type>com.tibco.plugin.timer.SleepActivity</pd:type>
+            <pd:resourceType>ae.activities.sleep</pd:resourceType>
+            <pd:x>255</pd:x>
+            <pd:y>353</pd:y>
             <config/>
             <pd:inputBindings/>
         </pd:activity>

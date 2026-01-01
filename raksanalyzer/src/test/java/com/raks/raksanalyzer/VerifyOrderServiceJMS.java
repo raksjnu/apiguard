@@ -18,8 +18,8 @@ public class VerifyOrderServiceJMS {
         
         String puml = generator.generateFlowPuml(doc, "orderServiceJMS");
         
-        File debugOut = new File("target/debug_jms.puml");
-        java.nio.file.Files.writeString(debugOut.toPath(), puml);
-        System.out.println("Written PUML to " + debugOut.getAbsolutePath());
+        // File debugOut = new File("target/debug_jms.puml");
+        // java.nio.file.Files.writeString(debugOut.toPath(), puml);
+        // System.out.println("Written PUML to " + debugOut.getAbsolutePath());
     }
 }

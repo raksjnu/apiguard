@@ -22,9 +22,9 @@ public class VerifyFlowDiagrams {
         
         String puml = generator.generateFlowPuml(doc, "LogandErrorHandler");
         
-        File debugOut = new File("target/debug_loganderror.puml");
-        java.nio.file.Files.writeString(debugOut.toPath(), puml);
-        System.out.println("Written PUML to " + debugOut.getAbsolutePath());
+        // File debugOut = new File("target/debug_loganderror.puml");
+        // java.nio.file.Files.writeString(debugOut.toPath(), puml);
+        // System.out.println("Written PUML to " + debugOut.getAbsolutePath());
         
         // Assertions for expected shape syntax
         // :<icon> **Name**\nType;

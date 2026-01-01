@@ -18,8 +18,8 @@ public class VerifyConnector {
         
         String puml = generator.generateFlowPuml(doc, "connector");
         
-        File debugOut = new File("target/debug_connector.puml");
-        java.nio.file.Files.writeString(debugOut.toPath(), puml);
-        System.out.println("Written PUML to " + debugOut.getAbsolutePath());
+        // File debugOut = new File("target/debug_connector.puml");
+        // java.nio.file.Files.writeString(debugOut.toPath(), puml);
+        // System.out.println("Written PUML to " + debugOut.getAbsolutePath());
     }
 }
