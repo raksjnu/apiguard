@@ -1213,7 +1213,6 @@ public class TibcoDiagramGenerator {
         if (startTargets.size() > 1) {
             logger.debug("[GROUP] Parallel start detected in group '{}': {}", groupName, startTargets);
             // PlantUML requires an activity before fork, add a hidden node
-            sb.append("#transparent:_;\n");  // Hidden node to satisfy PlantUML syntax
             sb.append("fork\n");
             
             int i = 0;
