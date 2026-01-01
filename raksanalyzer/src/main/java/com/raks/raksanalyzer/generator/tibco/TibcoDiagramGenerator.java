@@ -955,17 +955,19 @@ public class TibcoDiagramGenerator {
                     }
 
                     
-                    // Use separate processed set for each fork branch to allow duplicates
+                    // Use SEPARATE processed set for each fork branch
+                    // This allows the same node (e.g., Group) to be rendered in multiple branches
+                    // PlantUML will automatically merge nodes with the same name
                     Set<String> branchProcessed = new LinkedHashSet<>(processed);
-                    traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, branchProcessed, doc, joinNode, false, allowedScope, false, null); // skipFirst=false, label already rendered
-                    branchProcessedSets.add(branchProcessed);
+                    traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, branchProcessed, doc, joinNode, false, allowedScope, false, labelToPass); // Pass label for groups
                     branchProcessedSets.add(branchProcessed);
                 }
                 sb.append("end fork\n");
                 
-                // Merge all branch processed sets AFTER all branches are rendered
-                for (Set<String> branchProcessed : branchProcessedSets) {
-                    processed.addAll(branchProcessed);
+                // DATA CONSISTENCY FIX: Merge all branch processed sets AFTER all branches are rendered
+                // This ensures that rendering in Branch 1 doesn't block rendering in Branch 4
+                for (Set<String> bp : branchProcessedSets) {
+                    processed.addAll(bp);
                 }
                 
                 if (joinNode != null) {
@@ -1204,7 +1206,8 @@ public class TibcoDiagramGenerator {
         
         // Fix for "Cannot find group": Render incoming transition arrow INSIDE the partition
         if (incomingLabel != null) {
-             sb.append("-[#483D8B]->[").append(incomingLabel).append("]\n");
+             String label = incomingLabel.replace("\"", "\\\"");
+             sb.append("-> \"").append(label).append("\";\n");
         } else {
              sb.append("->\n");
         }
