@@ -38,3 +38,7 @@ repro_*.txt
 test_*.txt
 test_*.pdf
 dependency-reduced-pom.xml
+
+# Test Output
+test-output/
+*.puml

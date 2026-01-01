@@ -28,7 +28,6 @@ echo ========================================
 echo All tests complete!
 echo Output files in: %OUTPUT_DIR%
 echo ========================================
-pause
 goto :eof
 
 :test_process

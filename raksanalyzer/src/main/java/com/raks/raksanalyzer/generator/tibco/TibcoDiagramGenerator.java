@@ -1468,6 +1468,29 @@ public class TibcoDiagramGenerator {
             }
         }
     }
+    public static void main(String[] args) {
+        if (args.length < 2) {
+            System.err.println("Usage: TibcoDiagramGenerator <processPath> <projectRoot>");
+            System.exit(1);
+        }
+        try {
+            String processPath = args[0];
+            String projectRootPath = args[1];
+            File projectRoot = new File(projectRootPath);
+            File processFile = new File(processPath);
+            String serviceName = processFile.getName();
+            if (serviceName.endsWith(".process")) {
+                serviceName = serviceName.substring(0, serviceName.length() - 8);
+            }
+            
+            TibcoDiagramGenerator generator = new TibcoDiagramGenerator();
+            String puml = generator.generateIntegrationPuml(serviceName, processPath, projectRoot, null);
+            System.out.println(puml);
+        } catch (Exception e) {
+            e.printStackTrace();
+            System.exit(1);
+        }
+    }
 }
 
 
