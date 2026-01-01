@@ -947,7 +947,8 @@ public class TibcoDiagramGenerator {
                     // If successor IS a group, SUPPRESS arrow here and pass label to renderGroup
                     if (!groupMap.containsKey(successor)) {
                          if (labelToPass != null) {
-                             sb.append("-[#483D8B]->[" ).append(labelToPass).append("]\n");
+                             labelToPass = labelToPass.replace("\"", "\\\"");
+                             sb.append("-> \"").append(labelToPass).append("\";\n");
                          } else {
                              sb.append("->\n");
                          }
@@ -956,7 +957,7 @@ public class TibcoDiagramGenerator {
                     
                     // Use separate processed set for each fork branch to allow duplicates
                     Set<String> branchProcessed = new LinkedHashSet<>(processed);
-                    traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, branchProcessed, doc, joinNode, false, allowedScope, false, labelToPass); // skipFirst=false to render activities
+                    traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, branchProcessed, doc, joinNode, false, allowedScope, false, null); // skipFirst=false, label already rendered
                     branchProcessedSets.add(branchProcessed);
                     branchProcessedSets.add(branchProcessed);
                 }
