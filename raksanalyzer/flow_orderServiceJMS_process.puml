@@ -1,5 +1,5 @@
 @startuml
-' Generated: 1767242490897
+' Generated: 1767289433876
 skinparam shadowing false
 skinparam activity {
   BackgroundColor #E6E6FA
@@ -22,6 +22,11 @@ start
 ->
 :<&file> **Log**\nlog;
 ->
+partition "Group3 (simpleGroup)" {
+->
+:<&envelope-closed> **Reply-to-JMS-Message-1**\nJMSReply;
+}
+->
 :<&map> **Map Data**\nMapper;
 ->
 partition "Group (criticalSection)" {
@@ -41,8 +46,6 @@ fork
 :<&file> **Log-1-1-1**\nlog;
 fork again
 -[#483D8B]->[SOAP API Call]
-:<&file> **Log-1-1-2**\nlog;
-->
 :<&cog> **createOrderService**\nsubprocess;
 ->
 :<&file> **Log-1-1-1-1**\nlog;
@@ -63,14 +66,11 @@ end fork
 fork
 ->
 fork again
--[#483D8B]->[JMSRequestReplyUseCase]
-fork
--[#483D8B]->[Otherwise]
-:<&file> **Log-1-2**\nlog;
-fork again
--[#483D8B]->[groupxpath]
-:<&envelope-closed> **Reply to JMS Message**\nJMSReply;
-end fork
+->
+partition "Group4 (simpleGroup)" {
+->
+:<&envelope-closed> **Reply-to-JMS-Message-1-1**\nJMSReply;
+}
 end fork
 ->
 stop

@@ -1,5 +1,5 @@
 @startuml
-' Generated: 1767225780076
+' Generated: 1767289432041
 skinparam shadowing false
 skinparam activity {
   BackgroundColor #E6E6FA
@@ -23,7 +23,7 @@ fork
 ->
 :<&code> **Java Method**\nJavaMethod;
 ->
-partition "Group" {
+partition "Group (repeat)" {
 fork
 -[#483D8B]->[javaflag]
 :<&code> **Java Code**\njava;
@@ -42,8 +42,8 @@ fork again
 ->
 :<&puzzle-piece> **XML To Java**\nXmlToJava;
 fork again
--[#483D8B]->[xpathflag]
-partition "Group" {
+->
+partition "Group (repeat)" {
 fork
 -[#483D8B]->[javaflag]
 :<&code> **Java Code**\njava;

@@ -1,5 +1,5 @@
 @startuml
-' Generated: 1767242489554
+' Generated: 1767289432769
 skinparam shadowing false
 skinparam activity {
   BackgroundColor #E6E6FA
@@ -20,10 +20,12 @@ skinparam dpi 300
 start
 fork
 ->
+partition "Group (transactionGroup)" {
 ->
 :<&file> **Write File**\nFileWrite;
 ->
 :<&file> **Log**\nlog;
+}
 ->
 :<&map> **Map Data**\nMapper;
 ->
@@ -34,14 +36,18 @@ fork again
 ->
 :<&data-transfer-download> **JDBC Query**\nJDBCQuery;
 ->
+partition "Group (1) (transactionGroup)" {
 ->
 partition "<b>override-subprocess</b>\nLogandErrorHandlerDummy" #FFF3E0 {
 :<&cog> **LogandErrorHandlerDummy**\nsubprocess;
 }
+}
 ->
+partition "Group (3) (inputLoop)" {
 ->
 partition "<b>spawn-subprocess</b>\nLogandErrorHandler" #F1F8E9 {
 :<&cog> **LogandErrorHandler**\nsubprocess;
+}
 }
 ->
 :<&cog> **SOAPcreateOrderService**\nsubprocess;

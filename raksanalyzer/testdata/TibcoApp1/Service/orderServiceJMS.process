@@ -164,7 +164,7 @@
     <pd:activity name="Log">
         <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
         <pd:resourceType>ae.activities.log</pd:resourceType>
-        <pd:x>123</pd:x>
+        <pd:x>80</pd:x>
         <pd:y>183</pd:y>
         <config>
             <role>User</role>
@@ -373,22 +373,6 @@
         <config/>
         <pd:inputBindings/>
     </pd:activity>
-    <pd:activity name="Log-1-1-2">
-        <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
-        <pd:resourceType>ae.activities.log</pd:resourceType>
-        <pd:x>638</pd:x>
-        <pd:y>157</pd:y>
-        <config>
-            <role>User</role>
-        </config>
-        <pd:inputBindings>
-            <ns5:ActivityInput>
-                <message>
-                    <xsl:value-of select="&quot;Order Handling SOAP Service Invocation begins&quot;"/>
-                </message>
-            </ns5:ActivityInput>
-        </pd:inputBindings>
-    </pd:activity>
     <pd:activity name="Log-1-1-1-1">
         <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
         <pd:resourceType>ae.activities.log</pd:resourceType>
@@ -494,94 +478,6 @@
             </ns1:WriteActivityInputTextClass>
         </pd:inputBindings>
     </pd:activity>
-    <pd:group name="Group (1)">
-        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
-        <pd:resourceType>ae.process.group</pd:resourceType>
-        <pd:x>885</pd:x>
-        <pd:y>210</pd:y>
-        <pd:width>440</pd:width>
-        <pd:height>196</pd:height>
-        <pd:collapsedWidth>57</pd:collapsedWidth>
-        <pd:collapsedHeight>70</pd:collapsedHeight>
-        <pd:groupVariables/>
-        <pd:joinToggle>inherit</pd:joinToggle>
-        <config>
-            <pd:groupType>simpleGroup</pd:groupType>
-            <pd:serializable>false</pd:serializable>
-        </config>
-        <pd:inputBindings/>
-        <pd:expanded>true</pd:expanded>
-        <pd:transition>
-            <pd:from>start</pd:from>
-            <pd:to>Log-1-2</pd:to>
-            <pd:lineType>Default</pd:lineType>
-            <pd:lineColor>-16777216</pd:lineColor>
-            <pd:conditionType>otherwise</pd:conditionType>
-        </pd:transition>
-        <pd:transition>
-            <pd:from>start</pd:from>
-            <pd:to>Reply to JMS Message</pd:to>
-            <pd:lineType>Default</pd:lineType>
-            <pd:lineColor>-16777216</pd:lineColor>
-            <pd:conditionType>xpath</pd:conditionType>
-            <pd:xpath>groupxpath</pd:xpath>
-        </pd:transition>
-        <pd:transition>
-            <pd:from>Reply to JMS Message</pd:from>
-            <pd:to>end</pd:to>
-            <pd:lineType>Default</pd:lineType>
-            <pd:lineColor>-16777216</pd:lineColor>
-            <pd:conditionType>always</pd:conditionType>
-        </pd:transition>
-        <pd:transition>
-            <pd:from>Log-1-2</pd:from>
-            <pd:to>end</pd:to>
-            <pd:lineType>Default</pd:lineType>
-            <pd:lineColor>-16777216</pd:lineColor>
-            <pd:conditionType>always</pd:conditionType>
-        </pd:transition>
-        <pd:activity name="Reply to JMS Message">
-            <pd:type>com.tibco.plugin.jms.JMSReplyActivity</pd:type>
-            <pd:resourceType>ae.activities.JMSReplyActivity</pd:resourceType>
-            <pd:x>1118</pd:x>
-            <pd:y>278</pd:y>
-            <config>
-                <PermittedMessageType>Text</PermittedMessageType>
-                <SessionAttributes>
-                    <transacted>false</transacted>
-                    <acknowledgeMode>1</acknowledgeMode>
-                    <maxSessions>1</maxSessions>
-                </SessionAttributes>
-                <ConfigurableHeaders>
-                    <JMSDeliveryMode>PERSISTENT</JMSDeliveryMode>
-                    <JMSExpiration>0</JMSExpiration>
-                    <JMSPriority>4</JMSPriority>
-                    <EventSource>JMS Queue Receiver</EventSource>
-                </ConfigurableHeaders>
-                <ApplicationProperties>/Connections/JMS Application Properties.sharedjmsapp</ApplicationProperties>
-            </config>
-            <pd:inputBindings>
-                <ns6:ActivityInput>
-                    <xsl:copy-of select="$JMS-Queue-Receiver/ns6:ActivityOutput/OtherProperties"/>
-                    <Body>
-                        <xsl:value-of select="&quot;Order Processed by OrderServiceJMS&quot;"/>
-                    </Body>
-                </ns6:ActivityInput>
-            </pd:inputBindings>
-        </pd:activity>
-        <pd:activity name="Log-1-2">
-            <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
-            <pd:resourceType>ae.activities.log</pd:resourceType>
-            <pd:x>1073</pd:x>
-            <pd:y>351</pd:y>
-            <config>
-                <role>User</role>
-            </config>
-            <pd:inputBindings>
-                <ns5:ActivityInput/>
-            </pd:inputBindings>
-        </pd:activity>
-    </pd:group>
     <pd:activity name="Publish to Adapter">
         <pd:type>com.tibco.plugin.ae.AEPublisherActivity</pd:type>
         <pd:resourceType>ae.aepalette.aePubActivity</pd:resourceType>
@@ -610,6 +506,128 @@
         </config>
         <pd:inputBindings/>
     </pd:activity>
+    <pd:group name="Group3">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>85</pd:x>
+        <pd:y>264</pd:y>
+        <pd:width>237</pd:width>
+        <pd:height>163</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>simpleGroup</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Reply-to-JMS-Message-1</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Reply-to-JMS-Message-1</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Reply-to-JMS-Message-1">
+            <pd:type>com.tibco.plugin.jms.JMSReplyActivity</pd:type>
+            <pd:resourceType>ae.activities.JMSReplyActivity</pd:resourceType>
+            <pd:x>202</pd:x>
+            <pd:y>350</pd:y>
+            <config>
+                <PermittedMessageType>Text</PermittedMessageType>
+                <SessionAttributes>
+                    <transacted>false</transacted>
+                    <acknowledgeMode>1</acknowledgeMode>
+                    <maxSessions>1</maxSessions>
+                </SessionAttributes>
+                <ConfigurableHeaders>
+                    <JMSDeliveryMode>PERSISTENT</JMSDeliveryMode>
+                    <JMSExpiration>0</JMSExpiration>
+                    <JMSPriority>4</JMSPriority>
+                    <EventSource>JMS Queue Receiver</EventSource>
+                </ConfigurableHeaders>
+                <ApplicationProperties>/Connections/JMS Application Properties.sharedjmsapp</ApplicationProperties>
+            </config>
+            <pd:inputBindings>
+                <ns1:ActivityInput xmlns:ns1="http://www.tibco.com/namespaces/tnt/plugins/jms">
+                    <xsl:copy-of select="$JMS-Queue-Receiver/ns6:ActivityOutput/OtherProperties"/>
+                    <Body>
+                        <xsl:value-of xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="&quot;Order Processed by OrderServiceJMS&quot;"/>
+                    </Body>
+                </ns1:ActivityInput>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:group name="Group4">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>1070</pd:x>
+        <pd:y>234</pd:y>
+        <pd:width>178</pd:width>
+        <pd:height>140</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>simpleGroup</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Reply-to-JMS-Message-1-1</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Reply-to-JMS-Message-1-1</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Reply-to-JMS-Message-1-1">
+            <pd:type>com.tibco.plugin.jms.JMSReplyActivity</pd:type>
+            <pd:resourceType>ae.activities.JMSReplyActivity</pd:resourceType>
+            <pd:x>1148</pd:x>
+            <pd:y>298</pd:y>
+            <config>
+                <PermittedMessageType>Text</PermittedMessageType>
+                <SessionAttributes>
+                    <transacted>false</transacted>
+                    <acknowledgeMode>1</acknowledgeMode>
+                    <maxSessions>1</maxSessions>
+                </SessionAttributes>
+                <ConfigurableHeaders>
+                    <JMSDeliveryMode>PERSISTENT</JMSDeliveryMode>
+                    <JMSExpiration>0</JMSExpiration>
+                    <JMSPriority>4</JMSPriority>
+                    <EventSource>JMS Queue Receiver</EventSource>
+                </ConfigurableHeaders>
+                <ApplicationProperties>/Connections/JMS Application Properties.sharedjmsapp</ApplicationProperties>
+            </config>
+            <pd:inputBindings>
+                <ns1:ActivityInput xmlns:ns1="http://www.tibco.com/namespaces/tnt/plugins/jms">
+                    <xsl:copy-of select="$JMS-Queue-Receiver/ns6:ActivityOutput/OtherProperties"/>
+                    <Body>
+                        <xsl:value-of xmlns:xsl="http://www.w3.org/1999/XSL/Transform" select="&quot;Order Processed by OrderServiceJMS&quot;"/>
+                    </Body>
+                </ns1:ActivityInput>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
     <pd:transition>
         <pd:from>Group</pd:from>
         <pd:to>Null-1</pd:to>
@@ -627,13 +645,6 @@
     <pd:transition>
         <pd:from>LogandErrorHandler</pd:from>
         <pd:to>End</pd:to>
-        <pd:lineType>Default</pd:lineType>
-        <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
-    </pd:transition>
-    <pd:transition>
-        <pd:from>Log</pd:from>
-        <pd:to>Map Data</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>
@@ -681,13 +692,6 @@
         <pd:conditionType>always</pd:conditionType>
     </pd:transition>
     <pd:transition>
-        <pd:from>Log-1-1-2</pd:from>
-        <pd:to>createOrderService</pd:to>
-        <pd:lineType>Default</pd:lineType>
-        <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
-    </pd:transition>
-    <pd:transition>
         <pd:from>createOrderService</pd:from>
         <pd:to>Log-1-1-1-1</pd:to>
         <pd:lineType>Default</pd:lineType>
@@ -719,7 +723,7 @@
     </pd:transition>
     <pd:transition>
         <pd:from>Null-1</pd:from>
-        <pd:to>Log-1-1-2</pd:to>
+        <pd:to>createOrderService</pd:to>
         <pd:xpathDescription>SOAP API Call</pd:xpathDescription>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
@@ -756,24 +760,37 @@
         <pd:conditionType>always</pd:conditionType>
     </pd:transition>
     <pd:transition>
-        <pd:from>Group (1)</pd:from>
-        <pd:to>End</pd:to>
+        <pd:from>Publish to Adapter</pd:from>
+        <pd:to>Invoke REST API</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Log</pd:from>
+        <pd:to>Group3</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group3</pd:from>
+        <pd:to>Map Data</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>
     </pd:transition>
     <pd:transition>
         <pd:from>Null-2</pd:from>
-        <pd:to>Group (1)</pd:to>
-        <pd:xpathDescription>JMSRequestReplyUseCase</pd:xpathDescription>
+        <pd:to>Group4</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>xpath</pd:conditionType>
-        <pd:xpath>exists($JMS-Queue-Receiver/ns6:ActivityOutput/JMSHeaders/ns6:JMSReplyTo)</pd:xpath>
+        <pd:xpath>testcondition</pd:xpath>
     </pd:transition>
     <pd:transition>
-        <pd:from>Publish to Adapter</pd:from>
-        <pd:to>Invoke REST API</pd:to>
+        <pd:from>Group4</pd:from>
+        <pd:to>End</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>

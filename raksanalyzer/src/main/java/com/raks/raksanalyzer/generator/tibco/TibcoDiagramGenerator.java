@@ -68,8 +68,11 @@ public class TibcoDiagramGenerator {
             DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
             Document doc = dBuilder.parse(processFile);
             String puml = generateFlowPuml(doc, processFile.getName());
+            logger.info("[FLOW PUML] Generated PUML for '{}', length: {} chars", processFile.getName(), puml.length());
+            logger.debug("[FLOW PUML] Content preview (first 500 chars): {}", puml.substring(0, Math.min(500, puml.length())));
             byte[] pngBytes = renderPng(puml);
             if (pngBytes != null && pngBytes.length > 0) {
+                logger.info("[FLOW PNG] Successfully rendered PNG for '{}', size: {} bytes", processFile.getName(), pngBytes.length);
             } else {
                 logger.warn("✗ Diagram generation returned empty/null for {}", processFile.getName());
             }
@@ -151,7 +154,7 @@ public class TibcoDiagramGenerator {
         NodeList activities = doc.getElementsByTagNameNS("*", "activity");
         NodeList starters = doc.getElementsByTagNameNS("*", "starter");
         NodeList groups = doc.getElementsByTagNameNS("*", "group");
-        Map<String, Element> activityMap = new HashMap<>();
+        Map<String, Element> activityMap = new LinkedHashMap<>();
         for (int i = 0; i < activities.getLength(); i++) {
             Element act = (Element) activities.item(i);
             activityMap.put(act.getAttribute("name"), act);
@@ -165,7 +168,7 @@ public class TibcoDiagramGenerator {
             Element grp = (Element) groups.item(i);
             activityMap.put(grp.getAttribute("name"), grp);
         }
-        Map<String, List<String>> transitions = new HashMap<>();
+        Map<String, List<String>> transitions = new LinkedHashMap<>();
         NodeList transitionList = doc.getElementsByTagNameNS("*", "transition");
         for (int i = 0; i < transitionList.getLength(); i++) {
             Element t = (Element) transitionList.item(i);
@@ -190,7 +193,7 @@ public class TibcoDiagramGenerator {
         }
         
         // Collect transition labels if enabled
-        Map<String, Map<String, String>> transitionLabels = new HashMap<>();
+        Map<String, Map<String, String>> transitionLabels = new LinkedHashMap<>();
         if (this.showTransitionLabels) {
             for (int i = 0; i < transitionList.getLength(); i++) {
                 Element t = (Element) transitionList.item(i);
@@ -248,7 +251,7 @@ public class TibcoDiagramGenerator {
             String cleanType = type.substring(type.lastIndexOf('.') + 1);
             sb.append(":**").append(cleanType).append("**;\n");
         }
-        Set<String> processed = new HashSet<>();
+        Set<String> processed = new LinkedHashSet<>();
         String startNode = starterElement != null ? starterElement.getAttribute("name") : startName;
         List<String> starterSuccessors = transitions.get(startNode);
         if (starterSuccessors != null) {
@@ -340,7 +343,7 @@ public class TibcoDiagramGenerator {
                                  int depth, NodeList groupsNodeList, CallChain callChainObj,
                                  Map<String, Map<String, String>> transitionLabels) {
         // Convert NodeList groups to Map<String, Element> groups
-        Map<String, Element> groupsMap = new HashMap<>();
+        Map<String, Element> groupsMap = new LinkedHashMap<>();
         if (groupsNodeList != null) {
             for (int i = 0; i < groupsNodeList.getLength(); i++) {
                 Element grp = (Element) groupsNodeList.item(i);
@@ -378,7 +381,9 @@ public class TibcoDiagramGenerator {
             }
             return;
         }
+        // Check if this is a group
         String type = getTagValue(activity, "pd:type");
+        logger.debug("[SECTION 2 TRAVERSE] Processing node '{}' (type: {})", nodeName, type);
         if (type != null && (type.contains("LoopGroup") || type.contains("CriticalSectionGroup") || type.contains("CatchActivity") || type.contains("TransactionGroup"))) {
             // Extract group type from config
             String groupType = extractGroupType(activity);
@@ -389,7 +394,10 @@ public class TibcoDiagramGenerator {
                 partitionLabel = nodeName + " (" + groupType + ")";
             }
             
+            logger.info("[SECTION 2 GROUP] Rendering partition for group '{}' (type: {})", nodeName, groupType);
+            int beforeLen = sb.length();
             sb.append("partition \"").append(partitionLabel).append("\" {\n");
+            logger.info("[SECTION 2 PUML] Added: {}", sb.substring(beforeLen));
             
             // Render ALL activities within the group (not just connectors) to match TIBCO IDE
             NodeList groupActivities = activity.getElementsByTagNameNS("*", "activity");
@@ -433,6 +441,7 @@ public class TibcoDiagramGenerator {
                 // For now, let's trust the topology. Most groups end at a join or end of process.
                 
                 if (startNodes.size() > 1) {
+                    logger.info("[SECTION 2 GROUP] Group '{}' has {} internal start nodes - rendering internal fork", nodeName, startNodes.size());
                     sb.append("fork\n");
                     int i = 0;
                     for (String startNode : startNodes) {
@@ -448,7 +457,9 @@ public class TibcoDiagramGenerator {
                     }
                 }
             }
+            int beforeLen2 = sb.length();
             sb.append("}\n");
+            logger.info("[SECTION 2 PUML] Closed partition for '{}': {}", nodeName, sb.substring(beforeLen2, sb.length()));
             List<String> successors = transitions.get(nodeName);
             if (successors != null) {
                 if (successors.size() > 1) {
@@ -746,9 +757,9 @@ public class TibcoDiagramGenerator {
         try {
             Element root = doc.getDocumentElement();
             String startName = getTagValue(root, "pd:startName");
-            Map<String, Element> activityMap = new HashMap<>();
-            Map<String, Element> groupMap = new HashMap<>();
-            Map<String, List<String>> transitions = new HashMap<>();
+            Map<String, Element> activityMap = new LinkedHashMap<>();
+            Map<String, Element> groupMap = new LinkedHashMap<>();
+            Map<String, List<String>> transitions = new LinkedHashMap<>();
             List<String> catchActivities = new ArrayList<>();
             NodeList activities = doc.getElementsByTagNameNS("*", "activity");
             for (int i = 0; i < activities.getLength(); i++) {
@@ -784,8 +795,8 @@ public class TibcoDiagramGenerator {
                 if (xpathDesc != null && !xpathDesc.isEmpty()) {
                 }
             }
-            Map<String, Map<String, String>> transitionLabels = new HashMap<>();
-            Map<String, Map<String, String>> transitionConditions = new HashMap<>();
+            Map<String, Map<String, String>> transitionLabels = new LinkedHashMap<>();
+            Map<String, Map<String, String>> transitionConditions = new LinkedHashMap<>();
             for (int i = 0; i < transitionList.getLength(); i++) {
                 Element t = (Element) transitionList.item(i);
                 if (isInsideGroup(t)) continue;
@@ -922,21 +933,22 @@ public class TibcoDiagramGenerator {
                         continue;
                     }
 
-                    // Add transition label if available
-                    if (transitionLabels != null && transitionLabels.containsKey(nodeName)) {
+                    // Reverting to PROVEN FIX: Suppress labels for groups
+                    boolean successorIsGroup = groupMap.containsKey(successor);
+                    if (!successorIsGroup && transitionLabels != null && transitionLabels.containsKey(nodeName)) {
                         String label = transitionLabels.get(nodeName).get(successor);
                         if (label != null) {
                             label = label.replace("\"", "\\\"");
-                            sb.append("-[#483D8B]->[").append(label).append("]\n");
+                             sb.append("-[#483D8B]->[").append(label).append("]\n");
                         } else {
-                            sb.append("->\n"); 
+                            sb.append("->\n");
                         }
                     } else {
-                        sb.append("->\n"); 
+                        sb.append("->\n");
                     }
                     
                     // Use separate processed set for each fork branch to allow duplicates
-                    Set<String> branchProcessed = new HashSet<>(processed);
+                    Set<String> branchProcessed = new LinkedHashSet<>(processed);
                     traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, branchProcessed, doc, joinNode, false, allowedScope, true); // insideFork=true
                     branchProcessedSets.add(branchProcessed);
                 }
@@ -973,11 +985,13 @@ public class TibcoDiagramGenerator {
                 boolean isJoinNode = (stopAtNode != null && successor.equals(stopAtNode));
                 
                 boolean successorExists = activityMap.containsKey(successor) || groupMap.containsKey(successor);
+                // Hybrid State: Use quoted label syntax -> "label" for Single Successor (Proven working 11:28)
+                // This fixes activity rendering (yellow labels)
                 if (successorExists && transitionLabels != null && transitionLabels.containsKey(nodeName)) {
                     String label = transitionLabels.get(nodeName).get(successor);
                     if (label != null) {
                         label = label.replace("\"", "\\\"");
-                        sb.append("-[#483D8B]->[").append(label).append("]\n");
+                        sb.append("-> \"").append(label).append("\"\n");
                     } else if (!isJoinNode) {
                          sb.append("->\n");
                     }
@@ -992,11 +1006,11 @@ public class TibcoDiagramGenerator {
         if (startNodes == null || startNodes.isEmpty()) return null;
         List<Set<String>> reachableSets = new ArrayList<>();
         for (String start : startNodes) {
-            Set<String> reachable = new HashSet<>();
+            Set<String> reachable = new LinkedHashSet<>();
             collectReachable(start, transitions, reachable);
             reachableSets.add(reachable);
         }
-        Set<String> common = new HashSet<>(reachableSets.get(0));
+        Set<String> common = new LinkedHashSet<>(reachableSets.get(0));
         for (int i = 1; i < reachableSets.size(); i++) {
             common.retainAll(reachableSets.get(i));
         }
@@ -1014,7 +1028,7 @@ public class TibcoDiagramGenerator {
     private String findFirstCommonInBFS(String start, Map<String, List<String>> transitions, Set<String> candidates) {
         Queue<String> queue = new LinkedList<>();
         queue.add(start);
-        Set<String> visited = new HashSet<>();
+        Set<String> visited = new LinkedHashSet<>();
         visited.add(start);
         while(!queue.isEmpty()) {
             String curr = queue.poll();
@@ -1066,12 +1080,11 @@ public class TibcoDiagramGenerator {
         String groupName = group.getAttribute("name");
         
         // Parse content into local maps for traversal
-        Map<String, Element> localActivityMap = new HashMap<>();
-        Map<String, Element> localGroupMap = new HashMap<>();
-        Map<String, List<String>> localTransitions = new HashMap<>();
-        Map<String, Map<String, String>> localLabels = new HashMap<>();
-        Map<String, Map<String, String>> localConditions = new HashMap<>();
-        Set<String> scope = new HashSet<>();
+        Map<String, Element> localActivityMap = new LinkedHashMap<>();
+        Map<String, Element> localGroupMap = new LinkedHashMap<>();
+        Map<String, List<String>> localTransitions = new LinkedHashMap<>();
+        Map<String, Map<String, String>> localLabels = new LinkedHashMap<>();
+        Set<String> scope = new LinkedHashSet<>();
 
         // Activities
         NodeList groupActivities = group.getElementsByTagNameNS("*", "activity");
@@ -1121,63 +1134,57 @@ public class TibcoDiagramGenerator {
                 else if (getTagValue(t, "pd:xpath") != null) label = getTagValue(t, "pd:xpath").trim();
 
                 if (!label.isEmpty()) {
-                    localLabels.computeIfAbsent(from, k -> new HashMap<>()).put(to, label);
+                    localLabels.computeIfAbsent(from, k -> new LinkedHashMap<>()).put(to, label);
                 }
             }
         }
-        // --- Deep Traversal Logic ---
         
-        Set<String> processed = new HashSet<>();
+        Set<String> processed = new LinkedHashSet<>();
 
-        // Find Implicit Start Node (node with no incoming transitions inside scope)
-        Set<String> internalTargets = new HashSet<>();
-        for (Map.Entry<String, List<String>> entry : localTransitions.entrySet()) {
-            // Only consider transitions where the source is in the scope (ignore 'start' token for this calculation)
-            if (scope.contains(entry.getKey())) {
-                internalTargets.addAll(entry.getValue());
-            }
-        }
-        
-        String startNode = null;
-        for (String name : scope) {
-            if (!internalTargets.contains(name)) {
-                startNode = name;
-                break;
-            }
-        }
-        
-        // Fallback for cycles
-        if (startNode == null && !scope.isEmpty()) {
-            startNode = scope.iterator().next();
-        }
-
-        // 1. Identify Entry Points from 'start'
+        // Identify Entry Points from 'start'
         List<String> startTargets = localTransitions.getOrDefault("start", new ArrayList<>());
         
-        // If no explicit start-to-node transitions, use the existing 'startNode' fallback (first node in scope)
-        if (startTargets.isEmpty() && startNode != null) {
-            startTargets.add(startNode);
+        // If no explicit start transitions, find implicit start node (no incoming transitions)
+        if (startTargets.isEmpty()) {
+            Set<String> internalTargets = new HashSet<>();
+            for (Map.Entry<String, List<String>> entry : localTransitions.entrySet()) {
+                if (scope.contains(entry.getKey())) {
+                    internalTargets.addAll(entry.getValue());
+                }
+            }
+            
+            for (String name : scope) {
+                if (!internalTargets.contains(name)) {
+                    startTargets.add(name);
+                    break;
+                }
+            }
+            
+            // Fallback for cycles
+            if (startTargets.isEmpty() && !scope.isEmpty()) {
+                startTargets.add(scope.iterator().next());
+            }
         }
 
-        // 2. Render Main Flow (handling Fork from Start)
         
-        // 2. Render Main Flow (handling Fork from Start)
-        // Flow Diagrams: Use same structure as Integration diagrams
-        // partition contains fork (not fork contains partition)
-        // BUT: if this group is being rendered inside a fork branch, skip partition wrapper
-        if (!insideFork) {
-            String groupType = group.getElementsByTagNameNS("*", "groupType").getLength() > 0 
-                ? group.getElementsByTagNameNS("*", "groupType").item(0).getTextContent() 
-                : null;
-            String partitionLabel = groupName;
-            if (groupType != null && !groupType.isEmpty()) {
-                partitionLabel = groupName + " (" + groupType + ")";
-            }
-            sb.append("partition \"").append(partitionLabel).append("\" {\n");
-        }
-        // When insideFork=true, no wrapper or label - just render content directly        
+    
+    // ALWAYS use partition wrapper (matching Section 2's proven approach)
+    // Section 2 has NO insideFork parameter and ALWAYS uses partitions successfully
+    String groupType = group.getElementsByTagNameNS("*", "groupType").getLength() > 0 
+        ? group.getElementsByTagNameNS("*", "groupType").item(0).getTextContent() 
+        : null;
+    String partitionLabel = groupName;
+    if (groupType != null && !groupType.isEmpty()) {
+        partitionLabel = groupName + " (" + groupType + ")";
+    }
+    
+    logger.info("[SECTION 3 GROUP] Rendering partition for group '{}'", groupName);
+    int beforeLen = sb.length();
+    sb.append("partition \"").append(partitionLabel).append("\" {\n");
+    logger.info("[SECTION 3 PUML] Added: {}", sb.substring(beforeLen));
+        
+        // Handle internal parallel paths (fork from group start)
         if (startTargets.size() > 1) {
-            // Parallel Start -> Explicit Fork
             logger.debug("[GROUP] Parallel start detected in group '{}': {}", groupName, startTargets);
             sb.append("fork\n");
             
@@ -1185,8 +1192,8 @@ public class TibcoDiagramGenerator {
             for (String target : startTargets) {
                  if (i > 0) sb.append("fork again\n");
                  
-                  // We need to render the transition label if it exists
-                  String label = localLabels.getOrDefault("start", new HashMap<>()).get(target);
+                  // Add transition label if available
+                  String label = localLabels.getOrDefault("start", new LinkedHashMap<>()).get(target);
                   if (label != null && !label.isEmpty()) {
                       label = label.replace("\"", "\\\""); 
                       sb.append("-[#483D8B]->[").append(label).append("]\n");
@@ -1194,41 +1201,41 @@ public class TibcoDiagramGenerator {
                       sb.append("->\n");   
                   }
                   
-                  traverseFlowFromNode(sb, target, localActivityMap, localGroupMap, localTransitions, localLabels, localConditions, processed, doc, null, false, scope, false); // insideFork=false (group internal)
+                  // Traverse this branch - always pass false for insideFork since we're in a partition
+                  traverseFlowFromNode(sb, target, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false);
                   i++;
              }
              sb.append("end fork\n");
          } else if (startTargets.size() == 1) {
               // Single Start
               String target = startTargets.get(0);
-              String label = localLabels.getOrDefault("start", new HashMap<>()).get(target);
+              String label = localLabels.getOrDefault("start", new LinkedHashMap<>()).get(target);
               if (label != null && !label.isEmpty()) {
                   label = label.replace("\"", "\\\"");
                   sb.append("-[#483D8B]->[").append(label).append("]\n");
               } else {
                   sb.append("->\n");
               }
-              traverseFlowFromNode(sb, target, localActivityMap, localGroupMap, localTransitions, localLabels, localConditions, processed, doc, null, false, scope, false); // insideFork=false (group internal)
+              traverseFlowFromNode(sb, target, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false);
          }
          
-         if (!insideFork) {
-             sb.append("}\n");
-         }
-         
-
-        // 3. Island Detection (Dead Nodes) - Coverage Guarantee
-        // Identify any nodes in 'scope' that were NOT added to 'processed'
-        Set<String> unvisited = new HashSet<>(scope);
+         // Close partition only if we opened it
+          
+          // Close partition wrapper
+    int beforeLen2 = sb.length();
+    sb.append("}\n");
+    logger.info("[SECTION 3 PUML] Closed partition for '{}': {}", groupName, sb.substring(beforeLen2, sb.length()));
+         // Island Detection (Dead Nodes) - Coverage Guarantee
+        Set<String> unvisited = new LinkedHashSet<>(scope);
         unvisited.removeAll(processed);
         
         if (!unvisited.isEmpty()) {
             logger.debug("[GROUP] Detected {} unvisited (island) nodes in group '{}': {}", unvisited.size(), groupName, unvisited);
             
-            // Allow PlantUML to place these "floating". Or force them into a package.
             sb.append("package \"Disconnected / Unreachable\" {\n");
              
             for (String node : unvisited) {
-                if (processed.contains(node)) continue; // Already picked up by a previous island iteration
+                if (processed.contains(node)) continue;
                 
                  boolean hasIncoming = false;
                  for (Map.Entry<String, List<String>> entry : localTransitions.entrySet()) {
@@ -1239,14 +1246,14 @@ public class TibcoDiagramGenerator {
                  }
                  
                  if (!hasIncoming) {
-                     traverseFlowFromNode(sb, node, localActivityMap, localGroupMap, localTransitions, localLabels, localConditions, processed, doc, null, false, scope, false); // insideFork=false (island)
+                     traverseFlowFromNode(sb, node, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false);
                  }
             }
             
             // Sweeper: If cycles exist in islands, the above might miss them.
             for (String node : unvisited) {
                 if (!processed.contains(node)) {
-                     traverseFlowFromNode(sb, node, localActivityMap, localGroupMap, localTransitions, localLabels, localConditions, processed, doc, null, false, scope, false); // insideFork=false (island)
+                     traverseFlowFromNode(sb, node, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false);
                 }
             }
             
@@ -1433,3 +1440,8 @@ public class TibcoDiagramGenerator {
         }
     }
 }
+
+
+
+
+

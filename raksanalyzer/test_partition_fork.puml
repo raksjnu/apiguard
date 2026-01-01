@@ -1,0 +1,23 @@
+@startuml
+skinparam shadowing false
+start
+fork
+->
+:Activity 1;
+->
+partition "Group A" {
+fork
+->[label1]
+:Activity A1;
+fork again
+->[label2]
+:Activity A2;
+end fork
+}
+fork again
+->
+:Activity 2;
+end fork
+->
+stop
+@enduml
