@@ -1224,7 +1224,7 @@ public class TibcoDiagramGenerator {
                   String label = localLabels.getOrDefault("start", new LinkedHashMap<>()).get(target);
                   if (label != null && !label.isEmpty()) {
                       label = label.replace("\"", "\\\""); 
-                      sb.append("-[#483D8B]->[" ).append(label).append("]\n");
+                      sb.append("-> \"").append(label).append("\";\n");
                   } else {
                       sb.append("->\n");   
                   }
@@ -1240,7 +1240,7 @@ public class TibcoDiagramGenerator {
               String label = localLabels.getOrDefault("start", new LinkedHashMap<>()).get(target);
               if (label != null && !label.isEmpty()) {
                   label = label.replace("\"", "\\\"");
-                  sb.append("-[#483D8B]->[" ).append(label).append("]\n");
+                  sb.append("-> \"").append(label).append("\";\n");
               } else {
                   sb.append("->\n");
               }
