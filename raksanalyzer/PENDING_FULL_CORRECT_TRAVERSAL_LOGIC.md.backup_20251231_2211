@@ -1,0 +1,224 @@
+# Pending Fixes: Full Correct Traversal Logic
+
+This document serves as the master tracker for TIBCO Diagram Generation fixes, consolidating requirements, issue status, and technical implementation details.
+
+## 1. Requirements & Objectives
+
+### Core Requirements
+1.  **Logic Correctness**:
+    *   `traverseProcess` must correctly identify and render complex fork/merge structures.
+    *   Avoid infinite recursion or "path hijacking" where a shared merge node prevents other branches from rendering.
+    *   Correctly handle `Null` activities as merge points or pass-throughs depending on topology.
+2.  **Completeness**:
+    *   Render ALL valid execution paths (e.g., all 4 forks in `connector.process`).
+    *   Render internal activities within Groups (Critical Section, Loop, etc.).
+    *   Render Subprocess calls with correct linking.
+3.  **Visual Accuracy**:
+    *   Labels must be accurate (Issue 8).
+    *   Transition conditions (XPath, "Otherwise", "Error") must be displayed on the arrow.
+    *   Distinct visual style for "Spawn" vs "Call Process".
+
+### Diagram-Specific Requirements
+
+#### Section 2: Integration Diagrams
+- **Purpose**: Show ONLY connector-type activities through all nested levels of subprocesses
+- **Scope**: Recursive - follows subprocess calls to any depth
+- **Group Handling**: Show groups (with partition boxes) ONLY if they contain:
+  - Connector-type activities, OR
+  - Subprocess calls, OR
+  - Nested groups that meet these criteria
+- **Group within Group**: Full nested detail required when groups contain relevant content
+- **Visual**: Use `partition` for groups (works fine in Integration diagrams)
+
+#### Section 3: Flow Diagrams  
+- **Purpose**: Show EVERY possible activity within ONE process scope
+- **Scope**: Single process only - does NOT recurse into subprocesses
+- **Group Handling**: Show ALL groups with full internal detail
+- **Group within Group**: Full nested detail required for all groups
+- **Visual Challenge**: Groups can appear inside fork branches → cannot use `partition` inside `fork`
+- **Solution**: Conditional partition rendering based on fork context
+
+### Regression Prevention
+*   Ensure **Groups** are not broken by the new traversal logic.
+*   Ensure **Flow Diagrams** (Section 3) remain functional and independent of Integration (Section 2) changes.
+
+## 2. Issue Tracker
+
+| # | Issue | Status | Summary |
+|---|---|---|---|
+| **1** | **XPath Label Positioning** | 🟡 **Limitation** | PlantUML limits label placement. |
+| **2** | **Missing Publish to Adapter** | ✅ **FIXED** | Fixed via Topological Logic & StopAtNode. |
+| **3** | **Catch Blocks Toggle** | ✅ **FIXED** | Configurable via property. |
+| **4** | **Missing Forks (JavaToXML)** | ✅ **FIXED** | Fixed via Topological Logic. |
+| **5** | **Override + Spawn** | ✅ **FIXED** | Visualized with special colors. |
+| **6** | **Complex Fork/Merge** | ✅ **FIXED** | **Refactored**. Addresses `orderServiceJMS.process`. |
+| **7** | **Flow Diagram Blank Arrow** | ✅ **FIXED** | Labels added. |
+| **8** | **XPath Labels on Transitions** | ✅ **FIXED** | Labels implemented for single-branch paths. |
+| **9** | **Group Forking & Parallel Execution** | 🔴 **PENDING** | **Problem**: Activities inside groups render sequentially, ignoring internal forks/labels. **Fix**: Use traversal logic inside groups instead of iterating activities. |
+
+## 3. Detailed Fix Explanations
+
+### Issue #6: Complex Fork/Merge Logic (Refactoring)
+**Problem**: Previous recursion logic treated the first visits to a shared node (like "Null") as "claiming" the node, causing subsequent parallel branches to stop early ("Node already processed"), resulting in incomplete diagrams and missing downstream activities.
+
+**Solution (Topological Traversal)**:
+1.  **Common Join Node Detection**: Before rendering a fork, the algorithm analyzes downstream paths to find the *first common join node*.
+2.  **Visual Structure**: The Diagram is explicitly structured as `fork` ... `end fork`.
+3.  **StopAtNode**: Recursive calls for each branch are instructed to `stopAtNode = joinNode`. This ensures they render *up to* the merge point but do not duplicate it or claim it.
+4.  **Merge Rendering**: The `joinNode` is rendered *once* after the `end fork` block.
+
+### Issue #8: Transition Labels
+**Problem**: Single-branch transitions (e.g., `Start` -> `Activity` or `Null` -> `Activity`) often missed labels like XPath conditions because the labeling logic was previously coupled with the "Fork" block.
+
+**Solution**:
+*   Added check `if (transitionLabels.containsKey...)` inside the single-branch loops (and topological loops).
+*   Extracts `pd:xpath` or condition type (e.g., "error") and renders it as `-> "Label";`.
+
+### Issue #9: Group Forking & Parallel Execution
+**Problem**: Currently, the code iterates through `groupActivities` (NodeList) and renders them one by one sequentially. This ignores the actual transitions *inside* the group, causing parallel branches (like XPath forks) to appear as a straight line, and transition labels are lost.
+
+**Solution**:
+1.  **Identify Group Head**: Find the activity inside the group that has no incoming transitions *from other activities in the same group*.
+2.  **Internal Traversal**: Call `traverseProcess` (or `traverseFlowFromNode`) starting from this Head node.
+3.  **Scope**: Ensure traversal respects group boundaries (though usually transitions naturally stay within or exit clearly).
+
+## 4. Verification Checklist
+
+Please verify the following scenarios:
+
+- [ ] **Scenario A: Complex Merge (`orderServiceJMS.process`)**
+    - [ ] Fork at `Null-1` splits into 2 branches.
+    - [ ] Both branches merge at `Null`.
+    - [ ] `Null` has outgoing transition to `Null-2`.
+    - [ ] `Null-2` splits to `End` and `Sleep`.
+    - [ ] **Success Criteria**: All nodes visible, structure looks like a graph (not a tree), no missing "Sleep" or "End".
+
+- [ ] **Scenario B: Missing Connectors (`connector.process`)**
+    - [ ] 4 Forks from Start/Starter.
+    - [ ] `Java To XML` and `XML To Java` visible.
+    - [ ] **Success Criteria**: 4 distinct branches.
+
+- [ ] **Scenario C: Labels (Issue 8)**
+    - [ ] Arrows have labels (XPath) where applicable.
+    - [ ] IMPORTANT: Check transitions from `Null` activities.
+
+## 5. Next Actions
+1.  Run `start.bat`.
+2.  Generate diagrams.
+3.  Inspect `orderServiceJMS.process` for Scenario A.
+
+
+
+## Fix Implementation [2025-12-31]
+
+### Issue: "Cannot find group" PlantUML Error
+
+**Affected Files:**
+- 3.7 BusinessProcess/connector.process (Flow Diagram)
+- 3.14 Service/orderServiceJMS.process (Flow Diagram)
+
+**Root Cause:**
+The `renderGroup` method in Flow Diagram generation was creating invalid PlantUML syntax when groups are inside fork structures. PlantUML does not allow `partition` blocks to be nested inside `fork` blocks.
+
+**Error Pattern:**
+```plantuml
+fork
+-[#483D8B]->[xpathflag]
+partition "Group" {    <-- ERROR: partition inside fork not allowed
+  fork
+  ...
+  end fork
+}
+end fork
+```
+
+**Fix Implemented:**
+Removed `partition` wrapper entirely from Flow Diagram groups. Groups are now rendered with a simple label instead:
+```java
+// Before (caused error):
+sb.append("partition \"").append(groupName).append("\" {\n");
+// ... group content ...
+sb.append("}\n");
+
+// After (fixed):
+sb.append(":Group: **").append(groupName).append("**;\\n");
+// ... group content (no wrapper) ...
+```
+
+**Changes Made:**
+1. Modified `renderGroup()` method in `TibcoDiagramGenerator.java`
+2. Removed partition wrapper for Flow Diagrams
+3. Added label `:Group: **{name}**;` to indicate group boundaries
+4. Fixed newline escape sequence (was `\\n`, now `\n`) - this caused "Cannot find fork" error
+5. Compiled successfully
+
+**Status:** 🔴 REGRESSION - Syntax errors fixed but visual rendering broken
+
+**Regression Issues:**
+1. ❌ Group partition shape is broken - no visual box around groups
+2. ❌ Activity boxes not rendering - showing as plain text labels
+3. ❌ Activities after XPath transitions not rendering as boxes
+4. ❌ Overall visual structure degraded compared to TIBCO IDE
+
+**Root Cause Analysis (CORRECTED):**
+- Integration diagrams (Section 2) work fine because structure is: `partition { fork ... end fork }`
+- Flow diagrams were creating: `fork ... partition { } ... end fork` when group is in fork branch
+- PlantUML allows partition containing fork, but NOT fork containing partition
+
+**Correct Solution:**
+When `traverseFlowFromNode` is called from INSIDE a fork branch, and it encounters a group:
+- Skip the `partition` wrapper
+- Render group content directly
+- Need to pass `insideFork` flag through traversal chain
+
+**Implementation Plan:**
+1. ✅ Add `insideFork` parameter to `traverseFlowFromNode`
+2. ✅ Pass `true` when calling from fork branches (line ~939)
+3. ✅ Pass `insideFork` to `renderGroup`
+4. ✅ In `renderGroup`: skip partition wrapper if `insideFork == true`
+
+**Current Status:** ✅ IMPLEMENTED - Compiled successfully, ready for testing
+
+**Changes Made:**
+1. Added `insideFork` boolean parameter to `traverseFlowFromNode` method
+2. Pass `insideFork=true` when traversing fork branches (line 939)
+3. Pass `insideFork=false` for all top-level and group-internal calls
+4. Modified `renderGroup` to conditionally render partition:
+   - If `!insideFork`: Use `partition "Group (type)" { ... }`
+   - If `insideFork`: Use `:Group: **Group**;` label only
+5. Compiled successfully
+
+**Test Status:** � REGRESSION - Groups and activities not rendering correctly
+
+**New Issue Found:**
+- Groups inside forks showing as yellow ovals with just "Group: Group" label
+- Activities after XPath transitions showing as plain text instead of boxes
+- Activity names appearing as text (e.g., "Java To XML\nJavaToXml") without proper boxes
+
+**Root Cause:**
+The `:Group: **Group**;` label was interfering with PlantUML rendering of subsequent activities.
+
+**New Fix (2025-12-31 22:02):**
+- Remove the group label entirely when `insideFork=true`
+- Just render group content directly without any wrapper or label
+- This should allow activities to render as proper boxes
+- Trade-off: No visual group boundary when inside fork, but activities will render correctly
+
+**Status:** 🔄 Compiling and testing...
+
+## DECISION: Revert to Stable Version (2025-12-31 22:09)
+
+**Situation:**
+- Multiple attempts to fix PlantUML fork/partition nesting have created regressions
+- connector.process: "Cannot find fork" error is back
+- orderServiceJMS.process: Diagram structure doesn't match TIBCO IDE
+- User is frustrated with the back-and-forth
+
+**Action:**
+1. Revert all today's changes to `renderGroup` and `traverseFlowFromNode`
+2. Find the last stable commit before these changes
+3. Understand what was ACTUALLY working before
+4. Make minimal, targeted fix only for the specific error
+
+**Goal:**
+Get back to a stable state, then make ONE careful fix at a time with testing between each change.

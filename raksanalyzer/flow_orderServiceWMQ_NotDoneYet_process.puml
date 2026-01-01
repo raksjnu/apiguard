@@ -1,0 +1,62 @@
+@startuml
+' Generated: 1767242492197
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #E6E6FA
+  BorderColor #6A5ACD
+  ArrowColor #483D8B
+  StartColor #4CAF50
+  EndColor #E53935
+  FontSize 11
+}
+skinparam partition {
+  BackgroundColor #F0F0F0
+  BorderColor #999999
+  FontSize 11
+  BorderThickness 2
+}
+skinparam activityEndColor #E53935
+skinparam dpi 300
+start
+->
+:<&file> **Log**\nlog;
+->
+:<&map> **Map Data**\nMapper;
+->
+partition "Group (inputLoop)" {
+->
+:<&cog> **createOrder**\nsubprocess;
+}
+->
+:Null-1;
+fork
+-[#483D8B]->[REST API Call]
+:<&file> **Log-1-1**\nlog;
+->
+:<&cloud> **Invoke REST API**\nREST Activity;
+->
+:<&file> **Log-1-1-1**\nlog;
+fork again
+-[#483D8B]->[SOAP API Call]
+:<&file> **Log-1-1-2**\nlog;
+->
+:<&cog> **createOrderService**\nsubprocess;
+->
+:<&file> **Log-1-1-1-1**\nlog;
+fork again
+-[#483D8B]->[Default Flow]
+end fork
+->
+->
+:<&file> **Log-1**\nlog;
+->
+:Null-2;
+fork
+->
+fork again
+-[#483D8B]->[JMSRequestReplyUseCase]
+:<&envelope-closed> **Reply to JMS Message**\nJMSReply;
+end fork
+->
+stop
+@enduml

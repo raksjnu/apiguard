@@ -266,8 +266,10 @@
                 <processName>/BusinessProcess/LogandErrorHandler.process</processName>
                 <spawn>true</spawn>
                 <processNameXPath>if($_globalVariables/ns5:GlobalVariables/Flags/InvokeSOAPService='yes') then 
-"/BusinessProcess/UpdatePaymentDummy.process" else
-"/BusinessProcess/LogandErrorHandler.process"</processNameXPath>
+( if (1=2) then "/BusinessProcess/UpdatePaymentDummy.process" else
+"/BusinessProcess/LogandErrorHandler.process" )
+ else
+"/TestService/JMS/SOAPcreateOrderService.process"</processNameXPath>
             </config>
             <pd:inputBindings>
                 <root/>

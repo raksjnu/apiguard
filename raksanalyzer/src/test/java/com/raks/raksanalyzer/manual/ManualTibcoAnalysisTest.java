@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 public class ManualTibcoAnalysisTest {
     @Test
     public void generateFullTibcoReport() {
-        String projectPath = "c:/raks/apiguard/raksanalyzer/testdata/customerOrder";
+        String projectPath = "c:/raks/apiguard/raksanalyzer/testdata/TibcoApp1";
         System.out.println("Starting Analysis on: " + projectPath);
         TibcoAnalyzer analyzer = new TibcoAnalyzer(Paths.get(projectPath), new java.util.ArrayList<>());
         AnalysisResult result = analyzer.analyze();

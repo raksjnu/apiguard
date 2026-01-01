@@ -1,0 +1,37 @@
+@startuml
+' Generated: 1767242491859
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #E6E6FA
+  BorderColor #6A5ACD
+  ArrowColor #483D8B
+  StartColor #4CAF50
+  EndColor #E53935
+  FontSize 11
+}
+skinparam partition {
+  BackgroundColor #F0F0F0
+  BorderColor #999999
+  FontSize 11
+  BorderThickness 2
+}
+skinparam activityEndColor #E53935
+skinparam dpi 300
+start
+:<&clock> **Timer**\ntimer;
+->
+:<&file> **Log**\nlog;
+->
+:<&file> **Read File**\nFileRead;
+->
+:<&puzzle-piece> **Parse Data**\nParse;
+->
+partition "Group (inputLoop)" {
+->
+:<&cog> **createOrder**\nsubprocess;
+}
+->
+:<&file> **Log-1**\nlog;
+->
+stop
+@enduml

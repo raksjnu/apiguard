@@ -1,0 +1,54 @@
+@startuml
+' Generated: 1767242487545
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #E6E6FA
+  BorderColor #6A5ACD
+  ArrowColor #483D8B
+  StartColor #4CAF50
+  EndColor #E53935
+  FontSize 11
+}
+skinparam partition {
+  BackgroundColor #F0F0F0
+  BorderColor #999999
+  FontSize 11
+  BorderThickness 2
+}
+skinparam activityEndColor #E53935
+skinparam dpi 300
+start
+fork
+-[#483D8B]->[Logging Enabled]
+:<&map> **Map Data**\nMapper;
+fork
+-[#483D8B]->[DEBUG]
+:<&file> **LogDEBUG**\nlog;
+fork again
+-[#483D8B]->[INFO]
+:<&file> **LogINFO**\nlog;
+fork again
+-[#483D8B]->[WARN]
+:<&file> **LogWARN**\nlog;
+fork again
+-[#483D8B]->[ERROR]
+:<&file> **LogERROR**\nlog;
+->
+:<&data-transfer-download> **insertProcessErrors**\nJDBCUpdate;
+fork
+->
+fork again
+-[#483D8B]->[Error]
+:<&file> **insertFail**\nlog;
+end fork
+->
+fork again
+-[#483D8B]->[Otherwise]
+end fork
+->
+fork again
+-[#483D8B]->[Otherwise]
+end fork
+->
+stop
+@enduml

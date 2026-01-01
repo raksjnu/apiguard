@@ -70,8 +70,8 @@
         <pd:activity name="createOrder">
             <pd:type>com.tibco.pe.core.CallProcessActivity</pd:type>
             <pd:resourceType>ae.process.subprocess</pd:resourceType>
-            <pd:x>364</pd:x>
-            <pd:y>94</pd:y>
+            <pd:x>365</pd:x>
+            <pd:y>82</pd:y>
             <config>
                 <processName>/BusinessProcess/createOrderDummy.process</processName>
             </config>
@@ -180,8 +180,8 @@
     <pd:activity name="Log-1">
         <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
         <pd:resourceType>ae.activities.log</pd:resourceType>
-        <pd:x>1006</pd:x>
-        <pd:y>137</pd:y>
+        <pd:x>1021</pd:x>
+        <pd:y>144</pd:y>
         <config>
             <role>User</role>
         </config>
@@ -196,8 +196,8 @@
     <pd:activity name="Invoke REST API">
         <pd:type>*MISSING: ae.activities.unknown.data.model.class</pd:type>
         <pd:resourceType>ae.activities.unknown</pd:resourceType>
-        <pd:x>750</pd:x>
-        <pd:y>35</pd:y>
+        <pd:x>819</pd:x>
+        <pd:y>19</pd:y>
         <config>
             <enableProtocolUI>WADL</enableProtocolUI>
             <restMethodUI>POST</restMethodUI>
@@ -336,7 +336,7 @@
     <pd:activity name="Log-1-1">
         <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
         <pd:resourceType>ae.activities.log</pd:resourceType>
-        <pd:x>635</pd:x>
+        <pd:x>623</pd:x>
         <pd:y>35</pd:y>
         <config>
             <role>User</role>
@@ -352,7 +352,7 @@
     <pd:activity name="Log-1-1-1">
         <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
         <pd:resourceType>ae.activities.log</pd:resourceType>
-        <pd:x>848</pd:x>
+        <pd:x>902</pd:x>
         <pd:y>35</pd:y>
         <config>
             <role>User</role>
@@ -368,8 +368,8 @@
     <pd:activity name="Null">
         <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
         <pd:resourceType>ae.activities.null</pd:resourceType>
-        <pd:x>938</pd:x>
-        <pd:y>95</pd:y>
+        <pd:x>963</pd:x>
+        <pd:y>94</pd:y>
         <config/>
         <pd:inputBindings/>
     </pd:activity>
@@ -464,47 +464,18 @@
         <config/>
         <pd:inputBindings/>
     </pd:activity>
-    <pd:activity name="Reply to JMS Message">
-        <pd:type>com.tibco.plugin.jms.JMSReplyActivity</pd:type>
-        <pd:resourceType>ae.activities.JMSReplyActivity</pd:resourceType>
-        <pd:x>1079</pd:x>
-        <pd:y>254</pd:y>
-        <config>
-            <PermittedMessageType>Text</PermittedMessageType>
-            <SessionAttributes>
-                <transacted>false</transacted>
-                <acknowledgeMode>1</acknowledgeMode>
-                <maxSessions>1</maxSessions>
-            </SessionAttributes>
-            <ConfigurableHeaders>
-                <JMSDeliveryMode>PERSISTENT</JMSDeliveryMode>
-                <JMSExpiration>0</JMSExpiration>
-                <JMSPriority>4</JMSPriority>
-                <EventSource>JMS Queue Receiver</EventSource>
-            </ConfigurableHeaders>
-            <ApplicationProperties>/Connections/JMS Application Properties.sharedjmsapp</ApplicationProperties>
-        </config>
-        <pd:inputBindings>
-            <ns6:ActivityInput>
-                <xsl:copy-of select="$JMS-Queue-Receiver/ns6:ActivityOutput/OtherProperties"/>
-                <Body>
-                    <xsl:value-of select="&quot;Order Processed by OrderServiceJMS&quot;"/>
-                </Body>
-            </ns6:ActivityInput>
-        </pd:inputBindings>
-    </pd:activity>
     <pd:activity name="Null-2">
         <pd:type>com.tibco.plugin.timer.NullActivity</pd:type>
         <pd:resourceType>ae.activities.null</pd:resourceType>
-        <pd:x>1077</pd:x>
-        <pd:y>98</pd:y>
+        <pd:x>1102</pd:x>
+        <pd:y>100</pd:y>
         <config/>
         <pd:inputBindings/>
     </pd:activity>
     <pd:activity name="Write File">
         <pd:type>com.tibco.plugin.file.FileWriteActivity</pd:type>
         <pd:resourceType>ae.activities.FileWriteActivity</pd:resourceType>
-        <pd:x>1011</pd:x>
+        <pd:x>1029</pd:x>
         <pd:y>35</pd:y>
         <config>
             <encoding>text</encoding>
@@ -522,6 +493,122 @@
                 </textContent>
             </ns1:WriteActivityInputTextClass>
         </pd:inputBindings>
+    </pd:activity>
+    <pd:group name="Group (1)">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>885</pd:x>
+        <pd:y>210</pd:y>
+        <pd:width>440</pd:width>
+        <pd:height>196</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>simpleGroup</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+        </config>
+        <pd:inputBindings/>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Log-1-2</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Reply to JMS Message</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>groupxpath</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Reply to JMS Message</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Log-1-2</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Reply to JMS Message">
+            <pd:type>com.tibco.plugin.jms.JMSReplyActivity</pd:type>
+            <pd:resourceType>ae.activities.JMSReplyActivity</pd:resourceType>
+            <pd:x>1118</pd:x>
+            <pd:y>278</pd:y>
+            <config>
+                <PermittedMessageType>Text</PermittedMessageType>
+                <SessionAttributes>
+                    <transacted>false</transacted>
+                    <acknowledgeMode>1</acknowledgeMode>
+                    <maxSessions>1</maxSessions>
+                </SessionAttributes>
+                <ConfigurableHeaders>
+                    <JMSDeliveryMode>PERSISTENT</JMSDeliveryMode>
+                    <JMSExpiration>0</JMSExpiration>
+                    <JMSPriority>4</JMSPriority>
+                    <EventSource>JMS Queue Receiver</EventSource>
+                </ConfigurableHeaders>
+                <ApplicationProperties>/Connections/JMS Application Properties.sharedjmsapp</ApplicationProperties>
+            </config>
+            <pd:inputBindings>
+                <ns6:ActivityInput>
+                    <xsl:copy-of select="$JMS-Queue-Receiver/ns6:ActivityOutput/OtherProperties"/>
+                    <Body>
+                        <xsl:value-of select="&quot;Order Processed by OrderServiceJMS&quot;"/>
+                    </Body>
+                </ns6:ActivityInput>
+            </pd:inputBindings>
+        </pd:activity>
+        <pd:activity name="Log-1-2">
+            <pd:type>com.tibco.pe.core.WriteToLogActivity</pd:type>
+            <pd:resourceType>ae.activities.log</pd:resourceType>
+            <pd:x>1073</pd:x>
+            <pd:y>351</pd:y>
+            <config>
+                <role>User</role>
+            </config>
+            <pd:inputBindings>
+                <ns5:ActivityInput/>
+            </pd:inputBindings>
+        </pd:activity>
+    </pd:group>
+    <pd:activity name="Publish to Adapter">
+        <pd:type>com.tibco.plugin.ae.AEPublisherActivity</pd:type>
+        <pd:resourceType>ae.aepalette.aePubActivity</pd:resourceType>
+        <pd:x>709</pd:x>
+        <pd:y>35</pd:y>
+        <config>
+            <ae.aepalette.sharedProperties.transportChoice>default</ae.aepalette.sharedProperties.transportChoice>
+            <ae.aepalette.sharedProperties.useRequestReply>false</ae.aepalette.sharedProperties.useRequestReply>
+            <ae.aepalette.sharedProperties.adapterService>/Adapters/File/FileAdapterConfiguration.adfiles#adapterService.SubscriptionService</ae.aepalette.sharedProperties.adapterService>
+            <tpPluginEndpointName>SubscriptionServiceEndPoint</tpPluginEndpointName>
+            <ae.aepalette.sharedProperties.transportType>rvcm</ae.aepalette.sharedProperties.transportType>
+            <ae.aepalette.sharedProperties.rvSubject>%%Domain%%.%%Deployment%%.FileAdapter.FileAdapterConfiguration.SubscriptionService</ae.aepalette.sharedProperties.rvSubject>
+            <ae.aepalette.sharedProperties.rvSessionService>%%RvService%%</ae.aepalette.sharedProperties.rvSessionService>
+            <ae.aepalette.sharedProperties.rvSessionNetwork>%%RvNetwork%%</ae.aepalette.sharedProperties.rvSessionNetwork>
+            <ae.aepalette.sharedProperties.rvSessionDaemon>%%RvDaemon%%</ae.aepalette.sharedProperties.rvSessionDaemon>
+            <ae.aepalette.sharedProperties.msgFormat>aeRvMsg</ae.aepalette.sharedProperties.msgFormat>
+            <ae.aepalette.sharedProperties.rvCmSessionDefaultTimeLimit>0</ae.aepalette.sharedProperties.rvCmSessionDefaultTimeLimit>
+            <ae.aepalette.sharedProperties.rvCmSessionSyncLedger>true</ae.aepalette.sharedProperties.rvCmSessionSyncLedger>
+            <ae.aepalette.sharedProperties.rvCmSessionLedgerFile>%%DirLedger%%/bw%%Domain%%.%%Deployment%%.%%AppName%%.%%InstanceId%%.ldg</ae.aepalette.sharedProperties.rvCmSessionLedgerFile>
+            <ae.aepalette.sharedProperties.rvCmSessionName>bw%%Domain%%.%%Deployment%%.%%AppName%%.%%InstanceId%%.CM</ae.aepalette.sharedProperties.rvCmSessionName>
+            <ae.aepalette.sharedProperties.rvCmSessionRelayAgent/>
+            <ae.aepalette.sharedProperties.rvCmSessionRequireOldMessages>true</ae.aepalette.sharedProperties.rvCmSessionRequireOldMessages>
+            <ae.aepalette.sharedProperties.outputMeta>
+                <aeMeta>/AESchemas/ae/FileAdapter/wire/FileAdapterConfiguration.aeschema#class.WriterFileRecord</aeMeta>
+            </ae.aepalette.sharedProperties.outputMeta>
+        </config>
+        <pd:inputBindings/>
     </pd:activity>
     <pd:transition>
         <pd:from>Group</pd:from>
@@ -567,7 +654,7 @@
     </pd:transition>
     <pd:transition>
         <pd:from>Log-1-1</pd:from>
-        <pd:to>Invoke REST API</pd:to>
+        <pd:to>Publish to Adapter</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>
@@ -648,27 +735,11 @@
         <pd:conditionType>otherwise</pd:conditionType>
     </pd:transition>
     <pd:transition>
-        <pd:from>Reply to JMS Message</pd:from>
-        <pd:to>End</pd:to>
-        <pd:lineType>Default</pd:lineType>
-        <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
-    </pd:transition>
-    <pd:transition>
         <pd:from>Null-2</pd:from>
         <pd:to>End</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>
-    </pd:transition>
-    <pd:transition>
-        <pd:from>Null-2</pd:from>
-        <pd:to>Reply to JMS Message</pd:to>
-        <pd:xpathDescription>JMSRequestReplyUseCase</pd:xpathDescription>
-        <pd:lineType>Default</pd:lineType>
-        <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>xpath</pd:conditionType>
-        <pd:xpath>exists($JMS-Queue-Receiver/ns6:ActivityOutput/JMSHeaders/ns6:JMSReplyTo)</pd:xpath>
     </pd:transition>
     <pd:transition>
         <pd:from>Null</pd:from>
@@ -680,6 +751,29 @@
     <pd:transition>
         <pd:from>Write File</pd:from>
         <pd:to>Null-2</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group (1)</pd:from>
+        <pd:to>End</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Null-2</pd:from>
+        <pd:to>Group (1)</pd:to>
+        <pd:xpathDescription>JMSRequestReplyUseCase</pd:xpathDescription>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>exists($JMS-Queue-Receiver/ns6:ActivityOutput/JMSHeaders/ns6:JMSReplyTo)</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Publish to Adapter</pd:from>
+        <pd:to>Invoke REST API</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>

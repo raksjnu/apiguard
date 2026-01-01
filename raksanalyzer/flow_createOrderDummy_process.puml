@@ -1,0 +1,53 @@
+@startuml
+' Generated: 1767242489554
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #E6E6FA
+  BorderColor #6A5ACD
+  ArrowColor #483D8B
+  StartColor #4CAF50
+  EndColor #E53935
+  FontSize 11
+}
+skinparam partition {
+  BackgroundColor #F0F0F0
+  BorderColor #999999
+  FontSize 11
+  BorderThickness 2
+}
+skinparam activityEndColor #E53935
+skinparam dpi 300
+start
+fork
+->
+->
+:<&file> **Write File**\nFileWrite;
+->
+:<&file> **Log**\nlog;
+->
+:<&map> **Map Data**\nMapper;
+->
+partition "<b>override-subprocess</b>\nUpdateOrderDetails" #FFF3E0 {
+:<&cog> **UpdateOrderDetails**\nsubprocess;
+}
+fork again
+->
+:<&data-transfer-download> **JDBC Query**\nJDBCQuery;
+->
+->
+partition "<b>override-subprocess</b>\nLogandErrorHandlerDummy" #FFF3E0 {
+:<&cog> **LogandErrorHandlerDummy**\nsubprocess;
+}
+->
+->
+partition "<b>spawn-subprocess</b>\nLogandErrorHandler" #F1F8E9 {
+:<&cog> **LogandErrorHandler**\nsubprocess;
+}
+->
+:<&cog> **SOAPcreateOrderService**\nsubprocess;
+->
+:<&code> **Java Method**\nJavaMethod;
+end fork
+->
+stop
+@enduml

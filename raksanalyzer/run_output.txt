@@ -1,0 +1,11 @@
+2025-12-31 16:15:50 [main] INFO  com.raks.raksanalyzer.Application - Running in CLI mode
+2025-12-31 16:15:50 [main] INFO  com.raks.raksanalyzer.Application - Input source type: folder
+2025-12-31 16:15:50 [main] INFO  com.raks.raksanalyzer.Application - Custom output directory set: target/output_v2
+2025-12-31 16:15:50 [main] INFO  com.raks.raksanalyzer.Application - Discovering projects in:  testdata/TibcoApp1
+2025-12-31 16:15:50 [main] INFO  c.r.r.c.config.ConfigurationManager - Configuration loaded: 199 total properties
+2025-12-31 16:15:50 [main] INFO  c.r.r.c.discovery.ProjectDiscovery - Searching for TIBCO_BW5 projects in: C:\raks\apiguard\raksanalyzer\ testdata\TibcoApp1
+2025-12-31 16:15:50 [main] INFO  c.r.r.c.discovery.ProjectDiscovery - Maximum search depth: 5
+2025-12-31 16:15:50 [main] INFO  c.r.r.c.discovery.ProjectDiscovery - Searching directory: C:\raks\apiguard\raksanalyzer\ testdata\TibcoApp1 (depth: 0/5)
+2025-12-31 16:15:50 [main] INFO  c.r.r.c.discovery.ProjectDiscovery - Input path: C:\raks\apiguard\raksanalyzer\ testdata\TibcoApp1
+2025-12-31 16:15:50 [main] WARN  c.r.r.c.discovery.ProjectDiscovery - No TIBCO_BW5 projects found in: C:\raks\apiguard\raksanalyzer\ testdata\TibcoApp1
+2025-12-31 16:15:50 [main] ERROR com.raks.raksanalyzer.Application - No TIBCO_BW5 projects found in:  testdata/TibcoApp1

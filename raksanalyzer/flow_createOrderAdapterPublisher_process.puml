@@ -1,0 +1,41 @@
+@startuml
+' Generated: 1767242489287
+skinparam shadowing false
+skinparam activity {
+  BackgroundColor #E6E6FA
+  BorderColor #6A5ACD
+  ArrowColor #483D8B
+  StartColor #4CAF50
+  EndColor #E53935
+  FontSize 11
+}
+skinparam partition {
+  BackgroundColor #F0F0F0
+  BorderColor #999999
+  FontSize 11
+  BorderThickness 2
+}
+skinparam activityEndColor #E53935
+skinparam dpi 300
+start
+->
+partition "Group (transactionGroup)" {
+->
+:<&file> **Log**\nlog;
+}
+->
+:<&map> **Map Data**\nMapper;
+fork
+->
+:<&cog> **UpdateOrderDetails**\nsubprocess;
+fork again
+->
+:<&transfer> **Publish to Adapter**\naePub;
+->
+:<&cloud> **Wait for HTTP Request**\nhttpSignalIn;
+->
+:<&cloud> **Send HTTP Request**\nhttpRequest;
+end fork
+->
+stop
+@enduml
