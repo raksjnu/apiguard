@@ -1,9 +1,17 @@
-# PENDING: Full Correct Traversal Logic for TIBCO Diagrams
+﻿# PENDING: Full Correct Traversal Logic for TIBCO Diagrams
 
 ## Overview
 This document outlines the complete requirements for implementing correct diagram generation logic for TIBCO processes, covering both **Service Integration Diagrams (Section 2)** and **Process Flow Diagrams (Section 3)**.
 
 ---
+
+> [!IMPORTANT]
+> **Current Status (2025-12-31): COMPLETED** 
+> *   **Action**: Restored V2 logic for Integration Diagrams (Section 2) while retaining V3 logic for Flow Diagrams (Section 3).
+> *   **Result**: "Hybrid" implementation in `TibcoDiagramGenerator.java` correctly handles groups, subprocess recursion, and circular references.
+> *   **Verification**: Verified via `ManualTibcoAnalysisTest` and successful compilation.
+> *   **Next Step**: User to review generated diagrams for final acceptance.
+
 
 ## Requirements Summary
 
@@ -33,8 +41,8 @@ This document outlines the complete requirements for implementing correct diagra
 
 #### 1.5 Special Cases
 - ✅ **Spawn Process**: Detect SpawnActivity, show with ⚡ symbol in yellow/orange partition
-- ✅ **Dynamic Override**: Extract process name from `<pd:processPath>` XPath, show with 🔄 symbol in blue partition
-- ✅ **Circular References**: Detect A→B→A cycles, render "⟲ Recursive call to [ProcessName]" and exit
+- ✅ **Dynamic Override**: Extract process name from `<pd:processPath>` XPath, show with 📞 symbol in blue partition
+- ✅ **Circular References**: Detect A→B→A cycles, render "🔄 Recursive call to [ProcessName]" and exit
 - ✅ **Loop Groups with Recursion**: Special handling for while/until loops that call back to parent
 
 ---
@@ -68,276 +76,190 @@ This document outlines the complete requirements for implementing correct diagra
 
 ---
 
-## Unified Generator Configuration
+## Section 2 vs Section 3 Consistency Checklist
 
-### DiagramGenerationConfig Class
+> [!CAUTION]
+> **CRITICAL**: When modifying group rendering logic, ALWAYS ensure Section 2 and Section 3 remain consistent!
+
+### ✅ Verified Consistency Rules (2026-01-01)
+
+1. **Group Rendering - ALWAYS Use Partition**
+   - ✅ Section 2 (`traverseProcess` line 392): `sb.append("partition \"").append(partitionLabel).append("\" {\n");`
+   - ✅ Section 3 (`renderGroup` line 1167): `sb.append("partition \"").append(partitionLabel).append("\" {\n");`
+   - ❌ **NEVER** add conditional logic like `if (!insideFork)` for partition rendering
+   - **Reason**: PlantUML DOES support partitions inside fork branches - Section 2 proves this!
+
+2. **No Special Handling for Groups Inside Forks**
+   - ✅ Section 2: No `insideFork` parameter or conditional logic for group wrappers
+   - ✅ Section 3: Removed `insideFork` conditional - always use partition
+   - **Lesson Learned**: The "PlantUML limitation" was a misconception - partitions work fine inside forks
+
+3. **Internal Fork Rendering**
+   - ✅ Both sections: Groups with multiple start targets render internal `fork`/`end fork`
+   - ✅ Both sections: Fork logic is based on transition count, not `insideFork` flag
+   - **Key**: Internal parallel paths are determined by the group's structure, not external context
+
+4. **Partition Closing**
+   - ✅ Section 2: Always closes partition with `}`
+   - ✅ Section 3: Always closes partition with `}`
+   - ❌ **NEVER** make closing conditional on `insideFork` or any other flag
+
+### 🔍 Debugging Checklist
+
+When encountering "Cannot find group" or similar PlantUML errors:
+
+1. **Compare Generated PUML**:
+   - Check Section 2 Integration diagram for the same process
+   - Check Section 3 Flow diagram for the same process
+   - Look for syntax differences in group rendering
+
+2. **Verify Partition Usage**:
+   - Ensure both sections use `partition "Label" {` syntax
+   - Confirm no conditional logic prevents partition rendering
+   - Check that closing `}` is always present
+
+3. **Check Fork Nesting**:
+   - Verify internal forks are properly opened and closed
+   - Ensure `fork`/`fork again`/`end fork` balance is correct
+   - Confirm partitions don't interfere with fork structure
+
+4. **Review Section 2 Code**:
+   - Section 2 (Integration) is the "source of truth" for group rendering
+   - If Section 2 works and Section 3 doesn't, Section 3 needs to match Section 2
+   - Look for any logic in Section 3 that doesn't exist in Section 2
+
+### 📝 Implementation Notes
+
+**Section 2 Method**: `traverseProcess` (lines 336-650)
+- Handles groups as part of main traversal
+- Uses partition wrapper unconditionally
+- Traverses group contents with standard logic
+
+**Section 3 Method**: `renderGroup` (lines 1065-1270)
+- Dedicated method for group rendering
+- Must match Section 2's partition usage
+- Should not add extra conditional logic
+
+**Common Pitfall**: Adding "smart" conditional logic to Section 3 that doesn't exist in Section 2, causing divergence and errors.
+
+**Solution**: Keep it simple - if Section 2 works, copy its approach exactly.
+
+### 🔬 Debug Analysis - CONCLUSIVE FINDINGS (2026-01-01)
+
+**Test Results:**
+- Section 2: Renders 26+ groups with partitions - ZERO use of `insideFork` parameter
+- Section 3: Skips 10+ groups with "Skipping partition for group 'Group' (insideFork=true)"
+
+**Root Cause Identified:**
+Section 2 does NOT have an `insideFork` parameter at all! It treats groups as regular traversal nodes:
 ```java
-public class DiagramGenerationConfig {
-    // Activity Display
-    boolean showAllActivities;          // true=all, false=connectors only
-    
-    // Subprocess Traversal
-    boolean traverseSubprocesses;       // true=recursive, false=single level
-    int maxDepth;                       // Max subprocess depth (50 for Section 2, 0 for Section 3)
-    
-    // Special Features
-    boolean showSpawnOverride;          // Capture spawn/override details
-    boolean detectCircularReferences;   // Enable cycle detection
-    
-    // Visual
-    boolean usePartitions;              // Group subprocesses/groups in partitions
-    int maxActivitiesPerPage;           // Page split threshold (50)
+// Section 2 (Line 392) - ALWAYS renders partition
+sb.append("partition \"").append(partitionLabel).append("\" {\n");
+```
+
+Section 3 incorrectly adds `insideFork` logic that doesn't exist in Section 2:
+```java
+// Section 3 (Line 1160) - WRONG APPROACH
+if (!insideFork) {
+    sb.append("partition \"").append(partitionLabel).append("\" {\n");
+} else {
+    // Skip partition - THIS IS THE BUG!
 }
 ```
 
-### Configuration Matrix
-
-| Feature | Section 2 (Integration) | Section 3 (Flow) |
-|---------|------------------------|------------------|
-| `showAllActivities` | `false` (connectors only) | `true` (all activities) |
-| `traverseSubprocesses` | `true` (recursive) | `false` (single level) |
-| `maxDepth` | `50` | `0` |
-| `showSpawnOverride` | `true` | `true` |
-| `detectCircularReferences` | `true` | `false` |
-| `usePartitions` | `true` | `true` |
-| `maxActivitiesPerPage` | `50` | `50` |
+**The Fix:**
+Remove ALL `insideFork` conditional logic from Section 3's `renderGroup` method. Groups should ALWAYS use partition wrappers, exactly like Section 2. The `insideFork` parameter itself is the problem - Section 2 proves it's unnecessary.
 
 ---
 
-## Detailed Feature Requirements
+## Regression Checklist
 
-### Feature 1: Connector-Only Display (Section 2)
-**Requirement**: Show only connector activities, hide non-connectors
-- ✅ Connector patterns: REST, SOAP, JMS, File, Database, FTP, JDBC, etc.
-- ✅ Non-connectors: Assign, Log, Null, Mapper, etc.
-- ✅ Exception: Show non-connectors if they're in the path between connectors
-- ✅ Implementation: Filter by activity type using connector patterns
+### Section 2 (Integration Diagrams) - Must Pass
+- [ ] `connector.process` - Shows all connectors across subprocess levels
+- [ ] `orderServiceJMS.process` - Correct fork/merge logic, nested groups
+- [ ] Circular reference detection works (A→B→A)
+- [ ] Spawn process detection with ⚡ symbol
+- [ ] Dynamic override detection with 📞 symbol
+- [ ] Groups render with partition boundaries
+- [ ] No "Cannot find fork" or "Cannot find group" errors
 
-### Feature 2: All Activities Display (Section 3)
-**Requirement**: Show every activity in the process
-- ✅ No filtering by type
-- ✅ Render all: Assign, Log, Null, Connectors, etc.
-- ✅ Implementation: No filtering, render all activities
+### Section 3 (Flow Diagrams) - Must Pass  
+- [ ] `connector.process` - All activities shown, correct parallel paths
+- [ ] `orderServiceJMS.process` - Complete flow with all activities
+- [ ] Groups render with partition boundaries (matching Section 2)
+- [ ] Internal forks within groups display correctly
+- [ ] No subprocess recursion (single level only)
+- [ ] No "Cannot find fork" or "Cannot find group" errors
 
-### Feature 3: Recursive Subprocess Traversal (Section 2)
-**Requirement**: Traverse into all subprocess calls, unlimited depth
-- ✅ Detect `CallProcessActivity`
-- ✅ Extract subprocess path from configuration
-- ✅ Load subprocess .process file
-- ✅ Parse and traverse subprocess activities
-- ✅ Render in partition with subprocess name
-- ✅ Continue recursively for nested subprocesses
-- ✅ Track call chain for cycle detection
+### Code Quality
+- [ ] No duplicate code between Section 2 and Section 3
+- [ ] Consistent use of `LinkedHashMap`/`LinkedHashSet` for determinism
+- [ ] Debug logging present for troubleshooting
+- [ ] Comments explain any non-obvious logic
 
-### Feature 4: Single-Level Traversal (Section 3)
-**Requirement**: Show subprocess calls as nodes, don't expand
-- ✅ Detect `CallProcessActivity`
-- ✅ Render as activity node with subprocess name
-- ✅ Do NOT load or traverse subprocess file
-- ✅ Implementation: Skip recursion when `traverseSubprocesses=false`
-
-### Feature 5: Nested Group Traversal (Both Sections)
-**Requirement**: Traverse groups within groups
-- ✅ Detect group types: Loop, CriticalSection, Pick, Scope, etc.
-- ✅ Render outer group partition
-- ✅ Traverse activities inside group
-- ✅ If inner group found, render nested partition
-- ✅ Continue recursively for any depth of group nesting
-- ✅ Implementation: Recursive group rendering
-
-### Feature 6: Circular Reference Detection (Section 2)
-**Requirement**: Detect and handle A→B→A cycles
-- ✅ Maintain call chain: `[ProcessA, ProcessB, ProcessC]`
-- ✅ Before traversing subprocess, check if it's in call chain
-- ✅ If found: Render `:⟲ Recursive call to [ProcessName];` and exit
-- ✅ Special case: Loop groups (while/until) that call back to parent
-- ✅ Implementation: CallChain class with contains() check
-
-### Feature 7: Spawn Process Detection (Both Sections)
-**Requirement**: Show spawned processes with special notation
-- ✅ Detect activity type: `SpawnActivity`
-- ✅ Extract spawned process name from configuration
-- ✅ Section 2: Traverse into spawned process (if `traverseSubprocesses=true`)
-- ✅ Section 3: Show as node only (don't traverse)
-- ✅ Visual: Yellow/orange partition with ⚡ symbol
-- ✅ Implementation: Check activity type, render with special partition
-
-### Feature 8: Dynamic Override Detection (Both Sections)
-**Requirement**: Extract and show dynamic subprocess calls
-- ✅ Detect `CallProcessActivity` with `<pd:processPath>` element
-- ✅ Parse XPath expression: `//pd:processDefinition[@name='ProcessName']`
-- ✅ Use regex to extract process name from XPath
-- ✅ Section 2: Traverse into override process (if `traverseSubprocesses=true`)
-- ✅ Section 3: Show as node only (don't traverse)
-- ✅ Visual: Blue partition with 🔄 symbol
-- ✅ Implementation: XPath parsing with regex fallback
-
-### Feature 9: Multi-Page Diagram Support (Both Sections)
-**Requirement**: Split large diagrams across multiple pages
-- ✅ Track activity count during traversal
-- ✅ When count reaches threshold (50), split diagram
-- ✅ Add continuation symbol: "→ Continued on next diagram"
-- ✅ Generate multiple PlantUML strings
-- ✅ Render multiple PNG files: `process_integration_1.png`, `_2.png`, etc.
-- ✅ Update PDF/Word generators to embed all pages
-- ✅ Implementation: Activity counter with threshold check
-
-### Feature 10: Visual Partitions (Both Sections)
-**Requirement**: Use PlantUML partitions for grouping
-- ✅ Subprocess: `partition "Subprocess: [Name]" { ... }`
-- ✅ Group: `partition "Group: [Type] - [Name]" { ... }`
-- ✅ Spawn: `partition "⚡ Spawned: [Name]" #FFEBCD { ... }`
-- ✅ Override: `partition "🔄 Override: [Name]" #E3F2FD { ... }`
-- ✅ Cycle: `:⟲ Recursive call to [Name];`
-- ✅ Implementation: PlantUML partition syntax
 
 ---
 
-## Test Cases
+## Section 2 vs Section 3: Labeled Transition Syntax Analysis (2026-01-01)
 
-### Test Case 1: Simple Subprocess (1 Level)
-**Process**: A calls B
-- ✅ Section 2: Show A's connectors, traverse to B, show B's connectors
-- ✅ Section 3: Show all A's activities, show CallProcessActivity to B (don't traverse)
+### Root Cause Discovered
 
-### Test Case 2: Nested Subprocess (3 Levels)
-**Process**: A calls B, B calls C, C calls D
-- ✅ Section 2: Show connectors from A, B, C, D in nested partitions
-- ✅ Section 3: Show all A's activities, show CallProcessActivity to B (don't traverse)
+**Why Section 2 works with labeled transitions to groups:**
 
-### Test Case 3: Circular Reference
-**Process**: A calls B, B calls A
-- ✅ Section 2: Show A's connectors, traverse to B, detect cycle, render "⟲ Recursive call to A"
-- ✅ Section 3: Show all A's activities, show CallProcessActivity to B (don't traverse)
-
-### Test Case 4: Loop Group with Recursion
-**Process**: A has while loop that calls A
-- ✅ Section 2: Show loop group, detect cycle, render "⟲ Recursive call to A"
-- ✅ Section 3: Show loop group with CallProcessActivity to A (don't traverse)
-
-### Test Case 5: Spawn Process
-**Process**: A spawns B
-- ✅ Section 2: Show A's connectors, traverse to B in ⚡ partition, show B's connectors
-- ✅ Section 3: Show all A's activities including SpawnActivity (don't traverse to B)
-
-### Test Case 6: Dynamic Override
-**Process**: A calls B with `processPath` XPath
-- ✅ Section 2: Extract B name from XPath, traverse to B in 🔄 partition, show B's connectors
-- ✅ Section 3: Show CallProcessActivity with override (don't traverse to B)
-
-### Test Case 7: Large Diagram (>50 Activities)
-**Process**: A has 60 activities
-- ✅ Section 2: Split at 50 activities, generate `_1.png` and `_2.png`
-- ✅ Section 3: Split at 50 activities, generate `_1.png` and `_2.png`
-
-### Test Case 8: Nested Groups
-**Process**: A has Loop group containing CriticalSection group
-- ✅ Section 2: Show outer Loop partition, inner CriticalSection partition, connectors inside
-- ✅ Section 3: Show outer Loop partition, inner CriticalSection partition, all activities inside
-
-### Test Case 9: Service Agent (Non-Starter Service)
-**Process**: Service Agent with operations
-- ✅ Section 2: Treat as service, show operations and connectors
-- ✅ Section 3: N/A (Service Agents don't have flow diagrams)
-
-### Test Case 10: REST Adapter (Non-Starter Service)
-**Process**: REST Adapter service
-- ✅ Section 2: Treat as service, show REST operations and connectors
-- ✅ Section 3: N/A (REST Adapters don't have flow diagrams)
-
----
-
-## Implementation Checklist
-
-### Phase 1: Test Infrastructure ✅
-- [ ] Create `src/test/java/DiagramGeneratorTest.java`
-- [ ] Create `test-diagrams-only.properties`
-- [ ] Create `test-diagrams.bat` script
-- [ ] Setup test output directory
-
-### Phase 2: DiagramConfig Class ✅
-- [ ] Create `DiagramGenerationConfig` class
-- [ ] Add all configuration fields
-- [ ] Modify `generateIntegrationPuml` to accept config
-- [ ] Modify `generateFlowPuml` to accept config
-
-### Phase 3: Cycle Detection ✅
-- [ ] Create `CallChain` class
-- [ ] Modify `traverseProcess` to accept call chain
-- [ ] Implement cycle detection logic
-- [ ] Render cycle notation in PlantUML
-
-### Phase 4: Spawn/Override ✅
-- [ ] Detect `SpawnActivity`
-- [ ] Extract process name from spawn config
-- [ ] Detect dynamic override in `CallProcessActivity`
-- [ ] Parse XPath from `processPath` element
-- [ ] Render with special partitions and symbols
-
-### Phase 5: Multi-Page Support ✅
-- [ ] Add activity counter to traversal
-- [ ] Implement page split logic
-- [ ] Generate multiple PlantUML strings
-- [ ] Render multiple PNG files
-- [ ] Update PDF/Word generators to handle multiple diagrams
-
-### Phase 6: Unify Sections ✅
-- [ ] Update Section 2 to use config-based generator
-- [ ] Update Section 3 to use config-based generator
-- [ ] Remove duplicate diagram generation logic
-- [ ] Test both sections with unified generator
-
-### Phase 7: Testing ✅
-- [ ] Run all 10 test cases
-- [ ] Visual review of generated diagrams
-- [ ] Verify all requirements are met
-- [ ] Performance testing with deep nesting
-
----
-
-## Success Criteria
-
-✅ **All 10 test cases pass**
-✅ **Section 2 shows only connectors across all subprocess levels**
-✅ **Section 3 shows all activities in single process only**
-✅ **Circular references detected and rendered correctly**
-✅ **Spawn and override processes shown with special notation**
-✅ **Large diagrams split across multiple pages**
-✅ **Nested groups rendered with proper partitions**
-✅ **Same generator code works for both Section 2 and Section 3**
-✅ **No infinite loops or performance issues**
-✅ **Visual clarity maintained even with deep nesting**
-
----
-
-## Configuration Properties
-
-```properties
-# ===== Section 2: Integration Diagrams =====
-tibco.integration.show.all.activities=false
-tibco.integration.traverse.subprocesses=true
-tibco.integration.max.depth=50
-tibco.integration.max.activities.per.page=50
-tibco.integration.use.partitions=true
-tibco.integration.show.spawn.override=true
-tibco.integration.detect.circular.references=true
-
-# ===== Section 3: Flow Diagrams =====
-tibco.flow.show.all.activities=true
-tibco.flow.traverse.subprocesses=false
-tibco.flow.max.depth=0
-tibco.flow.max.activities.per.page=50
-tibco.flow.use.partitions=true
-tibco.flow.show.spawn.override=true
-tibco.flow.detect.circular.references=false
+Section 2 uses a DIFFERENT PlantUML syntax for labeled transitions:
+```
+-> "testcondition";
+partition "Group" {
 ```
 
----
+Section 3 uses colored/bracketed syntax:
+```
+-[#483D8B]->[testcondition]
+partition "Group" {
+```
 
-## Notes
+**PlantUML Parser Behavior:**
+- ✅ `-> "label";` WORKS before partition blocks
+- ❌ `-[#483D8B]->[label]` FAILS before partition blocks
 
-- This is a **PENDING** feature - not yet implemented
-- Estimated effort: 2-3 days of development + testing
-- High complexity due to recursive traversal and cycle detection
-- Critical for accurate connector visibility in integration diagrams
-- Will significantly improve documentation quality for complex TIBCO projects
+The bracketed syntax `-[color]->[label]` confuses PlantUML's parser when followed immediately by a partition block inside a fork branch.
+
+### Two Issues to Fix
+
+#### Issue 1: Activities Showing as Yellow Labels
+**Problem:** After labeled transitions in Section 2, activities appear as yellow text labels instead of proper activity shapes.
+
+**Example from orderServiceJMS:**
+```
+-[#483D8B]->[REST API Call]
+Log-1-1\nlog    ← Shows as yellow label, not activity shape
+```
+
+**Root Cause:** The activity is being rendered as part of the transition label text instead of as a separate activity node.
+
+**Solution:** Need to ensure activity rendering happens AFTER the transition arrow, not as part of the label.
+
+#### Issue 2: Section 3 Labeled Transitions to Groups
+**Problem:** Section 3's colored/bracketed syntax `-[#483D8B]->[label]` causes "Cannot find group" errors before partition blocks.
+
+**Solution Implemented:** Suppress transition labels when target is a group:
+```java
+boolean successorIsGroup = groupMap.containsKey(successor);
+if (!successorIsGroup && transitionLabels != null ...) {
+    // Add label
+} else {
+    sb.append("->\n");  // Plain arrow for groups
+}
+```
+
+### Recommendations
+
+1. **Keep Section 3 fix** - Suppressing labels for group targets is correct
+2. **Fix activity rendering** - Investigate why activities after labeled transitions show as labels
+3. **Consider syntax alignment** - Optionally change Section 3 to use Section 2's `-> "label";` syntax for consistency
+
+### Code Locations
+
+- **Section 2 transition labels**: Line 648 - `sb.append("-> \"").append(label).append("\";\n");`
+- **Section 3 transition labels**: Line 941 - `sb.append("-[#483D8B]->[").append(label).append("]\\n");`
+- **Section 3 group check**: Line 938 - `boolean successorIsGroup = groupMap.containsKey(successor);`

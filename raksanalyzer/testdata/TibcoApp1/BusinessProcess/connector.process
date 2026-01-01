@@ -72,15 +72,15 @@ public class connectorJavaEventSource extends JavaProcessStarter {
     </pd:starter>
     <pd:endName>End</pd:endName>
     <pd:endX>450</pd:endX>
-    <pd:endY>64</pd:endY>
+    <pd:endY>35</pd:endY>
     <pd:errorSchemas/>
     <pd:processVariables/>
     <pd:targetNamespace>http://xmlns.example.com/1766548391581</pd:targetNamespace>
     <pd:activity name="Java Method">
         <pd:type>com.tibco.plugin.java.JavaMethodActivity</pd:type>
         <pd:resourceType>ae.activities.JavaMethodActivity</pd:resourceType>
-        <pd:x>69</pd:x>
-        <pd:y>132</pd:y>
+        <pd:x>42</pd:x>
+        <pd:y>309</pd:y>
         <config>
             <ConstructDeclaredClass>false</ConstructDeclaredClass>
             <CacheConstructedClass>false</CacheConstructedClass>
@@ -94,7 +94,7 @@ public class connectorJavaEventSource extends JavaProcessStarter {
         <pd:type>com.tibco.plugin.java.JavaToXmlActivity</pd:type>
         <pd:resourceType>ae.activities.JavaToXmlActivity</pd:resourceType>
         <pd:x>268</pd:x>
-        <pd:y>43</pd:y>
+        <pd:y>35</pd:y>
         <config>
             <Repeatable>false</Repeatable>
             <UseJavaSchema>false</UseJavaSchema>
@@ -106,22 +106,83 @@ public class connectorJavaEventSource extends JavaProcessStarter {
     <pd:activity name="XML To Java">
         <pd:type>com.tibco.plugin.java.XmlToJavaActivity</pd:type>
         <pd:resourceType>ae.activities.XmlToJavaActivity</pd:resourceType>
-        <pd:x>344</pd:x>
-        <pd:y>155</pd:y>
+        <pd:x>451</pd:x>
+        <pd:y>159</pd:y>
         <config>
             <Repeatable>false</Repeatable>
             <UseJavaSchema>false</UseJavaSchema>
         </config>
         <pd:inputBindings/>
     </pd:activity>
-    <pd:activity name="Java Code">
-        <pd:type>com.tibco.plugin.java.JavaActivity</pd:type>
-        <pd:resourceType>ae.javapalette.javaActivity</pd:resourceType>
-        <pd:x>188</pd:x>
-        <pd:y>213</pd:y>
-        <config/>
+    <pd:group name="Group">
+        <pd:type>com.tibco.pe.core.LoopGroup</pd:type>
+        <pd:resourceType>ae.process.group</pd:resourceType>
+        <pd:x>134</pd:x>
+        <pd:y>153</pd:y>
+        <pd:width>251</pd:width>
+        <pd:height>284</pd:height>
+        <pd:collapsedWidth>57</pd:collapsedWidth>
+        <pd:collapsedHeight>70</pd:collapsedHeight>
+        <pd:groupVariables/>
+        <pd:joinToggle>inherit</pd:joinToggle>
+        <config>
+            <pd:groupType>repeat</pd:groupType>
+            <pd:serializable>false</pd:serializable>
+            <pd:indexSlot>test</pd:indexSlot>
+            <pd:outSlot>testwriteoutput</pd:outSlot>
+            <pd:activityOutputName/>
+            <pd:repeatCondition>1=2</pd:repeatCondition>
+            <pd:accumulateOutput>true</pd:accumulateOutput>
+        </config>
         <pd:inputBindings/>
-    </pd:activity>
+        <pd:expanded>true</pd:expanded>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Sleep</pd:to>
+            <pd:xpathDescription>sleepflag</pd:xpathDescription>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>otherwise</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>start</pd:from>
+            <pd:to>Java Code</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>xpath</pd:conditionType>
+            <pd:xpath>javaflag</pd:xpath>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Sleep</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:transition>
+            <pd:from>Java Code</pd:from>
+            <pd:to>end</pd:to>
+            <pd:lineType>Default</pd:lineType>
+            <pd:lineColor>-16777216</pd:lineColor>
+            <pd:conditionType>always</pd:conditionType>
+        </pd:transition>
+        <pd:activity name="Java Code">
+            <pd:type>com.tibco.plugin.java.JavaActivity</pd:type>
+            <pd:resourceType>ae.javapalette.javaActivity</pd:resourceType>
+            <pd:x>255</pd:x>
+            <pd:y>216</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+        <pd:activity name="Sleep">
+            <pd:type>com.tibco.plugin.timer.SleepActivity</pd:type>
+            <pd:resourceType>ae.activities.sleep</pd:resourceType>
+            <pd:x>255</pd:x>
+            <pd:y>353</pd:y>
+            <config/>
+            <pd:inputBindings/>
+        </pd:activity>
+    </pd:group>
     <pd:transition>
         <pd:from>Java Event Source</pd:from>
         <pd:to>Java Method</pd:to>
@@ -134,21 +195,8 @@ public class connectorJavaEventSource extends JavaProcessStarter {
         <pd:to>Java To XML</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
-    </pd:transition>
-    <pd:transition>
-        <pd:from>Java Method</pd:from>
-        <pd:to>Java Code</pd:to>
-        <pd:lineType>Default</pd:lineType>
-        <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
-    </pd:transition>
-    <pd:transition>
-        <pd:from>Java Event Source</pd:from>
-        <pd:to>Java Code</pd:to>
-        <pd:lineType>Default</pd:lineType>
-        <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>always</pd:conditionType>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>parseflag</pd:xpath>
     </pd:transition>
     <pd:transition>
         <pd:from>XML To Java</pd:from>
@@ -165,15 +213,30 @@ public class connectorJavaEventSource extends JavaProcessStarter {
         <pd:conditionType>always</pd:conditionType>
     </pd:transition>
     <pd:transition>
-        <pd:from>Java Code</pd:from>
-        <pd:to>End</pd:to>
+        <pd:from>Java Event Source</pd:from>
+        <pd:to>XML To Java</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>always</pd:conditionType>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Java Method</pd:from>
+        <pd:to>Group</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>
     </pd:transition>
     <pd:transition>
         <pd:from>Java Event Source</pd:from>
-        <pd:to>XML To Java</pd:to>
+        <pd:to>Group</pd:to>
+        <pd:lineType>Default</pd:lineType>
+        <pd:lineColor>-16777216</pd:lineColor>
+        <pd:conditionType>xpath</pd:conditionType>
+        <pd:xpath>xpathflag</pd:xpath>
+    </pd:transition>
+    <pd:transition>
+        <pd:from>Group</pd:from>
+        <pd:to>End</pd:to>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
         <pd:conditionType>always</pd:conditionType>

@@ -1351,16 +1351,28 @@ public class TibcoPdfGenerator {
         float maxPageHeight = PDRectangle.LETTER.getHeight() - (2 * MARGIN) - 50; 
         float imgWidth = pdImage.getWidth();
         float imgHeight = pdImage.getHeight();
-        float scale = 1.0f;
-        if (imgWidth > availableWidth) {
-            scale = availableWidth / imgWidth;
+        
+        // Default PDF DPI is 72. We generated images at 300 DPI.
+        // To render at natural size (physically correct 100% zoom), we line up pixels to points.
+        // Scale factor = target_dpi / source_dpi = 72 / 300 = ~0.24
+        float dpiScale = 72f / 300f;
+        
+        // Initial scaled dimensions (Natural Size)
+        float finalWidth = imgWidth * dpiScale;
+        float finalHeight = imgHeight * dpiScale;
+        
+        // Now constrain to page bounds if natural size is too big
+        if (finalWidth > availableWidth) {
+            float widthScale = availableWidth / finalWidth;
+            finalWidth *= widthScale;
+            finalHeight *= widthScale;
         }
-        float scaledHeight = imgHeight * scale;
-        if (scaledHeight > maxPageHeight) {
-            scale = scale * (maxPageHeight / scaledHeight);
+        
+        if (finalHeight > maxPageHeight) {
+            float heightScale = maxPageHeight / finalHeight;
+            finalWidth *= heightScale;
+            finalHeight *= heightScale;
         }
-        float finalWidth = imgWidth * scale;
-        float finalHeight = imgHeight * scale;
         float availableSpaceOnCurrentPage = currentY - MARGIN;
         if (finalHeight > availableSpaceOnCurrentPage) {
             newPage();
@@ -1374,7 +1386,9 @@ public class TibcoPdfGenerator {
         }
         contentStream.drawImage(pdImage, MARGIN, currentY - finalHeight, finalWidth, finalHeight);
         currentY -= (finalHeight + 20);
-        if (scale < 0.5f) {
+        // Check if we touched the bounds significantly vs natural size
+        // naturalWidth = imgWidth * dpiScale
+        if (finalWidth < (imgWidth * dpiScale * 0.9f)) {
             drawText("(Diagram scaled to fit page)", fontItalic, 8, Color.GRAY);
             currentY -= 10;
         }

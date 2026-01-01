@@ -17,6 +17,8 @@
         </encoder>
     </appender>
 
+    <logger name="com.raks.raksanalyzer.generator.tibco.TibcoDiagramGenerator" level="INFO"/>
+
     <root level="INFO">
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
