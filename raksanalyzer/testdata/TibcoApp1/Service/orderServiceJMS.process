@@ -552,10 +552,10 @@
     <pd:transition>
         <pd:from>Null-1</pd:from>
         <pd:to>Null</pd:to>
-        <pd:xpathDescription>Default Flow</pd:xpathDescription>
+        <pd:xpathDescription/>
         <pd:lineType>Default</pd:lineType>
         <pd:lineColor>-16777216</pd:lineColor>
-        <pd:conditionType>otherwise</pd:conditionType>
+        <pd:conditionType>error</pd:conditionType>
     </pd:transition>
     <pd:transition>
         <pd:from>Null-2</pd:from>
