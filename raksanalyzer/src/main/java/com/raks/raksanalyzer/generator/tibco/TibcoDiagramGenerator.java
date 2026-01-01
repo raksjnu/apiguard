@@ -372,10 +372,10 @@ public class TibcoDiagramGenerator {
             List<String> successors = transitions.get(nodeName);
             if (successors != null) {
                 for (String successor : successors) {
-                    if (transitionLabels.containsKey(nodeName) && transitionLabels.get(nodeName).containsKey(successor)) {
-                         String label = transitionLabels.get(nodeName).get(successor).replace("\"", "\\\"");
-                         sb.append("-> \"").append(label).append("\";\n");
-                    }
+                     if (transitionLabels.containsKey(nodeName) && transitionLabels.get(nodeName).containsKey(successor)) {
+                          String label = transitionLabels.get(nodeName).get(successor).replace("\"", "\\\"");
+                          sb.append("-[#483D8B]->[").append(label).append("]\n");
+                     }
                     traverseProcess(sb, successor, activityMap, transitions, processed, projectRoot, visited, relevanceCache, depth, groups, callChain, transitionLabels, null);
                 }
             }
@@ -827,14 +827,14 @@ public class TibcoDiagramGenerator {
                 }
             }
              sb.append("start\n");
-             traverseFlowFromNode(sb, startName, activityMap, groupMap, transitions, transitionLabels, transitionConditions, new HashSet<>(), doc, null, false, null, false); // insideFork=false (top level)
+             traverseFlowFromNode(sb, startName, activityMap, groupMap, transitions, transitionLabels, transitionConditions, new HashSet<>(), doc, null, false, null, false, null); // insideFork=false (top level)
              sb.append("stop\n");
              if (showExceptionHandlers && !catchActivities.isEmpty()) {
                  sb.append("partition \"Error Handling\" #FFEBEE {\n");
                  for (String catchName : catchActivities) {
                       sb.append("\n");
                       sb.append("start\n");
-                      traverseFlowFromNode(sb, catchName, activityMap, groupMap, transitions, transitionLabels, transitionConditions, new HashSet<>(), doc, null, false, null, false); // insideFork=false
+                       traverseFlowFromNode(sb, catchName, activityMap, groupMap, transitions, transitionLabels, transitionConditions, new HashSet<>(), doc, null, false, null, false, null); // insideFork=false
                       sb.append("stop\n");
                  }
                  sb.append("}\n");
@@ -865,7 +865,8 @@ public class TibcoDiagramGenerator {
                                       String stopAtNode,
                                       boolean skipFirstNodeRender,
                                       Set<String> allowedScope,
-                                      boolean insideFork) {
+                                      boolean insideFork,
+                                      String incomingLabel) {
         if (nodeName == null) return;
         
         logger.debug("[FLOW TRAVERSAL] Visiting node: '{}', stopAtNode: {}, allowedScope: {}", nodeName, stopAtNode, allowedScope != null ? allowedScope.size() : "null");
@@ -905,7 +906,7 @@ public class TibcoDiagramGenerator {
         } else if (!skipFirstNodeRender) {
             if (groupMap.containsKey(nodeName)) {
                 // Groups inside forks cannot use partition wrapper (PlantUML limitation)
-                renderGroup(sb, groupMap.get(nodeName), doc, insideFork); // Not inside fork at top level
+                renderGroup(sb, groupMap.get(nodeName), doc, insideFork, incomingLabel); // Not inside fork at top level
             } else if (activityMap.containsKey(nodeName)) {
             renderActivity(sb, activityMap.get(nodeName));
         }
@@ -933,23 +934,30 @@ public class TibcoDiagramGenerator {
                         continue;
                     }
 
-                    // Reverting to PROVEN FIX: Suppress labels for groups
-                    boolean successorIsGroup = groupMap.containsKey(successor);
-                    if (!successorIsGroup && transitionLabels != null && transitionLabels.containsKey(nodeName)) {
+                    // ALLOW labels for groups now that we use correct bracketed syntax
+                    String labelToPass = null;
+                    if (transitionLabels != null && transitionLabels.containsKey(nodeName) && transitionLabels.get(nodeName).containsKey(successor)) {
                         String label = transitionLabels.get(nodeName).get(successor);
                         if (label != null) {
-                            label = label.replace("\"", "\\\"");
-                             sb.append("-[#483D8B]->[").append(label).append("]\n");
-                        } else {
-                            sb.append("->\n");
+                            labelToPass = label.replace("\"", "\\\"");
                         }
-                    } else {
-                        sb.append("->\n");
+                    } 
+                    
+                    // If successor is NOT a group, render arrow normally
+                    // If successor IS a group, SUPPRESS arrow here and pass label to renderGroup
+                    if (!groupMap.containsKey(successor)) {
+                         if (labelToPass != null) {
+                             sb.append("-[#483D8B]->[" ).append(labelToPass).append("]\n");
+                         } else {
+                             sb.append("->\n");
+                         }
                     }
+
                     
                     // Use separate processed set for each fork branch to allow duplicates
                     Set<String> branchProcessed = new LinkedHashSet<>(processed);
-                    traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, branchProcessed, doc, joinNode, false, allowedScope, true); // insideFork=true
+                    traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, branchProcessed, doc, joinNode, false, allowedScope, false, labelToPass); // skipFirst=false to render activities
+                    branchProcessedSets.add(branchProcessed);
                     branchProcessedSets.add(branchProcessed);
                 }
                 sb.append("end fork\n");
@@ -969,36 +977,46 @@ public class TibcoDiagramGenerator {
                          String t = getTagValue(joinEl, "pd:type");
                          if (t != null && t.contains("NullActivity")) isJoinNull = true;
                     }
-                    traverseFlowFromNode(sb, joinNode, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, stopAtNode, isJoinNull, allowedScope, insideFork);
+                    traverseFlowFromNode(sb, joinNode, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, stopAtNode, insideFork, allowedScope, false, null);
                 }
             } else {
-                // Single successor
+                // Single Successor Logic
                 String successor = successors.get(0);
                 
-                // Avoid dangling arrows pointing to nodes outside the group/scope
-                if (allowedScope != null && !allowedScope.contains(successor)) {
-                	logger.debug("[FLOW TRAVERSAL] Stopping traversal from '{}' to '{}' because target is NOT in allowed scope: {}", nodeName, successor, allowedScope);
-                    return; 
-                }
-                
-                // Fix: Do not append arrow if we are about to stop at the join node
-                boolean isJoinNode = (stopAtNode != null && successor.equals(stopAtNode));
-                
-                boolean successorExists = activityMap.containsKey(successor) || groupMap.containsKey(successor);
-                // Hybrid State: Use quoted label syntax -> "label" for Single Successor (Proven working 11:28)
-                // This fixes activity rendering (yellow labels)
-                if (successorExists && transitionLabels != null && transitionLabels.containsKey(nodeName)) {
-                    String label = transitionLabels.get(nodeName).get(successor);
-                    if (label != null) {
-                        label = label.replace("\"", "\\\"");
-                        sb.append("-> \"").append(label).append("\"\n");
-                    } else if (!isJoinNode) {
-                         sb.append("->\n");
+                // Check scope logic... (omitted for brevity, assume existing)
+                 if (allowedScope != null && !allowedScope.contains(successor)) {
+                    	logger.debug("[FLOW TRAVERSAL] Stopping traversal from '{}' to '{}' because target is NOT in allowed scope: {}", nodeName, successor, allowedScope);
+                        return; 
                     }
-                } else if (!isJoinNode) {
-                    sb.append("->\n");
-                }
-                traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, stopAtNode, false, allowedScope, insideFork);
+                    
+                    // Fix: Do not append arrow if we are about to stop at the join node
+                    boolean isJoinNode = (stopAtNode != null && successor.equals(stopAtNode));
+                    
+                    boolean successorExists = activityMap.containsKey(successor) || groupMap.containsKey(successor);
+                    
+                    String labelToPass = null;
+                    if (successorExists && transitionLabels != null && transitionLabels.containsKey(nodeName)) {
+                        String label = transitionLabels.get(nodeName).get(successor);
+                        if (label != null) {
+                            labelToPass = label.replace("\"", "\\\"");
+                        }
+                    }
+                    
+                    // If successor is NOT a group, render arrow normally
+                    if (!groupMap.containsKey(successor)) {
+                         if (labelToPass != null) {
+                            sb.append("-[#483D8B]->[").append(labelToPass).append("]\n");
+                         } else if (!isJoinNode) {
+                             sb.append("->\n");
+                         }
+                    } else if (!isJoinNode && labelToPass == null) {
+                         // Group without label? 
+                         // Caller normally prints arrow. 
+                         // If we suppress for group, we must ensure renderGroup handles "null" label by printing plain arrow?
+                         // YES. renderGroup logic I added handles null label by printing "->"
+                    }
+
+                    traverseFlowFromNode(sb, successor, activityMap, groupMap, transitions, transitionLabels, transitionConditions, processed, doc, stopAtNode, false, allowedScope, false, labelToPass);
             }
         }
     }
@@ -1076,7 +1094,7 @@ public class TibcoDiagramGenerator {
         String readableType = getReadableTypeLabel(resourceType);
         sb.append(":").append(icon).append(" **").append(name).append("**\\n").append(readableType).append(";\n");
     }
-    private void renderGroup(StringBuilder sb, Element group, Document doc, boolean insideFork) {
+    private void renderGroup(StringBuilder sb, Element group, Document doc, boolean insideFork, String incomingLabel) {
         String groupName = group.getAttribute("name");
         
         // Parse content into local maps for traversal
@@ -1183,9 +1201,18 @@ public class TibcoDiagramGenerator {
     sb.append("partition \"").append(partitionLabel).append("\" {\n");
     logger.debug("[SECTION 3 PUML] Added: {}", sb.substring(beforeLen));
         
+        // Fix for "Cannot find group": Render incoming transition arrow INSIDE the partition
+        if (incomingLabel != null) {
+             sb.append("-[#483D8B]->[").append(incomingLabel).append("]\n");
+        } else {
+             sb.append("->\n");
+        }
+        
         // Handle internal parallel paths (fork from group start)
         if (startTargets.size() > 1) {
             logger.debug("[GROUP] Parallel start detected in group '{}': {}", groupName, startTargets);
+            // PlantUML requires an activity before fork, add a hidden node
+            sb.append("#transparent:_;\n");  // Hidden node to satisfy PlantUML syntax
             sb.append("fork\n");
             
             int i = 0;
@@ -1196,13 +1223,13 @@ public class TibcoDiagramGenerator {
                   String label = localLabels.getOrDefault("start", new LinkedHashMap<>()).get(target);
                   if (label != null && !label.isEmpty()) {
                       label = label.replace("\"", "\\\""); 
-                      sb.append("-[#483D8B]->[").append(label).append("]\n");
+                      sb.append("-[#483D8B]->[" ).append(label).append("]\n");
                   } else {
                       sb.append("->\n");   
                   }
                   
                   // Traverse this branch - always pass false for insideFork since we're in a partition
-                  traverseFlowFromNode(sb, target, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false);
+                  traverseFlowFromNode(sb, target, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false, null);
                   i++;
              }
              sb.append("end fork\n");
@@ -1212,11 +1239,11 @@ public class TibcoDiagramGenerator {
               String label = localLabels.getOrDefault("start", new LinkedHashMap<>()).get(target);
               if (label != null && !label.isEmpty()) {
                   label = label.replace("\"", "\\\"");
-                  sb.append("-[#483D8B]->[").append(label).append("]\n");
+                  sb.append("-[#483D8B]->[" ).append(label).append("]\n");
               } else {
                   sb.append("->\n");
               }
-              traverseFlowFromNode(sb, target, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false);
+              traverseFlowFromNode(sb, target, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false, null);
          }
          
          // Close partition only if we opened it
@@ -1246,16 +1273,15 @@ public class TibcoDiagramGenerator {
                  }
                  
                  if (!hasIncoming) {
-                     traverseFlowFromNode(sb, node, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false);
+                     traverseFlowFromNode(sb, node, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false, null);
                  }
             }
             
             // Sweeper: If cycles exist in islands, the above might miss them.
             for (String node : unvisited) {
                 if (!processed.contains(node)) {
-                     traverseFlowFromNode(sb, node, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false);
-                }
-            }
+                  traverseFlowFromNode(sb, node, localActivityMap, localGroupMap, localTransitions, localLabels, new LinkedHashMap<>(), processed, doc, null, false, scope, false, null);
+             }   }
             
             sb.append("}\n");
         }

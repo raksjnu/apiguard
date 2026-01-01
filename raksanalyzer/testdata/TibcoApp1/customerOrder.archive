@@ -8,7 +8,7 @@
         <processArchive name="Process Archive">
             <resourceType>process.archive.resource</resourceType>
             <authorProperty>Rakesh.Kumar@ibm.com</authorProperty>
-            <processProperty>/Service/orderService.serviceagent,/Service/orderServiceFILE.process,/Service/orderServiceREST.process,/Service/orderServiceSCHEDULER.process,/Service/Initialization_onstartup.process</processProperty>
+            <processProperty>/Service/orderService.serviceagent,/Service/orderServiceFILE.process,/Service/orderServiceJMS.process,/Service/orderServiceREST.process,/Service/orderServiceSCHEDULER.process,/Service/Initialization_onstartup.process</processProperty>
         </processArchive>
         <versionProperty>4</versionProperty>
         <authorProperty>Rakesh.Kumar@ibm.com</authorProperty>
