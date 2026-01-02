@@ -29,12 +29,13 @@
 Run comparisons from the command line and generate reports:
 
 ```bash
-java -jar target/apiurlcomparison-1.0.0.jar --config config.yaml --output ./reports
+java -jar target/apiurlcomparison-1.0.0-jar-with-raks.jar --output ./reports
 ```
 
 **CLI Arguments:**
-- `--config`: Path to the YAML configuration file (required)
-- `--output`: Directory where reports will be generated (required)
+- `--config`: Path to the YAML configuration file (optional, defaults to bundled config)
+- `--output`: Directory where reports will be generated (optional, defaults to `results.json`)
+- `--gui` / `-g`: Launch the interactive web GUI
 
 **Generated Reports:**
 - `results.json`: Machine-readable JSON report
@@ -45,14 +46,16 @@ java -jar target/apiurlcomparison-1.0.0.jar --config config.yaml --output ./repo
 Launch the interactive web interface:
 
 ```bash
-java -jar target/apiurlcomparison-1.0.0.jar
+java -jar target/apiurlcomparison-1.0.0-jar-with-raks.jar --gui
+# Or with a custom config:
+java -jar target/apiurlcomparison-1.0.0-jar-with-raks.jar --gui --config my-config.yaml
 ```
 
 The GUI will automatically open in your default browser at `http://localhost:4567`
 
 **Quick Start Scripts:**
-- **Windows**: Double-click `start-gui.bat` or run `start-gui.bat` from command prompt
-- **macOS/Linux**: Run `./start-gui.sh` from terminal (make executable first: `chmod +x start-gui.sh`)
+- **Windows**: Double-click `start-apiurlcomparison-gui.bat`
+- **macOS/Linux**: Run `./start-apiurlcomparison-gui.sh` (make executable first: `chmod +x start-apiurlcomparison-gui.sh`)
 
 **GUI Features:**
 - Interactive configuration form with default SOAP type

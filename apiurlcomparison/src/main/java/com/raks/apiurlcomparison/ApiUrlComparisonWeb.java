@@ -9,6 +9,51 @@ import static spark.Spark.*;
 public class ApiUrlComparisonWeb {
     private static final Logger logger = LoggerFactory.getLogger(ApiUrlComparisonWeb.class);
     private static final int DEFAULT_PORT = 4567;
+    private static java.io.File explicitConfigFile;
+
+    public static void setConfigFile(java.io.File file) {
+        explicitConfigFile = file;
+    }
+
+    private static Config loadConfig() throws java.io.IOException {
+        ObjectMapper yamlMapper = new ObjectMapper(new com.fasterxml.jackson.dataformat.yaml.YAMLFactory());
+        
+        // 1. Explicitly provided config
+        if (explicitConfigFile != null && explicitConfigFile.exists()) {
+            logger.info("Loading config from explicit file: {}", explicitConfigFile.getAbsolutePath());
+            return yamlMapper.readValue(explicitConfigFile, Config.class);
+        }
+
+        // 2. CWD config.yaml
+        java.io.File cwdConfig = new java.io.File("config.yaml");
+        if (cwdConfig.exists()) {
+            logger.info("Loading config from CWD: {}", cwdConfig.getAbsolutePath());
+            return yamlMapper.readValue(cwdConfig, Config.class);
+        }
+
+        // 3. Classpath config.yaml
+        logger.info("Loading config from classpath resources");
+        try (java.io.InputStream is = ApiUrlComparisonWeb.class.getClassLoader().getResourceAsStream("config.yaml")) {
+             if (is == null) {
+                 throw new java.io.FileNotFoundException("config.yaml not found in resources");
+             }
+             return yamlMapper.readValue(is, Config.class);
+        }
+    }
+    
+    // Helper to get storage dir
+    private static String getStorageDir() {
+        try {
+            Config config = loadConfig();
+            if (config.getBaseline() != null && config.getBaseline().getStorageDir() != null) {
+                return config.getBaseline().getStorageDir();
+            }
+        } catch (Exception e) {
+             logger.warn("Could not read config for storage dir, using default 'baselines'", e);
+        }
+        return "baselines";
+    }
+
     public static void main(String[] args) {
         int port = findAvailablePort(DEFAULT_PORT);
         port(port);
@@ -62,39 +107,20 @@ public class ApiUrlComparisonWeb {
         get("/api/config", (req, res) -> {
             res.type("application/json");
             try {
-                java.io.File configFile = new java.io.File("config.yaml");
-                if (configFile.exists()) {
-                    ObjectMapper yamlMapper = new ObjectMapper(new com.fasterxml.jackson.dataformat.yaml.YAMLFactory());
-                    ObjectMapper jsonMapper = new ObjectMapper();
-                    Config config = yamlMapper.readValue(configFile, Config.class);
-                    return jsonMapper.writeValueAsString(config);
-                } else {
-                    return "{}"; 
-                }
+                Config config = loadConfig();
+                ObjectMapper jsonMapper = new ObjectMapper();
+                return jsonMapper.writeValueAsString(config);
             } catch (Exception e) {
                 logger.error("Error reading config", e);
-                res.status(500);
-                return "{\"error\": \"" + e.getMessage() + "\"}";
+                // Return empty object if config fails to load, instead of error to allow UI to load defaults
+                return "{}";
             }
         });
         get("/api/baselines/services", (req, res) -> {
             res.type("application/json");
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                String storageDir = "baselines";
-                java.io.File configFile = new java.io.File("config.yaml");
-                if (configFile.exists()) {
-                    try {
-                        ObjectMapper yamlMapper = new ObjectMapper(
-                                new com.fasterxml.jackson.dataformat.yaml.YAMLFactory());
-                        Config config = yamlMapper.readValue(configFile, Config.class);
-                        if (config.getBaseline() != null && config.getBaseline().getStorageDir() != null) {
-                            storageDir = config.getBaseline().getStorageDir();
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Could not read storage dir from config, using default", e);
-                    }
-                }
+                String storageDir = getStorageDir();
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
                 List<String> services = storageService.listServices();
                 return mapper.writeValueAsString(services);
@@ -109,20 +135,7 @@ public class ApiUrlComparisonWeb {
             try {
                 String serviceName = req.params(":serviceName");
                 ObjectMapper mapper = new ObjectMapper();
-                String storageDir = "baselines";
-                java.io.File configFile = new java.io.File("config.yaml");
-                if (configFile.exists()) {
-                    try {
-                        ObjectMapper yamlMapper = new ObjectMapper(
-                                new com.fasterxml.jackson.dataformat.yaml.YAMLFactory());
-                        Config config = yamlMapper.readValue(configFile, Config.class);
-                        if (config.getBaseline() != null && config.getBaseline().getStorageDir() != null) {
-                            storageDir = config.getBaseline().getStorageDir();
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Could not read storage dir from config, using default", e);
-                    }
-                }
+                String storageDir = getStorageDir();
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
                 List<String> dates = storageService.listDates(serviceName);
                 return mapper.writeValueAsString(dates);
@@ -138,20 +151,7 @@ public class ApiUrlComparisonWeb {
                 String serviceName = req.params(":serviceName");
                 String date = req.params(":date");
                 ObjectMapper mapper = new ObjectMapper();
-                String storageDir = "baselines";
-                java.io.File configFile = new java.io.File("config.yaml");
-                if (configFile.exists()) {
-                    try {
-                        ObjectMapper yamlMapper = new ObjectMapper(
-                                new com.fasterxml.jackson.dataformat.yaml.YAMLFactory());
-                        Config config = yamlMapper.readValue(configFile, Config.class);
-                        if (config.getBaseline() != null && config.getBaseline().getStorageDir() != null) {
-                            storageDir = config.getBaseline().getStorageDir();
-                        }
-                    } catch (Exception e) {
-                        logger.warn("Could not read storage dir from config, using default", e);
-                    }
-                }
+                String storageDir = getStorageDir();
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
                 List<BaselineStorageService.RunInfo> runs = storageService.listRuns(serviceName, date);
                 List<java.util.Map<String, Object>> runList = new java.util.ArrayList<>();

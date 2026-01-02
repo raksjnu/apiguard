@@ -516,11 +516,18 @@ document.addEventListener('DOMContentLoaded', () => {
                      `;
                 }
 
+                // Helper to render payload safely
+                const renderPayload = (payload) => {
+                    if (payload === null || payload === undefined) return '<span style="color:#999; font-style:italic;">[Null Response]</span>';
+                    if (payload === '') return '<span style="color:#999; font-style:italic;">[Empty Response]</span>';
+                    return `<pre>${formatJson(payload)}</pre>`;
+                };
+
                 // Request Payload (Common)
                 const reqPayload = res.api1 && res.api1.requestPayload ? res.api1.requestPayload : '';
                 const reqDisplay = reqPayload ? `
                     <div class="request-box" style="margin-bottom: 20px;">
-                        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #27173e; font-weight: 600;">Request Payload</h4>
+                        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #27173e; font-weight: 600;">Request Payload (Original)</h4>
                         <pre>${formatJson(reqPayload)}</pre>
                     </div>` : '';
 
@@ -529,8 +536,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${diffHtml}
                         ${reqDisplay}
                         <div class="single-view">
-                            <h4>Response (Identical)</h4>
-                            <pre>${formatJson(res.api1.responsePayload)}</pre>
+                            <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #2e7d32; font-weight: 600;">Response (Identical)</h4>
+                            ${renderPayload(res.api1.responsePayload)}
                             <p><small>Duration: ${res.api1.duration}ms</small></p>
                         </div>
                     `;
@@ -546,11 +553,11 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="comparison-grid">
                             <div class="payload-box">
                                 <h4>${api1Label} Response (${res.api1.duration}ms)</h4>
-                                <pre>${formatJson(res.api1.responsePayload)}</pre>
+                                ${renderPayload(res.api1.responsePayload)}
                             </div>
                             <div class="payload-box">
                                 <h4>${api2Label} Response (${res.api2.duration}ms)</h4>
-                                <pre>${formatJson(res.api2.responsePayload)}</pre>
+                                ${renderPayload(res.api2.responsePayload)}
                             </div>
                         </div>
                     `;

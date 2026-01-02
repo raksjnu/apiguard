@@ -18,6 +18,12 @@ REM --------------------------
 echo Starting API Comparison Tool Web GUI...
 echo.
 
-call mvn clean compile exec:java -Dexec.mainClass="com.raks.apiurlcomparison.ApiUrlComparisonWeb"
+if not exist "target\apiurlcomparison-1.0.0-jar-with-raks.jar" (
+    echo [INFO] JAR not found. Building...
+    call mvn clean package -DskipTests
+)
+
+echo [INFO] Launching JAR in GUI mode...
+java -jar target\apiurlcomparison-1.0.0-jar-with-raks.jar --gui
 
 pause

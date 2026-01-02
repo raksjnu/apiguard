@@ -191,9 +191,9 @@ mvn clean package
 
 | Artifact | Purpose | Size |
 |----------|---------|------|
-| `apiurlcomparison-1.0.0.jar` | Executable application | ~15 MB |
-| `config.yaml` | Configuration template | ~5 KB |
-| `start-gui.sh` / `start-gui.bat` | GUI launcher scripts | ~1 KB |
+| `apiurlcomparison-1.0.0-jar-with-raks.jar` | Executable application | ~15 MB |
+| `config.yaml` | Configuration template (optional) | ~5 KB |
+| `start-apiurlcomparison-gui.bat` / `.sh` | GUI launcher scripts | ~1 KB |
 | `README.md` | User documentation | ~20 KB |
 
 ### 4.3 System Requirements
@@ -220,10 +220,10 @@ mvn clean package
 unzip apiurlcomparison-1.0.0-dist.zip
 
 # Run GUI mode
-./start-gui.sh
+./start-apiurlcomparison-gui.sh
 
 # Run CLI mode
-java -jar apiurlcomparison-1.0.0.jar --config=config.yaml
+java -jar apiurlcomparison-1.0.0-jar-with-raks.jar --output results.json
 ```
 
 ### 5.2 CI/CD Pipeline Integration
@@ -235,7 +235,7 @@ java -jar apiurlcomparison-1.0.0.jar --config=config.yaml
 test-api-migration:
   stage: test
   script:
-    - java -jar apiurlcomparison-1.0.0.jar --config=config.yaml --output=results.json
+    - java -jar apiurlcomparison-1.0.0-jar-with-raks.jar --output=results.json
     - # Parse results.json for pass/fail
   artifacts:
     paths:
@@ -250,9 +250,8 @@ test-api-migration:
 ```dockerfile
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
-COPY apiurlcomparison-1.0.0.jar .
-COPY config.yaml .
-CMD ["java", "-jar", "apiurlcomparison-1.0.0.jar", "--config=config.yaml"]
+COPY apiurlcomparison-1.0.0-jar-with-raks.jar .
+CMD ["java", "-jar", "apiurlcomparison-1.0.0-jar-with-raks.jar"]
 ```
 
 ### 5.4 Enterprise Server Deployment
@@ -261,8 +260,7 @@ CMD ["java", "-jar", "apiurlcomparison-1.0.0.jar", "--config=config.yaml"]
 
 ```bash
 # Run as background service
-nohup java -cp apiurlcomparison-1.0.0.jar \
-  com.raks.apiurlcomparison.ApiUrlComparisonWeb &
+nohup java -jar apiurlcomparison-1.0.0-jar-with-raks.jar --gui &
 
 # Access GUI from any workstation
 # http://server-hostname:4567

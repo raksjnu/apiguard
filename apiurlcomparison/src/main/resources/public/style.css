@@ -44,24 +44,26 @@ body {
     align-items: center;
     padding: 15px 25px;
     margin-bottom: 20px;
-    background-color: var(--primary-color);
+    background-color: #ffffff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-bottom: 3px solid var(--primary-color);
 }
 
 .logo {
-    color: #ffffff;
+    color: var(--primary-color);
     font-weight: 700;
     font-size: 1.8rem;
 }
 
 .highlight {
-    color: #ffffff;
+    color: var(--accent-color);
 }
 
 .subtitle {
-    color: #e0e0e0;
+    color: var(--primary-color);
     font-size: 0.9rem;
+    font-weight: 600;
 }
 
 /* Layout */
@@ -341,6 +343,15 @@ pre {
     font-family: 'Consolas', 'Monaco', monospace;
     white-space: pre;
     /* Preserve formatting and enable horizontal scroll */
+    min-height: 40px; /* Ensure visible even if empty */
+    background-color: #f8f9fa;
+    border: 1px solid #e0e0e0;
+}
+
+pre:empty::before {
+    content: "[Empty Content]";
+    color: #aaa;
+    font-style: italic;
 }
 
 /* Single View for Match */

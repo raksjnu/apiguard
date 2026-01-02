@@ -1,12 +1,19 @@
 #!/bin/bash
 # Start the API Response Comparison Tool GUI
+cd "$(dirname "$0")"
 
 echo "Starting API Response Comparison Tool - GUI..."
 echo "The GUI will open automatically in your default browser."
 echo ""
 
-# Run the GUI web server by explicitly specifying the ApiUrlComparisonWeb class
-java -cp target/apiurlcomparison-1.0.0-jar-with-raks.jar com.raks.apiurlcomparison.ApiUrlComparisonWeb
+# Check if JAR exists, build if not
+if [ ! -f "target/apiurlcomparison-1.0.0-jar-with-raks.jar" ]; then
+    echo "[INFO] JAR not found. Building..."
+    mvn clean package -DskipTests
+fi
+
+echo "[INFO] Launching JAR in GUI mode..."
+java -jar target/apiurlcomparison-1.0.0-jar-with-raks.jar --gui
 
 # Keep the terminal open if there's an error
 if [ $? -ne 0 ]; then
