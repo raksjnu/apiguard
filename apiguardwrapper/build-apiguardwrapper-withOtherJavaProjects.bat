@@ -5,7 +5,8 @@ REM ===================================================================
 REM This script:
 REM 1. Builds and Installs RaksAnalyzer (Dependency)
 REM 2. Builds and Installs MuleGuard (Dependency)
-REM 3. Builds the ApiGuardWrapper Mule application
+REM 3. Builds and Installs ApiDiscovery (Dependency)
+REM 4. Builds the ApiGuardWrapper Mule application
 REM ===================================================================
 
 setlocal
@@ -35,7 +36,7 @@ echo ============================================================
 echo.
 
 REM Step 1: Build & Install RaksAnalyzer
-echo [1/3] Building ^& Installing RaksAnalyzer...
+echo [1/4] Building ^& Installing RaksAnalyzer...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\raksanalyzer" (
     cd /d "%SCRIPT_DIR%..\raksanalyzer"
@@ -60,7 +61,7 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
 
 REM Step 2: Build & Install MuleGuard
 echo.
-echo [2/3] Building ^& Installing MuleGuard...
+echo [2/4] Building ^& Installing MuleGuard...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\muleguard" (
     cd /d "%SCRIPT_DIR%..\muleguard"
@@ -83,9 +84,34 @@ if exist "%SCRIPT_DIR%..\muleguard" (
     exit /b 1
 )
 
-REM Step 3: Build ApiGuardWrapper
+REM Step 3: Build & Install ApiDiscovery
 echo.
-echo [3/3] Building ApiGuardWrapper...
+echo [3/4] Building ^& Installing ApiDiscovery...
+echo ============================================================
+if exist "%SCRIPT_DIR%..\apidiscovery" (
+    cd /d "%SCRIPT_DIR%..\apidiscovery"
+    call mvn clean install -DskipTests
+    
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] ApiDiscovery build failed!
+        pause
+        exit /b 1
+    )
+    
+    REM Copy apidiscovery JAR to apiguardwrapper/lib
+    echo.
+    echo [INFO] Copying apidiscovery JAR to lib folder...
+    cmd /c "if exist "%USERPROFILE%\.m2\repository\com\raks\apidiscovery\1.0.0\apidiscovery-1.0.0.jar" (xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\apidiscovery\1.0.0\apidiscovery-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1 && echo [INFO] apidiscovery-1.0.0.jar copied successfully || echo [WARN] Failed to copy apidiscovery JAR) else (echo [WARN] apidiscovery JAR not found in .m2 repository)"
+) else (
+    echo [ERROR] ApiDiscovery project not found at ..\apidiscovery
+    pause
+    exit /b 1
+)
+
+REM Step 4: Build ApiGuardWrapper
+echo.
+echo [4/4] Building ApiGuardWrapper...
 echo ============================================================
 cd /d "%SCRIPT_DIR%"
 call mvn clean package -DskipTests
