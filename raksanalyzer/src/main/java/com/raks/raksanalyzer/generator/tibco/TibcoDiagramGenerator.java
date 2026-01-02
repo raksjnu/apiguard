@@ -95,14 +95,18 @@ public class TibcoDiagramGenerator {
         }
     }
     public String generateIntegrationPuml(String serviceName, String startProcessPath, File projectRoot, String overrideStarterLabel) {
-            if (startProcessPath.startsWith("/")) startProcessPath = startProcessPath.substring(1);
-            File processFile;
             File maybeAbsolute = new File(startProcessPath);
+            File processFile;
+
             if (maybeAbsolute.isAbsolute() && maybeAbsolute.exists()) {
                 processFile = maybeAbsolute;
             } else {
+                if (startProcessPath.startsWith("/")) {
+                    startProcessPath = startProcessPath.substring(1);
+                }
                 processFile = new File(projectRoot, startProcessPath);
             }
+
             if (!processFile.exists()) {
                 return "@startuml\nrectangle \"File Not Found: " + startProcessPath + "\"\n@enduml";
             }
