@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ApiUrlComparison - User Guide</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .guide-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .guide-section {
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #eee;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        .note {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 6px solid #ffc107;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="guide-container">
+        <header>
+            <h1>ApiUrlComparison Tool Guide</h1>
+            <a href="index.html" class="btn btn-primary" style="float: right; margin-top: -3rem;">Back to Tool</a>
+            <p>A comprehensive guide to comparing API responses and validating migrations.</p>
+        </header>
+
+        <section class="guide-section">
+            <h2>Overview</h2>
+            <p>The <strong>ApiUrlComparison</strong> tool allows you to compare the JSON or XML responses from two different API endpoints (e.g., a Legacy v1 API vs. a Modern v2 API). It highlights differences in structure, content, and data types.</p>
+        </section>
+
+        <section class="guide-section">
+            <h2>Getting Started</h2>
+            <ol>
+                <li><strong>Select Comparison Type:</strong> Choose between REST (JSON) or SOAP (XML).</li>
+                <li><strong>Choose Mode:</strong>
+                    <ul>
+                        <li><code>Live Comparison</code>: Compare two running API endpoints in real-time.</li>
+                        <li><code>Baseline Testing</code>: Compare a live API against a saved reference ("baseline") response.</li>
+                    </ul>
+                </li>
+                <li><strong>Configure Inputs:</strong> Enter the URLs for API 1 (Source) and API 2 (Target).</li>
+            </ol>
+        </section>
+
+        <section class="guide-section">
+            <h2>Using the Mock Server</h2>
+            <div class="note">
+                <strong>Note for CloudHub Users:</strong> The embedded mock servers (ports 9091-9094) act as local simulators. When deployed to CloudHub, these ports are <strong>internal only</strong> and cannot be accessed from the public internet. They are intended for internal testing within the VPC or Worker.
+            </div>
+            <p>You can start the Mock Server to test the tool without live APIs:</p>
+            <ol>
+                <li>Click <strong>Start Server</strong> in the top-left Mock Server panel.</li>
+                <li>The status will change to <span style="color: green; font-weight: bold;">RUNNING</span>.</li>
+                <li>Use the default mock URLs provided in the configuration fields (e.g., <code>http://localhost:9091/api/v1/resource</code>).</li>
+            </ol>
+        </section>
+
+        <section class="guide-section">
+            <h2>Advanced Configuration</h2>
+            <h3>Authentication</h3>
+            <p>The tool supports Basic Auth and OAuth via the <code>config.yaml</code> file. In the Web UI, these settings are pre-loaded from the server configuration.</p>
+            
+            <h3>Test Data (Payloads)</h3>
+            <p>For POST requests, the tool loads request bodies from:</p>
+            <ul>
+                <li><strong>Local Filesystem:</strong> <code>src/test/resources/payloads</code></li>
+                <li><strong>Packaged JAR:</strong> Internal classpath resources (fallback)</li>
+            </ul>
+        </section>
+        
+        <script>
+            // Ensure links work correctly when served via Mule Wrapper
+             document.addEventListener('DOMContentLoaded', () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const session = urlParams.get('session');
+                if (session) {
+                    document.querySelectorAll('a').forEach(link => {
+                        if (!link.href.includes('session=')) {
+                            const separator = link.href.includes('?') ? '&' : '?';
+                            link.href += separator + 'session=' + session;
+                        }
+                    });
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>
