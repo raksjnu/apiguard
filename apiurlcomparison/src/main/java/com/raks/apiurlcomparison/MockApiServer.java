@@ -13,14 +13,31 @@ import java.io.StringReader;
 import static spark.Spark.*;
 public class MockApiServer {
     private static final Logger logger = LoggerFactory.getLogger(MockApiServer.class);
+    private static Service api1;
+    private static Service api2;
+    private static Service soapApi1;
+    private static Service soapApi2;
+    private static boolean isRunning = false;
+
     public static void main(String[] args) {
+        start();
+    }
+
+    public static synchronized void start() {
+        if (isRunning) {
+            logger.info("Mock servers are already running.");
+            return;
+        }
+
         ObjectMapper mapper = new ObjectMapper();
-        Service api1 = Service.ignite();
-        api1.port(8081);
+
+        // API 1 (REST)
+        api1 = Service.ignite();
+        api1.port(9091);
         api1.before((req, res) -> {
             String auth = req.headers("Authorization");
             if (auth != null) {
-                logger.info("Received Authorization header: {}", auth);
+                logger.info("Received Authorization header on API 1: {}", auth);
             } else {
                 logger.warn("No Authorization header received on API 1");
             }
@@ -49,9 +66,11 @@ public class MockApiServer {
             return "{\"status\":\"success\",\"data\":\"This is the other resource\"}";
         });
         api1.awaitInitialization();
-        logger.info("Mock API 1 started on http://localhost:8081");
-        Service api2 = Service.ignite();
-        api2.port(8082);
+        logger.info("Mock API 1 started on http://localhost:9091");
+
+        // API 2 (REST)
+        api2 = Service.ignite();
+        api2.port(9092);
         api2.before((req, res) -> {
             String auth = req.headers("Authorization");
             if (auth != null)
@@ -70,9 +89,11 @@ public class MockApiServer {
             return "{\"status\":\"success\",\"data\":\"This is the other resource from API 2\"}";
         });
         api2.awaitInitialization();
-        logger.info("Mock API 2 started on http://localhost:8082");
-        Service soapApi1 = Service.ignite();
-        soapApi1.port(8083);
+        logger.info("Mock API 2 started on http://localhost:9092");
+
+        // SOAP API 1
+        soapApi1 = Service.ignite();
+        soapApi1.port(9093);
         soapApi1.before((req, res) -> {
             String auth = req.headers("Authorization");
             if (auth != null)
@@ -107,9 +128,11 @@ public class MockApiServer {
             }
         });
         soapApi1.awaitInitialization();
-        logger.info("Mock SOAP API 1 started on http://localhost:8083");
-        Service soapApi2 = Service.ignite();
-        soapApi2.port(8084);
+        logger.info("Mock SOAP API 1 started on http://localhost:9093");
+
+        // SOAP API 2
+        soapApi2 = Service.ignite();
+        soapApi2.port(9094);
         soapApi2.before((req, res) -> {
             String auth = req.headers("Authorization");
             if (auth != null)
@@ -130,9 +153,31 @@ public class MockApiServer {
             }
         });
         soapApi2.awaitInitialization();
-        logger.info("Mock SOAP API 2 started on http://localhost:8084");
-        logger.info("All mock servers are running. Press Ctrl+C to stop.");
+        logger.info("Mock SOAP API 2 started on http://localhost:9094");
+
+        isRunning = true;
+        logger.info("All mock servers are running.");
     }
+
+    public static synchronized void stop() {
+        if (!isRunning) {
+            logger.info("Mock servers are not running.");
+            return;
+        }
+
+        if (api1 != null) { api1.stop(); api1 = null; }
+        if (api2 != null) { api2.stop(); api2 = null; }
+        if (soapApi1 != null) { soapApi1.stop(); soapApi1 = null; }
+        if (soapApi2 != null) { soapApi2.stop(); soapApi2 = null; }
+
+        isRunning = false;
+        logger.info("All mock servers have been stopped.");
+    }
+
+    public static boolean isRunning() {
+        return isRunning;
+    }
+
     private static String extractAccountFromSoap(String soapPayload) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();

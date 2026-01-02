@@ -1,0 +1,17 @@
+{
+  "runId" : "run-001",
+  "serviceName" : "AccountService",
+  "captureDate" : "20251208",
+  "captureTimestamp" : "2025-12-08T17:40:21.8124949-06:00",
+  "testType" : "SOAP",
+  "endpoint" : "http://localhost:8083/ws/AccountService",
+  "operation" : "getAccountDetails",
+  "totalIterations" : 5,
+  "description" : "Pre-upgrade baseline v1.0.0",
+  "tags" : [ "v1.0.0", "pre-upgrade" ],
+  "configUsed" : {
+    "maxIterations" : 100,
+    "iterationController" : "ONE_BY_ONE",
+    "testType" : "SOAP"
+  }
+}

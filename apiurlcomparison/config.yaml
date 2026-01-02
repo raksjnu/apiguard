@@ -6,7 +6,7 @@ testType:  "SOAP" #"SOAP" #"REST" #
 # Configuration block for REST APIs
 rest:
   api1:
-    baseUrl: "http://localhost:8081/api/resource"
+    baseUrl: "http://localhost:9091/api/resource"
     authentication:
       tokenUrl: null
       clientId: rakesh
@@ -18,10 +18,10 @@ rest:
         headers:
           Content-Type: "application/json"
           Accept: "application/json"
-        payloadTemplatePath: "C:\\muleguard-fixed\\tmp\\in\\api1\\payload.json"
+        payloadTemplatePath: "testData/api1/payload.json"
       
   api2:
-    baseUrl: "http://localhost:8082/api/resource"
+    baseUrl: "http://localhost:9092/api/resource"
     authentication:
       tokenUrl: null
       clientId: rakesh
@@ -33,12 +33,12 @@ rest:
         headers:
           Content-Type: "application/json"
           Accept: "application/json"
-        payloadTemplatePath: "C:\\muleguard-fixed\\tmp\\in\\api2\\payload.json"
+        payloadTemplatePath: "testData/api2/payload.json"
       
 # Configuration block for SOAP APIs
 soap:
   api1:
-    baseUrl: "http://localhost:8083/ws/AccountService"
+    baseUrl: "http://localhost:9093/ws/AccountService"
     authentication:
       tokenUrl: null
       clientId: rakesh
@@ -49,10 +49,10 @@ soap:
         headers:
           Content-Type: "text/xml;charset=UTF-8"
           SOAPAction: "getAccountDetails"
-        payloadTemplatePath: "C:\\muleguard-fixed\\tmp\\in\\api1\\payload.xml"
+        payloadTemplatePath: "testData/api1/payload.xml"
       
   api2:
-    baseUrl: "http://localhost:8084/ws/AccountService"
+    baseUrl: "http://localhost:9094/ws/AccountService"
     authentication:
       tokenUrl: null
       clientId:   rakesh
@@ -63,7 +63,7 @@ soap:
         headers:
           Content-Type: "text/xml;charset=UTF-8"
           SOAPAction: "getAccountDetails"
-        payloadTemplatePath: "C:\\muleguard-fixed\\tmp\\in\\api2\\payload.xml"
+        payloadTemplatePath: "testData/api2/payload.xml"
       
 # Set the maximum number of iterations to run, as a safeguard.
 maxIterations: 100

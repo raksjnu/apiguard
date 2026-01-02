@@ -1,0 +1,15 @@
+{
+  "iterationNumber" : 4,
+  "timestamp" : "2026-01-02 11:15:25",
+  "tokensUsed" : {
+    "uuid" : "id1",
+    "account" : "1001"
+  },
+  "endpoint" : "http://localhost:9093/ws/AccountService",
+  "method" : "POST",
+  "soapAction" : "getAccountDetails",
+  "authentication" : {
+    "type" : "basic",
+    "username" : "rakesh"
+  }
+}

@@ -1,0 +1,23 @@
+<?xml version = "1.0" encoding = "UTF-8"?>
+<soapenv:Envelope xmlns:soapenv="schemas.xmlsoap.org"
+                  xmlns:cus="http://xmlns.example.com/unique/default/namespace/1134438639123"
+                  xmlns:tns="http://xmlns.example.com/1628144235184">
+   <soapenv:Header/>
+<soapenv:Body>
+      <!-- Ensure you include this TNS namespace wrapper -->
+      <tns:order xmlns:tns="http://xmlns.example.com/1628144235184">
+         <cus:customer xmlns:cus="http://xmlns.example.com/unique/default/namespace/1134438639123">
+            <cus:customerid>12345</cus:customerid>
+            <cus:firstname>John</cus:firstname>
+            <cus:lastname>Doe</cus:lastname>
+            <cus:age>35</cus:age>
+            <cus:email>john.doe@example.com</cus:email>
+            <cus:city>Anytown</cus:city>
+            <cus:zipcode>12345</cus:zipcode>
+            <cus:transactionstatus>Pending</cus:transactionstatus>
+         </cus:customer>
+      </tns:order>
+   </soapenv:Body>
+</soapenv:Envelope>
+
+

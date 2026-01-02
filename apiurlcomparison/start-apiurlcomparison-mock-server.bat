@@ -16,10 +16,10 @@ REM --------------------------
 echo Starting Mock API Server...
 echo.
 echo Mock servers will start on the following ports:
-echo   - REST API 1: http://localhost:8081
-echo   - REST API 2: http://localhost:8082
-echo   - SOAP API 1: http://localhost:8083
-echo   - SOAP API 2: http://localhost:8084
+echo   - REST API 1: http://localhost:9091
+echo   - REST API 2: http://localhost:9092
+echo   - SOAP API 1: http://localhost:9093
+echo   - SOAP API 2: http://localhost:9094
 echo.
 echo Press Ctrl+C to stop the servers.
 echo.

@@ -25,6 +25,67 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize baseline controls
     initBaselineControls();
 
+    // -- Mock Server Logic --
+    const mockStatusText = document.getElementById('mockStatusText');
+    const toggleMockBtn = document.getElementById('toggleMockBtn');
+
+    if (mockStatusText && toggleMockBtn) {
+        checkMockStatus();
+
+        toggleMockBtn.addEventListener('click', async () => {
+            const isRunning = toggleMockBtn.dataset.running === 'true';
+            toggleMockBtn.disabled = true;
+            toggleMockBtn.textContent = 'Processing...';
+            
+            try {
+                const endpoint = isRunning ? '/api/mock/stop' : '/api/mock/start';
+                const response = await fetch(endpoint, { method: 'POST' });
+                if (response.ok) {
+                    await checkMockStatus();
+                } else {
+                    const err = await response.json();
+                    alert('Error: ' + (err.error || 'Unknown error'));
+                }
+            } catch (e) {
+                console.error('Mock Toggle Error:', e);
+                alert('Failed to toggle mock server');
+            } finally {
+                toggleMockBtn.disabled = false;
+            }
+        });
+    }
+
+    async function checkMockStatus() {
+        try {
+            const response = await fetch('/api/mock/status');
+            const data = await response.json();
+            const isRunning = data.running;
+
+            toggleMockBtn.dataset.running = isRunning;
+            if (isRunning) {
+                mockStatusText.textContent = 'Mock Server: RUNNING';
+                mockStatusText.style.color = '#28a745'; // Green
+                toggleMockBtn.textContent = 'Stop Server';
+                toggleMockBtn.className = 'btn-secondary btn-danger'; // Add red style class if available or rely on css
+                toggleMockBtn.style.backgroundColor = '#dc3545';
+                toggleMockBtn.style.borderColor = '#dc3545';
+                toggleMockBtn.style.color = '#fff';
+            } else {
+                mockStatusText.textContent = 'Mock Server: STOPPED';
+                mockStatusText.style.color = '#dc3545'; // Red
+                toggleMockBtn.textContent = 'Start Server';
+                toggleMockBtn.className = 'btn-secondary'; // Reset style
+                toggleMockBtn.style.backgroundColor = '';
+                toggleMockBtn.style.borderColor = '';
+                toggleMockBtn.style.color = '';
+            }
+        } catch (e) {
+            console.error('Mock Status Error:', e);
+            mockStatusText.textContent = 'Mock Server: UNKNOWN';
+            mockStatusText.style.color = '#666';
+        }
+    }
+
     async function loadDefaults() {
         try {
             const response = await fetch('/api/config');

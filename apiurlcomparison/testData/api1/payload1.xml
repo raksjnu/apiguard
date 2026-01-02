@@ -1,0 +1,19 @@
+<soapenv:Envelope xmlns:soapenv="schemas.xmlsoap.org"
+                  xmlns:cus="http://xmlns.example.com/unique/default/namespace/1134438639123">
+   <soapenv:Header/>
+   <soapenv:Body>
+      <!-- The WSDL specifies the 'customer' element as the input for the 'orderRequest' message -->
+      <cus:customer>
+         <!-- Replace these placeholder values with actual test data -->
+         <cus:customerid>12345</cus:customerid>
+         <cus:firstname>John</cus:firstname>
+         <cus:lastname>Doe</cus:lastname>
+         <cus:age>35</cus:age>
+         <cus:email>john.doe@example.com</cus:email>
+         <cus:city>Anytown</cus:city>
+         <cus:zipcode>12345</cus:zipcode>
+         <!-- This field might be used for the response, but is included as per the schema definition -->
+         <cus:transactionstatus>Pending</cus:transactionstatus>
+      </cus:customer>
+   </soapenv:Body>
+</soapenv:Envelope>

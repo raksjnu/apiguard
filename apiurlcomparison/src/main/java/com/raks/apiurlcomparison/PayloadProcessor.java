@@ -33,12 +33,26 @@ public class PayloadProcessor {
     }
     private String loadTemplate(String templatePath) throws IOException {
         try {
+            // Priority 1: Local Filesystem
             Path path = Paths.get(templatePath);
             if (Files.exists(path) && !Files.isDirectory(path)) {
                 return new String(Files.readAllBytes(path));
-            } else {
-                return templatePath;
             }
+            
+            // Priority 2: Classpath Resource (Packaged in JAR)
+            String resourcePath = templatePath.replace('\\', '/');
+            if (!resourcePath.startsWith("/")) {
+                resourcePath = "/" + resourcePath;
+            }
+            
+            try (java.io.InputStream is = getClass().getResourceAsStream(resourcePath)) {
+                if (is != null) {
+                    return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                }
+            }
+
+            // Fallback: Return raw string if it's not a file path
+            return templatePath;
         } catch (Exception e) {
             return templatePath;
         }

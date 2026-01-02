@@ -75,7 +75,7 @@ mvn compile exec:java -Dexec.mainClass="com.raks.apiurlcomparison.MockApiServer"
 - **Windows**: Double-click `start-mock-server.bat` or run from command prompt
 - **macOS/Linux**: Run `./start-mock-server.sh` from terminal (make executable first: `chmod +x start-mock-server.sh`)
 
-The mock server starts on ports `8081-8084` (REST API 1, REST API 2, SOAP API 1, SOAP API 2) and provides test endpoints for development and validation.
+The mock server starts on ports `9091-9094` (REST API 1, REST API 2, SOAP API 1, SOAP API 2) and provides test endpoints for development and validation.
 
 ## Configuration
 
@@ -91,7 +91,7 @@ maxIterations: 100
 # Configuration block for REST APIs
 rest:
   api1:
-    baseUrl: "http://localhost:8080"
+    baseUrl: "http://localhost:9091"
     authentication:
       clientId: "user1"
       clientSecret: "pass1"
@@ -99,12 +99,12 @@ rest:
       - name: "createResource"
         methods: ["POST"]
         path: "/api/resource"
-        payloadTemplatePath: "C:/path/to/payload.json"
+        payloadTemplatePath: "testData/api1/payload.json"
         headers:
           Content-Type: "application/json"
   
   api2:
-    baseUrl: "http://localhost:8080"
+    baseUrl: "http://localhost:9092"
     authentication:
       clientId: "user2"
       clientSecret: "pass2"
@@ -112,14 +112,14 @@ rest:
       - name: "createResource"
         methods: ["POST"]
         path: "/api/resource"
-        payloadTemplatePath: "C:/path/to/payload.json"
+        payloadTemplatePath: "testData/api2/payload.json"
         headers:
           Content-Type: "application/json"
 
 # Configuration block for SOAP APIs
 soap:
   api1:
-    baseUrl: "http://localhost:8083/ws/AccountService"
+    baseUrl: "http://localhost:9093/ws/AccountService"
     authentication:
       clientId: "user1"
       clientSecret: "pass1"
@@ -129,10 +129,10 @@ soap:
         headers:
           Content-Type: "text/xml;charset=UTF-8"
           SOAPAction: "getAccountDetails"
-        payloadTemplatePath: "C:/path/to/payload.xml"
+        payloadTemplatePath: "testData/api1/payload.xml"
 
   api2:
-    baseUrl: "http://localhost:8084/ws/AccountService"
+    baseUrl: "http://localhost:9094/ws/AccountService"
     authentication:
       clientId: "user2"
       clientSecret: "pass2"
@@ -142,7 +142,7 @@ soap:
         headers:
           Content-Type: "text/xml;charset=UTF-8"
           SOAPAction: "getAccountDetails"
-        payloadTemplatePath: "C:/path/to/payload.xml"
+        payloadTemplatePath: "testData/api2/payload.xml"
 
 # Token definitions for iteration testing
 tokens:

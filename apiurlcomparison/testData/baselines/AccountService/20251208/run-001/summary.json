@@ -1,0 +1,41 @@
+{
+  "totalIterations" : 5,
+  "iterations" : [ {
+    "duration" : 422,
+    "tokens" : { },
+    "iterationNumber" : 1,
+    "statusCode" : 200
+  }, {
+    "duration" : 7,
+    "tokens" : {
+      "uuid" : "id1",
+      "account" : "999"
+    },
+    "iterationNumber" : 2,
+    "statusCode" : 200
+  }, {
+    "duration" : 5,
+    "tokens" : {
+      "uuid" : "id1",
+      "account" : "1000"
+    },
+    "iterationNumber" : 3,
+    "statusCode" : 200
+  }, {
+    "duration" : 6,
+    "tokens" : {
+      "uuid" : "id1",
+      "account" : "1001"
+    },
+    "iterationNumber" : 4,
+    "statusCode" : 200
+  }, {
+    "duration" : 4,
+    "tokens" : {
+      "uuid" : "id2",
+      "account" : "999"
+    },
+    "iterationNumber" : 5,
+    "statusCode" : 200
+  } ]
+}

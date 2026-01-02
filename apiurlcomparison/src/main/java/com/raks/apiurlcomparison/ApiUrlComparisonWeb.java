@@ -14,6 +14,36 @@ public class ApiUrlComparisonWeb {
         port(port);
         staticFiles.location("/public"); 
         logger.info("Starting Web GUI on port {}", port);
+
+        // Mock Server Control Endpoints
+        post("/api/mock/start", (req, res) -> {
+            res.type("application/json");
+            try {
+                MockApiServer.start();
+                return "{\"status\": \"started\"}";
+            } catch (Exception e) {
+                logger.error("Failed to start mock server", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/mock/stop", (req, res) -> {
+            res.type("application/json");
+            try {
+                MockApiServer.stop();
+                return "{\"status\": \"stopped\"}";
+            } catch (Exception e) {
+                logger.error("Failed to stop mock server", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        get("/api/mock/status", (req, res) -> {
+            res.type("application/json");
+            return "{\"running\": " + MockApiServer.isRunning() + "}";
+        });
         post("/api/compare", (req, res) -> {
             res.type("application/json");
             try {
