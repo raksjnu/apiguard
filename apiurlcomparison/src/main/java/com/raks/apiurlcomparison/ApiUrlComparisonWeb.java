@@ -87,7 +87,9 @@ public class ApiUrlComparisonWeb {
 
         get("/api/mock/status", (req, res) -> {
             res.type("application/json");
-            return "{\"running\": " + MockApiServer.isRunning() + "}";
+            // Match Mule Wrapper format: { "status": "running" } or { "status": "stopped" }
+            String status = MockApiServer.isRunning() ? "running" : "stopped";
+            return "{\"status\": \"" + status + "\"}";
         });
         post("/api/compare", (req, res) -> {
             res.type("application/json");
@@ -108,6 +110,8 @@ public class ApiUrlComparisonWeb {
             res.type("application/json");
             try {
                 Config config = loadConfig();
+                // Resolve payload file paths to content (parity with Wrapper)
+                resolvePayloads(config);
                 ObjectMapper jsonMapper = new ObjectMapper();
                 return jsonMapper.writeValueAsString(config);
             } catch (Exception e) {
@@ -120,7 +124,8 @@ public class ApiUrlComparisonWeb {
             res.type("application/json");
             try {
                 ObjectMapper mapper = new ObjectMapper();
-                String storageDir = getStorageDir();
+                String queryWorkDir = req.queryParams("workDir");
+                String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
                 List<String> services = storageService.listServices();
                 return mapper.writeValueAsString(services);
@@ -135,7 +140,8 @@ public class ApiUrlComparisonWeb {
             try {
                 String serviceName = req.params(":serviceName");
                 ObjectMapper mapper = new ObjectMapper();
-                String storageDir = getStorageDir();
+                String queryWorkDir = req.queryParams("workDir");
+                String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
                 List<String> dates = storageService.listDates(serviceName);
                 return mapper.writeValueAsString(dates);
@@ -151,20 +157,11 @@ public class ApiUrlComparisonWeb {
                 String serviceName = req.params(":serviceName");
                 String date = req.params(":date");
                 ObjectMapper mapper = new ObjectMapper();
-                String storageDir = getStorageDir();
+                String queryWorkDir = req.queryParams("workDir");
+                String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
                 List<BaselineStorageService.RunInfo> runs = storageService.listRuns(serviceName, date);
-                List<java.util.Map<String, Object>> runList = new java.util.ArrayList<>();
-                for (BaselineStorageService.RunInfo run : runs) {
-                    java.util.Map<String, Object> runMap = new java.util.HashMap<>();
-                    runMap.put("runId", run.getRunId());
-                    runMap.put("description", run.getDescription());
-                    runMap.put("tags", run.getTags());
-                    runMap.put("totalIterations", run.getTotalIterations());
-                    runMap.put("timestamp", run.getTimestamp());
-                    runList.add(runMap);
-                }
-                return mapper.writeValueAsString(runList);
+                return mapper.writeValueAsString(runs);
             } catch (Exception e) {
                 logger.error("Error fetching baseline runs", e);
                 res.status(500);
@@ -192,5 +189,34 @@ public class ApiUrlComparisonWeb {
             }
         }
         throw new RuntimeException("No available ports found starting from " + startPort);
+    }
+    
+    private static void resolvePayloads(Config config) {
+        if (config.getRestApis() != null) {
+            resolveApiPayloads(config.getRestApis().get("api1"));
+            resolveApiPayloads(config.getRestApis().get("api2"));
+        }
+        if (config.getSoapApis() != null) {
+            resolveApiPayloads(config.getSoapApis().get("api1"));
+            resolveApiPayloads(config.getSoapApis().get("api2"));
+        }
+    }
+
+    private static void resolveApiPayloads(ApiConfig api) {
+        if (api == null || api.getOperations() == null) return;
+        for (Operation op : api.getOperations()) {
+            if (op.getPayloadTemplatePath() != null && !op.getPayloadTemplatePath().isEmpty()) {
+                try {
+                    java.nio.file.Path path = java.nio.file.Paths.get(op.getPayloadTemplatePath());
+                    // Check if file exists relative to CWD or absolute
+                    if (java.nio.file.Files.exists(path)) {
+                        String content = new String(java.nio.file.Files.readAllBytes(path), java.nio.charset.StandardCharsets.UTF_8);
+                        op.setPayloadTemplatePath(content);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to resolve payload path: {}", op.getPayloadTemplatePath());
+                }
+            }
+        }
     }
 }

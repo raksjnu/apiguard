@@ -38,7 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
             toggleMockBtn.textContent = 'Processing...';
             
             try {
-                const endpoint = isRunning ? '/api/mock/stop' : '/api/mock/start';
+                const endpoint = isRunning ? 'api/mock/stop' : 'api/mock/start';
                 const response = await fetch(endpoint, { method: 'POST' });
                 if (response.ok) {
                     await checkMockStatus();
@@ -57,38 +57,47 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function checkMockStatus() {
         try {
-            const response = await fetch('/api/mock/status');
+            const response = await fetch('api/mock/status');
             const data = await response.json();
-            const isRunning = data.running;
+            const isRunning = data.status === 'running';
 
             toggleMockBtn.dataset.running = isRunning;
             if (isRunning) {
                 mockStatusText.textContent = 'Mock Server: RUNNING';
                 mockStatusText.style.color = '#28a745'; // Green
                 toggleMockBtn.textContent = 'Stop Server';
-                toggleMockBtn.className = 'btn-secondary btn-danger'; // Add red style class if available or rely on css
-                toggleMockBtn.style.backgroundColor = '#dc3545';
-                toggleMockBtn.style.borderColor = '#dc3545';
+                toggleMockBtn.className = 'btn-secondary';
+                toggleMockBtn.style.backgroundColor = '#28a745'; // Green button
+                toggleMockBtn.style.borderColor = '#28a745';
                 toggleMockBtn.style.color = '#fff';
             } else {
                 mockStatusText.textContent = 'Mock Server: STOPPED';
                 mockStatusText.style.color = '#dc3545'; // Red
                 toggleMockBtn.textContent = 'Start Server';
-                toggleMockBtn.className = 'btn-secondary'; // Reset style
-                toggleMockBtn.style.backgroundColor = '';
-                toggleMockBtn.style.borderColor = '';
-                toggleMockBtn.style.color = '';
+                toggleMockBtn.className = 'btn-secondary';
+                toggleMockBtn.style.backgroundColor = '#dc3545'; // Red button
+                toggleMockBtn.style.borderColor = '#dc3545';
+                toggleMockBtn.style.color = '#fff';
             }
+            
+            // Enable the button after status is loaded
+            toggleMockBtn.disabled = false;
         } catch (e) {
             console.error('Mock Status Error:', e);
             mockStatusText.textContent = 'Mock Server: UNKNOWN';
             mockStatusText.style.color = '#666';
+            toggleMockBtn.textContent = 'Check Status'; // Reset button text so it doesn't get stuck
+             // Reset style to default
+            toggleMockBtn.className = 'btn-secondary';
+            toggleMockBtn.style.backgroundColor = '';
+            toggleMockBtn.style.borderColor = '';
+            toggleMockBtn.style.color = '';
         }
     }
 
     async function loadDefaults() {
         try {
-            const response = await fetch('/api/config');
+            const response = await fetch('api/config');
             if (!response.ok) return; // Silent fail if no config api or file
             const config = await response.json();
             if (!config) return;
@@ -193,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 await handleBaselineComparison();
             } else {
                 // Handle normal LIVE comparison
-                const response = await fetch('/api/compare', {
+                const response = await fetch('api/compare', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
@@ -233,14 +242,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Build config for baseline capture
             const config = buildConfig();
             config.comparisonMode = 'BASELINE';
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
             config.baseline = {
                 operation: 'CAPTURE',
                 serviceName: serviceName,
                 description: description,
-                tags: tags
+                tags: tags,
+                storageDir: workDir || null
             };
 
-            const response = await fetch('/api/compare', {
+            const response = await fetch('api/compare', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
@@ -265,14 +276,16 @@ document.addEventListener('DOMContentLoaded', () => {
             // Build config for baseline comparison
             const config = buildConfig();
             config.comparisonMode = 'BASELINE';
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
             config.baseline = {
                 operation: 'COMPARE',
                 serviceName: serviceName,
                 compareDate: date,
-                compareRunId: runId
+                compareRunId: runId,
+                storageDir: workDir || null
             };
 
-            const response = await fetch('/api/compare', {
+            const response = await fetch('api/compare', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(config)
@@ -718,17 +731,28 @@ document.addEventListener('DOMContentLoaded', () => {
         comparisonMode.addEventListener('change', function () {
             const url2Group = document.getElementById('url2Group');
             const url1Label = document.querySelector('#urlRow .input-group:first-child label');
+            const tokensContainer = document.getElementById('tokensContainer');
 
             if (this.value === 'BASELINE') {
                 baselineControls.style.display = 'block';
                 if (url2Group) url2Group.style.display = 'none';
                 if (url1Label) url1Label.textContent = 'API Endpoint URL';
+                // Disable tokens in baseline mode (uses stored payloads)
+                if (tokensContainer) {
+                    tokensContainer.style.opacity = '0.5';
+                    tokensContainer.querySelectorAll('input, textarea').forEach(el => el.disabled = true);
+                }
                 loadBaselineServices();
                 updateButtonLabel();
             } else {
                 baselineControls.style.display = 'none';
                 if (url2Group) url2Group.style.display = 'block';
                 if (url1Label) url1Label.textContent = 'Endpoint 1 URL';
+                // Re-enable tokens in live mode
+                if (tokensContainer) {
+                    tokensContainer.style.opacity = '1';
+                    tokensContainer.querySelectorAll('input, textarea').forEach(el => el.disabled = false);
+                }
                 compareBtn.innerText = 'Run Comparison';
             }
         });
@@ -779,7 +803,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load available baseline services
     async function loadBaselineServices() {
         try {
-            const response = await fetch('/api/baselines/services');
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+            const url = workDir ? `api/baselines/services?workDir=${encodeURIComponent(workDir)}` : 'api/baselines/services';
+            const response = await fetch(url);
             const services = await response.json();
 
             const select = document.getElementById('baselineServiceSelect');
@@ -803,7 +829,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load dates for selected service
     async function loadBaselineDates(serviceName) {
         try {
-            const response = await fetch(`/api/baselines/dates/${serviceName}`);
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+            const url = workDir 
+                ? `api/baselines/dates/${serviceName}?workDir=${encodeURIComponent(workDir)}` 
+                : `api/baselines/dates/${serviceName}`;
+            const response = await fetch(url);
             const dates = await response.json();
 
             const select = document.getElementById('baselineDateSelect');
@@ -819,6 +849,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             select.disabled = false;
+            
+            // Auto-select latest (last) date
+            if (dates.length > 0) {
+                const latestDate = dates[dates.length - 1];
+                select.value = latestDate;
+                loadBaselineRuns(serviceName, latestDate);
+            }
         } catch (error) {
             console.error('Error loading baseline dates:', error);
         }
@@ -827,7 +864,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load runs for selected service and date
     async function loadBaselineRuns(serviceName, date) {
         try {
-            const response = await fetch(`/api/baselines/runs/${serviceName}/${date}`);
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+            const url = workDir 
+                ? `api/baselines/runs/${serviceName}/${date}?workDir=${encodeURIComponent(workDir)}` 
+                : `api/baselines/runs/${serviceName}/${date}`;
+            const response = await fetch(url);
             const runs = await response.json();
 
             const select = document.getElementById('baselineRunSelect');
@@ -844,6 +885,11 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             select.disabled = false;
+            
+            // Auto-select latest (last) run
+            if (runs.length > 0) {
+                select.value = runs[runs.length - 1].runId;
+            }
         } catch (error) {
             console.error('Error loading baseline runs:', error);
         }

@@ -105,20 +105,18 @@ public class MockApiServer {
             if ("\"getAccountDetails\"".equals(soapAction) || "getAccountDetails".equals(soapAction)) {
                 String account = extractAccountFromSoap(req.body());
                 if ("999".equals(account)) {
-                    return "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
+                    return "<?xml version='1.0' encoding='UTF-8'?>\n<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
                             + "<ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\">"
-                            + "<return><status>SUCCESS</status><transactionId>soap-api1-specific-id-for-999</transactionId>"
-                            + "<timestamp>2025-12-01T11:00:00Z</timestamp></return>"
+                            + "<return><status>SUCCESS</status><transactionId>soap-api1-specific-id-for-999</transactionId></return>"
                             + "</ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>";
                 } else {
-                    return "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
+                    return "<?xml version='1.0' encoding='UTF-8'?>\n<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
                             + "<ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\">"
-                            + "<return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId>"
-                            + "<timestamp>2025-12-01T10:00:00Z</timestamp></return>"
+                            + "<return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId></return>"
                             + "</ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>";
                 }
             } else if ("\"/Service/orderService.serviceagent/createOrderEndpoint1/Operation\"".equals(soapAction)) {
-                return "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
+                return "<?xml version='1.0' encoding='UTF-8'?>\n<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
                         + "<ns2:createOrderResponse xmlns:ns2=\"http://service.ws.myorg.com/\">"
                         + "<return><status>ORDER_CREATED</status><orderId>order-9876</orderId></return>"
                         + "</ns2:createOrderResponse></soap:Body></soap:Envelope>";
@@ -142,10 +140,9 @@ public class MockApiServer {
             String soapAction = req.headers("SOAPAction");
             res.type("text/xml");
             if ("\"getAccountDetails\"".equals(soapAction) || "getAccountDetails".equals(soapAction)) {
-                return "<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
+                return "<?xml version='1.0' encoding='UTF-8'?>\n<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
                         + "<ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\">"
-                        + "<return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId>"
-                        + "<timestamp>2025-12-01T10:00:00Z</timestamp></return>"
+                        + "<return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId></return>"
                         + "</ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>";
             } else {
                 res.status(400);

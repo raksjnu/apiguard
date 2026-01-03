@@ -15,7 +15,11 @@ public class ComparisonEngine {
         ApiCallResult api1Result = result.getApi1();
         ApiCallResult api2Result = result.getApi2();
         
+        logger.info("=== COMPARISON ENGINE START ===");
+        logger.info("API Type: {}", apiType);
+        
         if (api1Result == null || api2Result == null) {
+            logger.warn("One or both API results are null - API1: {}, API2: {}", api1Result, api2Result);
             result.setStatus(ComparisonResult.Status.ERROR);
             result.setErrorMessage("One or both API calls failed, cannot compare.");
             return;
@@ -25,20 +29,23 @@ public class ComparisonEngine {
         int status1 = api1Result.getStatusCode();
         int status2 = api2Result.getStatusCode();
         
-        logger.info("Comparison status codes - API1: {}, API2: {}", status1, status2);
-        
+        // CRITICAL: If either endpoint returns HTTP error, this is an ERROR not a comparison
         if (status1 >= 400 || status2 >= 400) {
             result.setStatus(ComparisonResult.Status.ERROR);
-            String errorMsg = "HTTP Error detected - ";
+            StringBuilder errorMsg = new StringBuilder("HTTP ERROR DETECTED: ");
             if (status1 >= 400 && status2 >= 400) {
-                errorMsg += "Both endpoints returned errors (API1: " + status1 + ", API2: " + status2 + ")";
+                errorMsg.append("Both endpoints failed - API1: HTTP ").append(status1)
+                        .append(", API2: HTTP ").append(status2);
             } else if (status1 >= 400) {
-                errorMsg += "API1 returned error " + status1;
+                errorMsg.append("API1 failed with HTTP ").append(status1);
             } else {
-                errorMsg += "API2 returned error " + status2;
+                errorMsg.append("API2 failed with HTTP ").append(status2);
             }
-            result.setErrorMessage(errorMsg);
-            logger.info("Setting result to ERROR: {}", errorMsg);
+            result.setErrorMessage(errorMsg.toString());
+            // Add to differences list so it's visible in UI
+            List<String> diffs = new ArrayList<>();
+            diffs.add(errorMsg.toString());
+            result.setDifferences(diffs);
             return;
         }
         
@@ -54,7 +61,10 @@ public class ComparisonEngine {
             List<String> differences = new ArrayList<>();
             if ("SOAP".equalsIgnoreCase(apiType)) {
                 try {
-                    Diff xmlDiff = DiffBuilder.compare(response1).withTest(response2).ignoreComments().build();
+                    Diff xmlDiff = DiffBuilder.compare(response1).withTest(response2)
+                            .ignoreComments()
+                            .ignoreWhitespace()
+                            .build();
                     isMatch = !xmlDiff.hasDifferences();
                     if (!isMatch) {
                         for (org.xmlunit.diff.Difference diff : xmlDiff.getDifferences()) {

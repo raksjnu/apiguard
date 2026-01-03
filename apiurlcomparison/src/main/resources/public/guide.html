@@ -186,28 +186,39 @@
         </section>
 
         <section class="guide-section" id="baseline-testing">
-            <h2>4. Baseline Testing</h2>
-            <p>Baseline testing is ideal for regression testing or upgrade validation (e.g., v1 -> v2).</p>
+            <h2>4. Baseline Testing & Production Verification</h2>
+            <p>Baseline testing allows you to save the state of an API ("Capture Baseline") and compare future results against it ("Compare with Baseline"). This is critical for regression testing and verifying production deployments.</p>
             
-            <h3>Workflow</h3>
+            <div class="tip">
+                <strong>New Feature: Working Directory</strong><br>
+                You can now specify a custom <strong>Working Directory</strong> in the UI. This determines where baseline files are saved and loaded from. Use this to organize baselines by project or environment (e.g., <code>C:\baselines\prod_release_v2</code>).
+            </div>
+
+            <h3>Workflow: Production Deployment Verification</h3>
+            <p>Use this workflow to ensure a production deployment introduces no regressions:</p>
+            
+            <h4>Phase 1: Pre-Deployment (Capture "Golden" State)</h4>
             <ol>
-                <li><strong>Capture Baseline:</strong>
-                    <ul>
-                        <li>Set Mode to <strong>Baseline Testing</strong>.</li>
-                        <li>Select Operation: <strong>Capture Baseline</strong>.</li>
-                        <li>Provide a Service Name (e.g., "AccountService") and Description.</li>
-                        <li>Run the test. Responses are saved locally.</li>
-                    </ul>
-                </li>
-                <li><strong>Compare with Baseline:</strong>
-                    <ul>
-                        <li>Set Mode to <strong>Baseline Testing</strong>.</li>
-                        <li>Select Operation: <strong>Compare with Baseline</strong>.</li>
-                        <li>Select the Service, Date, and specific Run ID of the baseline you captured.</li>
-                        <li>Run the test against your target API. It will compare current responses to the saved baseline.</li>
-                    </ul>
-                </li>
+                <li>Set <strong>Mode</strong> to <code>Baseline Testing</code>.</li>
+                <li>Set <strong>Operation</strong> to <code>Capture Baseline</code>.</li>
+                <li>Enter the <strong>Production URL</strong> as API 1.</li>
+                <li>Enter a <strong>Service Name</strong> (e.g., <code>AccountService</code>).</li>
+                <li>Add a description like "Prod Pre-Deployment v1.0".</li>
+                <li>(Optional) Set a custom <strong>Working Directory</strong>.</li>
+                <li>Click <strong>Run Comparison</strong>. The tool will execute requests against Prod and save the responses locally.</li>
             </ol>
+
+            <h4>Phase 2: Post-Deployment (Verify Changes)</h4>
+            <ol>
+                <li>After deployment, keep <strong>Mode</strong> as <code>Baseline Testing</code>.</li>
+                <li>Set <strong>Operation</strong> to <code>Compare with Baseline</code>.</li>
+                <li>Ensure the <strong>Working Directory</strong> is the same as Phase 1.</li>
+                <li>Select the <strong>Service Name</strong>, <strong>Date</strong>, and <strong>Run ID</strong> captured in Phase 1.</li>
+                <li>Enter the <strong>Production URL</strong> (now v2.0) as API 2.</li>
+                <li>Click <strong>Run Comparison</strong>.</li>
+            </ol>
+            
+            <p><strong>Result:</strong> The tool compares the <em>saved</em> pre-deployment responses (API 1 from baseline) against the <em>live</em> post-deployment responses (API 2). Any mismatch indicates a change in behavior.</p>
         </section>
 
         <section class="guide-section" id="mock-server">

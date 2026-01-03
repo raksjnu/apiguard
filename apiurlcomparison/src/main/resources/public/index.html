@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>API Response Comparison Tool - APITestingGuard</title>
+    <title>ApiUrlComparison - APITestingGuard</title>
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts for premium typography -->
     <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -16,7 +16,7 @@
         <header class="header">
             <h1 class="logo">
                 <img src="logo.svg" alt="RAKS Logo" style="height: 40px; vertical-align: middle; margin-right: 15px;">
-                API Response Comparison Tool - <span class="highlight">APITestingGuard</span>
+                ApiUrlComparison - <span class="highlight">APITestingGuard</span>
             </h1>
             
             <a href="guide.html" target="_blank" class="btn-primary" style="text-decoration: none; display: flex; align-items: center; gap: 8px; margin-bottom: 0; width: auto; padding: 10px 20px; font-size: 16px;">
@@ -34,13 +34,23 @@
                 <section class="card mock-panel" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #27173e; flex-direction: row; justify-content: space-between; align-items: center; flex: 0 0 auto;">
                     <div style="font-weight: 600; color: #27173e;">Mock Server Control</div>
                     <div class="mock-control" style="display: flex; align-items: center; gap: 15px;">
-                        <span id="mockStatusText" style="font-size: 0.9rem; font-weight: 600; color: #666;">Status: ...</span>
-                        <button id="toggleMockBtn" type="button" class="btn-secondary" style="margin-bottom: 0; padding: 6px 14px; border-radius: 20px;">...</button>
+                        <span id="mockStatusText" style="font-size: 0.9rem; font-weight: 600; color: #666;">Status: Initializing...</span>
+                        <button id="toggleMockBtn" type="button" class="btn-secondary" style="margin-bottom: 0; padding: 6px 14px; border-radius: 20px;" disabled>Please Wait...</button>
+                    </div>
+                </section>
+
+                <!-- Working Directory Panel -->
+                <section class="card mock-panel" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #27173e; flex: 0 0 auto;">
+                    <div style="font-weight: 600; color: #27173e; margin-bottom: 10px;">Working Directory</div>
+                    <div style="display: flex; flex-direction: column; gap: 8px;">
+                        <input type="text" id="workingDirectory" placeholder="${app.home}/work/apiurlcomparison" 
+                               style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
+                        <small style="color: #666; font-size: 0.8rem;">Leave empty to use default location. Specify custom path to browse older runs from different locations.</small>
                     </div>
                 </section>
 
                 <!-- Configuration Panel -->
-                <section class="card config-panel" id="configPanel" style="flex: 1; min-height: 0;">
+                <section class="card config-panel" id="configPanel" style="flex: 1; min-height: 0; border-left: 5px solid #27173e;">
                     <div class="card-header">
                         <h2>Configuration</h2>
                         <div class="toggle-group">

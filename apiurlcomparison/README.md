@@ -66,6 +66,26 @@ The GUI will automatically open in your default browser at `http://localhost:456
 - Timestamp with timezone in execution summary
 - Full-width responsive layout
 
+## Production Verification Workflow
+
+This tool is designed to support checking production deployments for regressions using the **Baseline Testing** feature.
+
+### 1. Pre-Deployment (Capture Baseline)
+Capture the state of your current production environment before deploying changes.
+1. Select **Baseline Testing** mode > **Capture Baseline**.
+2. Point API 1 to your **current** production URL.
+3. Set a **Service Name** (e.g., `OrderService`) and Description (`Pre-Deploy v1.0`).
+4. (Optional) Set a custom **Working Directory** to store these baselines (e.g., `C:/baselines/release_2023_05`).
+5. Run the comparison. The tool saves 500 successful checks as "golden" records.
+
+### 2. Post-Deployment (Verify)
+After deploying your new version, verify it matches the previous state (or only changes where expected).
+1. Select **Baseline Testing** mode > **Compare with Baseline**.
+2. Select the **Service**, **Date**, and **Run ID** you just captured.
+3. Point API 2 to your **new** production URL.
+4. Run the comparison.
+5. The tool compares `Saved Baseline` vs `Live API 2`. Any mismatches will be highlighted.
+
 ### Option 3: Mock API Server (For Testing)
 
 Run the built-in mock server to simulate API responses:

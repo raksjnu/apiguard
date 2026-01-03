@@ -250,8 +250,7 @@ output application/json
         </os:retrieve>
         <choice>
             <when expression="#[!vars.mockRunning]">
-                <set-payload value='{"error": "Mock server is stopped"}' mimeType="application/json"/>
-                <set-variable variableName="httpStatus" value="503"/>
+                <raise-error type="APP:SERVICE_UNAVAILABLE" description="Mock server is stopped"/>
             </when>
             <otherwise>
                 <set-variable variableName="subPath" value="#[attributes.relativePath replace '/apiurlcomparison/mock/api1/' with '']"/>
@@ -298,8 +297,7 @@ output application/json
         </os:retrieve>
         <choice>
             <when expression="#[!vars.mockRunning]">
-                <set-payload value='{"error": "Mock server is stopped"}' mimeType="application/json"/>
-                <set-variable variableName="httpStatus" value="503"/>
+                <raise-error type="APP:SERVICE_UNAVAILABLE" description="Mock server is stopped"/>
             </when>
             <otherwise>
                  <set-variable variableName="subPath" value="#[attributes.relativePath replace '/apiurlcomparison/mock/api2/' with '']"/>
@@ -332,9 +330,8 @@ output application/json
             <os:default-value><![CDATA[#[false]]]></os:default-value>
         </os:retrieve>
         <choice>
-             <when expression="#[!vars.mockRunning]">
-                <set-payload value='Mock server is stopped' mimeType="text/plain"/>
-                <set-variable variableName="httpStatus" value="503"/>
+            <when expression="#[!vars.mockRunning]">
+                <raise-error type="APP:SERVICE_UNAVAILABLE" description="Mock server is stopped"/>
             </when>
             <otherwise>
                 <set-variable variableName="soapAction" value="#[attributes.headers['soapaction'] default '']"/>
@@ -411,9 +408,8 @@ output application/json
             <os:default-value><![CDATA[#[false]]]></os:default-value>
         </os:retrieve>
         <choice>
-             <when expression="#[!vars.mockRunning]">
-                <set-payload value='Mock server is stopped' mimeType="text/plain"/>
-                <set-variable variableName="httpStatus" value="503"/>
+            <when expression="#[!vars.mockRunning]">
+                <raise-error type="APP:SERVICE_UNAVAILABLE" description="Mock server is stopped"/>
             </when>
             <otherwise>
                 <set-variable variableName="soapAction" value="#[attributes.headers['soapaction'] default '']"/>

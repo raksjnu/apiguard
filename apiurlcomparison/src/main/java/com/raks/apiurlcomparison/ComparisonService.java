@@ -145,17 +145,24 @@ public class ComparisonService {
                     }
                 }
                 api2CallResult.setRequestPayload(payload2);
+                
                 long start1 = System.currentTimeMillis();
                 com.raks.apiurlcomparison.http.HttpResponse httpResponse1 = client1.sendRequest(url1, method1, op1.getHeaders(), payload1);
                 api1CallResult.setDuration(System.currentTimeMillis() - start1);
                 api1CallResult.setStatusCode(httpResponse1.getStatusCode());
                 api1CallResult.setResponsePayload(httpResponse1.getBody());
+                
                 long start2 = System.currentTimeMillis();
                 com.raks.apiurlcomparison.http.HttpResponse httpResponse2 = client2.sendRequest(url2, method2, op2.getHeaders(), payload2);
                 api2CallResult.setDuration(System.currentTimeMillis() - start2);
                 api2CallResult.setStatusCode(httpResponse2.getStatusCode());
                 api2CallResult.setResponsePayload(httpResponse2.getBody());
+                
+                logger.info("Comparison - API1 status: {}, API2 status: {}", 
+                    httpResponse1.getStatusCode(), httpResponse2.getStatusCode());
+                
                 ComparisonEngine.compare(result, apiType);
+                
             } catch (Exception e) {
                 logger.error("Error during operation '{}' comparison: {}", op1.getName(), e.getMessage());
                 result.setErrorMessage("Operation failed: " + e.getMessage());
