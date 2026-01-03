@@ -464,6 +464,29 @@ java -jar target/apiurlcomparison-1.0.0.jar
 # 3. View results in the Execution Dashboard
 ```
 
+## CloudHub vs Standalone Deployment
+Choose the deployment model that best fits your testing needs:
+
+### 1. Standalone Java Tool (Local)
+**Best for:**
+- **Local Development:** Testing APIs running on localhost or accessible from your machine.
+- **Baseline Management:** Creating and storing baseline files persistently on your local disk (e.g., `C:\Baselines`).
+- **File Access:** Fully supports interacting with your local filesystem (Windows/Mac/Linux).
+
+**How to Run:**
+`java -jar apiurlcomparison-1.0.0.jar`
+
+### 2. CloudHub Deployment (Mule Application)
+**Best for:**
+- **Integration Testing:** Running comparisons from within the MuleSoft environment.
+- **Shared Access:** Exposing the tool to the team via a central URL.
+- **Ephemeral Testing:** Quick validation runs where persistent baselines are not required or are managed externally.
+
+**Limitations:**
+- **No Local File Access:** The CloudHub application runs on a remote server. It **cannot access** files on your local computer (e.g., `C:\users`). Do not try to save baselines to local paths.
+- **Ephemeral Storage:** Files saved to the CloudHub worker (e.g., `/tmp`) will be lost if the application restarts.
+
+
 ## Troubleshooting
 
 ### Port Already in Use (GUI)

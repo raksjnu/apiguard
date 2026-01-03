@@ -194,6 +194,13 @@
                 You can now specify a custom <strong>Working Directory</strong> in the UI. This determines where baseline files are saved and loaded from. Use this to organize baselines by project or environment (e.g., <code>C:\baselines\prod_release_v2</code>).
             </div>
 
+            <div class="tip" style="background-color: #fff3cd; color: #856404; border-left: 5px solid #ffeeba;">
+                <strong>CloudHub Limitation:</strong><br>
+                When deployed to CloudHub, this application <strong>cannot access your local computer's filesystem</strong> (e.g., <code>C:\Users</code> or <code>/Users</code>). Baselines saved during a CloudHub session are stored in the server's temporary storage and will be lost if the application restarts.
+                <br><br>
+                <strong>Recommendation:</strong> To create and manage persistent baselines on your local disk, use the <strong>Standalone Java Tool</strong> running locally on your machine.
+            </div>
+
             <h3>Workflow: Production Deployment Verification</h3>
             <p>Use this workflow to ensure a production deployment introduces no regressions:</p>
             
