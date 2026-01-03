@@ -36,7 +36,7 @@ echo ============================================================
 echo.
 
 REM Step 1: Build & Install RaksAnalyzer
-echo [1/4] Building ^& Installing RaksAnalyzer...
+echo [1/5] Building ^& Installing RaksAnalyzer...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\raksanalyzer" (
     cd /d "%SCRIPT_DIR%..\raksanalyzer"
@@ -61,7 +61,7 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
 
 REM Step 2: Build & Install MuleGuard
 echo.
-echo [2/4] Building ^& Installing MuleGuard...
+echo [2/5] Building ^& Installing MuleGuard...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\muleguard" (
     cd /d "%SCRIPT_DIR%..\muleguard"
@@ -86,7 +86,7 @@ if exist "%SCRIPT_DIR%..\muleguard" (
 
 REM Step 3: Build & Install ApiDiscovery
 echo.
-echo [3/4] Building ^& Installing ApiDiscovery...
+echo [3/5] Building ^& Installing ApiDiscovery...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\apidiscovery" (
     cd /d "%SCRIPT_DIR%..\apidiscovery"
@@ -109,9 +109,34 @@ if exist "%SCRIPT_DIR%..\apidiscovery" (
     exit /b 1
 )
 
-REM Step 4: Build ApiGuardWrapper
+REM Step 4: Build & Install ApiUrlComparison
 echo.
-echo [4/4] Building ApiGuardWrapper...
+echo [4/5] Building ^& Installing ApiUrlComparison...
+echo ============================================================
+if exist "%SCRIPT_DIR%..\apiurlcomparison" (
+    cd /d "%SCRIPT_DIR%..\apiurlcomparison"
+    call mvn clean install -DskipTests
+    
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] ApiUrlComparison build failed!
+        pause
+        exit /b 1
+    )
+    
+    REM Copy apiurlcomparison JAR to apiguardwrapper/lib
+    echo.
+    echo [INFO] Copying apiurlcomparison JAR to lib folder...
+    cmd /c "if exist "%SCRIPT_DIR%..\apiurlcomparison\target\apiurlcomparison-1.0.0-jar-with-raks.jar" (copy /Y "%SCRIPT_DIR%..\apiurlcomparison\target\apiurlcomparison-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\apiurlcomparison-1.0.0.jar" >nul && echo [INFO] apiurlcomparison JAR copied successfully || echo [WARN] Failed to copy apiurlcomparison JAR) else (echo [WARN] apiurlcomparison JAR not found in target)"
+) else (
+    echo [ERROR] ApiUrlComparison project not found at ..\apiurlcomparison
+    pause
+    exit /b 1
+)
+
+REM Step 5: Build ApiGuardWrapper
+echo.
+echo [5/5] Building ApiGuardWrapper...
 echo ============================================================
 cd /d "%SCRIPT_DIR%"
 call mvn clean package -DskipTests

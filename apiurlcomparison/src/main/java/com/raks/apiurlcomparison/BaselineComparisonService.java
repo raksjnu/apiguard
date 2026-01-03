@@ -153,10 +153,10 @@ public class BaselineComparisonService {
         apiCallResult.setRequestHeaders(operation.getHeaders());
         apiCallResult.setRequestPayload(payload);
         long start = System.currentTimeMillis();
-        String response = client.sendRequest(url, method, operation.getHeaders(), payload);
+        com.raks.apiurlcomparison.http.HttpResponse httpResponse = client.sendRequest(url, method, operation.getHeaders(), payload);
         apiCallResult.setDuration(System.currentTimeMillis() - start);
-        apiCallResult.setResponsePayload(response);
-        apiCallResult.setStatusCode(200);
+        apiCallResult.setStatusCode(httpResponse.getStatusCode());
+        apiCallResult.setResponsePayload(httpResponse.getBody());
         result.setStatus(ComparisonResult.Status.MATCH);
         return result;
     }

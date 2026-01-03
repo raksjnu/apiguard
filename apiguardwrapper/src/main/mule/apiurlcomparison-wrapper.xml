@@ -1,0 +1,465 @@
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+
+
+
+	<!-- Flow 0: Redirect Root to Index -->
+    <flow name="apiurlcomparison-root-flow">
+        <http:listener path="/apiurlcomparison" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <set-variable variableName="redirectLocation" value="/apiguard/apiurlcomparison/index.html"/>
+        <set-payload value="#['&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=' ++ vars.redirectLocation ++ '&quot;&gt;&lt;/head&gt;&lt;body&gt;Redirecting...&lt;/body&gt;&lt;/html&gt;']" mimeType="text/html"/>
+    </flow>
+
+    <!-- Startup Flow: Initialize Mock Server State to Stopped -->
+    <flow name="apiurlcomparison-init-flow" initialState="started">
+        <scheduler>
+            <scheduling-strategy>
+                <fixed-frequency frequency="999999999"/>  <!-- Run once, then never again -->
+            </scheduling-strategy>
+        </scheduler>
+        <logger level="INFO" message="Initializing ApiUrlComparison Mock Server state to STOPPED"/>
+        <os:store key="mockRunning">
+            <os:value><![CDATA[#[false]]]></os:value>
+        </os:store>
+    </flow>
+
+	<!-- Flow to serve ApiUrlComparison UI (index/guide/assets) -->
+	<flow name="apiurlcomparison-ui-flow" doc:id="apiurlcomparison-ui-flow-id">
+		<http:listener doc:name="Listener" config-ref="HTTP_Listener_config" path="/apiurlcomparison/*">
+			<http:response >
+				<http:headers ><![CDATA[#[
+                    {
+                        "Content-Type": vars.mimeType default "text/html",
+                        "Cache-Control": "public, max-age=3600"
+                    }
+                ]]]></http:headers>
+			</http:response>
+		</http:listener>
+		
+		<set-variable variableName="resourcePath" value="#[attributes.relativePath replace '/apiurlcomparison/' with '']" doc:name="Extract Path"/>
+		
+		<!-- Determine MIME type based on extension -->
+        <set-variable variableName="mimeType" value="#[
+            if (vars.resourcePath endsWith '.css') 'text/css'
+            else if (vars.resourcePath endsWith '.js') 'application/javascript'
+            else if (vars.resourcePath endsWith '.png') 'image/png'
+            else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
+            else if (vars.resourcePath endsWith '.jpg') 'image/jpeg'
+            else 'text/html'
+        ]"/>
+		
+		<choice doc:name="Route UI vs API">
+			<when expression="#[vars.resourcePath == '' or vars.resourcePath == 'index' or vars.resourcePath == 'index.html']">
+				<!-- Serve Index Page -->
+				<file:read doc:name="Read Index" path="${apiurlcomparison.web.dir}/index.html" config-ref="File_Config"/>
+			</when>
+			<when expression="#[vars.resourcePath == 'guide' or vars.resourcePath == 'guide.html']">
+				<!-- Serve Guide Page -->
+				<file:read doc:name="Read Guide" path="${apiurlcomparison.web.dir}/guide.html" config-ref="File_Config"/>
+			</when>
+
+			<otherwise>
+				<!-- Static Assets -->
+				<!-- Static Assets -->
+				<file:read doc:name="Read Asset" path="#[p('apiurlcomparison.web.dir') ++ '/' ++ vars.resourcePath]" config-ref="File_Config"/>
+			</otherwise>
+		</choice>
+	</flow>
+
+	<!-- Flow to handle API requests -->
+	<flow name="apiurlcomparison-api-flow" doc:id="apiurlcomparison-api-flow-id">
+		<http:listener doc:name="Listener" config-ref="HTTP_Listener_config" path="/apiurlcomparison/api/*" allowedMethods="GET, POST">
+			<http:response statusCode="#[vars.httpStatus default 200]" >
+                <http:headers><![CDATA[#[{
+                    "Content-Type": vars.contentType default "application/json"
+                }]]]></http:headers>
+            </http:response>
+		</http:listener>
+		
+        <!-- Robust apiPath extraction: just remove leading slash -->
+        <set-variable variableName="apiPath" value="#[attributes.relativePath replace /^\/?apiurlcomparison\/api\// with '' replace /^\// with '']" doc:name="Extract API Path"/>
+        <logger level="INFO" doc:name="Log Request" message="#['ApiUrlComparison Request: ' ++ vars.apiPath ++ ' Method: ' ++ attributes.method]"/>
+        <choice doc:name="Route Request">
+            <!-- CONFIG ENDPOINT -->
+            <when expression="#[vars.apiPath == 'config' and attributes.method == 'GET']">
+                <ee:transform doc:name="Values for Wrapper">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+var baseUrl = "http://localhost:" ++ p('http.listener.port') ++ "/apiguard/apiurlcomparison"
+var restPayload = '{\n  "account": "{{account}}",\n  "uuid": "{{uuid}}"\n}'
+var soapPayload = '<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ser="http://service.ws.myorg.com/">\n   <soapenv:Header/>\n   <soapenv:Body>\n      <ser:getAccountDetails>\n         <accountId>{{account}}</accountId>\n      </ser:getAccountDetails>\n   </soapenv:Body>\n</soapenv:Envelope>'
+---
+{
+    "testType": "SOAP",
+    "rest": {
+        "api1": { "baseUrl": baseUrl ++ "/mock/api1/api/resource", "operations": [{ "name": "createResource", "methods": ["POST"], "headers": {"Content-Type": "application/json"}, "payloadTemplatePath": restPayload }] },
+        "api2": { "baseUrl": baseUrl ++ "/mock/api2/api/resource", "operations": [{ "name": "createResource", "methods": ["POST"], "headers": {"Content-Type": "application/json"}, "payloadTemplatePath": restPayload }] }
+    },
+    "soap": {
+        "api1": { "baseUrl": baseUrl ++ "/mock/soap1/ws/AccountService", "operations": [{ "name": "getAccountDetails", "methods": ["POST"], "headers": {"Content-Type": "text/xml", "SOAPAction": "getAccountDetails"}, "payloadTemplatePath": soapPayload }] },
+        "api2": { "baseUrl": baseUrl ++ "/mock/soap2/ws/AccountService", "operations": [{ "name": "getAccountDetails", "methods": ["POST"], "headers": {"Content-Type": "text/xml", "SOAPAction": "getAccountDetails"}, "payloadTemplatePath": soapPayload }] }
+    },
+    "tokens": {
+        "account": ["999", "1000", "1001"],
+        "uuid": ["id1", "id2"]
+    },
+    "iterationController": "ONE_BY_ONE",
+    "maxIterations": 100,
+    "soap": {
+         "api1": { "baseUrl": baseUrl ++ "/mock/soap1/ws/AccountService", "authentication": { "clientId": "mock-client-id", "clientSecret": "mock-client-secret" }, "operations": [{ "name": "getAccountDetails", "methods": ["POST"], "headers": {"Content-Type": "text/xml", "SOAPAction": "getAccountDetails"}, "payloadTemplatePath": soapPayload }] },
+         "api2": { "baseUrl": baseUrl ++ "/mock/soap2/ws/AccountService", "authentication": { "clientId": "mock-client-id", "clientSecret": "mock-client-secret" }, "operations": [{ "name": "getAccountDetails", "methods": ["POST"], "headers": {"Content-Type": "text/xml", "SOAPAction": "getAccountDetails"}, "payloadTemplatePath": soapPayload }] }
+    },
+    "rest": {
+         "api1": { "baseUrl": baseUrl ++ "/mock/api1/api/resource", "authentication": { "clientId": "mock-client-id", "clientSecret": "mock-client-secret" }, "operations": [{ "name": "createResource", "methods": ["POST"], "headers": {"Content-Type": "application/json"}, "payloadTemplatePath": restPayload }] },
+         "api2": { "baseUrl": baseUrl ++ "/mock/api2/api/resource", "authentication": { "clientId": "mock-client-id", "clientSecret": "mock-client-secret" }, "operations": [{ "name": "createResource", "methods": ["POST"], "headers": {"Content-Type": "application/json"}, "payloadTemplatePath": restPayload }] }
+    }
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+            
+            <!-- COMPARE ENDPOINT -->
+            <when expression="#[vars.apiPath == 'compare' and attributes.method == 'POST']">
+                <set-variable variableName="clientIp" value="#[(attributes.headers['x-forwarded-for'] default attributes.remoteAddress)]"/>
+                <logger level="INFO" message="#['[COMPARE REQUEST] IP: ' ++ vars.clientIp]"/>
+                <ee:transform doc:name="To Java Map">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                 <java:invoke-static doc:name="Invoke ApiUrlComparison" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="compare(java.util.Map, java.lang.String)">
+                    <java:args><![CDATA[#[{
+						arg0: payload,
+						arg1: p('apiurlcomparison.work.dir')
+					}]]]></java:args>
+                 </java:invoke-static>
+                 <ee:transform doc:name="Transform Result">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+                    </ee:message>
+                 </ee:transform>
+            </when>
+
+            <!-- MOCK SERVER CONTROL ENDPOINTS (Managed by Mule) -->
+            <when expression="#[vars.apiPath == 'mock/start' and attributes.method == 'POST']">
+                <logger level="INFO" message="#['Mock Server START requested from IP: ' ++ (attributes.headers['x-forwarded-for'] default attributes.remoteAddress)]"/>
+                <os:store key="mockRunning"><os:value><![CDATA[#[true]]]></os:value></os:store>
+                <set-payload value='{"status": "running", "message": "Mock APIs started."}' mimeType="application/json"/>
+            </when>
+            <when expression="#[vars.apiPath == 'mock/stop' and attributes.method == 'POST']">
+                 <logger level="INFO" message="#['Mock Server STOP requested from IP: ' ++ (attributes.headers['x-forwarded-for'] default attributes.remoteAddress)]"/>
+                 <os:store key="mockRunning"><os:value><![CDATA[#[false]]]></os:value></os:store>
+                 <set-payload value='{"status": "stopped", "message": "Mock APIs stopped."}' mimeType="application/json"/>
+            </when>
+            <when expression="#[vars.apiPath == 'mock/status' and attributes.method == 'GET']">
+                 <os:retrieve key="mockRunning" target="mockRunning">
+                    <os:default-value><![CDATA[#[false]]]></os:default-value>
+                 </os:retrieve>
+                 <logger level="INFO" message="#['Mock Server STATUS check from IP: ' ++ (attributes.headers['x-forwarded-for'] default attributes.remoteAddress) ++ ' | Status: ' ++ (if (vars.mockRunning == true) 'RUNNING' else 'STOPPED')]"/>
+                 <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ status: if (vars.mockRunning == true) "running" else "stopped" }
+]]></ee:set-payload>
+                    </ee:message>
+                 </ee:transform>
+            </when>
+
+            <!-- BASELINE ENDPOINTS -->
+            <!-- /api/baselines/services -->
+            <when expression="#[vars.apiPath == 'baselines/services' and attributes.method == 'GET']">
+                 <java:invoke-static doc:name="List Services" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineServices(java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: p('apiurlcomparison.work.dir') }]]]></java:args>
+                 </java:invoke-static>
+                 <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload></ee:message></ee:transform>
+            </when>
+            
+             <!-- /api/baselines/dates/{serviceName} -->
+            <when expression="#[(vars.apiPath startsWith 'baselines/dates/') and attributes.method == 'GET']">
+                 <set-variable variableName="serviceName" value="#[vars.apiPath replace 'baselines/dates/' with '']" />
+                 <java:invoke-static doc:name="List Dates" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineDates(java.lang.String, java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: p('apiurlcomparison.work.dir'), arg1: vars.serviceName }]]]></java:args>
+                 </java:invoke-static>
+                 <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload></ee:message></ee:transform>
+            </when>
+
+            <!-- /api/baselines/runs/{serviceName}/{date} -->
+            <when expression="#[(vars.apiPath startsWith 'baselines/runs/') and attributes.method == 'GET']">
+                 <!-- Extract parts: runs/service/date -->
+                 <gw:set-variable variableName="parts" value="#[vars.apiPath splitBy '/']" xmlns:gw="http://www.mulesoft.org/schema/mule/core" />
+                 <set-variable variableName="serviceName" value="#[vars.parts[2]]" />
+                 <set-variable variableName="date" value="#[vars.parts[3]]" />
+                 
+                 <java:invoke-static doc:name="List Runs" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineRuns(java.lang.String, java.lang.String, java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: p('apiurlcomparison.work.dir'), arg1: vars.serviceName, arg2: vars.date }]]]></java:args>
+                 </java:invoke-static>
+                 
+                 <!-- Result is already JSON string from backend -->
+                 <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+            
+            <!-- DEFAULT / 404 -->
+            <otherwise>
+                <logger level="WARN" message="#['Endpoint not found: ' ++ vars.apiPath]"/>
+                <set-payload value='#[%dw 2.0
+output application/json
+---
+{"status": "error", "message": "Endpoint not found: " ++ (vars.apiPath default "null")}]' mimeType="application/json"/>
+                <set-variable variableName="httpStatus" value="404"/>
+            </otherwise>
+        </choice>
+	</flow>
+	
+	<!-- ============================================== -->
+	<!--             MOCK SIMULATION FLOWS              -->
+	<!-- ============================================== -->
+
+    <!-- REST API 1 Mock -->
+    <flow name="mock-api1-flow">
+        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/api1/*" allowedMethods="GET, POST"/>
+        <os:retrieve key="mockRunning" target="mockRunning">
+            <os:default-value><![CDATA[#[false]]]></os:default-value>
+        </os:retrieve>
+        <choice>
+            <when expression="#[!vars.mockRunning]">
+                <set-payload value='{"error": "Mock server is stopped"}' mimeType="application/json"/>
+                <set-variable variableName="httpStatus" value="503"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="subPath" value="#[attributes.relativePath replace '/apiurlcomparison/mock/api1/' with '']"/>
+                
+                <choice>
+                    <!-- /api/resource (POST) -->
+                    <when expression="#[vars.subPath == 'api/resource' and attributes.method == 'POST']">
+                         <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+        output application/json
+        var account = payload.account default ""
+        ---
+        if (account == "999") 
+          {status:"success", id:"api1-specific-id-for-999"}
+        else 
+          {status:"success", id:"shared-id-12345"}
+        ]]></ee:set-payload>
+                            </ee:message>
+                         </ee:transform>
+                    </when>
+                    <!-- /api/resource (GET) -->
+                    <when expression="#[vars.subPath == 'api/resource' and attributes.method == 'GET']">
+                         <set-payload value='{"status":"success","message":"Resource details retrieved via GET"}' mimeType="application/json"/>
+                    </when>
+                     <!-- /api/anotherResource (GET) -->
+                    <when expression="#[vars.subPath == 'api/anotherResource' and attributes.method == 'GET']">
+                         <set-payload value='{"status":"success","data":"This is the other resource"}' mimeType="application/json"/>
+                    </when>
+                    <otherwise>
+                        <set-payload value='{"error": "Mock endpoint not found"}' mimeType="application/json"/>
+                    </otherwise>
+                </choice>
+            </otherwise>
+        </choice>
+
+    </flow>
+
+    <!-- REST API 2 Mock -->
+    <flow name="mock-api2-flow">
+        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/api2/*" allowedMethods="GET, POST"/>
+        <os:retrieve key="mockRunning" target="mockRunning">
+            <os:default-value><![CDATA[#[false]]]></os:default-value>
+        </os:retrieve>
+        <choice>
+            <when expression="#[!vars.mockRunning]">
+                <set-payload value='{"error": "Mock server is stopped"}' mimeType="application/json"/>
+                <set-variable variableName="httpStatus" value="503"/>
+            </when>
+            <otherwise>
+                 <set-variable variableName="subPath" value="#[attributes.relativePath replace '/apiurlcomparison/mock/api2/' with '']"/>
+                
+                <choice>
+                     <!-- /api/resource (POST) -->
+                    <when expression="#[vars.subPath == 'api/resource' and attributes.method == 'POST']">
+                         <set-payload value='#[%dw 2.0 output application/json --- {"status":"success","id":"shared-id-12345"}]' mimeType="application/json"/>
+                    </when>
+                    <!-- /api/resource (GET) -->
+                    <when expression="#[vars.subPath == 'api/resource' and attributes.method == 'GET']">
+                         <set-payload value='{"status":"success","message":"Resource details retrieved from API 2"}' mimeType="application/json"/>
+                    </when>
+                     <!-- /api/anotherResource (GET) -->
+                    <when expression="#[vars.subPath == 'api/anotherResource' and attributes.method == 'GET']">
+                         <set-payload value='{"status":"success","data":"This is the other resource from API 2"}' mimeType="application/json"/>
+                    </when>
+                     <otherwise>
+                        <set-payload value='{"error": "Mock endpoint not found"}' mimeType="application/json"/>
+                    </otherwise>
+                </choice>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <!-- SOAP API 1 Mock -->
+    <flow name="mock-soap1-flow">
+        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/soap1/*" allowedMethods="POST"/>
+        <os:retrieve key="mockRunning" target="mockRunning">
+            <os:default-value><![CDATA[#[false]]]></os:default-value>
+        </os:retrieve>
+        <choice>
+             <when expression="#[!vars.mockRunning]">
+                <set-payload value='Mock server is stopped' mimeType="text/plain"/>
+                <set-variable variableName="httpStatus" value="503"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="soapAction" value="#[attributes.headers['soapaction'] default '']"/>
+                
+                <choice>
+                    <!-- getAccountDetails -->
+                    <when expression="#[vars.soapAction contains 'getAccountDetails']">
+                         <!-- Extract Account (Simplified XML parsing) -->
+                         <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+        output application/xml
+        ns soap http://schemas.xmlsoap.org/soap/envelope/
+        ns ns2 http://service.ws.myorg.com/
+        var bodyStr = write(payload, "application/xml")
+        var is999 = (bodyStr contains ">999<")
+        ---
+        soap#Envelope: {
+            soap#Body: {
+                ns2#getAccountDetailsResponse: {
+                    return: {
+                        status: "SUCCESS",
+                        transactionId: if (is999) "soap-api1-specific-id-for-999" else "shared-soap-id-12345"
+                    }
+                }
+            }
+        }
+        ]]></ee:set-payload>
+                            </ee:message>
+                            <ee:variables>
+                                <ee:set-variable variableName="contentType"><![CDATA['text/xml']]></ee:set-variable>
+                            </ee:variables>
+                         </ee:transform>
+                    </when>
+                    <!-- createOrder -->
+                     <when expression="#[vars.soapAction contains 'createOrderEndpoint1']">
+                          <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+        output application/xml
+        ns soap http://schemas.xmlsoap.org/soap/envelope/
+        ns ns2 http://service.ws.myorg.com/
+        ---
+        soap#Envelope: {
+            soap#Body: {
+                ns2#createOrderResponse: {
+                    return: {
+                        status: "ORDER_CREATED",
+                        orderId: "order-9876"
+                    }
+                }
+            }
+        }
+        ]]></ee:set-payload>
+                            </ee:message>
+                             <ee:variables>
+                                <ee:set-variable variableName="contentType"><![CDATA['text/xml']]></ee:set-variable>
+                            </ee:variables>
+                         </ee:transform>
+                    </when>
+                     <otherwise>
+                        <set-payload value="Unsupported SOAP Action" mimeType="text/plain"/>
+                        <set-variable variableName="httpStatus" value="400"/>
+                    </otherwise>
+                </choice>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <!-- SOAP API 2 Mock -->
+    <flow name="mock-soap2-flow">
+        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/soap2/*" allowedMethods="POST"/>
+        <os:retrieve key="mockRunning" target="mockRunning">
+            <os:default-value><![CDATA[#[false]]]></os:default-value>
+        </os:retrieve>
+        <choice>
+             <when expression="#[!vars.mockRunning]">
+                <set-payload value='Mock server is stopped' mimeType="text/plain"/>
+                <set-variable variableName="httpStatus" value="503"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="soapAction" value="#[attributes.headers['soapaction'] default '']"/>
+                
+                <choice>
+                    <!-- getAccountDetails (Always shared ID) -->
+                    <when expression="#[vars.soapAction contains 'getAccountDetails']">
+                         <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+        output application/xml
+        ns soap http://schemas.xmlsoap.org/soap/envelope/
+        ns ns2 http://service.ws.myorg.com/
+        ---
+        soap#Envelope: {
+            soap#Body: {
+                ns2#getAccountDetailsResponse: {
+                    return: {
+                        status: "SUCCESS",
+                        transactionId: "shared-soap-id-12345"
+                    }
+                }
+            }
+        }
+        ]]></ee:set-payload>
+                            </ee:message>
+                             <ee:variables>
+                                <ee:set-variable variableName="contentType"><![CDATA['text/xml']]></ee:set-variable>
+                            </ee:variables>
+                         </ee:transform>
+                    </when>
+                     <otherwise>
+                        <set-payload value="Unsupported SOAP Action" mimeType="text/plain"/>
+                        <set-variable variableName="httpStatus" value="400"/>
+                    </otherwise>
+                </choice>
+            </otherwise>
+        </choice>
+    </flow>
+    
+    <!-- CLEANUP SCHEDULER -->
+    <flow name="apiurlcomparison-cleanup-flow">
+        <scheduler doc:name="Cleanup Scheduler">
+            <scheduling-strategy>
+                <fixed-frequency frequency="1" timeUnit="HOURS"/>
+            </scheduling-strategy>
+        </scheduler>
+        <logger level="INFO" message="Running ApiUrlComparison Workspace Cleanup"/>
+        <java:invoke-static doc:name="Run Cleanup" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="cleanup(java.lang.String, int)">
+            <java:args><![CDATA[#[{ arg0: p('apiurlcomparison.work.dir'), arg1: p('apiurlcomparison.cleanup.retention.hours') as Number }]]]></java:args>
+        </java:invoke-static>
+        <logger level="INFO" message="Cleanup Complete: #[payload]"/>
+    </flow>
+
+</mule>

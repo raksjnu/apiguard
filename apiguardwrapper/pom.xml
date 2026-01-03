@@ -45,6 +45,10 @@
 							<groupId>com.raks</groupId>
 							<artifactId>apidiscovery</artifactId>
 						</sharedLibrary>
+						<sharedLibrary>
+							<groupId>com.raks</groupId>
+							<artifactId>apiurlcomparison</artifactId>
+						</sharedLibrary>
 					</sharedLibraries>
 				</configuration>
 			</plugin>
@@ -188,6 +192,13 @@
 			<version>1.0.0</version>
 			<scope>system</scope>
 			<systemPath>${project.basedir}/lib/apidiscovery-1.0.0.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>com.raks</groupId>
+			<artifactId>apiurlcomparison</artifactId>
+			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/apiurlcomparison-1.0.0.jar</systemPath>
 		</dependency>
 	</dependencies>
 

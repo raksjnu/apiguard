@@ -63,7 +63,7 @@ public class ApiClient {
             }
         }
     }
-    public String sendRequest(String url, String method, Map<String, String> headers, String body) throws IOException {
+    public HttpResponse sendRequest(String url, String method, Map<String, String> headers, String body) throws IOException {
         if (accessToken == null && authentication != null && authentication.getTokenUrl() != null) {
             obtainAccessToken();
         }
@@ -86,7 +86,9 @@ public class ApiClient {
             HttpUriRequest request = requestBuilder.build();
             logger.debug("Executing request: {}", request);
             try (CloseableHttpResponse response = client.execute(request)) {
-                return EntityUtils.toString(response.getEntity());
+                int statusCode = response.getStatusLine().getStatusCode();
+                String responseBody = EntityUtils.toString(response.getEntity());
+                return new HttpResponse(statusCode, responseBody);
             }
         }
     }

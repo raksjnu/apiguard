@@ -7,7 +7,8 @@
 # 1. Builds and Installs RaksAnalyzer (Dependency)
 # 2. Builds and Installs MuleGuard (Dependency)
 # 3. Builds and Installs ApiDiscovery (Dependency)
-# 4. Builds the ApiGuardWrapper Mule application
+# 4. Builds and Installs ApiUrlComparison (Dependency)
+# 5. Builds the ApiGuardWrapper Mule application
 # ===================================================================
 
 # Resolve script directory
@@ -36,7 +37,7 @@ echo "============================================================"
 echo ""
 
 # Step 1: Build & Install RaksAnalyzer
-echo "[1/4] Building & Installing RaksAnalyzer..."
+echo "[1/5] Building & Installing RaksAnalyzer..."
 echo "============================================================"
 if [ -d "$SCRIPT_DIR/../raksanalyzer" ]; then
     cd "$SCRIPT_DIR/../raksanalyzer"
@@ -69,7 +70,7 @@ fi
 
 # Step 2: Build & Install MuleGuard
 echo ""
-echo "[2/4] Building & Installing MuleGuard..."
+echo "[2/5] Building & Installing MuleGuard..."
 echo "============================================================"
 if [ -d "$SCRIPT_DIR/../muleguard" ]; then
     cd "$SCRIPT_DIR/../muleguard"
@@ -102,7 +103,7 @@ fi
 
 # Step 3: Build & Install ApiDiscovery
 echo ""
-echo "[3/4] Building & Installing ApiDiscovery..."
+echo "[3/5] Building & Installing ApiDiscovery..."
 echo "============================================================"
 if [ -d "$SCRIPT_DIR/../apidiscovery" ]; then
     cd "$SCRIPT_DIR/../apidiscovery"
@@ -133,9 +134,9 @@ else
     exit 1
 fi
 
-# Step 4: Build ApiGuardWrapper
+# Step 5: Build ApiGuardWrapper
 echo ""
-echo "[4/4] Building ApiGuardWrapper..."
+echo "[5/5] Building ApiGuardWrapper..."
 echo "============================================================"
 cd "$SCRIPT_DIR"
 mvn clean package -DskipTests

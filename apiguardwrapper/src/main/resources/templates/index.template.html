@@ -132,7 +132,7 @@
             { name: "{{tool.2.name}}", desc: "{{tool.2.description}}", url: "{{tool.2.url}}", enabled: "{{tool.2.enabled}}" },
             { name: "{{tool.3.name}}", desc: "{{tool.3.description}}", url: "{{tool.3.url}}", enabled: "{{tool.3.enabled}}" },
             { name: "{{tool.4.name}}", desc: "{{tool.4.description}}", url: "{{tool.4.url}}", enabled: "{{tool.4.enabled}}" },
-            { name: "{{tool.5.name}}", desc: "{{tool.5.description}}", url: "{{tool.5.url}}", enabled: "{{tool.5.enabled}}" },
+            { name: "{{tool.5.name}}", desc: "{{tool.5.description}}", url: "{{tool.5.url}}", enabled: "true" },
             { name: "{{tool.6.name}}", desc: "{{tool.6.description}}", url: "{{tool.6.url}}", enabled: "{{tool.6.enabled}}" }
         ];
 
@@ -141,13 +141,18 @@
             const card = document.createElement('a');
             card.className = 'tool-card';
             
+            // Normalize enabled check
+            const isEnabled = String(tool.enabled).toLowerCase() === 'true';
+            const isValidUrl = tool.url && tool.url !== '#' && tool.url !== '';
+
             // Check if tool is disabled
-            if (tool.enabled === 'false' || tool.url === '#' || tool.url === '' || !tool.url) {
+            if (!isEnabled || !isValidUrl) {
                 card.href = 'javascript:void(0)';
-                card.style.cursor = 'pointer';
+                card.style.cursor = 'not-allowed';
+                card.style.opacity = '0.7';
                 card.onclick = function(e) {
                     e.preventDefault();
-                    alert('🚧 ' + tool.name + ' is not enabled yet.\\n\\nThis tool is currently under development and will be available in a future release.');
+                    alert('🚧 ' + tool.name + ' is not enabled yet.\n\nThis tool is currently under development and will be available in a future release.');
                     return false;
                 };
             } else {

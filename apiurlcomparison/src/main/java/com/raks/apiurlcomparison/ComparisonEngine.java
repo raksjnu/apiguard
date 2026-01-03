@@ -14,11 +14,34 @@ public class ComparisonEngine {
     public static void compare(ComparisonResult result, String apiType) {
         ApiCallResult api1Result = result.getApi1();
         ApiCallResult api2Result = result.getApi2();
+        
         if (api1Result == null || api2Result == null) {
             result.setStatus(ComparisonResult.Status.ERROR);
             result.setErrorMessage("One or both API calls failed, cannot compare.");
             return;
         }
+        
+        // Check for HTTP errors (4xx, 5xx) - these should be ERROR, not MATCH/MISMATCH
+        int status1 = api1Result.getStatusCode();
+        int status2 = api2Result.getStatusCode();
+        
+        logger.info("Comparison status codes - API1: {}, API2: {}", status1, status2);
+        
+        if (status1 >= 400 || status2 >= 400) {
+            result.setStatus(ComparisonResult.Status.ERROR);
+            String errorMsg = "HTTP Error detected - ";
+            if (status1 >= 400 && status2 >= 400) {
+                errorMsg += "Both endpoints returned errors (API1: " + status1 + ", API2: " + status2 + ")";
+            } else if (status1 >= 400) {
+                errorMsg += "API1 returned error " + status1;
+            } else {
+                errorMsg += "API2 returned error " + status2;
+            }
+            result.setErrorMessage(errorMsg);
+            logger.info("Setting result to ERROR: {}", errorMsg);
+            return;
+        }
+        
         String response1 = api1Result.getResponsePayload();
         String response2 = api2Result.getResponsePayload();
         if (response1 == null || response2 == null) {
