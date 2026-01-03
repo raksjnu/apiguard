@@ -242,11 +242,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Build config for baseline capture
             const config = buildConfig();
             config.comparisonMode = 'BASELINE';
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
             config.baseline = {
                 operation: 'CAPTURE',
                 serviceName: serviceName,
                 description: description,
-                tags: tags
+                tags: tags,
+                storageDir: workDir || null
             };
 
             const response = await fetch('api/compare', {
@@ -274,11 +276,13 @@ document.addEventListener('DOMContentLoaded', () => {
             // Build config for baseline comparison
             const config = buildConfig();
             config.comparisonMode = 'BASELINE';
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
             config.baseline = {
                 operation: 'COMPARE',
                 serviceName: serviceName,
                 compareDate: date,
-                compareRunId: runId
+                compareRunId: runId,
+                storageDir: workDir || null
             };
 
             const response = await fetch('api/compare', {
@@ -799,7 +803,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load available baseline services
     async function loadBaselineServices() {
         try {
-            const response = await fetch('api/baselines/services');
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+            const url = workDir ? `api/baselines/services?workDir=${encodeURIComponent(workDir)}` : 'api/baselines/services';
+            const response = await fetch(url);
             const services = await response.json();
 
             const select = document.getElementById('baselineServiceSelect');
@@ -823,7 +829,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load dates for selected service
     async function loadBaselineDates(serviceName) {
         try {
-            const response = await fetch(`api/baselines/dates/${serviceName}`);
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+            const url = workDir 
+                ? `api/baselines/dates/${serviceName}?workDir=${encodeURIComponent(workDir)}` 
+                : `api/baselines/dates/${serviceName}`;
+            const response = await fetch(url);
             const dates = await response.json();
 
             const select = document.getElementById('baselineDateSelect');
@@ -854,7 +864,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Load runs for selected service and date
     async function loadBaselineRuns(serviceName, date) {
         try {
-            const response = await fetch(`api/baselines/runs/${serviceName}/${date}`);
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+            const url = workDir 
+                ? `api/baselines/runs/${serviceName}/${date}?workDir=${encodeURIComponent(workDir)}` 
+                : `api/baselines/runs/${serviceName}/${date}`;
+            const response = await fetch(url);
             const runs = await response.json();
 
             const select = document.getElementById('baselineRunSelect');

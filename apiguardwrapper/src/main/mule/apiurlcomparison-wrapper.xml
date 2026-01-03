@@ -138,10 +138,13 @@ output application/java
 payload]]></ee:set-payload>
                     </ee:message>
                 </ee:transform>
+                 <!-- Extract working directory from payload if provided -->
+                 <set-variable variableName="workDir" value="#[if (payload.baseline != null and payload.baseline.storageDir != null and payload.baseline.storageDir != '') payload.baseline.storageDir else p('apiurlcomparison.work.dir')]"/>
+                 <logger level="INFO" message="#['Using working directory: ' ++ vars.workDir]"/>
                  <java:invoke-static doc:name="Invoke ApiUrlComparison" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="compare(java.util.Map, java.lang.String)">
                     <java:args><![CDATA[#[{
 						arg0: payload,
-						arg1: p('apiurlcomparison.work.dir')
+						arg1: vars.workDir
 					}]]]></java:args>
                  </java:invoke-static>
                  <ee:transform doc:name="Transform Result">
@@ -184,8 +187,9 @@ output application/json
             <!-- BASELINE ENDPOINTS -->
             <!-- /api/baselines/services -->
             <when expression="#[vars.apiPath == 'baselines/services' and attributes.method == 'GET']">
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
                  <java:invoke-static doc:name="List Services" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineServices(java.lang.String)">
-                    <java:args><![CDATA[#[{ arg0: p('apiurlcomparison.work.dir') }]]]></java:args>
+                    <java:args><![CDATA[#[{ arg0: vars.workDir }]]]></java:args>
                  </java:invoke-static>
                  <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -196,8 +200,9 @@ payload]]></ee:set-payload></ee:message></ee:transform>
              <!-- /api/baselines/dates/{serviceName} -->
             <when expression="#[(vars.apiPath startsWith 'baselines/dates/') and attributes.method == 'GET']">
                  <set-variable variableName="serviceName" value="#[vars.apiPath replace 'baselines/dates/' with '']" />
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
                  <java:invoke-static doc:name="List Dates" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineDates(java.lang.String, java.lang.String)">
-                    <java:args><![CDATA[#[{ arg0: p('apiurlcomparison.work.dir'), arg1: vars.serviceName }]]]></java:args>
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName }]]]></java:args>
                  </java:invoke-static>
                  <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
 output application/json
@@ -211,9 +216,10 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                  <gw:set-variable variableName="parts" value="#[vars.apiPath splitBy '/']" xmlns:gw="http://www.mulesoft.org/schema/mule/core" />
                  <set-variable variableName="serviceName" value="#[vars.parts[2]]" />
                  <set-variable variableName="date" value="#[vars.parts[3]]" />
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
                  
                  <java:invoke-static doc:name="List Runs" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineRuns(java.lang.String, java.lang.String, java.lang.String)">
-                    <java:args><![CDATA[#[{ arg0: p('apiurlcomparison.work.dir'), arg1: vars.serviceName, arg2: vars.date }]]]></java:args>
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName, arg2: vars.date }]]]></java:args>
                  </java:invoke-static>
                  
                  <!-- Result is already JSON string from backend -->
