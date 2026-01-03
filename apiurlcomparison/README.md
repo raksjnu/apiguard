@@ -299,6 +299,8 @@ The web GUI provides an intuitive interface for baseline testing:
    - Click **"Compare with Baseline"**
    - View comparison results showing matches and mismatches
 
+**Working Directory**: The GUI includes a "Working Directory" field to specify a custom location for baseline storage. Leave empty to use the default location, or enter a custom path to browse/save baselines in different locations.
+
 ### Using Baseline Testing (CLI)
 
 #### Capture a Baseline
