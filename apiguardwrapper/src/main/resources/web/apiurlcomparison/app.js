@@ -798,6 +798,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
         }
+
+        // Fetch endpoint when run is selected
+        if (baselineRunSelect) {
+            baselineRunSelect.addEventListener('change', function() {
+                const service = baselineServiceSelect.value;
+                const date = baselineDateSelect.value;
+                if (service && date && this.value) {
+                    fetchBaselineEndpoint(service, date, this.value);
+                }
+            });
+        }
     }
 
     // Load available baseline services
@@ -888,10 +899,40 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Auto-select latest (last) run
             if (runs.length > 0) {
-                select.value = runs[runs.length - 1].runId;
+                const latestRunId = runs[runs.length - 1].runId;
+                select.value = latestRunId;
+                fetchBaselineEndpoint(serviceName, date, latestRunId);
             }
         } catch (error) {
             console.error('Error loading baseline runs:', error);
+        }
+    }
+
+    async function fetchBaselineEndpoint(service, date, runId) {
+        try {
+            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+            const enc = encodeURIComponent;
+            const url = workDir 
+                ? `api/baselines/runs/${enc(service)}/${enc(date)}/${enc(runId)}/endpoint?workDir=${enc(workDir)}` 
+                : `api/baselines/runs/${enc(service)}/${enc(date)}/${enc(runId)}/endpoint`;
+            
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            if (data && data.endpoint) {
+                const url1Input = document.getElementById('url1');
+                if (url1Input) {
+                    url1Input.value = data.endpoint;
+                    // Visual feedback
+                    url1Input.style.backgroundColor = '#e8f5e9';
+                    setTimeout(() => url1Input.style.backgroundColor = '', 1000);
+                }
+            } else {
+                 // Warning if no endpoint found? Or just log
+                 console.log("No endpoint found for this run");
+            }
+        } catch (error) {
+            console.error('Error fetching baseline endpoint:', error);
         }
     }
 });

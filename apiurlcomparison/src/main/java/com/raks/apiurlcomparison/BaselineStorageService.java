@@ -169,6 +169,34 @@ public class BaselineStorageService {
         runs.sort(Comparator.comparing(RunInfo::getRunId));
         return runs;
     }
+
+    public String getRunEndpoint(String serviceName, String date, String runId) throws IOException {
+        Path runDir = getRunDirectory(serviceName, date, runId);
+        Path iterDir = runDir.resolve("iteration-001");
+        
+        // If specific iteration-001 doesn't exist, find first available iteration
+        if (!Files.exists(iterDir)) {
+            File[] files = runDir.toFile().listFiles((dir, name) -> name.startsWith("iteration-"));
+            if (files == null || files.length == 0) {
+                return null;
+            }
+            Arrays.sort(files);
+            iterDir = files[0].toPath();
+        }
+
+        Path metadataFile = iterDir.resolve("request-metadata.json");
+        if (!Files.exists(metadataFile)) {
+            return null;
+        }
+
+        try {
+            IterationMetadata metadata = mapper.readValue(metadataFile.toFile(), IterationMetadata.class);
+            return metadata.getEndpoint();
+        } catch (Exception e) {
+            logger.warn("Failed to read endpoint from metadata: {}", e.getMessage());
+            return null;
+        }
+    }
     public static String getTodayDate() {
         return LocalDate.now().format(DATE_FORMATTER);
     }

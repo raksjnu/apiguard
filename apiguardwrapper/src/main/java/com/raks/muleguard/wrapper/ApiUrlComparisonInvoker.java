@@ -114,6 +114,20 @@ public class ApiUrlComparisonInvoker {
         }
     }
 
+    public static String getRunEndpoint(String workDir, String serviceName, String date, String runId) {
+        try {
+             if (workDir == null) return "{\"endpoint\": null}";
+             com.raks.apiurlcomparison.BaselineStorageService storage = new com.raks.apiurlcomparison.BaselineStorageService(workDir);
+             String endpoint = storage.getRunEndpoint(serviceName, date, runId);
+             Map<String, String> result = new HashMap<>();
+             result.put("endpoint", endpoint);
+             return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            logger.error("Error fetching run endpoint", e);
+            return "{\"endpoint\": null}";
+        }
+    }
+
     // --- CLEANUP WRAPPER ---
     public static Map<String, Object> cleanup(String workDir, int retentionHours) {
         Map<String, Object> result = new HashMap<>();

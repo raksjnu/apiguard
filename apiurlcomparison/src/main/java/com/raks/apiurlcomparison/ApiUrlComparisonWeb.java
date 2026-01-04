@@ -168,6 +168,27 @@ public class ApiUrlComparisonWeb {
                 return "{\"error\": \"" + e.getMessage() + "\"}";
             }
         });
+
+        get("/api/baselines/runs/:serviceName/:date/:runId/endpoint", (req, res) -> {
+            res.type("application/json");
+            try {
+                String serviceName = req.params(":serviceName");
+                String date = req.params(":date");
+                String runId = req.params(":runId");
+                ObjectMapper mapper = new ObjectMapper();
+                String queryWorkDir = req.queryParams("workDir");
+                String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
+                BaselineStorageService storageService = new BaselineStorageService(storageDir);
+                String endpoint = storageService.getRunEndpoint(serviceName, date, runId);
+                java.util.Map<String, String> result = new java.util.HashMap<>();
+                result.put("endpoint", endpoint);
+                return mapper.writeValueAsString(result);
+            } catch (Exception e) {
+                logger.error("Error fetching baseline endpoint", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
         awaitInitialization();
         logger.info("Server started. Access at http://localhost:{}", port);
         try {

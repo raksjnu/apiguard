@@ -210,6 +210,22 @@ output application/json
 payload]]></ee:set-payload></ee:message></ee:transform>
             </when>
 
+            <!-- /api/baselines/runs/{serviceName}/{date}/{runId}/endpoint -->
+            <when expression="#[(vars.apiPath startsWith 'baselines/runs/') and (vars.apiPath endsWith '/endpoint') and attributes.method == 'GET']">
+                 <!-- Extract parts: runs/service/date/runId/endpoint -->
+                 <gw:set-variable variableName="parts" value="#[vars.apiPath splitBy '/']" xmlns:gw="http://www.mulesoft.org/schema/mule/core" />
+                 <set-variable variableName="serviceName" value="#[vars.parts[2]]" />
+                 <set-variable variableName="date" value="#[vars.parts[3]]" />
+                 <set-variable variableName="runId" value="#[vars.parts[4]]" />
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 
+                 <java:invoke-static doc:name="Get Endpoint" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="getRunEndpoint(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName, arg2: vars.date, arg3: vars.runId }]]]></java:args>
+                 </java:invoke-static>
+                 
+                 <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+
             <!-- /api/baselines/runs/{serviceName}/{date} -->
             <when expression="#[(vars.apiPath startsWith 'baselines/runs/') and attributes.method == 'GET']">
                  <!-- Extract parts: runs/service/date -->
