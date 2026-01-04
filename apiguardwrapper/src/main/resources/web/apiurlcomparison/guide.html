@@ -184,6 +184,7 @@
             <p>Click <strong>Run Comparison</strong>. The dashboard on the right will update in real-time:</p>
             <ul>
                 <li><span class="badge badge-success">MATCH</span> - Responses are identical.</li>
+                <li><span class="badge badge-primary">CAPTURED</span> - (Baseline Mode) Response successfully captured and saved.</li>
                 <li><span class="badge" style="background-color: #dc3545;">MISMATCH</span> - Differences found (highlighted in red).</li>
                 <li><span class="badge" style="background-color: #ffc107; color: #000;">ERROR</span> - Connection or server error.</li>
             </ul>
@@ -192,6 +193,7 @@
                 <strong>Understanding Results:</strong>
                 <ul>
                     <li><strong>Matches:</strong> Indicates the API response status, headers, and body are identical.</li>
+                    <li><strong>Captured:</strong> In "Capture Baseline" mode, this indicates the response was successfully received and stored.</li>
                     <li><strong>Mismatches:</strong> Differences in Body, Headers, or Status are highlighted.</li>
                     <li><strong>Ignored Fields:</strong> If you specified fields to ignore (e.g., timestamp), differences in those fields will NOT cause a mismatch.</li>
                 </ul>
@@ -218,7 +220,7 @@
                 <li>Enter a <strong>Service Name</strong> (e.g., <code>AccountService</code>).</li>
                 <li>Add a description like "Prod Pre-Deployment v1.0".</li>
                 <li>(Optional) Set a custom <strong>Working Directory</strong>.</li>
-                <li>Click <strong>Run Comparison</strong>. The tool will execute requests against Prod and save the responses locally.</li>
+                <li>Click <strong>Run Comparison</strong>. The tool will execute requests against Prod and save the responses locally. You will see a <span class="badge badge-primary">CAPTURED</span> badge.</li>
             </ol>
 
             <h4>Phase 2: Post-Deployment (Verify Changes)</h4>
@@ -226,7 +228,8 @@
                 <li>After deployment, keep <strong>Mode</strong> as <code>Baseline Testing</code>.</li>
                 <li>Set <strong>Operation</strong> to <code>Compare with Baseline</code>.</li>
                 <li>Ensure the <strong>Working Directory</strong> is the same as Phase 1.</li>
-                <li>Select the <strong>Service Name</strong>, <strong>Date</strong>, and <strong>Run ID</strong> captured in Phase 1.</li>
+                <li>Select the <strong>Service Name</strong>. The tool will <strong>auto-select</strong> the latest Date and Run ID.</li>
+                <li>The <strong>Payload</strong> box will automatically populate with the payload used during the capture phase.</li>
                 <li>Enter the <strong>Production URL</strong> (now v2.0) as API 2.</li>
                 <li>Click <strong>Run Comparison</strong>.</li>
             </ol>
