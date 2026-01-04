@@ -156,6 +156,12 @@
                             <textarea id="payload" placeholder="{ 'id': '{{id}}' }" rows="6"></textarea>
                             <small>Use {{token}} syntax for variable injection from tokens below.</small>
                         </div>
+
+                        <div class="input-group full-width">
+                            <label>Ignored Fields (Comparison)</label>
+                            <input type="text" id="ignoredFields" placeholder="e.g. timestamp, duration, token" value="timestamp, X-Dynamic-Header">
+                            <small>Comma-separated list of JSON/XML fields to ignore during response comparison.</small>
+                        </div>
     
                         <!-- Dynamic Headers Section -->
                         <div class="divider"><span>Request Headers</span></div>
@@ -212,6 +218,11 @@
     
                         <!-- Auth Section -->
                         <div class="divider"><span>Authentication (Basic)</span></div>
+                        <div class="input-group" style="margin-bottom: 5px;">
+                            <label style="display:flex; align-items:center; font-weight:normal;">
+                                <input type="checkbox" id="enableAuth" checked style="width:auto; margin-right:8px;"> Enable Authentication
+                            </label>
+                        </div>
                         <div class="row">
                             <div class="input-group">
                                 <label>Client ID</label>

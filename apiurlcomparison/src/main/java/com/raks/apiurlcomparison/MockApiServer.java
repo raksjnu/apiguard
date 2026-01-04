@@ -43,14 +43,17 @@ public class MockApiServer {
             }
         });
         api1.post("/api/resource", (req, res) -> {
-            res.type("application/json");
+            res.header("Content-Type", "application/json; charset=utf-8");
             try {
                 JsonNode payload = mapper.readTree(req.body());
                 String account = payload.has("account") ? payload.get("account").asText() : "";
+                String timestamp = java.time.Instant.now().toString();
+                res.header("X-Dynamic-Header", java.util.UUID.randomUUID().toString());
+                String extraFields = ",\"processId\":\"pid-" + java.util.UUID.randomUUID().toString().substring(0,8) + "\",\"randomId\":\"" + java.util.UUID.randomUUID() + "\"";
                 if ("999".equals(account)) {
-                    return "{\"status\":\"success\",\"id\":\"api1-specific-id-for-999\",\"timestamp\":\"2025-12-01T11:00:00Z\"}";
+                    return "{\"status\":\"success\",\"id\":\"api1-specific-id-for-999\",\"timestamp\":\"" + timestamp + "\"" + extraFields + "}";
                 } else {
-                    return "{\"status\":\"success\",\"id\":\"shared-id-12345\",\"timestamp\":\"2025-12-01T10:00:00Z\"}";
+                    return "{\"status\":\"success\",\"id\":\"shared-id-12345\",\"timestamp\":\"" + timestamp + "\"" + extraFields + "}";
                 }
             } catch (Exception e) {
                 res.status(400);
@@ -77,8 +80,11 @@ public class MockApiServer {
                 logger.info("Received Authorization header on API 2: {}", auth);
         });
         api2.post("/api/resource", (req, res) -> {
-            res.type("application/json");
-            return "{\"status\":\"success\",\"id\":\"shared-id-12345\",\"timestamp\":\"2025-12-01T10:00:00Z\"}";
+            res.header("Content-Type", "application/json; charset=utf-8");
+            String timestamp = java.time.Instant.now().toString();
+            res.header("X-Dynamic-Header", java.util.UUID.randomUUID().toString());
+            String extraFields = ",\"processId\":\"" + java.util.UUID.randomUUID().toString().substring(0,8) + "\",\"randomId\":\"" + java.util.UUID.randomUUID() + "\"";
+            return "{\"status\":\"success\",\"id\":\"shared-id-12345\",\"timestamp\":\"" + timestamp + "\"" + extraFields + "}";
         });
         api2.get("/api/resource", (req, res) -> {
             res.type("application/json");
@@ -101,18 +107,20 @@ public class MockApiServer {
         });
         soapApi1.post("/ws/AccountService", (req, res) -> {
             String soapAction = req.headers("SOAPAction");
-            res.type("text/xml");
+            res.header("Content-Type", "text/xml; charset=utf-8");
             if ("\"getAccountDetails\"".equals(soapAction) || "getAccountDetails".equals(soapAction)) {
                 String account = extractAccountFromSoap(req.body());
+                String timestamp = java.time.Instant.now().toString();
+                String extraXml = "<timestamp>" + timestamp + "</timestamp><processId>pid-" + java.util.UUID.randomUUID().toString().substring(0,8) + "</processId><randomId>" + java.util.UUID.randomUUID() + "</randomId>";
                 if ("999".equals(account)) {
                     return "<?xml version='1.0' encoding='UTF-8'?>\n<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
                             + "<ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\">"
-                            + "<return><status>SUCCESS</status><transactionId>soap-api1-specific-id-for-999</transactionId></return>"
+                            + "<return><status>SUCCESS</status><transactionId>soap-api1-specific-id-for-999</transactionId>" + extraXml + "</return>"
                             + "</ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>";
                 } else {
                     return "<?xml version='1.0' encoding='UTF-8'?>\n<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
                             + "<ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\">"
-                            + "<return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId></return>"
+                            + "<return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId>" + extraXml + "</return>"
                             + "</ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>";
                 }
             } else if ("\"/Service/orderService.serviceagent/createOrderEndpoint1/Operation\"".equals(soapAction)) {
@@ -138,11 +146,13 @@ public class MockApiServer {
         });
         soapApi2.post("/ws/AccountService", (req, res) -> {
             String soapAction = req.headers("SOAPAction");
-            res.type("text/xml");
+            res.header("Content-Type", "text/xml; charset=utf-8");
             if ("\"getAccountDetails\"".equals(soapAction) || "getAccountDetails".equals(soapAction)) {
+                String timestamp = java.time.Instant.now().toString();
+                String extraXml = "<timestamp>" + timestamp + "</timestamp><processId>pid-" + java.util.UUID.randomUUID().toString().substring(0,8) + "</processId><randomId>" + java.util.UUID.randomUUID() + "</randomId>";
                 return "<?xml version='1.0' encoding='UTF-8'?>\n<soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"><soap:Body>"
                         + "<ns2:getAccountDetailsResponse xmlns:ns2=\"http://service.ws.myorg.com/\">"
-                        + "<return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId></return>"
+                        + "<return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId>" + extraXml + "</return>"
                         + "</ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>";
             } else {
                 res.status(400);

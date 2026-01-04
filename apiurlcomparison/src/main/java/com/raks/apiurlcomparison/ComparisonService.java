@@ -29,9 +29,9 @@ public class ComparisonService {
                     isOriginal ? " (Original Input Payload)" : "");
             try {
                 if ("REST".equalsIgnoreCase(config.getTestType())) {
-                    processApis(config.getRestApis(), currentTokens, allResults, config.getTestType(), isOriginal);
+                    processApis(config.getRestApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields());
                 } else if ("SOAP".equalsIgnoreCase(config.getTestType())) {
-                    processApis(config.getSoapApis(), currentTokens, allResults, config.getTestType(), isOriginal);
+                    processApis(config.getSoapApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields());
                 } else {
                     logger.error("Invalid testType specified in config: {}", config.getTestType());
                 }
@@ -73,7 +73,7 @@ public class ComparisonService {
         }
     }
     private void processApis(Map<String, ApiConfig> apis, Map<String, Object> currentTokens,
-            List<ComparisonResult> allResults, String apiType, boolean isOriginal) {
+            List<ComparisonResult> allResults, String apiType, boolean isOriginal, List<String> ignoredFields) {
         if (apis == null || apis.isEmpty()) {
             logger.warn("No {} APIs configured.", apiType);
             return;
@@ -151,17 +151,19 @@ public class ComparisonService {
                 api1CallResult.setDuration(System.currentTimeMillis() - start1);
                 api1CallResult.setStatusCode(httpResponse1.getStatusCode());
                 api1CallResult.setResponsePayload(httpResponse1.getBody());
+                api1CallResult.setResponseHeaders(httpResponse1.getHeaders());
                 
                 long start2 = System.currentTimeMillis();
                 com.raks.apiurlcomparison.http.HttpResponse httpResponse2 = client2.sendRequest(url2, method2, op2.getHeaders(), payload2);
                 api2CallResult.setDuration(System.currentTimeMillis() - start2);
                 api2CallResult.setStatusCode(httpResponse2.getStatusCode());
                 api2CallResult.setResponsePayload(httpResponse2.getBody());
+                api2CallResult.setResponseHeaders(httpResponse2.getHeaders());
                 
                 logger.info("Comparison - API1 status: {}, API2 status: {}", 
                     httpResponse1.getStatusCode(), httpResponse2.getStatusCode());
                 
-                ComparisonEngine.compare(result, apiType);
+                ComparisonEngine.compare(result, apiType, ignoredFields);
                 
             } catch (Exception e) {
                 logger.error("Error during operation '{}' comparison: {}", op1.getName(), e.getMessage());

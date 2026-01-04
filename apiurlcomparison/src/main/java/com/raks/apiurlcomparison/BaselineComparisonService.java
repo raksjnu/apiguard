@@ -111,8 +111,11 @@ public class BaselineComparisonService {
                 result.setBaselineDescription(baseline.getMetadata().getDescription());
                 result.setBaselineTags(baseline.getMetadata().getTags());
                 result.setBaselineCaptureTimestamp(baseline.getMetadata().getCaptureTimestamp());
-                compareWithBaselineIteration(result, baselineIter, config.getTestType());
+                result.setBaselineTags(baseline.getMetadata().getTags());
+                result.setBaselineCaptureTimestamp(baseline.getMetadata().getCaptureTimestamp());
+                compareWithBaselineIteration(result, baselineIter, config.getTestType(), config.getIgnoredFields());
                 results.add(result);
+                // results.add(result); // Removed duplicate
             } catch (Exception e) {
                 logger.error("Error comparing iteration {}: {}", iterNum, e.getMessage(), e);
                 ComparisonResult errorResult = new ComparisonResult();
@@ -157,6 +160,7 @@ public class BaselineComparisonService {
         apiCallResult.setDuration(System.currentTimeMillis() - start);
         apiCallResult.setStatusCode(httpResponse.getStatusCode());
         apiCallResult.setResponsePayload(httpResponse.getBody());
+        apiCallResult.setResponseHeaders(httpResponse.getHeaders());
         result.setStatus(ComparisonResult.Status.MATCH);
         return result;
     }
@@ -184,31 +188,33 @@ public class BaselineComparisonService {
         responseMetadata.put("statusCode", apiCall.getStatusCode());
         responseMetadata.put("duration", apiCall.getDuration());
         responseMetadata.put("timestamp", result.getTimestamp());
-        responseMetadata.put("contentType", "text/xml;charset=UTF-8");
+        // Simple heuristic for content type (could extract from headers if available)
+        responseMetadata.put("contentType", apiCall.getResponseHeaders().getOrDefault("Content-Type", "text/xml;charset=UTF-8"));
         return new BaselineStorageService.BaselineIteration(
                 iterationNumber,
                 apiCall.getRequestPayload(),
                 apiCall.getRequestHeaders(),
                 requestMetadata,
                 apiCall.getResponsePayload(),
-                new HashMap<>(),
+                apiCall.getResponseHeaders(),
                 responseMetadata);
     }
     private void compareWithBaselineIteration(ComparisonResult result,
             BaselineStorageService.BaselineIteration baseline,
-            String testType) {
+            String testType, List<String> ignoredFields) {
         ApiCallResult baselineApi = new ApiCallResult();
         baselineApi.setUrl(baseline.getRequestMetadata().getEndpoint());
         baselineApi.setMethod(baseline.getRequestMetadata().getMethod());
         baselineApi.setRequestPayload(baseline.getRequestPayload());
         baselineApi.setResponsePayload(baseline.getResponsePayload());
+        baselineApi.setResponseHeaders(baseline.getResponseHeaders());
         Object durationObj = baseline.getResponseMetadata().get("duration");
         if (durationObj instanceof Number) {
             baselineApi.setDuration(((Number) durationObj).longValue());
         }
         baselineApi.setStatusCode((Integer) baseline.getResponseMetadata().get("statusCode"));
         result.setApi2(baselineApi);
-        ComparisonEngine.compare(result, testType);
+        ComparisonEngine.compare(result, testType, ignoredFields);
     }
     private RunMetadata createRunMetadata(String runId, String serviceName, String date,
             ApiConfig apiConfig, Config config, int totalIterations) {

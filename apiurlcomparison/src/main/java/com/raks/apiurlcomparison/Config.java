@@ -19,6 +19,8 @@ public class Config {
     private String comparisonMode = "LIVE"; 
     @JsonProperty("baseline")
     private BaselineConfig baseline;
+    @JsonProperty("ignoredFields")
+    private List<String> ignoredFields;
     public String getTestType() {
         return testType;
     }
@@ -66,6 +68,12 @@ public class Config {
     }
     public void setTokens(Map<String, List<Object>> tokens) {
         this.tokens = tokens;
+    }
+    public List<String> getIgnoredFields() {
+        return ignoredFields;
+    }
+    public void setIgnoredFields(List<String> ignoredFields) {
+        this.ignoredFields = ignoredFields;
     }
     public static class BaselineConfig {
         @JsonProperty("operation")

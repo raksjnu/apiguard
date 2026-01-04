@@ -11,7 +11,7 @@ public class ComparisonEngineTest {
         api2.setResponsePayload("{\"status\":\"success\",\"id\":1}");
         result.setApi1(api1);
         result.setApi2(api2);
-        ComparisonEngine.compare(result, "REST");
+        ComparisonEngine.compare(result, "REST", null);
         assertEquals(ComparisonResult.Status.MATCH.name(), result.getStatus());
         assertTrue(result.getDifferences() == null || result.getDifferences().isEmpty());
     }
@@ -24,7 +24,7 @@ public class ComparisonEngineTest {
         api2.setResponsePayload("{\"status\":\"success\",\"id\":2}");
         result.setApi1(api1);
         result.setApi2(api2);
-        ComparisonEngine.compare(result, "REST");
+        ComparisonEngine.compare(result, "REST", null);
         assertEquals(ComparisonResult.Status.MISMATCH.name(), result.getStatus());
         assertNotNull(result.getDifferences());
         assertFalse(result.getDifferences().isEmpty());
@@ -38,7 +38,7 @@ public class ComparisonEngineTest {
         api2.setResponsePayload("{\"status\":\"success\",\"extra\":\"field\"}");
         result.setApi1(api1);
         result.setApi2(api2);
-        ComparisonEngine.compare(result, "REST");
+        ComparisonEngine.compare(result, "REST", null);
         assertEquals(ComparisonResult.Status.MISMATCH.name(), result.getStatus());
     }
     @Test
@@ -50,7 +50,7 @@ public class ComparisonEngineTest {
         api2.setResponsePayload("<root><status>ok</status></root>");
         result.setApi1(api1);
         result.setApi2(api2);
-        ComparisonEngine.compare(result, "SOAP");
+        ComparisonEngine.compare(result, "SOAP", null);
         assertEquals(ComparisonResult.Status.MATCH.name(), result.getStatus());
     }
     @Test
@@ -62,7 +62,7 @@ public class ComparisonEngineTest {
         api2.setResponsePayload("<root><status>failed</status></root>");
         result.setApi1(api1);
         result.setApi2(api2);
-        ComparisonEngine.compare(result, "SOAP");
+        ComparisonEngine.compare(result, "SOAP", null);
         assertEquals(ComparisonResult.Status.MISMATCH.name(), result.getStatus());
     }
     @Test
@@ -74,7 +74,20 @@ public class ComparisonEngineTest {
         api2.setResponsePayload("<root><status>ok</status></root>");
         result.setApi1(api1);
         result.setApi2(api2);
-        ComparisonEngine.compare(result, "SOAP");
+        ComparisonEngine.compare(result, "SOAP", null);
+        assertEquals(ComparisonResult.Status.MATCH.name(), result.getStatus());
+    }
+    @Test
+    void testCompare_RestWithIgnoredFields() {
+        ComparisonResult result = new ComparisonResult();
+        ApiCallResult api1 = new ApiCallResult();
+        api1.setResponsePayload("{\"status\":\"success\",\"timestamp\":100}");
+        ApiCallResult api2 = new ApiCallResult();
+        api2.setResponsePayload("{\"status\":\"success\",\"timestamp\":200}");
+        result.setApi1(api1);
+        result.setApi2(api2);
+        java.util.List<String> ignored = java.util.Collections.singletonList("timestamp");
+        ComparisonEngine.compare(result, "REST", ignored);
         assertEquals(ComparisonResult.Status.MATCH.name(), result.getStatus());
     }
 }

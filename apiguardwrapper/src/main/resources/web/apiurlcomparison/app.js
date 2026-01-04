@@ -95,50 +95,95 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    let loadedConfig = null;
+
     async function loadDefaults() {
         try {
             const response = await fetch('api/config');
             if (!response.ok) return; // Silent fail if no config api or file
-            const config = await response.json();
-            if (!config) return;
+            loadedConfig = await response.json();
+            if (!loadedConfig) return;
 
             // 1. Basic Fields
-            if (config.testType) document.getElementById('testType').value = config.testType;
-            if (config.iterationController) document.getElementById('iterationController').value = config.iterationController;
-            if (config.maxIterations) document.getElementById('maxIterations').value = config.maxIterations;
+            if (loadedConfig.testType) document.getElementById('testType').value = loadedConfig.testType;
+            if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
+            if (loadedConfig.maxIterations) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
+            if (loadedConfig.ignoredFields && Array.isArray(loadedConfig.ignoredFields) && loadedConfig.ignoredFields.length > 0) {
+                document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
+            } else {
+                document.getElementById('ignoredFields').value = 'timestamp, X-Dynamic-Header';
+            }
 
-            // 2. Determine which API config to use (REST or SOAP)
-            const apis = config.testType === 'SOAP' ? config.soapApis : config.restApis;
-            const activeApis = (config.testType === 'SOAP') ? config.soap : config.rest;
+            // Populate initially based on loaded config
+            populateFormFields(loadedConfig.testType);
 
-            if (activeApis && activeApis.api1 && activeApis.api2) {
-                document.getElementById('url1').value = activeApis.api1.baseUrl || '';
-                document.getElementById('url2').value = activeApis.api2.baseUrl || '';
+        } catch (e) {
+            console.error("Failed to load defaults", e);
+        }
+    }
 
-                // Extract Auth from api1 (assume symmetric)
-                if (activeApis.api1.authentication) {
-                    document.getElementById('clientId').value = activeApis.api1.authentication.clientId || '';
-                    document.getElementById('clientSecret').value = activeApis.api1.authentication.clientSecret || '';
+    // Listener for Type change to reload defaults
+    const testTypeSelect = document.getElementById('testType');
+    if (testTypeSelect) {
+        testTypeSelect.addEventListener('change', () => {
+            if (loadedConfig) {
+                populateFormFields(testTypeSelect.value);
+            }
+        });
+    }
+
+    function populateFormFields(type) {
+        if (!loadedConfig) return;
+        
+        // 2. Determine which API config to use (REST or SOAP)
+        const activeApis = (type === 'SOAP') ? loadedConfig.soap : loadedConfig.rest;
+
+        if (activeApis && activeApis.api1 && activeApis.api2) {
+            document.getElementById('url1').value = activeApis.api1.baseUrl || '';
+            document.getElementById('url2').value = activeApis.api2.baseUrl || '';
+
+            // Extract Auth from api1 (assume symmetric)
+            const enableAuth = document.getElementById('enableAuth');
+            const clientId = document.getElementById('clientId');
+            const clientSecret = document.getElementById('clientSecret');
+
+            if (activeApis.api1.authentication) {
+                if(enableAuth) enableAuth.checked = true;
+                if(clientId) {
+                    clientId.value = activeApis.api1.authentication.clientId || '';
+                    clientId.disabled = false;
+                }
+                if(clientSecret) {
+                    clientSecret.value = activeApis.api1.authentication.clientSecret || '';
+                    clientSecret.disabled = false;
+                }
+            } else {
+                if(enableAuth) enableAuth.checked = false;
+                if(clientId) clientId.disabled = true;
+                if(clientSecret) clientSecret.disabled = true;
+            }
+
+            // Extract Operation Details from api1 (assume 1st operation is main)
+            if (activeApis.api1.operations && activeApis.api1.operations.length > 0) {
+                const op = activeApis.api1.operations[0];
+                if (op.name) document.getElementById('operationName').value = op.name;
+                // Updated: Ensure payload is cleared if null, or set if present
+                document.getElementById('payload').value = op.payloadTemplatePath || ''; 
+                
+                // Populate Method
+                if (op.methods && op.methods.length > 0) {
+                    const methodVal = op.methods[0];
+                    const methodSelect = document.getElementById('method');
+                    // Ensure value exists in select options
+                    if ([...methodSelect.options].some(o => o.value === methodVal)) {
+                        methodSelect.value = methodVal;
+                    }
                 }
 
-                // Extract Operation Details from api1 (assume 1st operation is main)
-                if (activeApis.api1.operations && activeApis.api1.operations.length > 0) {
-                    const op = activeApis.api1.operations[0];
-                    if (op.name) document.getElementById('operationName').value = op.name;
-                    if (op.payloadTemplatePath) document.getElementById('payload').value = op.payloadTemplatePath;
-                    // Populate Method
-                    if (op.methods && op.methods.length > 0) {
-                        const methodVal = op.methods[0];
-                        const methodSelect = document.getElementById('method');
-                        // Ensure value exists in select options
-                        if ([...methodSelect.options].some(o => o.value === methodVal)) {
-                            methodSelect.value = methodVal;
-                        }
-                    }
-
-                    // Populate Headers
-                    if (op.headers && headersTable) {
-                        headersTable.innerHTML = ''; // Clear existing
+                // Populate Headers
+                if (headersTable) {
+                    headersTable.innerHTML = ''; // Clear existing
+                    if (op.headers) {
                         Object.entries(op.headers).forEach(([k, v]) => {
                             addRow(headersTable, ['Header Name', 'Value']);
                             const lastRow = headersTable.lastElementChild;
@@ -150,25 +195,22 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 }
             }
+        }
 
-            // 3. Populate Tokens
-            if (config.tokens && tokensTable) {
-                tokensTable.innerHTML = ''; // Clear existing
-                Object.entries(config.tokens).forEach(([k, list]) => {
-                    if (Array.isArray(list)) {
-                        const valStr = list.join('; ');
-                        addRow(tokensTable, ['Token Name', 'Values (semicolon separated)']);
-                        const lastRow = tokensTable.lastElementChild;
-                        if (lastRow) {
-                            lastRow.querySelector('.key-input').value = k;
-                            lastRow.querySelector('.value-input').value = valStr;
-                        }
+        // 3. Populate Tokens (Global, not per type usually, but refreshing cleanly)
+        if (loadedConfig.tokens && tokensTable) {
+            tokensTable.innerHTML = ''; // Clear existing
+            Object.entries(loadedConfig.tokens).forEach(([k, list]) => {
+                if (Array.isArray(list)) {
+                    const valStr = list.join('; ');
+                    addRow(tokensTable, ['Token Name', 'Values (semicolon separated)']);
+                    const lastRow = tokensTable.lastElementChild;
+                    if (lastRow) {
+                        lastRow.querySelector('.key-input').value = k;
+                        lastRow.querySelector('.value-input').value = valStr;
                     }
-                });
-            }
-
-        } catch (e) {
-            console.error("Failed to load defaults", e);
+                }
+            });
         }
     }
 
@@ -308,6 +350,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const payloadTemplate = document.getElementById('payload').value;
         const iterationType = document.getElementById('iterationController').value;
         const maxIterations = parseInt(document.getElementById('maxIterations').value) || 100;
+        
+        const ignoredFieldsStr = document.getElementById('ignoredFields').value;
+        const ignoredFields = ignoredFieldsStr ? ignoredFieldsStr.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
 
         const clientId = document.getElementById('clientId').value;
         const clientSecret = document.getElementById('clientSecret').value;
@@ -353,11 +398,12 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        const auth = {
+        const isAuthEnabled = document.getElementById('enableAuth').checked;
+        const auth = isAuthEnabled ? {
             tokenUrl: null, // Basic auth doesn't strictly need this for simple username/password
             clientId: clientId || null,
             clientSecret: clientSecret || null
-        };
+        } : null;
 
         const opConfig = {
             name: opName,
@@ -384,7 +430,8 @@ document.addEventListener('DOMContentLoaded', () => {
             iterationController: iterationType,
             tokens: tokens,
             rest: { api1: apiConfig1, api2: apiConfig2 },
-            soap: { api1: apiConfig1, api2: apiConfig2 }
+            soap: { api1: apiConfig1, api2: apiConfig2 },
+            ignoredFields: ignoredFields
         };
 
         return config;
@@ -491,8 +538,35 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             const tokenDisplay = tokenStr ? `<br><small style="color:#666; font-weight:normal;">Tokens: ${tokenStr}</small>` : '';
 
-            // Timestamp
-            const timeDisplay = res.timestamp ? `<span style="font-size:0.75rem; color:#999; margin-left: 10px;">${res.timestamp}</span>` : '';
+            // Helper for formatted timestamp
+            const fmtTime = (ts) => {
+                if (!ts) return 'Now';
+                // Check if it looks like a date string
+                if (typeof ts === 'string' && ts.length > 5) {
+                    try {
+                        return new Date(ts).toLocaleString('en-US', { 
+                            year: 'numeric', month: '2-digit', day: '2-digit', 
+                            hour: '2-digit', minute: '2-digit', second: '2-digit', 
+                            timeZoneName: 'short' 
+                        });
+                    } catch (e) { return ts; }
+                }
+                return ts;
+            };
+
+            // Timestamp Logic
+            let timeDisplay = '';
+            if (res.baselineCaptureTimestamp) {
+                // Dual timestamp for baseline comparison
+                timeDisplay = `
+                    <div style="text-align:right; font-size:0.75rem; color:#666;">
+                        <div>Baseline: ${fmtTime(res.baselineCaptureTimestamp)}</div>
+                        <div>Current: ${fmtTime(res.timestamp)}</div>
+                    </div>`;
+            } else {
+                // Single timestamp for live comparison
+                timeDisplay = res.timestamp ? `<span style="font-size:0.75rem; color:#999; margin-left: 10px;">${fmtTime(res.timestamp)}</span>` : '';
+            }
 
             const card = document.createElement('div');
             card.className = `result-item`;
@@ -536,6 +610,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     return `<pre>${formatJson(payload)}</pre>`;
                 };
 
+                // Helper to render headers
+                const renderHeaders = (headers) => {
+                    if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
+                    let html = '<div style="max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; background:#fafafa;">';
+                    html += '<table style="width:100%; font-size:0.8rem; border-collapse:collapse;">';
+                    Object.entries(headers).forEach(([k, v]) => {
+                        html += `<tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:2px 5px; font-weight:600; color:#444; width:30%; vertical-align:top;">${escapeHtml(k)}:</td><td style="padding:2px 5px; color:#333; word-break:break-all;">${escapeHtml(v)}</td></tr>`;
+                    });
+                    html += '</table></div>';
+                    return html;
+                };
+
                 // Request Payload (Common)
                 const reqPayload = res.api1 && res.api1.requestPayload ? res.api1.requestPayload : '';
                 const reqDisplay = reqPayload ? `
@@ -550,6 +636,13 @@ document.addEventListener('DOMContentLoaded', () => {
                         ${reqDisplay}
                         <div class="single-view">
                             <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #2e7d32; font-weight: 600;">Response (Identical)</h4>
+                            
+                            <div style="margin-bottom:10px;">
+                                <strong style="font-size:0.8rem;">Headers:</strong>
+                                ${renderHeaders(res.api1.responseHeaders)}
+                            </div>
+
+                            <strong style="font-size:0.8rem;">Payload:</strong>
                             ${renderPayload(res.api1.responsePayload)}
                             <p><small>Duration: ${res.api1.duration}ms</small></p>
                         </div>
@@ -566,10 +659,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="comparison-grid">
                             <div class="payload-box">
                                 <h4>${api1Label} Response (${res.api1.duration}ms)</h4>
+                                <div style="margin-bottom:10px;">
+                                    <strong style="font-size:0.8rem;">Headers:</strong>
+                                    ${renderHeaders(res.api1.responseHeaders)}
+                                </div>
+                                <strong style="font-size:0.8rem;">Payload:</strong>
                                 ${renderPayload(res.api1.responsePayload)}
                             </div>
                             <div class="payload-box">
                                 <h4>${api2Label} Response (${res.api2.duration}ms)</h4>
+                                <div style="margin-bottom:10px;">
+                                    <strong style="font-size:0.8rem;">Headers:</strong>
+                                    ${renderHeaders(res.api2.responseHeaders)}
+                                </div>
+                                <strong style="font-size:0.8rem;">Payload:</strong>
                                 ${renderPayload(res.api2.responsePayload)}
                             </div>
                         </div>
@@ -935,4 +1038,62 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error fetching baseline endpoint:', error);
         }
     }
+    // --- NEW: Auth Toggle Logic ---
+    const enableAuth = document.getElementById('enableAuth');
+    const clientIdInput = document.getElementById('clientId');
+    const clientSecretInput = document.getElementById('clientSecret');
+
+    if (enableAuth) {
+        enableAuth.addEventListener('change', () => {
+            const isEnabled = enableAuth.checked;
+            if (clientIdInput) clientIdInput.disabled = !isEnabled;
+            if (clientSecretInput) clientSecretInput.disabled = !isEnabled;
+        });
+    }
+
+    // --- NEW: Ignored Fields Logic ---
+    function updateIgnoredFieldsState() {
+        const comparisonMode = document.getElementById('comparisonMode');
+        const baselineOperation = document.getElementById('baselineOperation');
+        
+        const mode = comparisonMode ? comparisonMode.value : 'LIVE';
+        const operation = baselineOperation ? baselineOperation.value : 'CAPTURE';
+        const ignoredFieldsInput = document.getElementById('ignoredFields');
+        
+        if (ignoredFieldsInput) {
+            // Logic Update:
+            // ENABLED for LIVE mode
+            // ENABLED for BASELINE COMPARE mode
+            // DISABLED for BASELINE CAPTURE mode
+            
+            let shouldEnable = true;
+            if (mode === 'BASELINE' && operation === 'CAPTURE') {
+                shouldEnable = false;
+            }
+
+            if (shouldEnable) {
+                ignoredFieldsInput.disabled = false;
+                ignoredFieldsInput.style.opacity = '1';
+                ignoredFieldsInput.closest('.input-group').style.opacity = '1';
+            } else {
+                ignoredFieldsInput.disabled = true;
+                ignoredFieldsInput.style.opacity = '0.6';
+                ignoredFieldsInput.closest('.input-group').style.opacity = '0.6';
+            }
+        }
+    }
+
+    // Hook up listeners for Ignored Fields
+    const comparisonMode = document.getElementById('comparisonMode');
+    const baselineOperation = document.getElementById('baselineOperation');
+
+    if (comparisonMode) {
+        comparisonMode.addEventListener('change', updateIgnoredFieldsState);
+    }
+    if (baselineOperation) {
+        baselineOperation.addEventListener('change', updateIgnoredFieldsState);
+    }
+    
+    // Initial call
+    updateIgnoredFieldsState();
 });

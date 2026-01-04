@@ -88,7 +88,11 @@ public class ApiClient {
             try (CloseableHttpResponse response = client.execute(request)) {
                 int statusCode = response.getStatusLine().getStatusCode();
                 String responseBody = EntityUtils.toString(response.getEntity());
-                return new HttpResponse(statusCode, responseBody);
+                Map<String, String> respHeaders = new java.util.HashMap<>();
+                for (org.apache.http.Header header : response.getAllHeaders()) {
+                    respHeaders.put(header.getName(), header.getValue());
+                }
+                return new HttpResponse(statusCode, responseBody, respHeaders);
             }
         }
     }

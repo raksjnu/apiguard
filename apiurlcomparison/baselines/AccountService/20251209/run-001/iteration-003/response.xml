@@ -1,1 +1,0 @@
-<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"><soap:Body><ns2:getAccountDetailsResponse xmlns:ns2="http://service.ws.myorg.com/"><return><status>SUCCESS</status><transactionId>shared-soap-id-12345</transactionId><timestamp>2025-12-01T10:00:00Z</timestamp></return></ns2:getAccountDetailsResponse></soap:Body></soap:Envelope>
