@@ -59,11 +59,13 @@ The GUI will automatically open in your default browser at `http://localhost:456
 
 **GUI Features:**
 - Interactive configuration form with default SOAP type
-- Real-time execution dashboard
+- Real-time execution dashboard with **Response Header Comparison**
 - Visual comparison results with professional purple theme
+- **Ignored Fields**: Exclude dynamic fields (e.g., timestamp, token) from comparison
+- **Authentication Control**: Toggle Basic Auth support easily
 - Expandable iteration details with horizontal scrolling
 - XML/SOAP pretty-printing for better readability
-- Timestamp with timezone in execution summary
+- **Dual Timestamps**: View Baseline capture time vs Current execution time (with Timezone)
 - Full-width responsive layout
 
 ## Production Verification Workflow
@@ -456,9 +458,11 @@ open reports/results.html
 java -jar target/apiurlcomparison-1.0.0.jar
 
 # 2. Configure in browser:
+#    - Select Type (REST/SOAP) and Mode (Live/Baseline)
 #    - Enter endpoint URLs
-#    - Add payload template
-#    - Define tokens
+#    - (Optional) Check "Enable Authentication" for Basic Auth
+#    - (Optional) Enter "Ignored Fields" to skip dynamic values
+#    - Add payload template and define tokens
 #    - Click "Run Comparison"
 
 # 3. View results in the Execution Dashboard

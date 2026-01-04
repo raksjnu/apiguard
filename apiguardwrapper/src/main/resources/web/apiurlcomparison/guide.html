@@ -162,6 +162,10 @@
                     </ul>
                 </li>
                 <li><strong>Endpoints:</strong> Enter the full URLs for your APIs (e.g., <code>http://api.example.com/v1/resource</code>).</li>
+                <li><strong>Enable Authentication:</strong> Check this to provide Client ID and Client Secret for Basic Authentication.</li>
+                <li><strong>Ignored Fields:</strong> Comma-separated list of JSON keys or XML tags to exclude from comparison (e.g., <code>timestamp, processId</code>).
+                    <br><em>Note: This is enabled for Live and Compare modes, but disabled for Capture Baseline mode.</em>
+                </li>
                 <li><strong>Payload:</strong> Paste your JSON or XML body template. Use tokens like <code>{{id}}</code> for dynamic values.</li>
             </ul>
 
@@ -183,6 +187,14 @@
                 <li><span class="badge" style="background-color: #dc3545;">MISMATCH</span> - Differences found (highlighted in red).</li>
                 <li><span class="badge" style="background-color: #ffc107; color: #000;">ERROR</span> - Connection or server error.</li>
             </ul>
+            <div class="note">
+                <strong>Result Details:</strong>
+                <ul>
+                    <li><strong>Timestamps:</strong> Displays both "Baseline" (original capture time) and "Current" (execution time) with timezone context (e.g., CST/EST).</li>
+                    <li><strong>Headers:</strong> Response headers are now captured and displayed for both APIs. Headers defined in "Ignored Fields" (e.g., <code>Date, Server</code>) will not cause a mismatch.</li>
+                    <li><strong>Differences:</strong> Mismatches are shown with field-level granularity.</li>
+                </ul>
+            </div>
         </section>
 
         <section class="guide-section" id="baseline-testing">
@@ -192,13 +204,6 @@
             <div class="tip">
                 <strong>New Feature: Working Directory</strong><br>
                 You can now specify a custom <strong>Working Directory</strong> in the UI. This determines where baseline files are saved and loaded from. Use this to organize baselines by project or environment (e.g., <code>C:\baselines\prod_release_v2</code>).
-            </div>
-
-            <div class="tip" style="background-color: #fff3cd; color: #856404; border-left: 5px solid #ffeeba;">
-                <strong>CloudHub Limitation:</strong><br>
-                When deployed to CloudHub, this application <strong>cannot access your local computer's filesystem</strong> (e.g., <code>C:\Users</code> or <code>/Users</code>). Baselines saved during a CloudHub session are stored in the server's temporary storage and will be lost if the application restarts.
-                <br><br>
-                <strong>Recommendation:</strong> To create and manage persistent baselines on your local disk, use the <strong>Standalone Java Tool</strong> running locally on your machine.
             </div>
 
             <h3>Workflow: Production Deployment Verification</h3>
