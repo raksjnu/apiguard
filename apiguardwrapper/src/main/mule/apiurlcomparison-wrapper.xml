@@ -260,7 +260,11 @@ output application/json
 
     <!-- REST API 1 Mock -->
     <flow name="mock-api1-flow">
-        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/api1/*" allowedMethods="GET, POST"/>
+        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/api1/*" allowedMethods="GET, POST">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[{"Content-Type": "application/json; charset=utf-8"}]]]></http:headers>
+            </http:response>
+        </http:listener>
         <os:retrieve key="mockRunning" target="mockRunning">
             <os:default-value><![CDATA[#[false]]]></os:default-value>
         </os:retrieve>
@@ -279,11 +283,16 @@ output application/json
                                 <ee:set-payload><![CDATA[%dw 2.0
         output application/json
         var account = payload.account default ""
+        var common = {
+            timestamp: now(),
+            processId: "pid-" ++ (uuid()[0 to 7]),
+            randomId: uuid()
+        }
         ---
         if (account == "999") 
-          {status:"success", id:"api1-specific-id-for-999"}
+          {status:"success", id:"api1-specific-id-for-999"} ++ common
         else 
-          {status:"success", id:"shared-id-12345"}
+          {status:"success", id:"shared-id-12345"} ++ common
         ]]></ee:set-payload>
                             </ee:message>
                          </ee:transform>
@@ -298,6 +307,7 @@ output application/json
                     </when>
                     <otherwise>
                         <set-payload value='{"error": "Mock endpoint not found"}' mimeType="application/json"/>
+                        <set-variable variableName="httpStatus" value="404"/>
                     </otherwise>
                 </choice>
             </otherwise>
@@ -307,7 +317,11 @@ output application/json
 
     <!-- REST API 2 Mock -->
     <flow name="mock-api2-flow">
-        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/api2/*" allowedMethods="GET, POST"/>
+        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/api2/*" allowedMethods="GET, POST">
+             <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[{"Content-Type": "application/json; charset=utf-8"}]]]></http:headers>
+            </http:response>
+        </http:listener>
         <os:retrieve key="mockRunning" target="mockRunning">
             <os:default-value><![CDATA[#[false]]]></os:default-value>
         </os:retrieve>
@@ -321,7 +335,20 @@ output application/json
                 <choice>
                      <!-- /api/resource (POST) -->
                     <when expression="#[vars.subPath == 'api/resource' and attributes.method == 'POST']">
-                         <set-payload value='#[%dw 2.0 output application/json --- {"status":"success","id":"shared-id-12345"}]' mimeType="application/json"/>
+                         <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+        output application/json
+        var common = {
+            timestamp: now(),
+            processId: "pid-" ++ (uuid()[0 to 7]),
+            randomId: uuid()
+        }
+        ---
+        {status:"success", id:"shared-id-12345"} ++ common
+        ]]></ee:set-payload>
+                            </ee:message>
+                         </ee:transform>
                     </when>
                     <!-- /api/resource (GET) -->
                     <when expression="#[vars.subPath == 'api/resource' and attributes.method == 'GET']">
@@ -333,6 +360,7 @@ output application/json
                     </when>
                      <otherwise>
                         <set-payload value='{"error": "Mock endpoint not found"}' mimeType="application/json"/>
+                        <set-variable variableName="httpStatus" value="404"/>
                     </otherwise>
                 </choice>
             </otherwise>
@@ -341,7 +369,11 @@ output application/json
 
     <!-- SOAP API 1 Mock -->
     <flow name="mock-soap1-flow">
-        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/soap1/*" allowedMethods="POST"/>
+        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/soap1/*" allowedMethods="POST">
+             <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[{"Content-Type": "text/xml; charset=utf-8"}]]]></http:headers>
+            </http:response>
+        </http:listener>
         <os:retrieve key="mockRunning" target="mockRunning">
             <os:default-value><![CDATA[#[false]]]></os:default-value>
         </os:retrieve>
@@ -364,6 +396,11 @@ output application/json
         ns ns2 http://service.ws.myorg.com/
         var bodyStr = write(payload, "application/xml")
         var is999 = (bodyStr contains ">999<")
+        var common = {
+            timestamp: now(),
+            processId: "pid-" ++ (uuid()[0 to 7]),
+            randomId: uuid()
+        }
         ---
         soap#Envelope: {
             soap#Body: {
@@ -371,15 +408,12 @@ output application/json
                     return: {
                         status: "SUCCESS",
                         transactionId: if (is999) "soap-api1-specific-id-for-999" else "shared-soap-id-12345"
-                    }
+                    } ++ common
                 }
             }
         }
         ]]></ee:set-payload>
                             </ee:message>
-                            <ee:variables>
-                                <ee:set-variable variableName="contentType"><![CDATA['text/xml']]></ee:set-variable>
-                            </ee:variables>
                          </ee:transform>
                     </when>
                     <!-- createOrder -->
@@ -403,9 +437,6 @@ output application/json
         }
         ]]></ee:set-payload>
                             </ee:message>
-                             <ee:variables>
-                                <ee:set-variable variableName="contentType"><![CDATA['text/xml']]></ee:set-variable>
-                            </ee:variables>
                          </ee:transform>
                     </when>
                      <otherwise>
@@ -419,7 +450,11 @@ output application/json
 
     <!-- SOAP API 2 Mock -->
     <flow name="mock-soap2-flow">
-        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/soap2/*" allowedMethods="POST"/>
+        <http:listener config-ref="HTTP_Listener_config" path="/apiurlcomparison/mock/soap2/*" allowedMethods="POST">
+             <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[{"Content-Type": "text/xml; charset=utf-8"}]]]></http:headers>
+            </http:response>
+        </http:listener>
         <os:retrieve key="mockRunning" target="mockRunning">
             <os:default-value><![CDATA[#[false]]]></os:default-value>
         </os:retrieve>
@@ -439,6 +474,11 @@ output application/json
         output application/xml
         ns soap http://schemas.xmlsoap.org/soap/envelope/
         ns ns2 http://service.ws.myorg.com/
+        var common = {
+            timestamp: now(),
+            processId: "pid-" ++ (uuid()[0 to 7]),
+            randomId: uuid()
+        }
         ---
         soap#Envelope: {
             soap#Body: {
@@ -446,15 +486,12 @@ output application/json
                     return: {
                         status: "SUCCESS",
                         transactionId: "shared-soap-id-12345"
-                    }
+                    } ++ common
                 }
             }
         }
         ]]></ee:set-payload>
                             </ee:message>
-                             <ee:variables>
-                                <ee:set-variable variableName="contentType"><![CDATA['text/xml']]></ee:set-variable>
-                            </ee:variables>
                          </ee:transform>
                     </when>
                      <otherwise>
