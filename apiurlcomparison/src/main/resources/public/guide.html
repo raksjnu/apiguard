@@ -162,9 +162,9 @@
                     </ul>
                 </li>
                 <li><strong>Endpoints:</strong> Enter the full URLs for your APIs (e.g., <code>http://api.example.com/v1/resource</code>).</li>
-                <li><strong>Enable Authentication:</strong> Check this to provide Client ID and Client Secret for Basic Authentication.</li>
-                <li><strong>Ignored Fields:</strong> Comma-separated list of JSON keys or XML tags to exclude from comparison (e.g., <code>timestamp, processId</code>).
-                    <br><em>Note: This is enabled for Live and Compare modes, but disabled for Capture Baseline mode.</em>
+                <li><strong>Enable Authentication:</strong> (Optional) Check this box if your API requires Basic Authentication. This enables the <em>Client ID</em> and <em>Client Secret</em> fields.</li>
+                <li><strong>Ignored Fields:</strong> (Optional) Enter flexible fields that change with every request (like <code>timestamp</code>, <code>processId</code>, <code>guid</code>). The tool will <strong>skip comparison</strong> for these specific JSON keys or XML tags, ensuring you don't get false mismatches.
+                    <br><em>Note: Only applicable in Live and Compare modes.</em>
                 </li>
                 <li><strong>Payload:</strong> Paste your JSON or XML body template. Use tokens like <code>{{id}}</code> for dynamic values.</li>
             </ul>
@@ -187,12 +187,14 @@
                 <li><span class="badge" style="background-color: #dc3545;">MISMATCH</span> - Differences found (highlighted in red).</li>
                 <li><span class="badge" style="background-color: #ffc107; color: #000;">ERROR</span> - Connection or server error.</li>
             </ul>
-            <div class="note">
-                <strong>Result Details:</strong>
+                <li><span class="badge" style="background-color: #ffc107; color: #000;">ERROR</span> - Connection or server error.</li>
+            </ul>
+            <div class="tip">
+                <strong>Understanding Results:</strong>
                 <ul>
-                    <li><strong>Timestamps:</strong> Displays both "Baseline" (original capture time) and "Current" (execution time) with timezone context (e.g., CST/EST).</li>
-                    <li><strong>Headers:</strong> Response headers are now captured and displayed for both APIs. Headers defined in "Ignored Fields" (e.g., <code>Date, Server</code>) will not cause a mismatch.</li>
-                    <li><strong>Differences:</strong> Mismatches are shown with field-level granularity.</li>
+                    <li><strong>Matches:</strong> Indicates the API response status, headers, and body are identical.</li>
+                    <li><strong>Mismatches:</strong> Differences in Body, Headers, or Status are highlighted.</li>
+                    <li><strong>Ignored Fields:</strong> If you specified fields to ignore (e.g., timestamp), differences in those fields will NOT cause a mismatch.</li>
                 </ul>
             </div>
         </section>
