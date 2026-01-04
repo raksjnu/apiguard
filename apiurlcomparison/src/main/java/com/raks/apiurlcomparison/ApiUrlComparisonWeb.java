@@ -180,8 +180,11 @@ public class ApiUrlComparisonWeb {
                 String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
                 String endpoint = storageService.getRunEndpoint(serviceName, date, runId);
+                String payload = storageService.getRunRequestPayload(serviceName, date, runId);
+                
                 java.util.Map<String, String> result = new java.util.HashMap<>();
                 result.put("endpoint", endpoint);
+                result.put("payload", payload);
                 return mapper.writeValueAsString(result);
             } catch (Exception e) {
                 logger.error("Error fetching baseline endpoint", e);

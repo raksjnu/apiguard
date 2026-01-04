@@ -119,8 +119,11 @@ public class ApiUrlComparisonInvoker {
              if (workDir == null) return "{\"endpoint\": null}";
              com.raks.apiurlcomparison.BaselineStorageService storage = new com.raks.apiurlcomparison.BaselineStorageService(workDir);
              String endpoint = storage.getRunEndpoint(serviceName, date, runId);
+             String payload = storage.getRunRequestPayload(serviceName, date, runId);
+             
              Map<String, String> result = new HashMap<>();
              result.put("endpoint", endpoint);
+             result.put("payload", payload);
              return objectMapper.writeValueAsString(result);
         } catch (Exception e) {
             logger.error("Error fetching run endpoint", e);

@@ -487,7 +487,9 @@ document.addEventListener('DOMContentLoaded', () => {
         // Check if this is a baseline operation
         const isBaselineMode = results.length > 0 && results[0].baselinePath;
         const baselinePath = isBaselineMode ? results[0].baselinePath : null;
+        // Determine exact mode: 'Baseline Used' (Compare) or 'Baseline Captured' (Capture)
         const baselineOperation = isBaselineMode ? (results[0].api2 ? 'Baseline Used' : 'Baseline Captured') : null;
+        const isCaptureMode = baselineOperation === 'Baseline Captured';
 
         const summaryContainer = document.createElement('div');
         summaryContainer.style.marginBottom = '20px';
@@ -504,20 +506,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
         execSummaryHtml += `<div><strong>Report Generated:</strong> ${timestamp}</div>`;
 
+        let comparisonSummaryContent = '';
+        if (isCaptureMode) {
+             comparisonSummaryContent = `
+                <div><span class="status-MATCH" style="background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;">Captured: ${matches}</span></div>
+                <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
+             `;
+        } else {
+             comparisonSummaryContent = `
+                <div><span class="status-MATCH">Matches: ${matches}</span></div>
+                <div style="margin-top:5px;"><span class="status-MISMATCH">Mismatches: ${mismatches}</span></div>
+                <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
+             `;
+        }
+
         summaryContainer.innerHTML = `
             <div class="comparison-grid" style="gap: 10px;">
-                <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+                <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #27173e;">
                     <h3 style="margin-bottom: 10px; font-size: 1rem; color: #27173e;">Execution Summary</h3>
                     <div style="font-size: 0.9rem; line-height: 1.6;">
                         ${execSummaryHtml}
                     </div>
                 </div>
-                <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-                    <h3 style="margin-bottom: 10px; font-size: 1rem; color: #27173e;">Comparison Summary</h3>
+                <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #27173e;">
+                    <h3 style="margin-bottom: 10px; font-size: 1rem; color: #27173e;">${isCaptureMode ? 'Capture Summary' : 'Comparison Summary'}</h3>
                     <div style="font-size: 0.9rem; line-height: 1.6;">
-                        <div><span class="status-MATCH">Matches: ${matches}</span></div>
-                        <div style="margin-top:5px;"><span class="status-MISMATCH">Mismatches: ${mismatches}</span></div>
-                        <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
+                        ${comparisonSummaryContent}
                     </div>
                 </div>
             </div>
@@ -527,7 +541,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         results.forEach((res, index) => {
             const isMatch = res.status === 'MATCH';
-            const statusClass = isMatch ? 'status-MATCH' : (res.status === 'MISMATCH' ? 'status-MISMATCH' : 'status-ERROR');
+            let statusClass = isMatch ? 'status-MATCH' : (res.status === 'MISMATCH' ? 'status-MISMATCH' : 'status-ERROR');
+            let statusLabel = res.status;
+
+            if (isCaptureMode && isMatch) {
+                statusLabel = "CAPTURED";
+                // Optional: Custom style for CAPTURED if we want it distinct from MATCH, otherwise reuses MATCH style
+                // Inline override for specific label if needed, or just let it use status-MATCH class but with different text
+            }
 
             // Format tokens string: "account=123; id=456"
             let tokenStr = '';
@@ -571,6 +592,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const card = document.createElement('div');
             card.className = `result-item`;
 
+            // Adjust badge style for CAPTURED if desired
+            const badgeStyle = (isCaptureMode && isMatch) ? 'background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;' : '';
+
             const header = document.createElement('div');
             header.className = 'result-header';
             header.innerHTML = `
@@ -580,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 </div>
                 <div>
                    ${timeDisplay}
-                   <span class="${statusClass}" style="margin-left:10px;">${res.status}</span>
+                   <span class="${statusClass}" style="margin-left:10px; ${badgeStyle}">${statusLabel}</span>
                 </div>
             `;
             header.onclick = () => card.classList.toggle('expanded');
@@ -631,11 +655,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>` : '';
 
                 if (isMatch) {
+                    const successTitle = isCaptureMode ? 'Response Received' : 'Response (Identical)';
+                    const titleColor = isCaptureMode ? '#27173e' : '#2e7d32'; // Purple for capture, Green for match
+
                     body.innerHTML = `
                         ${diffHtml}
                         ${reqDisplay}
                         <div class="single-view">
-                            <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #2e7d32; font-weight: 600;">Response (Identical)</h4>
+                            <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: ${titleColor}; font-weight: 600;">${successTitle}</h4>
                             
                             <div style="margin-bottom:10px;">
                                 <strong style="font-size:0.8rem;">Headers:</strong>
@@ -935,6 +962,13 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             select.disabled = false;
+
+            // Auto-select latest (last) service
+            if (services.length > 0) {
+                const latestService = services[services.length - 1];
+                select.value = latestService;
+                loadBaselineDates(latestService);
+            }
         } catch (error) {
             console.error('Error loading baseline services:', error);
         }
@@ -993,7 +1027,8 @@ document.addEventListener('DOMContentLoaded', () => {
             runs.forEach(run => {
                 const option = document.createElement('option');
                 option.value = run.runId;
-                const label = `${run.runId} - ${run.description || 'No description'} (${run.totalIterations} iterations)`;
+                const formattedTags = (run.tags && run.tags.length > 0) ? ` [${run.tags.join(', ')}]` : '';
+                const label = `${run.runId} - ${run.description || 'No description'}${formattedTags} (${run.totalIterations} iterations)`;
                 option.textContent = label;
                 select.appendChild(option);
             });
@@ -1033,6 +1068,16 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                  // Warning if no endpoint found? Or just log
                  console.log("No endpoint found for this run");
+            }
+
+            if (data && data.payload) {
+                const payloadInput = document.getElementById('payload');
+                if (payloadInput) {
+                    payloadInput.value = data.payload;
+                    // Visual feedback
+                    payloadInput.style.backgroundColor = '#e8f5e9';
+                    setTimeout(() => payloadInput.style.backgroundColor = '', 1000);
+                }
             }
         } catch (error) {
             console.error('Error fetching baseline endpoint:', error);

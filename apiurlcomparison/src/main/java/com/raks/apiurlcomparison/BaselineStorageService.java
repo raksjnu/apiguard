@@ -172,9 +172,9 @@ public class BaselineStorageService {
 
     public String getRunEndpoint(String serviceName, String date, String runId) throws IOException {
         Path runDir = getRunDirectory(serviceName, date, runId);
-        Path iterDir = runDir.resolve("iteration-001");
         
-        // If specific iteration-001 doesn't exist, find first available iteration
+        // Find iteration-001 or first available
+        Path iterDir = runDir.resolve("iteration-001");
         if (!Files.exists(iterDir)) {
             File[] files = runDir.toFile().listFiles((dir, name) -> name.startsWith("iteration-"));
             if (files == null || files.length == 0) {
@@ -196,6 +196,39 @@ public class BaselineStorageService {
             logger.warn("Failed to read endpoint from metadata: {}", e.getMessage());
             return null;
         }
+    }
+
+    public String getRunRequestPayload(String serviceName, String date, String runId) throws IOException {
+        Path runDir = getRunDirectory(serviceName, date, runId);
+        
+        // Find iteration-001 or first available
+        Path iterDir = runDir.resolve("iteration-001");
+        if (!Files.exists(iterDir)) {
+             try (java.util.stream.Stream<Path> stream = Files.list(runDir)) {
+                 iterDir = stream
+                    .filter(Files::isDirectory)
+                    .filter(p -> p.getFileName().toString().startsWith("iteration-"))
+                    .sorted()
+                    .findFirst()
+                    .orElse(null);
+             }
+        }
+        
+        if (iterDir != null) {
+             Path requestFile = iterDir.resolve("request.xml"); 
+             if (Files.exists(requestFile)) {
+                 return new String(Files.readAllBytes(requestFile), java.nio.charset.StandardCharsets.UTF_8);
+             }
+             Path requestJson = iterDir.resolve("request.json"); 
+             if (Files.exists(requestJson)) {
+                 return new String(Files.readAllBytes(requestJson), java.nio.charset.StandardCharsets.UTF_8);
+             }
+             Path requestTxt = iterDir.resolve("request.txt");
+             if (Files.exists(requestTxt)) {
+                 return new String(Files.readAllBytes(requestTxt), java.nio.charset.StandardCharsets.UTF_8);
+             }
+        }
+        return null;
     }
     public static String getTodayDate() {
         return LocalDate.now().format(DATE_FORMATTER);

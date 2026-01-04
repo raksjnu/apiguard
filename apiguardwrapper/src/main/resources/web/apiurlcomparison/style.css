@@ -115,6 +115,7 @@ body {
     border-radius: 8px;
     background-color: #fafafa;
     transition: border-color 0.2s ease;
+    border-left: 5px solid #27173e;
 }
 
 .input-group:hover {
@@ -127,7 +128,12 @@ body {
     font-size: 0.85rem;
     font-weight: 600;
     margin-bottom: 5px;
-    color: #555;
+    color: #27173e;
+}
+
+.toggle-group label {
+    font-weight: 600;
+    color: #27173e;
 }
 
 input,
@@ -216,6 +222,7 @@ textarea:focus {
     overflow: hidden;
     box-shadow: 0 2px 8px rgba(94, 39, 139, 0.08);
     transition: box-shadow 0.2s ease, border-color 0.2s ease;
+    border-left: 5px solid #27173e;
 }
 
 .result-item:hover {
