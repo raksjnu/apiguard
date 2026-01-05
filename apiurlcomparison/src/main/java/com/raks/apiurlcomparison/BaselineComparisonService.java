@@ -113,7 +113,7 @@ public class BaselineComparisonService {
                 result.setBaselineCaptureTimestamp(baseline.getMetadata().getCaptureTimestamp());
                 result.setBaselineTags(baseline.getMetadata().getTags());
                 result.setBaselineCaptureTimestamp(baseline.getMetadata().getCaptureTimestamp());
-                compareWithBaselineIteration(result, baselineIter, config.getTestType(), config.getIgnoredFields());
+                compareWithBaselineIteration(result, baselineIter, config.getTestType(), config.getIgnoredFields(), config.isIgnoreHeaders());
                 results.add(result);
                 // results.add(result); // Removed duplicate
             } catch (Exception e) {
@@ -201,9 +201,10 @@ public class BaselineComparisonService {
     }
     private void compareWithBaselineIteration(ComparisonResult result,
             BaselineStorageService.BaselineIteration baseline,
-            String testType, List<String> ignoredFields) {
+            String testType, List<String> ignoredFields, boolean ignoreHeaders) {
         ApiCallResult baselineApi = new ApiCallResult();
         baselineApi.setUrl(baseline.getRequestMetadata().getEndpoint());
+        baselineApi.setStatusCode((Integer) baseline.getResponseMetadata().get("statusCode"));
         baselineApi.setMethod(baseline.getRequestMetadata().getMethod());
         baselineApi.setRequestPayload(baseline.getRequestPayload());
         baselineApi.setResponsePayload(baseline.getResponsePayload());
@@ -212,9 +213,10 @@ public class BaselineComparisonService {
         if (durationObj instanceof Number) {
             baselineApi.setDuration(((Number) durationObj).longValue());
         }
-        baselineApi.setStatusCode((Integer) baseline.getResponseMetadata().get("statusCode"));
+        result.setBaselineCaptureTimestamp(baseline.getRequestMetadata().getTimestamp());
         result.setApi2(baselineApi);
-        ComparisonEngine.compare(result, testType, ignoredFields);
+        // Use ignoreHeaders param to control header comparison
+        ComparisonEngine.compare(result, testType, ignoredFields, ignoreHeaders);
     }
     private RunMetadata createRunMetadata(String runId, String serviceName, String date,
             ApiConfig apiConfig, Config config, int totalIterations) {

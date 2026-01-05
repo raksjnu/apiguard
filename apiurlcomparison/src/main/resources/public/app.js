@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[APP] DOMContentLoaded event fired - Starting initialization...');
+    
+    // Variable declarations
+    let loadedConfig = null;
+    
     const compareBtn = document.getElementById('compareBtn');
     const resultsContainer = document.getElementById('resultsContainer');
     const statusIndicator = document.getElementById('statusIndicator');
@@ -7,6 +12,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const headersTable = document.getElementById('headersTable').querySelector('tbody');
     const addTokenBtn = document.getElementById('addTokenBtn');
     const tokensTable = document.getElementById('tokensTable').querySelector('tbody');
+
+    console.log('[APP] Core elements found:', {
+        compareBtn: !!compareBtn,
+        resultsContainer: !!resultsContainer,
+        headersTable: !!headersTable,
+        tokensTable: !!tokensTable
+    });
 
     // -- Dynamic Rows Logic --
     if (addHeaderBtn && headersTable) {
@@ -17,19 +29,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -- Resize Handle Logic --
+    console.log('[APP] Initializing resize handle...');
     initResizeHandle();
 
     // Load defaults on startup
+    console.log('[APP] Loading defaults from config...');
     loadDefaults();
 
     // Initialize baseline controls
+    console.log('[APP] Initializing baseline controls...');
     initBaselineControls();
+
+    // -- Clear Form Button Logic --
+    const clearFormBtn = document.getElementById('clearFormBtn');
+    console.log('[APP] Clear Form button found:', !!clearFormBtn);
+    if (clearFormBtn) {
+        clearFormBtn.addEventListener('click', () => {
+            console.log('[APP] Clear Form button clicked');
+            if (confirm('This will clear all form fields to minimal defaults. Continue?')) {
+                clearForm();
+            }
+        });
+    }
+
 
     // -- Mock Server Logic --
     const mockStatusText = document.getElementById('mockStatusText');
     const toggleMockBtn = document.getElementById('toggleMockBtn');
 
+    console.log('[APP] Mock Server elements found:', {
+        mockStatusText: !!mockStatusText,
+        toggleMockBtn: !!toggleMockBtn
+    });
+
     if (mockStatusText && toggleMockBtn) {
+        console.log('[APP] Checking mock server status...');
         checkMockStatus();
 
         toggleMockBtn.addEventListener('click', async () => {
@@ -95,8 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let loadedConfig = null;
-
     async function loadDefaults() {
         try {
             const response = await fetch('api/config');
@@ -112,6 +144,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
             } else {
                 document.getElementById('ignoredFields').value = 'timestamp, X-Dynamic-Header';
+            }
+            if (loadedConfig.ignoreHeaders !== undefined) {
+                 const ignoreHeaderBox = document.getElementById('ignoreHeaders');
+                 if(ignoreHeaderBox) ignoreHeaderBox.checked = loadedConfig.ignoreHeaders;
             }
 
             // Populate initially based on loaded config
@@ -213,6 +249,58 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    function clearForm() {
+        const testType = document.getElementById('testType').value;
+        
+        // Clear basic fields
+        document.getElementById('operationName').value = '';
+        document.getElementById('url1').value = '';
+        document.getElementById('url2').value = '';
+        document.getElementById('payload').value = '';
+        document.getElementById('ignoredFields').value = '';
+        
+        // Clear auth
+        document.getElementById('enableAuth').checked = false;
+        document.getElementById('clientId').value = '';
+        document.getElementById('clientSecret').value = '';
+        document.getElementById('clientId').disabled = true;
+        document.getElementById('clientSecret').disabled = true;
+        
+        // Clear tokens
+        if (tokensTable) {
+            tokensTable.innerHTML = '';
+        }
+        
+        // Clear headers and add only Content-Type based on test type
+        if (headersTable) {
+            headersTable.innerHTML = '';
+            addRow(headersTable, ['Header Name', 'Value']);
+            const lastRow = headersTable.lastElementChild;
+            if (lastRow) {
+                lastRow.querySelector('.key-input').value = 'Content-Type';
+                if (testType === 'SOAP') {
+                    lastRow.querySelector('.value-input').value = 'text/xml';
+                } else {
+                    lastRow.querySelector('.value-input').value = 'application/json';
+                }
+            }
+        }
+        
+        // Reset iteration settings to defaults
+        document.getElementById('iterationController').value = 'ONE_BY_ONE';
+        document.getElementById('maxIterations').value = '100';
+        document.getElementById('ignoreHeaders').checked = false;
+        document.getElementById('ignoreHeaders').disabled = false; // Ensure it's enabled
+        
+        // Clear other fields
+        if(document.getElementById('workingDirectory')) document.getElementById('workingDirectory').value = '';
+        if(document.getElementById('baselineServiceName')) document.getElementById('baselineServiceName').value = '';
+        if(document.getElementById('baselineDescription')) document.getElementById('baselineDescription').value = '';
+        if(document.getElementById('baselineTags')) document.getElementById('baselineTags').value = '';
+        if(document.getElementById('method')) document.getElementById('method').value = 'POST';
+    }
+
 
     function addRow(tbody, placeholders) {
         const tr = document.createElement('tr');
@@ -431,7 +519,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tokens: tokens,
             rest: { api1: apiConfig1, api2: apiConfig2 },
             soap: { api1: apiConfig1, api2: apiConfig2 },
-            ignoredFields: ignoredFields
+            ignoredFields: ignoredFields,
+            ignoreHeaders: document.getElementById('ignoreHeaders')?.checked || false
         };
 
         return config;
@@ -507,18 +596,18 @@ document.addEventListener('DOMContentLoaded', () => {
         execSummaryHtml += `<div><strong>Report Generated:</strong> ${timestamp}</div>`;
 
         let comparisonSummaryContent = '';
-        if (isCaptureMode) {
-             comparisonSummaryContent = `
-                <div><span class="status-MATCH" style="background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;">Captured: ${matches}</span></div>
-                <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
-             `;
-        } else {
-             comparisonSummaryContent = `
-                <div><span class="status-MATCH">Matches: ${matches}</span></div>
-                <div style="margin-top:5px;"><span class="status-MISMATCH">Mismatches: ${mismatches}</span></div>
-                <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
-             `;
-        }
+                if (isCaptureMode) {
+                     comparisonSummaryContent = `
+                        <div><span class="status-MATCH" style="background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;">Captured: ${matches}</span></div>
+                        <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
+                     `;
+                } else {
+                     comparisonSummaryContent = `
+                        <div><span class="status-MATCH">Matches: ${matches}</span></div>
+                        <div style="margin-top:5px;"><span class="status-MISMATCH">Mismatches: ${mismatches}</span></div>
+                        <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
+                     `;
+                }
 
         summaryContainer.innerHTML = `
             <div class="comparison-grid" style="gap: 10px;">
@@ -546,8 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isCaptureMode && isMatch) {
                 statusLabel = "CAPTURED";
-                // Optional: Custom style for CAPTURED if we want it distinct from MATCH, otherwise reuses MATCH style
-                // Inline override for specific label if needed, or just let it use status-MATCH class but with different text
             }
 
             // Format tokens string: "account=123; id=456"
@@ -621,23 +708,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="diff-list">
                             <h5>Differences Found</h5>
                             <ul>
-                                ${res.differences.map(d => `<li>${d}</li>`).join('')}
+                                ${res.differences.map(d => `<li>${escapeHtml(d)}</li>`).join('')}
                             </ul>
                         </div>
                      `;
                 }
 
-                // Helper to render payload safely
-                const renderPayload = (payload) => {
-                    if (payload === null || payload === undefined) return '<span style="color:#999; font-style:italic;">[Null Response]</span>';
-                    if (payload === '') return '<span style="color:#999; font-style:italic;">[Empty Response]</span>';
-                    return `<pre>${formatJson(payload)}</pre>`;
+                // Helper to render payload safely with sync class
+                const renderPayload = (payload, syncGroup) => {
+                    const content = (payload === null || payload === undefined) ? '<span style="color:#999; font-style:italic;">[Null Response]</span>' :
+                                    (payload === '') ? '<span style="color:#999; font-style:italic;">[Empty Response]</span>' :
+                                    `<pre class="sync-payload" data-sync-group="${syncGroup}">${formatJson(payload)}</pre>`;
+                    return content;
                 };
 
-                // Helper to render headers
-                const renderHeaders = (headers) => {
+                // Helper to render headers with sync class
+                const renderHeaders = (headers, syncGroup) => {
                     if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
-                    let html = '<div style="max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; background:#fafafa;">';
+                    let html = `<div class="sync-header" data-sync-group="${syncGroup}" style="max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; background:#fafafa;">`;
                     html += '<table style="width:100%; font-size:0.8rem; border-collapse:collapse;">';
                     Object.entries(headers).forEach(([k, v]) => {
                         html += `<tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:2px 5px; font-weight:600; color:#444; width:30%; vertical-align:top;">${escapeHtml(k)}:</td><td style="padding:2px 5px; color:#333; word-break:break-all;">${escapeHtml(v)}</td></tr>`;
@@ -666,11 +754,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             <div style="margin-bottom:10px;">
                                 <strong style="font-size:0.8rem;">Headers:</strong>
-                                ${renderHeaders(res.api1.responseHeaders)}
+                                ${renderHeaders(res.api1.responseHeaders, `headers-${index}`)}
                             </div>
 
                             <strong style="font-size:0.8rem;">Payload:</strong>
-                            ${renderPayload(res.api1.responsePayload)}
+                            ${renderPayload(res.api1.responsePayload, `payloads-${index}`)}
                             <p><small>Duration: ${res.api1.duration}ms</small></p>
                         </div>
                     `;
@@ -688,19 +776,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <h4>${api1Label} Response (${res.api1.duration}ms)</h4>
                                 <div style="margin-bottom:10px;">
                                     <strong style="font-size:0.8rem;">Headers:</strong>
-                                    ${renderHeaders(res.api1.responseHeaders)}
+                                    ${renderHeaders(res.api1.responseHeaders, `headers-${index}`)}
                                 </div>
                                 <strong style="font-size:0.8rem;">Payload:</strong>
-                                ${renderPayload(res.api1.responsePayload)}
+                                ${renderPayload(res.api1.responsePayload, `payloads-${index}`)}
                             </div>
                             <div class="payload-box">
                                 <h4>${api2Label} Response (${res.api2.duration}ms)</h4>
                                 <div style="margin-bottom:10px;">
                                     <strong style="font-size:0.8rem;">Headers:</strong>
-                                    ${renderHeaders(res.api2.responseHeaders)}
+                                    ${renderHeaders(res.api2.responseHeaders, `headers-${index}`)}
                                 </div>
                                 <strong style="font-size:0.8rem;">Payload:</strong>
-                                ${renderPayload(res.api2.responsePayload)}
+                                ${renderPayload(res.api2.responsePayload, `payloads-${index}`)}
                             </div>
                         </div>
                     `;
@@ -710,6 +798,63 @@ document.addEventListener('DOMContentLoaded', () => {
             card.appendChild(header);
             card.appendChild(body);
             resultsContainer.appendChild(card);
+        });
+        
+        // Enable synchronized scrolling
+        enableSyncScroll();
+    }
+    
+    function enableSyncScroll() {
+        // Sync Headers
+        const headerGroups = {};
+        document.querySelectorAll('.sync-header').forEach(el => {
+            const group = el.dataset.syncGroup;
+            if (!headerGroups[group]) headerGroups[group] = [];
+            headerGroups[group].push(el);
+        });
+
+        Object.values(headerGroups).forEach(group => {
+            if (group.length > 1) {
+                group.forEach(el => {
+                    el.addEventListener('scroll', (e) => {
+                        if (el.dataset.isScrolling) return; // Prevent loop
+                        group.forEach(other => {
+                            if (other !== el) {
+                                other.dataset.isScrolling = 'true';
+                                other.scrollTop = el.scrollTop;
+                                other.scrollLeft = el.scrollLeft;
+                                setTimeout(() => other.removeAttribute('data-is-scrolling'), 50);
+                            }
+                        });
+                    });
+                });
+            }
+        });
+
+        // Sync Payloads
+        const payloadGroups = {};
+        document.querySelectorAll('.sync-payload').forEach(el => {
+            const group = el.dataset.syncGroup;
+            if (!payloadGroups[group]) payloadGroups[group] = [];
+            payloadGroups[group].push(el);
+        });
+
+        Object.values(payloadGroups).forEach(group => {
+            if (group.length > 1) {
+                group.forEach(el => {
+                    el.addEventListener('scroll', (e) => {
+                        if (el.dataset.isScrolling) return; // Prevent loop
+                        group.forEach(other => {
+                            if (other !== el) {
+                                other.dataset.isScrolling = 'true';
+                                other.scrollTop = el.scrollTop;
+                                other.scrollLeft = el.scrollLeft;
+                                setTimeout(() => other.removeAttribute('data-is-scrolling'), 50);
+                            }
+                        });
+                    });
+                });
+            }
         });
     }
 
@@ -737,6 +882,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (pad !== 0) {
                     pad -= 1;
                 }
+
             } else if (line.match(/^<\w([^>]*[^\/])?>.*$/)) {
                 indent = 1;
             } else {
@@ -884,6 +1030,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     tokensContainer.querySelectorAll('input, textarea').forEach(el => el.disabled = false);
                 }
                 compareBtn.innerText = 'Run Comparison';
+                
+                // Re-enable ignoreHeaders for live mode (in case it was disabled by capture)
+                const ignoreHeaderBox = document.getElementById('ignoreHeaders');
+                if(ignoreHeaderBox) {
+                    ignoreHeaderBox.disabled = false;
+                }
             }
         });
 
@@ -893,13 +1045,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (this.value === 'CAPTURE') {
                     captureFields.style.display = 'block';
                     compareFields.style.display = 'none';
+                    // Auto-disable ignoreHeaders for capture
+                    const ignoreHeaderBox = document.getElementById('ignoreHeaders');
+                    if(ignoreHeaderBox) {
+                        ignoreHeaderBox.checked = false;
+                        ignoreHeaderBox.disabled = true;
+                    }
                 } else {
                     captureFields.style.display = 'none';
                     compareFields.style.display = 'block';
                     loadBaselineServices();
+                     // Re-enable ignoreHeaders for compare
+                     const ignoreHeaderBox = document.getElementById('ignoreHeaders');
+                     if(ignoreHeaderBox) {
+                         ignoreHeaderBox.disabled = false;
+                     }
                 }
                 updateButtonLabel();
             });
+
+            // Trigger change event to set initial state
+            baselineOperation.dispatchEvent(new Event('change'));
         }
 
         // Load dates when service is selected

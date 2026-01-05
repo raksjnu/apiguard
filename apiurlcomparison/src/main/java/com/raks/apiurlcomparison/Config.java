@@ -21,6 +21,8 @@ public class Config {
     private BaselineConfig baseline;
     @JsonProperty("ignoredFields")
     private List<String> ignoredFields;
+    @JsonProperty("ignoreHeaders")
+    private boolean ignoreHeaders;
     public String getTestType() {
         return testType;
     }
@@ -74,6 +76,12 @@ public class Config {
     }
     public void setIgnoredFields(List<String> ignoredFields) {
         this.ignoredFields = ignoredFields;
+    }
+    public boolean isIgnoreHeaders() {
+        return ignoreHeaders;
+    }
+    public void setIgnoreHeaders(boolean ignoreHeaders) {
+        this.ignoreHeaders = ignoreHeaders;
     }
     public static class BaselineConfig {
         @JsonProperty("operation")

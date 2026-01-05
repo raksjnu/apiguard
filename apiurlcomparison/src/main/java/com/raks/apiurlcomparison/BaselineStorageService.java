@@ -38,12 +38,20 @@ public class BaselineStorageService {
         int iterNum = iteration.getIterationNumber();
         Path iterDir = runDir.resolve(String.format("iteration-%03d", iterNum));
         Files.createDirectories(iterDir);
-        Files.writeString(iterDir.resolve("request.xml"), iteration.getRequestPayload());
+        writePayload(iterDir.resolve("request.xml"), iteration.getRequestPayload());
         mapper.writeValue(iterDir.resolve("request-headers.json").toFile(), iteration.getRequestHeaders());
         mapper.writeValue(iterDir.resolve("request-metadata.json").toFile(), iteration.getRequestMetadata());
-        Files.writeString(iterDir.resolve("response.xml"), iteration.getResponsePayload());
+        writePayload(iterDir.resolve("response.xml"), iteration.getResponsePayload());
         mapper.writeValue(iterDir.resolve("response-headers.json").toFile(), iteration.getResponseHeaders());
         mapper.writeValue(iterDir.resolve("response-metadata.json").toFile(), iteration.getResponseMetadata());
+    }
+
+    private void writePayload(Path path, String payload) throws IOException {
+        if (payload != null) {
+            Files.writeString(path, payload);
+        } else {
+            Files.writeString(path, "");
+        }
     }
     private void saveSummary(Path runDir, List<BaselineIteration> iterations) throws IOException {
         Map<String, Object> summary = new HashMap<>();

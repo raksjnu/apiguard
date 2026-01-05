@@ -22,7 +22,7 @@ public class ComparisonEngine {
             "X-Request-ID", "Strict-Transport-Security", "Content-Length", "Vary"
     ));
 
-    public static void compare(ComparisonResult result, String apiType, List<String> ignoredFields) {
+    public static void compare(ComparisonResult result, String apiType, List<String> ignoredFields, boolean ignoreHeaders) {
         ApiCallResult api1Result = result.getApi1();
         ApiCallResult api2Result = result.getApi2();
         
@@ -57,7 +57,9 @@ public class ComparisonEngine {
         List<String> differences = new ArrayList<>();
 
         // 2. Compare Headers
-        compareHeaders(result.getApi1().getResponseHeaders(), result.getApi2().getResponseHeaders(), differences, ignoredFields);
+        if (!ignoreHeaders) {
+            compareHeaders(result.getApi1().getResponseHeaders(), result.getApi2().getResponseHeaders(), differences, ignoredFields);
+        }
 
         // 3. Compare Payloads (Body)
         String response1 = api1Result.getResponsePayload();
