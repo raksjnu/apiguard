@@ -151,13 +151,27 @@ public class BaselineComparisonService {
             PayloadProcessor processor = new PayloadProcessor(operation.getPayloadTemplatePath(), testType);
             payload = processor.process(tokens);
         }
-        apiCallResult.setUrl(url);
-        apiCallResult.setMethod(method);
-        apiCallResult.setRequestHeaders(operation.getHeaders());
-        apiCallResult.setRequestPayload(payload);
         long start = System.currentTimeMillis();
         com.raks.apiurlcomparison.http.HttpResponse httpResponse = client.sendRequest(url, method, operation.getHeaders(), payload);
         apiCallResult.setDuration(System.currentTimeMillis() - start);
+        
+        // Reconstruct actual headers including Auth for saving
+        Map<String, String> actualHeaders = new HashMap<>(operation.getHeaders() != null ? operation.getHeaders() : new HashMap<>());
+        if (client.getAccessToken() != null) {
+            actualHeaders.put("Authorization", "Bearer " + client.getAccessToken());
+        } else if (apiConfig.getAuthentication() != null 
+                && apiConfig.getAuthentication().getClientId() != null 
+                && apiConfig.getAuthentication().getClientSecret() != null) {
+            String auth = apiConfig.getAuthentication().getClientId() + ":" + apiConfig.getAuthentication().getClientSecret();
+            String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            actualHeaders.put("Authorization", "Basic " + encodedAuth);
+        }
+
+        apiCallResult.setUrl(url);
+        apiCallResult.setMethod(method);
+        apiCallResult.setRequestHeaders(actualHeaders); // Save full headers including Auth
+        apiCallResult.setRequestPayload(payload);
+
         apiCallResult.setStatusCode(httpResponse.getStatusCode());
         apiCallResult.setResponsePayload(httpResponse.getBody());
         apiCallResult.setResponseHeaders(httpResponse.getHeaders());
@@ -259,5 +273,65 @@ public class BaselineComparisonService {
             return normalizedBase;
         }
         return normalizedBase + normalizedPath;
+    }
+
+    public List<ComparisonResult> getBaselineAsResults(String serviceName, String date, String runId) throws Exception {
+        logger.info("Fetching baseline as results for: {}/{}/{}", serviceName, date, runId);
+        BaselineStorageService.BaselineRun baseline = storageService.loadBaseline(serviceName, date, runId);
+        List<BaselineStorageService.BaselineIteration> baselineIterations = baseline.getIterations();
+        
+        List<ComparisonResult> results = new ArrayList<>();
+        RunMetadata metadata = baseline.getMetadata();
+        String description = metadata.getDescription();
+        List<String> tags = metadata.getTags();
+        String captureTime = metadata.getCaptureTimestamp();
+
+        String baselinePath = storageService.getRunDirectory(serviceName, date, runId).toString();
+
+        for (BaselineStorageService.BaselineIteration iter : baselineIterations) {
+            ComparisonResult result = new ComparisonResult();
+            
+            // Map Metadata
+            result.setOperationName(metadata.getOperation() + " (Baseline)");
+            result.setIterationTokens(convertTokensToMap(iter.getRequestMetadata().getTokensUsed()));
+            result.setTimestamp(iter.getRequestMetadata().getTimestamp()); // Use capture time as timestamp
+            
+            // Set Status to MATCH (as it's a capture view)
+            result.setStatus(ComparisonResult.Status.MATCH);
+            
+            // Set Baseline Info
+            result.setBaselineServiceName(serviceName);
+            result.setBaselineDate(date);
+            result.setBaselineRunId(runId);
+            result.setBaselinePath(baselinePath);
+            result.setBaselineDescription(description);
+            result.setBaselineTags(tags);
+            result.setBaselineCaptureTimestamp(captureTime);
+
+            // Populate API 1 (The Baseline Data)
+            ApiCallResult apiCall = new ApiCallResult();
+            apiCall.setUrl(iter.getRequestMetadata().getEndpoint());
+            apiCall.setMethod(iter.getRequestMetadata().getMethod());
+            apiCall.setRequestHeaders(iter.getRequestHeaders());
+            apiCall.setRequestPayload(iter.getRequestPayload());
+            
+            apiCall.setResponsePayload(iter.getResponsePayload());
+            apiCall.setResponseHeaders(iter.getResponseHeaders());
+            
+            Object statusCodeObj = iter.getResponseMetadata().get("statusCode");
+            if (statusCodeObj instanceof Integer) apiCall.setStatusCode((Integer) statusCodeObj);
+            
+            Object durationObj = iter.getResponseMetadata().get("duration");
+            if (durationObj instanceof Number) apiCall.setDuration(((Number) durationObj).longValue());
+
+            result.setApi1(apiCall);
+            
+            // API 2 is null for baseline view
+            result.setApi2(null);
+
+            results.add(result);
+        }
+        
+        return results;
     }
 }

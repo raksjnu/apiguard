@@ -277,7 +277,7 @@ public class BaselineStorageService {
     public static String getTodayDate() {
         return LocalDate.now().format(DATE_FORMATTER);
     }
-    private Path getRunDirectory(String serviceName, String date, String runId) {
+    public Path getRunDirectory(String serviceName, String date, String runId) {
         return Paths.get(baseStorageDir, serviceName, date, runId);
     }
     private Path getDateDirectory(String serviceName, String date) {

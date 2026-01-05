@@ -30,6 +30,10 @@ public class ApiClient {
     public ApiClient(Authentication authentication) {
         this.authentication = authentication;
     }
+
+    public String getAccessToken() {
+        return accessToken;
+    }
     private void obtainAccessToken() throws IOException {
         if (authentication == null || authentication.getTokenUrl() == null) {
             return; 

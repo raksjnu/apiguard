@@ -1244,12 +1244,35 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Append after select
                 select.parentNode.appendChild(viewDetailsBtn);
                 
-                viewDetailsBtn.addEventListener('click', () => {
+                viewDetailsBtn.addEventListener('click', async () => {
                      const sVal = document.getElementById('baselineServiceSelect').value;
                      const dVal = document.getElementById('baselineDateSelect').value;
                      const rVal = document.getElementById('baselineRunSelect').value;
+                     
                      if(sVal && dVal && rVal) {
-                         fetchBaselineEndpoint(sVal, dVal, rVal, true); // true = force show details
+                         try {
+                              // Visual feedback
+                              viewDetailsBtn.innerText = 'Loading...';
+                              viewDetailsBtn.disabled = true;
+
+                              const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+                              const enc = encodeURIComponent;
+                              const url = workDir 
+                                ? `api/baselines/runs/${enc(sVal)}/${enc(dVal)}/${enc(rVal)}/details?workDir=${enc(workDir)}` 
+                                : `api/baselines/runs/${enc(sVal)}/${enc(dVal)}/${enc(rVal)}/details`;
+                              
+                              const resp = await fetch(url);
+                              if(!resp.ok) throw new Error("Failed to fetch details");
+                              const results = await resp.json();
+                              
+                              renderResults(results);
+                         } catch(e) {
+                             console.error(e);
+                             alert("Error loading details: " + e.message);
+                         } finally {
+                             viewDetailsBtn.innerText = 'View Details';
+                             viewDetailsBtn.disabled = false;
+                         }
                      } else {
                          alert('Please select a valid run first.');
                      }
@@ -1261,7 +1284,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function fetchBaselineEndpoint(service, date, runId, showDetails = false) {
+    async function fetchBaselineEndpoint(service, date, runId) {
         try {
             const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
             const enc = encodeURIComponent;
@@ -1309,83 +1332,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             }
-            
-            // 4. Show Details (New Feature)
-            if (showDetails) {
-                 renderBaselineDetails(service, date, runId, data);
-            }
 
         } catch (error) {
             console.error('Error fetching baseline endpoint:', error);
         }
-    }
-
-    function renderBaselineDetails(service, date, runId, data) {
-        if (!data) return;
-        
-        // Clear previous results to make this the main view
-        resultsContainer.innerHTML = '';
-
-        const summaryContainer = document.createElement('div');
-        summaryContainer.style.marginBottom = '20px';
-        
-        let metaHtml = '';
-        if (data.metadata) {
-            metaHtml = `
-                <div style="margin-top:10px; padding:10px; background:#f8f9fa; border-radius:4px; font-size:0.9rem;">
-                    <div><strong>Description:</strong> ${escapeHtml(data.metadata.description || 'N/A')}</div>
-                    <div><strong>Tags:</strong> ${(data.metadata.tags || []).join(', ')}</div>
-                    <div><strong>Capture Time:</strong> ${new Date(data.metadata.captureTimestamp).toLocaleString()}</div>
-                    <div><strong>Total Iterations:</strong> ${data.metadata.totalIterations}</div>
-                </div>
-            `;
-        }
-        
-        let headersHtml = '<div style="color:#666; font-style:italic;">No headers</div>';
-        if (data.headers && Object.keys(data.headers).length > 0) {
-             headersHtml = '<table style="width:100%; font-size:0.85rem; margin-top:5px; border-collapse:collapse;">';
-             Object.entries(data.headers).forEach(([k,v]) => {
-                 headersHtml += `<tr style="border-bottom:1px solid #eee;"><td style="font-weight:600; width:30%;">${escapeHtml(k)}:</td><td>${escapeHtml(v)}</td></tr>`;
-             });
-             headersHtml += '</table>';
-        }
-
-        const payloadHtml = data.payload 
-            ? `<pre style="background:#f1f1f1; padding:10px; border-radius:4px; max-height:200px; overflow:auto; font-size:0.85rem;">${escapeHtml(data.payload)}</pre>`
-            : '<div style="color:#666; font-style:italic;">No payload</div>';
-
-        summaryContainer.innerHTML = `
-            <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left: 5px solid #673ab7;">
-                <h3 style="margin-bottom: 10px; font-size: 1.1rem; color: #673ab7; display:flex; justify-content:space-between;">
-                    <span>Baseline Details: ${escapeHtml(runId)}</span>
-                    <button onclick="document.getElementById('resultsContainer').innerHTML=''" style="background:none; border:none; color:#999; cursor:pointer; font-size:1.2rem; title='Clear View'">&times;</button>
-                </h3>
-                <div style="font-size: 0.9rem; line-height: 1.6;">
-                    <div><strong>Service:</strong> ${escapeHtml(service)}</div>
-                    <div><strong>Date:</strong> ${escapeHtml(date)}</div>
-                    ${metaHtml}
-                    
-                    <div style="margin-top:15px;">
-                        <strong style="color:#444;">Endpoint:</strong>
-                        <div style="font-family:monospace; background:#fafafa; padding:4px; border:1px solid #eee; margin-top:2px;">${escapeHtml(data.endpoint || 'N/A')}</div>
-                    </div>
-
-                    <div style="margin-top:15px;">
-                        <strong style="color:#444;">Request Headers:</strong>
-                        <div style="border:1px solid #eee; padding:5px; border-radius:4px; margin-top:2px;">
-                            ${headersHtml}
-                        </div>
-                    </div>
-
-                    <div style="margin-top:15px;">
-                        <strong style="color:#444;">Request Payload (Template):</strong>
-                        ${payloadHtml}
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        resultsContainer.appendChild(summaryContainer);
     }
 
     // --- NEW: Auth Toggle Logic ---

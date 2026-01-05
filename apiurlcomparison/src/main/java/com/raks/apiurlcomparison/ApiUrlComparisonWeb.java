@@ -197,6 +197,30 @@ public class ApiUrlComparisonWeb {
                 return "{\"error\": \"" + e.getMessage() + "\"}";
             }
         });
+
+        get("/api/baselines/runs/:serviceName/:date/:runId/details", (req, res) -> {
+            res.type("application/json");
+            try {
+                String serviceName = req.params(":serviceName");
+                String date = req.params(":date");
+                String runId = req.params(":runId");
+                
+                String queryWorkDir = req.queryParams("workDir");
+                String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
+                
+                BaselineStorageService storageService = new BaselineStorageService(storageDir);
+                BaselineComparisonService comparisonService = new BaselineComparisonService(storageService);
+                
+                List<ComparisonResult> results = comparisonService.getBaselineAsResults(serviceName, date, runId);
+                
+                ObjectMapper mapper = new ObjectMapper();
+                return mapper.writeValueAsString(results);
+            } catch (Exception e) {
+                logger.error("Error fetching baseline full details", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
         awaitInitialization();
         logger.info("Server started. Access at http://localhost:{}", port);
         try {

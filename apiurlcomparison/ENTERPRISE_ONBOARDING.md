@@ -95,6 +95,7 @@ graph TB
     AC --> API2
     BSS --> FS
     PP --> AC
+    GUI --> BCS
 ```
 
 ### 2.2 Key Components
@@ -159,6 +160,7 @@ All dependencies are actively maintained and from reputable sources:
 | **File System Access** | Limited to baseline storage directory and config files |
 | **API Endpoints** | Tool only calls endpoints specified in configuration |
 | **Input Validation** | YAML/JSON parsing with schema validation |
+| **Baseline Data** | Baseline run details exposed via `/details` endpoint (read-only) |
 
 > [!WARNING]
 > **Enterprise Recommendations:**

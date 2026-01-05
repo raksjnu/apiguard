@@ -1,0 +1,38 @@
+{
+    "testType": "REST",
+    "comparisonMode": "BASELINE",
+    "baseline": {
+        "operation": "CAPTURE",
+        "serviceName": "CurlCheckService",
+        "description": "Captured via Curl"
+    },
+    "tokens": {
+          "token1": ["default-token"]
+    },
+    "maxIterations": 1,
+    "rest": {
+        "api1": {
+            "baseUrl": "http://localhost:8081/apiurlcomparison/mock",
+            "operations": [
+                {
+                   "name": "GetUser",
+                   "path": "/users",
+                   "methods": ["GET"],
+                   "headers": {
+                       "Authorization": "Bearer curl-test-token"
+                   }
+                }
+            ]
+        },
+        "api2": {
+             "baseUrl": "http://localhost:8081/apiurlcomparison/mock",
+             "operations": [
+                 {
+                    "name": "GetUserV2",
+                    "path": "/users-v2",
+                    "methods": ["GET"]
+                 }
+             ]
+        }
+    }
+}
