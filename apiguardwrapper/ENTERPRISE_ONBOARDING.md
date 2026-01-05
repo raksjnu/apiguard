@@ -32,6 +32,7 @@ ApiGuardWrapper is a specialized MuleSoft Application acting as an orchestration
 | **Mule Email Connector** | 1.7.3 | Sends reports via email |
 | **Mule Guard** | 1.0.0 | Embedded analysis library |
 | **Raks Analyzer** | 1.0.0 | Embedded doc gen library |
+| **ApiUrlComparison** | 1.0.0 | Embedded comparison & baseline library |
 
 ---
 
@@ -54,6 +55,7 @@ graph TB
             MG[MuleGuard JAR]
             RA[RaksAnalyzer JAR]
             AD[ApiDiscovery JAR]
+            AUC[ApiUrlComparison JAR]
         end
     end
     
@@ -63,6 +65,7 @@ graph TB
     Java --> MG
     Java --> RA
     Java --> AD
+    Java --> AUC
 ```
 
 ### 2.2 Key Flows

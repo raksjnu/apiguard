@@ -131,6 +131,20 @@ public class ApiUrlComparisonInvoker {
         }
     }
 
+    public static String getRunDetails(String workDir, String serviceName, String date, String runId) {
+        try {
+            if (workDir == null) return "[]";
+            com.raks.apiurlcomparison.BaselineStorageService storage = new com.raks.apiurlcomparison.BaselineStorageService(workDir);
+            com.raks.apiurlcomparison.BaselineComparisonService service = new com.raks.apiurlcomparison.BaselineComparisonService(storage);
+            
+            List<ComparisonResult> results = service.getBaselineAsResults(serviceName, date, runId);
+            return objectMapper.writeValueAsString(results);
+        } catch (Exception e) {
+            logger.error("Error fetching run details", e);
+            return "[]";
+        }
+    }
+
     // --- CLEANUP WRAPPER ---
     public static Map<String, Object> cleanup(String workDir, int retentionHours) {
         Map<String, Object> result = new HashMap<>();
