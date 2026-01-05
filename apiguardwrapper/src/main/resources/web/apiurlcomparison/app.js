@@ -45,7 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initBaselineControls();
 
     // -- Clear Form Button Logic --
-    const clearBtn = document.getElementById('clearBtn'); // Changed from clearFormBtn to clearBtn
+    const clearBtn = document.getElementById('clearFormBtn'); // Changed from clearFormBtn to clearBtn (Fixed back to correct ID)
     if (clearBtn) {
         console.log('[APP] Clear button found, attaching listener');
         clearBtn.addEventListener('click', () => {
@@ -296,6 +296,14 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('iterationController').value = 'ONE_BY_ONE';
         document.getElementById('maxIterations').value = '100';
         document.getElementById('ignoreHeaders').checked = false;
+        document.getElementById('ignoreHeaders').disabled = false; // Ensure it's enabled
+        
+        // Clear other fields
+        if(document.getElementById('workingDirectory')) document.getElementById('workingDirectory').value = '';
+        if(document.getElementById('baselineServiceName')) document.getElementById('baselineServiceName').value = '';
+        if(document.getElementById('baselineDescription')) document.getElementById('baselineDescription').value = '';
+        if(document.getElementById('baselineTags')) document.getElementById('baselineTags').value = '';
+        if(document.getElementById('method')) document.getElementById('method').value = 'POST';
     }
 
 
@@ -1027,6 +1035,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     tokensContainer.querySelectorAll('input, textarea').forEach(el => el.disabled = false);
                 }
                 compareBtn.innerText = 'Run Comparison';
+                
+                // Re-enable ignoreHeaders for live mode (in case it was disabled by capture)
+                const ignoreHeaderBox = document.getElementById('ignoreHeaders');
+                if(ignoreHeaderBox) {
+                    ignoreHeaderBox.disabled = false;
+                }
             }
         });
 
