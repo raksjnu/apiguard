@@ -1323,6 +1323,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderBaselineDetails(service, date, runId, data) {
         if (!data) return;
         
+        // Clear previous results to make this the main view
+        resultsContainer.innerHTML = '';
+
         const summaryContainer = document.createElement('div');
         summaryContainer.style.marginBottom = '20px';
         
@@ -1355,7 +1358,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left: 5px solid #673ab7;">
                 <h3 style="margin-bottom: 10px; font-size: 1.1rem; color: #673ab7; display:flex; justify-content:space-between;">
                     <span>Baseline Details: ${escapeHtml(runId)}</span>
-                    <button onclick="this.closest('.card').remove()" style="background:none; border:none; color:#999; cursor:pointer; font-size:1.2rem;">&times;</button>
+                    <button onclick="document.getElementById('resultsContainer').innerHTML=''" style="background:none; border:none; color:#999; cursor:pointer; font-size:1.2rem; title='Clear View'">&times;</button>
                 </h3>
                 <div style="font-size: 0.9rem; line-height: 1.6;">
                     <div><strong>Service:</strong> ${escapeHtml(service)}</div>
@@ -1382,12 +1385,7 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         
-        // Prepend to results container
-        if (resultsContainer.firstChild) {
-            resultsContainer.insertBefore(summaryContainer, resultsContainer.firstChild);
-        } else {
-            resultsContainer.appendChild(summaryContainer);
-        }
+        resultsContainer.appendChild(summaryContainer);
     }
 
     // --- NEW: Auth Toggle Logic ---
