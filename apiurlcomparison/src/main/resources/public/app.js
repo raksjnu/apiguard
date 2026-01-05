@@ -682,11 +682,31 @@ document.addEventListener('DOMContentLoaded', () => {
             // Adjust badge style for CAPTURED if desired
             const badgeStyle = (isCaptureMode && isMatch) ? 'background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;' : '';
 
+            // API URL Display Logic
+            const url1 = res.api1 && res.api1.url ? res.api1.url : '';
+            const url2 = res.api2 && res.api2.url ? res.api2.url : '';
+            
+            let urlDisplay = '';
+            if (url1 && url2) {
+                if (url1 === url2) {
+                     urlDisplay = `<div style="font-size:0.75rem; color:#555; margin-top:4px;"><strong>Endpoint:</strong> ${escapeHtml(url1)}</div>`;
+                } else {
+                     urlDisplay = `
+                        <div style="font-size:0.75rem; color:#555; margin-top:4px;">
+                            <div><strong>API 1:</strong> ${escapeHtml(url1)}</div>
+                            <div><strong>API 2:</strong> ${escapeHtml(url2)}</div>
+                        </div>`;
+                }
+            } else if (url1) {
+                 urlDisplay = `<div style="font-size:0.75rem; color:#555; margin-top:4px;"><strong>Endpoint:</strong> ${escapeHtml(url1)}</div>`;
+            }
+
             const header = document.createElement('div');
             header.className = 'result-header';
             header.innerHTML = `
                 <div>
                     <span>Iteration #${index + 1} - ${res.operationName}</span>
+                    ${urlDisplay}
                     ${tokenDisplay}
                 </div>
                 <div>
@@ -771,7 +791,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     body.innerHTML = `
                         ${diffHtml}
                         ${reqDisplay}
-                        <div class="comparison-grid">
+                        <div class="comparison-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
                             <div class="payload-box">
                                 <h4>${api1Label} Response (${res.api1.duration}ms)</h4>
                                 <div style="margin-bottom:10px;">
@@ -930,28 +950,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function initResizeHandle() {
         const resizeHandle = document.getElementById('resizeHandle');
-        const configPanel = document.getElementById('configPanel');
+        // Target the sidebar column directly, not the internal panel
+        const sidebarCol = document.querySelector('.sidebar-col'); 
         const mainGrid = document.querySelector('.main-grid');
 
-        if (!resizeHandle || !configPanel || !mainGrid) return;
+        if (!resizeHandle || !sidebarCol || !mainGrid) return;
 
         let isResizing = false;
-        let startX = 0;
-        let startWidth = 0;
 
         resizeHandle.addEventListener('mousedown', (e) => {
             isResizing = true;
-            startX = e.clientX;
-            startWidth = configPanel.offsetWidth;
             document.body.classList.add('resizing');
-            e.preventDefault();
+            e.preventDefault(); // Prevent text selection
         });
 
         document.addEventListener('mousemove', (e) => {
             if (!isResizing) return;
 
-            const delta = e.clientX - startX;
-            const newWidth = startWidth + delta;
+            // Calculate width based on mouse position relative to container left edge
+            // This is more robust than delta + startWidth
+            const gridRect = mainGrid.getBoundingClientRect();
+            const newWidth = e.clientX - gridRect.left;
 
             // Set min and max width constraints
             const minWidth = 250;
@@ -959,6 +978,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (newWidth >= minWidth && newWidth <= maxWidth) {
                 mainGrid.style.setProperty('--config-width', `${newWidth}px`);
+                // Ensure sidebar doesn't constrain it
+                sidebarCol.style.width = '100%'; 
             }
         });
 
@@ -1207,12 +1228,40 @@ document.addEventListener('DOMContentLoaded', () => {
                 select.value = latestRunId;
                 fetchBaselineEndpoint(serviceName, date, latestRunId);
             }
+
+            // Insert "View Details" button if not exists
+            let viewDetailsBtn = document.getElementById('viewBaselineDetailsBtn');
+            if (!viewDetailsBtn) {
+                viewDetailsBtn = document.createElement('button');
+                viewDetailsBtn.id = 'viewBaselineDetailsBtn';
+                viewDetailsBtn.className = 'btn-secondary';
+                viewDetailsBtn.type = 'button';
+                viewDetailsBtn.textContent = 'View Details';
+                viewDetailsBtn.style.marginLeft = '10px';
+                viewDetailsBtn.style.padding = '4px 8px';
+                viewDetailsBtn.style.fontSize = '0.8rem';
+                
+                // Append after select
+                select.parentNode.appendChild(viewDetailsBtn);
+                
+                viewDetailsBtn.addEventListener('click', () => {
+                     const sVal = document.getElementById('baselineServiceSelect').value;
+                     const dVal = document.getElementById('baselineDateSelect').value;
+                     const rVal = document.getElementById('baselineRunSelect').value;
+                     if(sVal && dVal && rVal) {
+                         fetchBaselineEndpoint(sVal, dVal, rVal, true); // true = force show details
+                     } else {
+                         alert('Please select a valid run first.');
+                     }
+                });
+            }
+
         } catch (error) {
             console.error('Error loading baseline runs:', error);
         }
     }
 
-    async function fetchBaselineEndpoint(service, date, runId) {
+    async function fetchBaselineEndpoint(service, date, runId, showDetails = false) {
         try {
             const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
             const enc = encodeURIComponent;
@@ -1223,6 +1272,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const response = await fetch(url);
             const data = await response.json();
             
+            // 1. Endpoint
             if (data && data.endpoint) {
                 const url1Input = document.getElementById('url1');
                 if (url1Input) {
@@ -1236,6 +1286,7 @@ document.addEventListener('DOMContentLoaded', () => {
                  console.log("No endpoint found for this run");
             }
 
+            // 2. Payload
             if (data && data.payload) {
                 const payloadInput = document.getElementById('payload');
                 if (payloadInput) {
@@ -1245,10 +1296,100 @@ document.addEventListener('DOMContentLoaded', () => {
                     setTimeout(() => payloadInput.style.backgroundColor = '', 1000);
                 }
             }
+
+            // 3. Headers (New Feature)
+            if (data && data.headers && headersTable) {
+                headersTable.innerHTML = ''; // Clear existing
+                Object.entries(data.headers).forEach(([k, v]) => {
+                    addRow(headersTable, ['Header Name', 'Value']);
+                    const lastRow = headersTable.lastElementChild;
+                    if (lastRow) {
+                        lastRow.querySelector('.key-input').value = k;
+                        lastRow.querySelector('.value-input').value = v;
+                    }
+                });
+            }
+            
+            // 4. Show Details (New Feature)
+            if (showDetails) {
+                 renderBaselineDetails(service, date, runId, data);
+            }
+
         } catch (error) {
             console.error('Error fetching baseline endpoint:', error);
         }
     }
+
+    function renderBaselineDetails(service, date, runId, data) {
+        if (!data) return;
+        
+        const summaryContainer = document.createElement('div');
+        summaryContainer.style.marginBottom = '20px';
+        
+        let metaHtml = '';
+        if (data.metadata) {
+            metaHtml = `
+                <div style="margin-top:10px; padding:10px; background:#f8f9fa; border-radius:4px; font-size:0.9rem;">
+                    <div><strong>Description:</strong> ${escapeHtml(data.metadata.description || 'N/A')}</div>
+                    <div><strong>Tags:</strong> ${(data.metadata.tags || []).join(', ')}</div>
+                    <div><strong>Capture Time:</strong> ${new Date(data.metadata.captureTimestamp).toLocaleString()}</div>
+                    <div><strong>Total Iterations:</strong> ${data.metadata.totalIterations}</div>
+                </div>
+            `;
+        }
+        
+        let headersHtml = '<div style="color:#666; font-style:italic;">No headers</div>';
+        if (data.headers && Object.keys(data.headers).length > 0) {
+             headersHtml = '<table style="width:100%; font-size:0.85rem; margin-top:5px; border-collapse:collapse;">';
+             Object.entries(data.headers).forEach(([k,v]) => {
+                 headersHtml += `<tr style="border-bottom:1px solid #eee;"><td style="font-weight:600; width:30%;">${escapeHtml(k)}:</td><td>${escapeHtml(v)}</td></tr>`;
+             });
+             headersHtml += '</table>';
+        }
+
+        const payloadHtml = data.payload 
+            ? `<pre style="background:#f1f1f1; padding:10px; border-radius:4px; max-height:200px; overflow:auto; font-size:0.85rem;">${escapeHtml(data.payload)}</pre>`
+            : '<div style="color:#666; font-style:italic;">No payload</div>';
+
+        summaryContainer.innerHTML = `
+            <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-left: 5px solid #673ab7;">
+                <h3 style="margin-bottom: 10px; font-size: 1.1rem; color: #673ab7; display:flex; justify-content:space-between;">
+                    <span>Baseline Details: ${escapeHtml(runId)}</span>
+                    <button onclick="this.closest('.card').remove()" style="background:none; border:none; color:#999; cursor:pointer; font-size:1.2rem;">&times;</button>
+                </h3>
+                <div style="font-size: 0.9rem; line-height: 1.6;">
+                    <div><strong>Service:</strong> ${escapeHtml(service)}</div>
+                    <div><strong>Date:</strong> ${escapeHtml(date)}</div>
+                    ${metaHtml}
+                    
+                    <div style="margin-top:15px;">
+                        <strong style="color:#444;">Endpoint:</strong>
+                        <div style="font-family:monospace; background:#fafafa; padding:4px; border:1px solid #eee; margin-top:2px;">${escapeHtml(data.endpoint || 'N/A')}</div>
+                    </div>
+
+                    <div style="margin-top:15px;">
+                        <strong style="color:#444;">Request Headers:</strong>
+                        <div style="border:1px solid #eee; padding:5px; border-radius:4px; margin-top:2px;">
+                            ${headersHtml}
+                        </div>
+                    </div>
+
+                    <div style="margin-top:15px;">
+                        <strong style="color:#444;">Request Payload (Template):</strong>
+                        ${payloadHtml}
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Prepend to results container
+        if (resultsContainer.firstChild) {
+            resultsContainer.insertBefore(summaryContainer, resultsContainer.firstChild);
+        } else {
+            resultsContainer.appendChild(summaryContainer);
+        }
+    }
+
     // --- NEW: Auth Toggle Logic ---
     const enableAuth = document.getElementById('enableAuth');
     const clientIdInput = document.getElementById('clientId');

@@ -206,6 +206,42 @@ public class BaselineStorageService {
         }
     }
 
+    public java.util.Map<String, String> getRunRequestHeaders(String serviceName, String date, String runId) throws IOException {
+        Path runDir = getRunDirectory(serviceName, date, runId);
+        
+        // Find iteration-001 or first available
+        Path iterDir = runDir.resolve("iteration-001");
+        if (!Files.exists(iterDir)) {
+             try (java.util.stream.Stream<Path> stream = Files.list(runDir)) {
+                 iterDir = stream
+                    .filter(Files::isDirectory)
+                    .filter(p -> p.getFileName().toString().startsWith("iteration-"))
+                    .sorted()
+                    .findFirst()
+                    .orElse(null);
+             }
+        }
+        
+        if (iterDir != null) {
+             Path headersFile = iterDir.resolve("request-headers.json"); 
+             if (Files.exists(headersFile)) {
+                 return mapper.readValue(headersFile.toFile(), java.util.Map.class);
+             }
+        }
+        return Collections.emptyMap();
+    }
+
+    public RunMetadata getRunMetadata(String serviceName, String date, String runId) throws IOException {
+        Path runDir = getRunDirectory(serviceName, date, runId);
+        if (!Files.exists(runDir)) return null;
+        
+        Path metadataFile = runDir.resolve("metadata.json");
+        if (Files.exists(metadataFile)) {
+            return mapper.readValue(metadataFile.toFile(), RunMetadata.class);
+        }
+        return null;
+    }
+
     public String getRunRequestPayload(String serviceName, String date, String runId) throws IOException {
         Path runDir = getRunDirectory(serviceName, date, runId);
         

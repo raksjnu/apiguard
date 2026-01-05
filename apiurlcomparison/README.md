@@ -67,6 +67,9 @@ The GUI will automatically open in your default browser at `http://localhost:456
 - Expandable iteration details with horizontal scrolling
 - XML/SOAP pretty-printing for better readability
 - **Clear Form Control**: One-click reset to restore default configurations
+- **Baseline Request Headers**: Automatically loads original request headers when selecting a baseline run
+- **View Baseline Details**: Inspect full baseline metadata, endpoint, payload, and headers before running a comparison
+- **Endpoint Display in Results**: Clearly identifies which API endpoint corresponds to each response in the execution results
 - Full-width responsive layout
 
 ## Production Verification Workflow

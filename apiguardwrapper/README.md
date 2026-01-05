@@ -7,7 +7,7 @@ Mule 4 wrapper application for ApiGuard portal, MuleGuard validator, and RaksAna
 - **ApiGuard Portal**: User registration and tool access portal
 - **MuleGuard**: Mule configuration validator and analyzer
 - **RaksAnalyzer**: Universal document generation framework for Mule, TIBCO, and other projects
-- **ApiUrlComparison**: API response comparison and baseline testing tool
+- **ApiUrlComparison**: API response comparison and baseline testing tool (featuring new Baseline Header Loading and Endpoint Display)
 
 ## Deployment
 

@@ -232,6 +232,8 @@
                 <li>Ensure the <strong>Working Directory</strong> is the same as Phase 1.</li>
                 <li>Select the <strong>Service Name</strong>. The tool will <strong>auto-select</strong> the latest Date and Run ID.</li>
                 <li>The <strong>Payload</strong> box will automatically populate with the payload used during the capture phase.</li>
+                <li><strong>New:</strong> The <strong>Request Headers</strong> table (below the form) will automatically load the headers from the baseline run.</li>
+                <li><strong>New:</strong> Click the <strong>View Details</strong> button next to the Run dropdown to inspect the full baseline context (headers, payload, metadata, endpoint) before comparing.</li>
                 <li>Enter the <strong>Production URL</strong> (now v2.0) as API 2.</li>
                 <li>Click <strong>Run Comparison</strong>.</li>
             </ol>
@@ -264,8 +266,6 @@
                 <tr>
                     <td><strong>Port 4567 in use</strong></td>
                     <td>The tool will automatically try to find the next available port (e.g., 4568). Check the console logs for the actual URL.</td>
-                </tr>
-                <tr>
                     <td><strong>Token replacement failed</strong></td>
                     <td>Ensure your token names in the payload (<code>{{token}}</code>) match the defined Token Names exactly (case-sensitive).</td>
                 </tr>
