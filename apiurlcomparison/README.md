@@ -62,9 +62,11 @@ The GUI will automatically open in your default browser at `http://localhost:456
 - Real-time execution dashboard with **Response Header Comparison**
 - Visual comparison results with professional purple theme
 - **Ignored Fields**: Exclude dynamic fields (e.g., timestamp, token) from comparison
+- **Disable Header Comparison**: Toggle to ignore all header mismatches for focus on payload adjustments
 - **Authentication Control**: Toggle Basic Auth support easily
 - Expandable iteration details with horizontal scrolling
 - XML/SOAP pretty-printing for better readability
+- **Clear Form Control**: One-click reset to restore default configurations
 - Full-width responsive layout
 
 ## Production Verification Workflow

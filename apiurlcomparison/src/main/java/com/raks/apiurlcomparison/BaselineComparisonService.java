@@ -49,7 +49,7 @@ public class BaselineComparisonService {
                 result.setBaselineServiceName(serviceName);
                 result.setBaselineDate(date);
                 result.setBaselineRunId(runId);
-                String baselinePath = baselineConfig.getStorageDir() + "\\" + serviceName + "\\" + date + "\\" + runId;
+                String baselinePath = baselineConfig.getStorageDir() + java.io.File.separator + serviceName + java.io.File.separator + date + java.io.File.separator + runId;
                 result.setBaselinePath(baselinePath);
                 result.setBaselineDescription("Baseline captured to: " + baselinePath);
                 result.setBaselineTags(baselineConfig.getTags());
@@ -106,7 +106,7 @@ public class BaselineComparisonService {
                 result.setBaselineServiceName(serviceName);
                 result.setBaselineDate(date);
                 result.setBaselineRunId(runId);
-                String baselinePath = baselineConfig.getStorageDir() + "\\" + serviceName + "\\" + date + "\\" + runId;
+                String baselinePath = baselineConfig.getStorageDir() + java.io.File.separator + serviceName + java.io.File.separator + date + java.io.File.separator + runId;
                 result.setBaselinePath(baselinePath);
                 result.setBaselineDescription(baseline.getMetadata().getDescription());
                 result.setBaselineTags(baseline.getMetadata().getTags());

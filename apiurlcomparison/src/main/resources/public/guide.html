@@ -166,6 +166,8 @@
                 <li><strong>Ignored Fields:</strong> (Optional) Enter flexible fields that change with every request (like <code>timestamp</code>, <code>processId</code>, <code>guid</code>). The tool will <strong>skip comparison</strong> for these specific JSON keys or XML tags, ensuring you don't get false mismatches.
                     <br><em>Note: Only applicable in Live and Compare modes.</em>
                 </li>
+                <li><strong>Disable Header Comparison:</strong> Check this to completely ignore HTTP headers during verification, allowing you to focus solely on status codes and payloads.</li>
+                <li><strong>Clear Form:</strong> Use the "Clear Form" button in the header to reset all inputs to their default state.</li>
                 <li><strong>Payload:</strong> Paste your JSON or XML body template. Use tokens like <code>{{id}}</code> for dynamic values.</li>
             </ul>
 
