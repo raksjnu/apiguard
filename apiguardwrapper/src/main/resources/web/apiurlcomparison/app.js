@@ -1,7 +1,23 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('[APP] DOMContentLoaded event fired - Starting initialization...');
+
+    // Variable declarations
+    let loadedConfig = null;
+    
     const compareBtn = document.getElementById('compareBtn');
     const resultsContainer = document.getElementById('resultsContainer');
     const statusIndicator = document.getElementById('statusIndicator');
+    const mockServerStatus = document.getElementById('mockServerStatus'); // New variable
+    const mockServerControls = document.getElementById('mockServerControls'); // New variable
+
+    // Note: url1Input and url2Input are not defined in this scope, will log as undefined.
+    console.log('[APP] Core elements found:', {
+        url1: !!document.getElementById('url1'), // Assuming user meant to check existence of element
+        url2: !!document.getElementById('url2'), // Assuming user meant to check existence of element
+        results: !!resultsContainer,
+        compareBtn: !!compareBtn,
+        mockStatus: !!mockServerStatus
+    });
 
     const addHeaderBtn = document.getElementById('addHeaderBtn');
     const headersTable = document.getElementById('headersTable').querySelector('tbody');
@@ -17,45 +33,42 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // -- Resize Handle Logic --
+    console.log('[APP] Initializing resize handle...');
     initResizeHandle();
 
     // Load defaults on startup
+    console.log('[APP] Loading defaults...');
     loadDefaults();
 
     // Initialize baseline controls
+    console.log('[APP] Initializing baseline controls...');
     initBaselineControls();
+
+    // -- Clear Form Button Logic --
+    const clearBtn = document.getElementById('clearBtn'); // Changed from clearFormBtn to clearBtn
+    if (clearBtn) {
+        console.log('[APP] Clear button found, attaching listener');
+        clearBtn.addEventListener('click', () => {
+            console.log('[APP] Clear button clicked');
+            if (confirm('Are you sure you want to clear the form?')) {
+                document.getElementById('configForm').reset(); // Assuming 'configForm' is the ID of your form
+                if (resultsContainer) resultsContainer.innerHTML = '';
+            }
+        });
+    } else {
+        console.warn('[APP] Clear button NOT found');
+    }
+
 
     // -- Mock Server Logic --
     const mockStatusText = document.getElementById('mockStatusText');
     const toggleMockBtn = document.getElementById('toggleMockBtn');
 
-    if (mockStatusText && toggleMockBtn) {
-        checkMockStatus();
+    // Mock Server Status Check
+    const checkMockServerStatus = async () => { // Renamed from checkMockStatus to checkMockServerStatus
+        // console.log('[APP] Checking Mock Server status...');
+        if (!mockStatusText || !toggleMockBtn) return; // Added check for toggleMockBtn
 
-        toggleMockBtn.addEventListener('click', async () => {
-            const isRunning = toggleMockBtn.dataset.running === 'true';
-            toggleMockBtn.disabled = true;
-            toggleMockBtn.textContent = 'Processing...';
-            
-            try {
-                const endpoint = isRunning ? 'api/mock/stop' : 'api/mock/start';
-                const response = await fetch(endpoint, { method: 'POST' });
-                if (response.ok) {
-                    await checkMockStatus();
-                } else {
-                    const err = await response.json();
-                    alert('Error: ' + (err.error || 'Unknown error'));
-                }
-            } catch (e) {
-                console.error('Mock Toggle Error:', e);
-                alert('Failed to toggle mock server');
-            } finally {
-                toggleMockBtn.disabled = false;
-            }
-        });
-    }
-
-    async function checkMockStatus() {
         try {
             const response = await fetch('api/mock/status');
             const data = await response.json();
@@ -95,7 +108,31 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    let loadedConfig = null;
+    if (mockStatusText && toggleMockBtn) {
+        checkMockServerStatus(); // Call the renamed function
+
+        toggleMockBtn.addEventListener('click', async () => {
+            const isRunning = toggleMockBtn.dataset.running === 'true';
+            toggleMockBtn.disabled = true;
+            toggleMockBtn.textContent = 'Processing...';
+            
+            try {
+                const endpoint = isRunning ? 'api/mock/stop' : 'api/mock/start';
+                const response = await fetch(endpoint, { method: 'POST' });
+                if (response.ok) {
+                    await checkMockServerStatus(); // Call the renamed function
+                } else {
+                    const err = await response.json();
+                    alert('Error: ' + (err.error || 'Unknown error'));
+                }
+            } catch (e) {
+                console.error('Mock Toggle Error:', e);
+                alert('Failed to toggle mock server');
+            } finally {
+                toggleMockBtn.disabled = false;
+            }
+        });
+    }
 
     async function loadDefaults() {
         try {
@@ -112,6 +149,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
             } else {
                 document.getElementById('ignoredFields').value = 'timestamp, X-Dynamic-Header';
+            }
+            if (loadedConfig.ignoreHeaders !== undefined) {
+                 const ignoreHeaderBox = document.getElementById('ignoreHeaders');
+                 if(ignoreHeaderBox) ignoreHeaderBox.checked = loadedConfig.ignoreHeaders;
             }
 
             // Populate initially based on loaded config
@@ -213,6 +254,50 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     }
+
+    function clearForm() {
+        const testType = document.getElementById('testType').value;
+        
+        // Clear basic fields
+        document.getElementById('operationName').value = '';
+        document.getElementById('url1').value = '';
+        document.getElementById('url2').value = '';
+        document.getElementById('payload').value = '';
+        document.getElementById('ignoredFields').value = '';
+        
+        // Clear auth
+        document.getElementById('enableAuth').checked = false;
+        document.getElementById('clientId').value = '';
+        document.getElementById('clientSecret').value = '';
+        document.getElementById('clientId').disabled = true;
+        document.getElementById('clientSecret').disabled = true;
+        
+        // Clear tokens
+        if (tokensTable) {
+            tokensTable.innerHTML = '';
+        }
+        
+        // Clear headers and add only Content-Type based on test type
+        if (headersTable) {
+            headersTable.innerHTML = '';
+            addRow(headersTable, ['Header Name', 'Value']);
+            const lastRow = headersTable.lastElementChild;
+            if (lastRow) {
+                lastRow.querySelector('.key-input').value = 'Content-Type';
+                if (testType === 'SOAP') {
+                    lastRow.querySelector('.value-input').value = 'text/xml';
+                } else {
+                    lastRow.querySelector('.value-input').value = 'application/json';
+                }
+            }
+        }
+        
+        // Reset iteration settings to defaults
+        document.getElementById('iterationController').value = 'ONE_BY_ONE';
+        document.getElementById('maxIterations').value = '100';
+        document.getElementById('ignoreHeaders').checked = false;
+    }
+
 
     function addRow(tbody, placeholders) {
         const tr = document.createElement('tr');
@@ -431,7 +516,8 @@ document.addEventListener('DOMContentLoaded', () => {
             tokens: tokens,
             rest: { api1: apiConfig1, api2: apiConfig2 },
             soap: { api1: apiConfig1, api2: apiConfig2 },
-            ignoredFields: ignoredFields
+            ignoredFields: ignoredFields,
+            ignoreHeaders: document.getElementById('ignoreHeaders')?.checked || false
         };
 
         return config;
@@ -507,18 +593,18 @@ document.addEventListener('DOMContentLoaded', () => {
         execSummaryHtml += `<div><strong>Report Generated:</strong> ${timestamp}</div>`;
 
         let comparisonSummaryContent = '';
-        if (isCaptureMode) {
-             comparisonSummaryContent = `
-                <div><span class="status-MATCH" style="background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;">Captured: ${matches}</span></div>
-                <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
-             `;
-        } else {
-             comparisonSummaryContent = `
-                <div><span class="status-MATCH">Matches: ${matches}</span></div>
-                <div style="margin-top:5px;"><span class="status-MISMATCH">Mismatches: ${mismatches}</span></div>
-                <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
-             `;
-        }
+                if (isCaptureMode) {
+                     comparisonSummaryContent = `
+                        <div><span class="status-MATCH" style="background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;">Captured: ${matches}</span></div>
+                        <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
+                     `;
+                } else {
+                     comparisonSummaryContent = `
+                        <div><span class="status-MATCH">Matches: ${matches}</span></div>
+                        <div style="margin-top:5px;"><span class="status-MISMATCH">Mismatches: ${mismatches}</span></div>
+                        <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
+                     `;
+                }
 
         summaryContainer.innerHTML = `
             <div class="comparison-grid" style="gap: 10px;">
@@ -546,8 +632,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (isCaptureMode && isMatch) {
                 statusLabel = "CAPTURED";
-                // Optional: Custom style for CAPTURED if we want it distinct from MATCH, otherwise reuses MATCH style
-                // Inline override for specific label if needed, or just let it use status-MATCH class but with different text
             }
 
             // Format tokens string: "account=123; id=456"
@@ -621,23 +705,24 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div class="diff-list">
                             <h5>Differences Found</h5>
                             <ul>
-                                ${res.differences.map(d => `<li>${d}</li>`).join('')}
+                                ${res.differences.map(d => `<li>${escapeHtml(d)}</li>`).join('')}
                             </ul>
                         </div>
                      `;
                 }
 
-                // Helper to render payload safely
-                const renderPayload = (payload) => {
-                    if (payload === null || payload === undefined) return '<span style="color:#999; font-style:italic;">[Null Response]</span>';
-                    if (payload === '') return '<span style="color:#999; font-style:italic;">[Empty Response]</span>';
-                    return `<pre>${formatJson(payload)}</pre>`;
+                // Helper to render payload safely with sync class
+                const renderPayload = (payload, syncGroup) => {
+                    const content = (payload === null || payload === undefined) ? '<span style="color:#999; font-style:italic;">[Null Response]</span>' :
+                                    (payload === '') ? '<span style="color:#999; font-style:italic;">[Empty Response]</span>' :
+                                    `<pre class="sync-payload" data-sync-group="${syncGroup}">${formatJson(payload)}</pre>`;
+                    return content;
                 };
 
-                // Helper to render headers
-                const renderHeaders = (headers) => {
+                // Helper to render headers with sync class
+                const renderHeaders = (headers, syncGroup) => {
                     if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
-                    let html = '<div style="max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; background:#fafafa;">';
+                    let html = `<div class="sync-header" data-sync-group="${syncGroup}" style="max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; background:#fafafa;">`;
                     html += '<table style="width:100%; font-size:0.8rem; border-collapse:collapse;">';
                     Object.entries(headers).forEach(([k, v]) => {
                         html += `<tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:2px 5px; font-weight:600; color:#444; width:30%; vertical-align:top;">${escapeHtml(k)}:</td><td style="padding:2px 5px; color:#333; word-break:break-all;">${escapeHtml(v)}</td></tr>`;
@@ -666,11 +751,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             
                             <div style="margin-bottom:10px;">
                                 <strong style="font-size:0.8rem;">Headers:</strong>
-                                ${renderHeaders(res.api1.responseHeaders)}
+                                ${renderHeaders(res.api1.responseHeaders, `headers-${index}`)}
                             </div>
 
                             <strong style="font-size:0.8rem;">Payload:</strong>
-                            ${renderPayload(res.api1.responsePayload)}
+                            ${renderPayload(res.api1.responsePayload, `payloads-${index}`)}
                             <p><small>Duration: ${res.api1.duration}ms</small></p>
                         </div>
                     `;
@@ -688,19 +773,19 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <h4>${api1Label} Response (${res.api1.duration}ms)</h4>
                                 <div style="margin-bottom:10px;">
                                     <strong style="font-size:0.8rem;">Headers:</strong>
-                                    ${renderHeaders(res.api1.responseHeaders)}
+                                    ${renderHeaders(res.api1.responseHeaders, `headers-${index}`)}
                                 </div>
                                 <strong style="font-size:0.8rem;">Payload:</strong>
-                                ${renderPayload(res.api1.responsePayload)}
+                                ${renderPayload(res.api1.responsePayload, `payloads-${index}`)}
                             </div>
                             <div class="payload-box">
                                 <h4>${api2Label} Response (${res.api2.duration}ms)</h4>
                                 <div style="margin-bottom:10px;">
                                     <strong style="font-size:0.8rem;">Headers:</strong>
-                                    ${renderHeaders(res.api2.responseHeaders)}
+                                    ${renderHeaders(res.api2.responseHeaders, `headers-${index}`)}
                                 </div>
                                 <strong style="font-size:0.8rem;">Payload:</strong>
-                                ${renderPayload(res.api2.responsePayload)}
+                                ${renderPayload(res.api2.responsePayload, `payloads-${index}`)}
                             </div>
                         </div>
                     `;
@@ -710,6 +795,63 @@ document.addEventListener('DOMContentLoaded', () => {
             card.appendChild(header);
             card.appendChild(body);
             resultsContainer.appendChild(card);
+        });
+        
+        // Enable synchronized scrolling
+        enableSyncScroll();
+    }
+    
+    function enableSyncScroll() {
+        // Sync Headers
+        const headerGroups = {};
+        document.querySelectorAll('.sync-header').forEach(el => {
+            const group = el.dataset.syncGroup;
+            if (!headerGroups[group]) headerGroups[group] = [];
+            headerGroups[group].push(el);
+        });
+
+        Object.values(headerGroups).forEach(group => {
+            if (group.length > 1) {
+                group.forEach(el => {
+                    el.addEventListener('scroll', (e) => {
+                        if (el.dataset.isScrolling) return; // Prevent loop
+                        group.forEach(other => {
+                            if (other !== el) {
+                                other.dataset.isScrolling = 'true';
+                                other.scrollTop = el.scrollTop;
+                                other.scrollLeft = el.scrollLeft;
+                                setTimeout(() => other.removeAttribute('data-is-scrolling'), 50);
+                            }
+                        });
+                    });
+                });
+            }
+        });
+
+        // Sync Payloads
+        const payloadGroups = {};
+        document.querySelectorAll('.sync-payload').forEach(el => {
+            const group = el.dataset.syncGroup;
+            if (!payloadGroups[group]) payloadGroups[group] = [];
+            payloadGroups[group].push(el);
+        });
+
+        Object.values(payloadGroups).forEach(group => {
+            if (group.length > 1) {
+                group.forEach(el => {
+                    el.addEventListener('scroll', (e) => {
+                        if (el.dataset.isScrolling) return; // Prevent loop
+                        group.forEach(other => {
+                            if (other !== el) {
+                                other.dataset.isScrolling = 'true';
+                                other.scrollTop = el.scrollTop;
+                                other.scrollLeft = el.scrollLeft;
+                                setTimeout(() => other.removeAttribute('data-is-scrolling'), 50);
+                            }
+                        });
+                    });
+                });
+            }
         });
     }
 
@@ -737,6 +879,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (pad !== 0) {
                     pad -= 1;
                 }
+
             } else if (line.match(/^<\w([^>]*[^\/])?>.*$/)) {
                 indent = 1;
             } else {
@@ -893,13 +1036,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (this.value === 'CAPTURE') {
                     captureFields.style.display = 'block';
                     compareFields.style.display = 'none';
+                    // Auto-disable ignoreHeaders for capture
+                    const ignoreHeaderBox = document.getElementById('ignoreHeaders');
+                    if(ignoreHeaderBox) {
+                        ignoreHeaderBox.checked = false;
+                        ignoreHeaderBox.disabled = true;
+                    }
                 } else {
                     captureFields.style.display = 'none';
                     compareFields.style.display = 'block';
                     loadBaselineServices();
+                     // Re-enable ignoreHeaders for compare
+                     const ignoreHeaderBox = document.getElementById('ignoreHeaders');
+                     if(ignoreHeaderBox) {
+                         ignoreHeaderBox.disabled = false;
+                     }
                 }
                 updateButtonLabel();
             });
+
+            // Trigger change event to set initial state
+            baselineOperation.dispatchEvent(new Event('change'));
         }
 
         // Load dates when service is selected
@@ -946,6 +1103,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
             const url = workDir ? `api/baselines/services?workDir=${encodeURIComponent(workDir)}` : 'api/baselines/services';
+            
             const response = await fetch(url);
             const services = await response.json();
 

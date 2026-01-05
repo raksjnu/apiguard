@@ -8,7 +8,7 @@ echo ============================================================
 echo.
 
 echo [Step 1] Building Project...
-call build-apiguardwrapper-withapidiscovery.bat
+call build-apiguardwrapper-withapiurlcomparison.bat
 
 if %ERRORLEVEL% NEQ 0 (
     echo [ERROR] Build failed. Aborting deployment.
