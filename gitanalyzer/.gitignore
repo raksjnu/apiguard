@@ -1,0 +1,13 @@
+target/
+*.log
+.settings/
+.classpath
+.project
+.vscode/
+temp_config_repos/
+*.iml
+.idea/
+dependency-reduced-pom.xml
+build_output.txt
+requirements.md.bak
+src/main/resources/gitanalyzer.properties

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitAnalyzer Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg brand-header text-white mb-5">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white d-flex align-items-center" href="/">
+                <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
+                ApiGuard Portal - GitAnalyzer
+            </a>
+            <div class="d-flex">
+                <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="row g-4">
+            
+            <!-- Bulk Download Tile -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm tool-card" onclick="alert('Bulk Download - Coming Soon!')">
+                    <div class="card-body text-center p-5">
+                        <h4 class="card-title text-purple mb-3">Bulk Download</h4>
+                        <p class="card-text text-muted">Download repositories for automated analysis.</p>
+                        <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Migration Analysis Tile -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm tool-card" onclick="window.location.href='analysis.html'">
+                    <div class="card-body text-center p-5">
+                        <h4 class="card-title text-purple mb-3">Migration Analysis</h4>
+                        <p class="card-text text-muted">Compare branches and generate migration reports.</p>
+                        <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Git Search Tile -->
+            <div class="col-md-4">
+                <div class="card h-100 shadow-sm tool-card" onclick="window.location.href='search.html'">
+                    <div class="card-body text-center p-5">
+                        <h4 class="card-title text-purple mb-3">Git Search</h4>
+                        <p class="card-text text-muted">Search for code patterns across repositories.</p>
+                        <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <footer class="text-center text-muted mt-5 pt-3 border-top">
+        <p>&copy; 2026 RAKS Group - Enterprise API Solution Suite</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GitAnalyzer Migration Report</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Diff2Html -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.22/diff2html.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff2html/3.4.22/diff2html-ui.min.js"></script>
+    
+    <style>
+        body { font-family: 'Segoe UI', system-ui, sans-serif; }
+        .severity-LOW { background-color: #d1fae5; color: #065f46; }
+        .severity-MEDIUM { background-color: #fef08a; color: #854d0e; }
+        .severity-CRITICAL { background-color: #fecaca; color: #991b1b; }
+        .brand-purple { background-color: #663399; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- Header -->
+    <div class="brand-purple text-white p-4 shadow-lg">
+        <h1 class="text-2xl font-bold">GitAnalyzer Migration Report</h1>
+        <p class="text-sm opacity-80">Changes from ${sourceBranch} to ${targetBranch}</p>
+    </div>
+
+    <div class="container mx-auto p-6">
+        <!-- Summary Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-gray-500 text-sm font-uppercase">Total Files Changed</h3>
+                <p class="text-4xl font-bold text-gray-800">${totalFilesChanged}</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h3 class="text-gray-500 text-sm font-uppercase">APIs Affected</h3>
+                <p class="text-4xl font-bold text-gray-800">${apisAffectedCount}</p>
+            </div>
+            <div class="bg-white p-6 rounded-lg shadow flex items-center justify-between">
+                <div>
+                    <h3 class="text-gray-500 text-sm font-uppercase">Distribution</h3>
+                    <ul class="text-sm mt-2">
+                        <li class="text-blue-600">Code: ${codeChangesCount}</li>
+                        <li class="text-orange-600">Config: ${configChangesCount}</li>
+                    </ul>
+                </div>
+                <div style="width: 100px;">
+                    <canvas id="breakdownChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Changes -->
+        <div class="bg-white rounded-lg shadow overflow-hidden">
+            <div class="p-4 border-b">
+                <h2 class="text-xl font-bold text-gray-800">Change Details</h2>
+            </div>
+            
+            <#list apiResults as api>
+            <div class="border-b last:border-b-0">
+                <div class="bg-gray-100 p-4 font-semibold flex justify-between cursor-pointer" onclick="toggle('${api.name}')">
+                    <span>${api.name}</span>
+                    <span class="text-sm bg-gray-200 px-2 py-1 rounded">${api.modifiedFiles?size} files</span>
+                </div>
+                <div id="${api.name}" class="hidden p-4">
+                    <table class="w-full text-left border-collapse">
+                        <thead>
+                            <tr class="text-sm text-gray-500 border-b">
+                                <th class="p-2">Type</th>
+                                <th class="p-2">File Path</th>
+                                <th class="p-2">Lines</th>
+                                <th class="p-2">Severity</th>
+                                <th class="p-2">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <#list api.modifiedFiles as file>
+                            <tr class="border-b hover:bg-gray-50">
+                                <td class="p-2 text-xs font-mono">${file.type}</td>
+                                <td class="p-2 text-sm">${file.path}</td>
+                                <td class="p-2 text-sm">${file.linesChanged}</td>
+                                <td class="p-2">
+                                    <span class="text-xs px-2 py-1 rounded font-bold severity-${file.severity}">${file.severity}</span>
+                                </td>
+                                <td class="p-2">
+                                    <button class="text-blue-600 hover:underline text-sm" onclick="showDiff('${file.id}')">View Diff</button>
+                                </td>
+                            </tr>
+                            </#list>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            </#list>
+        </div>
+    </div>
+
+    <!-- Diff Modal -->
+    <div id="diffModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg w-full max-w-6xl h-5/6 flex flex-col">
+            <div class="p-4 border-b flex justify-between">
+                <h3 class="font-bold">File Diff</h3>
+                <button onclick="closeModal()" class="text-gray-500 hover:text-black">&times;</button>
+            </div>
+            <div id="diffContent" class="flex-1 overflow-auto p-4">
+                <!-- Diff2Html output goes here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chart Initialization
+        const ctx = document.getElementById('breakdownChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Code', 'Config'],
+                datasets: [{
+                    data: [${codeChangesCount}, ${configChangesCount}],
+                    backgroundColor: ['#2563eb', '#ea580c']
+                }]
+            },
+            options: { plugins: { legend: { display: false } } }
+        });
+
+        function toggle(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        function showDiff(fileId) {
+            document.getElementById('diffModal').classList.remove('hidden');
+            // In a real implementation, we would fetch the diff content/json for this fileId
+            // and render it using Diff2Html.
+            // For now, placeholder:
+            document.getElementById('diffContent').innerHTML = '<div class="p-4 text-center">Visual Diff for ' + fileId + ' would be rendered here using Diff2Html.UI</div>';
+        }
+
+        function closeModal() {
+            document.getElementById('diffModal').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

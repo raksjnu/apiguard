@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
+
+body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+}
+
+.brand-header {
+    background-color: #663399; /* Raks Purple */
+    padding: 1rem 2rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.text-purple {
+    color: #663399 !important;
+}
+
+.btn-purple {
+    background-color: #663399;
+    border-color: #663399;
+}
+
+.btn-purple:hover {
+    background-color: #552b80;
+    border-color: #552b80;
+}
+
+.ghost-btn {
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    background: transparent !important;
+    color: white !important;
+    transition: all 0.3s ease;
+}
+
+.ghost-btn:hover {
+    border: 2px solid white !important;
+    font-weight: bold;
+}
+
+.tool-card {
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    border: 1px solid #e0e0e0;
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    border-color: #663399;
+}

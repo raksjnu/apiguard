@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Migration Analysis - GitAnalyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/styles.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-light">
+
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg brand-header text-white mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white d-flex align-items-center" href="/">
+                <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
+                ApiGuard Portal - GitAnalyzer
+            </a>
+            <div class="d-flex">
+                <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Configuration Card -->
+        <div class="card shadow-sm mb-4">
+            <h5 class="card-header bg-white py-3 fw-bold">Analysis Configuration</h5>
+            <div class="card-body">
+                <form id="analysisForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">API Name / Project Identifier</label>
+                            <input type="text" class="form-control" id="apiName" placeholder="e.g. OrderService" required>
+                        </div>
+                        <div class="col-md-6">
+                             <!-- Spacer -->
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Code Repository</label>
+                            <input type="text" class="form-control" id="codeRepo" placeholder="owner/repo" required>
+                            <div class="form-text">Example: raksjnu/mule-dummy-api</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Config Repository (Optional)</label>
+                            <input type="text" class="form-control" id="configRepo" placeholder="owner/repo">
+                        </div>
+
+                        <div class="col-md-6">
+                            <label class="form-label">Source Branch (Current)</label>
+                            <input type="text" class="form-control" id="sourceBranch" value="main" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Target Branch (New)</label>
+                            <input type="text" class="form-control" id="targetBranch" value="develop" required>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label">Ignore Patterns (One per line)</label>
+                            <textarea class="form-control" id="ignorePatterns" rows="3" placeholder=".gitignore style or simple contains check&#10;target/&#10;timestamp&#10;regex:.*ID.*"></textarea>
+                            <div class="form-text">Lines containing these patterns will be marked as 'Ignored' and won't count towards High Severity. Support 'regex:' prefix.</div>
+                        </div>
+
+                        <div class="col-12 text-end">
+                            <button type="submit" class="btn btn-purple text-white px-5" id="analyzeBtn">Run Analysis</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Section (Hidden by default) -->
+        <div id="resultsSection" class="d-none">
+            <!-- Summary Stats -->
+            <div class="row g-4 mb-4">
+                <div class="col-md-4">
+                    <div class="card text-center h-100 border-primary">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">Total Files Changed</h6>
+                            <h2 class="display-4 fw-bold text-primary" id="totalFiles">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center h-100 border-success">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">Code Changes</h6>
+                            <h2 class="display-4 fw-bold text-success" id="codeChanges">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card text-center h-100 border-warning">
+                        <div class="card-body">
+                            <h6 class="card-title text-muted">Config Changes</h6>
+                            <h2 class="display-4 fw-bold text-warning" id="configChanges">0</h2>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Detailed Table -->
+            <div class="card shadow-sm">
+                <h5 class="card-header bg-white py-3 fw-bold">Detailed File Changes</h5>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0 align-middle">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>Type</th>
+                                    <th>File Path</th>
+                                    <th>Status</th>
+                                    <th>Valid Lines</th>
+                                    <th>Ignored Lines</th>
+                                    <th>Severity</th>
+                                </tr>
+                            </thead>
+                            <tbody id="filesTableBody">
+                                <!-- Rows injected via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.getElementById('analysisForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('analyzeBtn');
+            const originalText = btn.textContent;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing...';
+
+            const payload = {
+                apiName: document.getElementById('apiName').value,
+                codeRepo: document.getElementById('codeRepo').value,
+                configRepo: document.getElementById('configRepo').value,
+                sourceBranch: document.getElementById('sourceBranch').value,
+                targetBranch: document.getElementById('targetBranch').value,
+                ignorePatterns: document.getElementById('ignorePatterns').value
+            };
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) throw new Error('Analysis Request Failed');
+                
+                const result = await response.json();
+                renderResults(result);
+
+            } catch (err) {
+                alert('Error: ' + err.message);
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        function renderResults(data) {
+            document.getElementById('resultsSection').classList.remove('d-none');
+            
+            document.getElementById('totalFiles').textContent = data.totalFilesChanged;
+            document.getElementById('codeChanges').textContent = data.codeChangesCount;
+            document.getElementById('configChanges').textContent = data.configChangesCount;
+
+            const tbody = document.getElementById('filesTableBody');
+            tbody.innerHTML = '';
+
+            data.modifiedFiles.forEach(file => {
+                let statusBadge = '<span class="badge bg-secondary">MODIFIED</span>';
+                if (file.newFile) statusBadge = '<span class="badge bg-success">NEW</span>';
+                if (file.deletedFile) statusBadge = '<span class="badge bg-danger">DELETED</span>';
+
+                let severityClass = 'bg-secondary';
+                if (file.severity === 'LOW') severityClass = 'bg-info text-dark';
+                if (file.severity === 'MEDIUM') severityClass = 'bg-warning text-dark';
+                if (file.severity === 'CRITICAL') severityClass = 'bg-danger';
+
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><span class="badge bg-light text-dark border">${file.type}</span></td>
+                    <td class="font-monospace small">${file.path}</td>
+                    <td>${statusBadge}</td>
+                    <td class="fw-bold text-success">+${file.validChangedLines}</td>
+                    <td class="text-muted">${file.ignoredLines}</td>
+                    <td><span class="badge ${severityClass}">${file.severity}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+            
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({behavior: 'smooth'});
+        }
+    </script>
+</body>
+</html>

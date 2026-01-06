@@ -1,0 +1,20 @@
+# GitAnalyzer Configuration
+
+# Git Provider (gitlab or github)
+git.provider=github
+
+# GitLab Credentials
+gitlab.url=https://gitlab.com
+gitlab.group=https://gitlab.com/your-group
+gitlab.token=YOUR_GITLAB_TOKEN
+
+# GitHub Credentials
+github.url=https://api.github.com
+github.owner=your-github-username
+github.token=YOUR_GITHUB_TOKEN
+
+# Application Settings
+# Defaults to {app.home}/temp if not specified or empty
+# app.output.dir=reports 
+app.report.email.enabled=false
+http.port=6060
