@@ -36,7 +36,7 @@ echo ============================================================
 echo.
 
 REM Step 1: Build & Install RaksAnalyzer
-echo [1/5] Building ^& Installing RaksAnalyzer...
+echo [1/6] Building ^& Installing RaksAnalyzer...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\raksanalyzer" (
     cd /d "%SCRIPT_DIR%..\raksanalyzer"
@@ -61,7 +61,7 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
 
 REM Step 2: Build & Install MuleGuard
 echo.
-echo [2/5] Building ^& Installing MuleGuard...
+echo [2/6] Building ^& Installing MuleGuard...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\muleguard" (
     cd /d "%SCRIPT_DIR%..\muleguard"
@@ -86,7 +86,7 @@ if exist "%SCRIPT_DIR%..\muleguard" (
 
 REM Step 3: Build & Install ApiDiscovery
 echo.
-echo [3/5] Building ^& Installing ApiDiscovery...
+echo [3/6] Building ^& Installing ApiDiscovery...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\apidiscovery" (
     cd /d "%SCRIPT_DIR%..\apidiscovery"
@@ -111,7 +111,7 @@ if exist "%SCRIPT_DIR%..\apidiscovery" (
 
 REM Step 4: Build & Install ApiUrlComparison
 echo.
-echo [4/5] Building ^& Installing ApiUrlComparison...
+echo [4/6] Building ^& Installing ApiUrlComparison...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\apiurlcomparison" (
     cd /d "%SCRIPT_DIR%..\apiurlcomparison"
@@ -134,9 +134,34 @@ if exist "%SCRIPT_DIR%..\apiurlcomparison" (
     exit /b 1
 )
 
-REM Step 5: Build ApiGuardWrapper
+REM Step 5: Build & Install GitAnalyzer
 echo.
-echo [5/5] Building ApiGuardWrapper...
+echo [5/6] Building ^& Installing GitAnalyzer...
+echo ============================================================
+if exist "%SCRIPT_DIR%..\gitanalyzer" (
+    cd /d "%SCRIPT_DIR%..\gitanalyzer"
+    call mvn clean install -DskipTests
+    
+    if errorlevel 1 (
+        echo.
+        echo [ERROR] GitAnalyzer build failed!
+        pause
+        exit /b 1
+    )
+    
+    REM Copy gitanalyzer JAR to apiguardwrapper/lib
+    echo.
+    echo [INFO] Copying gitanalyzer JAR to lib folder...
+    cmd /c "if exist "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" (copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\gitanalyzer-1.0.0.jar" >nul && echo [INFO] gitanalyzer-1.0.0.jar copied successfully || echo [WARN] Failed to copy gitanalyzer JAR) else (echo [WARN] gitanalyzer JAR not found in target)"
+) else (
+    echo [ERROR] GitAnalyzer project not found at ..\gitanalyzer
+    pause
+    exit /b 1
+)
+
+REM Step 6: Build ApiGuardWrapper
+echo.
+echo [6/6] Building ApiGuardWrapper...
 echo ============================================================
 cd /d "%SCRIPT_DIR%"
 call mvn clean package -DskipTests

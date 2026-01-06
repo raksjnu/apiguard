@@ -134,9 +134,32 @@ else
     exit 1
 fi
 
-# Step 5: Build ApiGuardWrapper
+# Step 5: Build & Install GitAnalyzer
 echo ""
-echo "[5/5] Building ApiGuardWrapper..."
+echo "[5/6] Building & Installing GitAnalyzer..."
+echo "============================================================"
+if [ -d "$SCRIPT_DIR/../gitanalyzer" ]; then
+    cd "$SCRIPT_DIR/../gitanalyzer"
+    mvn clean install -DskipTests
+    
+    if [ $? -ne 0 ]; then
+        echo ""
+        echo "[ERROR] GitAnalyzer build failed!"
+        exit 1
+    fi
+    
+    # Copy JAR to apiguardwrapper/lib
+    echo ""
+    echo "[INFO] Copying gitanalyzer JAR to lib folder..."
+    cp "$SCRIPT_DIR/../gitanalyzer/target/gitanalyzer-1.0.0.jar" "$SCRIPT_DIR/lib/gitanalyzer-1.0.0.jar"
+else
+    echo "[ERROR] GitAnalyzer project not found at ../gitanalyzer"
+    exit 1
+fi
+
+# Step 6: Build ApiGuardWrapper
+echo ""
+echo "[6/6] Building ApiGuardWrapper..."
 echo "============================================================"
 cd "$SCRIPT_DIR"
 mvn clean package -DskipTests
