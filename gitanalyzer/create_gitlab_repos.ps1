@@ -36,18 +36,18 @@ foreach ($repoBase in $REPOS) {
     
     Write-Host "Processing $repoName..."
 
-    # 1. Create Directory Structure
-    New-Item -ItemType Directory -Force -Path "$localPath\repo_config\Properties\OCP" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$localPath\repo_config\Policies" | Out-Null
-    New-Item -ItemType Directory -Force -Path "$localPath\repo_config\Deployment" | Out-Null
+    # 1. Create Directory Structure (FLAT, no repo_config parent)
+    New-Item -ItemType Directory -Force -Path "$localPath\Properties\OCP" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$localPath\Policies" | Out-Null
+    New-Item -ItemType Directory -Force -Path "$localPath\Deployment" | Out-Null
 
     # 2. Create Dummy Files
-    "app.name=$repoBase`napp.env=dev`nhttp.port=8081" | Set-Content "$localPath\repo_config\Properties\OCP\dev.properties"
-    "app.name=$repoBase`napp.env=prod`nhttp.port=8081" | Set-Content "$localPath\repo_config\Properties\OCP\prod.properties"
+    "app.name=$repoBase`napp.env=dev`nhttp.port=8081" | Set-Content "$localPath\Properties\OCP\dev.properties"
+    "app.name=$repoBase`napp.env=prod`nhttp.port=8081" | Set-Content "$localPath\Properties\OCP\prod.properties"
     
-    "<policy><id>client-id-enforcement</id><enabled>true</enabled></policy>" | Set-Content "$localPath\repo_config\Policies\secure.policy"
+    "<policy><id>client-id-enforcement</id><enabled>true</enabled></policy>" | Set-Content "$localPath\Policies\secure.policy"
     
-    "replicas: 2`nmemory: 1024m" | Set-Content "$localPath\repo_config\Deployment\cloudhub.deploy"
+    "replicas: 2`nmemory: 1024m" | Set-Content "$localPath\Deployment\cloudhub.deploy"
 
     # 3. Create Project in GitLab (Ignore if exists, handle 400)
     try {
@@ -61,33 +61,33 @@ foreach ($repoBase in $REPOS) {
         Invoke-RestMethod -Uri $createUri -Method Post -Body $body -ContentType "application/json" -Headers @{ "PRIVATE-TOKEN" = $GITLAB_TOKEN } | Out-Null
         Write-Host "Created GitLab project $repoName"
     } catch {
-        # Check if error is 'has already been taken'
+         # Check if error is 'has already been taken'
         $errJson = $_.ErrorDetails.Message | ConvertFrom-Json
         if ($errJson.message.name -contains "has already been taken") {
-            Write-Host "Project $repoName already exists, proceeding to push..."
+            Write-Host "Project $repoName already exists, will overwrite content..."
         } else {
-            Write-Error "Failed to create project: $($_.Exception.Message)"
+            Write-Host "Warning during project creation: $($_.Exception.Message)"
         }
     }
 
     # 4. Git Operations
     Set-Location $localPath
+    if (Test-Path ".git") { Remove-Item -Recurse -Force ".git" } # Ensure clean slate
     git init | Out-Null
     git config user.email "bot@raks.com"
     git config user.name "RaksBot"
-    git add . | Out-Null
-    git commit -m "Initial configuration setup" | Out-Null
+    git add . 
+    git commit -m "Fix structure: Initial configuration setup"
     
     # Add Remote with Token Auth
     $remoteUrl = "https://oauth2:${GITLAB_TOKEN}@gitlab.com/${GROUP_PATH}/${repoName}.git"
     git remote add origin $remoteUrl
     
     # Push (Force to overwrite if exists)
-    try {
-        git push -u origin main --force 2>&1 | Write-Host
-        Write-Host "Pushed $repoName successfully."
-    } catch {
-        # Try master if main fails (older gitlab defaults)
+    Write-Host "Pushing to $repoName..."
+    git push -u origin main --force 2>&1 | Write-Host
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "Main push failed, trying master..."
         git push -u origin master --force 2>&1 | Write-Host
     }
 }
