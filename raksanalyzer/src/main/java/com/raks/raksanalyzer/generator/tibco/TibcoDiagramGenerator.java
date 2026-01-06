@@ -252,8 +252,11 @@ public class TibcoDiagramGenerator {
         }
         if (depth == 0 && starterElement != null) {
             String type = getTagValue(starterElement, "pd:type");
-            String cleanType = type.substring(type.lastIndexOf('.') + 1);
-            sb.append(":**").append(cleanType).append("**;\n");
+            String resourceType = getTagValue(starterElement, "pd:resourceType");
+            String cleanType = getReadableTypeLabel(resourceType);
+            String icon = getConnectorIcon(type);
+            String name = starterElement.getAttribute("name");
+            sb.append(":").append(icon).append(" **").append(name).append("**\\n").append(cleanType).append(";\n");
         }
         Set<String> processed = new LinkedHashSet<>();
         String startNode = starterElement != null ? starterElement.getAttribute("name") : startName;

@@ -89,9 +89,24 @@ public class DiagramGenerator {
         sb.append("@enduml\n");
         return sb.toString();
     }
-    private static java.nio.file.Path iconsDir = java.nio.file.Paths.get("c:/raks/apiguard/raksanalyzer/src/main/resources/images/mule");
+    private static java.nio.file.Path iconsDir;
     private static final Map<String, String> SPECIAL_ICONS = new HashMap<>();
+    
     static {
+        try {
+            String tempPath = System.getProperty("java.io.tmpdir");
+            iconsDir = java.nio.file.Paths.get(tempPath, "raks-mule-icons-cache");
+            if (!java.nio.file.Files.exists(iconsDir)) {
+                java.nio.file.Files.createDirectories(iconsDir);
+            }
+            // iterate over known icons to ensure they are available? 
+            // Lazy loading in getIconPath handles individual files.
+        } catch (IOException e) {
+            e.printStackTrace();
+            // Fallback
+            iconsDir = java.nio.file.Paths.get(".");
+        }
+
         SPECIAL_ICONS.put("async", "async-scope");
         SPECIAL_ICONS.put("async-scope", "async-scope");
         SPECIAL_ICONS.put("parallel-foreach", "foreach"); 
@@ -112,54 +127,78 @@ public class DiagramGenerator {
         SPECIAL_ICONS.put("apikit:router", "apikit");
         SPECIAL_ICONS.put("apikit-soap:router", "apikit");
     }
+
+    private static java.nio.file.Path getIconPath(String filename) {
+        if (iconsDir == null) return null;
+        java.nio.file.Path p = iconsDir.resolve(filename);
+        if (java.nio.file.Files.exists(p)) return p;
+        
+        try (java.io.InputStream is = DiagramGenerator.class.getResourceAsStream("/images/mule/" + filename)) {
+            if (is != null) {
+                java.nio.file.Files.copy(is, p, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                return p;
+            }
+        } catch (Exception e) {
+            // Ignore extraction errors
+        }
+        return null;
+    }
+
     private static String getIconForType(String type) {
         if (type == null) return null;
         String cleanType = type;
         if (cleanType.contains(":")) {
              cleanType = cleanType.substring(cleanType.indexOf(":")+1);
         }
+        
         if (SPECIAL_ICONS.containsKey(type)) {
              String specialName = SPECIAL_ICONS.get(type);
              String[] specialCandidates = {"mule_" + specialName + ".png", "mule_core-" + specialName + ".png", "mule_unknown-" + specialName + ".png"};
              for (String cand : specialCandidates) {
-                 java.nio.file.Path p = iconsDir.resolve(cand);
-                 if (java.nio.file.Files.exists(p)) {
+                 java.nio.file.Path p = getIconPath(cand);
+                 if (p != null) {
                      return "<img:" + p.toAbsolutePath().toString().replace("\\", "/") + ">";
                  }
              }
         }
+        
         if (SPECIAL_ICONS.containsKey(cleanType)) {
              String specialName = SPECIAL_ICONS.get(cleanType);
              String[] specialCandidates = {"mule_" + specialName + ".png", "mule_core-" + specialName + ".png", "mule_unknown-" + specialName + ".png"};
              for (String cand : specialCandidates) {
-                 java.nio.file.Path p = iconsDir.resolve(cand);
-                 if (java.nio.file.Files.exists(p)) {
+                 java.nio.file.Path p = getIconPath(cand);
+                 if (p != null) {
                      return "<img:" + p.toAbsolutePath().toString().replace("\\", "/") + ">";
                  }
              }
         }
+
         String filename = "mule_" + cleanType + ".png";
-        java.nio.file.Path iconPath = iconsDir.resolve(filename);
-        if (java.nio.file.Files.exists(iconPath)) {
+        java.nio.file.Path iconPath = getIconPath(filename);
+        if (iconPath != null) {
             return "<img:" + iconPath.toAbsolutePath().toString().replace("\\", "/") + ">";
         }
+        
         if (type.contains(":")) {
             String dashedType = type.replace(":", "-");
             filename = "mule_" + dashedType + ".png";
-            iconPath = iconsDir.resolve(filename);
-            if (java.nio.file.Files.exists(iconPath)) {
+            iconPath = getIconPath(filename);
+            if (iconPath != null) {
                 return "<img:" + iconPath.toAbsolutePath().toString().replace("\\", "/") + ">";
             }
         }
+        
         filename = "mule_unknown-" + cleanType + ".png";
-        iconPath = iconsDir.resolve(filename);
-        if (java.nio.file.Files.exists(iconPath)) {
+        iconPath = getIconPath(filename);
+        if (iconPath != null) {
              return "<img:" + iconPath.toAbsolutePath().toString().replace("\\", "/") + ">";
         }
-        java.nio.file.Path defaultIcon = iconsDir.resolve("mule_mule.png");
-        if (java.nio.file.Files.exists(defaultIcon)) {
+        
+        java.nio.file.Path defaultIcon = getIconPath("mule_mule.png");
+        if (defaultIcon != null) {
              return "<img:" + defaultIcon.toAbsolutePath().toString().replace("\\", "/") + ">";
         }
+        
         return null;
     }
     private static boolean isStructuralElement(String type) {

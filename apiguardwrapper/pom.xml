@@ -123,7 +123,7 @@
 		<dependency>
 			<groupId>org.mule.connectors</groupId>
 			<artifactId>mule-objectstore-connector</artifactId>
-			<version>1.2.4</version>
+			<version>1.2.5</version>
 			<classifier>mule-plugin</classifier>
 		</dependency>
 		<dependency>
