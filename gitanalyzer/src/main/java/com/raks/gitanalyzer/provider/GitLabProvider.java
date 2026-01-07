@@ -20,8 +20,11 @@ public class GitLabProvider implements GitProvider {
     }
 
     public GitLabProvider(String userToken) {
-        this.baseUrl = ConfigManager.get("gitlab.url");
-        this.groupUrl = ConfigManager.get("gitlab.group");
+        String url = ConfigManager.get("gitlab.url");
+        this.baseUrl = (url != null && !url.isBlank()) ? url : "https://gitlab.com";
+        
+        String group = ConfigManager.get("gitlab.group");
+        this.groupUrl = (group != null) ? group : "";
         
         // Priority: User Token > Config Token
         if (userToken != null && !userToken.isBlank()) {
@@ -50,6 +53,12 @@ public class GitLabProvider implements GitProvider {
         if (token != null && !token.isEmpty()) {
             cloneUrl = cloneUrl.replace("https://", "https://oauth2:" + token + "@");
         }
+        
+        // Ensure clone URL is valid (handle missing groupUrl case)
+        if (cloneUrl.startsWith("/")) { 
+             // Should not happen if Default Base URL is set, but just in case
+             cloneUrl = "https://gitlab.com" + cloneUrl;
+        }
 
         org.eclipse.jgit.api.CloneCommand command = Git.cloneRepository()
             .setURI(cloneUrl)
@@ -70,6 +79,10 @@ public class GitLabProvider implements GitProvider {
         // We'll search for the group first to get ID, or use the path if it matches
         // For simplicity, assuming groupName is the Path (like 'raks-group')
         // URL: /groups/raks-group/projects?include_subgroups=true&per_page=100
+        
+        if (groupName == null || groupName.isBlank()) {
+            throw new IllegalArgumentException("Group Name is required. Please check configuration or input.");
+        }
         
         String encodedGroup = java.net.URLEncoder.encode(groupName, java.nio.charset.StandardCharsets.UTF_8);
         
