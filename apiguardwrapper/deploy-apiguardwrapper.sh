@@ -24,7 +24,7 @@ fi
 # --------------------------
 
 # --- Mule Runtime Configuration ---
-PREFERRED_MULE_HOME="C:/raks/mule-enterprise-standalone-4.10.1"
+PREFERRED_MULE_HOME="/Users/raks/Library/CloudStorage/OneDrive-IBM/Documents/GitHub/mule-enterprise-standalone-4.10.1"
 # --------------------------
 
 # Configure the JAR file path
