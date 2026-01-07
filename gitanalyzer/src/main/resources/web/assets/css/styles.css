@@ -2,12 +2,24 @@
 
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+    background-color: #f0f0f0; /* Match portal bg */
+    padding: 20px; /* Match portal padding */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
 }
 
 .brand-header {
-    background-color: #663399; /* Raks Purple */
+    background-color: #faf5ff; /* Light Purple Theme */
     padding: 1rem 2rem;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    border-bottom: 2px solid #e0e0e0;
+}
+
+/* Ensure Logo/Brand text is purple */
+.brand-header .navbar-brand {
+    color: #663399 !important;
+    font-weight: 700;
 }
 
 .text-purple {
@@ -17,33 +29,185 @@ body {
 .btn-purple {
     background-color: #663399;
     border-color: #663399;
+    color: white !important; /* Fix text color */
+    font-weight: 500;
 }
 
 .btn-purple:hover {
     background-color: #552b80;
     border-color: #552b80;
+    color: white !important;
 }
 
+/* Ghost Button adapted for White Header (Purple Outline) */
 .ghost-btn {
-    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    border: 1px solid #663399 !important;
     background: transparent !important;
-    color: white !important;
+    color: #663399 !important;
     transition: all 0.3s ease;
+    font-weight: 500;
 }
 
 .ghost-btn:hover {
-    border: 2px solid white !important;
-    font-weight: bold;
+    background-color: #663399 !important;
+    color: white !important;
+    border: 1px solid #663399 !important;
+}
+
+.raks-frame {
+    background-color: #ffffff;
+    border: 5px solid #663399; /* The Main Outer Frame */
+    border-radius: 12px;
+    width: 96%;
+    margin: 20px auto;
+    box-shadow: 0 10px 25px rgba(102, 51, 153, 0.15);
+    display: flex;
+    flex-direction: column;
+    min-height: 85vh;
+    overflow: hidden;
 }
 
 .tool-card {
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #e9ecef;
+    border-top: 5px solid #663399; /* Portal Style Top Border */
+    border-radius: 8px;
+    background: white;
 }
 
 .tool-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1) !important;
+    box-shadow: 0 10px 20px rgba(102, 51, 153, 0.1) !important;
+}
+
+/* Custom Status Colors */
+.bg-modified { background-color: #0d6efd; color: white; } /* Blue */
+.bg-deleted { background-color: #dc3545; color: white; } /* Red */
+.bg-critical { background-color: #ff4500; color: white; } /* OrangeRed */
+
+/* File Identity Colors - Updated per Feedback */
+.bg-code { background-color: #008B8B; color: white; } /* Dark Cyan */
+.bg-config { background-color: #ADD8E6; color: #000; } /* Light Blue */
+
+/* Raks Standard Card Style */
+.raks-card, .card {
+    border: 1px solid #f0f0f0;
+    border-left: 6px solid #663399; /* Prominent Raks Purple Curve */
+    border-radius: 12px; /* Smooth rounded edges */
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(102, 51, 153, 0.08); /* Subtle purple-tinted shadow */
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.raks-card:hover, .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(102, 51, 153, 0.12);
+}
+
+/* Sub-frame for inner sections */
+.sub-frame {
+    border: 1px solid #e0e0e0;
+    border-left: 4px solid #663399;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+/* Dashboard Stats Cards */
+.dashboard-card {
+    border: 1px solid #f0f0f0;
+    border-radius: 12px;
+    background-color: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    height: 100%;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.2s;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+}
+
+/* Shape/Color Indicators for Dashboard */
+.dashboard-card.card-purple {
+    border-bottom: 6px solid #663399;
+}
+
+.dashboard-card.card-code {
+    border-bottom: 6px solid #008B8B; /* Dark Cyan */
+}
+
+.dashboard-card.card-config {
+    border-bottom: 6px solid #ADD8E6; /* Light Blue */
+}
+
+/* Sub-action Buttons (Fetch, etc.) */
+.btn-sub-action {
+    color: #663399;
+    border: 1px solid #663399;
+    background-color: white;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.375rem 0.75rem;
+    border-radius: 6px;
+    transition: all 0.2s;
+    text-decoration: none; /* For A tags */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.5;
+}
+
+.btn-sub-action:hover {
+    background-color: #f3e5f5; /* Very light purple hover */
+    color: #663399;
     border-color: #663399;
+}
+
+.btn-sub-action:active, .btn-sub-action:focus {
+    background-color: #663399;
+    color: white;
+}
+
+/* Guide Styling with Consistent Curve */
+.guide-sidebar .list-group-item {
+    border: none;
+    border-left: 4px solid transparent; /* Always present placeholder */
+    color: #555;
+    font-weight: 500;
+    transition: all 0.2s;
+    margin-bottom: 4px;
+}
+
+.guide-sidebar .list-group-item:hover {
+    background-color: #faf5ff;
+    color: #663399;
+    border-left-color: #d1c4e9; /* Light purple on hover */
+}
+
+.guide-sidebar .list-group-item.active, 
+.guide-sidebar .list-group-item:focus {
+    background-color: #faf5ff;
+    color: #663399;
+    border-left: 4px solid #663399; /* Strong purple on active */
+    font-weight: 700;
+    border-color: transparent transparent transparent #663399;
+}
+
+/* Portal-style Footer */
+.raks-footer {
+    background-color: #faf5ff; /* Light Purple Theme */
+    border-top: 1px solid #e0e0e0;
+    color: #552b80;
+    padding: 1.5rem 0;
+    margin-top: auto;
+    font-size: 0.9rem;
+    font-weight: 500;
 }

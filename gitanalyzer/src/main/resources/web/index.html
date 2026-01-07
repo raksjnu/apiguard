@@ -6,65 +6,77 @@
     <title>GitAnalyzer Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 <body class="bg-light">
 
-    <!-- Header -->
-    <nav class="navbar navbar-expand-lg brand-header text-white mb-5">
-        <div class="container-fluid">
-            <a class="navbar-brand text-white d-flex align-items-center" href="/">
-                <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
-                ApiGuard Portal - GitAnalyzer
-            </a>
-            <div class="d-flex">
-                <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Main Content -->
-    <div class="container">
-        <div class="row g-4">
-            
-            <!-- Bulk Download Tile -->
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm tool-card" onclick="window.location.href='bulk_download.html'">
-                    <div class="card-body text-center p-5">
-                        <h4 class="card-title text-purple mb-3" id="bulkTitle">Bulk Download</h4>
-                        <p class="card-text text-muted" id="bulkDesc">Clone multiple repositories simultaneously.</p>
-                        <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
+    <!-- Raks Frame Container -->
+    <div class="raks-frame">
+        <!-- Header -->
+        <nav class="navbar navbar-expand-lg navbar-light brand-header mb-5">
+            <div class="container-fluid">
+                    <a class="navbar-brand d-flex align-items-center" href="/">
+                        <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
+                        ApiGuard Portal - GitAnalyzer
+                    </a>
+                    <div class="d-flex">
+                        <!-- Guide Button similar to ApiUrlComparison -->
+                        <a href="guide.html#about" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
+                             <span class="me-2">📘</span> Guide / Help
+                        </a>
+                        <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
                     </div>
+                </div>
+            </nav>
+
+            <!-- Main Content -->
+            <div class="container flex-grow-1"> <!-- Flex grow to push footer down -->
+                <div class="row g-4 justify-content-center"> <!-- Center the tiles -->
+                    
+                    <!-- Bulk Download Tile -->
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm tool-card" onclick="window.location.href='bulk_download.html'">
+                            <div class="card-body text-center p-4">
+                                <h4 class="card-title text-purple mb-3" id="bulkTitle">Bulk Download</h4>
+                                <p class="card-text text-muted" id="bulkDesc">Clone multiple repositories simultaneously.</p>
+                                <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Migration Analysis Tile -->
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm tool-card" onclick="window.location.href='analysis.html'">
+                            <div class="card-body text-center p-4">
+                                <h4 class="card-title text-purple mb-3" id="analysisTitle">Migration Analysis</h4>
+                                <p class="card-text text-muted" id="analysisDesc">Compare branches and generate migration reports.</p>
+                                <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Git Search Tile -->
+                    <div class="col-md-4">
+                        <div class="card h-100 shadow-sm tool-card" onclick="window.location.href='search.html'">
+                            <div class="card-body text-center p-4">
+                                <h4 class="card-title text-purple mb-3" id="searchTitle">Git Search</h4>
+                                <p class="card-text text-muted" id="searchDesc">Search for code patterns across repositories.</p>
+                                <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
-            <!-- Migration Analysis Tile -->
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm tool-card" onclick="window.location.href='analysis.html'">
-                    <div class="card-body text-center p-5">
-                        <h4 class="card-title text-purple mb-3" id="analysisTitle">Migration Analysis</h4>
-                        <p class="card-text text-muted" id="analysisDesc">Compare branches and generate migration reports.</p>
-                        <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
-                    </div>
+            <!-- Footer -->
+            <footer class="raks-footer text-center mt-auto"> <!-- mt-auto pushes it to bottom if plenty of space -->
+                <div class="container" id="footerText">
+                    &copy; 2026 RAKS - Enterprise API Solution Suite - ApiGuard
                 </div>
-            </div>
-
-            <!-- Git Search Tile -->
-            <div class="col-md-4">
-                <div class="card h-100 shadow-sm tool-card" onclick="window.location.href='search.html'">
-                    <div class="card-body text-center p-5">
-                        <h4 class="card-title text-purple mb-3" id="searchTitle">Git Search</h4>
-                        <p class="card-text text-muted" id="searchDesc">Search for code patterns across repositories.</p>
-                        <span class="text-purple fw-bold mt-3 d-block">Click to Open &rarr;</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
+            </footer>
     </div>
-
-    <footer class="text-center text-muted mt-5 pt-3 border-top">
-        <p id="footerText">&copy; 2026 RAKS Group - Enterprise API Solution Suite</p>
-    </footer>
+    <!-- End Raks Frame -->
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -85,5 +97,6 @@
             })
             .catch(err => console.error('Failed to load UI config:', err));
     </script>
+
 </body>
 </html>

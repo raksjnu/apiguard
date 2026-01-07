@@ -42,13 +42,18 @@ public class AnalyzerService {
 
             // 3. Config Repo Analysis (Optional)
             if (configRepo != null && !configRepo.isEmpty()) {
-                String cSource = (configSourceBranch != null && !configSourceBranch.isBlank()) ? configSourceBranch : sourceBranch;
-                String cTarget = (configTargetBranch != null && !configTargetBranch.isBlank()) ? configTargetBranch : targetBranch;
-                
-                String configDiffJson = gitProvider.compareBranches(configRepo, cSource, cTarget);
-                Map<String, Object> configDiff = objectMapper.readValue(configDiffJson, Map.class);
-                List<Map<String, Object>> configDiffs = (List<Map<String, Object>>) configDiff.get("diffs");
-                processConfigDiffs(configDiffs, result, filePatterns);
+                try {
+                    String cSource = (configSourceBranch != null && !configSourceBranch.isBlank()) ? configSourceBranch : sourceBranch;
+                    String cTarget = (configTargetBranch != null && !configTargetBranch.isBlank()) ? configTargetBranch : targetBranch;
+                    
+                    String configDiffJson = gitProvider.compareBranches(configRepo, cSource, cTarget);
+                    Map<String, Object> configDiff = objectMapper.readValue(configDiffJson, Map.class);
+                    List<Map<String, Object>> configDiffs = (List<Map<String, Object>>) configDiff.get("diffs");
+                    processConfigDiffs(configDiffs, result, filePatterns);
+                } catch (Exception e) {
+                    // Suppress stack trace for Config failures (e.g. 404 Ref Not Found)
+                    System.out.println("Warning: Config Repo analysis failed: " + e.getMessage() + ". Proceeding with Code Repo analysis only.");
+                }
             }
 
         } catch (Exception e) {

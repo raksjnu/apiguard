@@ -1,99 +1,60 @@
 package com.raks.gitanalyzer.util;
 
-import org.w3c.dom.*;
-import org.xml.sax.InputSource;
-
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.transform.OutputKeys;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
-import java.io.StringReader;
-import java.io.StringWriter;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class XmlCanonicalizer {
+
+    private static final Pattern TAG_PATTERN = Pattern.compile("^<([\\w:-]+)(\\s+[^>]*?)\\s*(/?)>$");
+    private static final Pattern ATTR_PATTERN = Pattern.compile("([\\w:-]+)\\s*=\\s*(['\"])((?:\\\\\\2|.)*?)\\2");
 
     public static String canonicalize(String xmlFragment) {
         if (xmlFragment == null || xmlFragment.isBlank()) return xmlFragment;
 
-        try {
-            // 1. Wrap in dummy root to ensure well-formedness (e.g. for single tags or attributes)
-            // Note: If fragment is already a full document with decl, wrapping might fail.
-            // Check for XML declaration
-            boolean hasDecl = xmlFragment.trim().startsWith("<?xml");
-            String toParse = hasDecl ? xmlFragment : "<dummyroot>" + xmlFragment + "</dummyroot>";
+        String input = xmlFragment.trim();
 
-            // 2. Parse
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
-            dbf.setNamespaceAware(true); // Preserve namespaces
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            Document doc = db.parse(new InputSource(new StringReader(toParse)));
+        // 1. Try to match a single XML tag (e.g. <flow name="a" ... >)
+        Matcher tagMatcher = TAG_PATTERN.matcher(input);
+        if (tagMatcher.find()) {
+            String tagName = tagMatcher.group(1);
+            String attributes = tagMatcher.group(2);
+            String selfClose = tagMatcher.group(3); // "/" or ""
 
-            // 3. Normalize (Sort Attributes)
-            normalizeNode(doc.getDocumentElement());
-
-            // 4. Serialize
-            TransformerFactory tf = TransformerFactory.newInstance();
-            Transformer transformer = tf.newTransformer();
-            transformer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
-            transformer.setOutputProperty(OutputKeys.INDENT, "no"); // Keep compact to avoid whitespace noise
-
-            StringWriter writer = new StringWriter();
+            // 2. Extract and Sort Attributes
+            Map<String, String> sortedAttrs = new TreeMap<>();
+            Matcher attrMatcher = ATTR_PATTERN.matcher(attributes);
             
-            // If we wrapped it, we only want children of dummyroot
-            if (!hasDecl) {
-                NodeList children = doc.getDocumentElement().getChildNodes();
-                for (int i = 0; i < children.getLength(); i++) {
-                    Node child = children.item(i);
-                    transformer.transform(new DOMSource(child), new StreamResult(writer));
-                }
-            } else {
-                // Full doc comparison
-                transformer.transform(new DOMSource(doc), new StreamResult(writer));
+            while (attrMatcher.find()) {
+                String key = attrMatcher.group(1);
+                String quote = attrMatcher.group(2);
+                String value = attrMatcher.group(3);
+                // Reconstruct exact value including quotes
+                sortedAttrs.put(key, quote + value + quote);
             }
 
-            return writer.toString().trim();
-
-        } catch (Exception e) {
-            // If parsing fails, return original (fallback to strict text compare)
-            // System.err.println("Canonicalization failed for: " + xmlFragment + " -> " + e.getMessage());
-            return xmlFragment.trim();
+            // 3. Reconstruct
+            return reconstruct(tagName, sortedAttrs, selfClose);
         }
+
+        // Fallback: If not a simple tag (e.g. text node or complex), return original
+        return input;
     }
 
-    private static void normalizeNode(Node node) {
-        if (node.getNodeType() == Node.ELEMENT_NODE) {
-            Element element = (Element) node;
-            NamedNodeMap attributes = element.getAttributes();
-            
-            if (attributes != null && attributes.getLength() > 1) {
-                TreeMap<String, String> sortedAttrs = new TreeMap<>();
-                for (int i = 0; i < attributes.getLength(); i++) {
-                    Node attr = attributes.item(i);
-                    sortedAttrs.put(attr.getNodeName(), attr.getNodeValue());
-                }
-                
-                // Remove all
-                while (attributes.getLength() > 0) {
-                    element.removeAttributeNode((Attr) attributes.item(0));
-                }
-                
-                // Add back sorted
-                for (Map.Entry<String, String> entry : sortedAttrs.entrySet()) {
-                    element.setAttribute(entry.getKey(), entry.getValue());
-                }
-            }
+    private static String reconstruct(String tagName, Map<String, String> sortedAttrs, String selfClose) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<").append(tagName);
+
+        // TreeMap iterates identifiers in alphabetical order
+        for (Map.Entry<String, String> entry : sortedAttrs.entrySet()) {
+            sb.append(" ").append(entry.getKey()).append("=").append(entry.getValue());
         }
-        
-        // Recurse children
-        NodeList children = node.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            normalizeNode(children.item(i));
+
+        if (selfClose != null && !selfClose.isEmpty()) {
+             sb.append(" /");
         }
+        sb.append(">");
+        return sb.toString();
     }
 }

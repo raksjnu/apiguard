@@ -6,6 +6,7 @@
     <title>Comparison Branch Analysis - GitAnalyzer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         .border-purple { border-color: #6f42c1 !important; }
@@ -36,15 +37,22 @@
     </style>
 </head>
 <body class="bg-light">
-
-    <!-- Header -->
-    <nav class="navbar navbar-expand-lg brand-header text-white mb-4">
+    
+    <div class="raks-frame">
+        <!-- Header -->
+        <nav class="navbar navbar-expand-lg navbar-light brand-header mb-4">
         <div class="container-fluid">
-            <a class="navbar-brand text-white d-flex align-items-center" href="/">
+            <a class="navbar-brand d-flex align-items-center" href="/">
                 <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
                 ApiGuard Portal - GitAnalyzer
             </a>
             <div class="d-flex">
+                <a href="guide.html#analysis" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
+                    <span class="me-2">📘</span> Guide / Help
+                </a>
+                <button type="button" class="btn btn-outline-purple me-2 d-flex align-items-center" onclick="clearForm()">
+                    <span class="me-2">🗑️</span> Clear Form
+                </button>
                 <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
             </div>
         </div>
@@ -67,7 +75,7 @@
                 <div class="card-body">
                     <form id="analysisForm">
                         <!-- Section 1: Discovery -->
-                        <div class="border rounded p-3 mb-3 bg-light-subtle">
+                        <div class="sub-frame">
                             <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">1. Repository Discovery</h6>
                             <div class="row g-2 align-items-end mb-2">
                                 <div class="col-md-5">
@@ -79,7 +87,7 @@
                                     <input type="text" class="form-control form-control-sm" id="repoFilter" placeholder="e.g. .*service.*">
                                 </div>
                                 <div class="col-md-2">
-                                    <button type="button" class="btn btn-sm btn-outline-purple w-100" id="fetchReposBtn">Fetch Repos</button>
+                                    <button type="button" class="btn btn-sub-action w-100" id="fetchReposBtn">Fetch Repos</button>
                                 </div>
                             </div>
                             
@@ -90,14 +98,14 @@
                         </div>
 
                         <!-- Section 2: Analysis Scope -->
-                        <div class="border rounded p-3 mb-3">
+                        <div class="sub-frame">
                             <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">2. Analysis Scope</h6>
                             
                             <div class="row g-2 mb-3">
                                 <div class="col-md-12">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
                                         <label for="codeRepo" class="form-label">Code Repository</label>
-                                        <button type="button" class="btn btn-sm btn-outline-purple" id="fetchBranchesBtn">Fetch Branches</button>
+                                        <button type="button" class="btn btn-sub-action" id="fetchBranchesBtn">Fetch Branches</button>
                                     </div>
                                     <input type="text" class="form-control form-control-sm" id="codeRepo" placeholder="Select above or type owner/repo" required>
                                 </div>
@@ -111,7 +119,7 @@
                                     </select>
                                 </div>
                                 <div class="col-md-2 d-grid">
-                                    <button type="button" class="btn btn-sm btn-outline-purple" id="swapBranchesBtn" title="Swap Branches">
+                                    <button type="button" class="btn btn-sub-action" id="swapBranchesBtn" title="Swap Branches">
                                         &#8646; Swap
                                     </button>
                                 </div>
@@ -129,10 +137,11 @@
                                     <label class="form-check-label small fw-bold" for="enableConfigRepo">Analyze Config Repository</label>
                                 </div>
                                 <div id="configSection" class="ps-2 border-start border-3 border-light transition-all">
-                                    <div class="input-group input-group-sm mb-2">
-                                        <input type="text" class="form-control" id="configRepo" placeholder="owner/repo_config">
-                                        <button class="btn btn-outline-purple" type="button" id="fetchConfigBranchesBtn">Fetch Branches</button>
+                                    <div class="d-flex justify-content-between align-items-center mb-1">
+                                        <label for="configRepo" class="form-label x-small text-muted mb-0">Config Repository</label>
+                                        <button class="btn btn-sub-action py-1" type="button" id="fetchConfigBranchesBtn" style="font-size: 0.75rem;">Fetch Branches</button>
                                     </div>
+                                    <input type="text" class="form-control form-control-sm mb-2" id="configRepo" placeholder="owner/repo_config">
                                     <div class="row g-2">
                                         <div class="col-md-6">
                                             <select class="form-select form-select-sm" id="configSourceSelect">
@@ -180,38 +189,40 @@ regex:.*TODO.*"></textarea>
         <!-- Results Section (Hidden by default) -->
         <div id="resultsSection" class="d-none">
             <!-- Dashboard Stats -->
+            <!-- Dashboard Stats -->
             <div class="row g-4 mb-4">
                 <div class="col-md-3">
-                    <div class="card text-center h-100 border-purple shadow-sm">
-                        <div class="card-body">
-                            <h6 class="card-title text-muted">Total Changed Files</h6>
-                            <h2 class="display-5 fw-bold text-purple" id="totalFiles">0</h2>
+                    <div class="dashboard-card card-purple text-center">
+                        <div class="mb-2">
+                             <i class="bi bi-layers-fill fs-1 text-purple opacity-75"></i>
                         </div>
+                        <h6 class="text-muted mb-2">Total Changed Files</h6>
+                        <h2 class="display-5 fw-bold text-purple" id="totalFiles">0</h2>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-center h-100 border-purple shadow-sm">
-                        <div class="card-body">
-                            <h6 class="card-title text-muted">Code Changes</h6>
-                            <h2 class="display-5 fw-bold text-success" id="codeChanges">0</h2>
+                    <div class="dashboard-card card-code text-center">
+                        <div class="mb-2">
+                             <i class="bi bi-code-slash fs-1 opacity-75" style="color: #008B8B;"></i>
                         </div>
+                        <h6 class="text-muted mb-2">Code Changes</h6>
+                        <h2 class="display-5 fw-bold" style="color: #008B8B !important;" id="codeChanges">0</h2>
                     </div>
                 </div>
                 <div class="col-md-3">
-                    <div class="card text-center h-100 border-purple shadow-sm">
-                        <div class="card-body">
-                            <h6 class="card-title text-muted">Config Changes</h6>
-                            <h2 class="display-5 fw-bold text-warning" id="configChanges">0</h2>
+                    <div class="dashboard-card card-config text-center">
+                         <div class="mb-2">
+                             <i class="bi bi-gear fs-1 opacity-75" style="color: #648a99;"></i>
                         </div>
+                        <h6 class="text-muted mb-2">Config Changes</h6>
+                        <h2 class="display-5 fw-bold" style="color: #648a99 !important;" id="configChanges">0</h2>
                     </div>
                 </div>
                 <!-- Severity Chart -->
                 <div class="col-md-3">
-                    <div class="card text-center h-100 border-purple shadow-sm">
-                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
-                            <div style="height: 160px; width: 160px; position: relative;">
-                                <canvas id="severityChart"></canvas>
-                            </div>
+                    <div class="dashboard-card card-purple text-center d-flex flex-column justify-content-center align-items-center">
+                        <div style="height: 140px; width: 140px; position: relative;">
+                             <canvas id="severityChart"></canvas>
                         </div>
                     </div>
                 </div>
@@ -222,8 +233,8 @@ regex:.*TODO.*"></textarea>
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h5 class="mb-0 fw-bold">Detailed File Changes</h5>
                     <div class="btn-group">
-                         <button class="btn btn-sm btn-outline-purple" onclick="exportToCSV()">Export CSV</button>
-                         <button class="btn btn-sm btn-outline-purple" type="button" id="toggleConfigBtn" data-bs-toggle="collapse" data-bs-target="#setupCollapse" aria-expanded="false">Show Config</button>
+                         <button class="btn btn-sub-action" onclick="exportToCSV()">Export CSV</button>
+                         <button class="btn btn-sub-action" type="button" id="toggleConfigBtn" data-bs-toggle="collapse" data-bs-target="#setupCollapse" aria-expanded="false">Show Config</button>
                     </div>
                 </div>
                 <div class="card-body p-0">
@@ -250,6 +261,25 @@ regex:.*TODO.*"></textarea>
         </div>
     </div>
     
+        <!-- Footer -->
+        <footer class="raks-footer text-center mt-auto">
+            <div class="container" id="footerText">
+                &copy; 2026 RAKS - Enterprise API Solution Suite - ApiGuard
+            </div>
+        </footer>
+    </div>
+    <!-- End Raks Frame -->
+    
+    <script>
+        // Fetch UI Config (Footer)
+        fetch('/api/config/ui')
+            .then(r => r.json())
+            .then(c => {
+                if (c['ui.footer.text']) document.getElementById('footerText').innerText = c['ui.footer.text'];
+            })
+            .catch(e => console.error(e));
+    </script>
+    
     <!-- Diff Modal -->
     <div class="modal fade" id="diffModal" tabindex="-1" aria-labelledby="diffModalTitle" aria-hidden="true">
         <div class="modal-dialog modal-fullscreen">
@@ -263,7 +293,75 @@ regex:.*TODO.*"></textarea>
             </div>
         </div>
     </div>
+    </div>
 
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header brand-header">
+                    <h5 class="modal-title fw-bold" id="helpModalTitle">GitAnalyzer - User Guide & Documentation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- About -->
+                    <section class="mb-5">
+                        <h4 class="text-purple border-bottom pb-2 mb-3">1. Overview</h4>
+                        <p class="lead text-muted">GitAnalyzer is a specialized tool for performing semantic-aware comparisons between Git branches. Unlike standard diff tools, it distinguishes between "meaningful" code changes and "noise" (formatting, attribute reordering, or ignored content), making it ideal for auditing migrations, configuration updates, and release verification.</p>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold">Semantic Difference</h6>
+                                    <p class="small mb-0">Detects real logic changes while ignoring superficial ordering differences in XML or JSON.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold">Dual-Repo Analysis</h6>
+                                    <p class="small mb-0">Simultaneously analyzes code repositories and their associated configuration repositories.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold">Audit Ready</h6>
+                                    <p class="small mb-0">Generates comprehensive reports with categorized severity and exportable evidence.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Configuration -->
+                    <section class="mb-5">
+                        <h4 class="text-purple border-bottom pb-2 mb-3">2. Configuration Guide</h4>
+                        
+                        <div class="accordion" id="helpAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#helpConfig">
+                                        Analysis Configuration
+                                    </button>
+                                </h2>
+                                <div id="helpConfig" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                                    <div class="accordion-body">
+                                        <table class="table table-bordered table-sm">
+                                            <thead class="table-light"><tr><th>Field</th><th>Description</th></tr></thead>
+                                            <tbody>
+                                                <tr><td class="fw-bold">Git Provider</td><td>Select your hosting provider (GitLab/GitHub). Enter a Personal Access Token (PAT) if accessing private repositories.</td></tr>
+                                                <tr><td class="fw-bold">Repository Discovery</td><td>Use Regex filters (e.g. <code>.*service.*</code>) to find relevant repositories within a Group/Org.</td></tr>
+                                                <tr><td class="fw-bold">Analysis Scope</td><td>Select the Code Repository. Define <strong>Base Branch</strong> (Destination, e.g. <code>master</code>) and <strong>Feature Branch</strong> (Source, e.g. <code>feature/login</code>).</td></tr>
+                                                <tr><td class="fw-bold">Config Repository</td><td>Toggle "Analyze Config Repository" to include external config. The tool attempts to auto-match config branches (e.g. code <code>wip</code> -> config <code>wip</code>).</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpIgnore">
+                                        Advanced Filtering & Smart Compare
+                                    </button>
+                                </h2>
     <!-- Highlight.js CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
     <!-- Diff2Html CSS (Bundle) -->
@@ -615,7 +713,7 @@ regex:.*TODO.*"></textarea>
             try {
 
             const payload = {
-                apiName: document.getElementById('apiName').value || 'Manual Analysis',
+                apiName: apiName || 'Manual Analysis',
                 codeRepo: codeRepo,
                 configRepo: configRepo,
                 sourceBranch: document.getElementById('sourceBranchSelect').value,
@@ -623,7 +721,7 @@ regex:.*TODO.*"></textarea>
                 configSource: configSource,
                 configTarget: configTarget,
                 filePatterns: document.getElementById('ignorePatterns').value,
-                contentPatterns: document.getElementById('contentIgnorePatterns').value,
+                contentPatterns: document.getElementById('contentPatterns').value,
                 ignoreAttributeOrder: document.getElementById('ignoreAttributeOrder').checked
             };
 
@@ -681,22 +779,27 @@ regex:.*TODO.*"></textarea>
             tbody.innerHTML = '';
             diffDetails = {}; // Reset
 
-            data.modifiedFiles.forEach((file, index) => {
-                const fileId = 'file_' + index;
+            if (data.modifiedFiles && data.modifiedFiles.length > 0) {
+                data.modifiedFiles.forEach((file, index) => {
+                    const fileId = 'file_' + index;
                 diffDetails[fileId] = file.diffContent; // content
 
-                let statusBadge = '<span class="badge bg-secondary">MODIFIED</span>';
+                let statusBadge = '<span class="badge bg-modified">MODIFIED</span>';
                 if (file.newFile) statusBadge = '<span class="badge bg-success">NEW</span>';
-                if (file.deletedFile) statusBadge = '<span class="badge bg-danger">DELETED</span>';
+                if (file.deletedFile) statusBadge = '<span class="badge bg-deleted">DELETED</span>';
 
                 let severityClass = 'bg-secondary';
                 if (file.severity === 'LOW') severityClass = 'bg-info text-dark';
                 if (file.severity === 'MEDIUM') severityClass = 'bg-warning text-dark';
-                if (file.severity === 'CRITICAL') severityClass = 'bg-danger';
+                if (file.severity === 'CRITICAL') severityClass = 'bg-critical';
+                
+                let typeBadge = `<span class="badge bg-secondary">${file.type}</span>`;
+                if (file.type === 'CODE') typeBadge = '<span class="badge bg-code"><i class="bi bi-code-slash me-1"></i>CODE</span>';
+                if (file.type === 'CONFIG') typeBadge = '<span class="badge bg-config"><i class="bi bi-gear me-1"></i>CONFIG</span>';
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                    <td><span class="badge bg-light text-dark border">${file.type}</span></td>
+                    <td>${typeBadge}</td>
                     <td class="font-monospace small text-break fw-bold text-primary" style="cursor:pointer" onclick="showDiff('${fileId}', '${file.path}')">${file.path}</td>
                     <td>${statusBadge}</td>
                     <td class="fw-bold text-success">+${file.validChangedLines}</td>
@@ -706,6 +809,7 @@ regex:.*TODO.*"></textarea>
                 `;
                 tbody.appendChild(tr);
             });
+            }
 
             renderCharts(data);
             
@@ -725,15 +829,25 @@ regex:.*TODO.*"></textarea>
                 else if(f.severity === 'CRITICAL') crit++;
             });
 
+            // If all are zero, it might be due to ignored/safe changes. Show "Safe/Ignored" segment
+            let safe = 0;
+            if (low === 0 && med === 0 && crit === 0 && data.modifiedFiles.length > 0) {
+                 safe = data.modifiedFiles.length;
+            }
+
             if (severityChart) severityChart.destroy();
+
+            const chartData = (safe > 0) ? [safe] : [crit, med, low];
+            const chartLabels = (safe > 0) ? ['Safe / Ignored'] : ['Critical', 'Medium', 'Low'];
+            const chartColors = (safe > 0) ? ['#20c997'] : ['#FF4500', '#ffc107', '#0dcaf0']; // Safe=Teal
 
             severityChart = new Chart(ctxSev, {
                 type: 'doughnut',
                 data: {
-                    labels: ['Critical', 'Medium', 'Low'],
+                    labels: chartLabels,
                     datasets: [{
-                        data: [crit, med, low],
-                        backgroundColor: ['#dc3545', '#ffc107', '#0dcaf0']
+                        data: chartData,
+                        backgroundColor: chartColors
                     }]
                 },
                 options: {
@@ -839,6 +953,15 @@ regex:.*TODO.*"></textarea>
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+        }
+
+        function clearForm() {
+            if(confirm("Are you sure you want to clear all inputs?")) {
+                document.getElementById('analysisForm').reset();
+                // Clear dropdowns manually if needed or other specific UI states
+                document.getElementById('repoListContainer').classList.add('d-none');
+                document.getElementById('repoListContainer').innerHTML = '';
+            }
         }
     </script>
 </body>
