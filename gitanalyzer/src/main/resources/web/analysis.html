@@ -153,10 +153,11 @@
                                 <label class="form-label small fw-bold">File Ignore Patterns (Glob/Regex)</label>
                                 <textarea class="form-control form-control-sm font-monospace" id="ignorePatterns" rows="2" placeholder=".gitignore patterns..."></textarea>
                             </div>
-                            <div class="mb-2">
-                                <label class="form-label small fw-bold">Content Ignore Patterns (Regex, one per line)</label>
-                                <textarea class="form-control form-control-sm font-monospace" id="contentIgnorePatterns" rows="2" placeholder="e.g. regex:DEBUG_LOG&#10;regex:TODO.*"></textarea>
-                                <div class="form-text small">Lines matching these will differ but be counted as 'IG' (ignored).</div>
+                            <div class="mb-3">
+                                <label for="contentPatterns" class="form-label small fw-bold">Content Ignore Patterns (Regex, one per line)</label>
+                                <textarea class="form-control form-control-sm" id="contentPatterns" rows="3" placeholder="e.g.  regex:DEBUG_LOG
+regex:.*TODO.*"></textarea>
+                                <div class="form-text x-small text-muted">Lines matching these will differ but be counted as 'IG' (ignored).</div>
                             </div>
                         </div>
 

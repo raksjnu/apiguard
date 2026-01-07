@@ -130,29 +130,156 @@ public class AnalyzerService {
          }
     }
     
-    // Add missing calculateLines
+    // Updated calculateLines with XML Canonicalization logic
     private void calculateLines(FileChange change, String diffContent, List<String> patterns) {
         if (diffContent == null || diffContent.isEmpty()) {
             return;
         }
         
-        int valid = 0;
-        int ignored = 0;
+        // 1. Parse Diff into Minus and Plus buckets
+        List<String> minusLines = new ArrayList<>();
+        List<String> plusLines = new ArrayList<>();
+        List<String> rawDiffLines = new ArrayList<>(); // Store raw lines to map back
         
         String[] lines = diffContent.split("\n");
         for (String line : lines) {
-             // Check only added (+) or removed (-) lines, ignoring headers (+++/---)
-            if ((line.startsWith("+") || line.startsWith("-")) && 
-                !line.startsWith("+++") && !line.startsWith("---")) {
-                
-                String content = line.substring(1).trim();
-                // Check against content patterns
-                if (isIgnored(content, patterns)) {
-                    ignored++;
-                } else {
-                    valid++;
+            // Ignore headers
+            if (line.startsWith("+++") || line.startsWith("---") || line.startsWith("diff --git") || line.startsWith("index ")) {
+                continue;
+            }
+            
+            if (line.startsWith("-")) {
+                minusLines.add(line.substring(1).trim());
+                rawDiffLines.add(line);
+            } else if (line.startsWith("+")) {
+                plusLines.add(line.substring(1).trim());
+                rawDiffLines.add(line);
+            }
+        }
+        
+        int valid = 0;
+        int ignored = 0;
+        
+        // 2. Semantic Ignore Logic (XML)
+        List<String> semanticallyIgnoredMinus = new ArrayList<>();
+        List<String> semanticallyIgnoredPlus = new ArrayList<>();
+        
+        if (change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
+            // Bag matching: Count occurrences of Canonical Strings
+            Map<String, Integer> minusCounts = new HashMap<>();
+            
+            for (String m : minusLines) {
+                String canon = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(m);
+                minusCounts.put(canon, minusCounts.getOrDefault(canon, 0) + 1);
+            }
+            
+            for (String p : plusLines) {
+                String canon = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p);
+                if (minusCounts.containsKey(canon) && minusCounts.get(canon) > 0) {
+                     // Found a semantic match! It's a reordering or format change.
+                     semanticallyIgnoredPlus.add(p);
+                     // Decrement match count (remove one instance)
+                     minusCounts.put(canon, minusCounts.get(canon) - 1);
+                     
+                     // We need to mark the corresponding Minus line as ignored too
+                     // Since we don't have direct index map, we'll store the raw strings to skip later
                 }
             }
+            
+            // Re-calculate minus ignored based on left-overs
+            // Actually, simpler: Any P that matched is Ignored. 
+            // Any M that matched P is Ignored.
+            // We just matched P->M. 
+            // The number of matches = semanticallyIgnoredPlus.size().
+            // So we have N matches. We ignore N minus lines and N plus lines.
+        }
+        
+        // 3. Final count pass
+        // We'll reset and count strictly.
+        // But to respect the "Line by Line" regex checks, we should iterate Raw lines?
+        // Wait, Semantic Ignore supersedes Regex?
+        // If it's semantically same, it's IGNORED (Count as IGNORED).
+        
+        // Strategy: 
+        // Iterate Plus Lines: If in semanticallyIgnoredPlus -> Ignored++. Else -> check regex.
+        // Iterate Minus Lines: If it was matched -> Ignored++. Else -> check regex (usually deletions count as valid changes? or just ignored?)
+        // Standard GitAnalyzer logic: Deletions and Additions both valid.
+        
+        // We need to match specific Minus string instances.
+        // Let's use a Bag for matched items to consume.
+        List<String> matchPool = new ArrayList<>(semanticallyIgnoredPlus);
+        
+        // Count Plus
+        for (String p : plusLines) {
+            String canon = (change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) 
+                           ? com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p) : null;
+            
+            boolean semanticMatch = false;
+            // Check if this P's canonical form was matched
+            // (Only if XML)
+             if (canon != null) {
+                 // Check if it's identical to one of the matched plus lines? 
+                 // We know semanticallyIgnoredPlus contains the RAW strings.
+                 if (matchPool.remove(p)) { 
+                     semanticMatch = true;
+                 } else {
+                     // Maybe p is duplicate? matchPool has exact P instance? 
+                     // String equality works.
+                 }
+             }
+
+            if (semanticMatch) {
+                ignored++;
+            } else {
+                if (isIgnored(p, patterns)) ignored++;
+                else valid++;
+            }
+        }
+        
+        // Count Minus (We assume equal number of minus lines were matched)
+        // We need to reconstruct the "Matched Minus" from the Plus matches.
+        // If we matched N lines, we assume N minus lines are ignored.
+        // BUT which ones?
+        // Textual content might differ (attributes swapped).
+        // So we can't search by string.
+        // We matched by Canonical.
+        // Re-run canonical match logic?
+        
+        // Simplified Stats:
+        // Total Valid = (Total Plus Valid) + (Total Minus Valid).
+        // Total Ignored = (Total Plus Ignored) + (Total Minus Ignored).
+        
+        // Let's compute Minus Valid/Ignored separately.
+        // We know we matched X pairs.
+        int matchedPairs = semanticallyIgnoredPlus.size();
+        
+        // Minus lines analysis
+        // We iterate minus lines. We need to identify which ones matched.
+        // Rebuild Matching Map
+        Map<String, Integer> plusCanonCounts = new HashMap<>();
+        if (change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
+             for (String p : semanticallyIgnoredPlus) { // These are the Ps that found a match
+                 String c = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p);
+                 plusCanonCounts.put(c, plusCanonCounts.getOrDefault(c, 0) + 1);
+             }
+        }
+        
+        for (String m : minusLines) {
+             boolean semanticMatch = false;
+             if (change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
+                 String c = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(m);
+                 if (plusCanonCounts.containsKey(c) && plusCanonCounts.get(c) > 0) {
+                     semanticMatch = true;
+                     plusCanonCounts.put(c, plusCanonCounts.get(c) - 1);
+                 }
+             }
+             
+             if (semanticMatch) {
+                 ignored++;
+             } else {
+                 if (isIgnored(m, patterns)) ignored++;
+                 else valid++; // Deletion is a change
+             }
         }
         
         change.setValidChangedLines(valid);
