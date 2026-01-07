@@ -5,6 +5,8 @@ import java.util.List;
 
 public class AnalysisResult {
     private String apiName; // Or project name
+    private String codeRepo;
+    private String configRepo;
     private String sourceBranch;
     private String targetBranch;
     private int totalFilesChanged;
@@ -25,10 +27,17 @@ public class AnalysisResult {
             this.configChangesCount++;
         }
     }
-
+    
     // Getters and Setters
     public String getApiName() { return apiName; }
     public void setApiName(String apiName) { this.apiName = apiName; }
+
+    public String getCodeRepo() { return codeRepo; }
+    public void setCodeRepo(String codeRepo) { this.codeRepo = codeRepo; }
+
+    public String getConfigRepo() { return configRepo; }
+    public void setConfigRepo(String configRepo) { this.configRepo = configRepo; }
+
 
     public String getSourceBranch() { return sourceBranch; }
     public void setSourceBranch(String sourceBranch) { this.sourceBranch = sourceBranch; }
@@ -45,6 +54,11 @@ public class AnalysisResult {
     public int getConfigChangesCount() { return configChangesCount; }
     public void setConfigChangesCount(int configChangesCount) { this.configChangesCount = configChangesCount; }
 
+    private String error;
+
     public List<FileChange> getModifiedFiles() { return modifiedFiles; }
     public void setModifiedFiles(List<FileChange> modifiedFiles) { this.modifiedFiles = modifiedFiles; }
+    
+    public String getError() { return error; }
+    public void setError(String error) { this.error = error; }
 }

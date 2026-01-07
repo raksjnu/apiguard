@@ -15,21 +15,125 @@ public class GitHubProvider implements GitProvider {
     private final String owner;
 
     public GitHubProvider() {
+        this(null);
+    }
+
+    public GitHubProvider(String userToken) {
         this.baseUrl = ConfigManager.get("github.url");
-        this.token = ConfigManager.get("github.token");
         this.owner = ConfigManager.get("github.owner");
+        
+        if (userToken != null && !userToken.isBlank()) {
+            this.token = userToken;
+        } else {
+             this.token = ConfigManager.get("github.token");
+        }
     }
 
     @Override
-    public void cloneRepository(String repoName, File destination) throws Exception {
-        // GitHub Clone URL: https://github.com/owner/repo.git
-        // If private, authentication is needed via token injection or cred helper
-        String cloneUrl = "https://github.com/" + owner + "/" + repoName + ".git";
-        Git.cloneRepository()
+    public void cloneRepository(String repoName, File destination, String branch) throws Exception {
+        String cloneUrl;
+        if (repoName.contains("/")) {
+            // "owner/repo" specified
+            cloneUrl = "https://github.com/" + repoName + ".git";
+        } else {
+            // default to config owner
+            cloneUrl = "https://github.com/" + owner + "/" + repoName + ".git";
+        }
+
+        if (token != null && !token.isEmpty()) {
+            // GitHub Token Auth in URL: https://TOKEN@github.com/...
+            cloneUrl = cloneUrl.replace("https://", "https://" + token + "@");
+        }
+
+        org.eclipse.jgit.api.CloneCommand command = Git.cloneRepository()
             .setURI(cloneUrl)
-            .setDirectory(destination)
-            // .setCredentialsProvider(...) // if needed
-            .call();
+            .setDirectory(destination);
+
+        if (branch != null && !branch.isBlank()) {
+            command.setBranch(branch);
+            command.setBranchesToClone(java.util.Collections.singletonList("refs/heads/" + branch));
+        }
+
+        command.call();
+    }
+
+    @Override
+    public java.util.List<String> listBranches(String repoName) throws Exception {
+        // GET /repos/:owner/:repo/branches
+        String apiUrl = baseUrl + "/repos/" + repoName + "/branches";
+        
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Authorization", "Bearer " + token)
+                .GET()
+                .build();
+        
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+         if (response.statusCode() == 200) {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response.body());
+            
+            java.util.List<String> branches = new java.util.ArrayList<>();
+            if (root.isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode node : root) {
+                    if (node.has("name")) {
+                        branches.add(node.get("name").asText());
+                    }
+                }
+            }
+            return branches;
+        } else {
+             throw new RuntimeException("Failed to fetch branches. Status: " + response.statusCode());
+        }
+    }
+
+    @Override
+    public java.util.List<String> listRepositories(String groupName) throws Exception {
+        // GitHub API: GET /orgs/:org/repos or /users/:user/repos
+        // We'll start with Orgs. 
+        // URL: /orgs/:org/repos?per_page=100
+        
+        String apiUrl = baseUrl + "/orgs/" + groupName + "/repos?per_page=100";
+        
+        HttpClient client = HttpClient.newHttpClient();
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/vnd.github.v3+json")
+                .GET()
+                .build();
+        
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        
+        // If 404, try Users
+        if (response.statusCode() == 404) {
+             apiUrl = baseUrl + "/users/" + groupName + "/repos?per_page=100";
+             request = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Authorization", "Bearer " + token)
+                .header("Accept", "application/vnd.github.v3+json")
+                .GET()
+                .build();
+             response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        }
+
+        if (response.statusCode() == 200) {
+            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response.body());
+            
+            java.util.List<String> content = new java.util.ArrayList<>();
+            if (root.isArray()) {
+                for (com.fasterxml.jackson.databind.JsonNode node : root) {
+                    if (node.has("full_name")) {
+                        content.add(node.get("full_name").asText());
+                    }
+                }
+            }
+            return content;
+        } else {
+             throw new RuntimeException("Failed to fetch repositories. Status: " + response.statusCode());
+        }
     }
 
     @Override

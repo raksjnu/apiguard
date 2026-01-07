@@ -28,15 +28,40 @@ public class AnalysisResource {
             String sourceBranch = (String) request.get("sourceBranch");
             String targetBranch = (String) request.get("targetBranch");
             String ignoreText = (String) request.get("ignorePatterns"); 
+            String contentIgnoreText = (String) request.get("contentIgnorePatterns");
             String apiName = (String) request.getOrDefault("apiName", "Unknown API");
 
-            List<String> ignorePatterns = Collections.emptyList();
+            List<String> filePatterns = Collections.emptyList();
             if (ignoreText != null && !ignoreText.isBlank()) {
-                ignorePatterns = Arrays.asList(ignoreText.split("\\n"));
-                ignorePatterns.replaceAll(String::trim);
+                filePatterns = Arrays.asList(ignoreText.split("\\n"));
+                filePatterns.replaceAll(String::trim);
             }
 
+            List<String> contentPatterns = Collections.emptyList();
+            if (contentIgnoreText != null && !contentIgnoreText.isBlank()) {
+                contentPatterns = Arrays.asList(contentIgnoreText.split("\\n"));
+                contentPatterns.replaceAll(String::trim);
+            }
+
+            String defaultGroup = "";
             String providerType = ConfigManager.get("git.provider");
+            // ... (existing logic for defaultGroup)
+            
+            if ("github".equalsIgnoreCase(providerType)) {
+                defaultGroup = ConfigManager.get("github.owner");
+            } else {
+                String fullGroup = ConfigManager.get("gitlab.group");
+                if(fullGroup.contains("/")) defaultGroup = fullGroup.substring(fullGroup.lastIndexOf("/") + 1);
+                else defaultGroup = fullGroup;
+            }
+
+            if (codeRepo != null && !codeRepo.contains("/") && !defaultGroup.isBlank()) {
+                codeRepo = defaultGroup + "/" + codeRepo;
+            }
+            if (configRepo != null && !configRepo.isBlank() && !configRepo.contains("/") && !defaultGroup.isBlank()) {
+                configRepo = defaultGroup + "/" + configRepo;
+            }
+
             GitProvider provider;
             if ("github".equalsIgnoreCase(providerType)) {
                 provider = new GitHubProvider();
@@ -44,8 +69,11 @@ public class AnalysisResource {
                 provider = new GitLabProvider();
             }
 
+            String configSourceBranch = (String) request.get("configSourceBranch");
+            String configTargetBranch = (String) request.get("configTargetBranch");
+
             AnalyzerService service = new AnalyzerService(provider);
-            AnalysisResult result = service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, ignorePatterns);
+            AnalysisResult result = service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, filePatterns, contentPatterns, configSourceBranch, configTargetBranch);
 
             return Response.ok(result).build();
         } catch (Exception e) {

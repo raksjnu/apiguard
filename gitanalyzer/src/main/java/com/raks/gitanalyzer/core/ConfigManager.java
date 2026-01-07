@@ -68,4 +68,13 @@ public class ConfigManager {
         // sdf.setTimeZone(TimeZone.getTimeZone("UTC")); 
         return sdf.format(new Date());
     }
+    public static java.util.Map<String, String> getPropertiesByPrefix(String prefix) {
+        java.util.Map<String, String> result = new java.util.HashMap<>();
+        for (String key : properties.stringPropertyNames()) {
+            if (key.startsWith(prefix)) {
+                result.put(key, properties.getProperty(key));
+            }
+        }
+        return result;
+    }
 }

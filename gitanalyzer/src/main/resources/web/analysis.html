@@ -3,10 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Migration Analysis - GitAnalyzer</title>
+    <title>Comparison Branch Analysis - GitAnalyzer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="assets/css/styles.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .border-purple { border-color: #6f42c1 !important; }
+        .text-purple { color: #6f42c1 !important; }
+        .btn-outline-purple {
+            color: #6f42c1;
+            border-color: #6f42c1;
+        }
+        .btn-outline-purple:hover {
+            color: #fff;
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+        }
+        .form-control, .form-select {
+            border-color: #6f42c1 !important;
+            /* font-weight: normal; Default is normal */
+        }
+        .form-label {
+            font-weight: bold;
+        }
+        .btn {
+            font-weight: bold;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+            border-color: #6f42c1;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
@@ -26,84 +53,170 @@
     <div class="container">
         <!-- Configuration Card -->
         <div class="card shadow-sm mb-4">
-            <h5 class="card-header bg-white py-3 fw-bold">Analysis Configuration</h5>
-            <div class="card-body">
-                <form id="analysisForm">
-                    <div class="row g-3">
-                        <div class="col-md-6">
-                            <label class="form-label">API Name / Project Identifier</label>
-                            <input type="text" class="form-control" id="apiName" placeholder="e.g. OrderService" required>
-                        </div>
-                        <div class="col-md-6">
-                             <!-- Spacer -->
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0 fw-bold">Analysis Configuration</h5>
+                <form class="d-flex gap-2 align-items-center" onsubmit="return false;">
+                     <select class="form-select form-select-sm" id="gitProviderSelect" style="width: auto;">
+                         <option value="gitlab" selected>GitLab</option>
+                         <option value="github">GitHub</option>
+                     </select>
+                     <input type="password" class="form-control form-control-sm" id="gitTokenInput" placeholder="Private Token (Optional)" style="width: 200px;">
+                </form>
+            </div>
+            <div class="collapse show" id="setupCollapse">
+                <div class="card-body">
+                    <form id="analysisForm">
+                        <!-- Section 1: Discovery -->
+                        <div class="border rounded p-3 mb-3 bg-light-subtle">
+                            <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">1. Repository Discovery</h6>
+                            <div class="row g-2 align-items-end mb-2">
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold">Git Group / Organization</label>
+                                    <input type="text" class="form-control form-control-sm" id="groupName" placeholder="e.g. raks-group">
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold">Filter (Regex)</label>
+                                    <input type="text" class="form-control form-control-sm" id="repoFilter" placeholder="e.g. .*service.*">
+                                </div>
+                                <div class="col-md-2">
+                                    <button type="button" class="btn btn-sm btn-outline-purple w-100" id="fetchReposBtn">Fetch Repos</button>
+                                </div>
+                            </div>
+                            
+                            <!-- Repo List -->
+                            <div id="repoListContainer" class="border rounded bg-white p-2 d-none" style="max-height: 150px; overflow-y: auto;">
+                                <div class="text-muted small text-center fst-italic py-2">Fetched repositories will appear here...</div>
+                            </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Code Repository</label>
-                            <input type="text" class="form-control" id="codeRepo" placeholder="owner/repo" required>
-                            <div class="form-text">Example: raksjnu/mule-dummy-api</div>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Config Repository (Optional)</label>
-                            <input type="text" class="form-control" id="configRepo" placeholder="owner/repo">
+                        <!-- Section 2: Analysis Scope -->
+                        <div class="border rounded p-3 mb-3">
+                            <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">2. Analysis Scope</h6>
+                            
+                            <div class="row g-2 mb-3">
+                                <div class="col-md-12">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <label for="codeRepo" class="form-label">Code Repository</label>
+                                        <button type="button" class="btn btn-sm btn-outline-purple" id="fetchBranchesBtn">Fetch Branches</button>
+                                    </div>
+                                    <input type="text" class="form-control form-control-sm" id="codeRepo" placeholder="Select above or type owner/repo" required>
+                                </div>
+                            </div>
+
+                            <div class="row g-2 mb-3 align-items-end">
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold">Base Branch (Destination)</label>
+                                    <select class="form-select form-select-sm" id="sourceBranchSelect">
+                                        <!-- Options populated via Fetch Branches -->
+                                    </select>
+                                </div>
+                                <div class="col-md-2 d-grid">
+                                    <button type="button" class="btn btn-sm btn-outline-purple" id="swapBranchesBtn" title="Swap Branches">
+                                        &#8646; Swap
+                                    </button>
+                                </div>
+                                <div class="col-md-5">
+                                    <label class="form-label small fw-bold">Feature Branch (Source)</label>
+                                    <select class="form-select form-select-sm" id="targetBranchSelect">
+                                        <!-- Options populated via Fetch Branches -->
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check form-switch mb-1">
+                                    <input class="form-check-input" type="checkbox" id="enableConfigRepo" checked>
+                                    <label class="form-check-label small fw-bold" for="enableConfigRepo">Analyze Config Repository</label>
+                                </div>
+                                <div id="configSection" class="ps-2 border-start border-3 border-light transition-all">
+                                    <div class="input-group input-group-sm mb-2">
+                                        <input type="text" class="form-control" id="configRepo" placeholder="owner/repo_config">
+                                        <button class="btn btn-outline-purple" type="button" id="fetchConfigBranchesBtn">Fetch Branches</button>
+                                    </div>
+                                    <div class="row g-2">
+                                        <div class="col-md-6">
+                                            <select class="form-select form-select-sm" id="configSourceSelect">
+                                                <option value="" selected>Config Base (Default)</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <select class="form-select form-select-sm" id="configTargetSelect">
+                                                <option value="" selected>Config Feature (Default)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="form-text x-small text-muted">Fetch branches to select overrides, or leave default.</div>
+                                </div>
+                            </div>
+
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">File Ignore Patterns (Glob/Regex)</label>
+                                <textarea class="form-control form-control-sm font-monospace" id="ignorePatterns" rows="2" placeholder=".gitignore patterns..."></textarea>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Content Ignore Patterns (Regex, one per line)</label>
+                                <textarea class="form-control form-control-sm font-monospace" id="contentIgnorePatterns" rows="2" placeholder="e.g. regex:DEBUG_LOG&#10;regex:TODO.*"></textarea>
+                                <div class="form-text small">Lines matching these will differ but be counted as 'IG' (ignored).</div>
+                            </div>
                         </div>
 
-                        <div class="col-md-6">
-                            <label class="form-label">Source Branch (Current)</label>
-                            <input type="text" class="form-control" id="sourceBranch" value="main" required>
-                        </div>
-                        <div class="col-md-6">
-                            <label class="form-label">Target Branch (New)</label>
-                            <input type="text" class="form-control" id="targetBranch" value="develop" required>
-                        </div>
-
-                        <div class="col-12">
-                            <label class="form-label">Ignore Patterns (One per line)</label>
-                            <textarea class="form-control" id="ignorePatterns" rows="3" placeholder=".gitignore style or simple contains check&#10;target/&#10;timestamp&#10;regex:.*ID.*"></textarea>
-                            <div class="form-text">Lines containing these patterns will be marked as 'Ignored' and won't count towards High Severity. Support 'regex:' prefix.</div>
-                        </div>
-
-                        <div class="col-12 text-end">
+                        <div class="text-end">
                             <button type="submit" class="btn btn-purple text-white px-5" id="analyzeBtn">Run Analysis</button>
                         </div>
-                    </div>
-                </form>
+                    </form>
+                </div>
             </div>
         </div>
 
         <!-- Results Section (Hidden by default) -->
         <div id="resultsSection" class="d-none">
-            <!-- Summary Stats -->
+            <!-- Dashboard Stats -->
             <div class="row g-4 mb-4">
-                <div class="col-md-4">
-                    <div class="card text-center h-100 border-primary">
+                <div class="col-md-3">
+                    <div class="card text-center h-100 border-purple shadow-sm">
                         <div class="card-body">
-                            <h6 class="card-title text-muted">Total Files Changed</h6>
-                            <h2 class="display-4 fw-bold text-primary" id="totalFiles">0</h2>
+                            <h6 class="card-title text-muted">Total Changed Files</h6>
+                            <h2 class="display-5 fw-bold text-purple" id="totalFiles">0</h2>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card text-center h-100 border-success">
+                <div class="col-md-3">
+                    <div class="card text-center h-100 border-purple shadow-sm">
                         <div class="card-body">
                             <h6 class="card-title text-muted">Code Changes</h6>
-                            <h2 class="display-4 fw-bold text-success" id="codeChanges">0</h2>
+                            <h2 class="display-5 fw-bold text-success" id="codeChanges">0</h2>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="card text-center h-100 border-warning">
+                <div class="col-md-3">
+                    <div class="card text-center h-100 border-purple shadow-sm">
                         <div class="card-body">
                             <h6 class="card-title text-muted">Config Changes</h6>
-                            <h2 class="display-4 fw-bold text-warning" id="configChanges">0</h2>
+                            <h2 class="display-5 fw-bold text-warning" id="configChanges">0</h2>
+                        </div>
+                    </div>
+                </div>
+                <!-- Severity Chart -->
+                <div class="col-md-3">
+                    <div class="card text-center h-100 border-purple shadow-sm">
+                        <div class="card-body d-flex flex-column justify-content-center align-items-center">
+                            <div style="height: 160px; width: 160px; position: relative;">
+                                <canvas id="severityChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Detailed Table -->
-            <div class="card shadow-sm">
-                <h5 class="card-header bg-white py-3 fw-bold">Detailed File Changes</h5>
+            <!-- Detailed Changes -->
+            <div class="card shadow-sm mb-5 border-purple">
+                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">Detailed File Changes</h5>
+                    <div class="btn-group">
+                         <button class="btn btn-sm btn-outline-purple" onclick="exportToCSV()">Export CSV</button>
+                         <button class="btn btn-sm btn-outline-purple" type="button" id="toggleConfigBtn" data-bs-toggle="collapse" data-bs-target="#setupCollapse" aria-expanded="false">Show Config</button>
+                    </div>
+                </div>
                 <div class="card-body p-0">
                     <div class="table-responsive">
                         <table class="table table-hover mb-0 align-middle">
@@ -115,6 +228,7 @@
                                     <th>Valid Lines</th>
                                     <th>Ignored Lines</th>
                                     <th>Severity</th>
+                                    <th>Diff</th>
                                 </tr>
                             </thead>
                             <tbody id="filesTableBody">
@@ -125,38 +239,411 @@
                 </div>
             </div>
         </div>
-
+    </div>
+    
+    <!-- Diff Modal -->
+    <div class="modal fade" id="diffModal" tabindex="-1" aria-labelledby="diffModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title font-monospace small" id="diffModalTitle">File Diff</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="diffContainer" class="p-3"></div>
+            </div>
+        </div>
     </div>
 
+    <!-- Highlight.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
+    <!-- Diff2Html CSS (Bundle) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css">
+    
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Highlight.js & Diff2Html (Bundle) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
+
     <script>
+        // --- Persistence Logic ---
+        const STORE_KEY_PROVIDER = 'git_analyzer_provider';
+        const STORE_KEY_TOKEN = 'git_analyzer_token';
+
+        const providerSelect = document.getElementById('gitProviderSelect');
+        const tokenInput = document.getElementById('gitTokenInput');
+
+        // Restore Provider/Token
+        if (providerSelect && tokenInput) {
+             const savedProvider = localStorage.getItem(STORE_KEY_PROVIDER);
+             if (savedProvider) providerSelect.value = savedProvider;
+    
+             const savedToken = localStorage.getItem(STORE_KEY_TOKEN);
+             if (savedToken) tokenInput.value = savedToken;
+    
+             providerSelect.addEventListener('change', () => localStorage.setItem(STORE_KEY_PROVIDER, providerSelect.value));
+             tokenInput.addEventListener('input', () => localStorage.setItem(STORE_KEY_TOKEN, tokenInput.value));
+        }
+
+        // Restore Form Fields
+        // Removed apiName from persistence
+        const FIELDS_TO_PERSIST = ['groupName', 'repoFilter', 'codeRepo', 'configRepo', 'ignorePatterns'];
+        
+        FIELDS_TO_PERSIST.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                const val = localStorage.getItem('git_analysis_' + id);
+                if (val) el.value = val;
+                
+                el.addEventListener('input', () => {
+                    localStorage.setItem('git_analysis_' + id, el.value);
+                });
+            }
+        });
+
+        // Config Toggle Button Logic
+        const configBtn = document.getElementById('toggleConfigBtn');
+        const collapseEl = document.getElementById('setupCollapse');
+        if (configBtn && collapseEl) {
+            collapseEl.addEventListener('shown.bs.collapse', () => {
+                configBtn.textContent = 'Hide Config';
+            });
+            collapseEl.addEventListener('hidden.bs.collapse', () => {
+                configBtn.textContent = 'Show Config';
+            });
+        }
+
+        // Helper to get Headers
+        function getGitHeaders() {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (providerSelect) headers['X-Git-Provider'] = providerSelect.value;
+            if (tokenInput && tokenInput.value.trim()) headers['X-Git-Token'] = tokenInput.value.trim();
+            return headers;
+        }
+
+        let availableRepositories = []; // Cache to store fetched repos
+
+        // --- Fetch Repos Logic ---
+        document.getElementById('fetchReposBtn').addEventListener('click', async () => {
+             const group = document.getElementById('groupName').value;
+             const filter = document.getElementById('repoFilter').value;
+             const btn = document.getElementById('fetchReposBtn');
+             const originalText = btn.textContent;
+             
+             btn.classList.add('disabled');
+             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Fetching...';
+             
+             try {
+                let url = '/api/download/list'; // Reuse Bulk API
+                const params = new URLSearchParams();
+                if (group) params.append('group', group);
+                if (filter) params.append('filter', filter);
+                
+                const response = await fetch(url + '?' + params.toString(), { headers: getGitHeaders() });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch repositories');
+                }
+                
+                // Update Cache
+                availableRepositories = data.repositories || [];
+                
+                const container = document.getElementById('repoListContainer');
+                container.innerHTML = '';
+                container.classList.remove('d-none');
+
+                if (availableRepositories.length > 0) {
+                    availableRepositories.forEach((repo, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check';
+                        // Create unique ID
+                        const id = 'repo_' + index;
+                        div.innerHTML = `
+                            <input class="form-check-input repo-radio" type="radio" name="selectedRepo" id="${id}" value="${repo}">
+                            <label class="form-check-label small" for="${id}">${repo}</label>
+                        `;
+                        container.appendChild(div);
+                        
+                        // Event Listener for Selection
+                        div.querySelector('input').addEventListener('change', (e) => {
+                             if(e.target.checked) {
+                                 const selected = e.target.value;
+                                 document.getElementById('codeRepo').value = selected;
+                                 localStorage.setItem('git_analysis_codeRepo', selected);
+                                 
+                                 // Auto-Detect Config Repo
+                                 const configName = selected + "_config";
+                                 const configMatch = availableRepositories.find(r => r === configName); // Strict Exact Match from list
+                                 
+                                 const configInput = document.getElementById('configRepo');
+                                 if (configMatch) {
+                                     configInput.value = configMatch;
+                                     // Highlight effect
+                                     configInput.classList.add('border-warning', 'bg-warning-subtle');
+                                     setTimeout(() => {
+                                          configInput.classList.remove('border-warning', 'bg-warning-subtle');
+                                     }, 2000);
+                                     localStorage.setItem('git_analysis_configRepo', configMatch);
+                                 } else {
+                                     configInput.value = '';
+                                     localStorage.removeItem('git_analysis_configRepo');
+                                 }
+                             }
+                        });
+                    });
+                } else {
+                    container.innerHTML = '<div class="text-muted small text-center p-2">No repositories found.</div>';
+                }
+             } catch (err) {
+                 alert('Error fetching repositories: ' + err.message);
+                 console.error(err);
+             } finally {
+                 btn.classList.remove('disabled');
+                 btn.textContent = originalText;
+             }
+        });
+
+        // --- Fetch Branches Logic ---
+        document.getElementById('fetchBranchesBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const repo = document.getElementById('codeRepo').value;
+            if (!repo) {
+                alert("Please enter or select a Code Repository first.");
+                return;
+            }
+            
+            const btn = document.getElementById('fetchBranchesBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Fetching...';
+            
+            try {
+                const response = await fetch('/api/download/branches?repo=' + encodeURIComponent(repo), {
+                    headers: getGitHeaders()
+                });
+                const branches = await response.json(); // API returns List<String>
+                
+                // Helper to populate select
+                const populateSelect = (elementId, selectedValue) => {
+                    const select = document.getElementById(elementId);
+                    select.innerHTML = '';
+                    if (branches && branches.length > 0) {
+                        branches.forEach(br => {
+                            const opt = document.createElement('option');
+                            opt.value = br;
+                            opt.textContent = br;
+                            select.appendChild(opt);
+                        });
+                        if (selectedValue && branches.includes(selectedValue)) {
+                            select.value = selectedValue;
+                        }
+                    } else {
+                         const opt = document.createElement('option');
+                         opt.text = "No branches found";
+                         select.appendChild(opt);
+                    }
+                };
+                
+                // Smart Selection Logic
+                // branches is the array
+                let sourceVal = branches.includes('master') ? 'master' : (branches.includes('main') ? 'main' : branches[0]);
+                
+                // For target, prefer 'develop', then any branch != sourceVal
+                let targetVal = branches.includes('develop') ? 'develop' : null;
+                if (!targetVal && branches.length > 1) {
+                    targetVal = branches.find(b => b !== sourceVal) || sourceVal;
+                } else if (!targetVal) {
+                    targetVal = sourceVal;
+                }
+
+                populateSelect('sourceBranchSelect', sourceVal);
+                populateSelect('targetBranchSelect', targetVal);
+
+            } catch(err) {
+                 alert('Error fetching branches: ' + err.message);
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        });
+
+        // --- Swap Branches Logic ---
+        document.getElementById('swapBranchesBtn').addEventListener('click', () => {
+             // Swap Code Branches
+             const s = document.getElementById('sourceBranchSelect');
+             const t = document.getElementById('targetBranchSelect');
+             const temp = s.value;
+             s.value = t.value;
+             t.value = temp;
+             
+             // Swap Config Branches
+             const cs = document.getElementById('configSourceSelect');
+             const ct = document.getElementById('configTargetSelect');
+             const tempC = cs.value;
+             cs.value = ct.value;
+             ct.value = tempC;
+        });
+        
+        // --- Config Toggle Logic ---
+        const configCheckbox = document.getElementById('enableConfigRepo');
+        const configSection = document.getElementById('configSection');
+        
+        function updateConfigVisibility() {
+            if (configCheckbox.checked) {
+                configSection.classList.remove('opacity-50', 'pe-none');
+            } else {
+                configSection.classList.add('opacity-50', 'pe-none');
+            }
+        }
+        configCheckbox.addEventListener('change', updateConfigVisibility);
+        // Initial state
+        updateConfigVisibility();
+
+        // --- Config Fetch Branches ---
+        document.getElementById('fetchConfigBranchesBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('fetchConfigBranchesBtn');
+            const repo = document.getElementById('configRepo').value.trim();
+            if (!repo) { alert('Please enter a Config Repository first'); return; }
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+
+            try {
+                const url = `/api/download/branches?repo=${encodeURIComponent(repo)}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Status ' + response.status);
+                
+                const branches = await response.json();
+                
+                // Helper to populate
+                const populate = (id) => {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = '<option value="" selected>Default (Same as Code Repo)</option>';
+                    branches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b;
+                        opt.text = b;
+                        sel.appendChild(opt);
+                    });
+                    return sel;
+                };
+                
+                const cSource = populate('configSourceSelect');
+                const cTarget = populate('configTargetSelect');
+                
+                // --- Smart Auto-Select Logic ---
+                const codeBase = document.getElementById('sourceBranchSelect').value;
+                const codeFeature = document.getElementById('targetBranchSelect').value;
+                
+                // 1. Sync Config Base with Code Base (e.g. master -> master)
+                if (codeBase && branches.includes(codeBase)) {
+                    cSource.value = codeBase;
+                }
+                
+                // 2. Sync Config Feature with Code Feature (e.g. wip -> wip OR wipnew)
+                if (codeFeature) {
+                    if (branches.includes(codeFeature)) {
+                        cTarget.value = codeFeature;
+                    } else {
+                        // Heuristic: Fuzzy Match or Single Candidate
+                        const selectedBase = cSource.value;
+                        const candidates = branches.filter(b => b !== selectedBase);
+                        
+                        // Strategy A: Starts With (e.g. wip -> wipnew)
+                        const fuzzy = candidates.find(b => b.startsWith(codeFeature));
+                        if (fuzzy) {
+                            cTarget.value = fuzzy;
+                        } 
+                        // Strategy B: Only one branch left (and it's distinct from base)
+                        else if (candidates.length === 1) {
+                            cTarget.value = candidates[0];
+                        }
+                    }
+                }
+                
+            } catch(err) {
+                 alert('Error fetching config branches: ' + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // --- Analysis Logic ---
         document.getElementById('analysisForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             const btn = document.getElementById('analyzeBtn');
             const originalText = btn.textContent;
             
+            const codeRepo = document.getElementById('codeRepo').value;
+            
+            // Config Repo Logic
+            let configRepo = null;
+            let configSource = null;
+            let configTarget = null;
+            
+            if (document.getElementById('enableConfigRepo').checked) {
+                configRepo = document.getElementById('configRepo').value;
+                configSource = document.getElementById('configSourceSelect').value;
+                configTarget = document.getElementById('configTargetSelect').value;
+            }
+
+            // Auto-derive API name if needed
+            let apiName = '';
+            if (codeRepo) {
+                const parts = codeRepo.split('/');
+                apiName = parts[parts.length - 1]; // Use last part of repo
+            }
+
             btn.disabled = true;
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Analyzing...';
 
+            try {
+
             const payload = {
-                apiName: document.getElementById('apiName').value,
-                codeRepo: document.getElementById('codeRepo').value,
-                configRepo: document.getElementById('configRepo').value,
-                sourceBranch: document.getElementById('sourceBranch').value,
-                targetBranch: document.getElementById('targetBranch').value,
-                ignorePatterns: document.getElementById('ignorePatterns').value
+                apiName: apiName, // Auto-derived
+                codeRepo: codeRepo,
+                configRepo: configRepo, // From local logic above
+                sourceBranch: document.getElementById('sourceBranchSelect').value, // Used Select
+                targetBranch: document.getElementById('targetBranchSelect').value, // Used Select
+                configSourceBranch: configSource,
+                configTargetBranch: configTarget,
+                ignorePatterns: document.getElementById('ignorePatterns').value,
+                contentIgnorePatterns: document.getElementById('contentIgnorePatterns').value
             };
 
-            try {
-                const response = await fetch('/api/analyze', {
+            // Capture branch names for Diff Title
+            const sBranch = document.getElementById('sourceBranchSelect').value;
+            const tBranch = document.getElementById('targetBranchSelect').value;
+            window.currentAnalysisBranches = { source: sBranch, target: tBranch };
+            
+            // showLoading(true); // This line seems to be cut off or misplaced in the original instruction. Assuming it was meant to be before the fetch call.
+            const response = await fetch('/api/analyze', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: getGitHeaders(),
                     body: JSON.stringify(payload)
                 });
 
                 if (!response.ok) throw new Error('Analysis Request Failed');
                 
                 const result = await response.json();
+                
+                // Collapse Input Card
+                // Collapse Input Card (Manual DOM manipulation to avoid Bootstrap API errors)
+                // Collapse Input Card
+                const collapseEl = document.getElementById('setupCollapse');
+                if (collapseEl) {
+                    // Use Bootstrap API to ensure events fire, or manually update button
+                    collapseEl.classList.remove('show');
+                    const toggleBtn = document.getElementById('toggleConfigBtn');
+                    if (toggleBtn) toggleBtn.textContent = 'Show Config';
+                }
+                
                 renderResults(result);
 
             } catch (err) {
@@ -168,7 +655,12 @@
             }
         });
 
+        let currentResults = null;
+        let diffDetails = {}; // Store diffs map
+        let severityChart = null;
+
         function renderResults(data) {
+            currentResults = data;
             document.getElementById('resultsSection').classList.remove('d-none');
             
             document.getElementById('totalFiles').textContent = data.totalFilesChanged;
@@ -177,8 +669,12 @@
 
             const tbody = document.getElementById('filesTableBody');
             tbody.innerHTML = '';
+            diffDetails = {}; // Reset
 
-            data.modifiedFiles.forEach(file => {
+            data.modifiedFiles.forEach((file, index) => {
+                const fileId = 'file_' + index;
+                diffDetails[fileId] = file.diffContent; // content
+
                 let statusBadge = '<span class="badge bg-secondary">MODIFIED</span>';
                 if (file.newFile) statusBadge = '<span class="badge bg-success">NEW</span>';
                 if (file.deletedFile) statusBadge = '<span class="badge bg-danger">DELETED</span>';
@@ -191,17 +687,148 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><span class="badge bg-light text-dark border">${file.type}</span></td>
-                    <td class="font-monospace small">${file.path}</td>
+                    <td class="font-monospace small text-break fw-bold text-primary" style="cursor:pointer" onclick="showDiff('${fileId}', '${file.path}')">${file.path}</td>
                     <td>${statusBadge}</td>
                     <td class="fw-bold text-success">+${file.validChangedLines}</td>
                     <td class="text-muted">${file.ignoredLines}</td>
                     <td><span class="badge ${severityClass}">${file.severity}</span></td>
+                    <td><button class="btn btn-sm btn-outline-primary" onclick="showDiff('${fileId}', '${file.path}')">View Diff</button></td>
                 `;
                 tbody.appendChild(tr);
             });
+
+            renderCharts(data);
             
             // Scroll to results
             document.getElementById('resultsSection').scrollIntoView({behavior: 'smooth'});
+        }
+
+        function renderCharts(data) {
+            // Severity Chart
+            const ctxSev = document.getElementById('severityChart').getContext('2d');
+            
+            // Count Severities
+            let low = 0, med = 0, crit = 0;
+            data.modifiedFiles.forEach(f => {
+                if(f.severity === 'LOW') low++;
+                else if(f.severity === 'MEDIUM') med++;
+                else if(f.severity === 'CRITICAL') crit++;
+            });
+
+            if (severityChart) severityChart.destroy();
+
+            severityChart = new Chart(ctxSev, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'Medium', 'Low'],
+                    datasets: [{
+                        data: [crit, med, low],
+                        backgroundColor: ['#dc3545', '#ffc107', '#0dcaf0']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom' }
+                    }
+                }
+            });
+        }
+        
+        function showDiff(fileId, filePath) {
+            try {
+                const details = diffDetails[fileId];
+                // details might be string (legacy) or object
+                const diffContent = (details && typeof details === 'object') ? details.content : details;
+                
+                let source = 'Base';
+                let target = 'Head';
+                if (window.currentAnalysisBranches) {
+                    source = window.currentAnalysisBranches.source;
+                    target = window.currentAnalysisBranches.target;
+                }
+
+                const targetElement = document.getElementById('diffContainer');
+                document.getElementById('diffModalTitle').innerHTML = 
+                    `<span class="text-muted">File:</span> <span class="fw-bold text-primary">${filePath}</span> ` + 
+                    `<span class="badge bg-light text-dark border ms-2">${source} &#8594; ${target}</span>`;
+                
+                // Clear previous
+                targetElement.innerHTML = ''; 
+
+                if (!diffContent || diffContent.trim() === '') {
+                    targetElement.innerHTML = '<div class="alert alert-warning">No diff content available.</div>';
+                } else {
+                    // Raw Diff (Collapsed by default)
+                    const rawDetails = document.createElement('details');
+                    rawDetails.innerHTML = '<summary class="fw-bold mb-2" style="cursor:pointer">Show Raw Diff</summary><pre style="max-height: 200px; overflow: auto; background: #f8f9fa; padding: 10px;">' 
+                                       + diffContent.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre><hr>';
+                    targetElement.appendChild(rawDetails);
+
+                    const renderCtn = document.createElement('div');
+                    targetElement.appendChild(renderCtn);
+
+                    // Robust Constructor Discovery
+                    let UIConstructor = window.Diff2HtmlUI;
+                    if (!UIConstructor && window.Diff2Html) {
+                        UIConstructor = window.Diff2Html.UI || window.Diff2Html.Diff2HtmlUI;
+                    }
+                    
+                    if (!UIConstructor) {
+                        const globals = Object.keys(window).filter(k => k.toLowerCase().includes('diff'));
+                        renderCtn.innerHTML = `<div class="alert alert-danger">Visual Diff Error: Library not loaded correctly.<br>
+                        Debug: Found Globals = [${globals.join(', ')}]<br>
+                        Please check internet connection. Raw diff is available above.</div>`;
+                    } else {
+                        try {
+                             const configuration = {
+                                drawFileList: false,
+                                fileListToggle: false,
+                                fileListStartVisible: false,
+                                fileContentToggle: false,
+                                matching: 'lines',
+                                outputFormat: 'side-by-side',
+                                synchronisedScroll: true,
+                                highlight: true,
+                                renderNothingWhenEmpty: false
+                            };
+                            const diff2htmlUi = new UIConstructor(renderCtn, diffContent, configuration);
+                            diff2htmlUi.draw();
+                        } catch (e) {
+                            console.error('Diff2Html render error:', e);
+                            renderCtn.innerHTML = '<div class="alert alert-danger">Error rendering visual diff: ' + e.message + '</div>';
+                        }
+                    }
+                }
+
+                const modal = new bootstrap.Modal(document.getElementById('diffModal'));
+                modal.show();
+            } catch (err) {
+                alert('CRITICAL ERROR in showDiff: ' + err.message);
+                console.error(err);
+            }
+        }
+
+        function exportToCSV() {
+            if (!currentResults || !currentResults.modifiedFiles) return;
+            
+            const rows = [['Type', 'File Path', 'Status', 'Valid Lines', 'Ignored Lines', 'Severity']];
+            currentResults.modifiedFiles.forEach(f => {
+                const status = f.newFile ? 'NEW' : (f.deletedFile ? 'DELETED' : 'MODIFIED');
+                rows.push([f.type, f.path, status, f.validChangedLines, f.ignoredLines, f.severity]);
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8," 
+                + rows.map(e => e.join(",")).join("\n");
+            
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "migration_analysis.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
         }
     </script>
 </body>

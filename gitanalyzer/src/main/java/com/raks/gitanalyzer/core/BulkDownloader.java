@@ -38,9 +38,9 @@ public class BulkDownloader {
             executor.submit(() -> {
                 try {
                     System.out.println("Starting download: " + repoName);
-                    File repoDir = new File(baseDir, repoName);
-                    gitProvider.cloneRepository(repoName, repoDir);
-                    System.out.println("Completed download: " + repoName);
+                    File repoDir = new File(baseDir, repoName.substring(repoName.lastIndexOf("/") + 1));
+                    gitProvider.cloneRepository(repoName, repoDir, null);
+                    System.out.println("Downloaded: " + repoName);
                 } catch (Exception e) {
                     System.err.println("Failed to download " + repoName + ": " + e.getMessage());
                     e.printStackTrace();

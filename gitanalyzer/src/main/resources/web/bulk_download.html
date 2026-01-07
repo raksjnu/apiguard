@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bulk Download - GitAnalyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/styles.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+    <!-- Header -->
+    <nav class="navbar navbar-expand-lg brand-header text-white mb-4">
+        <div class="container-fluid">
+            <a class="navbar-brand text-white d-flex align-items-center" href="/">
+                <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
+                ApiGuard Portal - GitAnalyzer
+            </a>
+            <div class="d-flex">
+                <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container">
+        <!-- Configuration Card -->
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <h5 class="mb-0 fw-bold">Bulk Repository Download</h5>
+                <form class="d-flex gap-2 align-items-center" onsubmit="return false;">
+                     <select class="form-select form-select-sm" id="gitProviderSelect" style="width: auto;">
+                         <option value="gitlab" selected>GitLab</option>
+                         <option value="github">GitHub</option>
+                     </select>
+                     <input type="password" class="form-control form-control-sm" id="gitTokenInput" placeholder="Private Token (Optional)" style="width: 200px;">
+                </form>
+            </div>
+            <div class="card-body">
+                <form id="downloadForm">
+                    <!-- Provider & Token Section moved to Header -->
+
+                    <!-- Group & Filter Section -->
+                    <div class="row g-2 mb-2">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Git Group / Organization</label>
+                            <input type="text" class="form-control form-control-sm" id="groupName" placeholder="e.g. raks-group">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label d-flex justify-content-between small fw-bold">
+                                <span>Filter Pattern (Regex)</span>
+                                <a href="#" id="fetchGroupBtn" class="text-decoration-none text-purple">Fetch Repositories</a>
+                            </label>
+                            <input type="text" class="form-control form-control-sm" id="filterPattern" placeholder="e.g. .*mule.*">
+                        </div>
+                    </div>
+                    <div class="form-text mb-3 small">Token is saved in browser. Fetch listing to populate checkboxes below.</div>
+
+                    <!-- Repo Selection Section -->
+                    <div class="mb-3">
+                        <label class="form-label d-flex justify-content-between">
+                            <span>Repositories to Download</span>
+                            <small>
+                                <a href="#" id="selectAllBtn" class="text-decoration-none me-2">Select All</a>
+                                <a href="#" id="deselectAllBtn" class="text-decoration-none">Deselect All</a>
+                            </small>
+                        </label>
+                        <div id="repoChecklist" class="border rounded p-3 bg-light" style="height: 300px; overflow-y: auto;">
+                            <!-- Checkboxes will be injected here -->
+                            <div class="text-muted text-center mt-5">No repositories fetched yet.</div>
+                        </div>
+                        <div class="input-group mt-2">
+                            <input type="text" class="form-control" id="manualRepoInput" placeholder="Add manual repo (group/project)...">
+                            <button class="btn btn-outline-secondary" type="button" id="addManualBtn">Add</button>
+                        </div>
+                    </div>
+
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-8">
+                             <label class="form-label">Output Directory (Optional)</label>
+                             <input type="text" class="form-control" id="targetDir" placeholder="e.g. C:\MyDownloads">
+                        </div>
+                        <div class="col-md-4">
+                             <label class="form-label d-flex justify-content-between">
+                                 <span>Branches (Optional)</span>
+                                 <a href="#" id="fetchBranchesBtn" class="text-decoration-none small text-purple fw-bold">Fetch Branches</a>
+                             </label>
+                             <div id="branchChecklist" class="border rounded p-2 bg-light mb-1" style="height: 80px; overflow-y: auto;">
+                                 <div class="text-muted small text-center mt-3">Fetch or type manual below</div>
+                             </div>
+                             <input type="text" class="form-control form-control-sm" id="branchManualInput" placeholder="Add manual (e.g. feature/abc)...">
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="text-muted small">
+                            Downloads will sent to selected directory.
+                        </div>
+                        <button type="submit" class="btn btn-purple text-white" id="downloadBtn">
+                            <i class="bi bi-download me-2"></i>Start Download
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="card shadow-sm d-none">
+            <h5 class="card-header bg-white py-3 fw-bold">Download Status</h5>
+            <div class="card-body">
+                <div class="alert alert-info" id="statusSummary"></div>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Repository</th>
+                                <th>Branch</th>
+                                <th>Status</th>
+                                <th>Path / Error</th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- Persistence Logic ---
+        const STORE_KEY_PROVIDER = 'git_analyzer_provider';
+        const STORE_KEY_TOKEN = 'git_analyzer_token';
+
+        const providerSelect = document.getElementById('gitProviderSelect');
+        const tokenInput = document.getElementById('gitTokenInput');
+
+        // Load valid values from localStorage
+        if (providerSelect && tokenInput) {
+             const savedProvider = localStorage.getItem(STORE_KEY_PROVIDER);
+             if (savedProvider) providerSelect.value = savedProvider;
+    
+             const savedToken = localStorage.getItem(STORE_KEY_TOKEN);
+             if (savedToken) tokenInput.value = savedToken;
+    
+             // Save on change
+             providerSelect.addEventListener('change', () => {
+                 localStorage.setItem(STORE_KEY_PROVIDER, providerSelect.value);
+             });
+    
+             tokenInput.addEventListener('input', () => {
+                 localStorage.setItem(STORE_KEY_TOKEN, tokenInput.value);
+             });
+        }
+
+        // Helper to get Headers
+        function getGitHeaders() {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            const pSelect = document.getElementById('gitProviderSelect');
+            if (pSelect) headers['X-Git-Provider'] = pSelect.value;
+            
+            const tInput = document.getElementById('gitTokenInput');
+            if (tInput) {
+                const token = tInput.value.trim();
+                if (token) headers['X-Git-Token'] = token;
+            }
+            return headers;
+        }
+
+        // --- Persistence Logic (Form Fields) ---
+        const FIELDS_TO_PERSIST = ['groupName', 'filterPattern', 'targetDir'];
+        
+        FIELDS_TO_PERSIST.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                // Restore
+                const val = localStorage.getItem('git_analyzer_' + id);
+                if (val) el.value = val;
+                
+                // Save
+                el.addEventListener('input', () => {
+                    localStorage.setItem('git_analyzer_' + id, el.value);
+                });
+            }
+        });
+
+        // Restore Manual Repos
+        const savedManual = localStorage.getItem('git_analyzer_manual_repos');
+        if (savedManual) {
+            try {
+                const repos = JSON.parse(savedManual);
+                const container = document.getElementById('repoChecklist');
+                if (repos.length > 0 && container.innerText.includes('No repositories')) {
+                    container.innerHTML = '';
+                }
+                repos.forEach(r => container.appendChild(createCheckbox(r, true)));
+            } catch(e) { console.error('Error loading manual repos', e); }
+        }
+
+        function saveManualRepo(repo) {
+            let repos = [];
+            const existing = localStorage.getItem('git_analyzer_manual_repos');
+            if (existing) {
+                try { repos = JSON.parse(existing); } catch(e) {}
+            }
+            if (!repos.includes(repo)) {
+                repos.push(repo);
+                localStorage.setItem('git_analyzer_manual_repos', JSON.stringify(repos));
+            }
+        }
+
+
+        // Checkbox Helper
+        function createCheckbox(repoName, checked=true) {
+            const div = document.createElement('div');
+            div.className = 'form-check';
+            div.innerHTML = `
+                <input class="form-check-input repo-checkbox" type="checkbox" value="${repoName}" id="chk_${repoName.replace(/\W/g,'_')}" ${checked ? 'checked' : ''}>
+                <label class="form-check-label" for="chk_${repoName.replace(/\W/g,'_')}">
+                    ${repoName}
+                </label>
+            `;
+            return div;
+        }
+
+        // Add Manual Repo
+        document.getElementById('addManualBtn').addEventListener('click', () => {
+            const val = document.getElementById('manualRepoInput').value.trim();
+            if(val) {
+                const container = document.getElementById('repoChecklist');
+                // clear empty message if needed
+                if(container.innerText.includes('No repositories')) container.innerHTML = '';
+                container.appendChild(createCheckbox(val, true));
+                saveManualRepo(val); // Save to persistence
+                document.getElementById('manualRepoInput').value = '';
+            }
+        });
+
+        // Select/Deselect All
+        document.getElementById('selectAllBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.repo-checkbox').forEach(c => c.checked = true);
+        });
+        document.getElementById('deselectAllBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            document.querySelectorAll('.repo-checkbox').forEach(c => c.checked = false);
+        });
+
+        // Fetch Group Logic (Restored)
+        document.getElementById('fetchGroupBtn').addEventListener('click', async (e) => {
+             e.preventDefault(); // Important for <a> tag
+             const groupInput = document.getElementById('groupName').value;
+             const filterInput = document.getElementById('filterPattern').value;
+             const btn = document.getElementById('fetchGroupBtn');
+             const originalText = btn.textContent;
+             
+             btn.classList.add('disabled');
+             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Fetching...';
+             
+             try {
+                let url = '/api/download/list';
+                const params = new URLSearchParams();
+                if (groupInput) params.append('group', groupInput);
+                if (filterInput) params.append('filter', filterInput);
+                
+                const response = await fetch(url + '?' + params.toString(), {
+                    headers: getGitHeaders()
+                });
+                const data = await response.json();
+                
+                const container = document.getElementById('repoChecklist');
+                container.innerHTML = ''; // clear
+
+                if (data.repositories && data.repositories.length > 0) {
+                    data.repositories.forEach(repo => {
+                        container.appendChild(createCheckbox(repo, true));
+                    });
+                    
+                    if (!groupInput && data.group) {
+                         document.getElementById('groupName').value = data.group;
+                    }
+                } else {
+                    container.innerHTML = '<div class="text-muted text-center mt-5">No repositories found matching criteria.</div>';
+                }
+             } catch (err) {
+                 alert('Error fetching repositories: ' + err.message);
+                 console.error(err);
+             } finally {
+                 btn.classList.remove('disabled');
+                 btn.textContent = originalText;
+             }
+        });
+
+                // Fetch Branches Logic
+        document.getElementById('fetchBranchesBtn').addEventListener('click', async () => {
+             // Find first available repo to check branches against
+             const repos = Array.from(document.querySelectorAll('.repo-checkbox'));
+             if (repos.length === 0) {
+                 alert("Please fetch repositories first.");
+                 return;
+             }
+             // Prefer first checked, otherwise first listed
+             let sampleRepo = repos.find(cb => cb.checked)?.value || repos[0].value;
+             
+             const btn = document.getElementById('fetchBranchesBtn');
+             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+             btn.classList.add('disabled');
+             
+             try {
+                const response = await fetch('/api/download/branches?repo=' + encodeURIComponent(sampleRepo), {
+                    headers: getGitHeaders()
+                });
+                const branches = await response.json();
+                
+                const container = document.getElementById('branchChecklist');
+                container.innerHTML = '';
+                
+                if (branches && branches.length > 0) {
+                    branches.forEach(br => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check form-check-sm';
+                        div.innerHTML = `
+                            <input class="form-check-input branch-checkbox" type="checkbox" value="${br}" id="br_${br.replace(/\W/g,'_')}">
+                            <label class="form-check-label small" for="br_${br.replace(/\W/g,'_')}">${br}</label>
+                        `;
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<div class="text-muted small text-center mt-3">No branches found.</div>';
+                }
+             } catch (err) {
+                 alert('Error fetching branches: ' + err.message);
+             } finally {
+                 btn.innerHTML = 'Fetch Branches';
+                 btn.classList.remove('disabled');
+             }
+        });
+
+        document.getElementById('downloadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Gather Selected Repos
+            const selectedRepos = Array.from(document.querySelectorAll('.repo-checkbox:checked')).map(cb => cb.value);
+            
+            if(selectedRepos.length === 0) {
+                alert("Please select at least one repository.");
+                return;
+            }
+
+            const btn = document.getElementById('downloadBtn');
+            const originalText = btn.textContent;
+            
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Downloading...';
+            document.getElementById('resultsSection').classList.add('d-none');
+
+            // Gather Branches
+            const selectedBranches = Array.from(document.querySelectorAll('.branch-checkbox:checked')).map(cb => cb.value);
+            const manualBranch = document.getElementById('branchManualInput').value.trim();
+            if(manualBranch) {
+                manualBranch.split(',').forEach(b => {
+                    if(b.trim()) selectedBranches.push(b.trim());
+                });
+            }
+
+            const payload = {
+                repos: selectedRepos, 
+                outputDir: document.getElementById('targetDir').value,
+                branches: selectedBranches // Sent as array
+            };
+
+            try {
+                const triggerDownload = async (doOverwrite = false) => {
+                    const finalPayload = { ...payload };
+                    if (doOverwrite) finalPayload.overwrite = true;
+                    
+                    const response = await fetch('/api/download', {
+                        method: 'POST',
+                        headers: getGitHeaders(),
+                        body: JSON.stringify(finalPayload)
+                    });
+                    return await response.json();
+                };
+
+                let result = await triggerDownload(false);
+
+                // Check for Conflicts
+                if (result.details) {
+                    const conflicts = result.details.filter(d => d.status === 'FAILURE' && d.error && d.error.includes('already exists'));
+                    if (conflicts.length > 0) {
+                         const confirmOverwrite = confirm(`Found ${conflicts.length} repositories that already exist in the target directory.\n\nDo you want to overwrite them?\n(This will delete existing folders)`);
+                         if (confirmOverwrite) {
+                             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Overwriting...';
+                             result = await triggerDownload(true);
+                         }
+                    }
+                }
+                
+                renderResults(result);
+
+            } catch (err) {
+                alert('Error: ' + err.message);
+                console.error(err);
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        function renderResults(result) {
+            const tbody = document.getElementById('resultsTableBody');
+            tbody.innerHTML = '';
+            
+            const summary = document.getElementById('statusSummary');
+            summary.innerHTML = `<strong>Download Complete!</strong> Successfully downloaded ${result.successful} out of ${result.total} items to: <code>${result.downloadDir}</code>`;
+
+            if (result.details) {
+                result.details.forEach(item => {
+                    const tr = document.createElement('tr');
+                    const badgeClass = item.status === 'SUCCESS' ? 'bg-success' : 'bg-danger';
+                    
+                    tr.innerHTML = `
+                        <td>${item.repo}</td>
+                        <td class="fw-bold text-primary">${item.branch}</td>
+                        <td><span class="badge ${badgeClass}">${item.status}</span></td>
+                        <td class="small text-truncate" style="max-width: 300px;">
+                            ${item.status === 'SUCCESS' ? item.path : '<span class="text-danger">' + item.error + '</span>'}
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+            
+            document.getElementById('resultsSection').classList.remove('d-none');
+        }
+    </script>
+</body>
+</html>

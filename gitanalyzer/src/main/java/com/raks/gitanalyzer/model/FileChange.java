@@ -10,6 +10,12 @@ public class FileChange {
     private boolean isDeletedFile;
     private String diffContent; // For viewing diffs later
 
+    private String status;
+
+    public FileChange() {
+        // Default constructor
+    }
+
     public FileChange(String path, String type, int validChangedLines, int ignoredLines, String severity) {
         this.path = path;
         this.type = type;
@@ -17,6 +23,10 @@ public class FileChange {
         this.ignoredLines = ignoredLines;
         this.severity = severity;
     }
+    
+    // Add getStatus/setStatus if missing from previous check (it was missing in Step 1814)
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
     // Getters and Setters
     public String getPath() { return path; }

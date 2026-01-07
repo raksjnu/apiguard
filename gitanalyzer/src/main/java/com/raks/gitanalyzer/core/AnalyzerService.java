@@ -24,77 +24,147 @@ public class AnalyzerService {
         this.objectMapper = new ObjectMapper();
     }
 
-    public AnalysisResult analyze(String apiName, String codeRepo, String configRepo, String sourceBranch, String targetBranch, List<String> ignorePatterns) {
-        System.out.println("Analyzing API: " + apiName);
+    public AnalysisResult analyze(String apiName, String codeRepo, String configRepo, String sourceBranch, String targetBranch, List<String> filePatterns, List<String> contentPatterns, String configSourceBranch, String configTargetBranch) {
         AnalysisResult result = new AnalysisResult();
         result.setApiName(apiName);
+        result.setCodeRepo(codeRepo);
+        result.setConfigRepo(configRepo);
         result.setSourceBranch(sourceBranch);
         result.setTargetBranch(targetBranch);
-        
-        try {
-            // 1. Analyze Code Repo
-            System.out.println("  Checking Code Repo: " + codeRepo);
-            String codeDiffJson = gitProvider.compareBranches(codeRepo, sourceBranch, targetBranch);
-            processDiff(result, "CODE", codeDiffJson, ignorePatterns);
 
-            // 2. Analyze Config Repo
+        try {
+            // 1. Comparison
+            String diffJson = gitProvider.compareBranches(codeRepo, sourceBranch, targetBranch);
+            Map<String, Object> diffMap = objectMapper.readValue(diffJson, Map.class);
+            
+            // 2. Process Diffs
+            List<Map<String, Object>> diffs = (List<Map<String, Object>>) diffMap.get("diffs");
+            processDiffs(diffs, result, filePatterns, contentPatterns);
+
+            // 3. Config Repo Analysis (Optional)
             if (configRepo != null && !configRepo.isEmpty()) {
-                System.out.println("  Checking Config Repo: " + configRepo);
-                String configDiffJson = gitProvider.compareBranches(configRepo, sourceBranch, targetBranch);
-                processDiff(result, "CONFIG", configDiffJson, ignorePatterns);
+                String cSource = (configSourceBranch != null && !configSourceBranch.isBlank()) ? configSourceBranch : sourceBranch;
+                String cTarget = (configTargetBranch != null && !configTargetBranch.isBlank()) ? configTargetBranch : targetBranch;
+                
+                String configDiffJson = gitProvider.compareBranches(configRepo, cSource, cTarget);
+                Map<String, Object> configDiff = objectMapper.readValue(configDiffJson, Map.class);
+                List<Map<String, Object>> configDiffs = (List<Map<String, Object>>) configDiff.get("diffs");
+                processConfigDiffs(configDiffs, result, filePatterns);
             }
 
         } catch (Exception e) {
-            System.err.println("Analysis failed for " + apiName + ": " + e.getMessage());
             e.printStackTrace();
-            // Could set functionality in result to indicate failure
+            result.setError("Analysis failed: " + e.getMessage());
         }
+
         return result;
     }
 
-    private void processDiff(AnalysisResult result, String type, String jsonResponse, List<String> ignorePatterns) throws Exception {
-        JsonNode root = objectMapper.readTree(jsonResponse);
-        JsonNode diffs = root.get("diffs");
+    private void processDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns, List<String> contentPatterns) {
+        if (diffs == null) return;
 
-        if (diffs != null && diffs.isArray()) {
-            for (JsonNode diff : diffs) {
-                String newPath = diff.get("new_path").asText();
-                boolean newFile = diff.get("new_file").asBoolean();
-                boolean deletedFile = diff.get("deleted_file").asBoolean();
-                String diffContent = diff.has("diff") ? diff.get("diff").asText() : "";
+        for (Map<String, Object> diff : diffs) {
+            String newPath = (String) diff.get("new_path");
+            String oldPath = (String) diff.get("old_path");
+            
+            // Check File Patterns (Exclusion)
+            if (shouldIgnore(newPath, filePatterns) || (oldPath != null && shouldIgnore(oldPath, filePatterns))) {
+                continue; // Skip this file entirely
+            }
+
+            FileChange change = new FileChange();
+            change.setPath(newPath);
+            
+            boolean isNew = (boolean) diff.get("new_file");
+            boolean isDeleted = (boolean) diff.get("deleted_file");
+            boolean isRenamed = (boolean) diff.get("renamed_file");
+
+            change.setNewFile(isNew);
+            change.setDeletedFile(isDeleted);
+            
+            change.setType("CODE"); // Default to CODE
+
+            // Reconstruct Git Diff Header
+            String diffContent = (String) diff.get("diff");
+             if (diffContent != null && !diffContent.isEmpty()) {
+                StringBuilder fullDiff = new StringBuilder();
+                // Replace StringUtils.isNotEmpty with standard check
+                String oldPathStr = (oldPath != null && !oldPath.isEmpty()) ? oldPath : newPath;
                 
-                int validChangedLines = 0;
-                int ignoredLines = 0;
-
-                String[] lines = diffContent.split("\n");
-                for (String line : lines) {
-                    // Check only added (+) or removed (-) lines, ignoring headers (+++/---)
-                    if ((line.startsWith("+") || line.startsWith("-")) && 
-                        !line.startsWith("+++") && !line.startsWith("---")) {
-                        
-                        String content = line.substring(1).trim();
-                        if (isIgnored(content, ignorePatterns)) {
-                            ignoredLines++;
-                        } else {
-                            validChangedLines++;
-                        }
-                    }
+                fullDiff.append("diff --git a/").append(oldPathStr)
+                        .append(" b/").append(newPath).append("\n");
+                if (isNew) {
+                    fullDiff.append("new file mode 100644\n");
+                    fullDiff.append("--- /dev/null\n");
+                    fullDiff.append("+++ b/").append(newPath).append("\n");
+                } else if (isDeleted) {
+                    fullDiff.append("deleted file mode 100644\n");
+                    fullDiff.append("--- a/").append(oldPath).append("\n");
+                    fullDiff.append("+++ /dev/null\n");
+                } else {
+                    fullDiff.append("--- a/").append(oldPathStr).append("\n");
+                    fullDiff.append("+++ b/").append(newPath).append("\n");
                 }
+                fullDiff.append(diffContent);
+                change.setDiffContent(fullDiff.toString());
+            }
 
-                String severity = calculateSeverity(validChangedLines);
+            calculateLines(change, diffContent, contentPatterns);
+            
+            result.addFileChange(change);
+        }
+    }
 
-                FileChange change = new FileChange(newPath, type, validChangedLines, ignoredLines, severity);
-                change.setNewFile(newFile);
-                change.setDeletedFile(deletedFile);
-                // Optionally store diffContent if we want to show it in UI later
-                // change.setDiffContent(diffContent); 
+    private void processConfigDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns) {
+        if (diffs == null) return;
+        // For simplicity, let's just loop and add basic changes, marking as CONFIG.
+         for (Map<String, Object> diff : diffs) {
+            String newPath = (String) diff.get("new_path");
+            if (shouldIgnore(newPath, filePatterns)) continue;
+            
+            FileChange change = new FileChange();
+            change.setPath(newPath);
+            change.setType("CONFIG");
+            // ... (fill other fields if needed, but mostly we care about count)
+            result.addFileChange(change); // This increments Total and Config stats in AnalysisResult
+         }
+    }
+    
+    // Add missing calculateLines
+    private void calculateLines(FileChange change, String diffContent, List<String> patterns) {
+        if (diffContent == null || diffContent.isEmpty()) {
+            return;
+        }
+        
+        int valid = 0;
+        int ignored = 0;
+        
+        String[] lines = diffContent.split("\n");
+        for (String line : lines) {
+             // Check only added (+) or removed (-) lines, ignoring headers (+++/---)
+            if ((line.startsWith("+") || line.startsWith("-")) && 
+                !line.startsWith("+++") && !line.startsWith("---")) {
                 
-                result.addFileChange(change);
-
-                System.out.println(String.format("    [%s] %s - Valid Change: %d, Ignored: %d, Severity: %s", 
-                    type, newPath, validChangedLines, ignoredLines, severity));
+                String content = line.substring(1).trim();
+                // Check against content patterns
+                if (isIgnored(content, patterns)) {
+                    ignored++;
+                } else {
+                    valid++;
+                }
             }
         }
+        
+        change.setValidChangedLines(valid);
+        change.setIgnoredLines(ignored);
+        change.setSeverity(calculateSeverity(valid));
+    }
+
+
+    // Add back shouldIgnore
+    private boolean shouldIgnore(String path, List<String> patterns) {
+         if (path == null) return false;
+         return isIgnored(path, patterns);
     }
 
     private boolean isIgnored(String content, List<String> patterns) {
