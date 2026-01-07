@@ -176,7 +176,116 @@ body {
     color: white;
 }
 
-/* Guide Styling with Consistent Curve */
+/* Split Pane Layout */
+.split-container {
+    display: flex;
+    flex-direction: row;
+    flex-grow: 1; /* Take remaining height in raks-frame */
+    overflow: hidden; /* Prevent body scroll, use panel scroll */
+    position: relative;
+    /* Ensure height calculation works */
+    height: 100%; 
+}
+
+.split-left {
+    width: 400px; /* Default Width */
+    min-width: 300px;
+    max-width: 600px;
+    background-color: #ffffff;
+    border-right: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+    padding: 1rem;
+    position: relative;
+    z-index: 10;
+}
+
+.resizer {
+    width: 6px;
+    background-color: #f0f0f0;
+    cursor: col-resize;
+    position: relative; /* Relative to flow */
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s;
+}
+
+.resizer:hover, .resizer.resizing {
+    background-color: #d1c4e9; /* Highlight on hover */
+}
+
+.split-right {
+    flex-grow: 1;
+    background-color: #fdfdfd; /* Slightly off-white for content area */
+    overflow-y: auto;
+    padding: 1.5rem;
+    position: relative;
+    min-width: 400px;
+}
+
+/* Hover Diff Preview Frame */
+.diff-preview-popup {
+    position: absolute;
+    z-index: 1050; /* Above everything */
+    background: white;
+    border: 1px solid #663399;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    width: 600px;
+    max-height: 400px;
+    overflow: hidden;
+    display: none;
+    pointer-events: none; /* Let clicks pass through if needed, but important for hovering */
+}
+
+.diff-preview-header {
+    background-color: #faf5ff;
+    padding: 8px 12px;
+    border-bottom: 1px solid #e0e0e0;
+    font-weight: bold;
+    color: #663399;
+    font-size: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+}
+
+.diff-preview-body {
+    padding: 0;
+    max-height: 360px;
+    overflow-y: auto;
+    background: #fff;
+    font-size: 0.8rem;
+}
+
+/* Adjust raks-frame to be full height container */
+.raks-frame {
+    background-color: white;
+    border: 5px solid var(--raks-purple);
+    border-radius: 12px;
+    width: 98%; /* Slightly wider for split view */
+    margin: 1vh auto;
+    box-shadow: var(--raks-shadow);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 98vh; /* Fixed height viewport */
+}
+
+/* Form refinement for Left Panel */
+.split-left .card {
+    border: none;
+    box-shadow: none;
+}
+.split-left .card-header {
+    background: transparent;
+    padding-left: 0;
+    padding-right: 0;
+    border-bottom: 2px solid #f0f0f0;
+}
+
 .guide-sidebar .list-group-item {
     border: none;
     border-left: 4px solid transparent; /* Always present placeholder */
@@ -206,8 +315,9 @@ body {
     background-color: #faf5ff; /* Light Purple Theme */
     border-top: 1px solid #e0e0e0;
     color: #552b80;
-    padding: 1.5rem 0;
+    padding: 10px 0; /* Reduced padding for fixed layout */
     margin-top: auto;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     font-weight: 500;
+    flex-shrink: 0;
 }

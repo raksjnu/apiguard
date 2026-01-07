@@ -40,235 +40,244 @@
     
     <div class="raks-frame">
         <!-- Header -->
-        <nav class="navbar navbar-expand-lg navbar-light brand-header mb-4">
-        <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="/">
-                <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
-                ApiGuard Portal - GitAnalyzer
-            </a>
-            <div class="d-flex">
-                <a href="guide.html#analysis" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
-                    <span class="me-2">📘</span> Guide / Help
+        <nav class="navbar navbar-expand-lg navbar-light brand-header mb-0 flex-shrink-0">
+            <div class="container-fluid">
+                <a class="navbar-brand d-flex align-items-center" href="/">
+                    <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
+                    ApiGuard Portal - GitAnalyzer
                 </a>
-                <button type="button" class="btn btn-outline-purple me-2 d-flex align-items-center" onclick="clearForm()">
-                    <span class="me-2">🗑️</span> Clear Form
-                </button>
-                <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
+                <div class="d-flex">
+                    <a href="guide.html#analysis" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
+                        <span class="me-2">📘</span> Guide / Help
+                    </a>
+                    <button type="button" class="btn btn-outline-purple me-2 d-flex align-items-center" onclick="clearForm()">
+                        <span class="me-2">🗑️</span> Clear Form
+                    </button>
+                    <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
+                </div>
             </div>
-        </div>
-    </nav>
+        </nav>
 
-    <div class="container">
-        <!-- Configuration Card -->
-        <div class="card shadow-sm mb-4">
-            <div class="card-header bg-white py-2 d-flex justify-content-between align-items-center flex-wrap gap-2">
-                <h5 class="mb-0 fw-bold">Analysis Configuration</h5>
-                <form class="d-flex gap-2 align-items-center" onsubmit="return false;">
-                     <select class="form-select form-select-sm" id="gitProviderSelect" style="width: auto;">
-                         <option value="gitlab" selected>GitLab</option>
-                         <option value="github">GitHub</option>
-                     </select>
-                     <input type="password" class="form-control form-control-sm" id="gitTokenInput" placeholder="Private Token (Optional)" style="width: 200px;">
+        <!-- Split Layout -->
+        <div class="split-container">
+            <!-- Left Panel: Configuration -->
+            <div class="split-left" id="leftPanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold text-purple">Analysis Config</h5>
+                    <!-- Provider & Token Compact -->
+                    <div class="badge bg-light text-dark p-2 border">
+                         <select class="form-select form-select-sm border-0 bg-transparent p-0 d-inline-block w-auto fw-bold" id="gitProviderSelect" style="box-shadow:none;">
+                             <option value="gitlab">GitLab</option>
+                             <option value="github">GitHub</option>
+                         </select>
+                         <span class="mx-1">|</span>
+                         <input type="password" id="gitTokenInput" placeholder="Token Optional" class="border-0 bg-transparent p-0 small" style="width: 80px; outline:none;">
+                    </div>
+                </div>
+
+                <form id="analysisForm">
+                    <!-- Section 1: Discovery -->
+                    <div class="sub-frame mb-3">
+                        <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">1. Repository Discovery</h6>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Git Group / Organization</label>
+                            <input type="text" class="form-control form-control-sm" id="groupName" placeholder="e.g. raks-group">
+                        </div>
+                        <div class="mb-2">
+                             <label class="form-label small fw-bold">Filter (Regex)</label>
+                             <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="repoFilter" placeholder="e.g. .*service.*">
+                                <button type="button" class="btn btn-sub-action" id="fetchReposBtn">Fetch</button>
+                             </div>
+                        </div>
+                        
+                        <!-- Repo List -->
+                        <div id="repoListContainer" class="border rounded bg-white p-2 d-none" style="max-height: 120px; overflow-y: auto;">
+                            <div class="text-muted small text-center fst-italic py-2">Fetched repositories...</div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Analysis Scope -->
+                    <div class="sub-frame mb-4">
+                        <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">2. Analysis Scope</h6>
+                        
+                        <div class="mb-3">
+                            <label for="codeRepo" class="form-label small fw-bold">Code Repository</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="codeRepo" placeholder="Select above or type" required>
+                                <button type="button" class="btn btn-sub-action" id="fetchBranchesBtn">Branches</button>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Base Branch (Destination)</label>
+                            <select class="form-select form-select-sm" id="sourceBranchSelect"></select>
+                        </div>
+                        
+                         <div class="text-center my-1">
+                             <button type="button" class="btn btn-sub-action py-0 border-0" id="swapBranchesBtn" title="Swap Branches" style="font-size:1.2rem;">&#8646;</button>
+                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Feature Branch (Source)</label>
+                            <select class="form-select form-select-sm" id="targetBranchSelect"></select>
+                        </div>
+
+                        <!-- Config Repo -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" type="checkbox" id="enableConfigRepo" checked>
+                                <label class="form-check-label small fw-bold" for="enableConfigRepo">Analyze Config Repository</label>
+                            </div>
+                            <div id="configSection" class="ps-2 border-start border-3 border-light transition-all">
+                                <div class="input-group input-group-sm mb-2">
+                                     <input type="text" class="form-control" id="configRepo" placeholder="owner/repo_config">
+                                     <button class="btn btn-sub-action" type="button" id="fetchConfigBranchesBtn">Branches</button>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <select class="form-select form-select-sm" id="configSourceSelect">
+                                            <option value="" selected>Config Base</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select class="form-select form-select-sm" id="configTargetSelect">
+                                            <option value="" selected>Config Feature</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">File Ignore (Glob)</label>
+                            <textarea class="form-control form-control-sm font-monospace" id="ignorePatterns" rows="2" placeholder=".gitignore patterns..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Content Ignore (Regex)</label>
+                            <textarea class="form-control form-control-sm" id="contentPatterns" rows="2" placeholder="e.g. regex:DEBUG_LOG"></textarea>
+                        </div>
+                        
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="ignoreAttributeOrder">
+                            <label class="form-check-label small fw-bold" for="ignoreAttributeOrder">
+                                Smart XML Compare
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-purple text-white w-100 py-2 shadow-sm" id="analyzeBtn">Run Analysis</button>
+                    </div>
                 </form>
             </div>
-            <div class="collapse show" id="setupCollapse">
-                <div class="card-body">
-                    <form id="analysisForm">
-                        <!-- Section 1: Discovery -->
-                        <div class="sub-frame">
-                            <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">1. Repository Discovery</h6>
-                            <div class="row g-2 align-items-end mb-2">
-                                <div class="col-md-5">
-                                    <label class="form-label small fw-bold">Git Group / Organization</label>
-                                    <input type="text" class="form-control form-control-sm" id="groupName" placeholder="e.g. raks-group">
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="form-label small fw-bold">Filter (Regex)</label>
-                                    <input type="text" class="form-control form-control-sm" id="repoFilter" placeholder="e.g. .*service.*">
-                                </div>
-                                <div class="col-md-2">
-                                    <button type="button" class="btn btn-sub-action w-100" id="fetchReposBtn">Fetch Repos</button>
-                                </div>
-                            </div>
-                            
-                            <!-- Repo List -->
-                            <div id="repoListContainer" class="border rounded bg-white p-2 d-none" style="max-height: 150px; overflow-y: auto;">
-                                <div class="text-muted small text-center fst-italic py-2">Fetched repositories will appear here...</div>
-                            </div>
-                        </div>
 
-                        <!-- Section 2: Analysis Scope -->
-                        <div class="sub-frame">
-                            <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">2. Analysis Scope</h6>
-                            
-                            <div class="row g-2 mb-3">
-                                <div class="col-md-12">
-                                    <div class="d-flex justify-content-between align-items-center mb-2">
-                                        <label for="codeRepo" class="form-label">Code Repository</label>
-                                        <button type="button" class="btn btn-sub-action" id="fetchBranchesBtn">Fetch Branches</button>
-                                    </div>
-                                    <input type="text" class="form-control form-control-sm" id="codeRepo" placeholder="Select above or type owner/repo" required>
-                                </div>
-                            </div>
+            <!-- Resizer -->
+            <div class="resizer" id="dragMe"></div>
 
-                            <div class="row g-2 mb-3 align-items-end">
-                                <div class="col-md-5">
-                                    <label class="form-label small fw-bold">Base Branch (Destination)</label>
-                                    <select class="form-select form-select-sm" id="sourceBranchSelect">
-                                        <!-- Options populated via Fetch Branches -->
-                                    </select>
-                                </div>
-                                <div class="col-md-2 d-grid">
-                                    <button type="button" class="btn btn-sub-action" id="swapBranchesBtn" title="Swap Branches">
-                                        &#8646; Swap
-                                    </button>
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="form-label small fw-bold">Feature Branch (Source)</label>
-                                    <select class="form-select form-select-sm" id="targetBranchSelect">
-                                        <!-- Options populated via Fetch Branches -->
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="mb-3">
-                                <div class="form-check form-switch mb-1">
-                                    <input class="form-check-input" type="checkbox" id="enableConfigRepo" checked>
-                                    <label class="form-check-label small fw-bold" for="enableConfigRepo">Analyze Config Repository</label>
-                                </div>
-                                <div id="configSection" class="ps-2 border-start border-3 border-light transition-all">
-                                    <div class="d-flex justify-content-between align-items-center mb-1">
-                                        <label for="configRepo" class="form-label x-small text-muted mb-0">Config Repository</label>
-                                        <button class="btn btn-sub-action py-1" type="button" id="fetchConfigBranchesBtn" style="font-size: 0.75rem;">Fetch Branches</button>
-                                    </div>
-                                    <input type="text" class="form-control form-control-sm mb-2" id="configRepo" placeholder="owner/repo_config">
-                                    <div class="row g-2">
-                                        <div class="col-md-6">
-                                            <select class="form-select form-select-sm" id="configSourceSelect">
-                                                <option value="" selected>Config Base (Default)</option>
-                                            </select>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <select class="form-select form-select-sm" id="configTargetSelect">
-                                                <option value="" selected>Config Feature (Default)</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                    <div class="form-text x-small text-muted">Fetch branches to select overrides, or leave default.</div>
-                                </div>
-                            </div>
-
-                            <div class="mb-2">
-                                <label class="form-label small fw-bold">File Ignore Patterns (Glob/Regex)</label>
-                                <textarea class="form-control form-control-sm font-monospace" id="ignorePatterns" rows="2" placeholder=".gitignore patterns..."></textarea>
-                            </div>
-                            <div class="mb-3">
-                                <label for="contentPatterns" class="form-label small fw-bold">Content Ignore Patterns (Regex, one per line)</label>
-                                <textarea class="form-control form-control-sm" id="contentPatterns" rows="3" placeholder="e.g.  regex:DEBUG_LOG
-regex:.*TODO.*"></textarea>
-                                <div class="form-text x-small text-muted">Lines matching these will differ but be counted as 'IG' (ignored).</div>
-                            </div>
-                            
-                            <div class="form-check mb-3">
-                                <input class="form-check-input" type="checkbox" id="ignoreAttributeOrder">
-                                <label class="form-check-label small fw-bold" for="ignoreAttributeOrder">
-                                    Smart XML Compare (Ignore Attribute Order)
-                                </label>
-                                <div class="form-text x-small text-muted">If checked, XML changes involving only attribute reordering will be ignored.</div>
-                            </div>
-                        </div>
-
-                        <div class="text-end">
-                            <button type="submit" class="btn btn-purple text-white px-5" id="analyzeBtn">Run Analysis</button>
-                        </div>
-                    </form>
+            <!-- Right Panel: Results -->
+            <div class="split-right" id="rightPanel">
+                <!-- Initial Placeholder -->
+                <div id="resultsPlaceholder" class="text-center mt-5 text-muted">
+                    <img src="assets/images/logo.png" height="80" class="opacity-25 mb-3" style="filter: grayscale(100%);">
+                    <h4>Ready to Analyze</h4>
+                    <p>Configure repository details on the left and click "Run Analysis".</p>
                 </div>
-            </div>
-        </div>
 
-        <!-- Results Section (Hidden by default) -->
-        <div id="resultsSection" class="d-none">
-            <!-- Dashboard Stats -->
-            <!-- Dashboard Stats -->
-            <div class="row g-4 mb-4">
-                <div class="col-md-3">
-                    <div class="dashboard-card card-purple text-center">
-                        <div class="mb-2">
-                             <i class="bi bi-layers-fill fs-1 text-purple opacity-75"></i>
+                <!-- Results Section (Hidden by default) -->
+                <div id="resultsSection" class="d-none animate-fade-in">
+                     <div class="d-flex justify-content-between align-items-center mb-4">
+                         <h4 class="text-purple fw-bold">Analysis Report</h4>
+                         <span class="badge bg-light text-dark border"><span id="reportTime"></span></span>
+                     </div>
+
+                    <!-- Dashboard Stats -->
+                    <div class="row g-4 mb-4">
+                        <div class="col-md-3">
+                            <div class="dashboard-card card-purple text-center">
+                                <div class="mb-2">
+                                     <i class="bi bi-layers-fill fs-1 text-purple opacity-75"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Total Changed Files</h6>
+                                <h2 class="display-5 fw-bold text-purple" id="totalFiles">0</h2>
+                            </div>
                         </div>
-                        <h6 class="text-muted mb-2">Total Changed Files</h6>
-                        <h2 class="display-5 fw-bold text-purple" id="totalFiles">0</h2>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="dashboard-card card-code text-center">
-                        <div class="mb-2">
-                             <i class="bi bi-code-slash fs-1 opacity-75" style="color: #008B8B;"></i>
+                        <div class="col-md-3">
+                            <div class="dashboard-card card-code text-center">
+                                <div class="mb-2">
+                                     <i class="bi bi-code-slash fs-1 opacity-75" style="color: #008B8B;"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Code Changes</h6>
+                                <h2 class="display-5 fw-bold" style="color: #008B8B !important;" id="codeChanges">0</h2>
+                            </div>
                         </div>
-                        <h6 class="text-muted mb-2">Code Changes</h6>
-                        <h2 class="display-5 fw-bold" style="color: #008B8B !important;" id="codeChanges">0</h2>
-                    </div>
-                </div>
-                <div class="col-md-3">
-                    <div class="dashboard-card card-config text-center">
-                         <div class="mb-2">
-                             <i class="bi bi-gear fs-1 opacity-75" style="color: #648a99;"></i>
+                        <div class="col-md-3">
+                            <div class="dashboard-card card-config text-center">
+                                 <div class="mb-2">
+                                     <i class="bi bi-gear fs-1 opacity-75" style="color: #648a99;"></i>
+                                </div>
+                                <h6 class="text-muted mb-2">Config Changes</h6>
+                                <h2 class="display-5 fw-bold" style="color: #648a99 !important;" id="configChanges">0</h2>
+                            </div>
                         </div>
-                        <h6 class="text-muted mb-2">Config Changes</h6>
-                        <h2 class="display-5 fw-bold" style="color: #648a99 !important;" id="configChanges">0</h2>
-                    </div>
-                </div>
-                <!-- Severity Chart -->
-                <div class="col-md-3">
-                    <div class="dashboard-card card-purple text-center d-flex flex-column justify-content-center align-items-center">
-                        <div style="height: 140px; width: 140px; position: relative;">
-                             <canvas id="severityChart"></canvas>
+                        <!-- Severity Chart -->
+                        <div class="col-md-3">
+                            <div class="dashboard-card card-purple text-center d-flex flex-column justify-content-center align-items-center">
+                                <div style="height: 140px; width: 140px; position: relative;">
+                                     <canvas id="severityChart"></canvas>
+                                </div>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </div>
-
-            <!-- Detailed Changes -->
-            <div class="card shadow-sm mb-5 border-purple">
-                <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                    <h5 class="mb-0 fw-bold">Detailed File Changes</h5>
-                    <div class="btn-group">
-                         <button class="btn btn-sub-action" onclick="exportToCSV()">Export CSV</button>
-                         <button class="btn btn-sub-action" type="button" id="toggleConfigBtn" data-bs-toggle="collapse" data-bs-target="#setupCollapse" aria-expanded="false">Show Config</button>
-                    </div>
-                </div>
-                <div class="card-body p-0">
-                    <div class="table-responsive">
-                        <table class="table table-hover mb-0 align-middle">
-                            <thead class="bg-light">
-                                <tr>
-                                    <th>Type</th>
-                                    <th>File Path</th>
-                                    <th>Status</th>
-                                    <th>Valid Lines</th>
-                                    <th>Ignored Lines</th>
-                                    <th>Severity</th>
-                                    <th>Diff</th>
-                                </tr>
-                            </thead>
-                            <tbody id="filesTableBody">
-                                <!-- Rows injected via JS -->
-                            </tbody>
-                        </table>
+        
+                    <!-- Detailed Changes -->
+                    <div class="card shadow-sm mb-5 border-purple">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">Detailed File Changes</h5>
+                            <button class="btn btn-sub-action" onclick="exportToCSV()">Export CSV</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="bg-light">
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>File Path</th>
+                                            <th>Status</th>
+                                            <th>Valid Lines</th>
+                                            <th>Ignored Lines</th>
+                                            <th>Severity</th>
+                                            <th>Diff</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="filesTableBody">
+                                        <!-- Rows injected via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
     
         <!-- Footer -->
-        <footer class="raks-footer text-center mt-auto">
+        <footer class="raks-footer text-center mt-auto flex-shrink-0">
             <div class="container" id="footerText">
                 &copy; 2026 RAKS - Enterprise API Solution Suite - ApiGuard
             </div>
         </footer>
     </div>
     <!-- End Raks Frame -->
+    
+    <!-- Hover Diff Popup -->
+    <div id="diffPreviewPopup" class="diff-preview-popup">
+        <div class="diff-preview-header">
+            <span>Diff Preview</span>
+            <small class="text-muted">Click row for full view</small>
+        </div>
+        <div id="diffPreviewContent" class="diff-preview-body p-2">
+            <!-- Content Injected Here -->
+        </div>
+    </div>
     
     <script>
         // Fetch UI Config (Footer)
@@ -763,13 +772,77 @@ regex:.*TODO.*"></textarea>
             }
         });
 
+        // --- Resizer Logic ---
+        const resizer = document.getElementById('dragMe');
+        const leftPanel = document.getElementById('leftPanel');
+        let x = 0;
+        let leftWidth = 0;
+
+        const mouseDownHandler = function (e) {
+            x = e.clientX;
+            leftWidth = leftPanel.getBoundingClientRect().width;
+            resizer.classList.add('resizing');
+            document.addEventListener('mousemove', mouseMoveHandler);
+            document.addEventListener('mouseup', mouseUpHandler);
+            // Block iframes/selection
+            document.body.style.userSelect = 'none';
+        };
+
+        const mouseMoveHandler = function (e) {
+            const dx = e.clientX - x;
+            const newLeftWidth = leftWidth + dx;
+            // Constraints
+            if (newLeftWidth > 250 && newLeftWidth < 800) {
+                 leftPanel.style.width = `${newLeftWidth}px`;
+            }
+        };
+
+        const mouseUpHandler = function () {
+            resizer.classList.remove('resizing');
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+            document.body.style.removeProperty('user-select');
+        };
+
+        resizer.addEventListener('mousedown', mouseDownHandler);
+        
+        // --- Hover Preview Logic ---
+        const diffPopup = document.getElementById('diffPreviewPopup');
+        const diffContentDiv = document.getElementById('diffPreviewContent');
+
+        function showDiffPreview(e, content) {
+            if(!content) return;
+            // Clean content for preview (first 20 lines)
+            const lines = content.split('\n').slice(0, 20).join('\n');
+            const previewText = lines + (content.split('\n').length > 20 ? '\n... (Click to view full)' : '');
+            
+            diffContentDiv.textContent = previewText;
+            
+            // Position
+            const rect = e.target.getBoundingClientRect();
+            diffPopup.style.display = 'block';
+            diffPopup.style.top = (rect.top + window.scrollY + 20) + 'px';
+            // Align right if too close to edge
+            if (window.innerWidth - rect.right < 600) {
+                 diffPopup.style.left = (rect.left - 600) + 'px';
+            } else {
+                 diffPopup.style.left = (rect.left + 20) + 'px';
+            }
+        }
+
+        function hideDiffPreview() {
+            diffPopup.style.display = 'none';
+        }
+
         let currentResults = null;
         let diffDetails = {}; // Store diffs map
         let severityChart = null;
 
         function renderResults(data) {
             currentResults = data;
+            document.getElementById('resultsPlaceholder').classList.add('d-none');
             document.getElementById('resultsSection').classList.remove('d-none');
+            document.getElementById('reportTime').textContent = new Date().toLocaleString();
             
             document.getElementById('totalFiles').textContent = data.totalFilesChanged;
             document.getElementById('codeChanges').textContent = data.codeChangesCount;
@@ -800,6 +873,24 @@ regex:.*TODO.*"></textarea>
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${typeBadge}</td>
+                    <td class="small fw-bold font-monospace text-primary text-truncate" style="max-width: 250px;" title="${file.filePath}">${file.filePath}</td>
+                    <td>${statusBadge}</td>
+                    <td class="small text-success">+${file.validLines}</td>
+                    <td class="small text-muted">${file.ignoredLines}</td>
+                    <td><span class="badge ${severityClass}">${file.severity}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-primary py-0" 
+                            onclick="showDiffModal('${fileId}', '${file.filePath}')"
+                            onmouseenter="showDiffPreview(event, diffDetails['${fileId}'])"
+                            onmouseleave="hideDiffPreview()"
+                        >View Diff</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+            } else {
+                 tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No changes found matching the criteria.</td></tr>';
+            }
                     <td class="font-monospace small text-break fw-bold text-primary" style="cursor:pointer" onclick="showDiff('${fileId}', '${file.path}')">${file.path}</td>
                     <td>${statusBadge}</td>
                     <td class="fw-bold text-success">+${file.validChangedLines}</td>
