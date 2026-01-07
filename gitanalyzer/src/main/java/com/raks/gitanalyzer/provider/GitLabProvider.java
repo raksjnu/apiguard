@@ -37,26 +37,55 @@ public class GitLabProvider implements GitProvider {
     @Override
     public void cloneRepository(String repoName, File destination, String branch) throws Exception {
         String cloneUrl;
-        if (repoName.contains("/")) {
-            // User provided "namespace/project", so append to base URL
-            // Default to https://gitlab.com if base not set, but it should be.
-            String base = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
-            cloneUrl = base + repoName + ".git";
+        
+        // Smart URL Cleaning for Clone as well
+        String cleanName = repoName.trim();
+        if (cleanName.startsWith("http://") || cleanName.startsWith("https://")) {
+            // It's a full URL, use it directly (but ensuring auth if needed)
+            cloneUrl = cleanName;
+            // Remove .git if present to ensure consistent appending later? 
+            // Actually JGit handles it, but our logic below might double append or break auth replacement.
+            // Let's rely on standard logic: strip to path, then rebuild with Auth.
+             try {
+                java.net.URI uri = java.net.URI.create(cleanName);
+                String path = uri.getPath();
+                if (path.startsWith("/")) path = path.substring(1);
+                 
+                // If the user provided a full URL that matches our Base URL, we can treat it as a relative path
+                // But if it's external, we might need to handle it differently.
+                // For now assuming same GitLab instance as configured.
+                cleanName = path;
+                if (cleanName.endsWith(".git")) cleanName = cleanName.substring(0, cleanName.length() - 4);
+                
+                // Reconstruct standard Clone URL
+                String base = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+                cloneUrl = base + cleanName + ".git";
+            } catch (Exception e) {
+                 cloneUrl = cleanName; // Fallback
+            }
         } else {
-            // User provided just "project", append to Configured Group URL
-            String group = groupUrl.endsWith("/") ? groupUrl : groupUrl + "/";
-            cloneUrl = group + repoName + ".git";
+             // Standard Logic
+            if (repoName.contains("/")) {
+                String base = baseUrl.endsWith("/") ? baseUrl : baseUrl + "/";
+                cloneUrl = base + repoName + ".git";
+            } else {
+                String group = groupUrl.endsWith("/") ? groupUrl : groupUrl + "/";
+                cloneUrl = group + repoName + ".git";
+            }
         }
 
         // Add token for auth (simple replacement for HTTPS)
         // Format: https://oauth2:TOKEN@gitlab.com/...
         if (token != null && !token.isEmpty()) {
-            cloneUrl = cloneUrl.replace("https://", "https://oauth2:" + token + "@");
+            // Only replace if it matches our expected base? Or generally replace https://
+            // Replacing all https:// might break if there are redirects, but standard for this tool.
+            if (cloneUrl.startsWith("https://")) {
+                 cloneUrl = cloneUrl.replace("https://", "https://oauth2:" + token + "@");
+            }
         }
         
-        // Ensure clone URL is valid (handle missing groupUrl case)
+        // Ensure clone URL is valid (handle cases where it might be relative)
         if (cloneUrl.startsWith("/")) { 
-             // Should not happen if Default Base URL is set, but just in case
              cloneUrl = "https://gitlab.com" + cloneUrl;
         }
 
@@ -126,14 +155,40 @@ public class GitLabProvider implements GitProvider {
     private final java.util.Map<String, String> projectIdCache = new java.util.concurrent.ConcurrentHashMap<>();
 
     private String resolveProjectId(String repoName) throws Exception {
-        if (projectIdCache.containsKey(repoName)) return projectIdCache.get(repoName);
+        // Smart Parsing: Handle full URLs and .git suffixes
+        String searchName = repoName.trim();
         
-        System.out.println("[DEBUG] Resolving Project ID for: " + repoName);
+        // Remove .git suffix if present
+        if (searchName.endsWith(".git")) {
+            searchName = searchName.substring(0, searchName.length() - 4);
+        }
+        
+        // Handle Full URLs
+        // If it starts with http/https, try to extract the path
+        if (searchName.startsWith("http://") || searchName.startsWith("https://")) {
+            try {
+                java.net.URI uri = java.net.URI.create(searchName);
+                String path = uri.getPath();
+                // Path usually starts with /, remove it
+                if (path.startsWith("/")) {
+                    path = path.substring(1);
+                }
+                searchName = path;
+                System.out.println("[INFO] Parsed URL to Path: " + repoName + " -> " + searchName);
+            } catch (Exception e) {
+                 System.err.println("[WARN] Failed to parse repo URL: " + repoName);
+                 // Fallback to using it as is, or maybe splitting by /
+            }
+        }
+
+        if (projectIdCache.containsKey(searchName)) return projectIdCache.get(searchName);
+        
+        System.out.println("[DEBUG] Resolving Project ID for: " + searchName);
         String cleanBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         HttpClient client = HttpClient.newHttpClient();
         
         // 1. Try Direct Path Lookup
-        String encodedPath = java.net.URLEncoder.encode(repoName, java.nio.charset.StandardCharsets.UTF_8);
+        String encodedPath = java.net.URLEncoder.encode(searchName, java.nio.charset.StandardCharsets.UTF_8);
         String directUrl = cleanBase + "/api/v4/projects/" + encodedPath;
         
         HttpRequest directReq = HttpRequest.newBuilder()
@@ -147,14 +202,15 @@ public class GitLabProvider implements GitProvider {
              com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
              com.fasterxml.jackson.databind.JsonNode node = mapper.readTree(directRes.body());
              String id = String.valueOf(node.get("id").asInt());
-             projectIdCache.put(repoName, id);
+             projectIdCache.put(searchName, id);
+             // Also cache the original if different, to avoid future reparsing? Maybe not needed.
              return id;
         }
         
         // 2. Fallback: Search
         System.out.println("[WARN] Direct lookup failed (Status " + directRes.statusCode() + "). Trying Search Fallback...");
         // Extract project name from path (last part)
-        String projectName = repoName.contains("/") ? repoName.substring(repoName.lastIndexOf("/") + 1) : repoName;
+        String projectName = searchName.contains("/") ? searchName.substring(searchName.lastIndexOf("/") + 1) : searchName;
         String encodedSearch = java.net.URLEncoder.encode(projectName, java.nio.charset.StandardCharsets.UTF_8);
         String searchUrl = cleanBase + "/api/v4/projects?search=" + encodedSearch + "&simple=true&per_page=100";
         
@@ -172,17 +228,17 @@ public class GitLabProvider implements GitProvider {
                  for (com.fasterxml.jackson.databind.JsonNode node : root) {
                       String path = node.get("path_with_namespace").asText();
                       // Case-insensitive match check
-                      if (path.equalsIgnoreCase(repoName)) {
+                      if (path.equalsIgnoreCase(searchName)) {
                            String id = String.valueOf(node.get("id").asInt());
-                           projectIdCache.put(repoName, id);
-                           System.out.println("[INFO] Resolved Project via Search: " + repoName + " -> " + id);
+                           projectIdCache.put(searchName, id);
+                           System.out.println("[INFO] Resolved Project via Search: " + searchName + " -> " + id);
                            return id;
                       }
                  }
              }
         }
         
-        throw new RuntimeException("Project not found: " + repoName + " (Direct: " + directRes.statusCode() + ")");
+        throw new RuntimeException("Project not found: " + searchName + " (Direct: " + directRes.statusCode() + ")");
     }
 
     @Override

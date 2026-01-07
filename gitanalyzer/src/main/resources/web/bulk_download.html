@@ -13,13 +13,19 @@
     <div class="raks-frame">
         <!-- Header -->
         <nav class="navbar navbar-expand-lg navbar-light brand-header mb-0 flex-shrink-0">
-            <div class="container-fluid">
+            <div class="container-fluid position-relative">
                 <a class="navbar-brand d-flex align-items-center" href="/">
                     <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
                     ApiGuard Portal - GitAnalyzer
                 </a>
-                <div class="d-flex">
-                    <a href="guide.html#bulk" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
+                
+                <!-- Centered Title -->
+                <div class="position-absolute start-50 translate-middle-x d-none d-lg-block">
+                    <h5 class="fw-bold text-purple mb-0">Bulk Download</h5>
+                </div>
+
+                <div class="d-flex ms-auto">
+                    <a href="guide.html" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
                         <span class="me-2">📘</span> Guide / Help
                     </a>
                     <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
@@ -33,13 +39,14 @@
             <div class="split-left" id="leftPanel">
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 fw-bold text-purple">Bulk Configuration</h5>
-                    <div class="badge bg-light text-dark p-2 border">
-                         <select class="form-select form-select-sm border-0 bg-transparent p-0 d-inline-block w-auto fw-bold" id="gitProviderSelect" style="box-shadow:none;">
+                    <!-- Better Token Input Design -->
+                    <div class="input-group input-group-sm w-auto">
+                        <span class="input-group-text bg-white border-end-0"><i class="bi bi-shield-lock"></i></span>
+                        <select class="form-select border-start-0 border-end-0" id="gitProviderSelect" style="max-width: 90px; background-color: white;">
                              <option value="gitlab">GitLab</option>
                              <option value="github">GitHub</option>
-                         </select>
-                         <span class="mx-1">|</span>
-                         <input type="password" id="gitTokenInput" placeholder="Token Optional" class="border-0 bg-transparent p-0 small" style="width: 80px; outline:none;">
+                        </select>
+                        <input type="password" class="form-control border-start-0" id="gitTokenInput" placeholder="Token Optional" style="max-width: 120px;">
                     </div>
                 </div>
 
@@ -59,10 +66,10 @@
                         </div>
                     </div>
                     
+                    <!-- (Rest of Form remains) -->
                     <div class="sub-frame mb-3">
                         <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">2. Manual Addition</h6>
-                        <label class="form-label small fw-bold">Add Single Repository</label>
-                        <div class="input-group input-group-sm">
+                         <div class="input-group input-group-sm">
                             <input type="text" class="form-control" id="manualRepoInput" placeholder="group/project">
                             <button class="btn btn-sub-action" type="button" id="addManualBtn">Add</button>
                         </div>
@@ -74,12 +81,13 @@
                              <label class="form-label small fw-bold">Output Directory (Optional)</label>
                              <input type="text" class="form-control form-control-sm" id="targetDir" placeholder="e.g. C:\MyDownloads">
                           </div>
+                           <label class="form-label small fw-bold">Branch Selection (Optional)</label>
                           <div class="input-group input-group-sm">
                             <input type="text" class="form-control" id="branchManualInput" placeholder="Branch (e.g. master)">
-                            <button class="btn btn-sub-action" type="button" id="fetchBranchesBtn">Fetch Branches</button>
+                            <button class="btn btn-sub-action" type="button" id="fetchBranchesBtnLeft">Fetch Branches</button>
                         </div>
-                        <div class="form-text x-small">Click Fetch to see available branches for selected repos.</div>
-                        <div id="branchChecklist" class="d-none"></div> <!-- Hidden for now, logic handles it differently? Or I need to adapt logic? -->
+                        <div class="form-text x-small">Click Fetch to see available branches for (checked) repos.</div>
+                        <div id="branchChecklist" class="mt-2 text-start d-none border rounded p-2 bg-light"></div> 
                     </div>
 
                     <button type="submit" class="btn btn-purple text-white w-100 py-2 shadow-sm" id="downloadBtn">
@@ -96,19 +104,22 @@
                 
                 <h5 class="text-purple fw-bold mb-3">Repositories to Download</h5>
                 
-                <div class="d-flex justify-content-between align-items-center mb-2 bg-light p-2 rounded border">
-                    <div class="form-check">
+                <div class="d-flex justify-content-between align-items-center mb-2 bg-white p-2 rounded border shadow-sm" style="border-left: 4px solid #663399 !important;">
+                    <div class="form-check m-0">
                         <small>
-                            <a href="#" id="selectAllBtn" class="text-decoration-none me-2 fw-bold">Select All</a>
+                            <a href="#" id="selectAllBtn" class="text-decoration-none fw-bold me-2 text-purple">Select All</a>
                             <span class="text-muted">|</span>
-                            <a href="#" id="deselectAllBtn" class="text-decoration-none ms-2">Deselect All</a>
+                            <a href="#" id="deselectAllBtn" class="text-decoration-none ms-2 text-purple">Deselect All</a>
                         </small>
                     </div>
+                     <button class="btn btn-sm btn-sub-action" type="button" id="fetchBranchesBtn">
+                        <i class="bi bi-git me-1"></i> Fetch Branches
+                    </button>
                 </div>
 
-                <div class="card shadow-sm border-0 mb-3" style="min-height: 200px;">
+                <div class="card shadow-sm border-0 mb-4" style="border-left: 4px solid #663399 !important; min-height: 200px;">
                     <div class="card-body p-0">
-                         <div id="repoChecklist" class="p-2" style="max-height: 400px; overflow-y: auto;">
+                         <div id="repoChecklist" class="p-3" style="max-height: 350px; overflow-y: auto;">
                             <!-- Checkboxes injected here -->
                             <div class="text-muted text-center mt-5">
                                 <i class="bi bi-cloud-download display-4 opacity-25"></i>
@@ -118,30 +129,27 @@
                     </div>
                 </div>
                 
-                <!-- Status/Console Output -->
+                <!-- New Results Card Style -->
                 <div id="resultsSection" class="d-none animate-fade-in">
-                    <div class="card bg-dark text-white border-0 shadow-sm mt-3">
-                        <div class="card-header bg-dark border-bottom border-secondary py-2">
-                            <small class="text-uppercase fw-bold text-muted">Download Status</small>
-                        </div>
-                        <div class="card-body p-2">
-                            <div id="statusSummary" class="alert alert-info py-2 small mb-2"></div>
-                            <div class="table-responsive" style="max-height: 200px; overflow-y: auto;">
-                                <table class="table table-dark table-sm table-hover align-middle mb-0">
-                                    <thead>
-                                        <tr>
-                                            <th>Repo</th>
-                                            <th>Branch</th>
-                                            <th>Status</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="resultsTableBody"></tbody>
-                                </table>
-                            </div>
-                        </div>
+                    <div class="card shadow-sm border-0 mb-4" style="border-left: 4px solid #663399 !important;">
+                         <div class="card-header bg-white border-bottom-0 pt-3 pb-2">
+                             <div class="d-flex justify-content-between align-items-center">
+                                <h6 class="text-purple fw-bold m-0">Download Results</h6>
+                                <span id="statusTime" class="small text-muted font-monospace"></span>
+                             </div>
+                         </div>
+                         <div class="card-body pt-0">
+                             <div id="statusSummary" class="mb-3"></div>
+                             <div class="table-responsive">
+                                 <table class="table table-sm table-hover align-middle">
+                                     <tbody id="resultsTableBody">
+                                         <!-- Result Items -->
+                                     </tbody>
+                                 </table>
+                             </div>
+                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     
@@ -190,7 +198,14 @@
     <script>
         fetch('/api/config/ui').then(r=>r.json()).then(c=>{
             if(c['ui.footer.text']) document.getElementById('footerText').innerText=c['ui.footer.text'];
-        });
+                    const f = document.querySelector('.raks-footer .container');
+                     if(f) f.innerText = c['ui.footer.text'];
+                }
+                if (c['ui.header.bulk']) {
+                     const headerTitle = document.querySelector('.position-absolute h5');
+                     if(headerTitle) headerTitle.innerText = c['ui.header.bulk'];
+                }
+            });
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -361,7 +376,7 @@
         });
 
                 // Fetch Branches Logic
-        document.getElementById('fetchBranchesBtn').addEventListener('click', async () => {
+        const fetchBranchesHandler = async (btnId) => {
              // Find first available repo to check branches against
              const repos = Array.from(document.querySelectorAll('.repo-checkbox'));
              if (repos.length === 0) {
@@ -371,39 +386,70 @@
              // Prefer first checked, otherwise first listed
              let sampleRepo = repos.find(cb => cb.checked)?.value || repos[0].value;
              
-             const btn = document.getElementById('fetchBranchesBtn');
-             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
-             btn.classList.add('disabled');
+             // Get BOTH buttons to update state
+             const btnLeft = document.getElementById('fetchBranchesBtnLeft');
+             const btnRight = document.getElementById('fetchBranchesBtn');
+             
+             // Set loading state
+             const setLoading = (isLoading) => {
+                 if(btnLeft) {
+                     btnLeft.disabled = isLoading;
+                     btnLeft.innerHTML = isLoading ? '<span class="spinner-border spinner-border-sm"></span>' : 'Fetch Branches';
+                 }
+                 if(btnRight) {
+                     btnRight.disabled = isLoading;
+                     btnRight.innerHTML = isLoading ? '<i class="bi bi-git me-1"></i> Fetching...' : '<i class="bi bi-git me-1"></i> Fetch Branches';
+                 }
+             };
+             
+             setLoading(true);
              
              try {
                 const response = await fetch('/api/download/branches?repo=' + encodeURIComponent(sampleRepo), {
                     headers: getGitHeaders()
                 });
+                if (!response.ok) throw new Error('API Error: ' + response.status);
+                
                 const branches = await response.json();
                 
                 const container = document.getElementById('branchChecklist');
-                container.innerHTML = '';
+                container.classList.remove('d-none'); 
+                
+                container.innerHTML = '<div class="fw-bold x-small mb-1 text-muted">Branches (' + branches.length + ' found)</div>';
+                const listDiv = document.createElement('div');
+                listDiv.className = 'scrollable-checklist';
                 
                 if (branches && branches.length > 0) {
                     branches.forEach(br => {
                         const div = document.createElement('div');
                         div.className = 'form-check form-check-sm';
                         div.innerHTML = `
-                            <input class="form-check-input branch-checkbox" type="checkbox" value="${br}" id="br_${br.replace(/\W/g,'_')}">
-                            <label class="form-check-label small" for="br_${br.replace(/\W/g,'_')}">${br}</label>
+                            <input class="form-check-input branch-checkbox" type="checkbox" value="${br}" id="br_${br.replace(/\./g,'_').replace(/\//g,'_')}">
+                            <label class="form-check-label small" for="br_${br.replace(/\./g,'_').replace(/\//g,'_')}">${br}</label>
                         `;
-                        container.appendChild(div);
+                        listDiv.appendChild(div);
                     });
+                     container.appendChild(listDiv);
                 } else {
                     container.innerHTML = '<div class="text-muted small text-center mt-3">No branches found.</div>';
                 }
              } catch (err) {
                  alert('Error fetching branches: ' + err.message);
+                 console.error(err);
              } finally {
-                 btn.innerHTML = 'Fetch Branches';
-                 btn.classList.remove('disabled');
+                 setLoading(false);
              }
-        });
+        };
+
+        // Bind to both buttons
+        if(document.getElementById('fetchBranchesBtn')) {
+            document.getElementById('fetchBranchesBtn').addEventListener('click', () => fetchBranchesHandler('fetchBranchesBtn'));
+        }
+        if(document.getElementById('fetchBranchesBtnLeft')) {
+             document.getElementById('fetchBranchesBtnLeft').addEventListener('click', () => fetchBranchesHandler('fetchBranchesBtnLeft'));
+        }
+             
+
 
         document.getElementById('downloadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -492,7 +538,7 @@
                         <td>${item.repo}</td>
                         <td class="fw-bold text-primary">${item.branch}</td>
                         <td><span class="badge ${badgeClass}">${item.status}</span></td>
-                        <td class="small text-truncate" style="max-width: 300px;">
+                        <td class="small text-break">
                             ${item.status === 'SUCCESS' ? item.path : '<span class="text-danger">' + item.error + '</span>'}
                         </td>
                     `;
@@ -502,7 +548,23 @@
             
             document.getElementById('resultsSection').classList.remove('d-none');
         }
-    </script>
 
+        // Fetch UI Config
+        fetch('/api/config/ui')
+            .then(response => response.json())
+            .then(config => {
+                if (config['ui.header.bulk']) {
+                    const headerTitle = document.querySelector('.navbar .position-absolute h5');
+                    if (headerTitle) headerTitle.textContent = config['ui.header.bulk'];
+                }
+                if (config['ui.footer.text']) {
+                    const footerText = document.querySelector('.raks-footer .container'); 
+                    // Note: bulk_download.html might not have the footer ID 'footerText' or structure. I need to verify structure first.
+                    // Actually, I'll use querySelector which is safer if ID is missing.
+                    if (footerText) footerText.innerHTML = config['ui.footer.text'];
+                }
+            })
+            .catch(err => console.error('Error loading UI config:', err));
+    </script>
 </body>
 </html>

@@ -40,14 +40,21 @@
     
     <div class="raks-frame">
         <!-- Header -->
+        <!-- Header -->
         <nav class="navbar navbar-expand-lg navbar-light brand-header mb-0 flex-shrink-0">
-            <div class="container-fluid">
+            <div class="container-fluid position-relative">
                 <a class="navbar-brand d-flex align-items-center" href="/">
                     <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
                     ApiGuard Portal - GitAnalyzer
                 </a>
-                <div class="d-flex">
-                    <a href="guide.html#analysis" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
+                
+                <!-- Centered Title -->
+                <div class="position-absolute start-50 translate-middle-x d-none d-lg-block">
+                    <h5 class="fw-bold text-purple mb-0">Comparison Analysis Tool</h5>
+                </div>
+
+                <div class="d-flex ms-auto">
+                    <a href="guide.html" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
                         <span class="me-2">📘</span> Guide / Help
                     </a>
                     <button type="button" class="btn btn-outline-purple me-2 d-flex align-items-center" onclick="clearForm()">
@@ -65,13 +72,13 @@
                 <div class="d-flex justify-content-between align-items-center mb-3">
                     <h5 class="mb-0 fw-bold text-purple">Analysis Config</h5>
                     <!-- Provider & Token Compact -->
-                    <div class="badge bg-light text-dark p-2 border">
-                         <select class="form-select form-select-sm border-0 bg-transparent p-0 d-inline-block w-auto fw-bold" id="gitProviderSelect" style="box-shadow:none;">
+                    <div class="input-group input-group-sm w-auto shadow-sm">
+                        <span class="input-group-text bg-white text-purple"><i class="bi bi-shield-lock-fill"></i></span>
+                        <select class="form-select border-start-0" id="gitProviderSelect" style="max-width: 100px;">
                              <option value="gitlab">GitLab</option>
                              <option value="github">GitHub</option>
-                         </select>
-                         <span class="mx-1">|</span>
-                         <input type="password" id="gitTokenInput" placeholder="Token Optional" class="border-0 bg-transparent p-0 small" style="width: 80px; outline:none;">
+                        </select>
+                        <input type="password" class="form-control" id="gitTokenInput" placeholder="Token Optional" style="max-width: 120px;">
                     </div>
                 </div>
 
@@ -109,19 +116,22 @@
                             </div>
                         </div>
 
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold">Base Branch (Destination)</label>
-                            <select class="form-select form-select-sm" id="sourceBranchSelect"></select>
-                        </div>
-                        
-                         <div class="text-center my-1">
-                             <button type="button" class="btn btn-sub-action py-0 border-0" id="swapBranchesBtn" title="Swap Branches" style="font-size:1.2rem;">&#8646;</button>
-                         </div>
-
-                        <div class="mb-3">
-                            <label class="form-label small fw-bold">Feature Branch (Source)</label>
-                            <select class="form-select form-select-sm" id="targetBranchSelect"></select>
-                        </div>
+                            <label class="form-label small fw-bold">Branch Comparison</label>
+                            <div class="d-flex align-items-end gap-2 mb-3">
+                                <div class="w-50">
+                                    <label class="form-label x-small text-muted mb-1">Base (Destination)</label>
+                                    <select class="form-select form-select-sm" id="sourceBranchSelect"></select>
+                                </div>
+                                <div class="mb-1">
+                                    <button type="button" class="btn btn-sub-action py-0 px-2" id="swapBranchesBtn" title="Swap" style="height: 31px;">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                    </button>
+                                </div>
+                                <div class="w-50">
+                                    <label class="form-label x-small text-muted mb-1">Feature (Source)</label>
+                                    <select class="form-select form-select-sm" id="targetBranchSelect"></select>
+                                </div>
+                            </div>
 
                         <!-- Config Repo -->
                         <div class="mb-3">
@@ -158,10 +168,14 @@
                             <textarea class="form-control form-control-sm" id="contentPatterns" rows="2" placeholder="e.g. regex:DEBUG_LOG"></textarea>
                         </div>
                         
+
                         <div class="form-check mb-3">
-                            <input class="form-check-input" type="checkbox" id="ignoreAttributeOrder">
-                            <label class="form-check-label small fw-bold" for="ignoreAttributeOrder">
+                            <input class="form-check-input" type="checkbox" id="ignoreAttributeOrder" style="border: 1px solid #663399;">
+                            <label class="form-check-label small fw-bold d-flex align-items-center" for="ignoreAttributeOrder">
                                 Smart XML Compare
+                                <span class="ms-1" data-bs-toggle="tooltip" data-bs-placement="right" title="Ignores insignificant whitespace and attribute order for cleaner XML diffs.">
+                                    <i class="bi bi-info-circle text-muted" style="cursor:help;"></i>
+                                </span>
                             </label>
                         </div>
                         
@@ -177,7 +191,7 @@
             <div class="split-right" id="rightPanel">
                 <!-- Initial Placeholder -->
                 <div id="resultsPlaceholder" class="text-center mt-5 text-muted">
-                    <img src="assets/images/logo.png" height="80" class="opacity-25 mb-3" style="filter: grayscale(100%);">
+                    <img src="assets/images/logo.png" height="100" class="mb-3">
                     <h4>Ready to Analyze</h4>
                     <p>Configure repository details on the left and click "Run Analysis".</p>
                 </div>
@@ -191,37 +205,33 @@
 
                     <!-- Dashboard Stats -->
                     <div class="row g-4 mb-4">
+                    <!-- Dashboard Stats (Compact) -->
+                    <div class="row g-3 mb-4">
                         <div class="col-md-3">
-                            <div class="dashboard-card card-purple text-center">
-                                <div class="mb-2">
-                                     <i class="bi bi-layers-fill fs-1 text-purple opacity-75"></i>
-                                </div>
-                                <h6 class="text-muted mb-2">Total Changed Files</h6>
-                                <h2 class="display-5 fw-bold text-purple" id="totalFiles">0</h2>
+                            <div class="dashboard-card-sm card-purple text-center d-flex flex-column justify-content-center">
+                                <i class="bi bi-layers-fill fs-4 text-purple opacity-50 mb-1"></i>
+                                <h6 class="text-purple small mb-0 fw-bold">Total Files</h6>
+                                <h3 class="fw-bold text-purple mb-0" id="totalFiles">0</h3>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="dashboard-card card-code text-center">
-                                <div class="mb-2">
-                                     <i class="bi bi-code-slash fs-1 opacity-75" style="color: #008B8B;"></i>
-                                </div>
-                                <h6 class="text-muted mb-2">Code Changes</h6>
-                                <h2 class="display-5 fw-bold" style="color: #008B8B !important;" id="codeChanges">0</h2>
+                            <div class="dashboard-card-sm card-code text-center d-flex flex-column justify-content-center">
+                                <i class="bi bi-code-slash fs-4 text-secondary opacity-50 mb-1"></i>
+                                <h6 class="text-purple small mb-0 fw-bold">Code Changes</h6>
+                                <h3 class="fw-bold text-purple mb-0" id="codeChanges">0</h3>
                             </div>
                         </div>
                         <div class="col-md-3">
-                            <div class="dashboard-card card-config text-center">
-                                 <div class="mb-2">
-                                     <i class="bi bi-gear fs-1 opacity-75" style="color: #648a99;"></i>
-                                </div>
-                                <h6 class="text-muted mb-2">Config Changes</h6>
-                                <h2 class="display-5 fw-bold" style="color: #648a99 !important;" id="configChanges">0</h2>
+                            <div class="dashboard-card-sm card-config text-center d-flex flex-column justify-content-center">
+                                <i class="bi bi-gear fs-4 text-info opacity-50 mb-1"></i>
+                                <h6 class="text-purple small mb-0 fw-bold">Config Changes</h6>
+                                <h3 class="fw-bold text-purple mb-0" id="configChanges">0</h3>
                             </div>
                         </div>
                         <!-- Severity Chart -->
                         <div class="col-md-3">
-                            <div class="dashboard-card card-purple text-center d-flex flex-column justify-content-center align-items-center">
-                                <div style="height: 140px; width: 140px; position: relative;">
+                            <div class="dashboard-card-sm card-purple p-1 d-flex align-items-center justify-content-center">
+                                <div style="height: 90px; width: 100%;">
                                      <canvas id="severityChart"></canvas>
                                 </div>
                             </div>
@@ -238,7 +248,7 @@
                             <div class="table-responsive">
                                 <table class="table table-hover mb-0 align-middle">
                                     <thead class="bg-light">
-                                        <tr>
+                                        <tr class="text-purple small fw-bold text-uppercase">
                                             <th>Type</th>
                                             <th>File Path</th>
                                             <th>Status</th>
@@ -260,7 +270,10 @@
         </div>
     
         <!-- Footer -->
-        <footer class="raks-footer text-center mt-auto flex-shrink-0">
+        </div>
+    
+        <!-- Footer -->
+        <footer class="raks-footer text-center mt-auto flex-shrink-0 w-100">
             <div class="container" id="footerText">
                 &copy; 2026 RAKS - Enterprise API Solution Suite - ApiGuard
             </div>
@@ -280,11 +293,164 @@
     </div>
     
     <script>
-        // Fetch UI Config (Footer)
+        // --- Modal Logic ---
+        const analyzingModal = new bootstrap.Modal(document.getElementById('analyzingModal'));
+        
+        document.getElementById('analysisForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            // Show Analyzing Modal
+            analyzingModal.show();
+            
+            // Gather Data
+            const data = {
+                provider: document.getElementById('gitProviderSelect').value,
+                token: document.getElementById('gitTokenInput').value,
+                group: document.getElementById('groupName').value,
+                repoFilter: document.getElementById('repoFilter').value,
+                codeRepo: document.getElementById('codeRepo').value,
+                sourceBranch: document.getElementById('sourceBranchSelect').value,
+                targetBranch: document.getElementById('targetBranchSelect').value,
+                
+                configRepo: document.getElementById('enableConfigRepo').checked ? document.getElementById('configRepo').value : null,
+                configSourceBranch: document.getElementById('configSourceSelect').value,
+                configTargetBranch: document.getElementById('configTargetSelect').value,
+                
+                ignorePatterns: document.getElementById('ignorePatterns').value.split('\n').filter(l => l.trim().length > 0),
+                contentPatterns: document.getElementById('contentPatterns').value,
+                ignoreAttributeOrder: document.getElementById('ignoreAttributeOrder').checked
+            };
+            
+            try {
+                const response = await fetch('/api/analyze', { 
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+                
+                if (!response.ok) throw new Error((await response.json()).error || 'Analysis failed');
+                
+                const report = await response.json();
+                
+                // Show Success State in Modal
+                document.getElementById('analyzingBody').classList.add('d-none');
+                document.getElementById('analysisSuccessBody').classList.remove('d-none');
+                
+                // Wait for User to Click "View Results" which dismisses modal
+                // But we need to render results first or when dismissed
+                renderReport(report);
+                
+            } catch (err) {
+                // Close modal and show error
+                analyzingModal.hide();
+                alert('Analysis Error: ' + err.message);
+            }
+        });
+        
+        // Reset Modal on Hide
+        document.getElementById('analyzingModal').addEventListener('hidden.bs.modal', () => {
+             document.getElementById('analyzingBody').classList.remove('d-none');
+             document.getElementById('analysisSuccessBody').classList.add('d-none');
+        });
+
+        function renderReport(report) {
+             document.getElementById('totalFiles').innerText = report.totalFiles;
+             document.getElementById('codeChanges').innerText = report.codeChanges;
+             document.getElementById('configChanges').innerText = report.configChanges;
+             document.getElementById('reportTime').innerText = report.timestamp;
+             
+             // Render Table
+             const tbody = document.getElementById('filesTableBody');
+             tbody.innerHTML = '';
+             report.details.forEach(d => {
+                 const tr = document.createElement('tr');
+                 tr.innerHTML = `
+                    <td><span class="badge ${d.type === 'CODE' ? 'bg-code' : 'bg-config'}">${d.type}</span></td>
+                    <td class="small font-monospace text-break">${d.file}</td>
+                    <td><span class="badge ${d.status === 'MODIFIED' ? 'bg-modified' : (d.status === 'NEW' ? 'bg-success' : 'bg-deleted')}">${d.status}</span></td>
+                    <td>${d.validLines}</td>
+                    <td>${d.ignoredLines}</td>
+                    <td><span class="badge ${d.severity === 'CRITICAL' ? 'bg-critical' : (d.severity === 'HIGH' ? 'bg-danger' : 'bg-secondary')}">${d.severity}</span></td>
+                    <td>
+                        <button class="btn btn-sm ghost-btn py-0 diff-btn" data-diff="${encodeURIComponent(d.diff)}">View</button>
+                    </td>
+                 `;
+                 
+                 // Hover Preview Logic
+                 const diffBtn = tr.querySelector('.diff-btn');
+                 diffBtn.addEventListener('mouseenter', (e) => {
+                     showDiffPreview(e, decodeURIComponent(d.diff));
+                     diffPopup.style.display = 'block';
+                 });
+                 diffBtn.addEventListener('mouseleave', () => {
+                     diffPopup.style.display = 'none';
+                 });
+                 diffBtn.addEventListener('mousemove', (e) => {
+                     diffPopup.style.top = (e.pageY + 15) + 'px';
+                     diffPopup.style.left = (e.pageX + 15) + 'px';
+                 });
+                 diffBtn.addEventListener('click', () => {
+                      showModalDiff(d.file, decodeURIComponent(d.diff));
+                 });
+                 
+                 tbody.appendChild(tr);
+             });
+             
+             // Update Chart
+             updateChart(report.severityCounts);
+             
+             // Show Resuls
+             document.getElementById('resultsPlaceholder').classList.add('d-none');
+             document.getElementById('resultsSection').classList.remove('d-none');
+        }
+
+        // --- Chart Logic ---
+        let severityChartInstance = null;
+        function updateChart(counts) {
+            const ctx = document.getElementById('severityChart').getContext('2d');
+            if(severityChartInstance) severityChartInstance.destroy();
+            
+            severityChartInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Critical', 'High', 'Low', 'Info'],
+                    datasets: [{
+                        data: [counts.CRITICAL || 0, counts.HIGH || 0, counts.LOW || 0, counts.INFO || 0],
+                        backgroundColor: ['#ff4500', '#dc3545', '#ffc107', '#0dcaf0'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    cutout: '70%'
+                }
+            });
+        }
+        
+        function showModalDiff(file, diff) {
+             document.getElementById('diffModalTitle').innerText = "File Diff: " + file;
+             const targetElement = document.getElementById('diffContainer');
+             const diff2htmlUi = new Diff2HtmlUI(targetElement, diff, {
+                drawFileList: false,
+                matching: 'lines',
+                outputFormat: 'side-by-side',
+             });
+             diff2htmlUi.draw();
+             new bootstrap.Modal(document.getElementById('diffModal')).show();
+        }
+
+        // Fetch UI Config (Footer & Header)
         fetch('/api/config/ui')
             .then(r => r.json())
             .then(c => {
                 if (c['ui.footer.text']) document.getElementById('footerText').innerText = c['ui.footer.text'];
+                // Clean Header Title Implementation
+                if (c['ui.header.analysis']) {
+                    const headerTitle = document.querySelector('.position-absolute h5');
+                    if(headerTitle) headerTitle.innerText = c['ui.header.analysis'];
+                }
             })
             .catch(e => console.error(e));
     </script>
@@ -302,6 +468,28 @@
             </div>
         </div>
     </div>
+    </div>
+
+    <!-- Analyzing Status Modal -->
+    <div class="modal fade" id="analyzingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-left: 5px solid #663399 !important;">
+                <div class="modal-body text-center p-5" id="analyzingBody">
+                    <div class="spinner-border text-purple mb-3" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="fw-bold text-purple">Analyzing Repositories...</h5>
+                    <p class="text-muted mb-0">Please wait while we compare branches and generate the report.</p>
+                </div>
+                <!-- Success State (Hidden initially) -->
+                 <div class="modal-body text-center p-5 d-none" id="analysisSuccessBody">
+                     <i class="bi bi-check-circle-fill text-success display-1 mb-3"></i>
+                     <h4 class="fw-bold text-success">Analysis Complete!</h4>
+                     <p class="text-muted">The report has been generated successfully.</p>
+                     <button type="button" class="btn btn-purple btn-lg px-5 mt-3" data-bs-dismiss="modal">View Results</button>
+                 </div>
+            </div>
+        </div>
     </div>
 
     <!-- Help Modal -->
@@ -772,6 +960,81 @@
             }
         });
 
+
+        // --- Fetch Repos Logic ---
+        document.getElementById('fetchReposBtn').addEventListener('click', async () => {
+             const group = document.getElementById('groupName').value.trim();
+             const filter = document.getElementById('repoFilter').value.trim();
+             const btn = document.getElementById('fetchReposBtn');
+             
+             if(!group) { alert('Please enter a Git Group / Organization'); return; }
+
+             const originalText = btn.textContent;
+             btn.disabled = true;
+             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+             
+             try {
+                let url = `/api/download/list?group=${encodeURIComponent(group)}`;
+                if(filter) url += `&filter=${encodeURIComponent(filter)}`;
+                
+                const resp = await fetch(url, { headers: getGitHeaders() });
+                if(!resp.ok) throw new Error(`Fetch failed: ${resp.status}`);
+                
+                const data = await resp.json();
+                const container = document.getElementById('repoListContainer');
+                container.classList.remove('d-none');
+                container.innerHTML = ''; 
+
+                if(data.repositories && data.repositories.length > 0) {
+                    data.repositories.forEach((r, idx) => {
+                        const div = document.createElement('div');
+                        div.className = 'small py-1 border-bottom d-flex align-items-center';
+                        div.innerHTML = `
+                             <div class="form-check m-0">
+                                <input class="form-check-input" type="radio" name="repoRadio" id="repo_${idx}" value="${r}">
+                                <label class="form-check-label text-break" for="repo_${idx}" style="cursor:pointer">
+                                    <i class="bi bi-git me-1 text-purple"></i>${r}
+                                </label>
+                            </div>
+                        `;
+                        // Click on div selects radio
+                        div.addEventListener('click', (e) => {
+                             // Prevent double toggle if clicking label/input directly
+                             if(e.target.tagName !== 'INPUT' && e.target.tagName !== 'LABEL') {
+                                 const radio = div.querySelector('input[type="radio"]');
+                                 radio.checked = true;
+                                 radio.dispatchEvent(new Event('change'));
+                             }
+                        });
+                        
+                        div.querySelector('input').addEventListener('change', () => {
+                             const codeRepo = document.getElementById('codeRepo');
+                             codeRepo.value = r;
+                             codeRepo.dispatchEvent(new Event('input')); // Trigger auto-populate
+                             
+                             // Highlight
+                             Array.from(container.children).forEach(c => c.classList.remove('bg-light', 'fw-bold'));
+                             div.classList.add('bg-light', 'fw-bold');
+                        });
+                        
+                        container.appendChild(div);
+                    });
+                } else {
+                    container.innerHTML = '<div class="text-muted text-center small mt-2">No repositories found.</div>';
+                }
+             } catch(e) {
+                 console.error(e);
+                 alert('Error fetching repositories: ' + e.message);
+             } finally {
+                 // Ensure we query the button again to set properties if reference lost
+                 const safeBtn = document.getElementById('fetchReposBtn');
+                 if(safeBtn) {
+                    safeBtn.disabled = false;
+                    safeBtn.textContent = 'Fetch'; // Hard reset to ensure text clears
+                 }
+             }
+        });
+
         // --- Resizer Logic ---
         const resizer = document.getElementById('dragMe');
         const leftPanel = document.getElementById('leftPanel');
@@ -784,14 +1047,12 @@
             resizer.classList.add('resizing');
             document.addEventListener('mousemove', mouseMoveHandler);
             document.addEventListener('mouseup', mouseUpHandler);
-            // Block iframes/selection
             document.body.style.userSelect = 'none';
         };
 
         const mouseMoveHandler = function (e) {
             const dx = e.clientX - x;
             const newLeftWidth = leftWidth + dx;
-            // Constraints
             if (newLeftWidth > 250 && newLeftWidth < 800) {
                  leftPanel.style.width = `${newLeftWidth}px`;
             }
@@ -812,16 +1073,43 @@
 
         function showDiffPreview(e, content) {
             if(!content) return;
-            // Clean content for preview (first 20 lines)
-            const lines = content.split('\n').slice(0, 20).join('\n');
-            const previewText = lines + (content.split('\n').length > 20 ? '\n... (Click to view full)' : '');
             
-            diffContentDiv.textContent = previewText;
+            // Refined Logic & Coloring
+            const lines = content.split('\n');
+            let innerHTML = '<div class="small fw-bold text-purple mb-2 border-bottom pb-1">Diff Preview</div>';
+            
+            let count = 0;
+            for(let line of lines) {
+                if (count >= 15) {
+                    innerHTML += '<div class="text-muted small mt-1">... (Click for full diff)</div>';
+                    break;
+                }
+                
+                // Skip git headers
+                if (line.startsWith('diff --git') || line.startsWith('index ') || 
+                    line.startsWith('new file') || line.startsWith('deleted file') ||
+                    line.startsWith('---') || line.startsWith('+++') || line.startsWith('@@')) {
+                    continue;
+                }
+
+                if (line.startsWith('+')) {
+                    innerHTML += `<div class="diff-add-high" style="white-space: pre-wrap;">${line.replace(/</g, '&lt;')}</div>`;
+                    count++;
+                } else if (line.startsWith('-')) {
+                    innerHTML += `<div class="diff-del-high" style="white-space: pre-wrap;">${line.replace(/</g, '&lt;')}</div>`;
+                    count++;
+                } else if (line.trim().length > 0) { // Show context lines if valid
+                    innerHTML += `<div class="text-muted" style="white-space: pre-wrap;">${line.replace(/</g, '&lt;')}</div>`;
+                    count++;
+                }
+            }
+            
+            diffContentDiv.innerHTML = innerHTML; // Use innerHTML for colors
             
             // Position
             const rect = e.target.getBoundingClientRect();
             diffPopup.style.display = 'block';
-            diffPopup.style.top = (rect.top + window.scrollY + 20) + 'px';
+            diffPopup.style.top = (rect.top + window.scrollY + 10) + 'px'; // Slightly higher
             // Align right if too close to edge
             if (window.innerWidth - rect.right < 600) {
                  diffPopup.style.left = (rect.left - 600) + 'px';
@@ -838,15 +1126,22 @@
         let diffDetails = {}; // Store diffs map
         let severityChart = null;
 
+
         function renderResults(data) {
             currentResults = data;
             document.getElementById('resultsPlaceholder').classList.add('d-none');
             document.getElementById('resultsSection').classList.remove('d-none');
-            document.getElementById('reportTime').textContent = new Date().toLocaleString();
+            document.getElementById('reportTime').textContent = new Date().toLocaleString('en-US', { timeZoneName: 'short' });
             
-            document.getElementById('totalFiles').textContent = data.totalFilesChanged;
-            document.getElementById('codeChanges').textContent = data.codeChangesCount;
-            document.getElementById('configChanges').textContent = data.configChangesCount;
+            // Filter Stats (Exclude NONE severity from counts if they are Smart Matched/Ignored)
+            // Assuming NONE implies it was filtered out by smart logic or has no meaningful changes
+            const meaningfulFiles = data.modifiedFiles.filter(f => f.severity !== 'NONE');
+            const codeFiles = meaningfulFiles.filter(f => f.type === 'CODE');
+            const configFiles = meaningfulFiles.filter(f => f.type === 'CONFIG');
+
+            document.getElementById('totalFiles').textContent = meaningfulFiles.length; // Show meaningful count
+            document.getElementById('codeChanges').textContent = codeFiles.length;
+            document.getElementById('configChanges').textContent = configFiles.length;
 
             const tbody = document.getElementById('filesTableBody');
             tbody.innerHTML = '';
@@ -855,52 +1150,55 @@
             if (data.modifiedFiles && data.modifiedFiles.length > 0) {
                 data.modifiedFiles.forEach((file, index) => {
                     const fileId = 'file_' + index;
-                diffDetails[fileId] = file.diffContent; // content
+                    diffDetails[fileId] = file.diffContent; // content
 
-                let statusBadge = '<span class="badge bg-modified">MODIFIED</span>';
-                if (file.newFile) statusBadge = '<span class="badge bg-success">NEW</span>';
-                if (file.deletedFile) statusBadge = '<span class="badge bg-deleted">DELETED</span>';
+                    let statusBadge = '<span class="badge bg-modified">MODIFIED</span>';
+                    let rowClass = '';
+                    
+                    if (file.severity === 'NONE') {
+                        statusBadge = '<span class="badge bg-secondary opacity-50">SMART MATCHED</span>';
+                        rowClass = 'table-light text-muted opacity-75'; // Dimmed row
+                    } else {
+                        if (file.newFile) statusBadge = '<span class="badge bg-success">NEW</span>';
+                        if (file.deletedFile) statusBadge = '<span class="badge bg-deleted">DELETED</span>';
+                    }
 
-                let severityClass = 'bg-secondary';
-                if (file.severity === 'LOW') severityClass = 'bg-info text-dark';
-                if (file.severity === 'MEDIUM') severityClass = 'bg-warning text-dark';
-                if (file.severity === 'CRITICAL') severityClass = 'bg-critical';
+                    let severityClass = 'bg-secondary';
+                    if (file.severity === 'LOW') severityClass = 'bg-info text-dark';
+                    if (file.severity === 'MEDIUM') severityClass = 'bg-warning text-dark';
+                    if (file.severity === 'CRITICAL') severityClass = 'bg-critical';
+                    if (file.severity === 'NONE') severityClass = 'bg-light text-muted border'; // Visually distinct
                 
-                let typeBadge = `<span class="badge bg-secondary">${file.type}</span>`;
-                if (file.type === 'CODE') typeBadge = '<span class="badge bg-code"><i class="bi bi-code-slash me-1"></i>CODE</span>';
-                if (file.type === 'CONFIG') typeBadge = '<span class="badge bg-config"><i class="bi bi-gear me-1"></i>CONFIG</span>';
+                    let typeBadge = `<span class="badge bg-secondary">${file.type}</span>`;
+                    if (file.type === 'CODE') typeBadge = '<span class="badge bg-code"><i class="bi bi-code-slash me-1"></i>CODE</span>';
+                    if (file.type === 'CONFIG') typeBadge = '<span class="badge bg-config"><i class="bi bi-gear me-1"></i>CONFIG</span>';
 
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td>${typeBadge}</td>
-                    <td class="small fw-bold font-monospace text-primary text-truncate" style="max-width: 250px;" title="${file.filePath}">${file.filePath}</td>
-                    <td>${statusBadge}</td>
-                    <td class="small text-success">+${file.validLines}</td>
-                    <td class="small text-muted">${file.ignoredLines}</td>
-                    <td><span class="badge ${severityClass}">${file.severity}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-outline-primary py-0" 
-                            onclick="showDiffModal('${fileId}', '${file.filePath}')"
-                            onmouseenter="showDiffPreview(event, diffDetails['${fileId}'])"
-                            onmouseleave="hideDiffPreview()"
-                        >View Diff</button>
-                    </td>
-                `;
-                tbody.appendChild(tr);
-            });
+                    const tr = document.createElement('tr');
+                    if(rowClass) tr.className = rowClass;
+                    
+                    tr.innerHTML = `
+                        <td>${typeBadge}</td>
+                        <td class="small fw-bold font-monospace text-primary text-truncate" style="max-width: 250px;" title="${file.path}">
+                            ${file.path}
+                        </td>
+                        <td>${statusBadge}</td>
+                        <td class="small text-success">+${file.validChangedLines}</td>
+                        <td class="small text-muted">${file.ignoredLines}</td>
+                        <td><span class="badge ${severityClass}">${file.severity}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-sub-action py-0" 
+                                onclick="showDiff('${fileId}', '${file.path}')"
+                                onmouseenter="showDiffPreview(event, diffDetails['${fileId}'])"
+                                onmouseleave="hideDiffPreview()"
+                            >View Diff</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
             } else {
                  tbody.innerHTML = '<tr><td colspan="7" class="text-center py-4 text-muted">No changes found matching the criteria.</td></tr>';
             }
-                    <td class="font-monospace small text-break fw-bold text-primary" style="cursor:pointer" onclick="showDiff('${fileId}', '${file.path}')">${file.path}</td>
-                    <td>${statusBadge}</td>
-                    <td class="fw-bold text-success">+${file.validChangedLines}</td>
-                    <td class="text-muted">${file.ignoredLines}</td>
-                    <td><span class="badge ${severityClass}">${file.severity}</span></td>
-                    <td><button class="btn btn-sm btn-outline-primary" onclick="showDiff('${fileId}', '${file.path}')">View Diff</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-            }
+
 
             renderCharts(data);
             
@@ -908,143 +1206,28 @@
             document.getElementById('resultsSection').scrollIntoView({behavior: 'smooth'});
         }
 
-        function renderCharts(data) {
-            // Severity Chart
-            const ctxSev = document.getElementById('severityChart').getContext('2d');
-            
-            // Count Severities
-            let low = 0, med = 0, crit = 0;
-            data.modifiedFiles.forEach(f => {
-                if(f.severity === 'LOW') low++;
-                else if(f.severity === 'MEDIUM') med++;
-                else if(f.severity === 'CRITICAL') crit++;
+        // Initialize Tooltips & Fetch UI Config
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
             });
 
-            // If all are zero, it might be due to ignored/safe changes. Show "Safe/Ignored" segment
-            let safe = 0;
-            if (low === 0 && med === 0 && crit === 0 && data.modifiedFiles.length > 0) {
-                 safe = data.modifiedFiles.length;
-            }
-
-            if (severityChart) severityChart.destroy();
-
-            const chartData = (safe > 0) ? [safe] : [crit, med, low];
-            const chartLabels = (safe > 0) ? ['Safe / Ignored'] : ['Critical', 'Medium', 'Low'];
-            const chartColors = (safe > 0) ? ['#20c997'] : ['#FF4500', '#ffc107', '#0dcaf0']; // Safe=Teal
-
-            severityChart = new Chart(ctxSev, {
-                type: 'doughnut',
-                data: {
-                    labels: chartLabels,
-                    datasets: [{
-                        data: chartData,
-                        backgroundColor: chartColors
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' }
+            // Fetch UI Config
+            fetch('/api/config/ui')
+                .then(response => response.json())
+                .then(config => {
+                    if (config['ui.header.analysis']) {
+                        const headerTitle = document.querySelector('.navbar .position-absolute h5');
+                        if (headerTitle) headerTitle.textContent = config['ui.header.analysis'];
                     }
-                }
-            });
-        }
-        
-        function showDiff(fileId, filePath) {
-            try {
-                const details = diffDetails[fileId];
-                // details might be string (legacy) or object
-                const diffContent = (details && typeof details === 'object') ? details.content : details;
-                
-                let source = 'Base';
-                let target = 'Head';
-                if (window.currentAnalysisBranches) {
-                    source = window.currentAnalysisBranches.source;
-                    target = window.currentAnalysisBranches.target;
-                }
-
-                const targetElement = document.getElementById('diffContainer');
-                document.getElementById('diffModalTitle').innerHTML = 
-                    `<span class="text-muted">File:</span> <span class="fw-bold text-primary">${filePath}</span> ` + 
-                    `<span class="badge bg-light text-dark border ms-2">${source} &#8594; ${target}</span>`;
-                
-                // Clear previous
-                targetElement.innerHTML = ''; 
-
-                if (!diffContent || diffContent.trim() === '') {
-                    targetElement.innerHTML = '<div class="alert alert-warning">No diff content available.</div>';
-                } else {
-                    // Raw Diff (Collapsed by default)
-                    const rawDetails = document.createElement('details');
-                    rawDetails.innerHTML = '<summary class="fw-bold mb-2" style="cursor:pointer">Show Raw Diff</summary><pre style="max-height: 200px; overflow: auto; background: #f8f9fa; padding: 10px;">' 
-                                       + diffContent.replace(/</g, '&lt;').replace(/>/g, '&gt;') + '</pre><hr>';
-                    targetElement.appendChild(rawDetails);
-
-                    const renderCtn = document.createElement('div');
-                    targetElement.appendChild(renderCtn);
-
-                    // Robust Constructor Discovery
-                    let UIConstructor = window.Diff2HtmlUI;
-                    if (!UIConstructor && window.Diff2Html) {
-                        UIConstructor = window.Diff2Html.UI || window.Diff2Html.Diff2HtmlUI;
+                    if (config['ui.footer.text']) {
+                        const footerText = document.getElementById('footerText');
+                        if (footerText) footerText.innerHTML = config['ui.footer.text']; // Use innerHTML for HTML entities like &copy;
                     }
-                    
-                    if (!UIConstructor) {
-                        const globals = Object.keys(window).filter(k => k.toLowerCase().includes('diff'));
-                        renderCtn.innerHTML = `<div class="alert alert-danger">Visual Diff Error: Library not loaded correctly.<br>
-                        Debug: Found Globals = [${globals.join(', ')}]<br>
-                        Please check internet connection. Raw diff is available above.</div>`;
-                    } else {
-                        try {
-                             const configuration = {
-                                drawFileList: false,
-                                fileListToggle: false,
-                                fileListStartVisible: false,
-                                fileContentToggle: false,
-                                matching: 'lines',
-                                outputFormat: 'side-by-side',
-                                synchronisedScroll: true,
-                                highlight: true,
-                                renderNothingWhenEmpty: false
-                            };
-                            const diff2htmlUi = new UIConstructor(renderCtn, diffContent, configuration);
-                            diff2htmlUi.draw();
-                        } catch (e) {
-                            console.error('Diff2Html render error:', e);
-                            renderCtn.innerHTML = '<div class="alert alert-danger">Error rendering visual diff: ' + e.message + '</div>';
-                        }
-                    }
-                }
-
-                const modal = new bootstrap.Modal(document.getElementById('diffModal'));
-                modal.show();
-            } catch (err) {
-                alert('CRITICAL ERROR in showDiff: ' + err.message);
-                console.error(err);
-            }
-        }
-
-        function exportToCSV() {
-            if (!currentResults || !currentResults.modifiedFiles) return;
-            
-            const rows = [['Type', 'File Path', 'Status', 'Valid Lines', 'Ignored Lines', 'Severity']];
-            currentResults.modifiedFiles.forEach(f => {
-                const status = f.newFile ? 'NEW' : (f.deletedFile ? 'DELETED' : 'MODIFIED');
-                rows.push([f.type, f.path, status, f.validChangedLines, f.ignoredLines, f.severity]);
-            });
-
-            let csvContent = "data:text/csv;charset=utf-8," 
-                + rows.map(e => e.join(",")).join("\n");
-            
-            const encodedUri = encodeURI(csvContent);
-            const link = document.createElement("a");
-            link.setAttribute("href", encodedUri);
-            link.setAttribute("download", "migration_analysis.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
+                })
+                .catch(err => console.error('Error loading UI config:', err));
+        });
 
         function clearForm() {
             if(confirm("Are you sure you want to clear all inputs?")) {
@@ -1054,6 +1237,169 @@
                 document.getElementById('repoListContainer').innerHTML = '';
             }
         }
+
+        function renderCharts(data) {
+             const ctx = document.getElementById('severityChart').getContext('2d');
+             
+             if (severityChart) {
+                 severityChart.destroy();
+             }
+
+             const config = {
+                 type: 'doughnut',
+                 data: {
+                     labels: ['Critical', 'Medium', 'Low'],
+                     datasets: [{
+                         data: [
+                             data.modifiedFiles.filter(f => f.severity === 'CRITICAL').length,
+                             data.modifiedFiles.filter(f => f.severity === 'MEDIUM').length,
+                             data.modifiedFiles.filter(f => f.severity === 'LOW').length
+                         ],
+                         backgroundColor: ['#ff4500', '#ffc107', '#0dcaf0'],
+                         hoverOffset: 4
+                     }]
+                 },
+                 options: {
+                     responsive: true,
+                     maintainAspectRatio: false,
+                     plugins: {
+                         legend: {
+                             position: 'bottom',
+                             labels: { usePointStyle: true, boxWidth: 8 }
+                         }
+                     }
+                 }
+             };
+             
+             severityChart = new Chart(ctx, config);
+        }
+
+        // --- Auto-Populate Config Repo Logic ---
+        // Listen for Code Repo Change
+        const codeRepoInput = document.getElementById('codeRepo');
+        const configRepoInput = document.getElementById('configRepo');
+        
+        // Helper to detect change (input or selection)
+        const updateConfigRepo = () => {
+             const val = codeRepoInput.value.trim();
+             if (val && !configRepoInput.value) { // Only if config is empty
+                 configRepoInput.value = val + '_config';
+             }
+        };
+
+        codeRepoInput.addEventListener('input', updateConfigRepo);
+        codeRepoInput.addEventListener('change', updateConfigRepo);
+        
+        // Also trigger when a radio is selected (since we use a hidden radio logic)
+        // We already have a listener on line 1010 that updates codeRepo.value. 
+        // We can hook into the codeRepo 'change' event or manually call it there.
+        // Let's rely on the input/change listener above, but ensure the radio logic dispatches a change event.
+        
+        // --- Analysis Submit / Modal Logic ---
+        document.getElementById('analysisForm').addEventListener('submit', async (e) => {
+             e.preventDefault();
+             
+             // Show Modal
+             const modalEl = document.getElementById('analysisModal');
+             const modal = new bootstrap.Modal(modalEl, {backdrop: 'static', keyboard: false});
+             modal.show();
+             
+             // Reset UI in Modal
+             document.getElementById('analysisSpinner').classList.remove('d-none');
+             document.getElementById('analysisSuccess').classList.add('d-none');
+             
+             const formData = new FormData(e.target);
+             const params = new URLSearchParams(formData);
+
+             try {
+                 const response = await fetch('/api/analyze?' + params.toString(), {
+                     method: 'POST'
+                 });
+                 if (!response.ok) throw new Error('Analysis failed: ' + await response.text());
+                 
+                 const data = await response.json();
+                 
+                 // Show Success in Modal
+                 document.getElementById('analysisSpinner').classList.add('d-none');
+                 document.getElementById('analysisSuccess').classList.remove('d-none');
+                 
+                 // Render Results
+                 renderResults(data);
+                 
+                 // Close Modal after brief delay
+                 setTimeout(() => {
+                     modal.hide();
+                 }, 1000);
+                 
+             } catch (err) {
+                 console.error(err);
+                 alert('Error: ' + err.message);
+                 modal.hide();
+             }
+        });
+
+        function exportCSV() {
+             if (!currentResults || !currentResults.modifiedFiles) {
+                 alert("No data to export");
+                 return;
+             }
+             
+             const headers = ["Type", "File Path", "Status", "Valid Lines", "Ignored Lines", "Severity"];
+             const rows = currentResults.modifiedFiles.map(f => [
+                 f.type,
+                 f.path,
+                 f.newFile ? 'NEW' : (f.deletedFile ? 'DELETED' : 'MODIFIED'),
+                 f.validChangedLines,
+                 f.ignoredLines,
+                 f.severity
+             ]);
+             
+             let csvContent = "data:text/csv;charset=utf-8," 
+                 + headers.join(",") + "\n" 
+                 + rows.map(e => e.join(",")).join("\n");
+                 
+             const encodedUri = encodeURI(csvContent);
+             const link = document.createElement("a");
+             link.setAttribute("href", encodedUri);
+             link.setAttribute("download", "analysis_report_" + new Date().getTime() + ".csv");
+             document.body.appendChild(link);
+             link.click();
+             document.body.removeChild(link);
+        }
+
+        // --- Diff Modal Logic ---
+        const diffModalVar = new bootstrap.Modal(document.getElementById('diffModal'));
+
+        function showDiff(fileId, path) {
+             const content = diffDetails[fileId];
+             document.getElementById('diffModalTitle').textContent = path;
+             
+             const container = document.getElementById('diffModalContent');
+             if(content) {
+                 container.innerHTML = content;
+             } else {
+                 container.innerText = "No diff content available.";
+             }
+             
+             diffModalVar.show();
+        }
     </script>
+
+    <!-- Diff View Modal -->
+    <div class="modal fade" id="diffModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable" style="height: 90vh;">
+            <div class="modal-content h-100">
+                <div class="modal-header bg-light opacity-100"> <!-- ensure visibility -->
+                    <h5 class="modal-title font-monospace small" id="diffModalTitle">File Diff</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0 bg-white">
+                    <pre class="m-0 p-3 h-100" id="diffModalContent" style="font-size: 0.85em; overflow: auto; white-space: pre-wrap;"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
+
+

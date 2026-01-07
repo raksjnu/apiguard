@@ -8,16 +8,22 @@
     <link href="assets/css/styles.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
-<body class="bg-light">
+<body class="bg-light guide-body">
 
-    <div class="raks-frame">
+    <div class="raks-full-screen">
         <!-- Navigation -->
         <nav class="navbar navbar-expand-lg navbar-light brand-header mb-4">
-            <div class="container-fluid">
+            <div class="container-fluid position-relative">
                 <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
                     <img src="assets/images/logo.png" alt="Logo" width="40" height="40" class="d-inline-block align-text-top me-2">
                     ApiGuard Portal - GitAnalyzer
                 </a>
+                
+                <!-- Centered Title -->
+                <div class="position-absolute start-50 translate-middle-x d-none d-lg-block">
+                    <h5 class="fw-bold text-purple mb-0">User Guide</h5>
+                </div>
+
                 <div class="d-flex">
                     <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
                 </div>
@@ -159,8 +165,35 @@
         fetch('/api/config/ui').then(r=>r.json()).then(c=>{
             if(c['ui.footer.text']) document.getElementById('footerText').innerText=c['ui.footer.text'];
         });
+
+        // Force Scroll to Top on Load (ignores hash)
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const container = document.querySelector('.container.flex-grow-1');
+                if(container) container.scrollTop = 0;
+                window.scrollTo(0, 0);
+            }, 10);
+        });
     </script>
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fetch UI Config
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/config/ui')
+                .then(response => response.json())
+                .then(config => {
+                    // Update Header Title if specific guide property exists, or fallback
+                    if (config['ui.header.guide']) {
+                        const headerTitle = document.querySelector('.navbar .position-absolute h5');
+                        if (headerTitle) headerTitle.textContent = config['ui.header.guide'];
+                    }
+                    if (config['ui.header.guide']) {
+                         document.title = config['ui.header.guide'] + " - GitAnalyzer";
+                    }
+                })
+                .catch(err => console.error('Error loading UI config:', err));
+        });
+    </script>
 </body>
 </html>
