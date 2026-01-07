@@ -3,7 +3,6 @@ package com.raks.gitanalyzer.core;
 import com.raks.gitanalyzer.provider.GitProvider;
 import com.raks.gitanalyzer.model.AnalysisResult;
 import com.raks.gitanalyzer.model.FileChange;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.ArrayList;
@@ -24,7 +23,7 @@ public class AnalyzerService {
         this.objectMapper = new ObjectMapper();
     }
 
-    public AnalysisResult analyze(String apiName, String codeRepo, String configRepo, String sourceBranch, String targetBranch, List<String> filePatterns, List<String> contentPatterns, String configSourceBranch, String configTargetBranch) {
+    public AnalysisResult analyze(String apiName, String codeRepo, String configRepo, String sourceBranch, String targetBranch, List<String> filePatterns, List<String> contentPatterns, String configSourceBranch, String configTargetBranch, boolean ignoreAttributeOrder) {
         AnalysisResult result = new AnalysisResult();
         result.setApiName(apiName);
         result.setCodeRepo(codeRepo);
@@ -39,7 +38,7 @@ public class AnalyzerService {
             
             // 2. Process Diffs
             List<Map<String, Object>> diffs = (List<Map<String, Object>>) diffMap.get("diffs");
-            processDiffs(diffs, result, filePatterns, contentPatterns);
+            processDiffs(diffs, result, filePatterns, contentPatterns, ignoreAttributeOrder);
 
             // 3. Config Repo Analysis (Optional)
             if (configRepo != null && !configRepo.isEmpty()) {
@@ -60,7 +59,7 @@ public class AnalyzerService {
         return result;
     }
 
-    private void processDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns, List<String> contentPatterns) {
+    private void processDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns, List<String> contentPatterns, boolean ignoreAttributeOrder) {
         if (diffs == null) return;
 
         for (Map<String, Object> diff : diffs) {
@@ -77,7 +76,6 @@ public class AnalyzerService {
             
             boolean isNew = (boolean) diff.get("new_file");
             boolean isDeleted = (boolean) diff.get("deleted_file");
-            boolean isRenamed = (boolean) diff.get("renamed_file");
 
             change.setNewFile(isNew);
             change.setDeletedFile(isDeleted);
@@ -109,7 +107,7 @@ public class AnalyzerService {
                 change.setDiffContent(fullDiff.toString());
             }
 
-            calculateLines(change, diffContent, contentPatterns);
+            calculateLines(change, diffContent, contentPatterns, ignoreAttributeOrder);
             
             result.addFileChange(change);
         }
@@ -131,7 +129,7 @@ public class AnalyzerService {
     }
     
     // Updated calculateLines with XML Canonicalization logic
-    private void calculateLines(FileChange change, String diffContent, List<String> patterns) {
+    private void calculateLines(FileChange change, String diffContent, List<String> patterns, boolean ignoreAttributeOrder) {
         if (diffContent == null || diffContent.isEmpty()) {
             return;
         }
@@ -161,10 +159,10 @@ public class AnalyzerService {
         int ignored = 0;
         
         // 2. Semantic Ignore Logic (XML)
-        List<String> semanticallyIgnoredMinus = new ArrayList<>();
         List<String> semanticallyIgnoredPlus = new ArrayList<>();
         
-        if (change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
+        // Only run if Feature Enabled AND is XML
+        if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
             // Bag matching: Count occurrences of Canonical Strings
             Map<String, Integer> minusCounts = new HashMap<>();
             
@@ -180,30 +178,15 @@ public class AnalyzerService {
                      semanticallyIgnoredPlus.add(p);
                      // Decrement match count (remove one instance)
                      minusCounts.put(canon, minusCounts.get(canon) - 1);
-                     
-                     // We need to mark the corresponding Minus line as ignored too
-                     // Since we don't have direct index map, we'll store the raw strings to skip later
                 }
             }
-            
-            // Re-calculate minus ignored based on left-overs
-            // Actually, simpler: Any P that matched is Ignored. 
-            // Any M that matched P is Ignored.
-            // We just matched P->M. 
-            // The number of matches = semanticallyIgnoredPlus.size().
-            // So we have N matches. We ignore N minus lines and N plus lines.
         }
         
         // 3. Final count pass
-        // We'll reset and count strictly.
-        // But to respect the "Line by Line" regex checks, we should iterate Raw lines?
-        // Wait, Semantic Ignore supersedes Regex?
-        // If it's semantically same, it's IGNORED (Count as IGNORED).
         
         // Strategy: 
         // Iterate Plus Lines: If in semanticallyIgnoredPlus -> Ignored++. Else -> check regex.
         // Iterate Minus Lines: If it was matched -> Ignored++. Else -> check regex (usually deletions count as valid changes? or just ignored?)
-        // Standard GitAnalyzer logic: Deletions and Additions both valid.
         
         // We need to match specific Minus string instances.
         // Let's use a Bag for matched items to consume.
@@ -211,20 +194,14 @@ public class AnalyzerService {
         
         // Count Plus
         for (String p : plusLines) {
-            String canon = (change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) 
+            String canon = (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) 
                            ? com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p) : null;
             
             boolean semanticMatch = false;
             // Check if this P's canonical form was matched
-            // (Only if XML)
              if (canon != null) {
-                 // Check if it's identical to one of the matched plus lines? 
-                 // We know semanticallyIgnoredPlus contains the RAW strings.
                  if (matchPool.remove(p)) { 
                      semanticMatch = true;
-                 } else {
-                     // Maybe p is duplicate? matchPool has exact P instance? 
-                     // String equality works.
                  }
              }
 
@@ -237,27 +214,9 @@ public class AnalyzerService {
         }
         
         // Count Minus (We assume equal number of minus lines were matched)
-        // We need to reconstruct the "Matched Minus" from the Plus matches.
-        // If we matched N lines, we assume N minus lines are ignored.
-        // BUT which ones?
-        // Textual content might differ (attributes swapped).
-        // So we can't search by string.
-        // We matched by Canonical.
-        // Re-run canonical match logic?
-        
-        // Simplified Stats:
-        // Total Valid = (Total Plus Valid) + (Total Minus Valid).
-        // Total Ignored = (Total Plus Ignored) + (Total Minus Ignored).
-        
-        // Let's compute Minus Valid/Ignored separately.
-        // We know we matched X pairs.
-        int matchedPairs = semanticallyIgnoredPlus.size();
-        
-        // Minus lines analysis
-        // We iterate minus lines. We need to identify which ones matched.
         // Rebuild Matching Map
         Map<String, Integer> plusCanonCounts = new HashMap<>();
-        if (change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
+        if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
              for (String p : semanticallyIgnoredPlus) { // These are the Ps that found a match
                  String c = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p);
                  plusCanonCounts.put(c, plusCanonCounts.getOrDefault(c, 0) + 1);
@@ -266,7 +225,7 @@ public class AnalyzerService {
         
         for (String m : minusLines) {
              boolean semanticMatch = false;
-             if (change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
+             if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
                  String c = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(m);
                  if (plusCanonCounts.containsKey(c) && plusCanonCounts.get(c) > 0) {
                      semanticMatch = true;

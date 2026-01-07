@@ -159,6 +159,14 @@
 regex:.*TODO.*"></textarea>
                                 <div class="form-text x-small text-muted">Lines matching these will differ but be counted as 'IG' (ignored).</div>
                             </div>
+                            
+                            <div class="form-check mb-3">
+                                <input class="form-check-input" type="checkbox" id="ignoreAttributeOrder">
+                                <label class="form-check-label small fw-bold" for="ignoreAttributeOrder">
+                                    Smart XML Compare (Ignore Attribute Order)
+                                </label>
+                                <div class="form-text x-small text-muted">If checked, XML changes involving only attribute reordering will be ignored.</div>
+                            </div>
                         </div>
 
                         <div class="text-end">
@@ -607,15 +615,16 @@ regex:.*TODO.*"></textarea>
             try {
 
             const payload = {
-                apiName: apiName, // Auto-derived
+                apiName: document.getElementById('apiName').value || 'Manual Analysis',
                 codeRepo: codeRepo,
-                configRepo: configRepo, // From local logic above
-                sourceBranch: document.getElementById('sourceBranchSelect').value, // Used Select
-                targetBranch: document.getElementById('targetBranchSelect').value, // Used Select
-                configSourceBranch: configSource,
-                configTargetBranch: configTarget,
-                ignorePatterns: document.getElementById('ignorePatterns').value,
-                contentIgnorePatterns: document.getElementById('contentIgnorePatterns').value
+                configRepo: configRepo,
+                sourceBranch: document.getElementById('sourceBranchSelect').value,
+                targetBranch: document.getElementById('targetBranchSelect').value,
+                configSource: configSource,
+                configTarget: configTarget,
+                filePatterns: document.getElementById('ignorePatterns').value,
+                contentPatterns: document.getElementById('contentIgnorePatterns').value,
+                ignoreAttributeOrder: document.getElementById('ignoreAttributeOrder').checked
             };
 
             // Capture branch names for Diff Title

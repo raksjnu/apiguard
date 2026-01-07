@@ -71,9 +71,11 @@ public class AnalysisResource {
 
             String configSourceBranch = (String) request.get("configSourceBranch");
             String configTargetBranch = (String) request.get("configTargetBranch");
+            
+            boolean ignoreAttributeOrder = request.containsKey("ignoreAttributeOrder") && Boolean.TRUE.equals(request.get("ignoreAttributeOrder"));
 
             AnalyzerService service = new AnalyzerService(provider);
-            AnalysisResult result = service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, filePatterns, contentPatterns, configSourceBranch, configTargetBranch);
+            AnalysisResult result = service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, filePatterns, contentPatterns, configSourceBranch, configTargetBranch, ignoreAttributeOrder);
 
             return Response.ok(result).build();
         } catch (Exception e) {
