@@ -20,11 +20,19 @@ public class AnalysisResult {
 
     public void addFileChange(FileChange change) {
         this.modifiedFiles.add(change);
-        this.totalFilesChanged++;
-        if ("CODE".equalsIgnoreCase(change.getType())) {
-            this.codeChangesCount++;
-        } else {
-            this.configChangesCount++;
+        
+        // Only increment counters if there are significant changes
+        // A change is significant if it's New, Deleted, or has Valid Lines > 0
+        // (If it's just Modified with 0 valid lines, it means all changes were ignored/cosmetic)
+        boolean isSignificant = change.isNewFile() || change.isDeletedFile() || change.getValidChangedLines() > 0;
+        
+        if (isSignificant) {
+            this.totalFilesChanged++;
+            if ("CODE".equalsIgnoreCase(change.getType())) {
+                this.codeChangesCount++;
+            } else {
+                this.configChangesCount++;
+            }
         }
     }
     
@@ -59,6 +67,11 @@ public class AnalysisResult {
     public List<FileChange> getModifiedFiles() { return modifiedFiles; }
     public void setModifiedFiles(List<FileChange> modifiedFiles) { this.modifiedFiles = modifiedFiles; }
     
+    private List<String> ignoredFiles = new ArrayList<>();
+    public List<String> getIgnoredFiles() { return ignoredFiles; }
+    public void setIgnoredFiles(List<String> ignoredFiles) { this.ignoredFiles = ignoredFiles; }
+    public void addIgnoredFile(String path) { this.ignoredFiles.add(path); }
+
     public String getError() { return error; }
     public void setError(String error) { this.error = error; }
 }

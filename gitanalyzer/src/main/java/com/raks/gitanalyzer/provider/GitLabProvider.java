@@ -118,8 +118,8 @@ public class GitLabProvider implements GitProvider {
         String cleanBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         String apiUrl = cleanBase + "/api/v4/groups/" + encodedGroup + "/projects?include_subgroups=true&per_page=100";
         
-        System.out.println("[DEBUG] ListRepos - URL: " + apiUrl);
-        System.out.println("[DEBUG] ListRepos - Token Present: " + (token != null && !token.isEmpty()));
+        // System.out.println("[DEBUG] ListRepos - URL: " + apiUrl);
+        // System.out.println("[DEBUG] ListRepos - Token Present: " + (token != null && !token.isEmpty()));
 
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -130,7 +130,7 @@ public class GitLabProvider implements GitProvider {
         
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         
-        System.out.println("[DEBUG] ListRepos - Response Code: " + response.statusCode());
+        // System.out.println("[DEBUG] ListRepos - Response Code: " + response.statusCode());
         
         if (response.statusCode() == 200) {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
@@ -145,7 +145,7 @@ public class GitLabProvider implements GitProvider {
                     }
                 }
             }
-            System.out.println("[DEBUG] ListRepos - Found: " + content.size() + " repos");
+            // System.out.println("[DEBUG] ListRepos - Found: " + content.size() + " repos");
             return content;
         } else {
              throw new RuntimeException("Failed to fetch repositories. Status: " + response.statusCode());
@@ -183,7 +183,7 @@ public class GitLabProvider implements GitProvider {
 
         if (projectIdCache.containsKey(searchName)) return projectIdCache.get(searchName);
         
-        System.out.println("[DEBUG] Resolving Project ID for: " + searchName);
+        // System.out.println("[DEBUG] Resolving Project ID for: " + searchName);
         String cleanBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
         HttpClient client = HttpClient.newHttpClient();
         

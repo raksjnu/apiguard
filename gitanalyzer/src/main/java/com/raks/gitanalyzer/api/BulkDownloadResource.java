@@ -158,10 +158,15 @@ public class BulkDownloadResource {
                         targetDir = new File(new File(bulkDir, branchFolder), baseFolderName);
 
                         // Overwrite Logic
-                        boolean overwrite = Boolean.TRUE.equals(request.get("overwrite"));
+                        Object ovr = request.get("overwrite");
+                        boolean overwrite = Boolean.TRUE.equals(ovr) || "true".equalsIgnoreCase(String.valueOf(ovr));
+                        
                         if (targetDir.exists()) {
                             if (overwrite) {
                                 deleteRecursively(targetDir);
+                                if (targetDir.exists()) {
+                                    throw new java.io.IOException("Failed to delete existing directory: " + targetDir.getAbsolutePath());
+                                }
                             } else {
                                 // Check if empty, otherwise JGit throws standard exception which is caught below
                                 if (targetDir.list() != null && targetDir.list().length > 0) {
@@ -197,13 +202,16 @@ public class BulkDownloadResource {
         }
     }
 
-    private void deleteRecursively(File file) {
+    private void deleteRecursively(File file) throws java.io.IOException {
         if (file.isDirectory()) {
             for (File c : file.listFiles()) {
                 deleteRecursively(c);
             }
         }
-        file.delete();
+        if (!file.delete()) {
+             // throw new java.io.IOException("Failed to delete file: " + file.getAbsolutePath()); 
+             // Windows sometimes lags, so we don't throw immediately, but the caller checks existence.
+        }
     }
 
     private GitProvider getProvider(jakarta.ws.rs.core.HttpHeaders headers) {

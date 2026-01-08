@@ -10,4 +10,4 @@ temp_config_repos/
 dependency-reduced-pom.xml
 build_output.txt
 requirements.md.bak
-src/main/resources/gitanalyzer.properties
+

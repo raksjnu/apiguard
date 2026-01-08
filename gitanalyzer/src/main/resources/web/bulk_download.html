@@ -10,11 +10,11 @@
 </head>
 <body class="bg-light">
 
-    <div class="raks-frame">
+    <div class="raks-frame border-start border-5 border-purple">
         <!-- Header -->
         <nav class="navbar navbar-expand-lg navbar-light brand-header mb-0 flex-shrink-0">
             <div class="container-fluid position-relative">
-                <a class="navbar-brand d-flex align-items-center" href="/">
+                <a class="navbar-brand d-flex align-items-center" href="index.html">
                     <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
                     ApiGuard Portal - GitAnalyzer
                 </a>
@@ -28,7 +28,7 @@
                     <a href="guide.html" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
                         <span class="me-2">📘</span> Guide / Help
                     </a>
-                    <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
+                    <a href="index.html" class="btn btn-outline-light ghost-btn">Dashboard</a>
                 </div>
             </div>
         </nav>
@@ -196,11 +196,12 @@
     </script>
     
     <script>
-        fetch('/api/config/ui').then(r=>r.json()).then(c=>{
-            if(c['ui.footer.text']) document.getElementById('footerText').innerText=c['ui.footer.text'];
-                    const f = document.querySelector('.raks-footer .container');
-                     if(f) f.innerText = c['ui.footer.text'];
-                }
+        fetch(getBasePath() + '/api/config/ui').then(r=>r.json()).then(c=>{
+            if(c['ui.footer.text']) {
+                if(document.getElementById('footerText')) document.getElementById('footerText').innerText=c['ui.footer.text'];
+                const f = document.querySelector('.raks-footer .container');
+                if(f) f.innerText = c['ui.footer.text'];
+            }
                 if (c['ui.header.bulk']) {
                      const headerTitle = document.querySelector('.position-absolute h5');
                      if(headerTitle) headerTitle.innerText = c['ui.header.bulk'];
@@ -235,6 +236,17 @@
              });
         }
 
+        // Helper to get base path (works in both standalone and wrapper modes)
+        function getBasePath() {
+            const path = window.location.pathname;
+            // If path contains /apiguard/gitanalyzer, we're in wrapper mode
+            if (path.includes('/apiguard/gitanalyzer')) {
+                return '/apiguard/gitanalyzer';
+            }
+            // Otherwise, standalone mode - no prefix
+            return '';
+        }
+        
         // Helper to get Headers
         function getGitHeaders() {
             const headers = {
@@ -342,7 +354,7 @@
              btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Fetching...';
              
              try {
-                let url = '/api/download/list';
+                let url = getBasePath() + '/api/download/list';
                 const params = new URLSearchParams();
                 if (groupInput) params.append('group', groupInput);
                 if (filterInput) params.append('filter', filterInput);
@@ -405,7 +417,7 @@
              setLoading(true);
              
              try {
-                const response = await fetch('/api/download/branches?repo=' + encodeURIComponent(sampleRepo), {
+                const response = await fetch(getBasePath() + '/api/download/branches?repo=' + encodeURIComponent(sampleRepo), {
                     headers: getGitHeaders()
                 });
                 if (!response.ok) throw new Error('API Error: ' + response.status);
@@ -450,6 +462,30 @@
         }
              
 
+    </script>
+
+    <!-- Downloading Modal -->
+    <div class="modal fade" id="downloadingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content text-center p-4">
+                <div class="modal-body" id="downloadingBody">
+                    <div class="spinner-border text-purple mb-3" role="status" style="width: 3rem; height: 3rem;">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="fw-bold text-dark">Downloading Repositories...</h5>
+                    <p class="text-muted small mb-0">Please wait while we clone/pull the selected repositories.</p>
+                </div>
+                <div class="modal-body d-none" id="downloadSuccessBody">
+                    <div class="mb-3 text-success">
+                        <i class="bi bi-check-circle-fill display-4"></i>
+                    </div>
+                    <h5 class="fw-bold text-success">Download Complete!</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
 
         document.getElementById('downloadForm').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -463,10 +499,14 @@
             }
 
             const btn = document.getElementById('downloadBtn');
-            const originalText = btn.textContent;
+            // const originalText = btn.textContent; // No longer needed for button text
             
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Downloading...';
+            // Show Modal
+            const downloadingModal = new bootstrap.Modal(document.getElementById('downloadingModal'));
+            document.getElementById('downloadingBody').classList.remove('d-none');
+            document.getElementById('downloadSuccessBody').classList.add('d-none');
+            downloadingModal.show();
+            
             document.getElementById('resultsSection').classList.add('d-none');
 
             // Gather Branches
@@ -489,7 +529,7 @@
                     const finalPayload = { ...payload };
                     if (doOverwrite) finalPayload.overwrite = true;
                     
-                    const response = await fetch('/api/download', {
+                    const response = await fetch(getBasePath() + '/api/download', {
                         method: 'POST',
                         headers: getGitHeaders(),
                         body: JSON.stringify(finalPayload)
@@ -503,22 +543,37 @@
                 if (result.details) {
                     const conflicts = result.details.filter(d => d.status === 'FAILURE' && d.error && d.error.includes('already exists'));
                     if (conflicts.length > 0) {
+                         // Hide modal momentarily for confirm? Or just confirm over it?
+                         // Confirm is blocking, so it stays on top.
+                         // But if user cancels, we need to hide modal.
                          const confirmOverwrite = confirm(`Found ${conflicts.length} repositories that already exist in the target directory.\n\nDo you want to overwrite them?\n(This will delete existing folders)`);
                          if (confirmOverwrite) {
-                             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Overwriting...';
+                             // Update text?
+                             document.querySelector('#downloadingBody h5').textContent = 'Overwriting...';
                              result = await triggerDownload(true);
+                         } else {
+                             downloadingModal.hide();
+                             return; // Abort
                          }
                     }
                 }
                 
-                renderResults(result);
+                // Success State in Modal
+                document.getElementById('downloadingBody').classList.add('d-none');
+                document.getElementById('downloadSuccessBody').classList.remove('d-none');
+                
+                // Revert title text for next time
+                setTimeout(() => { document.querySelector('#downloadingBody h5').textContent = 'Downloading Repositories...'; }, 2000);
+
+                setTimeout(() => {
+                    downloadingModal.hide();
+                    renderResults(result);
+                }, 1500);
 
             } catch (err) {
+                downloadingModal.hide();
                 alert('Error: ' + err.message);
                 console.error(err);
-            } finally {
-                btn.disabled = false;
-                btn.textContent = originalText;
             }
         });
 
@@ -550,7 +605,7 @@
         }
 
         // Fetch UI Config
-        fetch('/api/config/ui')
+        fetch(getBasePath() + '/api/config/ui')
             .then(response => response.json())
             .then(config => {
                 if (config['ui.header.bulk']) {

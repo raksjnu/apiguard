@@ -99,7 +99,10 @@
         </dependency>
     </dependencies>
 
+
+
     <build>
+        <finalName>${project.artifactId}-${project.version}</finalName>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -133,4 +136,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

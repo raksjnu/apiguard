@@ -14,9 +14,6 @@ public class AnalyzerService {
     private final GitProvider gitProvider;
     private final ObjectMapper objectMapper;
 
-    // Severity Thresholds
-    private static final int SEVERITY_LOW = 10;
-    private static final int SEVERITY_MEDIUM = 50;
 
     public AnalyzerService(GitProvider gitProvider) {
         this.gitProvider = gitProvider;
@@ -72,8 +69,10 @@ public class AnalyzerService {
             String oldPath = (String) diff.get("old_path");
             
             // Check File Patterns (Exclusion)
+            // Check File Patterns (Exclusion)
             if (shouldIgnore(newPath, filePatterns) || (oldPath != null && shouldIgnore(oldPath, filePatterns))) {
-                continue; // Skip this file entirely
+                result.addIgnoredFile(newPath); // EXPLICITLY TRACK IGNORED FILES
+                continue; // Skip this file entirely from Analysis but allow UI to show it
             }
 
             FileChange change = new FileChange();
@@ -123,7 +122,10 @@ public class AnalyzerService {
         // For simplicity, let's just loop and add basic changes, marking as CONFIG.
          for (Map<String, Object> diff : diffs) {
             String newPath = (String) diff.get("new_path");
-            if (shouldIgnore(newPath, filePatterns)) continue;
+            if (shouldIgnore(newPath, filePatterns)) {
+                result.addIgnoredFile(newPath); 
+                continue;
+            }
             
             FileChange change = new FileChange();
             change.setPath(newPath);
@@ -162,6 +164,8 @@ public class AnalyzerService {
         
         int valid = 0;
         int ignored = 0;
+        int additions = 0;
+        int deletions = 0;
         
         // 2. Semantic Ignore Logic (XML)
         List<String> semanticallyIgnoredPlus = new ArrayList<>();
@@ -187,14 +191,16 @@ public class AnalyzerService {
             }
         }
         
-        // 3. Final count pass
+        // 3. Final Reconstruct & Count logic
         
         // Strategy: 
-        // Iterate Plus Lines: If in semanticallyIgnoredPlus -> Ignored++. Else -> check regex.
-        // Iterate Minus Lines: If it was matched -> Ignored++. Else -> check regex (usually deletions count as valid changes? or just ignored?)
+        // Iterate Plus Lines: If in semanticallyIgnoredPlus -> Ignored (add to ignored buffer). Else -> Valid (add to valid buffer).
+        // Iterate Minus Lines: If matched -> Ignored buffer. Else -> Valid buffer.
         
-        // We need to match specific Minus string instances.
-        // Let's use a Bag for matched items to consume.
+        List<String> validDiffLines = new ArrayList<>();
+        List<String> ignoredDiffLines = new ArrayList<>();
+        
+        // Use a Bag for matched items to consume.
         List<String> matchPool = new ArrayList<>(semanticallyIgnoredPlus);
         
         // Count Plus
@@ -203,7 +209,6 @@ public class AnalyzerService {
                            ? com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p) : null;
             
             boolean semanticMatch = false;
-            // Check if this P's canonical form was matched
              if (canon != null) {
                  if (matchPool.remove(p)) { 
                      semanticMatch = true;
@@ -212,17 +217,25 @@ public class AnalyzerService {
 
             if (semanticMatch) {
                 ignored++;
+                ignoredDiffLines.add("+" + p);
+                change.addMatchType("Smart XML"); // Track filter type
             } else {
-                if (isIgnored(p, patterns)) ignored++;
-                else valid++;
+                if (isIgnored(p, patterns)) {
+                    ignored++;
+                    ignoredDiffLines.add("+" + p);
+                    change.addMatchType("Content Filter"); // Track filter type
+                } else {
+                    valid++;
+                    additions++;
+                    validDiffLines.add("+" + p);
+                }
             }
         }
         
-        // Count Minus (We assume equal number of minus lines were matched)
-        // Rebuild Matching Map
+        // Count Minus
         Map<String, Integer> plusCanonCounts = new HashMap<>();
         if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
-             for (String p : semanticallyIgnoredPlus) { // These are the Ps that found a match
+             for (String p : semanticallyIgnoredPlus) { 
                  String c = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p);
                  plusCanonCounts.put(c, plusCanonCounts.getOrDefault(c, 0) + 1);
              }
@@ -240,14 +253,52 @@ public class AnalyzerService {
              
              if (semanticMatch) {
                  ignored++;
+                 ignoredDiffLines.add("-" + m);
+                 change.addMatchType("Smart XML"); // Track filter type
              } else {
-                 if (isIgnored(m, patterns)) ignored++;
-                 else valid++; // Deletion is a change
+                 if (isIgnored(m, patterns)) {
+                     ignored++;
+                     ignoredDiffLines.add("-" + m);
+                     change.addMatchType("Content Filter"); // Track filter type
+                 } else {
+                     valid++;
+                     deletions++;
+                     validDiffLines.add("-" + m);
+                 }
              }
         }
         
+        // Reconstruct Diff Content if Smart XML was active AND we have ignored lines
+        // Only trigger this reconstruction if we actually did semantic separation to improve readability
+        if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
+            StringBuilder newDiff = new StringBuilder();
+            
+            // Keep original Header (diff --git ...)
+            String[] originalLines = diffContent.split("\n");
+            for(String line : originalLines) {
+                if (line.startsWith("diff --git") || line.startsWith("index ") || line.startsWith("new file") || line.startsWith("deleted file") || line.startsWith("---") || line.startsWith("+++")) {
+                    newDiff.append(line).append("\n");
+                } else {
+                    break; // Stop at first hunk
+                }
+            }
+            
+            // Append Valid Lines
+            for(String line : validDiffLines) newDiff.append(line).append("\n");
+            
+            // Append Separator if needed
+            if (!ignoredDiffLines.isEmpty()) {
+                newDiff.append("--- Ignored Semantic Matches ---\n");
+                for(String line : ignoredDiffLines) newDiff.append(line).append("\n");
+            }
+            
+            change.setDiffContent(newDiff.toString());
+        }
+
         change.setValidChangedLines(valid);
         change.setIgnoredLines(ignored);
+        change.setAdditions(additions);
+        change.setDeletions(deletions);
         change.setSeverity(calculateSeverity(valid));
     }
 
@@ -273,8 +324,15 @@ public class AnalyzerService {
 
     private String calculateSeverity(int lines) {
         if (lines == 0) return "NONE"; // All ignored
-        if (lines < SEVERITY_LOW) return "LOW";
-        if (lines < SEVERITY_MEDIUM) return "MEDIUM";
-        return "CRITICAL";
+        
+        int lowThreshold = Integer.parseInt(ConfigManager.get("severity.threshold.low", "10"));
+        int mediumThreshold = Integer.parseInt(ConfigManager.get("severity.threshold.medium", "50"));
+        
+        if (lines < lowThreshold) return "LOW";
+        if (lines < mediumThreshold) return "MEDIUM";
+        return "HIGH"; // Changed from CRITICAL to HIGH to match consistent terminology if needed, or keep CRITICAL? Legend says High/Medium/Low? Legend image shows High/Medium/Low. The code previously returned "CRITICAL". Check legend image. 
+        // Legend image shows: High (Red), Medium (Yellow), Low (Green).
+        // Previous code returned CRITICAL.
+        // Let's stick to HIGH to match the UI legend "High".
     }
 }

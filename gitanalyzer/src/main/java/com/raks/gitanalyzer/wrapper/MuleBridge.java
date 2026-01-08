@@ -1,0 +1,334 @@
+package com.raks.gitanalyzer.wrapper;
+
+import com.raks.gitanalyzer.core.AnalyzerService;
+import com.raks.gitanalyzer.core.ConfigManager;
+import com.raks.gitanalyzer.model.AnalysisResult;
+import com.raks.gitanalyzer.provider.GitProvider;
+import com.raks.gitanalyzer.provider.GitHubProvider;
+import com.raks.gitanalyzer.provider.GitLabProvider;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import java.util.*;
+import java.io.File;
+
+/**
+ * MuleBridge - Static entry point for MuleSoft wrapper to invoke GitAnalyzer features.
+ * Ensures cross-platform compatibility and externalized configuration support.
+ */
+public class MuleBridge {
+
+    // Cache service instance if needed, or create per request
+    // Since AnalyzerService is lightweight, creating per request is fine.
+    
+    /**
+     * Invokes the main analysis flow.
+     * @param params Map containing request parameters (from Mule payload)
+     * @return AnalysisResult object (Mule will serialize this to JSON)
+     */
+    public static AnalysisResult invokeAnalysis(Map<String, Object> params) {
+        try {
+            // Extract parameters
+            String codeRepo = (String) params.get("codeRepo");
+            String configRepo = (String) params.get("configRepo");
+            String sourceBranch = (String) params.get("sourceBranch");
+            String targetBranch = (String) params.get("targetBranch");
+            String ignorePatternsStr = (String) params.get("ignorePatterns");
+            String contentPatternsStr = (String) params.get("contentPatterns");
+            String apiName = (String) params.getOrDefault("apiName", "Unknown API");
+            String configSourceBranch = (String) params.get("configSourceBranch");
+            String configTargetBranch = (String) params.get("configTargetBranch");
+            boolean ignoreAttributeOrder = Boolean.TRUE.equals(params.get("ignoreAttributeOrder"));
+
+            // Parse patterns
+            List<String> filePatterns = parsePatterns(ignorePatternsStr);
+            List<String> contentPatterns = parsePatterns(contentPatternsStr);
+
+            // Determine Provider
+            String providerType = ConfigManager.get("git.provider", "gitlab");
+            GitProvider provider;
+            
+            // Allow override via params for flexibility
+            if (params.containsKey("gitProvider")) {
+                providerType = (String) params.get("gitProvider");
+            }
+
+            if ("github".equalsIgnoreCase(providerType)) {
+                provider = new GitHubProvider();
+            } else {
+                provider = new GitLabProvider();
+            }
+
+            // Normalization Logic (reused from AnalysisResource)
+            String defaultGroup = "";
+            if ("github".equalsIgnoreCase(providerType)) {
+                defaultGroup = ConfigManager.get("github.owner");
+            } else {
+                String fullGroup = ConfigManager.get("gitlab.group");
+                if (fullGroup != null && fullGroup.contains("/")) 
+                     defaultGroup = fullGroup.substring(fullGroup.lastIndexOf("/") + 1);
+                else 
+                     defaultGroup = fullGroup;
+            }
+            
+            // Sanitize standard repo paths if they are just names
+            if (codeRepo != null && !codeRepo.contains("/") && defaultGroup != null && !defaultGroup.isBlank()) {
+                codeRepo = defaultGroup + "/" + codeRepo;
+            }
+            if (configRepo != null && !configRepo.isBlank() && !configRepo.contains("/") && defaultGroup != null && !defaultGroup.isBlank()) {
+                configRepo = defaultGroup + "/" + configRepo;
+            }
+
+            AnalyzerService service = new AnalyzerService(provider);
+            return service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, filePatterns, contentPatterns, configSourceBranch, configTargetBranch, ignoreAttributeOrder);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            AnalysisResult errorResult = new AnalysisResult();
+            errorResult.setError("Bridge Analysis Failed: " + e.getMessage());
+            return errorResult;
+        }
+    }
+
+    /**
+     * Returns UI configuration properties for the frontend.
+     */
+    public static Map<String, String> getUIConfig() {
+        return ConfigManager.getPropertiesByPrefix("ui.");
+    }
+    
+    /**
+     * Helper to get provider based on config.
+     */
+    private static GitProvider getProvider() {
+        String providerType = ConfigManager.get("git.provider", "gitlab");
+        if ("github".equalsIgnoreCase(providerType)) {
+            return new GitHubProvider();
+        } else {
+            return new GitLabProvider();
+        }
+    }
+
+    /**
+     * Bridges /api/download/list (Repo Discovery)
+     */
+    public static Map<String, Object> invokeRepoDiscovery(String groupName, String filterPattern) {
+        try {
+            GitProvider provider = getProvider();
+            
+            // Default group logic
+            if (groupName == null || groupName.isBlank()) {
+                if (provider instanceof GitHubProvider) {
+                     groupName = ConfigManager.get("github.owner");
+                } else {
+                    String fullGroupUrl = ConfigManager.get("gitlab.group");
+                    if (fullGroupUrl != null && fullGroupUrl.contains("/")) {
+                        groupName = fullGroupUrl.substring(fullGroupUrl.lastIndexOf("/") + 1);
+                    } else {
+                        groupName = fullGroupUrl;
+                    }
+                }
+            } else {
+                groupName = groupName.trim();
+                while(groupName.endsWith("/")) groupName = groupName.substring(0, groupName.length() - 1);
+                if (groupName.contains("/")) {
+                    groupName = groupName.substring(groupName.lastIndexOf("/") + 1);
+                }
+            }
+            
+            List<String> repos = provider.listRepositories(groupName);
+            
+            // Regex Filter
+            if (filterPattern != null && !filterPattern.isBlank()) {
+                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(filterPattern, java.util.regex.Pattern.CASE_INSENSITIVE);
+                repos = repos.stream()
+                    .filter(r -> pattern.matcher(r).find())
+                    .collect(java.util.stream.Collectors.toList());
+            }
+            
+            return Map.of("group", groupName != null ? groupName : "", "repositories", repos);
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("error", "Discovery Failed: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Bridges /api/download/branches
+     */
+    public static Object invokeBranchDiscovery(String repoName) {
+         try {
+            if (repoName == null || repoName.isBlank()) {
+                 return Map.of("error", "Repo name is required");
+            }
+            GitProvider provider = getProvider();
+            return provider.listBranches(repoName);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("error", e.getMessage());
+        }
+    }
+
+    /**
+     * Bridges /api/search
+     */
+    public static List<Map<String, Object>> invokeSearch(Map<String, String> params) {
+        try {
+            String mode = params.get("mode");
+            String token = params.get("token");
+            String path = params.get("path");
+            
+            GitProvider provider = getProvider();
+            com.raks.gitanalyzer.core.SearchService service = new com.raks.gitanalyzer.core.SearchService(provider);
+            List<com.raks.gitanalyzer.core.SearchService.SearchResult> serviceResults;
+
+            if ("remote".equalsIgnoreCase(mode)) {
+                List<String> repos = List.of(path.split("\\s*,\\s*"));
+                serviceResults = service.searchRemote(token, repos); 
+            } else {
+                serviceResults = service.searchLocal(token, new File(path));
+            }
+
+            List<Map<String, Object>> results = new ArrayList<>();
+            for (com.raks.gitanalyzer.core.SearchService.SearchResult r : serviceResults) {
+                Map<String, Object> row = new HashMap<>();
+                row.put("filePath", r.filePath);
+                row.put("lineNumber", r.lineNumber);
+                row.put("content", r.content);
+                results.add(row);
+            }
+            return results;
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            // Return empty list or handle error gracefully in Mule
+            return Collections.emptyList();
+        }
+    }
+
+    /**
+     * Bridges /api/download (Bulk Download)
+     */
+    public static Map<String, Object> invokeBulkDownload(Map<String, Object> request) {
+        try {
+            // "repos" parsing
+            Object reposObj = request.get("repos");
+            List<String> repos = new ArrayList<>();
+            if (reposObj instanceof List) {
+                repos = (List<String>) reposObj;
+            } else if (reposObj instanceof String) {
+                repos = Arrays.asList(((String) reposObj).split("\\n"));
+            }
+            repos.replaceAll(String::trim);
+            repos.removeIf(String::isBlank);
+
+            // "branches" parsing
+            Object branchesObj = request.get("branches"); 
+            List<String> branches = new ArrayList<>();
+             if (branchesObj instanceof List) {
+                branches = (List<String>) branchesObj;
+            } else if (branchesObj instanceof String) {
+                 String branchesInput = (String) branchesObj;
+                 if (branchesInput != null && !branchesInput.isBlank()) {
+                    branches = Arrays.asList(branchesInput.split(","));
+                 }
+            }
+            branches.replaceAll(String::trim);
+            branches.removeIf(String::isBlank);
+            
+            if (branches.isEmpty()) {
+                branches.add(null); // Default branch
+            }
+
+            if (repos.isEmpty()) {
+                 return Map.of("error", "No repositories specified");
+            }
+
+            // Target Directory Logic used in standalone is simpler, ensuring it works inside Mule
+            // We use the temp dir from ConfigManager which respects app.home
+            String customPath = (String) request.get("outputDir");
+            File bulkDir;
+            if (customPath != null && !customPath.isBlank()) {
+               bulkDir = new File(customPath);
+            } else {
+               bulkDir = new File(ConfigManager.getTempDir(), "bulk_" + ConfigManager.getCurrentTimestamp().replace(" ", "_").replace(":", "-"));
+            }
+            if (!bulkDir.exists()) bulkDir.mkdirs();
+
+            GitProvider provider = getProvider();
+            List<Map<String, String>> results = new ArrayList<>();
+            // AtomicInteger successCount = new AtomicInteger(0);
+            int successCount = 0;
+            boolean multiBranch = branches.size() > 1;
+
+            for (String repoName : repos) {
+                String baseFolderName = repoName.replace("/", "_");
+                
+                for (String branch : branches) {
+                    Map<String, String> result = new HashMap<>();
+                    result.put("repo", repoName);
+                    String displayBranch = (branch == null) ? "Default" : branch;
+                    
+                    try {
+                        // Folder name strategy
+                        String folderName = baseFolderName;
+                        if (multiBranch) {
+                            folderName += "_" + displayBranch.replace("/", "-");
+                        }
+                        
+                        File repoDir = new File(bulkDir, folderName);
+                        
+                        // Sanitize repo name for provider methods if needed (e.g. adding group)
+                        // Similar to invokeAnalysis logic
+                         String fullRepoName = repoName;
+                         if (!repoName.contains("/")) {
+                             if (provider instanceof GitHubProvider) {
+                                String owner = ConfigManager.get("github.owner");
+                                if (owner != null && !owner.isBlank()) fullRepoName = owner + "/" + repoName;
+                             } else {
+                                String group = ConfigManager.get("gitlab.group");
+                                if (group != null) {
+                                     // Extract last part if it is a url
+                                     if (group.contains("/")) group = group.substring(group.lastIndexOf("/") + 1);
+                                     fullRepoName = group + "/" + repoName;
+                                }
+                             }
+                         }
+
+                        provider.cloneRepository(fullRepoName, repoDir, branch);
+                        
+                        result.put("status", "Success");
+                        result.put("branch", displayBranch);
+                        result.put("path", repoDir.getAbsolutePath());
+                        successCount++;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        result.put("status", "Failed: " + e.getMessage());
+                        result.put("branch", displayBranch);
+                    }
+                    results.add(result);
+                }
+            }
+
+            return Map.of(
+                "outputDir", bulkDir.getAbsolutePath(),
+                "total", repos.size() * branches.size(),
+                "success", successCount,
+                "details", results
+            );
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("error", "Bulk Download Failed: " + e.getMessage());
+        }
+    }
+
+    private static List<String> parsePatterns(String patternStr) {
+        if (patternStr == null || patternStr.isBlank()) {
+            return Collections.emptyList();
+        }
+        List<String> list = new ArrayList<>(Arrays.asList(patternStr.split("\\n")));
+        list.replaceAll(String::trim);
+        return list;
+    }
+}

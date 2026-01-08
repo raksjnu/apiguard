@@ -11,6 +11,8 @@ public class FileChange {
     private String diffContent; // For viewing diffs later
 
     private String status;
+    private int additions;
+    private int deletions;
 
     public FileChange() {
         // Default constructor
@@ -24,7 +26,6 @@ public class FileChange {
         this.severity = severity;
     }
     
-    // Add getStatus/setStatus if missing from previous check (it was missing in Step 1814)
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
@@ -43,12 +44,24 @@ public class FileChange {
 
     public String getSeverity() { return severity; }
     public void setSeverity(String severity) { this.severity = severity; }
+    
+    public int getAdditions() { return additions; }
+    public void setAdditions(int additions) { this.additions = additions; }
+    
+    public int getDeletions() { return deletions; }
+    public void setDeletions(int deletions) { this.deletions = deletions; }
 
     public boolean isNewFile() { return isNewFile; }
     public void setNewFile(boolean newFile) { isNewFile = newFile; }
 
     public boolean isDeletedFile() { return isDeletedFile; }
     public void setDeletedFile(boolean deletedFile) { isDeletedFile = deletedFile; }
+
+    private java.util.Set<String> matchTypes = new java.util.HashSet<>();
+
+    public java.util.Set<String> getMatchTypes() { return matchTypes; }
+    public void setMatchTypes(java.util.Set<String> matchTypes) { this.matchTypes = matchTypes; }
+    public void addMatchType(String type) { this.matchTypes.add(type); }
 
     public String getDiffContent() { return diffContent; }
     public void setDiffContent(String diffContent) { this.diffContent = diffContent; }
