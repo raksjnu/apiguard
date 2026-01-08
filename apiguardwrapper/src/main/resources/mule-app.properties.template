@@ -1,0 +1,39 @@
+# Mule Application Configuration
+# This is a template. Rename to mule-app.properties and fill in your secrets.
+
+# HTTP Listener Config
+http.port=8081
+http.host=0.0.0.0
+
+# Environment
+mule.env=dev
+
+# GitAnalyzer Wrapper Configuration
+# ---------------------------------------------------
+
+# Git Provider Defaults (Override these to change behavior)
+gitanalyzer.gitlab.provider=gitlab
+gitanalyzer.gitlab.token=${GITLAB_TOKEN}
+gitanalyzer.gitlab.url=https://gitlab.com
+gitanalyzer.gitlab.group=https://gitlab.com/raks-group
+
+gitanalyzer.github.url=https://api.github.com
+gitanalyzer.github.owner=raksjnu
+gitanalyzer.github.token=${GITHUB_TOKEN}
+
+# Severity Thresholds
+gitanalyzer.severity.threshold.low=10
+gitanalyzer.severity.threshold.medium=20
+gitanalyzer.severity.threshold.high=50
+gitanalyzer.severity.threshold.critical=80
+
+# UI Configuration
+# Dynamic titles and texts for the Web UI
+gitanalyzer.ui.footer.text=2018 RAKS - Enterprise API Solution Suite - ApiGuard
+gitanalyzer.ui.header.title=ApiGuard Portal
+gitanalyzer.ui.header.guide=User Guide
+
+# Workspace Configuration
+# By default, uses {app.home}/temp.
+# Overriding this keeps the workspace outside the runtime folder (good for persistence).
+raksanalyzer.work.dir=${mule.home}/apps/apiguardwrapper/working/raks

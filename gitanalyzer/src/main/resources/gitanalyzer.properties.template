@@ -1,20 +1,22 @@
-# GitAnalyzer Configuration
-
-# Git Provider (gitlab or github)
-git.provider=github
+# GitAnalyzer Configuration File
+# This is a template. Rename to gitanalyzer.properties and fill in your secrets.
 
 # GitLab Credentials
 gitlab.url=https://gitlab.com
-gitlab.group=https://gitlab.com/your-group
-gitlab.token=YOUR_GITLAB_TOKEN
+gitlab.group=https://gitlab.com/raks-group
+gitlab.token=${GITLAB_TOKEN}
 
 # GitHub Credentials
 github.url=https://api.github.com
-github.owner=your-github-username
-github.token=YOUR_GITHUB_TOKEN
+github.owner=raksjnu
+github.token=${GITHUB_TOKEN}
 
 # Application Settings
 # Defaults to {app.home}/temp if not specified or empty
-# app.output.dir=reports 
-app.report.email.enabled=false
+app.workspace=
+
+# HTTP Server
 http.port=6060
+
+# UI Text
+ui.footer.text=2018 RAKS - Enterprise API Solution Suite - ApiGuard

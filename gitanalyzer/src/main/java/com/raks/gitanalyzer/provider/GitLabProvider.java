@@ -99,7 +99,14 @@ public class GitLabProvider implements GitProvider {
             command.setBranchesToClone(java.util.Collections.singletonList("refs/heads/" + branch));
         }
         
-        command.call();
+        
+        try (Git git = command.call()) {
+            // Explicitly close repository to release all file handles
+            // This is critical on Windows to allow directory deletion
+            if (git != null && git.getRepository() != null) {
+                git.getRepository().close();
+            }
+        }
     }
 
     @Override

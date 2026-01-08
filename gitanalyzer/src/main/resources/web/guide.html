@@ -47,106 +47,164 @@
                 <div class="col-md-9">
                     
                     <!-- About -->
-                    <section id="about" class="raks-card">
-                        <h2 class="text-purple border-bottom pb-2 mb-3">About GitAnalyzer</h2>
-                        <p class="lead text-muted">Enterprise-Grade Semantic Code Analysis</p>
-                        <p>GitAnalyzer is an advanced comparison engine designed to understand the <strong>intent</strong> of code changes, not just textual differences. Unlike traditional diff tools that flag extensive false positives due to formatting, attribute reordering, or noise, GitAnalyzer focuses on what matters: specific logic, configuration, and structural integrity.</p>
+                    <section id="about" class="raks-card mb-5">
+                        <div class="d-flex align-items-center border-bottom pb-3 mb-4">
+                            <i class="bi bi-gem text-purple fs-3 me-3"></i>
+                            <h2 class="text-purple mb-0">Enterprise Semantic Analysis</h2>
+                        </div>
+                        <p class="lead text-dark">Don't just verify <em>code</em>. Verify <strong>Intent</strong>.</p>
+                        <p class="text-muted">GitAnalyzer is a specialized auditing engine designed key migration and compliance challenges. It distinguishes between noise (formatting, reordering) and actual risk (logic changes, configuration drift), providing a crystal-clear view of your release readiness.</p>
                         
-                        <h5 class="text-purple mt-4 mb-3">Key Capabilities</h5>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="sub-frame h-100">
-                                    <h6 class="fw-bold"><i class="bi bi-arrows-angle-contract me-2"></i>Semantic XML/JSON Compare</h6>
-                                    <p class="small mb-0">Intelligently compares structured data. 
-                                    <br><code>&lt;tag a="1" b="2"/&gt;</code> is treated as identical to <code>&lt;tag b="2" a="1"/&gt;</code>. This eliminates noise in migration audits where tools may reorder attributes.</p>
+                        <div class="row g-4 mt-2">
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold text-dark"><i class="bi bi-diagram-3-fill text-purple me-2"></i>Multi-Repo Context</h6>
+                                    <p class="small mb-0">Automatically pairs Code repositories with their configuration counterparts (e.g., `api-v1` + `api-v1_config`) to ensure holistic consistency.</p>
                                 </div>
                             </div>
-                             <div class="col-md-6">
-                                <div class="sub-frame h-100">
-                                    <h6 class="fw-bold"><i class="bi bi-funnel me-2"></i>Noise Reduction</h6>
-                                    <p class="small mb-0">Define powerful Regex patterns to ignore irrelevant changes like timestamps, generated IDs, or comments, allowing you to focus on actual regressions.</p>
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold text-dark"><i class="bi bi-magic text-purple me-2"></i>Smart Semantics</h6>
+                                    <p class="small mb-0">Compares XML logically. <code>&lt;tag a="1" b="2"/&gt;</code> equals <code>&lt;tag b="2" a="1"/&gt;</code>. Zero false positives from attribute reordering.</p>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="sub-frame h-100">
-                                    <h6 class="fw-bold"><i class="bi bi-diagram-2 me-2"></i>Multi-Repo Awareness</h6>
-                                    <p class="small mb-0">Simultaneously analyzes paired repositories (e.g. Code vs Configuration) to ensure total environment consistency across releases.</p>
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold text-dark"><i class="bi bi-shield-check text-purple me-2"></i>Audit Ready</h6>
+                                    <p class="small mb-0">Generates immutable, severity-classified reports. Perfect for Change Advisory Board (CAB) reviews.</p>
                                 </div>
                             </div>
-                            <div class="col-md-6">
-                                <div class="sub-frame h-100">
-                                    <h6 class="fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Audit-Ready Reporting</h6>
-                                    <p class="small mb-0">Generates comprehensive, immutable reports with categorized severity (Critical, Modified, Config), suitable for compliance and release sign-offs.</p>
+                        </div>
+                    </section>
+
+                    <!-- Workflow -->
+                    <section id="analysis" class="raks-card mb-5">
+                        <div class="d-flex align-items-center border-bottom pb-3 mb-4">
+                            <i class="bi bi-cpu text-purple fs-3 me-3"></i>
+                            <h3 class="text-purple mb-0">Comparison Workflow</h3>
+                        </div>
+                        
+                        <div class="timeline ps-3 border-start border-purple border-3">
+                            <div class="mb-4 ps-3">
+                                <h5 class="fw-bold"><span class="badge bg-purple rounded-circle me-2">1</span>Repository Discovery</h5>
+                                <p>GitAnalyzer intelligently scans your environment to build a workspace.</p>
+                                <ul class="list-unstyled small">
+                                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong>Auto-Fetch:</strong> Retrieves all repositories from your configured group or local directory.</li>
+                                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i><strong>Smart Pairing:</strong> When you select a main repo (e.g., `order-api`), the tool automatically hunts for a config repo (e.g., `order-api_config`) and pre-selects it.</li>
+                                    <li><i class="bi bi-check-circle text-success me-2"></i><strong>Branch Sync:</strong> Fetches all active branches for both repositories simultaneously.</li>
+                                </ul>
+                            </div>
+                            
+                            <div class="mb-4 ps-3">
+                                <h5 class="fw-bold"><span class="badge bg-purple rounded-circle me-2">2</span>Noise Reduction Strategy</h5>
+                                <p>Configure <em>how</em> the comparison engine perceives differences. This is the core power of GitAnalyzer.</p>
+                                
+                                <div class="card border-0 bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-purple"><i class="bi bi-file-earmark-x me-2"></i>Mode A: File Exclusions</h6>
+                                        <p class="small mb-2">Completely ignore files that don't matter for the audit.</p>
+                                        <div class="bg-white p-2 border rounded font-monospace small">
+                                            *.md, *.txt, .gitignore, src/test/**
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card border-0 bg-light mb-3">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-purple"><i class="bi bi-regex me-2"></i>Mode B: Content Filters</h6>
+                                        <p class="small">Ignore specific lines within valid files. Useful for timestamps, dynamic IDs, or logs.</p>
+                                        <table class="table table-sm table-borderless small mb-0">
+                                            <tr>
+                                                <td width="120"><strong>Plain Text</strong></td>
+                                                <td><code>DEBUG_LOG</code></td>
+                                                <td class="text-muted">Ignores any line containing "DEBUG_LOG".</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Strict Regex</strong></td>
+                                                <td><code>regex:^//.*</code></td>
+                                                <td class="text-muted">Matches lines starting with `//` (Comments).</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Wildcard Regex</strong></td>
+                                                <td><code>regex:.*guid.*</code></td>
+                                                <td class="text-muted">Matches any line containing "guid". Note the `.*` to match the full line.</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+
+                                <div class="card border-0 bg-light">
+                                    <div class="card-body">
+                                        <h6 class="fw-bold text-purple"><i class="bi bi-code-square me-2"></i>Mode C: Smart XML Compare</h6>
+                                        <p class="small mb-0">Unlike text diffs, this mode parses XML structure. It recognizes that <code>attributeOrder="irrelevant"</code>. Enable this to eliminate thousands of false flags in Mule/Spring XMLs.</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </section>
     
                     <!-- Legend -->
-                    <section id="legend" class="raks-card">
-                        <h3 class="text-purple border-bottom pb-2 mb-3">Status Legend & Colors</h3>
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th style="width: 200px;">Badge / Indicator</th>
-                                    <th>Description</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr>
-                                    <td><span class="badge bg-code"><i class="bi bi-code-slash"></i> CODE</span></td>
-                                    <td>File belongs to the main source code (Logic/Flows). Color: <span class="badge bg-code">Dark Cyan</span></td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-config"><i class="bi bi-gear"></i> CONFIG</span></td>
-                                    <td>File belongs to configuration (properties, yaml, pom). Color: <span class="badge bg-config">Light Blue</span></td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-warning text-dark">MODIFIED</span></td>
-                                    <td>File exists in both but content changed. Color: <span class="badge bg-warning text-dark">Yellow</span></td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-success">NEW</span></td>
-                                    <td>File exists only in the Featured/Target branch.</td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-deleted">DELETED</span></td>
-                                    <td>File removed (exists only in Base). Color: <span class="badge bg-deleted">Red</span></td>
-                                </tr>
-                                <tr>
-                                    <td><span class="badge bg-critical">CRITICAL</span></td>
-                                    <td>High severity change requiring review. Color: <span class="badge bg-critical">Orange-Red</span></td>
-                                </tr>
-                            </tbody>
-                        </table>
+                    <section id="legend" class="raks-card mb-5">
+                        <div class="d-flex align-items-center border-bottom pb-3 mb-4">
+                            <i class="bi bi-palette text-purple fs-3 me-3"></i>
+                            <h3 class="text-purple mb-0">Visual Intelligence</h3>
+                        </div>
+                        <p>The Results Panel is packed with interactive data.</p>
+                        
+                        <div class="row g-4">
+                            <div class="col-md-6">
+                                <div class="card h-100 shadow-sm border-0">
+                                    <div class="card-header bg-white fw-bold">Identification Badges</div>
+                                    <div class="card-body">
+                                        <ul class="list-group list-group-flush small">
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Logic / Source Code
+                                                <span class="badge bg-code">CODE</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                Configuration Files
+                                                <span class="badge bg-config">CONFIG</span>
+                                            </li>
+                                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                                High Risk Change
+                                                <span class="badge bg-critical">CRITICAL</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card h-100 shadow-sm border-0">
+                                    <div class="card-header bg-white fw-bold">Interactive Features</div>
+                                    <div class="card-body small">
+                                        <dl class="row mb-0">
+                                            <dt class="col-sm-4"><i class="bi bi-eye text-primary"></i> Live Preview</dt>
+                                            <dd class="col-sm-8">Hover over the <strong>View</strong> button to see a quick diff snippet without leaving the page.</dd>
+                                            
+                                            <dt class="col-sm-4"><i class="bi bi-funnel text-warning"></i> Filter Badges</dt>
+                                            <dd class="col-sm-8">The "Filters" column shows exactly <em>why</em> content was ignored (e.g., <span class="badge" style="background-color: #6f42c1; font-size: 0.7em;">Smart XML</span>), giving you confidence in the filtering.</dd>
+                                            
+                                            <dt class="col-sm-4"><i class="bi bi-search text-secondary"></i> Unified Diff</dt>
+                                            <dd class="col-sm-8">Click <strong>View</strong> to open the full side-by-side Unified Diff, preserving context while highlighting changes.</dd>
+                                        </dl>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </section>
     
-                    <!-- Analysis -->
-                    <section id="analysis" class="raks-card">
-                        <h3 class="text-purple border-bottom pb-2 mb-3">Comparison Analysis Tool</h3>
-                        <p>Compare two branches (Base vs Head) to see what changed.</p>
-                        <ul>
-                            <li><strong>Repositories:</strong> Auto-fetches available repos from the configured directory.</li>
-                            <li><strong>Branches:</strong> Select Base (Source) and Head (Target) branches.</li>
-                            <li><strong>Smart Compare:</strong> Ignores whitespace and designated patterns (e.g., `app.home`).</li>
-                        </ul>
-                    </section>
-    
-                    <!-- Search -->
-                    <section id="search" class="raks-card">
-                        <h3 class="text-purple border-bottom pb-2 mb-3">Git Search</h3>
-                        <p>Search for code patterns using Regex across repositories.</p>
-                        <ul>
-                            <li><strong>Local Mode:</strong> Search within downloaded repositories.</li>
-                            <li><strong>Remote Mode:</strong> Search directly on GitLab using API (Requires Token).</li>
-                        </ul>
-                    </section>
-    
-                    <!-- Bulk -->
-                    <section id="bulk" class="raks-card">
-                        <h3 class="text-purple border-bottom pb-2 mb-3">Bulk Download</h3>
-                        <p>Download multiple repositories simultaneously based on Group or Regex Filter.</p>
-                        <div class="alert alert-info small">Useful for setting up a workspace for the first time.</div>
+                    <!-- Search & Bulk -->
+                    <section id="search" class="raks-card mb-5">
+                       <div class="row">
+                           <div class="col-md-6">
+                               <h4 class="text-purple mb-3"><i class="bi bi-search me-2"></i>Git Search</h4>
+                               <p class="small">Perform regex-based forensic searches across your entire repository landscape. Supports <strong>Local</strong> (downloaded) and <strong>Remote</strong> (API-based) search modes.</p>
+                           </div>
+                           <div class="col-md-6 border-start">
+                               <h4 class="text-purple mb-3"><i class="bi bi-cloud-download me-2"></i>Bulk Download</h4>
+                               <p class="small">Rapidly onboard workspaces. Download specific groups or regex-matched repositories in bulk to prepare for offline analysis.</p>
+                           </div>
+                       </div>
                     </section>
     
                 </div>

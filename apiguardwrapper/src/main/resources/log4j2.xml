@@ -9,9 +9,9 @@
         </RollingFile>
     </Appenders>
     <Loggers>
-        <AsyncLogger name="org.mule.service.http" level="DEBUG"/>
-        <AsyncLogger name="org.mule.extension.http" level="DEBUG"/>
-        <AsyncLogger name="com.raks.gitanalyzer" level="DEBUG"/>
+        <AsyncLogger name="org.mule.service.http" level="INFO"/>
+        <AsyncLogger name="org.mule.extension.http" level="INFO"/>
+        <AsyncLogger name="com.raks.gitanalyzer" level="INFO"/>
         <AsyncRoot level="INFO">
             <AppenderRef ref="file" />
         </AsyncRoot>

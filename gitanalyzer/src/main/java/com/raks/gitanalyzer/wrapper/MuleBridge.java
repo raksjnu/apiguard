@@ -10,12 +10,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.*;
 import java.io.File;
+import org.eclipse.jgit.storage.file.WindowCacheConfig;
 
 /**
  * MuleBridge - Static entry point for MuleSoft wrapper to invoke GitAnalyzer features.
  * Ensures cross-platform compatibility and externalized configuration support.
  */
 public class MuleBridge {
+
+    /**
+     * Updates configuration properties dynamically.
+     */
+    static {
+        // Disable JGit file locking (MMAP) on Windows
+        // This must run before any JGit operations
+        try {
+            WindowCacheConfig jgitConfig = new WindowCacheConfig();
+            jgitConfig.setPackedGitMMAP(false);
+            jgitConfig.install();
+        } catch (Exception ignored) {}
+    }
 
     /**
      * Updates configuration properties dynamically.
@@ -291,6 +305,20 @@ public class MuleBridge {
                         
                         File repoDir = new File(bulkDir, folderName);
                         
+                        // Overwrite Logic
+                        boolean overwrite = Boolean.TRUE.equals(request.get("overwrite"));
+                        if (repoDir.exists()) {
+                            if (overwrite) {
+                                // Recursive delete
+                                deleteDirectory(repoDir);
+                            } else {
+                                // This specific message format is detected by Frontend
+                                // Use a custom exception that won't log a stack trace (expected behavior)
+                                ConflictException conflict = new ConflictException("Destination path \"" + repoDir.getName() + "\" already exists");
+                                throw conflict;
+                            }
+                        }
+                        
                         String fullRepoName = repoName;
                          if (!repoName.contains("/")) {
                              if (provider instanceof GitHubProvider) {
@@ -307,13 +335,21 @@ public class MuleBridge {
 
                         provider.cloneRepository(fullRepoName, repoDir, branch);
                         
-                        result.put("status", "Success");
+                        result.put("status", "SUCCESS"); // Standardize to UPPERCASE
                         result.put("branch", displayBranch);
                         result.put("path", repoDir.getAbsolutePath());
                         successCount++;
+                    } catch (ConflictException e) {
+                        // Expected conflict - don't log stack trace
+                        result.put("status", "FAILURE: " + e.getMessage());
+                        result.put("error", e.getMessage());
+                        result.put("branch", displayBranch);
                     } catch (Exception e) {
-                        e.printStackTrace();
-                        result.put("status", "Failed: " + e.getMessage());
+                        // Unexpected error - log for debugging
+                        System.err.println("Bulk download error for " + repoName + ": " + e.getMessage());
+                        // Standardize error status for Frontend detection
+                        result.put("status", "FAILURE: " + e.getMessage());
+                        result.put("error", e.getMessage());
                         result.put("branch", displayBranch);
                     }
                     results.add(result);
@@ -340,5 +376,50 @@ public class MuleBridge {
         List<String> list = new ArrayList<>(Arrays.asList(patternStr.split("\\n")));
         list.replaceAll(String::trim);
         return list;
+    }
+
+    // Helper for recursive deletion with force support
+    private static boolean deleteDirectory(File file) {
+        if (!file.exists()) return true;
+
+        // Try to handle read-only files (common in .git)
+        try {
+            if (!file.canWrite()) {
+                file.setWritable(true);
+            }
+        } catch (Exception ignored) {}
+
+        if (file.isDirectory()) {
+            File[] entries = file.listFiles();
+            if (entries != null) {
+                for (File entry : entries) {
+                    if (!deleteDirectory(entry)) {
+                        // Don't return false immediately, try allowing GC to run
+                    }
+                }
+            }
+        }
+
+        // Expanded Retry Logic for Windows File Locking
+        // 1. First attempt
+        if (file.delete()) return true;
+
+        // 2. Retry with small delays
+        for (int i = 0; i < 3; i++) {
+            try { Thread.sleep(50); } catch (InterruptedException ignored) {}
+            if (file.delete()) return true;
+        }
+
+        // 3. Trigger GC to release memory mapped files (Git pack files)
+        System.gc();
+        try { Thread.sleep(100); } catch (InterruptedException ignored) {}
+        if (file.delete()) return true;
+
+        // 4. One final desperate attempt
+        try { Thread.sleep(200); } catch (InterruptedException ignored) {}
+        if (file.delete()) return true;
+        
+        System.err.println("Failed to delete permanently: " + file.getAbsolutePath());
+        return false;
     }
 }
