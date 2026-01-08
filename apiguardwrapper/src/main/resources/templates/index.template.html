@@ -67,7 +67,10 @@
             padding: 20px;
             text-decoration: none;
             color: inherit;
-            display: block;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            min-height: 220px;
             transition: transform 0.2s, box-shadow 0.2s;
         }
 
@@ -85,6 +88,7 @@
         .tool-card p {
             color: #555;
             line-height: 1.5;
+            flex-grow: 1;
         }
 
         .tool-card .action-link {
@@ -133,7 +137,8 @@
             { name: "{{tool.3.name}}", desc: "{{tool.3.description}}", url: "{{tool.3.url}}", enabled: "{{tool.3.enabled}}" },
             { name: "{{tool.4.name}}", desc: "{{tool.4.description}}", url: "{{tool.4.url}}", enabled: "{{tool.4.enabled}}" },
             { name: "{{tool.5.name}}", desc: "{{tool.5.description}}", url: "{{tool.5.url}}", enabled: "true" },
-            { name: "{{tool.6.name}}", desc: "{{tool.6.description}}", url: "{{tool.6.url}}", enabled: "{{tool.6.enabled}}" }
+            { name: "{{tool.6.name}}", desc: "{{tool.6.description}}", url: "{{tool.6.url}}", enabled: "{{tool.6.enabled}}" },
+            { name: "{{tool.7.name}}", desc: "{{tool.7.description}}", url: "{{tool.7.url}}", enabled: "{{tool.7.enabled}}" }
         ];
 
         const grid = document.getElementById('tool-grid');

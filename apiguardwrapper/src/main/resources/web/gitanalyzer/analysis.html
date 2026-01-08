@@ -1,0 +1,1250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comparison Branch Analysis - GitAnalyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .border-purple { border-color: #6f42c1 !important; }
+        .text-purple { color: #6f42c1 !important; }
+        .btn-outline-purple {
+            color: #6f42c1;
+            border-color: #6f42c1;
+        }
+        .btn-outline-purple:hover {
+            color: #fff;
+            background-color: #6f42c1;
+            border-color: #6f42c1;
+        }
+        .form-control, .form-select {
+            border-color: #6f42c1 !important;
+            /* font-weight: normal; Default is normal */
+        }
+        .form-label {
+            font-weight: bold;
+        }
+        .btn {
+            font-weight: bold;
+        }
+        .form-control:focus, .form-select:focus {
+            box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
+            border-color: #6f42c1;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    
+    <div class="raks-frame">
+        <!-- Header -->
+        <!-- Header -->
+        <nav class="navbar navbar-expand-lg navbar-light brand-header mb-0 flex-shrink-0">
+            <div class="container-fluid position-relative">
+                <a class="navbar-brand d-flex align-items-center" href="index.html">
+                    <img src="assets/images/logo.png" alt="Logo" class="d-inline-block align-text-top me-2" height="40">
+                    ApiGuard Portal - GitAnalyzer <span class="badge bg-dark ms-2">v2.1</span>
+                </a>
+                
+                <!-- Centered Title -->
+                <div class="position-absolute start-50 translate-middle-x d-none d-lg-block">
+                    <h5 class="fw-bold text-purple mb-0">Comparison Analysis Tool</h5>
+                </div>
+
+                <div class="d-flex ms-auto">
+                    <a href="guide.html" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
+                        <span class="me-2">📘</span> Guide / Help
+                    </a>
+                    <button type="button" class="btn btn-outline-purple me-2 d-flex align-items-center" onclick="clearForm()">
+                        <span class="me-2">🗑️</span> Clear Form
+                    </button>
+                    <a href="index.html" class="btn btn-outline-light ghost-btn">Dashboard</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Split Layout -->
+        <div class="split-container">
+            <!-- Left Panel: Configuration -->
+            <div class="split-left" id="leftPanel">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0 fw-bold text-purple">Analysis Config</h5>
+                    <!-- Provider & Token Compact -->
+                    <div class="input-group input-group-sm w-auto shadow-sm">
+                        <span class="input-group-text bg-white text-purple"><i class="bi bi-shield-lock-fill"></i></span>
+                        <select class="form-select border-start-0" id="gitProviderSelect" style="max-width: 100px;">
+                             <option value="gitlab">GitLab</option>
+                             <option value="github">GitHub</option>
+                        </select>
+                        <input type="password" class="form-control" id="gitTokenInput" placeholder="Token Optional" style="max-width: 120px;">
+                    </div>
+                </div>
+
+                <form id="analysisForm">
+                    <!-- Section 1: Discovery -->
+                    <div class="sub-frame mb-3">
+                        <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">1. Repository Discovery</h6>
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">Git Group / Organization</label>
+                            <input type="text" class="form-control form-control-sm" id="groupName" placeholder="e.g. raks-group">
+                        </div>
+                        <div class="mb-2">
+                             <label class="form-label small fw-bold">Filter (Regex)</label>
+                             <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="repoFilter" placeholder="e.g. .*service.*">
+                                <button type="button" class="btn btn-sub-action" id="fetchReposBtn">Fetch</button>
+                             </div>
+                        </div>
+                        
+                        <!-- Repo List -->
+                        <div id="repoListContainer" class="border rounded bg-white p-2 d-none" style="max-height: 120px; overflow-y: auto;">
+                            <div class="text-muted small text-center fst-italic py-2">Fetched repositories...</div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2: Analysis Scope -->
+                    <div class="sub-frame mb-4">
+                        <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">2. Analysis Scope</h6>
+                        
+                        <div class="mb-3">
+                            <label for="codeRepo" class="form-label small fw-bold">Code Repository</label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" class="form-control" id="codeRepo" placeholder="Select above or type" required>
+                                <button type="button" class="btn btn-sub-action" id="fetchBranchesBtn">Branches</button>
+                            </div>
+                        </div>
+
+                            <label class="form-label small fw-bold">Branch Comparison</label>
+                            <div class="d-flex align-items-end gap-2 mb-3">
+                                <div class="w-50">
+                                    <label class="form-label x-small text-muted mb-1">Base (Destination)</label>
+                                    <select class="form-select form-select-sm" id="sourceBranchSelect"></select>
+                                </div>
+                                <div class="mb-1">
+                                    <button type="button" class="btn btn-sub-action py-0 px-2" id="swapBranchesBtn" title="Swap" style="height: 31px;">
+                                        <i class="bi bi-arrow-left-right"></i>
+                                    </button>
+                                </div>
+                                <div class="w-50">
+                                    <label class="form-label x-small text-muted mb-1">Feature (Source)</label>
+                                    <select class="form-select form-select-sm" id="targetBranchSelect"></select>
+                                </div>
+                            </div>
+
+                        <!-- Config Repo -->
+                        <div class="mb-3">
+                            <div class="form-check form-switch mb-1">
+                                <input class="form-check-input" type="checkbox" id="enableConfigRepo" checked>
+                                <label class="form-check-label small fw-bold" for="enableConfigRepo">Analyze Config Repository</label>
+                            </div>
+                            <div id="configSection" class="ps-2 border-start border-3 border-light transition-all">
+                                <div class="input-group input-group-sm mb-2">
+                                     <input type="text" class="form-control" id="configRepo" placeholder="owner/repo_config">
+                                     <button class="btn btn-sub-action" type="button" id="fetchConfigBranchesBtn">Branches</button>
+                                </div>
+                                <div class="row g-2">
+                                    <div class="col-md-6">
+                                        <select class="form-select form-select-sm" id="configSourceSelect">
+                                            <option value="" selected>Config Base</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <select class="form-select form-select-sm" id="configTargetSelect">
+                                            <option value="" selected>Config Feature</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-2">
+                            <label class="form-label small fw-bold">File Ignore (Glob)</label>
+                            <textarea class="form-control form-control-sm font-monospace" id="ignorePatterns" rows="2" placeholder=".gitignore patterns..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Content Ignore (Regex)</label>
+                            <textarea class="form-control form-control-sm" id="contentPatterns" rows="2" placeholder="e.g. regex:DEBUG_LOG"></textarea>
+                        </div>
+                        
+
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="ignoreAttributeOrder" style="border: 1px solid #663399;">
+                            <label class="form-check-label small fw-bold d-flex align-items-center" for="ignoreAttributeOrder">
+                                Smart XML Compare
+                                <span class="ms-1" data-bs-toggle="tooltip" data-bs-placement="right" title="Ignores insignificant whitespace and attribute order for cleaner XML diffs.">
+                                    <i class="bi bi-info-circle text-muted" style="cursor:help;"></i>
+                                </span>
+                            </label>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-purple text-white w-100 py-2 shadow-sm" id="analyzeBtn">Run Analysis</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Resizer -->
+            <div class="resizer" id="dragMe"></div>
+
+            <!-- Right Panel: Results -->
+            <div class="split-right" id="rightPanel">
+                <!-- Initial Placeholder -->
+                <div id="resultsPlaceholder" class="text-center mt-5 text-muted">
+                    <img src="assets/images/logo.png" height="100" class="mb-3">
+                    <h4>Ready to Analyze</h4>
+                    <p>Configure repository details on the left and click "Run Analysis".</p>
+                </div>
+
+                <!-- Results Section (Hidden by default) -->
+                <div id="resultsSection" class="d-none animate-fade-in">
+                     <div class="d-flex justify-content-between align-items-center mb-4">
+                         <h4 class="text-purple fw-bold">Analysis Report</h4>
+                         <span class="badge bg-light text-dark border"><span id="reportTime"></span></span>
+                     </div>
+
+                    <!-- Dashboard Stats -->
+                    <div class="row g-4 mb-4">
+                    <!-- Dashboard Stats (Compact) -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-md-3">
+                            <div class="dashboard-card-sm card-purple text-center d-flex flex-column justify-content-center">
+                                <i class="bi bi-layers-fill fs-4 text-purple opacity-50 mb-1"></i>
+                                <h6 class="text-purple small mb-0 fw-bold">Total Files</h6>
+                                <h3 class="fw-bold text-purple mb-0" id="totalFiles">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="dashboard-card-sm card-code text-center d-flex flex-column justify-content-center">
+                                <i class="bi bi-code-slash fs-4 text-secondary opacity-50 mb-1"></i>
+                                <h6 class="text-purple small mb-0 fw-bold">Code Changes</h6>
+                                <h3 class="fw-bold text-purple mb-0" id="codeChanges">0</h3>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="dashboard-card-sm card-config text-center d-flex flex-column justify-content-center">
+                                <i class="bi bi-gear fs-4 text-info opacity-50 mb-1"></i>
+                                <h6 class="text-purple small mb-0 fw-bold">Config Changes</h6>
+                                <h3 class="fw-bold text-purple mb-0" id="configChanges">0</h3>
+                            </div>
+                        </div>
+                        <!-- Severity Chart -->
+                        <div class="col-md-3">
+                            <div class="dashboard-card-sm card-purple p-1 d-flex align-items-center justify-content-center">
+                                <div style="height: 90px; width: 100%;">
+                                     <canvas id="severityChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+        
+                    <!-- Detailed Changes -->
+                    <div class="card shadow-sm mb-5 border-purple">
+                        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold">Detailed File Changes</h5>
+                            <button class="btn btn-sub-action" onclick="exportToCSV()">Export CSV</button>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0 align-middle">
+                                    <thead class="bg-light">
+                                        <tr class="text-purple small fw-bold text-uppercase">
+                                            <th>Type</th>
+                                            <th>File Path</th>
+                                            <th>Diff</th>
+                                            <th>Status</th>
+                                            <th>Valid Lines</th>
+                                            <th>Ignored Lines</th>
+                                            <th>Filters</th>
+                                            <th>Severity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="filesTableBody">
+                                        <!-- Rows injected via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+
+                    <!-- Blocked Files Section (Moved Inside Results) -->
+                    <div id="blockedFilesSection" class="card shadow-sm mb-5 border-danger animate-fade-in d-none">
+                        <div class="card-header bg-danger text-white py-2">
+                            <h6 class="mb-0 fw-bold"><i class="bi bi-slash-circle me-2"></i>Files Blocked by Glob Ignore Pattern</h6>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
+                                <table class="table table-sm table-striped mb-0">
+                                    <tbody id="blockedFilesTableBody">
+                                        <!-- Injected via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div> <!-- End Results Section -->
+            </div> <!-- End Split Right -->
+        </div> <!-- End Split Container -->
+
+
+
+        </div>
+    
+        <!-- Footer -->
+        </div>
+    
+        <!-- Footer -->
+        <footer class="raks-footer text-center mt-auto flex-shrink-0 w-100">
+            <div class="container" id="footerText">
+                &copy; 2018 RAKS - Enterprise API Solution Suite - ApiGuard
+            </div>
+        </footer>
+    </div>
+    <!-- End Raks Frame -->
+    
+    <!-- Hover Diff Popup -->
+    <div id="diffPreviewPopup" class="diff-preview-popup">
+        <div class="diff-preview-header">
+            <span>Diff Preview</span>
+            <small class="text-muted">Click row for full view</small>
+        </div>
+        <div id="diffPreviewContent" class="diff-preview-body p-2">
+            <!-- Content Injected Here -->
+        </div>
+    </div>
+    
+    <!-- Old script block removed - correct implementation is below -->
+    
+    <!-- Diff Modal -->
+    <div class="modal fade" id="diffModal" tabindex="-1" aria-labelledby="diffModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-fullscreen">
+            <div class="modal-content">
+                <div class="modal-header bg-light">
+                    <h5 class="modal-title font-monospace small" id="diffModalTitle">File Diff</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div id="diffContainer" class="p-3"></div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <!-- Analyzing Status Modal -->
+    <div class="modal fade" id="analyzingModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg" style="border-left: 5px solid #663399 !important;">
+                <div class="modal-body text-center p-5" id="analyzingBody">
+                    <div class="spinner-border text-purple mb-3" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <h5 class="fw-bold text-purple">Analyzing Repositories...</h5>
+                    <p class="text-muted mb-0">Please wait while we compare branches and generate the report.</p>
+                </div>
+                <!-- Success State (Hidden initially) -->
+                 <div class="modal-body text-center p-5 d-none" id="analysisSuccessBody">
+                     <i class="bi bi-check-circle-fill text-success display-1 mb-3"></i>
+                     <h4 class="fw-bold text-success">Analysis Complete!</h4>
+                     <p class="text-muted">The report has been generated successfully.</p>
+                     <button type="button" class="btn btn-purple btn-lg px-5 mt-3" data-bs-dismiss="modal">View Results</button>
+                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="modal fade" id="helpModal" tabindex="-1" aria-labelledby="helpModalTitle" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header brand-header">
+                    <h5 class="modal-title fw-bold" id="helpModalTitle">GitAnalyzer - User Guide & Documentation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-4">
+                    <!-- About -->
+                    <section class="mb-5">
+                        <h4 class="text-purple border-bottom pb-2 mb-3">1. Overview</h4>
+                        <p class="lead text-muted">GitAnalyzer is a specialized tool for performing semantic-aware comparisons between Git branches. Unlike standard diff tools, it distinguishes between "meaningful" code changes and "noise" (formatting, attribute reordering, or ignored content), making it ideal for auditing migrations, configuration updates, and release verification.</p>
+                        <div class="row g-3 mt-2">
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold">Semantic Difference</h6>
+                                    <p class="small mb-0">Detects real logic changes while ignoring superficial ordering differences in XML or JSON.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold">Dual-Repo Analysis</h6>
+                                    <p class="small mb-0">Simultaneously analyzes code repositories and their associated configuration repositories.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="p-3 border rounded bg-light h-100">
+                                    <h6 class="fw-bold">Audit Ready</h6>
+                                    <p class="small mb-0">Generates comprehensive reports with categorized severity and exportable evidence.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Configuration -->
+                    <section class="mb-5">
+                        <h4 class="text-purple border-bottom pb-2 mb-3">2. Configuration Guide</h4>
+                        
+                        <div class="accordion" id="helpAccordion">
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#helpConfig">
+                                        Analysis Configuration
+                                    </button>
+                                </h2>
+                                <div id="helpConfig" class="accordion-collapse collapse show" data-bs-parent="#helpAccordion">
+                                    <div class="accordion-body">
+                                        <table class="table table-bordered table-sm">
+                                            <thead class="table-light"><tr><th>Field</th><th>Description</th></tr></thead>
+                                            <tbody>
+                                                <tr><td class="fw-bold">Git Provider</td><td>Select your hosting provider (GitLab/GitHub). Enter a Personal Access Token (PAT) if accessing private repositories.</td></tr>
+                                                <tr><td class="fw-bold">Repository Discovery</td><td>Use Regex filters (e.g. <code>.*service.*</code>) to find relevant repositories within a Group/Org.</td></tr>
+                                                <tr><td class="fw-bold">Analysis Scope</td><td>Select the Code Repository. Define <strong>Base Branch</strong> (Destination, e.g. <code>master</code>) and <strong>Feature Branch</strong> (Source, e.g. <code>feature/login</code>).</td></tr>
+                                                <tr><td class="fw-bold">Config Repository</td><td>Toggle "Analyze Config Repository" to include external config. The tool attempts to auto-match config branches (e.g. code <code>wip</code> -> config <code>wip</code>).</td></tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion-item">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#helpIgnore">
+                                        Advanced Filtering & Smart Compare
+                                    </button>
+                                </h2>
+    <!-- Highlight.js CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.min.css" />
+    <!-- Diff2Html CSS (Bundle) -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/diff2html/bundles/css/diff2html.min.css">
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Highlight.js & Diff2Html (Bundle) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
+
+    <script>
+        // --- Persistence Logic ---
+        const STORE_KEY_PROVIDER = 'git_analyzer_provider';
+        const STORE_KEY_TOKEN = 'git_analyzer_token';
+
+        const providerSelect = document.getElementById('gitProviderSelect');
+        const tokenInput = document.getElementById('gitTokenInput');
+
+        // --- UI Config Loading ---
+        document.addEventListener('DOMContentLoaded', () => {
+             fetch('/apiguard/gitanalyzer/api/config/ui')
+                .then(response => response.json())
+                .then(config => {
+                    if (config['ui.footer.text']) {
+                        const footerEl = document.getElementById('footerText');
+                        if (footerEl) footerEl.innerHTML = config['ui.footer.text'];
+                    }
+                })
+                .catch(err => console.warn('Failed to load UI config:', err));
+        });
+
+        // Restore Provider/Token
+        if (providerSelect && tokenInput) {
+             const savedProvider = localStorage.getItem(STORE_KEY_PROVIDER);
+             if (savedProvider) providerSelect.value = savedProvider;
+    
+             const savedToken = localStorage.getItem(STORE_KEY_TOKEN);
+             if (savedToken) tokenInput.value = savedToken;
+    
+             providerSelect.addEventListener('change', () => localStorage.setItem(STORE_KEY_PROVIDER, providerSelect.value));
+             tokenInput.addEventListener('input', () => localStorage.setItem(STORE_KEY_TOKEN, tokenInput.value));
+        }
+
+        // Restore Form Fields
+        // Removed apiName from persistence
+        const FIELDS_TO_PERSIST = ['groupName', 'repoFilter', 'codeRepo', 'configRepo', 'ignorePatterns'];
+        
+        FIELDS_TO_PERSIST.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                const val = localStorage.getItem('git_analysis_' + id);
+                if (val) el.value = val;
+                
+                el.addEventListener('input', () => {
+                    localStorage.setItem('git_analysis_' + id, el.value);
+                });
+            }
+        });
+
+        // Config Toggle Button Logic
+        const configBtn = document.getElementById('toggleConfigBtn');
+        const collapseEl = document.getElementById('setupCollapse');
+        if (configBtn && collapseEl) {
+            collapseEl.addEventListener('shown.bs.collapse', () => {
+                configBtn.textContent = 'Hide Config';
+            });
+            collapseEl.addEventListener('hidden.bs.collapse', () => {
+                configBtn.textContent = 'Show Config';
+            });
+        }
+
+        // Helper to get base path (works in both standalone and wrapper modes)
+        function getBasePath() {
+            const path = window.location.pathname;
+            // If path contains /apiguard/gitanalyzer, we're in wrapper mode
+            if (path.includes('/apiguard/gitanalyzer')) {
+                return '/apiguard/gitanalyzer';
+            }
+            // Otherwise, standalone mode - no prefix
+            return '';
+        }
+        
+        // Helper to get Headers
+        function getGitHeaders() {
+            const headers = {
+                'Content-Type': 'application/json'
+            };
+            if (providerSelect) headers['X-Git-Provider'] = providerSelect.value;
+            if (tokenInput && tokenInput.value.trim()) headers['X-Git-Token'] = tokenInput.value.trim();
+            return headers;
+        }
+
+        let availableRepositories = []; // Cache to store fetched repos
+
+        // --- Fetch Repos Logic ---
+        document.getElementById('fetchReposBtn').addEventListener('click', async () => {
+             const group = document.getElementById('groupName').value;
+             const filter = document.getElementById('repoFilter').value;
+             const btn = document.getElementById('fetchReposBtn');
+             const originalText = btn.textContent;
+             
+             btn.classList.add('disabled');
+             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Fetching...';
+             
+             try {
+                let url = getBasePath() + '/api/download/list'; // Reuse Bulk API
+                const params = new URLSearchParams();
+                if (group) params.append('group', group);
+                if (filter) params.append('filter', filter);
+                
+                const response = await fetch(url + '?' + params.toString(), { headers: getGitHeaders() });
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to fetch repositories');
+                }
+                
+                // Update Cache
+                availableRepositories = data.repositories || [];
+                
+                const container = document.getElementById('repoListContainer');
+                container.innerHTML = '';
+                container.classList.remove('d-none');
+
+                if (availableRepositories.length > 0) {
+                    availableRepositories.forEach((repo, index) => {
+                        const div = document.createElement('div');
+                        div.className = 'form-check';
+                        // Create unique ID
+                        const id = 'repo_' + index;
+                        div.innerHTML = `
+                            <input class="form-check-input repo-radio" type="radio" name="selectedRepo" id="${id}" value="${repo}">
+                            <label class="form-check-label small" for="${id}">${repo}</label>
+                        `;
+                        container.appendChild(div);
+                        
+                        // Event Listener for Selection
+                        div.querySelector('input').addEventListener('change', (e) => {
+                             if(e.target.checked) {
+                                 const selected = e.target.value;
+                                 document.getElementById('codeRepo').value = selected;
+                                 localStorage.setItem('git_analysis_codeRepo', selected);
+                                 
+                                 // Auto-Detect Config Repo
+                                 const configName = selected + "_config";
+                                 const configMatch = availableRepositories.find(r => r === configName); // Strict Exact Match from list
+                                 
+                                 const configInput = document.getElementById('configRepo');
+                                 if (configMatch) {
+                                     configInput.value = configMatch;
+                                     // Highlight effect
+                                     configInput.classList.add('border-warning', 'bg-warning-subtle');
+                                     setTimeout(() => {
+                                          configInput.classList.remove('border-warning', 'bg-warning-subtle');
+                                     }, 2000);
+                                     localStorage.setItem('git_analysis_configRepo', configMatch);
+                                 } else {
+                                     configInput.value = '';
+                                     localStorage.removeItem('git_analysis_configRepo');
+                                 }
+                             }
+                        });
+                    });
+                } else {
+                    container.innerHTML = '<div class="text-muted small text-center p-2">No repositories found.</div>';
+                }
+             } catch (err) {
+                 alert('Error fetching repositories: ' + err.message);
+                 console.error(err);
+             } finally {
+                 btn.classList.remove('disabled');
+                 btn.textContent = originalText;
+             }
+        });
+
+        // --- Fetch Branches Logic ---
+        document.getElementById('fetchBranchesBtn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            const repo = document.getElementById('codeRepo').value;
+            if (!repo) {
+                alert("Please enter or select a Code Repository first.");
+                return;
+            }
+            
+            const btn = document.getElementById('fetchBranchesBtn');
+            const originalHtml = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Fetching...';
+            
+            try {
+                const response = await fetch(getBasePath() + '/api/download/branches?repo=' + encodeURIComponent(repo), {
+                    headers: getGitHeaders()
+                });
+                const branches = await response.json(); // API returns List<String>
+                
+                // Helper to populate select
+                const populateSelect = (elementId, selectedValue) => {
+                    const select = document.getElementById(elementId);
+                    select.innerHTML = '';
+                    if (branches && branches.length > 0) {
+                        branches.forEach(br => {
+                            const opt = document.createElement('option');
+                            opt.value = br;
+                            opt.textContent = br;
+                            select.appendChild(opt);
+                        });
+                        if (selectedValue && branches.includes(selectedValue)) {
+                            select.value = selectedValue;
+                        }
+                    } else {
+                         const opt = document.createElement('option');
+                         opt.text = "No branches found";
+                         select.appendChild(opt);
+                    }
+                };
+                
+                // Smart Selection Logic
+                // branches is the array
+                let sourceVal = branches.includes('master') ? 'master' : (branches.includes('main') ? 'main' : branches[0]);
+                
+                // For target, prefer 'develop', then any branch != sourceVal
+                let targetVal = branches.includes('develop') ? 'develop' : null;
+                if (!targetVal && branches.length > 1) {
+                    targetVal = branches.find(b => b !== sourceVal) || sourceVal;
+                } else if (!targetVal) {
+                    targetVal = sourceVal;
+                }
+
+                populateSelect('sourceBranchSelect', sourceVal);
+                populateSelect('targetBranchSelect', targetVal);
+
+            } catch(err) {
+                 alert('Error fetching branches: ' + err.message);
+            } finally {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+        });
+
+        // --- Swap Branches Logic ---
+        document.getElementById('swapBranchesBtn').addEventListener('click', () => {
+             // Swap Code Branches
+             const s = document.getElementById('sourceBranchSelect');
+             const t = document.getElementById('targetBranchSelect');
+             const temp = s.value;
+             s.value = t.value;
+             t.value = temp;
+             
+             // Swap Config Branches
+             const cs = document.getElementById('configSourceSelect');
+             const ct = document.getElementById('configTargetSelect');
+             const tempC = cs.value;
+             cs.value = ct.value;
+             ct.value = tempC;
+        });
+        
+        // --- Config Toggle Logic ---
+        const configCheckbox = document.getElementById('enableConfigRepo');
+        const configSection = document.getElementById('configSection');
+        
+        function updateConfigVisibility() {
+            if (configCheckbox.checked) {
+                configSection.classList.remove('opacity-50', 'pe-none');
+            } else {
+                configSection.classList.add('opacity-50', 'pe-none');
+            }
+        }
+        configCheckbox.addEventListener('change', updateConfigVisibility);
+        // Initial state
+        updateConfigVisibility();
+
+        // --- Config Fetch Branches ---
+        document.getElementById('fetchConfigBranchesBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('fetchConfigBranchesBtn');
+            const repo = document.getElementById('configRepo').value.trim();
+            if (!repo) { alert('Please enter a Config Repository first'); return; }
+            
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            btn.disabled = true;
+
+            try {
+                const url = getBasePath() + `/api/download/branches?repo=${encodeURIComponent(repo)}`;
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Status ' + response.status);
+                
+                const branches = await response.json();
+                
+                // Helper to populate
+                const populate = (id) => {
+                    const sel = document.getElementById(id);
+                    sel.innerHTML = '<option value="" selected>Default (Same as Code Repo)</option>';
+                    branches.forEach(b => {
+                        const opt = document.createElement('option');
+                        opt.value = b;
+                        opt.text = b;
+                        sel.appendChild(opt);
+                    });
+                    return sel;
+                };
+                
+                const cSource = populate('configSourceSelect');
+                const cTarget = populate('configTargetSelect');
+                
+                // --- Smart Auto-Select Logic ---
+                const codeBase = document.getElementById('sourceBranchSelect').value;
+                const codeFeature = document.getElementById('targetBranchSelect').value;
+                
+                // 1. Sync Config Base with Code Base (e.g. master -> master)
+                if (codeBase && branches.includes(codeBase)) {
+                    cSource.value = codeBase;
+                }
+                
+                // 2. Sync Config Feature with Code Feature (e.g. wip -> wip OR wipnew)
+                if (codeFeature) {
+                    if (branches.includes(codeFeature)) {
+                        cTarget.value = codeFeature;
+                    } else {
+                        // Heuristic: Fuzzy Match or Single Candidate
+                        const selectedBase = cSource.value;
+                        const candidates = branches.filter(b => b !== selectedBase);
+                        
+                        // Strategy A: Starts With (e.g. wip -> wipnew)
+                        const fuzzy = candidates.find(b => b.startsWith(codeFeature));
+                        if (fuzzy) {
+                            cTarget.value = fuzzy;
+                        } 
+                        // Strategy B: Only one branch left (and it's distinct from base)
+                        else if (candidates.length === 1) {
+                            cTarget.value = candidates[0];
+                        }
+                    }
+                }
+                
+            } catch(err) {
+                 alert('Error fetching config branches: ' + err.message);
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        });
+
+        // --- Analysis Logic ---
+        document.getElementById('analysisForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const codeRepo = document.getElementById('codeRepo').value.trim();
+            const sourceBranch = document.getElementById('sourceBranchSelect').value;
+            const targetBranch = document.getElementById('targetBranchSelect').value;
+            
+            if (!codeRepo || !sourceBranch || !targetBranch) {
+                alert('Please fill in Code Repository and select both branches.');
+                return;
+            }
+            
+            // Build request payload
+            const payload = {
+                codeRepo: codeRepo,
+                sourceBranch: sourceBranch,
+                targetBranch: targetBranch,
+                ignorePatterns: document.getElementById('ignorePatterns').value.trim(),
+                contentIgnorePatterns: document.getElementById('contentPatterns').value.trim(),
+                ignoreAttributeOrder: document.getElementById('ignoreAttributeOrder').checked,
+                apiName: codeRepo // Use repo name as API name
+            };
+            
+            // Config Repo (if enabled)
+            if (document.getElementById('enableConfigRepo').checked) {
+                const configRepo = document.getElementById('configRepo').value.trim();
+                if (configRepo) {
+                    payload.configRepo = configRepo;
+                    payload.configSourceBranch = document.getElementById('configSourceSelect').value || sourceBranch;
+                    payload.configTargetBranch = document.getElementById('configTargetSelect').value || targetBranch;
+                }
+            }
+            
+            // Show analyzing modal
+            const analyzingModal = new bootstrap.Modal(document.getElementById('analyzingModal'));
+            analyzingModal.show();
+            
+            try {
+                const response = await fetch(getBasePath() + '/api/analyze', {
+                    method: 'POST',
+                    headers: getGitHeaders(),
+                    body: JSON.stringify(payload)
+                });
+                
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Analysis failed');
+                }
+                
+                const result = await response.json();
+
+                // Check for Backend Error returned as JSON
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+                
+                // Show success state briefly
+                document.getElementById('analyzingBody').classList.add('d-none');
+                document.getElementById('analysisSuccessBody').classList.remove('d-none');
+                
+                // Auto-close after 1.5 seconds and show results
+                setTimeout(() => {
+                    analyzingModal.hide();
+                    displayResults(result);
+                    
+                    // Reset modal state for next time
+                    setTimeout(() => {
+                        document.getElementById('analyzingBody').classList.remove('d-none');
+                        document.getElementById('analysisSuccessBody').classList.add('d-none');
+                    }, 500);
+                }, 1500);
+                
+            } catch (err) {
+                analyzingModal.hide();
+                alert('Analysis Error: ' + err.message);
+                console.error('Analysis error:', err);
+            }
+        });
+        
+        // Global state for analysis results
+        let currentAnalysisResults = [];
+
+        // Function to display results
+        function displayResults(data) {
+            // Store results globally
+            currentAnalysisResults = data.modifiedFiles || [];
+            
+            // Hide placeholder, show results
+            document.getElementById('resultsPlaceholder').classList.add('d-none');
+            document.getElementById('resultsSection').classList.remove('d-none');
+            
+            // Update timestamp
+            document.getElementById('reportTime').textContent = new Date().toLocaleString();
+            
+            // Update stats
+            const totalFiles = data.totalFilesChanged || 0;
+            const codeChanges = data.codeChangesCount || 0;
+            const configChanges = data.configChangesCount || 0;
+            
+            document.getElementById('totalFiles').textContent = totalFiles;
+            document.getElementById('codeChanges').textContent = codeChanges;
+            document.getElementById('configChanges').textContent = configChanges;
+            
+            // Render table
+            // Render table
+            const tbody = document.getElementById('filesTableBody');
+            tbody.innerHTML = '';
+            
+            // Note: Header is updated via static HTML now to avoid sync issues.
+            // Expected Order: Type | Path | View | Status | Valid | Ignored | Filters | Severity
+
+            currentAnalysisResults.forEach((change, index) => {
+                const row = document.createElement('tr');
+                const statusBadge = change.status || (change.isNewFile ? 'ADDED' : change.isDeletedFile ? 'DELETED' : 'MODIFIED');
+                
+                // Truncate path if too long
+                const displayPath = change.path.length > 80 ? '...' + change.path.substring(change.path.length - 80) : change.path;
+                
+                // Format Filters Badges
+                let filtersHtml = '-';
+                if (change.matchTypes && change.matchTypes.length > 0) {
+                    filtersHtml = change.matchTypes.map(t => {
+                        if (t === 'Smart XML') return '<span class="badge" style="background-color: #6f42c1;">Smart XML</span>';
+                        if (t === 'Content Filter') return '<span class="badge bg-secondary">Content Filter</span>';
+                        return `<span class="badge bg-light text-dark border">${t}</span>`;
+                    }).join(' ');
+                }
+                
+                // Ignored Lines Highlight
+                const ignoredClass = (change.ignoredLines > 0) ? 'bg-warning-subtle text-dark fw-bold' : '';
+
+                row.innerHTML = `
+                    <td><span class="badge ${change.type === 'CODE' ? 'bg-secondary' : 'bg-info'}">${change.type || 'CODE'}</span></td>
+                    <td class="font-monospace small" title="${change.path}">${displayPath}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-purple diff-view-btn" 
+                                onclick="showDiff(${index})"
+                                onmouseenter="showDiffPreview(this, ${index})" 
+                                onmouseleave="hideDiffPreview()">
+                            🔍 View
+                        </button>
+                    </td>
+                    <td><span class="badge bg-${statusBadge === 'MODIFIED' ? 'warning' : statusBadge === 'ADDED' ? 'success' : 'danger'}">${statusBadge}</span></td>
+                    <td>${formatLineChanges(change)}</td>
+                    <td class="${ignoredClass}">${change.ignoredLines || 0}</td>
+                    <td>${filtersHtml}</td>
+                    <td><span class="badge bg-${change.severity === 'HIGH' ? 'danger' : change.severity === 'MEDIUM' ? 'warning' : change.severity === 'LOW' ? 'success' : 'secondary'}">${change.severity || 'LOW'}</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+            
+            // Render Ignored/Blocked Files Section
+            const blockedSection = document.getElementById('blockedFilesSection');
+            const blockedTbody = document.getElementById('blockedFilesTableBody');
+            blockedTbody.innerHTML = '';
+            
+            if (data.ignoredFiles && data.ignoredFiles.length > 0) {
+                blockedSection.classList.remove('d-none');
+                data.ignoredFiles.forEach(path => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `<td class="font-monospace small text-muted"><i class="bi bi-file-earmark me-2"></i>${path}</td>`;
+                    blockedTbody.appendChild(row);
+                });
+            } else {
+                 blockedSection.classList.add('d-none');
+            }
+
+            // Update severity chart
+            updateSeverityChart(currentAnalysisResults);
+        }
+        
+        // (Old showDiff/showDiffPreview removed - using enhanced versions below)
+
+        
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // Helper to format Valid Lines with separate + and -
+        function formatLineChanges(change) {
+            const added = change.additions || 0;
+            const deleted = change.deletions || 0;
+            // If both are 0 but valid lines exist (legacy compatibility), use valid lines
+            if (added === 0 && deleted === 0 && change.validChangedLines > 0) {
+                return change.validChangedLines;
+            }
+            if (added === 0 && deleted === 0) return '0';
+            
+            return `<span class="text-success fw-bold">+${added}</span> <span class="text-muted mx-1">/</span> <span class="text-danger fw-bold">-${deleted}</span>`;
+        }
+
+
+
+        // Function to update severity chart
+        function updateSeverityChart(changes) {
+            const severityCounts = { HIGH: 0, MEDIUM: 0, LOW: 0 };
+            changes.forEach(c => {
+                // Only count severity for significant changes? Or all? Usually all visible ones
+                // Let's count all visible rows
+                const sev = c.severity || 'LOW';
+                severityCounts[sev] = (severityCounts[sev] || 0) + 1;
+            });
+            
+            const ctx = document.getElementById('severityChart');
+            if (ctx && window.Chart) {
+                if (window.severityChartInstance) {
+                    window.severityChartInstance.destroy();
+                }
+                window.severityChartInstance = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['High', 'Medium', 'Low'],
+                        datasets: [{
+                            data: [severityCounts.HIGH, severityCounts.MEDIUM, severityCounts.LOW],
+                            backgroundColor: ['#dc3545', '#ffc107', '#28a745']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '70%'
+                    }
+                });
+            }
+        }
+        
+        // Function to show diff
+        function showDiff(index) {
+            const change = currentAnalysisResults[index];
+            if (!change) return;
+            
+            // Fix: Use correct ID for modal element (bootstrap requires the main modal el)
+            const modalEl = document.getElementById('diffModal'); 
+            const modal = new bootstrap.Modal(modalEl);
+            
+            // Header Info
+            const sBranch = document.getElementById('sourceBranchSelect').value || 'Source';
+            const tBranch = document.getElementById('targetBranchSelect').value || 'Target';
+            const headerInfo = `<div class="mb-2 text-muted small">Comparing: <span class="fw-bold">${sBranch}</span> &rarr; <span class="fw-bold">${tBranch}</span></div>`;
+            
+            document.getElementById('diffModalTitle').innerHTML = `${escapeHtml(change.path)} <br>${headerInfo}`;
+            
+            // Fix: Use correct ID for content container (diffContainer)
+            const container = document.getElementById('diffContainer');
+            
+            if (change.diffContent) {
+                 // Custom Syntax Highlighting (Red/Green) + Dimming Ignored Sections
+                 const lines = change.diffContent.split('\n');
+                 let html = '<div class="font-monospace small" style="background-color: #f8f9fa; padding: 10px; border-radius: 5px; overflow-x: auto;">';
+                 
+                 let isIgnoredSection = false;
+                 
+                 lines.forEach(line => {
+                     const safeLine = escapeHtml(line);
+                     
+                     // Detect Separator
+                     if (line.includes('--- Ignored Semantic Matches ---')) {
+                         isIgnoredSection = true;
+                         html += `<div class="border-top border-bottom my-2 py-1 text-center small fw-bold" style="background-color: white; color: black;">${safeLine}</div>`;
+                         return;
+                     }
+                     
+                     let style = 'white-space: pre; display: block; width: 100%;';
+                     // if (isIgnoredSection) style += ' opacity: 0.6;';  // Disabled opacity as per request 
+                     
+                     if (line.startsWith('+') && !line.startsWith('+++')) {
+                         style += ' background-color: #d4edda; color: #155724;';
+                         html += `<div style="${style}">${safeLine}</div>`;
+                     } else if (line.startsWith('-') && !line.startsWith('---')) {
+                         style += ' background-color: #f8d7da; color: #721c24;';
+                         html += `<div style="${style}">${safeLine}</div>`;
+                     } else if (line.startsWith('@@')) {
+                         style += ' color: #6c757d; font-weight: bold; padding-top: 5px; padding-bottom: 5px;';
+                         html += `<div style="${style}">${safeLine}</div>`;
+                     } else {
+                         style += ' color: #212529;';
+                         html += `<div style="${style}">${safeLine}</div>`;
+                     }
+                 });
+                 html += '</div>';
+                 container.innerHTML = html;
+            } else {
+                 container.innerHTML = '<div class="alert alert-info m-3">No diff content available (Binary file or no changes recorded).</div>';
+            }
+
+            modal.show();
+        } 
+        
+        // --- Tooltip Logic (Enhanced) ---
+        let previewTooltip = null;
+
+        function showDiffPreview(btn, index) {
+            const change = currentAnalysisResults[index];
+            if (!change || !change.diffContent) return;
+
+            // Create Tooltip if missing
+            if (!previewTooltip) {
+                previewTooltip = document.createElement('div');
+                previewTooltip.className = 'card shadow-lg position-fixed border-0';
+                previewTooltip.style.zIndex = '9999';
+                previewTooltip.style.display = 'none';
+                previewTooltip.style.maxWidth = '90vw'; // Dynamic width constraint
+                previewTooltip.style.width = 'auto'; // Shrink to fit
+                previewTooltip.style.border = '1px solid #6f42c1'; // Purple border
+                document.body.appendChild(previewTooltip);
+            }
+
+            // Parse Diff (Limit lines)
+            const lines = change.diffContent.split('\n');
+            let html = '<div class="card-body p-2 font-monospace small bg-white text-nowrap rounded" style="overflow: auto; max-height: 400px;">'; // White bg
+            
+            let shownLines = 0;
+            const maxLines = 25; // Increased preview limit
+            let isIgnoredSection = false;
+            
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i];
+                if (shownLines >= maxLines) {
+                    html += `<div class="text-muted fst-italic text-center mt-1">... and ${lines.length - i} more lines (click View to see full diff) ...</div>`;
+                    break;
+                }
+                
+                // Detect Separator
+                if (line.includes('--- Ignored Semantic Matches ---')) {
+                    isIgnoredSection = true;
+                    html += `<div class="border-top border-bottom my-1 py-1 text-center small fw-bold" style="background-color: white; color: black;">${escapeHtml(line)}</div>`;
+                    shownLines++;
+                    continue;
+                }
+
+                // Skip headers unless they are semantic separators
+                if (line.startsWith('diff --git') || line.startsWith('index ') || line.startsWith('new file')) continue;
+
+                const safeLine = escapeHtml(line);
+                let style = 'white-space: pre; display: block;';
+                // if (isIgnoredSection) style += ' opacity: 0.5;'; // Disabled opactiy as per user request 
+
+                if (line.startsWith('+') && !line.startsWith('+++')) {
+                    style += ' color: #155724; background-color: #d4edda;'; 
+                    html += `<div style="${style}">${safeLine}</div>`;
+                    shownLines++;
+                } else if (line.startsWith('-') && !line.startsWith('---')) {
+                     style += ' color: #721c24; background-color: #f8d7da;';
+                     html += `<div style="${style}">${safeLine}</div>`;
+                     shownLines++;
+                } else if (line.startsWith('@@')) {
+                    html += `<div class="text-secondary fw-bold" style="${style}">${safeLine}</div>`;
+                    shownLines++;
+                }
+            }
+            html += '</div>';
+            previewTooltip.innerHTML = html;
+            previewTooltip.style.display = 'block';
+
+            // Positioning Logic (Initial)
+            const rect = btn.getBoundingClientRect();
+            updateTooltipPosition(rect, previewTooltip);
+            
+            // Attach move handler for dynamic following
+            btn.currentRect = rect; // trace
+        }
+
+        function hideDiffPreview() {
+            if (previewTooltip) {
+                previewTooltip.style.display = 'none';
+            }
+        }
+        
+        // Dynamic Positioning (Above Cursor Preferred)
+        document.addEventListener('mousemove', function(e) {
+             if (previewTooltip && previewTooltip.style.display === 'block') {
+                 // Calculate desired position (Above, centered on X usually, but simple offset is fine)
+                 // e.clientY is cursor Y.
+                 const tooltipHeight = previewTooltip.offsetHeight;
+                 let top = e.clientY - tooltipHeight - 15; // 15px above cursor
+                 
+                 // If top goes off-screen, flip to bottom
+                 if (top < 10) {
+                     top = e.clientY + 20;
+                 }
+                 
+                 let left = e.clientX + 15;
+                 // Ensure doesn't overflow right
+                 if (left + previewTooltip.offsetWidth > window.innerWidth) {
+                     left = window.innerWidth - previewTooltip.offsetWidth - 10;
+                 }
+                 
+                 previewTooltip.style.top = top + 'px';
+                 previewTooltip.style.left = left + 'px';
+             }
+        });
+        
+        // Fetch UI Config for footer
+        fetch(getBasePath() + '/api/config/ui')
+            .then(response => response.json())
+            .then(config => {
+                if (config['ui.footer.text']) {
+                    const footerEl = document.getElementById('footerText');
+                    if (footerEl) footerEl.innerHTML = config['ui.footer.text'];
+                }
+            })
+            .catch(err => console.error('Failed to load UI config:', err));
+
+        // --- Resizer Logic ---
+        const resizer = document.getElementById('dragMe');
+        const leftPanel = document.getElementById('leftPanel');
+        let x = 0;
+        let leftWidth = 0;
+
+        const mouseDownHandler = function (e) {
+            x = e.clientX;
+            leftWidth = leftPanel.getBoundingClientRect().width;
+            resizer.classList.add('resizing');
+            document.addEventListener('mousemove', mouseMoveHandler);
+            document.addEventListener('mouseup', mouseUpHandler);
+            document.body.style.userSelect = 'none';
+        };
+        
+        const mouseMoveHandler = function (e) {
+            const dx = e.clientX - x;
+            const newLeftWidth = leftWidth + dx;
+            leftPanel.style.width = newLeftWidth + 'px';
+        };
+        
+        const mouseUpHandler = function () {
+            resizer.classList.remove('resizing');
+            document.removeEventListener('mousemove', mouseMoveHandler);
+            document.removeEventListener('mouseup', mouseUpHandler);
+            document.body.style.userSelect = '';
+        };
+
+        if (resizer) resizer.addEventListener('mousedown', mouseDownHandler);
+        
+        // --- Clear Form Function ---
+        function clearForm() {
+            document.getElementById('analysisForm').reset();
+            document.getElementById('repoListContainer').classList.add('d-none');
+            document.getElementById('sourceBranchSelect').innerHTML = '';
+            document.getElementById('targetBranchSelect').innerHTML = '';
+            document.getElementById('configSourceSelect').innerHTML = '<option value="" selected>Config Base</option>';
+            document.getElementById('configTargetSelect').innerHTML = '<option value="" selected>Config Feature</option>';
+            document.getElementById('resultsPlaceholder').classList.remove('d-none');
+            document.getElementById('resultsSection').classList.add('d-none');
+        }
+        
+        // --- Export to CSV Function ---
+        function exportToCSV() {
+            const tbody = document.getElementById('filesTableBody');
+            if (!tbody || tbody.children.length === 0) {
+                alert('No data to export');
+                return;
+            }
+            
+            let csv = 'Type,File Path,Status,Valid Lines,Ignored Lines,Severity\n';
+            Array.from(tbody.children).forEach(row => {
+                const cells = row.querySelectorAll('td');
+                // Adjust indices based on new columns
+                // 0: Type (Icon), 1: Path, 2: Status, 3: Valid (Formatted), 4: Ignored, 5: Severity, 6: Action
+                const type = cells[0].textContent.trim() || 'CODE'; // Fallback
+                const path = cells[1].textContent.trim();
+                const status = cells[2].textContent.trim();
+                const validLines = cells[3].textContent.trim().replace(/\s+/g, ' '); // Clean formatting
+                const ignoredLines = cells[4].textContent.trim();
+                const severity = cells[5].textContent.trim();
+                csv += `"${type}","${path}","${status}","${validLines}","${ignoredLines}","${severity}"\n`;
+            });
+            
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'analysis_report_' + new Date().toISOString().slice(0,10) + '.csv';
+            a.click();
+            window.URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>

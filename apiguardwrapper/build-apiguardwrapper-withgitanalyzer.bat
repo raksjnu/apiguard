@@ -1,10 +1,11 @@
 @echo off
 REM ===================================================================
-REM ApiGuard Wrapper - Build Script with GitAnalyzer
+REM ApiGuard Wrapper - Simple Build Script with GitAnalyzer
 REM ===================================================================
 REM This script:
-REM 1. Builds and Installs GitAnalyzer (Dependency)
-REM 2. Builds the ApiGuardWrapper Mule application
+REM 1. Builds and Installs GitAnalyzer JAR (includes web assets)
+REM 2. Copies JAR to lib folder
+REM 3. Builds the ApiGuardWrapper Mule application
 REM ===================================================================
 
 setlocal
@@ -36,8 +37,8 @@ echo.
 REM Step 1: Build & Install GitAnalyzer
 echo [1/2] Building ^& Installing GitAnalyzer...
 echo ============================================================
-if exist "%SCRIPT_DIR%..\gitanalyzer" (
-    cd /d "%SCRIPT_DIR%..\gitanalyzer"
+if exist "%SCRIPT_DIR%..\\gitanalyzer" (
+    cd /d "%SCRIPT_DIR%..\\gitanalyzer"
     call mvn clean install -DskipTests
     
     if errorlevel 1 (
@@ -50,11 +51,23 @@ if exist "%SCRIPT_DIR%..\gitanalyzer" (
     REM Copy gitanalyzer JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying gitanalyzer JAR to lib folder...
-    REM Try copying from target first as it is reliable for shaded/non-shaded logic in this context
-    REM But following pattern uses .m2. Let's use target if available for simplicity or specific logic
-    cmd /c "if exist "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" (copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\gitanalyzer-1.0.0.jar" >nul && echo [INFO] gitanalyzer-1.0.0.jar copied successfully || echo [WARN] Failed to copy gitanalyzer JAR) else (echo [WARN] gitanalyzer JAR not found in target)"
+    if exist "%SCRIPT_DIR%..\\gitanalyzer\\target\\gitanalyzer-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\\gitanalyzer\\target\\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\\gitanalyzer-1.0.0.jar" >nul
+        if errorlevel 1 (
+            echo [ERROR] Failed to copy gitanalyzer JAR
+            pause
+            exit /b 1
+        )
+        echo [INFO] gitanalyzer-1.0.0.jar copied successfully
+        echo [INFO] Web assets are included in the JAR - no separate copy needed
+    ) else (
+        echo [ERROR] gitanalyzer JAR not found in target
+        pause
+        exit /b 1
+    )
+
 ) else (
-    echo [ERROR] GitAnalyzer project not found at ..\gitanalyzer
+    echo [ERROR] GitAnalyzer project not found at ..\\gitanalyzer
     pause
     exit /b 1
 )

@@ -298,7 +298,7 @@
         <!-- Footer -->
         <footer class="raks-footer text-center mt-auto flex-shrink-0 w-100">
             <div class="container" id="footerText">
-                &copy; 2026 RAKS - Enterprise API Solution Suite - ApiGuard
+                &copy; 2018 RAKS - Enterprise API Solution Suite - ApiGuard
             </div>
         </footer>
     </div>
@@ -440,6 +440,19 @@
 
         const providerSelect = document.getElementById('gitProviderSelect');
         const tokenInput = document.getElementById('gitTokenInput');
+
+        // --- UI Config Loading ---
+        document.addEventListener('DOMContentLoaded', () => {
+             fetch('/apiguard/gitanalyzer/api/config/ui')
+                .then(response => response.json())
+                .then(config => {
+                    if (config['ui.footer.text']) {
+                        const footerEl = document.getElementById('footerText');
+                        if (footerEl) footerEl.innerHTML = config['ui.footer.text'];
+                    }
+                })
+                .catch(err => console.warn('Failed to load UI config:', err));
+        });
 
         // Restore Provider/Token
         if (providerSelect && tokenInput) {
@@ -802,6 +815,11 @@
                 }
                 
                 const result = await response.json();
+
+                // Check for Backend Error returned as JSON
+                if (result.error) {
+                    throw new Error(result.error);
+                }
                 
                 // Show success state briefly
                 document.getElementById('analyzingBody').classList.add('d-none');

@@ -1,0 +1,256 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+	xmlns="http://www.mulesoft.org/schema/mule/core" 
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:java="http://www.mulesoft.org/schema/mule/java"
+	xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:file="http://www.mulesoft.org/schema/mule/file"
+
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- Configuration for GitAnalyzer Properties (Externalized) -->
+    <!-- Ideally validation of properties happens in ConfigManager via the bridge -->
+
+	<!-- Flow for GitAnalyzer UI Static Resources -->
+	<flow name="gitanalyzer-ui-flow">
+		<http:listener path="/gitanalyzer/web/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
+			<http:response>
+				<http:headers><![CDATA[#[
+                    {
+                        "Content-Type": vars.mimeType default "text/html",
+                        "Cache-Control": "no-cache, no-store, must-revalidate"
+                    }
+                ]]]></http:headers>
+			</http:response>
+		</http:listener>
+		
+		<set-variable variableName="resourcePath" value="#[attributes.relativePath replace '/gitanalyzer/web/' with '']"/>
+		
+        <set-variable variableName="mimeType" value="#[
+            if (vars.resourcePath endsWith '.css') 'text/css'
+            else if (vars.resourcePath endsWith '.js') 'application/javascript'
+            else if (vars.resourcePath endsWith '.png') 'image/png'
+            else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
+            else 'text/html'
+        ]"/>
+		
+		<!-- Load from apiguardwrapper/src/main/resources/web/gitanalyzer -->
+        <file:read path="#[p('gitanalyzer.web.dir') ++ '/' ++ vars.resourcePath]" config-ref="File_Config"/>
+	</flow>
+
+    <!-- Configure UI Endpoint -->
+	<flow name="gitanalyzer-config-flow">
+		<http:listener path="/gitanalyzer/api/config/ui" config-ref="HTTP_Listener_config" allowedMethods="GET">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+		
+        <!-- Sync Configuration from Mule Properties to Java -->
+        <ee:transform doc:name="Sync Config">
+             <ee:message>
+                 <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    "ui.footer.text": p('gitanalyzer.ui.footer.text'),
+    "ui.index.analysis.title": p('gitanalyzer.ui.index.analysis.title'),
+    "ui.index.analysis.desc": p('gitanalyzer.ui.index.analysis.desc'),
+    "ui.index.search.title": p('gitanalyzer.ui.index.search.title'),
+    "ui.index.search.desc": p('gitanalyzer.ui.index.search.desc'),
+    "ui.index.bulk.title": p('gitanalyzer.ui.index.bulk.title'),
+    "ui.index.bulk.desc": p('gitanalyzer.ui.index.bulk.desc'),
+    "ui.header.analysis": p('gitanalyzer.ui.header.analysis'),
+    "ui.header.search": p('gitanalyzer.ui.header.search'),
+    "ui.header.bulk": p('gitanalyzer.ui.header.bulk'),
+    "ui.header.guide": p('gitanalyzer.ui.header.guide'),
+    "severity.threshold.low": p('gitanalyzer.severity.threshold.low'),
+    "severity.threshold.medium": p('gitanalyzer.severity.threshold.medium'),
+    "gitlab.url": p('gitanalyzer.gitlab.url'),
+    "gitlab.group": p('gitanalyzer.gitlab.group'),
+    "github.url": p('gitanalyzer.github.url'),
+    "github.owner": p('gitanalyzer.github.owner')
+}]]></ee:set-payload>
+             </ee:message>
+        </ee:transform>
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="updateConfig(java.util.Map)">
+            <java:args>#[{
+                arg0: payload
+            }]</java:args>
+        </java:invoke-static>
+
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="getUIConfig()"/>
+        
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+    <!-- Analyze Endpoint -->
+    <flow name="gitanalyzer-analyze-flow">
+		<http:listener path="/gitanalyzer/api/analyze" config-ref="HTTP_Listener_config" allowedMethods="POST">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+
+        <!-- Pass Payload Map to Java Bridge -->
+        <logger level="INFO" doc:name="Debug Logger" message="#[output application/java --- 'GitAnalyzer Analysis Request - Headers: ' ++ write(attributes.headers default {}, 'application/json') ++ ' Payload: ' ++ write(payload default {}, 'application/json')]"/>
+        <ee:transform doc:name="JSON to Java Map">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {
+    "token": (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token')),
+    "gitProvider": (attributes.headers['x-git-provider'] default p('gitanalyzer.gitlab.provider'))
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeAnalysis(java.util.Map)">
+            <java:args>#[{
+                arg0: payload
+            }]</java:args>
+        </java:invoke-static>
+        
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+
+
+
+    <!-- Repo Discovery Endpoint (List Repos) -->
+    <flow name="gitanalyzer-repo-list-flow">
+		<http:listener path="/gitanalyzer/api/download/list" config-ref="HTTP_Listener_config" allowedMethods="GET">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+        <logger level="INFO" doc:name="Log Request" message="#['GitAnalyzer: Fetching Repos for Group: ' ++ (attributes.queryParams.group default 'None')]"/>
+
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeRepoDiscovery(java.lang.String,java.lang.String,java.lang.String)">
+            <java:args>#[{
+                arg0: attributes.queryParams.group as String default null,
+                arg1: attributes.queryParams.filter as String default null,
+                arg2: (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token'))
+            }]</java:args>
+        </java:invoke-static>
+        
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+
+    <!-- Branch Discovery Endpoint -->
+    <flow name="gitanalyzer-branch-list-flow">
+		<http:listener path="/gitanalyzer/api/download/branches" config-ref="HTTP_Listener_config" allowedMethods="GET">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeBranchDiscovery(java.lang.String,java.lang.String)">
+            <java:args>#[{
+                arg0: attributes.queryParams.repo as String default "",
+                arg1: (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token'))
+            }]</java:args>
+        </java:invoke-static>
+        
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+
+    <!-- Search Endpoint -->
+    <flow name="gitanalyzer-search-flow">
+		<http:listener path="/gitanalyzer/api/search" config-ref="HTTP_Listener_config" allowedMethods="POST">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+
+        <ee:transform doc:name="JSON to Java Map">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {"token": (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token'))}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeSearch(java.util.Map)">
+            <java:args>#[{
+                arg0: payload
+            }]</java:args>
+        </java:invoke-static>
+        
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+
+
+
+    <!-- Bulk Download Endpoint -->
+    <flow name="gitanalyzer-bulk-download-flow">
+		<http:listener path="/gitanalyzer/api/download" config-ref="HTTP_Listener_config" allowedMethods="POST">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+
+        <ee:transform doc:name="JSON to Java Map">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload ++ {"token": (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token'))}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeBulkDownload(java.util.Map)">
+            <java:args>#[{
+                arg0: payload
+            }]</java:args>
+        </java:invoke-static>
+        
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+    </flow>
+
+</mule>

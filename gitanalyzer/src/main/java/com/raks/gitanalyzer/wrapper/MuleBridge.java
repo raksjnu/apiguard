@@ -17,9 +17,21 @@ import java.io.File;
  */
 public class MuleBridge {
 
-    // Cache service instance if needed, or create per request
-    // Since AnalyzerService is lightweight, creating per request is fine.
-    
+    /**
+     * Updates configuration properties dynamically.
+     */
+    public static void updateConfig(Map<String, Object> config) {
+        if (config != null) {
+            Map<String, String> stringProps = new HashMap<>();
+            for (Map.Entry<String, Object> entry : config.entrySet()) {
+                if (entry.getValue() != null) {
+                    stringProps.put(entry.getKey(), String.valueOf(entry.getValue()));
+                }
+            }
+            ConfigManager.setAll(stringProps);
+        }
+    }
+
     /**
      * Invokes the main analysis flow.
      * @param params Map containing request parameters (from Mule payload)
@@ -39,28 +51,22 @@ public class MuleBridge {
             String configTargetBranch = (String) params.get("configTargetBranch");
             boolean ignoreAttributeOrder = Boolean.TRUE.equals(params.get("ignoreAttributeOrder"));
 
+            // Extract Token and Provider
+            String token = (String) params.get("token");
+            if (token == null || token.isBlank()) {
+                token = (String) params.get("gitToken");
+            }
+            String providerType = (String) params.get("gitProvider");
+
             // Parse patterns
             List<String> filePatterns = parsePatterns(ignorePatternsStr);
             List<String> contentPatterns = parsePatterns(contentPatternsStr);
 
-            // Determine Provider
-            String providerType = ConfigManager.get("git.provider", "gitlab");
-            GitProvider provider;
-            
-            // Allow override via params for flexibility
-            if (params.containsKey("gitProvider")) {
-                providerType = (String) params.get("gitProvider");
-            }
-
-            if ("github".equalsIgnoreCase(providerType)) {
-                provider = new GitHubProvider();
-            } else {
-                provider = new GitLabProvider();
-            }
+            GitProvider provider = getProvider(token, providerType);
 
             // Normalization Logic (reused from AnalysisResource)
             String defaultGroup = "";
-            if ("github".equalsIgnoreCase(providerType)) {
+            if (provider instanceof GitHubProvider) {
                 defaultGroup = ConfigManager.get("github.owner");
             } else {
                 String fullGroup = ConfigManager.get("gitlab.group");
@@ -84,7 +90,10 @@ public class MuleBridge {
         } catch (Exception e) {
             e.printStackTrace();
             AnalysisResult errorResult = new AnalysisResult();
-            errorResult.setError("Bridge Analysis Failed: " + e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : e.toString();
+            // Sanitize message to prevent JSON issues
+            msg = msg.replaceAll("[\\n\\r\\t]", " ");
+            errorResult.setError("Bridge Analysis Failed: " + msg);
             return errorResult;
         }
     }
@@ -97,23 +106,27 @@ public class MuleBridge {
     }
     
     /**
-     * Helper to get provider based on config.
+     * Helper to get provider based on config or override.
      */
-    private static GitProvider getProvider() {
-        String providerType = ConfigManager.get("git.provider", "gitlab");
+    private static GitProvider getProvider(String token, String providerOverride) {
+        String providerType = providerOverride;
+        if (providerType == null || providerType.isBlank()) {
+            providerType = ConfigManager.get("git.provider", "gitlab");
+        }
+        
         if ("github".equalsIgnoreCase(providerType)) {
-            return new GitHubProvider();
+            return new GitHubProvider(token);
         } else {
-            return new GitLabProvider();
+            return new GitLabProvider(token);
         }
     }
 
     /**
      * Bridges /api/download/list (Repo Discovery)
      */
-    public static Map<String, Object> invokeRepoDiscovery(String groupName, String filterPattern) {
+    public static Map<String, Object> invokeRepoDiscovery(String groupName, String filterPattern, String token) {
         try {
-            GitProvider provider = getProvider();
+            GitProvider provider = getProvider(token, null);
             
             // Default group logic
             if (groupName == null || groupName.isBlank()) {
@@ -156,12 +169,12 @@ public class MuleBridge {
     /**
      * Bridges /api/download/branches
      */
-    public static Object invokeBranchDiscovery(String repoName) {
+    public static Object invokeBranchDiscovery(String repoName, String token) {
          try {
             if (repoName == null || repoName.isBlank()) {
                  return Map.of("error", "Repo name is required");
             }
-            GitProvider provider = getProvider();
+            GitProvider provider = getProvider(token, null);
             return provider.listBranches(repoName);
         } catch (Exception e) {
             e.printStackTrace();
@@ -178,7 +191,9 @@ public class MuleBridge {
             String token = params.get("token");
             String path = params.get("path");
             
-            GitProvider provider = getProvider();
+            if (token == null) token = params.get("gitToken");
+
+            GitProvider provider = getProvider(token, null);
             com.raks.gitanalyzer.core.SearchService service = new com.raks.gitanalyzer.core.SearchService(provider);
             List<com.raks.gitanalyzer.core.SearchService.SearchResult> serviceResults;
 
@@ -201,7 +216,6 @@ public class MuleBridge {
             
         } catch (Exception e) {
             e.printStackTrace();
-            // Return empty list or handle error gracefully in Mule
             return Collections.emptyList();
         }
     }
@@ -211,6 +225,9 @@ public class MuleBridge {
      */
     public static Map<String, Object> invokeBulkDownload(Map<String, Object> request) {
         try {
+            String token = (String) request.get("token");
+            if (token == null) token = (String) request.get("gitToken");
+
             // "repos" parsing
             Object reposObj = request.get("repos");
             List<String> repos = new ArrayList<>();
@@ -244,8 +261,6 @@ public class MuleBridge {
                  return Map.of("error", "No repositories specified");
             }
 
-            // Target Directory Logic used in standalone is simpler, ensuring it works inside Mule
-            // We use the temp dir from ConfigManager which respects app.home
             String customPath = (String) request.get("outputDir");
             File bulkDir;
             if (customPath != null && !customPath.isBlank()) {
@@ -255,9 +270,8 @@ public class MuleBridge {
             }
             if (!bulkDir.exists()) bulkDir.mkdirs();
 
-            GitProvider provider = getProvider();
+            GitProvider provider = getProvider(token, null);
             List<Map<String, String>> results = new ArrayList<>();
-            // AtomicInteger successCount = new AtomicInteger(0);
             int successCount = 0;
             boolean multiBranch = branches.size() > 1;
 
@@ -270,7 +284,6 @@ public class MuleBridge {
                     String displayBranch = (branch == null) ? "Default" : branch;
                     
                     try {
-                        // Folder name strategy
                         String folderName = baseFolderName;
                         if (multiBranch) {
                             folderName += "_" + displayBranch.replace("/", "-");
@@ -278,9 +291,7 @@ public class MuleBridge {
                         
                         File repoDir = new File(bulkDir, folderName);
                         
-                        // Sanitize repo name for provider methods if needed (e.g. adding group)
-                        // Similar to invokeAnalysis logic
-                         String fullRepoName = repoName;
+                        String fullRepoName = repoName;
                          if (!repoName.contains("/")) {
                              if (provider instanceof GitHubProvider) {
                                 String owner = ConfigManager.get("github.owner");
@@ -288,7 +299,6 @@ public class MuleBridge {
                              } else {
                                 String group = ConfigManager.get("gitlab.group");
                                 if (group != null) {
-                                     // Extract last part if it is a url
                                      if (group.contains("/")) group = group.substring(group.lastIndexOf("/") + 1);
                                      fullRepoName = group + "/" + repoName;
                                 }

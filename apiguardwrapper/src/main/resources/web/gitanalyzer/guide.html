@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Guide - GitAnalyzer</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="assets/css/styles.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+</head>
+<body class="bg-light guide-body">
+
+    <div class="raks-full-screen">
+        <!-- Navigation -->
+        <nav class="navbar navbar-expand-lg navbar-light brand-header mb-4">
+            <div class="container-fluid position-relative">
+                <a class="navbar-brand fw-bold d-flex align-items-center" href="index.html">
+                    <img src="assets/images/logo.png" alt="Logo" width="40" height="40" class="d-inline-block align-text-top me-2">
+                    ApiGuard Portal - GitAnalyzer
+                </a>
+                
+                <!-- Centered Title -->
+                <div class="position-absolute start-50 translate-middle-x d-none d-lg-block">
+                    <h5 class="fw-bold text-purple mb-0">User Guide</h5>
+                </div>
+
+                <div class="d-flex">
+                    <a href="index.html" class="btn btn-outline-light ghost-btn">Dashboard</a>
+                </div>
+            </div>
+        </nav>
+    
+        <div class="container flex-grow-1 mb-5">
+            <div class="row">
+                <!-- Sidebar TOC -->
+                <div class="col-md-3">
+                    <div class="list-group guide-sidebar sticky-top" style="top: 2rem;">
+                        <a href="#about" class="list-group-item list-group-item-action active">About GitAnalyzer</a>
+                        <a href="#legend" class="list-group-item list-group-item-action">Status & Legend</a>
+                        <a href="#analysis" class="list-group-item list-group-item-action">Analysis Tool</a>
+                        <a href="#search" class="list-group-item list-group-item-action">Git Search</a>
+                        <a href="#bulk" class="list-group-item list-group-item-action">Bulk Download</a>
+                    </div>
+                </div>
+    
+                <!-- Content -->
+                <div class="col-md-9">
+                    
+                    <!-- About -->
+                    <section id="about" class="raks-card">
+                        <h2 class="text-purple border-bottom pb-2 mb-3">About GitAnalyzer</h2>
+                        <p class="lead text-muted">Enterprise-Grade Semantic Code Analysis</p>
+                        <p>GitAnalyzer is an advanced comparison engine designed to understand the <strong>intent</strong> of code changes, not just textual differences. Unlike traditional diff tools that flag extensive false positives due to formatting, attribute reordering, or noise, GitAnalyzer focuses on what matters: specific logic, configuration, and structural integrity.</p>
+                        
+                        <h5 class="text-purple mt-4 mb-3">Key Capabilities</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <div class="sub-frame h-100">
+                                    <h6 class="fw-bold"><i class="bi bi-arrows-angle-contract me-2"></i>Semantic XML/JSON Compare</h6>
+                                    <p class="small mb-0">Intelligently compares structured data. 
+                                    <br><code>&lt;tag a="1" b="2"/&gt;</code> is treated as identical to <code>&lt;tag b="2" a="1"/&gt;</code>. This eliminates noise in migration audits where tools may reorder attributes.</p>
+                                </div>
+                            </div>
+                             <div class="col-md-6">
+                                <div class="sub-frame h-100">
+                                    <h6 class="fw-bold"><i class="bi bi-funnel me-2"></i>Noise Reduction</h6>
+                                    <p class="small mb-0">Define powerful Regex patterns to ignore irrelevant changes like timestamps, generated IDs, or comments, allowing you to focus on actual regressions.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sub-frame h-100">
+                                    <h6 class="fw-bold"><i class="bi bi-diagram-2 me-2"></i>Multi-Repo Awareness</h6>
+                                    <p class="small mb-0">Simultaneously analyzes paired repositories (e.g. Code vs Configuration) to ensure total environment consistency across releases.</p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="sub-frame h-100">
+                                    <h6 class="fw-bold"><i class="bi bi-file-earmark-text me-2"></i>Audit-Ready Reporting</h6>
+                                    <p class="small mb-0">Generates comprehensive, immutable reports with categorized severity (Critical, Modified, Config), suitable for compliance and release sign-offs.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+    
+                    <!-- Legend -->
+                    <section id="legend" class="raks-card">
+                        <h3 class="text-purple border-bottom pb-2 mb-3">Status Legend & Colors</h3>
+                        <table class="table table-hover align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 200px;">Badge / Indicator</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><span class="badge bg-code"><i class="bi bi-code-slash"></i> CODE</span></td>
+                                    <td>File belongs to the main source code (Logic/Flows). Color: <span class="badge bg-code">Dark Cyan</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-config"><i class="bi bi-gear"></i> CONFIG</span></td>
+                                    <td>File belongs to configuration (properties, yaml, pom). Color: <span class="badge bg-config">Light Blue</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-modified">MODIFIED</span></td>
+                                    <td>File exists in both but content changed. Color: <span class="badge bg-modified">Blue</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-success">NEW</span></td>
+                                    <td>File exists only in the Featured/Target branch.</td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-deleted">DELETED</span></td>
+                                    <td>File removed (exists only in Base). Color: <span class="badge bg-deleted">Red</span></td>
+                                </tr>
+                                <tr>
+                                    <td><span class="badge bg-critical">CRITICAL</span></td>
+                                    <td>High severity change requiring review. Color: <span class="badge bg-critical">Orange-Red</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </section>
+    
+                    <!-- Analysis -->
+                    <section id="analysis" class="raks-card">
+                        <h3 class="text-purple border-bottom pb-2 mb-3">Comparison Analysis Tool</h3>
+                        <p>Compare two branches (Base vs Head) to see what changed.</p>
+                        <ul>
+                            <li><strong>Repositories:</strong> Auto-fetches available repos from the configured directory.</li>
+                            <li><strong>Branches:</strong> Select Base (Source) and Head (Target) branches.</li>
+                            <li><strong>Smart Compare:</strong> Ignores whitespace and designated patterns (e.g., `app.home`).</li>
+                        </ul>
+                    </section>
+    
+                    <!-- Search -->
+                    <section id="search" class="raks-card">
+                        <h3 class="text-purple border-bottom pb-2 mb-3">Git Search</h3>
+                        <p>Search for code patterns using Regex across repositories.</p>
+                        <ul>
+                            <li><strong>Local Mode:</strong> Search within downloaded repositories.</li>
+                            <li><strong>Remote Mode:</strong> Search directly on GitLab using API (Requires Token).</li>
+                        </ul>
+                    </section>
+    
+                    <!-- Bulk -->
+                    <section id="bulk" class="raks-card">
+                        <h3 class="text-purple border-bottom pb-2 mb-3">Bulk Download</h3>
+                        <p>Download multiple repositories simultaneously based on Group or Regex Filter.</p>
+                        <div class="alert alert-info small">Useful for setting up a workspace for the first time.</div>
+                    </section>
+    
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="raks-footer text-center mt-auto">
+             <div class="container" id="footerText">
+                &copy; 2026 RAKS - Enterprise API Solution Suite - ApiGuard
+            </div>
+        </footer>
+    </div>
+    
+    <script>
+        fetch('/api/config/ui').then(r=>r.json()).then(c=>{
+            if(c['ui.footer.text']) document.getElementById('footerText').innerText=c['ui.footer.text'];
+        });
+
+        // Force Scroll to Top on Load (ignores hash)
+        window.addEventListener('load', function() {
+            setTimeout(() => {
+                const container = document.querySelector('.container.flex-grow-1');
+                if(container) container.scrollTop = 0;
+                window.scrollTo(0, 0);
+            }, 10);
+        });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Fetch UI Config
+        document.addEventListener('DOMContentLoaded', function() {
+            fetch('/api/config/ui')
+                .then(response => response.json())
+                .then(config => {
+                    // Update Header Title if specific guide property exists, or fallback
+                    if (config['ui.header.guide']) {
+                        const headerTitle = document.querySelector('.navbar .position-absolute h5');
+                        if (headerTitle) headerTitle.textContent = config['ui.header.guide'];
+                    }
+                    if (config['ui.header.guide']) {
+                         document.title = config['ui.header.guide'] + " - GitAnalyzer";
+                    }
+                })
+                .catch(err => console.error('Error loading UI config:', err));
+        });
+    </script>
+</body>
+</html>

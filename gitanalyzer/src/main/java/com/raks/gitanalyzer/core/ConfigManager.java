@@ -77,4 +77,18 @@ public class ConfigManager {
         }
         return result;
     }
+
+    public static void set(String key, String value) {
+        if (value != null) {
+            properties.setProperty(key, value);
+        }
+    }
+
+    public static void setAll(java.util.Map<String, String> map) {
+        if (map != null) {
+            map.forEach((k, v) -> {
+                if (v != null) properties.setProperty(k, v);
+            });
+        }
+    }
 }
