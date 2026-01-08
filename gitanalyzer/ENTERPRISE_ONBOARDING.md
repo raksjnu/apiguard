@@ -56,8 +56,10 @@ All dependencies are from trusted, widely-used open-source projects:
 ```mermaid
 graph TB
     subgraph "User Interface Layer"
-        GUI[Web GUI<br/>Spark Java Server (Port 6060)]
-        CLI[Command Line Interface<br/>Picocli]
+        GUI["Web GUI
+        Spark Java Server (Port 6060)"]
+        CLI["Command Line Interface
+        Picocli"]
     end
     
     subgraph "Core Business Logic"
@@ -73,8 +75,10 @@ graph TB
     end
     
     subgraph "External Systems"
-        GitHost[Remote Git Server<br/>(GitLab/GitHub)]
-        FS[Local File System<br/>Temp Repos]
+        GitHost["Remote Git Server
+        (GitLab/GitHub)"]
+        FS["Local File System
+        Temp Repos"]
     end
     
     GUI --> AS
