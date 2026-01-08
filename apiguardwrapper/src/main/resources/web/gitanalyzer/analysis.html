@@ -269,8 +269,8 @@
                     </div>
 
                     <!-- Blocked Files Section (Moved Inside Results) -->
-                    <div id="blockedFilesSection" class="card shadow-sm mb-5 border-danger animate-fade-in d-none">
-                        <div class="card-header bg-danger text-white py-2">
+                    <div id="blockedFilesSection" class="card shadow-sm mb-5 d-none" style="border-color: #663399;">
+                        <div class="card-header text-white py-2" style="background-color: #663399;">
                             <h6 class="mb-0 fw-bold"><i class="bi bi-slash-circle me-2"></i>Files Blocked by Glob Ignore Pattern</h6>
                         </div>
                         <div class="card-body p-0">
@@ -878,6 +878,12 @@
 
             currentAnalysisResults.forEach((change, index) => {
                 const row = document.createElement('tr');
+                
+                // Highlight row if ignored lines exist (e.g. Smart XML) or filters applied
+                if ((change.ignoredLines && change.ignoredLines > 0) || (change.matchTypes && change.matchTypes.length > 0)) {
+                    row.style.backgroundColor = '#fff9c4'; // Light Yellow Highlight
+                }
+                
                 const statusBadge = change.status || (change.isNewFile ? 'ADDED' : change.isDeletedFile ? 'DELETED' : 'MODIFIED');
                 
                 // Truncate path if too long

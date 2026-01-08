@@ -270,6 +270,9 @@ public class AnalyzerService {
         
         // Reconstruct Diff Content if Smart XML was active AND we have ignored lines
         // Only trigger this reconstruction if we actually did semantic separation to improve readability
+        // Reconstruct Diff Content if Smart XML was active AND we have ignored lines
+        // Only trigger this reconstruction if we actually did semantic separation to improve readability
+        /* DISABLE DIFF RECONSTRUCTION TO PRESERVE CONTEXT (PER USER REQUEST)
         if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
             StringBuilder newDiff = new StringBuilder();
             
@@ -294,6 +297,7 @@ public class AnalyzerService {
             
             change.setDiffContent(newDiff.toString());
         }
+        */
 
         change.setValidChangedLines(valid);
         change.setIgnoredLines(ignored);
