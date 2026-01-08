@@ -62,7 +62,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 		<set-variable variableName="sessionId" value="#[attributes.queryParams.session default '']"/>
 		
 		<!-- Prepare Tool URLs with Session ID - use & to preserve existing params like ?type=mule -->
-		<set-variable variableName="tool1Url" value="#[p('tool.1.url') ++ (if (vars.sessionId != '') '&amp;session=' ++ vars.sessionId else '')]"/>
+		<set-variable variableName="tool1Url" value="#[p('tool.1.url') ++ (if (vars.sessionId != '') '?session=' ++ vars.sessionId else '')]"/>
 		<set-variable variableName="tool2Url" value="#[p('tool.2.url') ++ (if (vars.sessionId != '') '&amp;session=' ++ vars.sessionId else '')]"/>
 		<set-variable variableName="tool3Url" value="#[p('tool.3.url') ++ (if (vars.sessionId != '') '&amp;session=' ++ vars.sessionId else '')]"/>
 		<set-variable variableName="tool6Url" value="#[p('tool.6.url') ++ (if (vars.sessionId != '') '?session=' ++ vars.sessionId else '')]"/>
