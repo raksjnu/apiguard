@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <DeploymentDescriptors xmlns="http://www.tibco.com/xmlns/dd">
     <name>customerOrder</name>
-    <version>5</version>
+    <version>1</version>
     <owner>Rakesh.Kumar@ibm.com</owner>
     <creationDate>12/23/25, 9:17 AM</creationDate>
     <isApplicationArchive>true</isApplicationArchive>
