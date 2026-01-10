@@ -1099,22 +1099,16 @@ output text/plain
                         <set-variable variableName="reportDirName" value="#[(vars.storedPath splitBy '||')[1]]"/>
                         
                         <!-- The ZIP is created at projectPath/reportDirName.zip -->
-                        <!-- But projectPath might be like: workDir/sessionId/extractedFolder -->
-                        <!-- The ZIP is actually at: workDir/sessionId/extractedFolder/reportDirName.zip -->
-                        <!-- Which is exactly projectPath/reportDirName.zip -->
-                        <!-- BUT from error, it seems projectPath has extra folder. Let's use parent. -->
-                        
-                        <!-- Actually, let's check if the file exists at projectPath/reportDirName.zip first -->
-                        <!-- If not, try parent directory -->
                         <set-variable variableName="zipFilePath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
                         
-                        <!-- Try to read, if fails, will go to error handler -->
+                        <!-- Try to read, if fails, try parent directory -->
                         <try>
                             <file:read path="#[vars.zipFilePath]" config-ref="File_Config"/>
                             <error-handler>
                                 <on-error-continue type="FILE:ILLEGAL_PATH,FILE:FILE_DOESNT_EXIST">
-                                    <!-- Try parent directory -->
-                                    <set-variable variableName="parentPath" value="#[vars.projectPath substringBeforeLast '/']"/>
+                                    <!-- Get parent path by splitting and rejoining -->
+                                    <set-variable variableName="pathParts" value="#[vars.projectPath splitBy '/']"/>
+                                    <set-variable variableName="parentPath" value="#[(vars.pathParts[0 to -2]) joinBy '/']"/>
                                     <set-variable variableName="zipFilePath" value="#[vars.parentPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
                                     <file:read path="#[vars.zipFilePath]" config-ref="File_Config"/>
                                 </on-error-continue>
