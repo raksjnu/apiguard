@@ -73,12 +73,14 @@ public class ExecutePanel extends JPanel {
         
         configLoadPanel.add(pathPanel, BorderLayout.NORTH);
         
-        // Config info area
-        configInfoArea = new JTextArea(3, 40);
+        // Config info area - INCREASED HEIGHT for better visibility
+        configInfoArea = new JTextArea(8, 40); // Increased from 3 to 8 rows
         configInfoArea.setEditable(false);
         configInfoArea.setFont(new Font("Consolas", Font.PLAIN, 11));
-        configInfoArea.setText("No configuration loaded.\\nYou can load a saved configuration or use mappings from the Mapping tab.");
-        configLoadPanel.add(new JScrollPane(configInfoArea), BorderLayout.CENTER);
+        configInfoArea.setText("No configuration loaded.\nYou can load a saved configuration or use mappings from the Mapping tab.");
+        JScrollPane configScrollPane = new JScrollPane(configInfoArea);
+        configScrollPane.setPreferredSize(new Dimension(0, 150)); // Set minimum height
+        configLoadPanel.add(configScrollPane, BorderLayout.CENTER);
         
         // Execution controls panel (always visible at bottom of config section)
         JPanel execControlPanel = new JPanel(new BorderLayout(10, 5));
