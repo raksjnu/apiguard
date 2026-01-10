@@ -559,7 +559,7 @@ output application/json indent=false
         <logger level="INFO" message="#['DEBUG: Attach Decision - Reports: ' ++ vars.shouldAttachReports ++ ', Input: ' ++ vars.shouldAttachInput ++ ' (Path: ' ++ (vars.zipFilePath default 'None') ++ '), Project: ' ++ vars.shouldAttachProject]"/>    
 
         <!-- Prepare email attachments and calculate total size -->
-        <set-variable variableName="emailAttachments" value="#[{ 'logo.png': readUrl('classpath://web/logo.png', 'application/octet-stream') }]"/>
+        <set-variable variableName="emailAttachments" value="#[{ 'logo.png': readUrl('classpath://web/muleguard/logo.png', 'application/octet-stream') }]"/>
         <set-variable variableName="totalAttachmentSize" value="#[0]"/>
         <set-variable variableName="tempAttachments" value="#[[]]"/>
         
@@ -991,7 +991,7 @@ output text/plain
     <!-- NEW FLOW: Serve Generated Reports from Filesystem -->
     <flow name="report-serving-flow">
         <http:listener path="/muleguard/reports/{sessionId}/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
-            <http:response>
+            <http:response statusCode="#[vars.httpStatus default 200]">
                 <http:headers><![CDATA[#[
                     output application/java
                     ---
@@ -1005,22 +1005,37 @@ output text/plain
         <set-variable variableName="sessionId" value="#[attributes.uriParams.sessionId]"/>
         <set-variable variableName="resourcePath" value="#[attributes.relativePath replace ('/muleguard/reports/' ++ vars.sessionId ++ '/') with '']"/>
         
-        <!-- Construct absolute path to file in session workspace -->
-        <set-variable variableName="workDir" value="#[p('muleguard.work.dir')]"/>
-        <set-variable variableName="filePath" value="#[vars.workDir ++ '/' ++ vars.sessionId ++ '/' ++ vars.resourcePath]"/>
+        <!-- Retrieve Project Path from Object Store (Handles dynamic subfolder structure) -->
+        <os:retrieve key="#[vars.sessionId]" objectStore="Report_Path_Store" target="storedPath">
+            <os:default-value>null</os:default-value>
+        </os:retrieve>
         
-        <!-- Determine MIME type -->
-        <set-variable variableName="mimeType" value="#[
-            if (vars.resourcePath endsWith '.html') 'text/html; charset=UTF-8'
-            else if (vars.resourcePath endsWith '.css') 'text/css; charset=UTF-8'
-            else if (vars.resourcePath endsWith '.js') 'application/javascript; charset=UTF-8'
-            else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
-            else if (vars.resourcePath endsWith '.png') 'image/png'
-            else if (vars.resourcePath endsWith '.jpg') 'image/jpeg'
-            else 'application/octet-stream'
-        ]"/>
+        <choice>
+            <when expression="#[vars.storedPath != null]">
+                <!-- storedPath format: projectPath || reportDirName -->
+                <set-variable variableName="projectPath" value="#[(vars.storedPath splitBy '||')[0]]"/>
+                <!-- Resource path includes report dir name, so we just append it to project root -->
+                <set-variable variableName="filePath" value="#[vars.projectPath ++ '/' ++ vars.resourcePath]"/>
+                
+                <!-- Determine MIME type -->
+                <set-variable variableName="mimeType" value="#[
+                    if (vars.resourcePath endsWith '.html') 'text/html; charset=UTF-8'
+                    else if (vars.resourcePath endsWith '.css') 'text/css; charset=UTF-8'
+                    else if (vars.resourcePath endsWith '.js') 'application/javascript; charset=UTF-8'
+                    else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
+                    else if (vars.resourcePath endsWith '.png') 'image/png'
+                    else if (vars.resourcePath endsWith '.jpg') 'image/jpeg'
+                    else 'application/octet-stream'
+                ]"/>
 
-        <file:read path="#[vars.filePath]" config-ref="File_Config"/>
+                <file:read path="#[vars.filePath]" config-ref="File_Config"/>
+            </when>
+            <otherwise>
+                <!-- Session not found or expired -->
+                <set-payload value="Session expired or invalid"/>
+                <set-variable variableName="httpStatus" value="404"/>
+            </otherwise>
+        </choice>
     </flow>
 
     <!-- NEW FLOW: Download ZIP -->
