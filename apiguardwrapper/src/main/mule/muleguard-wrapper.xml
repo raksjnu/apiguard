@@ -1097,9 +1097,29 @@ output text/plain
                         <!-- storedPath format: projectPath || reportDirName -->
                         <set-variable variableName="projectPath" value="#[(vars.storedPath splitBy '||')[0]]"/>
                         <set-variable variableName="reportDirName" value="#[(vars.storedPath splitBy '||')[1]]"/>
+                        
+                        <!-- The ZIP is created at projectPath/reportDirName.zip -->
+                        <!-- But projectPath might be like: workDir/sessionId/extractedFolder -->
+                        <!-- The ZIP is actually at: workDir/sessionId/extractedFolder/reportDirName.zip -->
+                        <!-- Which is exactly projectPath/reportDirName.zip -->
+                        <!-- BUT from error, it seems projectPath has extra folder. Let's use parent. -->
+                        
+                        <!-- Actually, let's check if the file exists at projectPath/reportDirName.zip first -->
+                        <!-- If not, try parent directory -->
                         <set-variable variableName="zipFilePath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
                         
-                        <file:read path="#[vars.zipFilePath]" config-ref="File_Config"/>
+                        <!-- Try to read, if fails, will go to error handler -->
+                        <try>
+                            <file:read path="#[vars.zipFilePath]" config-ref="File_Config"/>
+                            <error-handler>
+                                <on-error-continue type="FILE:ILLEGAL_PATH,FILE:FILE_DOESNT_EXIST">
+                                    <!-- Try parent directory -->
+                                    <set-variable variableName="parentPath" value="#[vars.projectPath substringBeforeLast '/']"/>
+                                    <set-variable variableName="zipFilePath" value="#[vars.parentPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
+                                    <file:read path="#[vars.zipFilePath]" config-ref="File_Config"/>
+                                </on-error-continue>
+                            </error-handler>
+                        </try>
                     </when>
                     <otherwise>
                         <logger level="ERROR" message="Session path not found in ObjectStore"/>
