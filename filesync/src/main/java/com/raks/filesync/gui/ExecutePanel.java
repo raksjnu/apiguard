@@ -198,12 +198,34 @@ public class ExecutePanel extends JPanel {
     
     private void displayConfigInfo(MappingConfig config, String source) {
         StringBuilder info = new StringBuilder();
-        info.append("Configuration loaded successfully!\\n");
-        info.append("Source: ").append(source).append("\\n\\n");
-        info.append("Version: ").append(config.getVersion()).append("\\n");
-        info.append("Source Directory: ").append(config.getPaths().getSourceDirectory()).append("\\n");
-        info.append("Target Directory: ").append(config.getPaths().getTargetDirectory()).append("\\n");
-        info.append("File Mappings: ").append(config.getFileMappings().size()).append("\\n");
+        info.append("Configuration loaded successfully!\n");
+        info.append("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n");
+        
+        info.append("Source: ").append(source).append("\n");
+        info.append("Version: ").append(config.getVersion()).append("\n\n");
+        
+        info.append("Directories:\n");
+        info.append("  • Source: ").append(config.getPaths().getSourceDirectory()).append("\n");
+        info.append("  • Target: ").append(config.getPaths().getTargetDirectory()).append("\n\n");
+        
+        info.append("File Mappings: ").append(config.getFileMappings().size()).append(" mapping(s)\n");
+        
+        // Show first few mappings as preview
+        int previewCount = Math.min(3, config.getFileMappings().size());
+        if (previewCount > 0) {
+            info.append("\nPreview:\n");
+            for (int i = 0; i < previewCount; i++) {
+                var mapping = config.getFileMappings().get(i);
+                info.append("  ").append(i + 1).append(". ")
+                    .append(mapping.getSourceFile())
+                    .append(" → ")
+                    .append(mapping.getTargetFile())
+                    .append(" (").append(mapping.getFieldMappings().size()).append(" fields)\n");
+            }
+            if (config.getFileMappings().size() > 3) {
+                info.append("  ... and ").append(config.getFileMappings().size() - 3).append(" more\n");
+            }
+        }
         
         configInfoArea.setText(info.toString());
         
@@ -250,11 +272,18 @@ public class ExecutePanel extends JPanel {
         SwingWorker<MappingExecutor.ExecutionResult, String> worker = new SwingWorker<>() {
             @Override
             protected MappingExecutor.ExecutionResult doInBackground() {
-                publish("=== TRANSFORMATION STARTED ===");
-                publish("Source Directory: " + finalConfig.getPaths().getSourceDirectory());
-                publish("Target Directory: " + finalConfig.getPaths().getTargetDirectory());
-                publish("File Mappings: " + finalConfig.getFileMappings().size());
+                publish("═══════════════════════════════════════════════════════");
+                publish("  TRANSFORMATION STARTED");
+                publish("═══════════════════════════════════════════════════════");
                 publish("");
+                publish("Configuration:");
+                publish("  Source Directory: " + finalConfig.getPaths().getSourceDirectory());
+                publish("  Target Directory: " + finalConfig.getPaths().getTargetDirectory());
+                publish("  File Mappings: " + finalConfig.getFileMappings().size());
+                publish("");
+                publish("───────────────────────────────────────────────────────");
+                publish("");
+                
                 MappingExecutor executor = new MappingExecutor();
                 return executor.execute(finalConfig);
             }
@@ -271,42 +300,45 @@ public class ExecutePanel extends JPanel {
                 try {
                     MappingExecutor.ExecutionResult result = get();
                     
-                    // Display results with full paths
+                    // Display results with clear formatting
                     log("");
-                    log("=== EXECUTION SUMMARY ===");
+                    log("═══════════════════════════════════════════════════════");
+                    log("  EXECUTION SUMMARY");
+                    log("═══════════════════════════════════════════════════════");
+                    log("");
                     log(result.getSummary());
                     log("");
                     
                     if (!result.getSuccesses().isEmpty()) {
-                        log("SUCCESSES:");
+                        log("✓ SUCCESSES:");
+                        log("───────────────────────────────────────────────────────");
                         for (String success : result.getSuccesses()) {
-                            log("  ✓ " + success);
-                            // Add full path info
-                            if (success.contains("Processed")) {
-                                String targetDir = finalConfig.getPaths().getTargetDirectory();
-                                log("    Target: " + targetDir);
-                            }
+                            log("  " + success);
                         }
+                        log("");
                     }
                     
                     if (!result.getWarnings().isEmpty()) {
-                        log("");
-                        log("WARNINGS:");
+                        log("⚠ WARNINGS:");
+                        log("───────────────────────────────────────────────────────");
                         for (String warning : result.getWarnings()) {
-                            log("  ⚠ " + warning);
+                            log("  " + warning);
                         }
+                        log("");
                     }
                     
                     if (!result.getErrors().isEmpty()) {
-                        log("");
-                        log("ERRORS:");
+                        log("✗ ERRORS:");
+                        log("───────────────────────────────────────────────────────");
                         for (String error : result.getErrors()) {
-                            log("  ✗ " + error);
+                            log("  " + error);
                         }
+                        log("");
                     }
                     
-                    log("");
-                    log("=== TRANSFORMATION COMPLETE ===");
+                    log("═══════════════════════════════════════════════════════");
+                    log("  TRANSFORMATION COMPLETE");
+                    log("═══════════════════════════════════════════════════════");
                     
                     progressBar.setIndeterminate(false);
                     progressBar.setValue(100);
@@ -325,7 +357,9 @@ public class ExecutePanel extends JPanel {
                     }
                     
                 } catch (Exception e) {
-                    log("ERROR: Execution failed - " + e.getMessage());
+                    log("");
+                    log("✗ ERROR: Execution failed");
+                    log("  " + e.getMessage());
                     e.printStackTrace();
                     
                     JOptionPane.showMessageDialog(ExecutePanel.this,
@@ -346,8 +380,13 @@ public class ExecutePanel extends JPanel {
     }
     
     private void log(String message) {
-        String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
-        logArea.append("[" + timestamp + "] " + message + "\\n");
+        // Add timestamp only for major sections
+        if (message.contains("═══") || message.contains("STARTED") || message.contains("COMPLETE")) {
+            String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+            logArea.append("[" + timestamp + "] " + message + "\n");
+        } else {
+            logArea.append(message + "\n");
+        }
         logArea.setCaretPosition(logArea.getDocument().getLength());
     }
     
