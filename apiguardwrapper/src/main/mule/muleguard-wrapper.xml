@@ -317,7 +317,8 @@ output application/java
                             <file:delete path="#[vars.workingDir]" config-ref="File_Config"/>
                             <logger level="INFO" message="#['Deleted existing working directory: ' ++ vars.workingDir]"/>
                             <error-handler>
-                                <on-error-continue type="ANY">
+                                <on-error-continue type="ANY" logException="false">
+                                    <!-- Use lower log level since this is expected on first run -->
                                     <logger level="DEBUG" message="Working directory does not exist yet or cannot be deleted (ignoring error)"/>
                                 </on-error-continue>
                             </error-handler>

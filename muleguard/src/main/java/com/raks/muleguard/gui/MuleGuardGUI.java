@@ -169,17 +169,17 @@ public class MuleGuardGUI {
                     if ("local".equals(mode)) {
                         projectPath = (String) params.get("path");
                     } else if ("zip".equals(mode) || "jar".equals(mode)) {
-                        File uploadFile = (File) params.get("archive");
-                        if (uploadFile != null) {
-                            Path extractPath;
-                            if ("zip".equals(mode)) {
-                                extractPath = ArchiveExtractor.extractZip(uploadFile.toPath(), sessionId, appTempDir);
-                            } else {
-                                extractPath = ArchiveExtractor.extractJar(uploadFile.toPath(), sessionId, appTempDir);
+                            File uploadFile = (File) params.get("archive");
+                            if (uploadFile != null) {
+                                String extractPath;
+                                if ("zip".equals(mode)) {
+                                    extractPath = ArchiveExtractor.extractZip(uploadFile.toPath(), sessionId, appTempDir);
+                                } else {
+                                    extractPath = ArchiveExtractor.extractJar(uploadFile.toPath(), sessionId, appTempDir);
+                                }
+                                projectPath = extractPath;
                             }
-                            projectPath = extractPath.toString();
                         }
-                    }
 
                     if (projectPath != null) {
                         logger.info("Running validation on: {}", projectPath);

@@ -69,14 +69,19 @@
             background-color: var(--truist-purple-light);
         }
 
-        .dashboard-button {
+        .top-nav-container {
             position: absolute;
             top: 20px;
             right: 40px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .top-nav-button {
             background-color: var(--truist-purple);
             color: var(--text-white);
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -88,7 +93,7 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .dashboard-button:hover {
+        .top-nav-button:hover {
             background-color: var(--truist-purple-light);
         }
     </style>
@@ -97,11 +102,10 @@
 <body>
     <div class="report-container">
         <!-- Buttons container to manage absolute positioning easily -->
-        <div class="header-buttons">
-            <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button"
-                title="Return to main dashboard">← Dashboard</a>
-            <a href="/muleguard/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
-                style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+        <div class="top-nav-container">
+            <a href="index.html" id="dashboardBtn" class="top-nav-button"
+                title="Return to home">🏠 Home</a>
+            <a href="help.html" class="top-nav-button">Help</a>
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
             <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">

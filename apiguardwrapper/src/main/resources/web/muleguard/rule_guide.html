@@ -108,15 +108,21 @@
       position: relative;
     }
 
-    /* Dashboard Button - Consistent with Report style */
-    .dashboard-button {
+    /* Top Nav Button Style */
+    .top-nav-container {
       position: absolute;
       top: 20px;
       right: 40px;
+      display: flex;
+      gap: 10px;
+      z-index: 100;
+    }
+
+    .top-nav-button {
       background-color: var(--truist-purple);
       color: var(--text-white);
       border: none;
-      padding: 10px 20px;
+      padding: 8px 16px;
       text-align: center;
       text-decoration: none;
       display: inline-block;
@@ -126,10 +132,9 @@
       border-radius: 5px;
       transition: background-color 0.3s ease;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-      Z-index: 100;
     }
 
-    .dashboard-button:hover {
+    .top-nav-button:hover {
       background-color: var(--truist-purple-light);
     }
 
@@ -278,11 +283,8 @@
   </div>
   <div class="resizer" id="resizer"></div>
   <div class="main-content">
-    <div class="header-buttons">
-      <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button" title="Return to main dashboard">←
-        Dashboard</a>
-      <a href="/muleguard/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
-        style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+    <div class="top-nav-container">
+      <a href="index.html" id="dashboardBtn" class="top-nav-button" title="Return to home">🏠 Home</a>
     </div>
     <div class="report-container">
       <div id='CLIENTIDMAP_VALIDATOR' class='rule-content' style='display: block;'>

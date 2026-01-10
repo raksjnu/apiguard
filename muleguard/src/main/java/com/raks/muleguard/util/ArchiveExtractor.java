@@ -31,7 +31,7 @@ public class ArchiveExtractor {
      * @return Path to the extracted project root
      * @throws IOException if extraction fails
      */
-    public static Path extractZip(Path zipPath, String sessionId, String baseTempDir) throws IOException {
+    public static String extractZip(Path zipPath, String sessionId, String baseTempDir) throws IOException {
         logger.info("Extracting ZIP file: {}", zipPath);
         Path tempDir = createTempDirectory(sessionId, baseTempDir);
 
@@ -59,11 +59,11 @@ public class ArchiveExtractor {
 
         Path projectRoot = findProjectRoot(tempDir);
         logger.info("ZIP extracted successfully. Project root: {}", projectRoot);
-        return projectRoot;
+        return projectRoot.toString();
     }
 
     // Overload for String path (Wrapper compatibility)
-    public static Path extractZip(String zipPath, String sessionId, String baseTempDir) throws IOException {
+    public static String extractZip(String zipPath, String sessionId, String baseTempDir) throws IOException {
         return extractZip(Paths.get(zipPath), sessionId, baseTempDir);
     }
 
@@ -76,7 +76,7 @@ public class ArchiveExtractor {
      * @return Path to the extracted project root
      * @throws IOException if extraction fails
      */
-    public static Path extractZip(InputStream zipStream, String sessionId, String baseTempDir) throws IOException {
+    public static String extractZip(InputStream zipStream, String sessionId, String baseTempDir) throws IOException {
         logger.info("Extracting ZIP from stream for session: {}", sessionId);
         
         // Save stream to temporary file first
@@ -104,7 +104,7 @@ public class ArchiveExtractor {
      * @return Path to the extracted project root
      * @throws IOException if extraction fails or JAR is invalid
      */
-    public static Path extractJar(Path jarPath, String sessionId, String baseTempDir) throws IOException {
+    public static String extractJar(Path jarPath, String sessionId, String baseTempDir) throws IOException {
         logger.info("Extracting JAR file: {}", jarPath);
         Path tempDir = createTempDirectory(sessionId, baseTempDir);
         boolean foundMuleSrc = false;
@@ -147,11 +147,11 @@ public class ArchiveExtractor {
 
         Path projectRoot = findProjectRoot(tempDir);
         logger.info("JAR extracted successfully. Project root: {}", projectRoot);
-        return projectRoot;
+        return projectRoot.toString();
     }
 
     // Overload for String path (Wrapper compatibility)
-    public static Path extractJar(String jarPath, String sessionId, String baseTempDir) throws IOException {
+    public static String extractJar(String jarPath, String sessionId, String baseTempDir) throws IOException {
         return extractJar(Paths.get(jarPath), sessionId, baseTempDir);
     }
 
@@ -164,7 +164,7 @@ public class ArchiveExtractor {
      * @return Path to the extracted project root
      * @throws IOException if extraction fails
      */
-    public static Path extractJar(InputStream jarStream, String sessionId, String baseTempDir) throws IOException {
+    public static String extractJar(InputStream jarStream, String sessionId, String baseTempDir) throws IOException {
         logger.info("Extracting JAR from stream for session: {}", sessionId);
         
         // Save stream to temporary file first

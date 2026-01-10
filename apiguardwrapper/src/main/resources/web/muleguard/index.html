@@ -5,16 +5,75 @@
     <meta charset="UTF-8">
     <title>MuleGuard - Validation Tool</title>
     <style>
+
         body {
-            background-color: #f0f0f0;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             margin: 0;
             padding: 0;
+            background-color: #f5f5f5;
+            color: #333;
         }
 
+        /* Modal Styles */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+            position: relative;
+        }
+
+        /* Progress Bar Styles */
+        .progress-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            margin-top: 20px;
+            height: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background-color: #663399;
+            width: 0%;
+            transition: width 0.4s ease;
+        }
+        
+        .progress-bar.indeterminate {
+            width: 100%;
+            background: linear-gradient(45deg, #663399 25%, #7a4bb8 25%, #7a4bb8 50%, #663399 50%, #663399 75%, #7a4bb8 75%, #7a4bb8);
+            background-size: 40px 40px;
+            animation: progress-stripe 1s linear infinite;
+        }
+        
+        @keyframes progress-stripe {
+            0% { background-position: 40px 0; }
+            100% { background-position: 0 0; }
+        }
+
+        /* Header & Container (Keep existing) */
+        /* Header & Container - Restored to Original 'Boxed' Style */
         .container {
             background: white;
-            border: 5px solid #663399;
+            border: 5px solid #663399; /* The solid purple line requested */
             border-radius: 8px;
             padding: 40px;
             margin: 50px auto;
@@ -25,225 +84,111 @@
         .logo {
             text-align: center;
             margin-bottom: 20px;
+            /* Reset flex properties from previous unwanted edit */
+            display: block;
+            width: auto;
+            height: auto;
+            background-color: transparent; 
         }
 
         .logo img {
             height: 80px;
             margin-bottom: 10px;
+            max-width: none;
+            max-height: none;
         }
 
         h1 {
             color: #663399;
             margin: 10px 0;
             text-align: center;
+            font-size: 32px; /* Restored larger size */
         }
-
+        
         .subtitle {
             color: #666;
             text-align: center;
             margin-bottom: 30px;
             font-size: 16px;
         }
-
-        .mode-selector {
-            margin: 30px 0;
-            padding: 20px;
-            background: #f9f9f9;
-            border-radius: 6px;
+        
+        /* Form Elements */
+        .card { background: white; border-radius: 8px; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); margin-bottom: 20px; border-top: 4px solid #663399; }
+        .section-title { font-size: 18px; margin-bottom: 20px; color: #663399; font-weight: 600; display: flex; align-items: center; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 8px; font-weight: 500; }
+        input[type="text"], input[type="file"] { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; box-sizing: border-box; }
+        .btn-primary { background-color: #663399; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: 600; width: 100%; transition: background 0.2s; }
+        .btn-primary:hover { background-color: #552b80; }
+        .btn-primary:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        .radio-group { display: flex; gap: 20px; margin-bottom: 20px; }
+        .radio-option { display: flex; align-items: center; cursor: pointer; padding: 10px 15px; border: 1px solid #ddd; border-radius: 4px; transition: all 0.2s; }
+        .radio-option:hover { background-color: #f9f4ff; border-color: #d1b3ff; }
+        .radio-option.selected { background-color: #f3e5ff; border-color: #663399; color: #663399; font-weight: 500; }
+        .radio-input { margin-right: 10px; }
+        
+        .helper-text { font-size: 12px; color: #666; margin-top: 5px; }
+        .badge-coming-soon { background: #eee; color: #666; font-size: 10px; padding: 2px 6px; border-radius: 10px; margin-left: 5px; }
+        
+        /* Utility Classes */
+        .hidden { display: none !important; }
+        
+        /* Compatibility Mappings */
+        .optional-section, .mode-selector { 
+            background: #f0f0ff; 
+            border-radius: 4px; 
+            padding: 20px; 
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+            margin-bottom: 20px; 
+            border-left: 5px solid #663399; 
+            border-top: none;
         }
-
-        .mode-selector label {
-            display: block;
-            margin: 15px 0;
-            font-size: 16px;
-            cursor: pointer;
+        
+        button { 
+            background-color: #663399; 
+            color: white; 
+            border: none; 
+            padding: 12px 24px; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 16px; 
+            font-weight: 600; 
+            width: 100%; 
+            transition: background 0.2s; 
+            margin-top: 10px;
         }
-
-        input[type="radio"] {
-            margin-right: 10px;
-        }
-
-        input[type="text"],
-        input[type="file"] {
-            width: 100%;
-            padding: 15px;
-            margin: 10px 0;
-            border: 2px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-            box-sizing: border-box;
-            transition: border-color 0.3s;
-        }
-
-        input[type="text"]:focus {
-            outline: none;
-            border-color: #663399;
-        }
-
-        .optional-section {
-            margin: 20px 0;
-            padding: 15px;
-            background: #f0f0ff;
-            border-left: 4px solid #663399;
-            border-radius: 4px;
-        }
-
-        .optional-section label {
-            font-weight: bold;
-            color: #663399;
-        }
-
-        button {
-            background: #663399;
-            color: white;
-            padding: 15px 40px;
-            font-size: 18px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            width: 100%;
-            margin-top: 20px;
-            transition: background 0.3s;
-        }
-
-        button:hover {
-            background: #7d4fb2;
-        }
-
-        button:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-        }
-
-        .button-group {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            justify-content: space-between;
-        }
-
+        button:hover { background-color: #552b80; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        
+        /* Nav Buttons */
         .nav-button {
             background: #663399;
             color: white;
-            padding: 12px 10px;
-            font-size: 16px;
-            font-weight: bold;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: center;
+            padding: 10px 15px;
             text-decoration: none;
-            flex: 1;
-            transition: background 0.3s;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-        }
-
-        .nav-button:hover {
-            background: #7d4fb2;
-        }
-
-        .hidden {
-            display: none;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #663399;
-        }
-
-        .disabled-label {
-            color: #ccc;
-            cursor: not-allowed !important;
-        }
-
-        /* Custom Modal Dialog */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .modal-dialog {
-            background: white;
-            border-radius: 8px;
-            padding: 0;
-            max-width: 600px;
-            width: 90%;
-            border: 3px solid #663399;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-        }
-
-        .modal-header {
-            background: #663399;
-            color: white;
-            padding: 12px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            border-radius: 5px 5px 0 0;
-        }
-
-        .modal-header img {
-            height: 24px;
-            width: auto;
-        }
-
-        .modal-body {
-            padding: 25px 30px;
-            font-size: 14px;
-            line-height: 1.6;
-        }
-
-        .modal-body a {
-            color: #0078d4;
-            text-decoration: none;
-            font-weight: bold;
-        }
-
-        .modal-body a:hover {
-            text-decoration: underline;
-        }
-
-        .modal-footer {
-            padding: 15px 30px;
-            text-align: center;
-            border-top: 1px solid #ddd;
-            background: #f9f9f9;
-        }
-
-        .modal-button {
-            background: #0078d4;
-            color: white;
-            border: none;
-            padding: 6px 20px;
             border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-            min-width: 80px;
+            font-weight: bold;
+            font-size: 14px;
+            display: inline-block;
+            text-align: center;
         }
-
-        .modal-button:hover {
-            background: #005a9e;
-        }
+        .button-group { display: flex; gap: 10px; margin-top: 20px; justify-content: center; }
     </style>
 </head>
 
 <body>
-    <div class="container">
+    <div class="container" style="position: relative;">
+        <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
+            <a id="linkChecklist" href="checklist.html" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
+            <a id="linkRules" href="rule_guide.html" class="nav-button" title="Guide to all MuleGuard validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
+            <a id="linkHelp" href="help.html" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
+        </div>
+
         <div class="logo">
             <!-- Logo path will be adjusted by JS if needed -->
-            <img id="logoImg" src="/apiguard/muleguard/web/logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;"
-                 onerror="this.src='/logo.svg'; this.onerror=null;">
+            <img id="logoImg" src="logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;"
+                 onerror="this.style.display='none'; this.parentNode.innerText='MuleGuard';">
             <h1>MuleGuard</h1>
         </div>
 
@@ -299,8 +244,8 @@
         <!-- JAR File Input -->
         <div id="jarInput" class="optional-section hidden">
             <label>Select Archive File:</label>
-            <input type="file" id="jarFile" accept=".jar,.ear,.war">
-            <small>Supported formats: .jar (Mule App), .ear (TIBCO), .war</small>
+            <input type="file" id="jarFile" accept=".jar">
+            <small>Supported formats: .jar (Mule App)</small>
         </div>
 
         <!-- Custom Rules Input -->
@@ -344,12 +289,7 @@
 
         <button id="runBtn" onclick="runValidation()">&#128640; Run MuleGuard</button>
 
-        <div class="button-group">
-            <a id="linkChecklist" href="#" class="nav-button" title="View all validation checklist items">Checklist</a>
-            <a id="linkRunbook" href="#" class="nav-button" title="Project Runbook">Runbook</a>
-            <a id="linkRules" href="#" class="nav-button" title="Guide to all MuleGuard validation rules">Rule Guide</a>
-            <a id="linkHelp" href="#" class="nav-button" title="View help and documentation">Help</a>
-        </div>
+
 
         <div id="loading" class="hidden loading">
             <p>&#8987; Running validation...</p>
@@ -456,6 +396,17 @@
             });
         }
 
+        function showProgress(show, title = "Validating Project...", text = "Running comprehensive analysis...") {
+            const modal = document.getElementById('progressModal');
+            if (show) {
+                document.getElementById('progressTitle').innerText = title;
+                document.getElementById('progressText').innerText = text;
+                modal.style.display = 'flex';
+            } else {
+                modal.style.display = 'none';
+            }
+        }
+
         function runValidation() {
             const radio = document.querySelector('input[name="mode"]:checked');
             if (!radio) {
@@ -479,20 +430,23 @@
                     return;
                 }
                 formData.append('path', path);
+                showProgress(true, "Scanning Local Project", "Analyzing files in " + path + "...");
             } else if (mode === 'zip') {
                 const file = document.getElementById('zipFile').files[0];
                 if (!file) {
                     showAlert('Please select a ZIP file');
                     return;
                 }
-                formData.append('archive', file); // Unified field name 'archive'
+                formData.append('archive', file); 
+                showProgress(true, "Uploading & Scanning", "Uploading " + file.name + " and running analysis...");
             } else if (mode === 'jar') {
                 const file = document.getElementById('jarFile').files[0];
                 if (!file) {
                     showAlert('Please select a JAR/Archive file');
                     return;
                 }
-                formData.append('archive', file); // Unified field name 'archive'
+                formData.append('archive', file);
+                showProgress(true, "Uploading & Scanning", "Uploading " + file.name + " and running analysis...");
             }
 
             // Custom rules
@@ -507,7 +461,6 @@
             formData.append('attachProject', document.getElementById('attachProject').checked);
 
             // UI State
-            document.getElementById('loading').classList.remove('hidden');
             document.getElementById('runBtn').disabled = true;
 
             // API Call
@@ -517,70 +470,89 @@
             })
             .then(response => response.json())
             .then(data => {
-                document.getElementById('loading').classList.add('hidden');
+                showProgress(false); // Hide progress
                 document.getElementById('runBtn').disabled = false;
                 
-                if (data.status === 'success' || data.success === true) { // Handle both response formats
+                if (data.status === 'success' || data.success === true) {
                     handleSuccess(data, mode, sessionId);
                 } else {
                     showAlert('Error: ' + (data.message || 'Unknown error occurred'));
                 }
             })
             .catch(error => {
+                showProgress(false); // Hide progress
                 showAlert('Network Error: ' + error.message);
-                document.getElementById('loading').classList.add('hidden');
                 document.getElementById('runBtn').disabled = false;
             });
         }
-
+        
         function handleSuccess(data, mode, sessionId) {
-            let message = '';
-            const reportPath = data.reportPath || data.reportsPath;
-            const serverSessionId = data.sessionId || sessionId;
+            // Use the session ID returned from the server if the initial one was null
+            const activeSessionId = data.sessionId || sessionId;
 
-            if (mode === 'zip' || mode === 'jar' || (isWrapper && mode !== 'local')) {
-                // Browser-based report link
-                const reportUrl = `${CONFIG.resourceBase.replace('/web', '')}/reports/${serverSessionId}/CONSOLIDATED-REPORT.html`;
+            let message = '';
+            // Basic report link logic
+            const reportName = data.reportFolder || 'validation-report';
+            const resourceBase = CONFIG.resourceBase;
+            const openReportUrl = resourceBase + '/' + reportName + '/report.html';
+            
+            if (mode === 'local') {
+                // Escape path for string literal usage in onclick
+                const safePath = data.reportPath.replace(/\\/g, '\\\\');
                 
                 message = `
-                    <div style="text-align: center;">
-                        <div style="font-size: 18px; margin-bottom: 20px; color: #28a745; font-weight: bold;">
-                            ✅ Validation Complete!
-                        </div>
-                        <div style="margin-bottom: 15px;">
-                            <a href="${reportUrl}" target="_blank" 
-                               style="display: inline-block; background: #28a745; color: white; text-decoration: none; padding: 10px 20px; border-radius: 4px; font-weight: bold;">
-                                &#128202; View Report
-                            </a>
-                        </div>
-                        <div style="font-size: 12px; color: #666;">
-                            Session ID: ${serverSessionId}
-                        </div>
+                    <p>&#9989; <strong>Validation Complete!</strong></p>
+                    <p>Report generated at: <br><code>${data.reportPath}</code></p>
+                    <div style="margin-top:20px;">
+                        <button class="btn-primary" onclick="openLocalReportApi('${safePath}')">Open Report in Browser</button>
                     </div>
                 `;
             } else {
-                // Local file path
-                const normalizedPath = reportPath.replace(/\\/g, '/');
+                // ZIP/JAR mode uses the server's relative URL if available, or constructs one
+                // The backend now returns 'relativeReportUrl' which is safer
+                let finalUrl = openReportUrl;
+                if (data.relativeReportUrl) {
+                    finalUrl = CONFIG.baseUrl + '/reports/' + activeSessionId + '/' + data.relativeReportUrl;
+                }
+
                 message = `
-                    <div style="text-align: center;">
-                        <div style="font-size: 18px; margin-bottom: 20px; color: #28a745; font-weight: bold;">
-                            ✅ Validation Complete!
-                        </div>
-                        <div style="background: #f9f4ff; padding: 10px; border: 1px solid #663399; border-radius: 4px; margin-bottom: 15px; word-break: break-all;">
-                            ${normalizedPath}
-                        </div>
-                        <button onclick="copyToClipboard('${normalizedPath.replace(/'/g, "\\'")}')" 
-                                style="background: #0078d4; color: white; padding: 5px 15px; font-size: 13px;">
-                            📋 Copy Path
-                        </button>
-                    </div>
+                    <p>&#9989; <strong>Validation Complete!</strong></p>
+                    <p>Report has been generated.</p>
+                    <div style="margin-top:15px; display:flex; flex-direction:column; gap:10px;">
+                        <button class="btn-primary" onclick="window.open('${finalUrl}', '_blank')">View Report Online</button>
                 `;
+                
+                if (data.reportZip) {
+                    message += `<button class="btn-primary" style="background:#555;" onclick="window.location.href='${CONFIG.baseUrl}/download?file=${data.reportZip}'">Download Report ZIP</button>`;
+                } else {
+                     message += `<button class="btn-primary" style="background:#aa5; cursor:not-allowed;" disabled>Download ZIP Not Available</button>`;
+                }
+                
+                message += `</div>`;
             }
-            
+
             showAlert(message, true);
         }
 
-        // ... Modal and Utility Functions ...
+        function openLocalReportApi(path) {
+            // Use the backend API to open the file on the host OS
+            const formData = new URLSearchParams();
+            formData.append('path', path);
+            
+            // Handle context path if in wrapper
+            const apiBase = CONFIG.baseUrl || ''; 
+            
+            fetch(apiBase + '/api/open', {
+                method: 'POST',
+                body: formData
+            })
+            .then(r => r.json())
+            .then(d => {
+                if(!d.success) alert('Failed to open report automatically. Please open the file manually: ' + path);
+            })
+            .catch(e => alert('Error requesting to open report: ' + e.message));
+        }
+
         function showAlert(message, isHtml = false) {
             const modalBody = document.getElementById('modalMessage');
             if (isHtml) {
@@ -594,27 +566,39 @@
         function closeModal() {
             document.getElementById('customModal').style.display = 'none';
         }
-
+        
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
-                alert('Copied to clipboard!');
+                /* Optional toast or alert, or just let user know via tooltip */
+                const btn = document.querySelector('button[onclick^="copyToClipboard"]');
+                if(btn) {
+                    const originalText = btn.innerText;
+                    btn.innerText = "Copied!";
+                    setTimeout(() => btn.innerText = originalText, 1500);
+                }
             });
         }
     </script>
 
-    <!-- Custom Modal Dialog -->
-    <div id="customModal" class="modal-overlay">
-        <div class="modal-dialog">
-            <div class="modal-header">
-                <img id="modalLogo" src="/apiguard/muleguard/web/logo.svg" alt="🛡️" style="height: 24px; width: auto;"
-                     onerror="this.style.display='none';">
-                <span>MuleGuard says</span>
+    <!-- Progress Modal -->
+    <div id="progressModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 id="progressTitle" style="color: #333; margin-bottom: 10px;">Validating Project...</h3>
+            <div class="progress-container">
+                <div class="progress-bar indeterminate"></div>
             </div>
-            <div class="modal-body" id="modalMessage"></div>
-            <div class="modal-footer">
-                <button class="modal-button" onclick="closeModal()">OK</button>
-            </div>
+            <p id="progressText" style="color: #666; margin-top: 15px; font-size: 14px;">Running comprehensive analysis. This may take a moment...</p>
         </div>
     </div>
+    
+    <!-- Message Modal (Reuses modal-content style) -->
+    <div id="customModal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 style="color: #663399; margin-bottom: 15px;">MuleGuard Notification</h3>
+            <div id="modalMessage" style="margin-bottom: 20px; color: #333;"></div>
+            <button onclick="closeModal()" style="padding: 8px 20px; background: #663399; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+        </div>
+    </div>
+
 </body>
 </html>
