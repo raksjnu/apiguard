@@ -559,7 +559,7 @@ output application/json indent=false
         <logger level="INFO" message="#['DEBUG: Attach Decision - Reports: ' ++ vars.shouldAttachReports ++ ', Input: ' ++ vars.shouldAttachInput ++ ' (Path: ' ++ (vars.zipFilePath default 'None') ++ '), Project: ' ++ vars.shouldAttachProject]"/>    
 
         <!-- Prepare email attachments and calculate total size -->
-        <set-variable variableName="emailAttachments" value="#[{ 'logo.png': readUrl('classpath://web/muleguard/logo.png', 'application/octet-stream') }]"/>
+        <set-variable variableName="emailAttachments" value="#[{ 'raksLogo.png': readUrl('classpath://web/muleguard/raksLogo.png', 'application/octet-stream') }]"/>
         <set-variable variableName="totalAttachmentSize" value="#[0]"/>
         <set-variable variableName="tempAttachments" value="#[[]]"/>
         
