@@ -192,6 +192,55 @@ MuleGuard uses the following major dependencies:
 
 ---
 
+## Configuration File Security
+
+### MuleGuard Configuration Files
+
+MuleGuard validates environment-specific configuration files from the `muleapp_config` folder:
+
+1. **Folder Structure**
+   - Configuration files must be in `muleapp_config` folder
+   - Supported extensions: `.properties`, `.policy`, `.deployment`
+   - Format: `propertyName=propertyValue` (delimiter must be `=`)
+
+2. **Security Considerations**
+   ```bash
+   # Restrict access to configuration folders
+   chmod 750 muleapp_config/
+   
+   # Protect sensitive property files
+   chmod 640 muleapp_config/*.properties
+   ```
+
+3. **Best Practices**
+   - **Never commit** production credentials to Git
+   - Use **environment variables** for sensitive values
+   - Implement **property encryption** for passwords
+   - **Audit** configuration file access regularly
+
+### Wrapper Configuration (mule-app.properties)
+
+When deploying ApiGuardWrapper:
+
+1. **SMTP Credentials**
+   ```properties
+   # Use environment variables
+   smtp.username=${env:SMTP_USERNAME}
+   smtp.password=${env:SMTP_PASSWORD}
+   ```
+
+2. **Working Directories**
+   - Use `${mule.home}` for CloudHub compatibility
+   - Implement cleanup policies for temporary files
+   - Restrict file system permissions
+
+3. **API Endpoints**
+   - Use HTTPS for all external connections
+   - Implement API key rotation
+   - Monitor for unauthorized access
+
+---
+
 ## Report Security
 
 ### Generated Reports
