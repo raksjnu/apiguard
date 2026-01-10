@@ -15,11 +15,12 @@
 3. [Logging Standards](#logging-standards)
 4. [Credential Management](#credential-management)
 5. [Code Quality Standards](#code-quality-standards)
-6. [Dependency Management](#dependency-management)
-7. [Testing Requirements](#testing-requirements)
-8. [Documentation Standards](#documentation-standards)
-9. [Security Best Practices](#security-best-practices)
-10. [Deployment Considerations](#deployment-considerations)
+6. [Cross-Platform Compatibility](#cross-platform-compatibility)
+7. [Dependency Management](#dependency-management)
+8. [Testing Requirements](#testing-requirements)
+9. [Documentation Standards](#documentation-standards)
+10. [Security Best Practices](#security-best-practices)
+11. [Deployment Considerations](#deployment-considerations)
 
 ---
 
@@ -57,12 +58,17 @@ Use this checklist for every project cleanup:
 - [ ] Remove test scripts (unless demo/sample data)
 - [ ] Keep sample data if useful for validation
 
-### Phase 5: Code Quality
+### Phase 5: Code Quality & Cross-Platform
 - [ ] Add input validation to public methods
 - [ ] Review exception handling (avoid generic catches)
 - [ ] Ensure proper resource management (try-with-resources)
 - [ ] Remove unused imports and dead code
 - [ ] Fix any compiler warnings
+- [ ] **Use `Paths.get()` for all file path operations**
+- [ ] **No hardcoded `\` or `/` in path strings**
+- [ ] **Use `System.lineSeparator()` for line endings**
+- [ ] **No hardcoded drive letters or absolute paths**
+- [ ] **Test on both Windows and Unix-like systems**
 
 ### Phase 6: Documentation
 - [ ] Create/update `CHANGELOG.md`
@@ -380,7 +386,233 @@ public Optional<User> findUser(String id) {
 
 ---
 
+## Cross-Platform Compatibility
+
+### Critical Rule
+**ALWAYS** use platform-independent code to ensure applications work on Windows, Linux, and macOS.
+
+### File Path Handling
+
+#### ❌ NEVER Do This:
+```java
+// WRONG: Hardcoded Windows paths
+String path = "C:\\Users\\rakesh\\project\\file.txt";
+String reportPath = projectPath + "\\reports\\output.html";
+
+// WRONG: Hardcoded Unix paths  
+String path = "/home/rakesh/project/file.txt";
+String reportPath = projectPath + "/reports/output.html";
+
+// WRONG: Manual path concatenation
+String fullPath = baseDir + "\\" + subDir + "\\" + fileName;
+```
+
+#### ✅ ALWAYS Do This:
+```java
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.io.File;
+
+// ✅ CORRECT: Use Path API (Java 7+, preferred)
+Path projectPath = Paths.get(baseDir, subDir, fileName);
+Path reportPath = projectPath.resolve("reports").resolve("output.html");
+String pathString = projectPath.toString(); // Platform-appropriate separators
+
+// ✅ CORRECT: Use File.separator
+String fullPath = baseDir + File.separator + subDir + File.separator + fileName;
+
+// ✅ CORRECT: Use Paths.get for multiple segments
+Path fullPath = Paths.get(baseDir, subDir, fileName);
+```
+
+### Path Separator Handling
+
+```java
+// ❌ WRONG: Hardcoded separators
+String[] parts = path.split("\\\\");  // Only works on Windows
+String[] parts = path.split("/");     // Only works on Unix
+
+// ✅ CORRECT: Use File.separator or Path API
+String[] parts = path.split(Pattern.quote(File.separator));
+
+// ✅ BETTER: Use Path API
+Path p = Paths.get(path);
+int nameCount = p.getNameCount();
+Path fileName = p.getFileName();
+```
+
+### Line Ending Handling
+
+```java
+// ❌ WRONG: Hardcoded line endings
+String output = "Line 1\n" + "Line 2\n";      // Unix only
+String output = "Line 1\r\n" + "Line 2\r\n";  // Windows only
+
+// ✅ CORRECT: Use System.lineSeparator()
+String output = "Line 1" + System.lineSeparator() + 
+                "Line 2" + System.lineSeparator();
+
+// ✅ CORRECT: Use %n in format strings
+String output = String.format("Line 1%nLine 2%n");
+
+// ✅ CORRECT: For logging (SLF4J handles this)
+logger.info("Line 1\nLine 2");  // OK in logs
+```
+
+### File Operations
+
+```java
+// ✅ CORRECT: Platform-independent file operations
+import java.nio.file.*;
+
+// Create directories
+Path dir = Paths.get("reports", "output");
+Files.createDirectories(dir);  // Creates parent dirs if needed
+
+// Write files
+Path file = dir.resolve("report.html");
+Files.write(file, content.getBytes(StandardCharsets.UTF_8));
+
+// Read files
+String content = Files.readString(file, StandardCharsets.UTF_8);
+
+// Check existence
+if (Files.exists(file)) {
+    // file exists
+}
+
+// Delete files
+Files.deleteIfExists(file);
+```
+
+### Temporary Files and Directories
+
+```java
+// ❌ WRONG: Hardcoded temp paths
+String tempDir = "C:\\Temp\\myapp";
+String tempDir = "/tmp/myapp";
+
+// ✅ CORRECT: Use system temp directory
+Path tempDir = Paths.get(System.getProperty("java.io.tmpdir"), "myapp");
+Files.createDirectories(tempDir);
+
+// ✅ CORRECT: Use Files.createTempFile/createTempDirectory
+Path tempFile = Files.createTempFile("muleguard-", ".zip");
+Path tempDir = Files.createTempDirectory("muleguard-work-");
+```
+
+### Environment-Specific Code
+
+```java
+// ✅ CORRECT: Detect OS when necessary
+String os = System.getProperty("os.name").toLowerCase();
+boolean isWindows = os.contains("win");
+boolean isMac = os.contains("mac");
+boolean isUnix = os.contains("nix") || os.contains("nux") || os.contains("aix");
+
+// Use only when platform-specific behavior is required
+if (isWindows) {
+    // Windows-specific code
+} else {
+    // Unix/Mac code
+}
+```
+
+### URL Path Handling (Web Applications)
+
+```javascript
+// ❌ WRONG: Hardcoded absolute paths in JavaScript
+var url = "/muleguard/main";  // Breaks in wrapper context
+
+// ✅ CORRECT: Dynamic base path detection
+var isInMuleWrapper = path.includes('/apiguard/');
+var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+var url = basePath + '/main';
+```
+
+### Common Pitfalls to Avoid
+
+#### 1. String Replacement for Paths
+```java
+// ❌ WRONG
+String unixPath = windowsPath.replace("\\", "/");
+
+// ✅ CORRECT: Use Path API
+Path path = Paths.get(windowsPath);
+String normalizedPath = path.toString();  // Platform-appropriate
+```
+
+#### 2. Hardcoded Drive Letters
+```java
+// ❌ WRONG
+if (path.startsWith("C:")) { ... }
+
+// ✅ CORRECT: Check if path is absolute
+Path p = Paths.get(path);
+if (p.isAbsolute()) { ... }
+```
+
+#### 3. Case Sensitivity
+```java
+// ❌ RISKY: Case-sensitive comparison (fails on Windows)
+if (fileName.equals("Report.html")) { ... }
+
+// ✅ BETTER: Case-insensitive for file names
+if (fileName.equalsIgnoreCase("Report.html")) { ... }
+
+// ✅ BEST: Use Path comparison
+Path p1 = Paths.get("Report.html");
+Path p2 = Paths.get("report.html");
+// On Windows: p1.equals(p2) returns true
+// On Unix: p1.equals(p2) returns false
+```
+
+### Testing Cross-Platform Code
+
+```bash
+# Test on multiple platforms
+# Windows
+mvn clean package
+java -jar target/myapp.jar
+
+# Linux/Mac
+mvn clean package
+java -jar target/myapp.jar
+
+# Verify paths in logs
+grep "Path:" logs/myapp.log
+```
+
+### Checklist for Cross-Platform Code
+
+- [ ] No hardcoded `\` or `/` in path strings
+- [ ] Use `Paths.get()` or `File.separator` for all path operations
+- [ ] Use `System.lineSeparator()` or `%n` for line endings
+- [ ] Use `System.getProperty("java.io.tmpdir")` for temp files
+- [ ] No hardcoded drive letters (C:, D:, etc.)
+- [ ] Use `Files.createDirectories()` instead of `mkdir()`
+- [ ] Use `Path.resolve()` for path concatenation
+- [ ] Test on both Windows and Unix-like systems
+- [ ] Use case-insensitive comparisons for file names when appropriate
+- [ ] Avoid platform-specific APIs unless absolutely necessary
+
+### Real-World Example: MuleGuard Path Fix
+
+```java
+// ❌ BEFORE (Platform-specific)
+String reportPath = projectPath + "\\muleguard-reports\\CONSOLIDATED-REPORT.html";
+
+// ✅ AFTER (Cross-platform)
+Path reportPath = Paths.get(projectPath)
+    .resolve("muleguard-reports")
+    .resolve("CONSOLIDATED-REPORT.html");
+String reportPathString = reportPath.toString();
+```
+
+---
+
 ## Dependency Management
+
 
 ### Security Scanning
 ```bash
