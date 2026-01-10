@@ -20,9 +20,16 @@ Thumbs.db
 # Workspace and temporary files
 workspace/
 muleguard-reports*/
+logs/
+reports/
+temp/
+security_scan/
+reference/
 
 # Maven specific
 dependency-reduced-pom.xml
+.mule/
+META-INF/
 
 # Log files
 *.log
