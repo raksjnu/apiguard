@@ -19,8 +19,8 @@ public class MappingPanel extends JPanel {
     
     private JComboBox<String> sourceFileCombo;
     private JComboBox<String> sourceFieldCombo;
-    private JTextField targetFileField;
-    private JTextField targetFieldField;
+    private AutocompleteTextField targetFileField;
+    private AutocompleteTextField targetFieldField;
     private JButton addMappingButton;
     private JTable mappingTable;
     private DefaultTableModel tableModel;
@@ -62,18 +62,20 @@ public class MappingPanel extends JPanel {
         sourceFieldCombo = new JComboBox<>();
         topPanel.add(sourceFieldCombo, gbc);
         
-        // Target file
+        // Target file - WITH AUTOCOMPLETE
         gbc.gridx = 0; gbc.gridy = 2; gbc.weightx = 0;
         topPanel.add(new JLabel("Target File:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1.0;
-        targetFileField = new JTextField();
+        targetFileField = new AutocompleteTextField(20);
+        targetFileField.setSuggestions(UserPreferences.getTargetFileHistory());
         topPanel.add(targetFileField, gbc);
         
-        // Target field
+        // Target field - WITH AUTOCOMPLETE
         gbc.gridx = 0; gbc.gridy = 3; gbc.weightx = 0;
         topPanel.add(new JLabel("Target Field:"), gbc);
         gbc.gridx = 1; gbc.weightx = 1.0;
-        targetFieldField = new JTextField();
+        targetFieldField = new AutocompleteTextField(20);
+        targetFieldField.setSuggestions(UserPreferences.getTargetFieldHistory());
         topPanel.add(targetFieldField, gbc);
         
         // Add button
@@ -186,6 +188,14 @@ public class MappingPanel extends JPanel {
         
         // Add to table
         tableModel.addRow(new Object[]{sourceFile, sourceField, targetFile, targetField, "direct"});
+        
+        // Save to history for autocomplete
+        UserPreferences.addTargetFileName(targetFile);
+        UserPreferences.addTargetFieldName(targetField);
+        
+        // Update autocomplete suggestions
+        targetFileField.addSuggestion(targetFile);
+        targetFieldField.addSuggestion(targetField);
         
         // Clear target fields for next entry
         targetFieldField.setText("");

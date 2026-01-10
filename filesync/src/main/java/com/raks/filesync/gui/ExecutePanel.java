@@ -21,7 +21,8 @@ public class ExecutePanel extends JPanel {
     private JButton resetButton;
     private JTextArea configInfoArea;
     private JProgressBar progressBar;
-    private JTextArea logArea;
+    private JTextPane logPane;
+    private javax.swing.text.StyledDocument logDoc;
     
     private MappingConfig loadedConfig;
     private String loadedConfigFilePath; // Track the actual file path
@@ -115,15 +116,17 @@ public class ExecutePanel extends JPanel {
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBorder(BorderFactory.createTitledBorder("Execution Log"));
         
-        logArea = new JTextArea();
-        logArea.setEditable(false);
-        logArea.setFont(new Font("Consolas", Font.PLAIN, 11));
+        // Use JTextPane for colored text support
+        logPane = new JTextPane();
+        logPane.setEditable(false);
+        logPane.setFont(new Font("Consolas", Font.PLAIN, 11));
+        logDoc = logPane.getStyledDocument();
         
-        JScrollPane logScrollPane = new JScrollPane(logArea);
+        JScrollPane logScrollPane = new JScrollPane(logPane);
         bottomPanel.add(logScrollPane, BorderLayout.CENTER);
         
         JButton clearLogButton = new JButton("Clear Log");
-        clearLogButton.addActionListener(e -> logArea.setText(""));
+        clearLogButton.addActionListener(e -> logPane.setText(""));
         JPanel logButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         logButtonPanel.add(clearLogButton);
         bottomPanel.add(logButtonPanel, BorderLayout.SOUTH);
@@ -137,8 +140,8 @@ public class ExecutePanel extends JPanel {
         loadedConfig = null;
         loadedConfigFilePath = null;
         configPathField.setText("");
-        configInfoArea.setText("No configuration loaded.\\nYou can load a saved configuration or use mappings from the Mapping tab.");
-        logArea.setText("");
+        configInfoArea.setText("No configuration loaded.\nYou can load a saved configuration or use mappings from the Mapping tab.");
+        logPane.setText("");
         progressBar.setValue(0);
         progressBar.setString("Ready");
         log("Panel reset. Ready for new configuration.");
@@ -382,14 +385,51 @@ public class ExecutePanel extends JPanel {
     }
     
     private void log(String message) {
-        // Add timestamp only for major sections
-        if (message.contains("═══") || message.contains("STARTED") || message.contains("COMPLETE")) {
-            String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
-            logArea.append("[" + timestamp + "] " + message + "\n");
-        } else {
-            logArea.append(message + "\n");
+        try {
+            // Define color styles
+            javax.swing.text.Style defaultStyle = logPane.addStyle("default", null);
+            javax.swing.text.StyleConstants.setForeground(defaultStyle, Color.BLACK);
+            
+            javax.swing.text.Style blueStyle = logPane.addStyle("blue", null);
+            javax.swing.text.StyleConstants.setForeground(blueStyle, new Color(0, 102, 204)); // Blue
+            javax.swing.text.StyleConstants.setBold(blueStyle, true);
+            
+            javax.swing.text.Style greenStyle = logPane.addStyle("green", null);
+            javax.swing.text.StyleConstants.setForeground(greenStyle, new Color(0, 153, 0)); // Green
+            javax.swing.text.StyleConstants.setBold(greenStyle, true);
+            
+            javax.swing.text.Style purpleStyle = logPane.addStyle("purple", null);
+            javax.swing.text.StyleConstants.setForeground(purpleStyle, new Color(107, 70, 193)); // Purple
+            javax.swing.text.StyleConstants.setBold(purpleStyle, true);
+            
+            // Determine style based on message content
+            javax.swing.text.Style style = defaultStyle;
+            String displayMessage = message;
+            
+            if (message.contains("TRANSFORMATION STARTED")) {
+                style = blueStyle;
+                String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+                displayMessage = "[" + timestamp + "] " + message;
+            } else if (message.contains("TRANSFORMATION COMPLETE")) {
+                style = greenStyle;
+                String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+                displayMessage = "[" + timestamp + "] " + message;
+            } else if (message.contains("EXECUTION SUMMARY")) {
+                style = purpleStyle;
+                String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+                displayMessage = "[" + timestamp + "] " + message;
+            } else if (message.contains("═══")) {
+                // Box drawing characters - add timestamp
+                String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
+                displayMessage = "[" + timestamp + "] " + message;
+            }
+            
+            logDoc.insertString(logDoc.getLength(), displayMessage + "\n", style);
+            logPane.setCaretPosition(logDoc.getLength());
+            
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        logArea.setCaretPosition(logArea.getDocument().getLength());
     }
     
     private void loadLastConfigFile() {
