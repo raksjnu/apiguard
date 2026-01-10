@@ -122,14 +122,18 @@ public class ReportGenerator {
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
                             .contact-button:hover { background-color: var(--truist-purple-light); }
-                            .dashboard-button {
+                            .top-nav-container {
                                 position: absolute;
                                 top: 20px;
                                 right: 40px;
+                                display: flex;
+                                gap: 10px;
+                            }
+                            .top-nav-button {
                                 background-color: var(--truist-purple);
                                 color: var(--text-white);
                                 border: none;
-                                padding: 10px 20px;
+                                padding: 8px 16px;
                                 text-align: center;
                                 text-decoration: none;
                                 display: inline-block;
@@ -140,12 +144,17 @@ public class ReportGenerator {
                                 transition: background-color 0.3s ease;
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
-                            .dashboard-button:hover { background-color: var(--truist-purple-light); }
+                            .top-nav-button:hover { background-color: var(--truist-purple-light); }
                         </style>
                     </head>
                     <body>
                         <div class="report-container">
-                            <a href="../CONSOLIDATED-REPORT.html" class="dashboard-button" title="Return to main dashboard">← Dashboard</a>
+                            <div class="top-nav-container">
+                                <a href="../CONSOLIDATED-REPORT.html" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
+                                <a href="../checklist.html" class="top-nav-button">Checklist</a>
+                                <a href="../rule_guide.html" class="top-nav-button">Rule Guide</a>
+                                <a href="../help.html" class="top-nav-button">Help</a>
+                            </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
                                 <h1 style="margin: 0;">MuleGuard - Mulesoft Application Review & Validation</h1>
@@ -156,10 +165,6 @@ public class ReportGenerator {
                                 <strong>Total Rules:</strong> %d | <strong style="color:green">Passed:</strong> %d | <strong style="color:red">Failed:</strong> %d
                             </div>
                             <table><tr><th>Rule ID</th><th>Name</th><th>Severity</th><th>Status</th><th>Details</th></tr>%s</table>
-                            <a href="../checklist.html" class="contact-button" title="View all validation checklist items.">Checklist</a>
-                            <a href="#" onclick="return false;" class="contact-button" title="Placeholder: Configure your runbook or playbook link here" style="opacity: 0.7; cursor: not-allowed;">Runbook</a>
-                            <a href="../rule_guide.html" class="contact-button" title="Guide to all MuleGuard validation rules.">Rule Guide</a>
-                            <a href="../help.html" class="contact-button" title="View help and documentation about MuleGuard" style="margin-left: 10px;">Help</a>
                         </div>
                     </body>
                     </html>
@@ -301,27 +306,38 @@ public class ReportGenerator {
                             table {width: 100%%; border-collapse: collapse;}
                             th, td {border: 1px solid #ddd; padding: 12px; text-align: left;}
                             th {background: var(--truist-purple); color: var(--text-white);}
-                            .contact-button {
+                            .top-nav-container {
+                                position: absolute;
+                                top: 20px;
+                                right: 40px;
+                                display: flex;
+                                gap: 10px;
+                            }
+                            .top-nav-button {
                                 background-color: var(--truist-purple);
                                 color: var(--text-white);
                                 border: none;
-                                padding: 12px 24px;
+                                padding: 8px 16px;
                                 text-align: center;
                                 text-decoration: none;
                                 display: inline-block;
-                                font-size: 16px;
+                                font-size: 14px;
                                 font-weight: bold;
-                                margin-top: 25px;
                                 cursor: pointer;
                                 border-radius: 5px;
                                 transition: background-color 0.3s ease;
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
-                            .contact-button:hover { background-color: var(--truist-purple-light); }
+                            .top-nav-button:hover { background-color: var(--truist-purple-light); }
                         </style>
                     </head>
                     <body>
                         <div class="report-container">
+                            <div class="top-nav-container">
+                                <a href="checklist.html" class="top-nav-button">Checklist</a>
+                                <a href="rule_guide.html" class="top-nav-button">Rule Guide</a>
+                                <a href="help.html" class="top-nav-button">Help</a>
+                            </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
                                 <h1 style="margin: 0;">MuleGuard - Mulesoft Application Review & Validation</h1>
@@ -333,10 +349,6 @@ public class ReportGenerator {
                                 <strong>Total Rules:</strong> %d | <strong style="color:green">Passed:</strong> %d | <strong style="color:red">Failed:</strong> %d
                             </div>
                             <table><tr><th>API Name</th><th>Total Rules</th><th>Passed</th><th>Failed</th><th>Status</th><th>Report</th></tr>%s</table>
-                            <a href="checklist.html" class="contact-button" title="View all validation checklist items.">Checklist</a>
-                            <a href="#" onclick="return false;" class="contact-button" title="Placeholder: Configure your runbook or playbook link here" style="opacity: 0.7; cursor: not-allowed;">Runbook</a>
-                            <a href="rule_guide.html" class="contact-button" title="Guide to all MuleGuard validation rules.">Rule Guide</a>
-                            <a href="help.html" class="contact-button" title="View help and documentation about MuleGuard" style="margin-left: 10px;">Help</a>
                             </div>
                     </body>
                     </html>
@@ -415,32 +427,37 @@ public class ReportGenerator {
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
                             .contact-button:hover { background-color: var(--truist-purple-light); }
-                        .dashboard-button {
-                            position: absolute;
-                            top: 20px;
-                            right: 40px;
-                            background-color: var(--truist-purple);
-                            color: var(--text-white);
-                            border: none;
-                            padding: 10px 20px;
-                            text-align: center;
-                            text-decoration: none;
-                            display: inline-block;
-                            font-size: 14px;
-                            font-weight: bold;
-                            cursor: pointer;
-                            border-radius: 5px;
-                            transition: background-color 0.3s ease;
-                            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                        }
-                        .dashboard-button:hover { background-color: var(--truist-purple-light); }
+                            .top-nav-container {
+                                position: absolute;
+                                top: 20px;
+                                right: 40px;
+                                display: flex;
+                                gap: 10px;
+                            }
+                            .top-nav-button {
+                                background-color: var(--truist-purple);
+                                color: var(--text-white);
+                                border: none;
+                                padding: 8px 16px;
+                                text-align: center;
+                                text-decoration: none;
+                                display: inline-block;
+                                font-size: 14px;
+                                font-weight: bold;
+                                cursor: pointer;
+                                border-radius: 5px;
+                                transition: background-color 0.3s ease;
+                                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+                            }
+                            .top-nav-button:hover { background-color: var(--truist-purple-light); }
                         </style>
                     </head>
                     <body>
                         <div class="report-container">
-                            <div class="header-buttons">
-                                <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button" title="Return to main dashboard">← Dashboard</a>
-                                <a href="/muleguard/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+                            <div class="top-nav-container">
+                                <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
+                                <a href="/muleguard/main" id="mainPageBtn" class="top-nav-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+                                <a href="help.html" class="top-nav-button">Help</a>
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
@@ -451,7 +468,6 @@ public class ReportGenerator {
                                 <tr><th>Sr.#</th><th>ChecklistItem</th><th>ChecklistType</th><th>RuleId</th></tr>
                                 %s
                             </table>
-                            <a href="help.html" class="contact-button" title="View help and documentation about MuleGuard">Help</a>
                         </div>
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
@@ -609,14 +625,19 @@ public class ReportGenerator {
                                 border: 5px solid var(--truist-purple);
                                 position: relative;
                             }
-                            .dashboard-button {
+                            .top-nav-container {
                                 position: absolute;
                                 top: 20px;
                                 right: 40px;
+                                display: flex;
+                                gap: 10px;
+                                z-index: 100;
+                            }
+                            .top-nav-button {
                                 background-color: var(--truist-purple);
                                 color: var(--text-white);
                                 border: none;
-                                padding: 10px 20px;
+                                padding: 8px 16px;
                                 text-align: center;
                                 text-decoration: none;
                                 display: inline-block;
@@ -626,9 +647,8 @@ public class ReportGenerator {
                                 border-radius: 5px;
                                 transition: background-color 0.3s ease;
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                                Z-index: 100;
                             }
-                            .dashboard-button:hover { background-color: var(--truist-purple-light); }
+                            .top-nav-button:hover { background-color: var(--truist-purple-light); }
                             h1 { color: var(--truist-purple); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }  
                             h2 { color: #444; margin-top: 30px; }
                             h3 { color: #666; }
@@ -688,9 +708,9 @@ public class ReportGenerator {
                         </div>
                         <div class="resizer" id="resizer"></div>
                         <div class="main-content">
-                            <div class="header-buttons">
-                                <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button" title="Return to main dashboard">← Dashboard</a>
-                                <a href="/muleguard/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+                            <div class="top-nav-container">
+                                <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
+                                <a href="/muleguard/main" id="mainPageBtn" class="top-nav-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
                             </div>
                             <div class="report-container">
                                 %s

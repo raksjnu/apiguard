@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+﻿<?xml version="1.0" encoding="UTF-8"?>
 <mule xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
 	xmlns:compression="http://www.mulesoft.org/schema/mule/compression" 
 	xmlns:java="http://www.mulesoft.org/schema/mule/java" 
@@ -209,8 +209,8 @@ output application/java
     userSessionId: payload.parts.session.content default null,
     validationMode: payload.parts.mode.content default null,
     pathContent: payload.parts.path.content default null,
-    zipFileContent: payload.parts.zipFile.content default null,
-    zipFilename: payload.parts.zipFile.headers['Content-Disposition'].filename default "Uploaded ZIP File",
+    zipFileContent: payload.parts.archive.content default null,
+    zipFilename: payload.parts.archive.headers['Content-Disposition'].filename default "Uploaded Archive",
     customRulesContent: payload.parts.customRules.content default null,
     attachReports: payload.parts.attachReports.content default null,
     attachInput: payload.parts.attachInput.content default null,
@@ -301,8 +301,9 @@ output application/java
             </when>
             
             <!-- ZIP Upload Mode -->
-            <when expression="#[trim(vars.validationMode as String) == 'zip']">
-                <!-- ZIP mode only works with multipart/form-data -->
+            <!-- ZIP or JAR Upload Mode -->
+            <when expression="#[(trim(vars.validationMode as String) == 'zip') or (trim(vars.validationMode as String) == 'jar')]">
+                <!-- ZIP/JAR mode only works with multipart/form-data -->
                 <choice>
                     <when expression="#[vars.isMultipart and vars.zipFileContent != null]">
                         <!-- Use userSessionId for workspace to match Object Store key -->
@@ -311,7 +312,7 @@ output application/java
                         <set-variable variableName="workingDir" 
                             value="#[p('muleguard.work.dir') ++ '/' ++ vars.userSessionId]"/>
                         
-                                                <!-- Delete existing directory if present to allow re-runs -->
+                        <!-- Delete existing directory if present to allow re-runs -->
                         <try>
                             <file:delete path="#[vars.workingDir]" config-ref="File_Config"/>
                             <logger level="INFO" message="#['Deleted existing working directory: ' ++ vars.workingDir]"/>
@@ -325,32 +326,54 @@ output application/java
                         <!-- Create working directory -->
                         <file:create-directory directoryPath="#[vars.workingDir]" config-ref="File_Config"/>
 
-                        <!-- Save ZIP to file first (persisted for email attachment) -->
-                        <set-variable variableName="zipFilePath" value="#[vars.workingDir ++ '/input.zip']"/>
+                        <!-- Determine input filename -->
+                        <set-variable variableName="extension" value="#[if (vars.validationMode == 'zip') '.zip' else '.jar']"/>
+                        <set-variable variableName="inputFileName" value="#['input' ++ vars.extension]"/>
+
+                        <!-- Save Archive to file first (persisted for email attachment) -->
+                        <set-variable variableName="zipFilePath" value="#[vars.workingDir ++ '/' ++ vars.inputFileName]"/>
                         <file:write path="#[vars.zipFilePath]" config-ref="File_Config">
                             <file:content>#[vars.zipFileContent]</file:content>
                         </file:write>
 
                         <!-- Read back for extraction (stream was consumed) -->
-                        <file:read path="#[vars.zipFilePath]" target="savedZipContent" config-ref="File_Config"/>
-
-                        <!-- Extract ZIP using Java ZipExtractor -->
-                        <java:invoke-static class="com.raks.muleguard.wrapper.ZipExtractor" 
-                                            method="extractZip(java.io.InputStream, String)">
-                            <java:args>#[{
-                                arg0: vars.savedZipContent,
-                                arg1: vars.workingDir ++ '/extracted'
-                            }]</java:args>
-                        </java:invoke-static>
+                        <!-- Note: ArchiveExtractor.extractZip/Jar(Path) handles extraction from file -->
                         
-                        <!-- Store extracted path -->
-                        <set-variable variableName="extractedPath" value="#[payload]"/>
+                        <!-- Extract using ArchiveExtractor based on mode -->
+                        <set-variable variableName="utilsBaseTempDir" value="#[p('muleguard.work.dir')]"/>
+                        
+                        <choice>
+                            <when expression="#[vars.validationMode == 'zip']">
+                                <java:invoke-static class="com.raks.muleguard.util.ArchiveExtractor" 
+                                                    method="extractZip(String, String, String)">
+                                    <java:args>#[{
+                                        arg0: vars.zipFilePath,
+                                        arg1: vars.userSessionId,
+                                        arg2: vars.utilsBaseTempDir
+                                    }]</java:args>
+                                </java:invoke-static>
+                            </when>
+                            <otherwise>
+                                <!-- JAR Mode -->
+                                <java:invoke-static class="com.raks.muleguard.util.ArchiveExtractor" 
+                                                    method="extractJar(String, String, String)">
+                                    <java:args>#[{
+                                        arg0: vars.zipFilePath,
+                                        arg1: vars.userSessionId,
+                                        arg2: vars.utilsBaseTempDir
+                                    }]</java:args>
+                                </java:invoke-static>
+                            </otherwise>
+                        </choice>
+                        
+                        <!-- Store extracted path as String to avoid serialization issues -->
+                        <set-variable variableName="extractedPath" value="#[payload as String]"/>
                         
                         <!-- Set project path for validation -->
                         <set-variable variableName="projectPath" value="#[vars.extractedPath]"/>
                         <set-variable variableName="displayPath" value="#[vars.zipFilename]"/>
                         
-                        <logger level="INFO" message="#['ZIP extracted to: ' ++ vars.projectPath]"/>
+                        <logger level="INFO" message="#['Archive extracted to: ' ++ (vars.projectPath as String)]"/>
                         
                         <!-- Handle custom rules if provided -->
                         <choice>
@@ -368,9 +391,9 @@ output application/java
                         </choice>
                     </when>
                     <otherwise>
-                        <!-- JSON cannot upload ZIP files or ZIP file missing -->
-                        <logger level="ERROR" message="ZIP mode requires multipart/form-data with a ZIP file"/>
-                        <raise-error type="MULEGUARD:ZIP_REQUIRES_MULTIPART" description="ZIP upload mode requires multipart/form-data content type with a ZIP file"/>
+                        <!-- JSON cannot upload files or file missing -->
+                        <logger level="ERROR" message="ZIP/JAR mode requires multipart/form-data with an archive file"/>
+                        <raise-error type="MULEGUARD:ARCHIVE_REQUIRES_MULTIPART" description="Upload mode requires multipart/form-data content type with an archive file"/>
                     </otherwise>
                 </choice>
             </when>
@@ -378,7 +401,7 @@ output application/java
             <!-- Invalid mode -->
             <otherwise>
                 <logger level="ERROR" message="#['Invalid validation mode: ' ++ vars.validationMode]"/>
-                <raise-error type="MULEGUARD:INVALID_MODE" description="#['Invalid validation mode: ' ++ vars.validationMode ++ '. Must be local or zip']"/>
+                <raise-error type="MULEGUARD:INVALID_MODE" description="#['Invalid validation mode: ' ++ vars.validationMode ++ '. Must be local, zip, or jar']"/>
             </otherwise>
         </choice>
         
@@ -532,7 +555,7 @@ output application/json indent=false
         
         <!-- Compress reports folder using Java ZipExtractor -->
         <set-variable variableName="reportsZipPath" value="#[vars.validationResults.reportsPath ++ '.zip']"/>
-        <java:invoke-static doc:name="Zip Reports" class="com.raks.muleguard.wrapper.ZipExtractor" method="zipDirectory(java.lang.String,java.lang.String)" target="zipResult">
+        <java:invoke-static doc:name="Zip Reports" class="com.raks.muleguard.util.ArchiveExtractor" method="zipDirectory(java.lang.String,java.lang.String)" target="zipResult">
             <java:args><![CDATA[#[{
                 arg0: vars.validationResults.reportsPath,
                 arg1: vars.reportsZipPath
@@ -631,11 +654,11 @@ output text/plain
     <div class='container'>
         <div class='header'>
             <img src='cid:logo.png' alt='MuleGuard' style='height: 50px; display: block; margin: 0 auto 10px auto;'/>
-            <h2 style='margin: 0;'>🛡️ MuleGuard Validation Report</h2>
+            <h2 style='margin: 0;'>ðŸ›¡ï¸ MuleGuard Validation Report</h2>
         </div>
         
         <div class='section'>
-            <h3 style='color: #663399; margin-top: 0;'>👤 User Information</h3>
+            <h3 style='color: #663399; margin-top: 0;'>ðŸ‘¤ User Information</h3>
             <table>
                 <tr><td class='label'>Name:</td><td>" ++ vars.sessionData.name ++ "</td></tr>
                 <tr><td class='label'>Email:</td><td>" ++ vars.sessionData.email ++ "</td></tr>
@@ -645,7 +668,7 @@ output text/plain
         </div>
         
         <div class='section'>
-            <h3 style='color: #663399; margin-top: 0;'>📦 Validation Details</h3>
+            <h3 style='color: #663399; margin-top: 0;'>ðŸ“¦ Validation Details</h3>
             <table>
                 <tr><td class='label'>Mode:</td><td><strong>" ++ upper(vars.validationMode) ++ "</strong></td></tr>
                 <tr><td class='label'>Session ID:</td><td><code>" ++ vars.userSessionId ++ "</code></td></tr>
@@ -656,7 +679,7 @@ output text/plain
         </div>
         
         <div class='section'>
-            <h3 style='color: #663399; margin-top: 0;'>📊 Results Summary</h3>
+            <h3 style='color: #663399; margin-top: 0;'>ðŸ“Š Results Summary</h3>
             <div class='highlight'>
                 <table style='width: 100%; border-collapse: collapse;'>
                     <tr>
@@ -676,36 +699,36 @@ output text/plain
                         <td style='padding: 8px;'><strong style='color: #ffc107;'>" ++ (sizeOf(vars.validationResults.skipped default []) as String) ++ "</strong></td>
                     </tr>
                 </table>
-                <p style='margin: 15px 0 0 0; color: #666; font-size: 13px;'>📊 <em>View the consolidated report for detailed API-level pass/fail counts, rule violations, and compliance scores.</em></p>
+                <p style='margin: 15px 0 0 0; color: #666; font-size: 13px;'>ðŸ“Š <em>View the consolidated report for detailed API-level pass/fail counts, rule violations, and compliance scores.</em></p>
             </div>
         </div>
         
         
         <div class='section'>
-            <h3 style='color: #663399; margin-top: 0;'>📎 Attachments</h3>
+            <h3 style='color: #663399; margin-top: 0;'>ðŸ“Ž Attachments</h3>
             <p>" ++ (if (sizeOf(vars.emailAttachments default {}) > 0) 
-                '✅ Please check the report details in attachment of the email.'
+                'âœ… Please check the report details in attachment of the email.'
             else if (vars.attachmentSkippedMessage != null)
-                '⚠️ ' ++ vars.attachmentSkippedMessage
+                'âš ï¸ ' ++ vars.attachmentSkippedMessage
             else
-                '❌ No attachments (reports available via web interface)') ++ "</p>
+                'âŒ No attachments (reports available via web interface)') ++ "</p>
         </div>
         
         
         " ++ 
         "<div class='section'>
-            <h3 style='color: #663399; margin-top: 0;'>🔗 View Full Report Online</h3>
+            <h3 style='color: #663399; margin-top: 0;'>ðŸ”— View Full Report Online</h3>
             <div class='highlight'>
                 <p style='margin: 0;'>Click the link below to view the complete validation report:</p>
-                <p style='margin: 10px 0 0 0;'><a href='" ++ vars.baseUrl ++ "/muleguard/reports/" ++ vars.userSessionId ++ "/CONSOLIDATED-REPORT.html' class='link'>📊 View Consolidated Report</a></p>
-                <p style='font-size: 11px; color: #999; margin-top: 8px;'>⏱️ <em>Note: This link will remain active for the duration of your session. Reports are automatically cleaned up after session expiry.</em></p>
+                <p style='margin: 10px 0 0 0;'><a href='" ++ vars.baseUrl ++ "/muleguard/reports/" ++ vars.userSessionId ++ "/CONSOLIDATED-REPORT.html' class='link'>ðŸ“Š View Consolidated Report</a></p>
+                <p style='font-size: 11px; color: #999; margin-top: 8px;'>â±ï¸ <em>Note: This link will remain active for the duration of your session. Reports are automatically cleaned up after session expiry.</em></p>
             </div>
         </div>"
          ++ "
         
         <div class='footer'>
             <p style='margin: 0;'>This is an automated notification from MuleGuard</p>
-            <p style='margin: 5px 0 0 0;'>© 2025 RAKS - MuleSoft Application Validation Tool</p>
+            <p style='margin: 5px 0 0 0;'>Â© 2025 RAKS - MuleSoft Application Validation Tool</p>
         </div>
     </div>
 </body>
