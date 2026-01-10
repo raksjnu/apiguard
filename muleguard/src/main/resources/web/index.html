@@ -261,7 +261,7 @@
         </div>
 
         <!-- Email Notification Options -->
-        <div class="optional-section" style="margin-top: 20px;">
+        <div id="emailSection" class="optional-section" style="margin-top: 20px;">
             <strong style="color: #663399;">&#128231; Email Notification Options</strong>
 
             <div style="margin-top: 15px;">
@@ -333,20 +333,11 @@
             if (!isWrapper) {
                 document.getElementById('logoImg').src = 'logo.svg';
                 
-                // Email is not configured in standalone mode
-                // Add listeners to email checkboxes to show notification
-                const emailCheckboxes = ['attachReports', 'attachInput', 'attachProject'];
-                emailCheckboxes.forEach(id => {
-                    const checkbox = document.getElementById(id);
-                    if (checkbox) {
-                        checkbox.addEventListener('change', function() {
-                            if (this.checked) {
-                                alert('⚠️ Email notifications are not configured in standalone mode.\n\nPlease contact your administrator to enable email functionality.');
-                                this.checked = false; // Uncheck it
-                            }
-                        });
-                    }
-                });
+                // Hide email section in standalone mode (no SMTP configured)
+                const emailSection = document.getElementById('emailSection');
+                if (emailSection) {
+                    emailSection.style.display = 'none';
+                }
             }
         });
 
