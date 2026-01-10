@@ -107,7 +107,7 @@ MuleGuard supports multiple input methods:
 ### 3.3 Configuration File Requirements
 
 **Important**: Environment-specific configuration files must follow this structure:
-- **Folder Name**: `muleapp_config` (at the same level as API projects)
+- **Folder Name**: Must contain `_config` in the name (e.g., `muleapp_config`, `api_config`, `myproject_config`)
 - **File Extensions**: `.properties`, `.policy`, or `.deployment`
 - **File Format**: `propertyName=propertyValue` (delimiter must be `=`)
 
@@ -121,6 +121,8 @@ your-mule-projects/
     ├── qa.properties
     └── prod.properties
 ```
+
+**Note**: The default pattern in `rules.yaml` is `".*_config.*"` which matches any folder containing `_config`. You can modify this pattern if needed.
 
 ### 3.4 Security Features
 

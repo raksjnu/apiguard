@@ -196,10 +196,12 @@ MuleGuard uses the following major dependencies:
 
 ### MuleGuard Configuration Files
 
-MuleGuard validates environment-specific configuration files from the `muleapp_config` folder:
+MuleGuard validates environment-specific configuration files from folders containing `_config` in the name:
 
 1. **Folder Structure**
-   - Configuration files must be in `muleapp_config` folder
+   - Configuration files must be in a folder containing `_config` in the name
+   - Examples: `muleapp_config`, `api_config`, `myproject_config`
+   - Pattern in `rules.yaml`: `".*_config.*"` (matches any folder containing `_config`)
    - Supported extensions: `.properties`, `.policy`, `.deployment`
    - Format: `propertyName=propertyValue` (delimiter must be `=`)
 

@@ -32,7 +32,7 @@ It generates detailed HTML and Excel reports highlighting compliance and identif
 
 **Important**: If your organization uses environment-specific configuration files, they must follow this structure:
 
-- **Folder Name**: `muleapp_config` (at the same level as your API project folders)
+- **Folder Name**: Must contain `_config` in the name (e.g., `muleapp_config`, `api_config`, `myproject_config`)
 - **File Extensions**: `.properties`, `.policy`, or `.deployment`
 - **File Format**: Properties must use `propertyName=propertyValue` format
   - Delimiter must be `=` (equals sign)
@@ -50,7 +50,7 @@ your-mule-projects/
     └── prod.properties
 ```
 
-**Note**: If your organization uses a different folder name or structure, you can either rename your folder to `muleapp_config` or modify the `rules.yaml` configuration to match your structure. Configuration validation rules (RULE-3001 through RULE-3999) only apply to files in the `muleapp_config` folder.
+**Note**: The folder name must contain `_config` somewhere in the name. The default pattern in `rules.yaml` is `".*_config.*"` which matches any folder containing `_config`. You can modify this pattern if your organization uses a different naming convention. Configuration validation rules (RULE-100 through RULE-199) only apply to files in folders matching this pattern.
 
 ## Prerequisites
 

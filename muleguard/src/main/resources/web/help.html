@@ -171,7 +171,12 @@
         
         <h3>Required Structure</h3>
         <ul>
-            <li><strong>Folder Name:</strong> Configuration files must be in a folder named <code>muleapp_config</code></li>
+            <li><strong>Folder Name:</strong> Configuration files must be in a folder containing <code>_config</code> in the name
+                <ul style="margin-top: 5px;">
+                    <li>Examples: <code>muleapp_config</code>, <code>api_config</code>, <code>myproject_config</code></li>
+                    <li>Pattern: Any folder name containing <code>_config</code></li>
+                </ul>
+            </li>
             <li><strong>File Extensions:</strong> Supported extensions are:
                 <ul style="margin-top: 5px;">
                     <li><code>.properties</code> - Standard property files</li>
@@ -186,7 +191,7 @@
                     <li>Example: <code>api.timeout=30000</code></li>
                 </ul>
             </li>
-            <li><strong>Location:</strong> The <code>muleapp_config</code> folder should be at the same level as your API project folders</li>
+            <li><strong>Location:</strong> The config folder should be at the same level as your API project folders</li>
         </ul>
 
         <h3>Example Project Structure</h3>
@@ -203,14 +208,14 @@ your-mule-projects/
         </div>
 
         <div class="highlight-box" style="background: #fff3cd; border-left-color: #ffc107;">
-            <p><strong>⚠️ Note:</strong> If your organization uses a different folder name or file structure, 
-            you will need to either:</p>
+            <p><strong>⚠️ Note:</strong> The folder name must contain <code>_config</code> somewhere in the name. 
+            If your organization uses a different pattern, you can modify the <code>namePattern</code> in <code>rules.yaml</code>:</p>
             <ul style="margin-top: 5px;">
-                <li>Rename your configuration folder to <code>muleapp_config</code>, OR</li>
-                <li>Modify the <code>rules.yaml</code> configuration to match your structure</li>
+                <li>Current pattern: <code>".*_config.*"</code> (matches any folder containing <code>_config</code>)</li>
+                <li>You can change this to match your naming convention</li>
             </ul>
-            <p style="margin-top: 10px;">Configuration validation rules (RULE-3001 through RULE-3999) will only apply to files 
-            in the <code>muleapp_config</code> folder.</p>
+            <p style="margin-top: 10px;">Configuration validation rules (RULE-100 through RULE-199) will only apply to files 
+            in folders matching this pattern.</p>
         </div>
 
         <h2>🎯 Key Features</h2>
