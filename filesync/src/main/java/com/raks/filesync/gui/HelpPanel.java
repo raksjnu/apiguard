@@ -365,6 +365,21 @@ public class HelpPanel extends JPanel {
             "java -jar filesync-1.0.0.jar -m execute -c config.json\n\n" +
             "# Validate configuration\n" +
             "java -jar filesync-1.0.0.jar -m validate -c config.json\n\n\n" +
+            "HEAP MEMORY CONFIGURATION:\n\n" +
+            "For processing large CSV files, increase Java heap memory:\n\n" +
+            "# 2GB heap (medium files: 1,000-10,000 rows)\n" +
+            "java -Xmx2g -jar filesync-1.0.0.jar\n\n" +
+            "# 4GB heap (large files: 10,000-100,000 rows)\n" +
+            "java -Xmx4g -jar filesync-1.0.0.jar\n\n" +
+            "# Set min and max (recommended for consistent performance)\n" +
+            "java -Xms1g -Xmx4g -jar filesync-1.0.0.jar\n\n" +
+            "# 8GB for very large datasets (100,000+ rows)\n" +
+            "java -Xms2g -Xmx8g -jar filesync-1.0.0.jar\n\n" +
+            "Guidelines:\n" +
+            "• Default (256MB-512MB): Small files (<1,000 rows)\n" +
+            "• 2GB: Medium files (1,000-10,000 rows)\n" +
+            "• 4GB: Large files (10,000-100,000 rows)\n" +
+            "• 8GB+: Very large files (100,000+ rows)\n\n\n" +
             "EXIT CODES:\n\n" +
             "0 - Success\n" +
             "1 - Error (check console output for details)"
