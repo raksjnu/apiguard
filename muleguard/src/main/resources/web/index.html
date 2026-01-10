@@ -332,6 +332,21 @@
             // Update image sources if in standalone
             if (!isWrapper) {
                 document.getElementById('logoImg').src = 'logo.svg';
+                
+                // Email is not configured in standalone mode
+                // Add listeners to email checkboxes to show notification
+                const emailCheckboxes = ['attachReports', 'attachInput', 'attachProject'];
+                emailCheckboxes.forEach(id => {
+                    const checkbox = document.getElementById(id);
+                    if (checkbox) {
+                        checkbox.addEventListener('change', function() {
+                            if (this.checked) {
+                                alert('⚠️ Email notifications are not configured in standalone mode.\n\nPlease contact your administrator to enable email functionality.');
+                                this.checked = false; // Uncheck it
+                            }
+                        });
+                    }
+                });
             }
         });
 

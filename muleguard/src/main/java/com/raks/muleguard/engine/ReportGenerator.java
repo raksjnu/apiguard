@@ -14,7 +14,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class ReportGenerator {
+    private static final Logger logger = LoggerFactory.getLogger(ReportGenerator.class);
     private static final String[] RULE_DOCS = {
             "CONFIG_CLIENTIDMAP_VALIDATOR.md",
             "CONFIG_GENERIC_PROPERTY_FILE_CHECK.md",
@@ -44,16 +48,15 @@ public class ReportGenerator {
                 if (logoStream != null) {
                     Path logoPath = outputDir.resolve("logo.svg");
                     Files.copy(logoStream, logoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    System.out.println("   → logo.svg copied to " + outputDir.getFileName());
+                    logger.info("Logo copied to {}", outputDir.getFileName());
                 } else {
-                    System.err.println("Warning: logo.svg not found in resources for " + outputDir.getFileName());
+                    logger.warn("Logo not found in resources for {}", outputDir.getFileName());
                 }
             } catch (Exception logoEx) {
-                System.err.println(
-                        "Warning: Failed to copy logo.svg to " + outputDir.getFileName() + ": " + logoEx.getMessage());
+                logger.warn("Failed to copy logo to {}: {}", outputDir.getFileName(), logoEx.getMessage());
             }
         } catch (Exception e) {
-            System.err.println("Failed to generate individual reports: " + e.getMessage());
+            logger.error("Failed to generate individual reports: {}", e.getMessage());
         }
     }
     public static void generateHtml(ValidationReport report, Path outputPath) {
@@ -179,7 +182,7 @@ public class ReportGenerator {
                             rows.toString());
             Files.writeString(outputPath, html, java.nio.charset.StandardCharsets.UTF_8);
         } catch (Exception e) {
-            System.err.println("Failed to generate HTML: " + e.getMessage());
+            logger.error("Failed to generate HTML: {}", e.getMessage());
         }
     }
     public static void generateExcel(ValidationReport report, Path outputPath) {
@@ -238,13 +241,13 @@ public class ReportGenerator {
                 workbook.write(fos);
             }
         } catch (Exception e) {
-            System.err.println("Failed to generate Excel: " + e.getMessage());
+            logger.error("Failed to generate Excel: {}", e.getMessage());
         }
     }
     public static void generateConsolidatedReport(List<ApiResult> results, Path outputPath) {
         try {
             if (results == null || results.isEmpty()) {
-                System.err.println("No results to generate consolidated report.");
+                logger.warn("No results to generate consolidated report");
                 return;
             }
             Files.createDirectories(outputPath.getParent());
@@ -263,10 +266,10 @@ public class ReportGenerator {
                 try {
                     target = r.reportDir.resolve("report.html");
                     if (!Files.exists(target)) {
-                        System.err.println("Warning: Report not found: " + target);
+                        logger.warn("Report not found: {}", target);
                     }
                 } catch (Exception e) {
-                    System.err.println("Invalid report path for API: " + r.name);
+                    logger.warn("Invalid report path for API: {}", r.name);
                     continue;
                 }
                 String relativeLink;
@@ -362,17 +365,15 @@ public class ReportGenerator {
                             tableRows);
             Path htmlPath = outputPath.resolve("CONSOLIDATED-REPORT.html");
             Files.writeString(htmlPath, html, java.nio.charset.StandardCharsets.UTF_8);
-            System.out.println("CONSOLIDATED REPORT GENERATED:");
-            System.out.println("   → " + htmlPath.toAbsolutePath());
+            logger.info("Consolidated report generated: {}", htmlPath.toAbsolutePath());
             copyHelpFile(outputPath);
             generateConsolidatedExcel(results, outputPath);
             generateChecklistReport(outputPath); 
             generateRuleGuide(outputPath); 
         } catch (Throwable t) {
-            System.err.println("FAILED TO GENERATE CONSOLIDATED REPORT!");
-            System.err.println("Error type: " + t.getClass().getName());
-            System.err.println("Message: " + (t.getMessage() != null ? t.getMessage().replace('%', '％') : "null"));
-            t.printStackTrace(System.err); 
+            logger.error("Failed to generate consolidated report");
+            logger.error("Error type: {}", t.getClass().getName());
+            logger.error("Error message: {}", (t.getMessage() != null ? t.getMessage() : "null"), t); 
         }
     }
     private static void generateChecklistReport(Path outputDir) {
@@ -513,9 +514,9 @@ public class ReportGenerator {
                     .formatted(rows.toString());
             Path checklistPath = outputDir.resolve("checklist.html");
             Files.writeString(checklistPath, html, java.nio.charset.StandardCharsets.UTF_8);
-            System.out.println("   → checklist.html generated");
+            logger.info("Checklist generated");
         } catch (Exception e) {
-            System.err.println("Failed to generate checklist report: " + e.getMessage());
+            logger.error("Failed to generate checklist report: {}", e.getMessage());
         }
     }
     private static void generateRuleGuide(Path outputDir) {
@@ -760,10 +761,9 @@ public class ReportGenerator {
                     .formatted(sidebar.toString(), content.toString());
             Path ruleGuidePath = outputDir.resolve("rule_guide.html");
             Files.writeString(ruleGuidePath, html, java.nio.charset.StandardCharsets.UTF_8);
-            System.out.println("   → rule_guide.html generated");
+            logger.info("Rule guide generated");
         } catch (Exception e) {
-            System.err.println("Failed to generate Rule Guide: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Failed to generate rule guide: {}", e.getMessage(), e);
         }
     }
     private static String convertMdToHtml(String md) {
@@ -847,10 +847,9 @@ public class ReportGenerator {
             try (FileOutputStream fos = new FileOutputStream(excelPath.toFile())) {
                 workbook.write(fos);
             }
-            System.out.println("   → CONSOLIDATED-REPORT.xlsx generated");
+            logger.info("Consolidated Excel report generated");
         } catch (Exception e) {
-            System.err.println("Failed to generate consolidated Excel report: " + e.getMessage());
-            e.printStackTrace();
+            logger.error("Failed to generate consolidated Excel report: {}", e.getMessage(), e);
         }
     }
     private static String escape(String s) {
@@ -862,24 +861,24 @@ public class ReportGenerator {
         try {
             InputStream helpStream = ReportGenerator.class.getResourceAsStream("/help.html");
             if (helpStream == null) {
-                System.err.println("Warning: help.html not found in resources");
+                logger.warn("Help file not found in resources");
             } else {
                 Path helpPath = outputDir.resolve("help.html");
                 Files.copy(helpStream, helpPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 helpStream.close();
-                System.out.println("   → help.html copied");
+                logger.info("Help file copied");
             }
             InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg");
             if (logoStream == null) {
-                System.err.println("Warning: logo.svg not found in resources");
+                logger.warn("Logo not found in resources");
             } else {
                 Path logoPath = outputDir.resolve("logo.svg");
                 Files.copy(logoStream, logoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 logoStream.close();
-                System.out.println("   → logo.svg copied");
+                logger.info("Logo copied");
             }
         } catch (Exception e) {
-            System.err.println("Warning: Failed to copy help files: " + e.getMessage());
+            logger.warn("Failed to copy help files: {}", e.getMessage());
         }
     }
 }
