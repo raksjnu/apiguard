@@ -163,6 +163,32 @@ public class DiscoveryPanel extends JPanel {
         return discoveredSchemas != null && !discoveredSchemas.isEmpty();
     }
     
+    /**
+     * Get all discovered file names (just the names)
+     */
+    public java.util.Set<String> getAllDiscoveredFileNames() {
+        java.util.Set<String> fileNames = new java.util.HashSet<>();
+        if (discoveredSchemas != null) {
+            for (CsvDiscovery.FileSchema schema : discoveredSchemas.values()) {
+                fileNames.add(schema.getFileName());
+            }
+        }
+        return fileNames;
+    }
+    
+    /**
+     * Get all discovered unique field names (headers) from all files
+     */
+    public java.util.Set<String> getAllDiscoveredFields() {
+        java.util.Set<String> fields = new java.util.HashSet<>();
+        if (discoveredSchemas != null) {
+            for (CsvDiscovery.FileSchema schema : discoveredSchemas.values()) {
+                fields.addAll(schema.getHeaders());
+            }
+        }
+        return fields;
+    }
+    
     private void loadLastSourceDirectory() {
         String lastDir = UserPreferences.getLastSourceDirectory();
         if (!lastDir.isEmpty()) {

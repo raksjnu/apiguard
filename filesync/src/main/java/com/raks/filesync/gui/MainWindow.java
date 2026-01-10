@@ -66,6 +66,7 @@ public class MainWindow extends JFrame {
             int selectedIndex = tabbedPane.getSelectedIndex();
             if (selectedIndex == 1) { // Mapping tab
                 mappingPanel.refreshSourceFiles();
+                mappingPanel.refreshAutocompleteData();
             } else if (selectedIndex == 2) { // Execute tab (now index 2, not 3)
                 executePanel.refreshFromMappingTab();
             }

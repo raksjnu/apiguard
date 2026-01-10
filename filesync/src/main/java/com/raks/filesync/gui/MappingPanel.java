@@ -206,6 +206,26 @@ public class MappingPanel extends JPanel {
                 JOptionPane.INFORMATION_MESSAGE);
     }
     
+    /**
+     * Refresh autocomplete data from DiscoveryPanel
+     * Should be called when switching to this tab or after a scan
+     */
+    public void refreshAutocompleteData() {
+        if (discoveryPanel != null && discoveryPanel.hasDiscoveredFiles()) {
+            java.util.Set<String> discoveredFiles = discoveryPanel.getAllDiscoveredFileNames();
+            java.util.Set<String> discoveredFields = discoveryPanel.getAllDiscoveredFields();
+            
+            // Add to autocomplete fields (this merges with existing history)
+            for (String file : discoveredFiles) {
+                targetFileField.addSuggestion(file);
+            }
+            
+            for (String field : discoveredFields) {
+                targetFieldField.addSuggestion(field);
+            }
+        }
+    }
+
     private void removeSelectedMapping() {
         int selectedRow = mappingTable.getSelectedRow();
         if (selectedRow >= 0) {
