@@ -108,11 +108,35 @@ Settings persist across sessions using Java Preferences API.
 
 When you switch to the Execute tab, the tool automatically:
 - Loads the current mappings from the Mapping tab
-- Displays configuration details
-- Shows "[From Mapping Tab]" as the source
+- Displays configuration details with preview
+- Shows source/target directories and file count
 - Ready to execute immediately
 
 No need to manually save and load configuration files during your workflow!
+
+## Smart Autocomplete
+
+The Mapping tab features intelligent autocomplete for faster data entry:
+
+### Target File Names
+- Start typing in the "Target File" field
+- Dropdown shows previously used target file names
+- Select from history or type new name
+- History persists across sessions
+
+### Target Field Names
+- Start typing in the "Target Field" field
+- Dropdown shows previously used field names
+- Quick selection from common field names
+- Automatically saves new entries
+
+**Storage**: History limited to 10 most recent entries per category (~1-2 KB total)
+
+**Benefits**:
+- Faster mapping creation
+- Consistent naming across mappings
+- Reduced typos
+- Better productivity
 
 ## Heap Memory Configuration
 

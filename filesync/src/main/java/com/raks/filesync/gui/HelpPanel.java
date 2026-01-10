@@ -132,6 +132,12 @@ public class HelpPanel extends JPanel {
             "  - Remembers last config file location\n" +
             "  - Remembers window size and position\n" +
             "  - Persists across application restarts\n\n" +
+            "✓ Smart Autocomplete\n" +
+            "  - Target file name suggestions\n" +
+            "  - Target field name suggestions\n" +
+            "  - History-based dropdown (10 most recent)\n" +
+            "  - Persistent across sessions (~1-2 KB storage)\n" +
+            "  - Faster mapping creation\n\n" +
             "✓ Auto-Load Configuration\n" +
             "  - Automatically loads mappings from Mapping tab\n" +
             "  - No manual save/load required during workflow\n" +
