@@ -114,6 +114,38 @@ When you switch to the Execute tab, the tool automatically:
 
 No need to manually save and load configuration files during your workflow!
 
+## Heap Memory Configuration
+
+For processing large CSV files, you can increase the Java heap memory:
+
+### Standard Launch
+```bash
+java -jar target/filesync-1.0.0.jar
+```
+
+### With Increased Heap Memory
+```bash
+# 2GB heap (for medium files: 1,000-10,000 rows)
+java -Xmx2g -jar target/filesync-1.0.0.jar
+
+# 4GB heap (for large files: 10,000-100,000 rows)
+java -Xmx4g -jar target/filesync-1.0.0.jar
+
+# Set both min and max (recommended for consistent performance)
+java -Xms1g -Xmx4g -jar target/filesync-1.0.0.jar
+
+# 8GB for very large datasets (100,000+ rows)
+java -Xms2g -Xmx8g -jar target/filesync-1.0.0.jar
+```
+
+**Guidelines**:
+- Default (256MB-512MB): Small files (<1,000 rows)
+- 2GB: Medium files (1,000-10,000 rows)
+- 4GB: Large files (10,000-100,000 rows)
+- 8GB+: Very large files (100,000+ rows)
+
+**Note**: `-Xms` sets minimum heap, `-Xmx` sets maximum heap. Setting both to similar values can improve performance.
+
 ## Future Enhancements
 
 - Rule-based conditional mappings
