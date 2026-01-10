@@ -28,6 +28,30 @@ It generates detailed HTML and Excel reports highlighting compliance and identif
 - **Checklist View**: Includes a `checklist.html` page that lists all possible validation rules the tool checks for.
 - **Enterprise Ready**: No trial restrictions, professional SLF4J logging, cross-platform compatible.
 
+## Configuration File Requirements
+
+**Important**: If your organization uses environment-specific configuration files, they must follow this structure:
+
+- **Folder Name**: `muleapp_config` (at the same level as your API project folders)
+- **File Extensions**: `.properties`, `.policy`, or `.deployment`
+- **File Format**: Properties must use `propertyName=propertyValue` format
+  - Delimiter must be `=` (equals sign)
+  - Example: `database.host=localhost`
+  - Example: `api.timeout=30000`
+
+**Example Structure**:
+```
+your-mule-projects/
+├── api-project-1/
+├── api-project-2/
+└── muleapp_config/
+    ├── dev.properties
+    ├── qa.properties
+    └── prod.properties
+```
+
+**Note**: If your organization uses a different folder name or structure, you can either rename your folder to `muleapp_config` or modify the `rules.yaml` configuration to match your structure. Configuration validation rules (RULE-3001 through RULE-3999) only apply to files in the `muleapp_config` folder.
+
 ## Prerequisites
 
 To build and run MuleGuard, you will need the following installed:

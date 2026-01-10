@@ -33,7 +33,8 @@ MuleGuard is a specialized static analysis tool for MuleSoft applications. It sc
 | **Apache POI** | 5.4.0 | Excel report generation |
 | **Picocli** | 4.7.5 | Command-line interface |
 | **SnakeYAML** | 2.2 | Configuration parsing |
-| **Log4j** | 2.24.3 | Logging framework |
+| **SLF4J** | 2.0.9 | Logging API |
+| **Logback** | 1.4.11 | Logging implementation |
 | **Maven Model** | 3.9.6 | Parsing `pom.xml` files |
 
 ---
@@ -87,12 +88,41 @@ graph TB
 
 | Dependency | Security Status | Notes |
 |------------|----------------|-------|
-| **Log4j 2.24.3** | ✅ Secure | Patched against Log4Shell and newer CVEs |
+| **SLF4J/Logback** | ✅ Secure | Industry-standard logging framework |
 | **Dom4j 2.1.4** | ✅ Secure | Modern maintenance fork of dom4j |
 | **SnakeYAML 2.2** | ✅ Secure | Safe constructor defaults |
 | **Apache POI 5.4.0** | ✅ Secure | Latest version |
 
-### 3.2 Security Features
+### 3.2 Input Modes
+
+MuleGuard supports multiple input methods:
+
+| Mode | Availability | Description |
+|------|--------------|-------------|
+| **Local Folder** | Standalone CLI/GUI | Scan projects from filesystem |
+| **ZIP Upload** | Standalone GUI, Wrapper | Upload and validate ZIP archives |
+| **JAR Upload** | Standalone GUI, Wrapper | Validate Mule application JAR files |
+| **Git Repository** | Coming Soon | Clone and validate from Git |
+
+### 3.3 Configuration File Requirements
+
+**Important**: Environment-specific configuration files must follow this structure:
+- **Folder Name**: `muleapp_config` (at the same level as API projects)
+- **File Extensions**: `.properties`, `.policy`, or `.deployment`
+- **File Format**: `propertyName=propertyValue` (delimiter must be `=`)
+
+Example:
+```
+your-mule-projects/
+├── api-project-1/
+├── api-project-2/
+└── muleapp_config/
+    ├── dev.properties
+    ├── qa.properties
+    └── prod.properties
+```
+
+### 3.4 Security Features
 
 #### Static Analysis
 - **Offline Scanning**: MuleGuard does not execute the Mule code it scans. It purely performs static text/XML analysis.
