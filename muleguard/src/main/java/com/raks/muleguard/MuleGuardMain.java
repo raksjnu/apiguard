@@ -8,6 +8,8 @@ import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.introspector.PropertyUtils;
 import org.yaml.snakeyaml.TypeDescription;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -19,45 +21,33 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 import javax.swing.JFileChooser;
-import com.raks.muleguard.license.TrialLicenseManager;
 public class MuleGuardMain {
+    private static final Logger logger = LoggerFactory.getLogger(MuleGuardMain.class);
     public static void main(String[] args) {
-        try {
-            TrialLicenseManager licenseManager = new TrialLicenseManager();
-            licenseManager.validateTrial();
-        } catch (TrialLicenseManager.LicenseException e) {
-            System.err.println("\n╔════════════════════════════════════════════════════════════╗");
-            System.err.println("║                  LICENSE ERROR                             ║");
-            System.err.println("╠════════════════════════════════════════════════════════════╣");
-            System.err.println("║  " + e.getMessage());
-            System.err.println("╚════════════════════════════════════════════════════════════╝\n");
-            System.exit(1);
-        }
         Path parentFolder;
         String configFilePath = null;
         if (args.length == 0 || args[0].isEmpty()) {
             parentFolder = showFolderDialog();
             if (parentFolder == null) {
-                System.out.println("No folder selected. Exiting.");
+                logger.info("No folder selected. Exiting.");
                 return;
             }
         } else if (args.length >= 2 && "-p".equals(args[0])) {
             parentFolder = Paths.get(args[1]);
             if (args.length >= 4 && "--config".equals(args[2])) {
                 configFilePath = args[3];
-                System.out.println("Using custom config file: " + configFilePath);
+                logger.info("Using custom config file: {}", configFilePath);
             }
         } else {
-            System.err.println(
-                    "Usage: java -jar muleguard.jar -p <folder> [--config <rules.yaml>]   OR   double-click to select folder");
+            logger.error("Usage: java -jar muleguard.jar -p <folder> [--config <rules.yaml>]   OR   double-click to select folder");
             return;
         }
         if (!Files.isDirectory(parentFolder)) {
-            System.err.println("Error: Not a valid folder: " + parentFolder);
+            logger.error("Error: Not a valid folder: {}", parentFolder);
             return;
         }
-        System.out.println("Starting MuleGuard validation on: " + parentFolder);
-        System.out.println("Scanning for Mule API projects...\n");
+        logger.info("Starting MuleGuard validation on: {}", parentFolder);
+        logger.info("Scanning for Mule API projects...");
         RootWrapper configWrapper = loadConfig(configFilePath);
         List<Rule> allRules = configWrapper.getRules();
         Map<String, Object> projectIdConfig = configWrapper.getConfig().getProjectIdentification();
@@ -84,7 +74,7 @@ public class MuleGuardMain {
         try {
             Files.createDirectories(reportsRoot);
         } catch (IOException e) {
-            System.err.println("Failed to create reports directory: " + e.getMessage());
+            logger.error("Failed to create reports directory: {}", e.getMessage());
             System.exit(1);
         }
         List<Path> discoveredProjects = com.raks.muleguard.util.ProjectDiscovery.findMuleProjects(
@@ -95,11 +85,11 @@ public class MuleGuardMain {
                 configFolderPattern,
                 exactIgnoredNames,
                 ignoredPrefixes);
-        System.out.println(); 
+        logger.info("");
         for (Path apiDir : discoveredProjects) {
             String apiName = apiDir.getFileName().toString();
             boolean isConfigProject = apiName.matches(configFolderPattern);
-            System.out.printf("Validating %s: %s%n", isConfigProject ? "Config" : "API", apiName);
+            logger.info("Validating {}: {}", isConfigProject ? "Config" : "API", apiName);
             List<Rule> applicableRules = allRules.stream()
                     .filter(Rule::isEnabled)
                     .filter(rule -> {
@@ -131,7 +121,7 @@ public class MuleGuardMain {
             try {
                 Files.createDirectories(apiReportDir);
             } catch (IOException e) {
-                System.err.println("Failed to create report dir for " + apiName + ": " + e.getMessage());
+                logger.error("Failed to create report dir for {}: {}", apiName, e.getMessage());
                 continue; 
             }
             ReportGenerator.generateIndividualReports(report, apiReportDir);
@@ -139,23 +129,23 @@ public class MuleGuardMain {
             int failed = report.failed.size();
             int skipped = report.skipped.size();
             results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
-            System.out.println("   " + (failed == 0 ? "PASS" : "FAIL") +
-                    " | Passed: " + passed + " | Failed: " + failed + " | Skipped: " + skipped + "\n");
+            logger.info("   {} | Passed: {} | Failed: {} | Skipped: {}", 
+                    (failed == 0 ? "PASS" : "FAIL"), passed, failed, skipped);
         }
         try {
             ReportGenerator.generateConsolidatedReport(results, reportsRoot);
         } catch (Throwable t) {
-            System.err.println("FAILED TO GENERATE CONSOLIDATED REPORT!");
-            System.err.println("Exception: " + t.getClass().getSimpleName());
+            logger.error("FAILED TO GENERATE CONSOLIDATED REPORT!");
+            logger.error("Exception: {}", t.getClass().getSimpleName());
             String msg = t.getMessage();
             if (msg != null) {
-                System.err.println("Message: " + msg.replace('%', '％')); 
+                logger.error("Message: {}", msg.replace('%', '％'));
             }
-            t.printStackTrace(System.err);
+            logger.error("Stack trace:", t);
         }
-        System.out.println("BATCH VALIDATION COMPLETE!");
-        System.out.println("Consolidated report: " + reportsRoot.resolve("CONSOLIDATED-REPORT.html"));
-        System.out.println("Individual reports in: " + reportsRoot);
+        logger.info("BATCH VALIDATION COMPLETE!");
+        logger.info("Consolidated report: {}", reportsRoot.resolve("CONSOLIDATED-REPORT.html"));
+        logger.info("Individual reports in: {}", reportsRoot);
     }
     public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath) {
         return validateAndReturnResults(projectPath, customRulesPath, null);
@@ -219,7 +209,7 @@ public class MuleGuardMain {
                 try {
                     Files.createDirectories(apiReportDir);
                 } catch (IOException e) {
-                    System.err.println("Failed to create report directory for " + apiName);
+                    logger.error("Failed to create report directory for {}", apiName);
                     continue;
                 }
                 boolean isConfigProject = apiName.matches(configFolderPattern);
@@ -257,7 +247,7 @@ public class MuleGuardMain {
                 ValidationEngine engine = new ValidationEngine(applicableRules, apiDir);
                 ValidationReport report = engine.validate();
                 if (report == null) {
-                    System.err.println("Validation failed for " + apiName);
+                    logger.error("Validation failed for {}", apiName);
                     continue;
                 }
                 if (displayName != null && !displayName.trim().isEmpty()) {
@@ -270,15 +260,15 @@ public class MuleGuardMain {
                 int failed = report.failed.size();
                 int skipped = report.skipped.size();
                 results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
-                System.out.println("Validating API: " + apiName);
-                System.out.println("   " + (failed == 0 ? "PASS" : "FAIL") +
-                        " | Passed: " + passed + " | Failed: " + failed + " | Skipped: " + skipped + "\n");
+                logger.info("Validating API: {}", apiName);
+                logger.info("   {} | Passed: {} | Failed: {} | Skipped: {}",
+                        (failed == 0 ? "PASS" : "FAIL"), passed, failed, skipped);
             }
             try {
                 ReportGenerator.generateConsolidatedReport(results, reportsRoot);
             } catch (Throwable t) {
-                System.err.println("Failed to generate consolidated report: " + t.getMessage());
-                t.printStackTrace();
+                logger.error("Failed to generate consolidated report: {}", t.getMessage());
+                logger.error("Stack trace:", t);
             }
             int totalPassed = results.stream().mapToInt(r -> r.passed).sum();
             int totalFailed = results.stream().mapToInt(r -> r.failed).sum();
@@ -302,9 +292,8 @@ public class MuleGuardMain {
             result.put("skipped", skipped);
             result.put("reportsPath", reportsRoot.toString());
             result.put("customRulesUsed", customRulesPath != null);
-            System.out.println("BATCH VALIDATION COMPLETE!");
-            System.out.println("Validation results: Passed=" + totalPassed + ", Failed=" + totalFailed + ", Status="
-                    + overallStatus);
+            logger.info("BATCH VALIDATION COMPLETE!");
+            logger.info("Validation results: Passed={}, Failed={}, Status={}", totalPassed, totalFailed, overallStatus);
         } catch (Exception e) {
             result.put("status", "ERROR");
             result.put("passed", new ArrayList<>());
@@ -326,17 +315,17 @@ public class MuleGuardMain {
         if (configFilePath != null && !configFilePath.isEmpty()) {
             try {
                 input = Files.newInputStream(Paths.get(configFilePath));
-                System.out.println("Loaded custom config from: " + configFilePath);
+                logger.info("Loaded custom config from: {}", configFilePath);
             } catch (IOException e) {
-                System.err.println("Error loading custom config file: " + configFilePath);
-                System.err.println("Falling back to embedded rules.yaml");
+                logger.error("Error loading custom config file: {}", configFilePath);
+                logger.warn("Falling back to embedded rules.yaml");
                 input = MuleGuardMain.class.getClassLoader().getResourceAsStream("rules/rules.yaml");
             }
         } else {
             input = MuleGuardMain.class.getClassLoader().getResourceAsStream("rules/rules.yaml");
         }
         if (input == null) {
-            System.err.println("rules.yaml not found!");
+            logger.error("rules.yaml not found!");
             System.exit(1);
         }
         return yaml.loadAs(input, RootWrapper.class);

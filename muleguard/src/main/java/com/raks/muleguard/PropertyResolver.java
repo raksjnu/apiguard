@@ -8,7 +8,10 @@ import java.util.Properties;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 public class PropertyResolver {
+    private static final Logger logger = LoggerFactory.getLogger(PropertyResolver.class);
     private final Properties properties = new Properties();
     public PropertyResolver(Path projectDir) {
         Path resourcesDir = projectDir.resolve("src/main/resources");
@@ -19,14 +22,14 @@ public class PropertyResolver {
             files.filter(file -> file.toString().toLowerCase().endsWith(".properties"))
                     .forEach(this::loadPropertiesFromFile);
         } catch (IOException e) {
-            System.err.println("Warning: Could not scan for property files: " + e.getMessage());
+            logger.warn("Could not scan for property files: {}", e.getMessage());
         }
     }
     private void loadPropertiesFromFile(Path propertyFile) {
         try (InputStream input = new FileInputStream(propertyFile.toFile())) {
             properties.load(input);
         } catch (IOException e) {
-            System.err.println("Warning: Could not load property file: " + propertyFile + ". Error: " + e.getMessage());
+            logger.warn("Could not load property file: {}. Error: {}", propertyFile, e.getMessage());
         }
     }
     public String resolve(String value) {

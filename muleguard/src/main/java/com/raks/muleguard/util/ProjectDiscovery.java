@@ -5,7 +5,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 public class ProjectDiscovery {
+    private static final Logger logger = LoggerFactory.getLogger(ProjectDiscovery.class);
     public static List<Path> findMuleProjects(
             Path searchPath,
             int maxDepth,
@@ -15,17 +18,17 @@ public class ProjectDiscovery {
             List<String> exactIgnoredNames,
             List<String> ignoredPrefixes) {
         List<Path> projects = new ArrayList<>();
-        System.out.println("Searching for Mule projects in: " + searchPath.toAbsolutePath());
-        System.out.println("Maximum search depth: " + maxDepth);
+        logger.info("Searching for Mule projects in: {}", searchPath.toAbsolutePath());
+        logger.info("Maximum search depth: {}", maxDepth);
         searchForProjects(searchPath, projects, 0, maxDepth,
                 markerFiles, matchMode, configFolderPattern,
                 exactIgnoredNames, ignoredPrefixes);
         if (projects.isEmpty()) {
-            System.out.println("No Mule projects found in: " + searchPath.toAbsolutePath());
+            logger.info("No Mule projects found in: {}", searchPath.toAbsolutePath());
         } else {
-            System.out.println("Found " + projects.size() + " Mule project(s):");
+            logger.info("Found {} Mule project(s):", projects.size());
             for (int i = 0; i < projects.size(); i++) {
-                System.out.println("  " + (i + 1) + ". " + projects.get(i).toAbsolutePath());
+                logger.info("  {}. {}", (i + 1), projects.get(i).toAbsolutePath());
             }
         }
         return projects;
@@ -58,7 +61,7 @@ public class ProjectDiscovery {
                 }
             }
         } catch (IOException e) {
-            System.err.println("Error searching directory: " + directory + " - " + e.getMessage());
+            logger.error("Error searching directory: {} - {}", directory, e.getMessage());
         }
     }
     private static boolean isMuleProject(
