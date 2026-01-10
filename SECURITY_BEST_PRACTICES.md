@@ -1,6 +1,13 @@
-# MuleGuard Security Best Practices
+# ApiGuard Security Best Practices
 
-This document outlines security best practices for deploying and using MuleGuard in enterprise environments.
+This document outlines security best practices for deploying and using **all ApiGuard projects** in enterprise environments.
+
+**Applies to:**
+- **MuleGuard**: MuleSoft static analysis tool
+- **ApiGuardWrapper**: Mule 4 wrapper application (includes MuleGuard, RaksAnalyzer, ApiUrlComparison, GitAnalyzer)
+- **RaksAnalyzer**: Universal documentation generator
+- **ApiUrlComparison**: API response comparison tool
+- **GitAnalyzer**: Semantic code analysis tool
 
 ---
 
@@ -10,13 +17,14 @@ This document outlines security best practices for deploying and using MuleGuard
 3. [Log File Security](#log-file-security)
 4. [Network Security](#network-security)
 5. [Dependency Management](#dependency-management)
+6. [Configuration File Security](#configuration-file-security)
 
 ---
 
 ## Credential Management
 
-### No Credentials in MuleGuard
-✅ **Good News**: MuleGuard does **NOT** require or store any credentials. The tool performs static analysis of Mule projects and does not connect to external systems.
+### Standalone Applications (MuleGuard, RaksAnalyzer)
+✅ **Good News**: Standalone tools do **NOT** require or store any credentials. They perform static analysis and do not connect to external systems.
 
 ### When Using MuleGuard via Wrapper
 If you're using MuleGuard through the `apiguardwrapper` Mule application:
@@ -161,9 +169,8 @@ MuleGuard uses the following major dependencies:
 | SnakeYAML | 2.2 | YAML parsing | Updated for CVE fixes |
 | Jackson | 2.18.2 | JSON processing | Latest secure version |
 | Apache POI | 5.4.0 | Excel reports | Updated for CVE-2025-31672 |
-| Log4j | 2.24.3 | Logging (POI dependency) | Post-Log4Shell secure version |
-| SLF4J | 2.0.9 | Logging API | Latest stable |
-| Logback | 1.4.14 | Logging implementation | Latest stable |
+| SLF4J | 2.0.9 | Logging API | Industry standard |
+| Logback | 1.4.11 | Logging implementation | Latest stable |
 
 ### Security Updates
 
@@ -238,7 +245,7 @@ MuleGuard generates HTML and Excel reports containing:
 If you discover a security vulnerability:
 
 1. **Do NOT** open a public GitHub issue
-2. **Email**: raksjnu@gmail.com with details
+2. **Email**: rakesh.kumar@ibmcom with details
 3. **Include**: 
    - Description of vulnerability
    - Steps to reproduce
