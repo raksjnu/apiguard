@@ -456,10 +456,15 @@ public class ReportGenerator {
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
                                     var path = window.location.pathname;
-                                    var isMuleStatic = path.includes('/muleguard/web/');
-                                    var isMuleReport = path.includes('/muleguard/reports/');
+                                    var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
+                                    var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
                                     var dashboardBtn = document.getElementById('dashboardBtn');
                                     var mainPageBtn = document.getElementById('mainPageBtn');
+                                    
+                                    // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+                                    var isInMuleWrapper = path.includes('/apiguard/');
+                                    var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+                                    
                                     var sessionId = new URLSearchParams(window.location.search).get('session');
                                     if (!sessionId && isMuleReport) {
                                         var parts = path.split('/muleguard/reports/');
@@ -471,7 +476,9 @@ public class ReportGenerator {
                                     if (isMuleStatic || isMuleReport) {
                                         if (mainPageBtn) {
                                             mainPageBtn.style.display = 'inline-block';
-                                            if (sessionId) mainPageBtn.href = '/muleguard/main?session=' + sessionId;
+                                            var mainPageUrl = basePath + '/main';
+                                            if (sessionId) mainPageUrl += '?session=' + sessionId;
+                                            mainPageBtn.href = mainPageUrl;
                                             if (isMuleStatic) {
                                                 mainPageBtn.style.right = '40px';
                                                 if (dashboardBtn) dashboardBtn.style.display = 'none'; 
@@ -692,10 +699,15 @@ public class ReportGenerator {
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
                                     var path = window.location.pathname;
-                                    var isMuleStatic = path.includes('/muleguard/web/');
-                                    var isMuleReport = path.includes('/muleguard/reports/');
+                                    var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
+                                    var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
                                     var dashboardBtn = document.getElementById('dashboardBtn');
                                     var mainPageBtn = document.getElementById('mainPageBtn');
+                                    
+                                    // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+                                    var isInMuleWrapper = path.includes('/apiguard/');
+                                    var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+                                    
                                     var sessionId = new URLSearchParams(window.location.search).get('session');
                                     if (!sessionId && isMuleReport) {
                                         var parts = path.split('/muleguard/reports/');
@@ -707,7 +719,9 @@ public class ReportGenerator {
                                     if (isMuleStatic || isMuleReport) {
                                         if (mainPageBtn) {
                                             mainPageBtn.style.display = 'inline-block';
-                                            if (sessionId) mainPageBtn.href = '/muleguard/main?session=' + sessionId;
+                                            var mainPageUrl = basePath + '/main';
+                                            if (sessionId) mainPageUrl += '?session=' + sessionId;
+                                            mainPageBtn.href = mainPageUrl;
                                             if (isMuleStatic) {
                                                 mainPageBtn.style.right = '40px';
                                                 if (dashboardBtn) dashboardBtn.style.display = 'none'; 

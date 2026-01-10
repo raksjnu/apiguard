@@ -97,11 +97,11 @@
 <body>
     <div class="report-container">
         <!-- Buttons container to manage absolute positioning easily -->
-        <div class="header-buttons" style="position: absolute; top: 20px; right: 40px; display: flex; gap: 10px;">
+        <div class="header-buttons">
             <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button"
-                title="Return to main dashboard" style="position: static;">← Dashboard</a>
-            <a href="/apiguard/muleguard/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
-                style="display: none; background-color: #0078d4; position: static;">🏠 Main Page</a>
+                title="Return to main dashboard">← Dashboard</a>
+            <a href="/muleguard/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
+                style="display: none; background-color: #0078d4;">🏠 Main Page</a>
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
             <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
@@ -312,16 +312,21 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var path = window.location.pathname;
-            var isMuleStatic = path.includes('/apiguard/muleguard/web/');
-            var isMuleReport = path.includes('/apiguard/muleguard/reports/');
+            var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
+            var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
             var dashboardBtn = document.getElementById('dashboardBtn');
             var mainPageBtn = document.getElementById('mainPageBtn');
 
+            // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+            var isInMuleWrapper = path.includes('/apiguard/');
+            var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+
             // Session Handling
             var sessionId = new URLSearchParams(window.location.search).get('session');
-            // If in report path /muleguard/reports/{sessionId}/..., extract it
+            // If in report path, extract sessionId from path
             if (!sessionId && isMuleReport) {
-                var parts = path.split('/apiguard/muleguard/reports/');
+                var reportPath = basePath + '/reports/';
+                var parts = path.split(reportPath);
                 if (parts.length > 1) {
                     var subparts = parts[1].split('/');
                     if (subparts.length > 0) sessionId = subparts[0];
@@ -332,27 +337,22 @@
                 // We are in Mule Wrapper Environment
                 if (mainPageBtn) {
                     mainPageBtn.style.display = 'inline-block';
-                    // Update link with sessionId if available
-                    if (sessionId) mainPageBtn.href = '/apiguard/muleguard/main?session=' + sessionId;
+                    // Build Main Page URL with correct base path
+                    var mainPageUrl = basePath + '/main';
+                    if (sessionId) mainPageUrl += '?session=' + sessionId;
+                    mainPageBtn.href = mainPageUrl;
 
                     if (isMuleStatic) {
-                        // Static web pages - only show Main Page button
-                        if (dashboardBtn) dashboardBtn.style.display = 'none';
+                        mainPageBtn.style.right = '40px';
+                        if (dashboardBtn) dashboardBtn.style.display = 'none'; // No dashboard in static view
                     } else {
-                        // In Mule Report - show both buttons and update Dashboard href
-                        if (dashboardBtn) {
-                            dashboardBtn.style.display = 'inline-block';
-                            // Update Dashboard button to point to correct report location
-                            if (sessionId) {
-                                dashboardBtn.href = '/apiguard/muleguard/reports/' + sessionId + '/CONSOLIDATED-REPORT.html';
-                            }
-                        }
+                        // In Mule Report
+                        mainPageBtn.style.right = '180px';
                     }
                 }
             } else {
-                // Standalone Java or Local File - only show Dashboard button
+                // Standalone Java or Local File - Main Page button stays hidden
                 if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
-                if (mainPageBtn) mainPageBtn.style.display = 'none';
             }
         });
     </script>
