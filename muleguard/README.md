@@ -15,12 +15,18 @@ It generates detailed HTML and Excel reports highlighting compliance and identif
 
 ## Features
 
+- **Multiple Input Modes**: 
+  - **Local Folder**: Scan projects from your filesystem
+  - **ZIP Upload**: Upload and validate ZIP archives
+  - **JAR Upload**: Validate Mule application JAR files
+  - **Git Repository**: (Coming Soon) Clone and validate from Git
 - **Comprehensive Rule Set**: Validates against a wide range of best practices.
 - **Multi-Project Analysis**: Scan a single API or a directory containing multiple APIs.
 - **Consolidated Reporting**: Generates a summary dashboard for all scanned APIs.
 - **Detailed Individual Reports**: Provides rule-by-rule results for each API, with links from the consolidated report.
 - **Multiple Formats**: Reports are generated in both user-friendly HTML and easy-to-process Excel formats.
 - **Checklist View**: Includes a `checklist.html` page that lists all possible validation rules the tool checks for.
+- **Enterprise Ready**: No trial restrictions, professional SLF4J logging, cross-platform compatible.
 
 ## Prerequisites
 

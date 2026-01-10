@@ -64,6 +64,7 @@ Use this checklist for every project cleanup:
 - [ ] Ensure proper resource management (try-with-resources)
 - [ ] Remove unused imports and dead code
 - [ ] Fix any compiler warnings
+- [ ] **Remove all comments from Java files** (comments allowed only in `.properties`, `.yaml`, `.xml` config files)
 - [ ] **Use `Paths.get()` for all file path operations**
 - [ ] **No hardcoded `\` or `/` in path strings**
 - [ ] **Use `System.lineSeparator()` for line endings**
