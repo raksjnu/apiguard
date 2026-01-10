@@ -2844,16 +2844,21 @@ api-main.xml: Direct database operations forbidden in API layer - use service la
   <script>
     document.addEventListener('DOMContentLoaded', function () {
       var path = window.location.pathname;
-      var isMuleStatic = path.includes('/muleguard/web/');
-      var isMuleReport = path.includes('/muleguard/reports/');
+      var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
+      var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
       var dashboardBtn = document.getElementById('dashboardBtn');
       var mainPageBtn = document.getElementById('mainPageBtn');
 
+      // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+      var isInMuleWrapper = path.includes('/apiguard/');
+      var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+
       // Session Handling
       var sessionId = new URLSearchParams(window.location.search).get('session');
-      // If in report path /muleguard/reports/{sessionId}/..., extract it
+      // If in report path, extract sessionId from path
       if (!sessionId && isMuleReport) {
-        var parts = path.split('/muleguard/reports/');
+        var reportPath = basePath + '/reports/';
+        var parts = path.split(reportPath);
         if (parts.length > 1) {
           var subparts = parts[1].split('/');
           if (subparts.length > 0) sessionId = subparts[0];
@@ -2864,8 +2869,10 @@ api-main.xml: Direct database operations forbidden in API layer - use service la
         // We are in Mule Wrapper Environment
         if (mainPageBtn) {
           mainPageBtn.style.display = 'inline-block';
-          // Update link with sessionId if available
-          if (sessionId) mainPageBtn.href = '/muleguard/main?session=' + sessionId;
+          // Build Main Page URL with correct base path
+          var mainPageUrl = basePath + '/main';
+          if (sessionId) mainPageUrl += '?session=' + sessionId;
+          mainPageBtn.href = mainPageUrl;
 
           if (isMuleStatic) {
             mainPageBtn.style.right = '40px';

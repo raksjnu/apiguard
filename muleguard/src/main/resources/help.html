@@ -277,7 +277,7 @@
 
             // Session Handling
             var sessionId = new URLSearchParams(window.location.search).get('session');
-            // If in report path, extract sessionId
+            // If in report path, extract sessionId from path
             if (!sessionId && isMuleReport) {
                 var reportPath = basePath + '/reports/';
                 var parts = path.split(reportPath);
