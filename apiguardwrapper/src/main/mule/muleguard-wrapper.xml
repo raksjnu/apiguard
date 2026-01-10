@@ -459,7 +459,17 @@ output application/java
             <flow-ref name="send-usage-notification-flow"/>
         </async>
         
-        <!-- Return session ID -->
+        <!-- Generate ZIP for Download Button (Synchronous) -->
+        <set-variable variableName="reportsZipPath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
+        <!-- Only zip if not already zipped by email flow (though email is async, so better to just zip here ensures availability) -->
+        <java:invoke-static doc:name="Zip Reports Sync" class="com.raks.muleguard.util.ArchiveExtractor" method="zipDirectory(java.lang.String,java.lang.String)">
+            <java:args><![CDATA[#[{
+                arg0: vars.reportsFolderPath,
+                arg1: vars.reportsZipPath
+            }]]]></java:args>
+        </java:invoke-static>
+
+        <!-- Return session ID and Report Info -->
         <ee:transform>
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
@@ -469,7 +479,10 @@ output application/json indent=false
     status: "success", 
     sessionId: vars.validationSessionId default vars.userSessionId, 
     mode: vars.validationMode, 
-    reportsPath: vars.projectPath ++ "/" ++ vars.reportDirName, 
+    requestPath: vars.projectPath,
+    reportPath: vars.reportDirName,
+    relativeReportUrl: vars.reportDirName ++ "/CONSOLIDATED-REPORT.html", 
+    reportZip: "validation-report.zip",
     customRules: vars.customRulesPath != null,
     baseUrl: vars.baseUrl
 }]]></ee:set-payload>
@@ -973,5 +986,108 @@ output text/plain
                 <logger level="WARN" message="#['Failed to send registration email: ' ++ error.description]"/>
             </on-error-continue>
         </error-handler>
+    </flow>
+
+    <!-- NEW FLOW: Serve Generated Reports from Filesystem -->
+    <flow name="report-serving-flow">
+        <http:listener path="/muleguard/reports/{sessionId}/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response>
+                <http:headers><![CDATA[#[
+                    output application/java
+                    ---
+                    {
+                        "Content-Type": vars.mimeType default "text/html"
+                    }
+                ]]]></http:headers>
+            </http:response>
+        </http:listener>
+        
+        <set-variable variableName="sessionId" value="#[attributes.uriParams.sessionId]"/>
+        <set-variable variableName="resourcePath" value="#[attributes.relativePath replace ('/muleguard/reports/' ++ vars.sessionId ++ '/') with '']"/>
+        
+        <!-- Construct absolute path to file in session workspace -->
+        <set-variable variableName="workDir" value="#[p('muleguard.work.dir')]"/>
+        <set-variable variableName="filePath" value="#[vars.workDir ++ '/' ++ vars.sessionId ++ '/' ++ vars.resourcePath]"/>
+        
+        <!-- Determine MIME type -->
+        <set-variable variableName="mimeType" value="#[
+            if (vars.resourcePath endsWith '.html') 'text/html; charset=UTF-8'
+            else if (vars.resourcePath endsWith '.css') 'text/css; charset=UTF-8'
+            else if (vars.resourcePath endsWith '.js') 'application/javascript; charset=UTF-8'
+            else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
+            else if (vars.resourcePath endsWith '.png') 'image/png'
+            else if (vars.resourcePath endsWith '.jpg') 'image/jpeg'
+            else 'application/octet-stream'
+        ]"/>
+
+        <file:read path="#[vars.filePath]" config-ref="File_Config"/>
+    </flow>
+
+    <!-- NEW FLOW: Download ZIP -->
+    <flow name="download-serving-flow">
+        <http:listener path="/muleguard/download" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response>
+                <http:headers><![CDATA[#[
+                    output application/java
+                    ---
+                    {
+                        "Content-Type": "application/zip",
+                        "Content-Disposition": "attachment; filename=\"validation-report.zip\""
+                    }
+                ]]]></http:headers>
+            </http:response>
+        </http:listener>
+        
+        <set-variable variableName="sessionId" value="#[attributes.queryParams.session]"/>
+        
+        <choice>
+             <when expression="#[vars.sessionId != null]">
+                 <!-- Construct path to the zip file. Logic matches validation flow zip naming -->
+                 <!-- Zip is named: {reportDirName}.zip. Usually 'muleguard-reports.zip' or timestamped -->
+                 <!-- BUT validation flow returned 'validation-report.zip' as name to UI. -->
+                 <!-- We need to find the actual zip file. -->
+                 <!-- In validation-trigger-flow, we saved it as: vars.projectPath ++ '/' ++ vars.reportDirName ++ '.zip' -->
+                 <!-- vars.projectPath is usually workDir/sessionId/input -->
+                 <!-- Actually, projectPath is passed into validation flow. -->
+                 <!-- Let's find the ZIP in the session directory. -->
+                 
+                 <set-variable variableName="workDir" value="#[p('muleguard.work.dir')]"/>
+                 <!-- We assume the zip is at workDir/sessionId/input/muleguard-reports*.zip or similar -->
+                 <!-- To be robust, let's look for the first .zip file in the project root that isn't input.zip -->
+                 <!-- Or simpler, just reconstruct the path if possible. URL param 'file' was used in UI. -->
+                 
+                 <!-- Let's try to trust the 'file' param if we validate it's inside the session dir -->
+                 <!-- But UI sends 'validation-report.zip'. -->
+                 
+                 <!-- Strategy: Look for the report zip in the session dir -->
+                 <!-- The zip was created at: projectPath / reportDirName .zip -->
+                 <!-- projectPath = workDir/sessionId/extracted_folder -->
+                 <!-- This is hard to guess. -->
+                 
+                 <!-- Better: Use the ObjectStore 'Report_Path_Store' we populated! -->
+                 <os:retrieve key="#[vars.sessionId]" objectStore="Report_Path_Store" target="storedPath">
+                    <os:default-value>null</os:default-value>
+                 </os:retrieve>
+                 
+                 <choice>
+                    <when expression="#[vars.storedPath != null]">
+                        <!-- storedPath format: projectPath || reportDirName -->
+                        <set-variable variableName="projectPath" value="#[(vars.storedPath splitBy '||')[0]]"/>
+                        <set-variable variableName="reportDirName" value="#[(vars.storedPath splitBy '||')[1]]"/>
+                        <set-variable variableName="zipFilePath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
+                        
+                        <file:read path="#[vars.zipFilePath]" config-ref="File_Config"/>
+                    </when>
+                    <otherwise>
+                        <logger level="ERROR" message="Session path not found in ObjectStore"/>
+                        <set-payload value="Session expired or invalid"/>
+                        <http:request method="GET" url="http://localhost"/> <!-- Force error or send 404 -->
+                    </otherwise>
+                 </choice>
+             </when>
+             <otherwise>
+                 <set-payload value="Missing session ID"/>
+             </otherwise>
+        </choice>
     </flow>
 </mule>

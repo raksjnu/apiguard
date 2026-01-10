@@ -523,7 +523,8 @@
                 `;
                 
                 if (data.reportZip) {
-                    message += `<button class="btn-primary" style="background:#555;" onclick="window.location.href='${CONFIG.baseUrl}/download?file=${data.reportZip}'">Download Report ZIP</button>`;
+                    // Start download using session ID
+                    message += `<button class="btn-primary" style="background:#555;" onclick="window.location.href='${CONFIG.baseUrl}/download?session=${activeSessionId}'">Download Report ZIP</button>`;
                 } else {
                      message += `<button class="btn-primary" style="background:#aa5; cursor:not-allowed;" disabled>Download ZIP Not Available</button>`;
                 }
