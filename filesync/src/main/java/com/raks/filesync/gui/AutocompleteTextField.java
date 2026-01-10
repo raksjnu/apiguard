@@ -192,8 +192,12 @@ public class AutocompleteTextField extends JTextField {
      * Add a suggestion to the list
      */
     public void addSuggestion(String suggestion) {
-        if (suggestion != null && !suggestion.trim().isEmpty() && !suggestions.contains(suggestion)) {
-            suggestions.add(suggestion);
+        if (suggestion != null) {
+            String clean = suggestion.trim();
+            // Only add real words (length > 1) and ignore single chars/garbage
+            if (clean.length() > 1 && !suggestions.contains(clean)) {
+                suggestions.add(clean);
+            }
         }
     }
     
@@ -203,7 +207,14 @@ public class AutocompleteTextField extends JTextField {
     public void setSuggestions(List<String> newSuggestions) {
         suggestions.clear();
         if (newSuggestions != null) {
-            suggestions.addAll(newSuggestions);
+            for (String s : newSuggestions) {
+                if (s != null) {
+                    String clean = s.trim();
+                    if (clean.length() > 1) {
+                        suggestions.add(clean);
+                    }
+                }
+            }
         }
     }
 }
