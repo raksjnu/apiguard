@@ -1,0 +1,15 @@
+Mapping.xlsx file has sample details about the layout of the different files and the content details and how expected mapping of the files and the corresponding fields from the files. 
+
+Assume you have CSV file names mentioned in Column J with specific data in column K that needs to be converted to CSV files name in column S with field names in Column T
+
+You may need to create CSV files named as mentioned in Column J, with sample data similar to what is available in Column B for as an example.
+
+Please ensure that our tool has followings:
+1. it shlould be in java like we have our other tools raksanalyzer, apiurlcomparison etc.
+2. the java tool must provide gui as well as cli version as option.
+3. it should have everything possibly flexible means, source path where mapping file will be placed which tool can read, then path where csv files are there from source, and target where output csv files will be created.
+4. we should have a way to configure the details of the options in ui and if user wants to run in cli then optional paramaters  they can provide else as a default details will be there in property file.
+5. have all the column name and file name , field names of csv files etc. as configuirable so that for any situation we can update in config file and all will work.
+6. note that first we will have just the source and target csv file handling and simple fields mapping done and details written but then next thing is based on different rules, we will need to update the fields in target csv files. means, let's say source files/fields have some different values and based on some value we may have to create the target csf files with different fields in the files (example product_id=123 AND product_Type=Roadie from source file products_export.csv then in target file  ATG_AllYetiAttributeGroup.csv the field will NOT be Attr_ProductType rather something else  say field Attr_ProductType_Another. like that we will have to update the target fields based on different rules possibly which we also need to think how to do). 
+
+this is just  asample means there will be hundreds of different files, system's extracted source csv files whose field and layout we don't know. so i need to do this in configurable, dynamixc way. so that when we will have another csv fiel from any source its layour etc. can be dynamically extracted/renderes and then correspodning target csv file with the corresponding fields will be created and then data from the fields from source file will be written int he target csv files in the fields. 

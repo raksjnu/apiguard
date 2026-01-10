@@ -1,0 +1,201 @@
+product_id,product_description,master_sku,color,size,weight_kg,dimensions
+PROD00001,High-quality product item 1 with premium features,MSK-000001,Purple,XL,4.48,85x66x38cm
+PROD00002,High-quality product item 2 with premium features,MSK-000002,Green,XL,34.85,55x20x31cm
+PROD00003,High-quality product item 3 with premium features,MSK-000003,Red,One Size,25.45,60x88x44cm
+PROD00004,High-quality product item 4 with premium features,MSK-000004,Purple,N/A,16.56,62x60x44cm
+PROD00005,High-quality product item 5 with premium features,MSK-000005,Purple,One Size,0.22,78x43x7cm
+PROD00006,High-quality product item 6 with premium features,MSK-000006,Yellow,L,44.59,76x82x38cm
+PROD00007,High-quality product item 7 with premium features,MSK-000007,Black,L,17.14,46x59x37cm
+PROD00008,High-quality product item 8 with premium features,MSK-000008,Purple,M,28.97,82x35x8cm
+PROD00009,High-quality product item 9 with premium features,MSK-000009,Purple,XS,18.91,16x23x25cm
+PROD00010,High-quality product item 10 with premium features,MSK-000010,White,One Size,14.3,59x45x32cm
+PROD00011,High-quality product item 11 with premium features,MSK-000011,Red,N/A,33.47,35x60x25cm
+PROD00012,High-quality product item 12 with premium features,MSK-000012,Gray,M,37.02,64x55x5cm
+PROD00013,High-quality product item 13 with premium features,MSK-000013,Blue,XL,26.95,44x21x26cm
+PROD00014,High-quality product item 14 with premium features,MSK-000014,Blue,S,42.43,71x25x25cm
+PROD00015,High-quality product item 15 with premium features,MSK-000015,Blue,XS,39.96,27x42x32cm
+PROD00016,High-quality product item 16 with premium features,MSK-000016,Gray,L,24.97,44x11x39cm
+PROD00017,High-quality product item 17 with premium features,MSK-000017,Blue,One Size,36.17,11x82x38cm
+PROD00018,High-quality product item 18 with premium features,MSK-000018,Orange,L,43.11,13x91x28cm
+PROD00019,High-quality product item 19 with premium features,MSK-000019,Pink,N/A,4.16,57x97x30cm
+PROD00020,High-quality product item 20 with premium features,MSK-000020,Green,XS,4.77,17x51x12cm
+PROD00021,High-quality product item 21 with premium features,MSK-000021,Green,S,14.9,62x20x37cm
+PROD00022,High-quality product item 22 with premium features,MSK-000022,White,XS,36.88,47x43x39cm
+PROD00023,High-quality product item 23 with premium features,MSK-000023,Red,N/A,12.47,76x36x44cm
+PROD00024,High-quality product item 24 with premium features,MSK-000024,Red,N/A,0.2,47x88x6cm
+PROD00025,High-quality product item 25 with premium features,MSK-000025,Red,XL,27.93,28x67x19cm
+PROD00026,High-quality product item 26 with premium features,MSK-000026,Pink,XL,0.35,38x79x6cm
+PROD00027,High-quality product item 27 with premium features,MSK-000027,Red,S,48.04,52x90x39cm
+PROD00028,High-quality product item 28 with premium features,MSK-000028,Blue,One Size,29.22,63x96x36cm
+PROD00029,High-quality product item 29 with premium features,MSK-000029,Green,M,4.31,74x91x18cm
+PROD00030,High-quality product item 30 with premium features,MSK-000030,Pink,M,28.11,94x94x41cm
+PROD00031,High-quality product item 31 with premium features,MSK-000031,Pink,One Size,30.18,13x52x10cm
+PROD00032,High-quality product item 32 with premium features,MSK-000032,Red,XXL,30.05,91x57x19cm
+PROD00033,High-quality product item 33 with premium features,MSK-000033,Pink,N/A,31.13,31x35x50cm
+PROD00034,High-quality product item 34 with premium features,MSK-000034,Orange,XS,20.76,36x95x34cm
+PROD00035,High-quality product item 35 with premium features,MSK-000035,Purple,N/A,29.97,12x61x7cm
+PROD00036,High-quality product item 36 with premium features,MSK-000036,Red,L,3.2,23x55x23cm
+PROD00037,High-quality product item 37 with premium features,MSK-000037,White,XS,26.7,92x38x21cm
+PROD00038,High-quality product item 38 with premium features,MSK-000038,Yellow,XS,37.72,65x31x42cm
+PROD00039,High-quality product item 39 with premium features,MSK-000039,Purple,M,3.41,21x85x37cm
+PROD00040,High-quality product item 40 with premium features,MSK-000040,Black,XL,22.87,29x65x42cm
+PROD00041,High-quality product item 41 with premium features,MSK-000041,Black,N/A,22.26,72x44x44cm
+PROD00042,High-quality product item 42 with premium features,MSK-000042,Blue,One Size,11.68,28x58x32cm
+PROD00043,High-quality product item 43 with premium features,MSK-000043,Yellow,XS,28.39,41x69x37cm
+PROD00044,High-quality product item 44 with premium features,MSK-000044,Black,XS,43.86,84x67x42cm
+PROD00045,High-quality product item 45 with premium features,MSK-000045,Red,N/A,44.71,30x73x10cm
+PROD00046,High-quality product item 46 with premium features,MSK-000046,White,M,27.69,11x24x21cm
+PROD00047,High-quality product item 47 with premium features,MSK-000047,Yellow,One Size,19.76,82x70x37cm
+PROD00048,High-quality product item 48 with premium features,MSK-000048,Red,N/A,34.21,64x62x27cm
+PROD00049,High-quality product item 49 with premium features,MSK-000049,Yellow,N/A,47.99,20x96x29cm
+PROD00050,High-quality product item 50 with premium features,MSK-000050,Orange,XL,29.76,86x65x30cm
+PROD00051,High-quality product item 51 with premium features,MSK-000051,Purple,XL,21.77,18x31x50cm
+PROD00052,High-quality product item 52 with premium features,MSK-000052,Black,XS,26.3,76x92x26cm
+PROD00053,High-quality product item 53 with premium features,MSK-000053,Pink,One Size,34.08,46x95x14cm
+PROD00054,High-quality product item 54 with premium features,MSK-000054,Yellow,N/A,34.56,82x72x32cm
+PROD00055,High-quality product item 55 with premium features,MSK-000055,Red,XXL,6.99,36x19x43cm
+PROD00056,High-quality product item 56 with premium features,MSK-000056,Purple,S,48.94,19x30x44cm
+PROD00057,High-quality product item 57 with premium features,MSK-000057,Pink,XS,19.02,54x61x14cm
+PROD00058,High-quality product item 58 with premium features,MSK-000058,White,XS,21.96,51x60x32cm
+PROD00059,High-quality product item 59 with premium features,MSK-000059,Green,XXL,24.89,25x39x44cm
+PROD00060,High-quality product item 60 with premium features,MSK-000060,Yellow,One Size,33.02,70x81x32cm
+PROD00061,High-quality product item 61 with premium features,MSK-000061,Purple,XXL,19.49,68x42x5cm
+PROD00062,High-quality product item 62 with premium features,MSK-000062,White,XL,18.38,58x44x31cm
+PROD00063,High-quality product item 63 with premium features,MSK-000063,Black,L,28.8,100x57x19cm
+PROD00064,High-quality product item 64 with premium features,MSK-000064,White,One Size,22.8,70x83x16cm
+PROD00065,High-quality product item 65 with premium features,MSK-000065,Black,XL,33.01,55x87x49cm
+PROD00066,High-quality product item 66 with premium features,MSK-000066,Red,N/A,26.24,43x21x49cm
+PROD00067,High-quality product item 67 with premium features,MSK-000067,Black,XS,0.88,12x47x15cm
+PROD00068,High-quality product item 68 with premium features,MSK-000068,Yellow,M,1.51,30x10x16cm
+PROD00069,High-quality product item 69 with premium features,MSK-000069,Purple,M,25.72,29x21x12cm
+PROD00070,High-quality product item 70 with premium features,MSK-000070,White,L,1.75,42x38x19cm
+PROD00071,High-quality product item 71 with premium features,MSK-000071,Blue,N/A,45.96,17x40x17cm
+PROD00072,High-quality product item 72 with premium features,MSK-000072,Red,N/A,2.17,19x10x42cm
+PROD00073,High-quality product item 73 with premium features,MSK-000073,Purple,One Size,25.36,32x60x43cm
+PROD00074,High-quality product item 74 with premium features,MSK-000074,Red,S,9.4,43x35x27cm
+PROD00075,High-quality product item 75 with premium features,MSK-000075,Pink,XS,46.92,15x23x8cm
+PROD00076,High-quality product item 76 with premium features,MSK-000076,Black,L,28.6,54x67x44cm
+PROD00077,High-quality product item 77 with premium features,MSK-000077,Black,One Size,32.64,93x27x20cm
+PROD00078,High-quality product item 78 with premium features,MSK-000078,Black,S,22.61,36x72x21cm
+PROD00079,High-quality product item 79 with premium features,MSK-000079,Gray,S,7.55,64x24x22cm
+PROD00080,High-quality product item 80 with premium features,MSK-000080,Black,XL,15.59,67x16x29cm
+PROD00081,High-quality product item 81 with premium features,MSK-000081,Orange,L,49.58,41x76x46cm
+PROD00082,High-quality product item 82 with premium features,MSK-000082,Red,One Size,33.24,95x49x18cm
+PROD00083,High-quality product item 83 with premium features,MSK-000083,Pink,M,0.58,45x58x33cm
+PROD00084,High-quality product item 84 with premium features,MSK-000084,White,XL,18.65,95x81x40cm
+PROD00085,High-quality product item 85 with premium features,MSK-000085,Orange,S,19.69,18x94x30cm
+PROD00086,High-quality product item 86 with premium features,MSK-000086,Black,N/A,12.88,48x16x39cm
+PROD00087,High-quality product item 87 with premium features,MSK-000087,Pink,N/A,6.46,30x31x50cm
+PROD00088,High-quality product item 88 with premium features,MSK-000088,Green,S,31.12,81x65x44cm
+PROD00089,High-quality product item 89 with premium features,MSK-000089,Green,S,24.14,44x60x18cm
+PROD00090,High-quality product item 90 with premium features,MSK-000090,Gray,N/A,35.26,35x29x36cm
+PROD00091,High-quality product item 91 with premium features,MSK-000091,Blue,XS,19.6,17x30x17cm
+PROD00092,High-quality product item 92 with premium features,MSK-000092,Green,M,6.81,69x80x44cm
+PROD00093,High-quality product item 93 with premium features,MSK-000093,Orange,XL,22.51,18x27x24cm
+PROD00094,High-quality product item 94 with premium features,MSK-000094,Yellow,N/A,43.6,33x65x23cm
+PROD00095,High-quality product item 95 with premium features,MSK-000095,Black,S,47.82,96x36x26cm
+PROD00096,High-quality product item 96 with premium features,MSK-000096,Purple,N/A,3.63,18x74x20cm
+PROD00097,High-quality product item 97 with premium features,MSK-000097,White,S,9.47,62x37x48cm
+PROD00098,High-quality product item 98 with premium features,MSK-000098,Black,XS,30.47,32x25x43cm
+PROD00099,High-quality product item 99 with premium features,MSK-000099,Blue,One Size,47.32,65x54x24cm
+PROD00100,High-quality product item 100 with premium features,MSK-000100,Black,XXL,36.38,60x86x36cm
+PROD00101,High-quality product item 101 with premium features,MSK-000101,Gray,L,8.5,52x74x26cm
+PROD00102,High-quality product item 102 with premium features,MSK-000102,Black,S,16.18,49x59x46cm
+PROD00103,High-quality product item 103 with premium features,MSK-000103,Orange,L,37.02,29x73x11cm
+PROD00104,High-quality product item 104 with premium features,MSK-000104,Purple,XXL,35.53,15x70x11cm
+PROD00105,High-quality product item 105 with premium features,MSK-000105,Red,XL,4.53,22x51x31cm
+PROD00106,High-quality product item 106 with premium features,MSK-000106,Pink,L,31.09,62x90x7cm
+PROD00107,High-quality product item 107 with premium features,MSK-000107,Purple,XL,32.28,73x61x32cm
+PROD00108,High-quality product item 108 with premium features,MSK-000108,Pink,One Size,24.39,68x87x24cm
+PROD00109,High-quality product item 109 with premium features,MSK-000109,Green,L,21.82,22x41x28cm
+PROD00110,High-quality product item 110 with premium features,MSK-000110,Pink,M,29.03,32x60x17cm
+PROD00111,High-quality product item 111 with premium features,MSK-000111,Yellow,L,48.91,84x19x5cm
+PROD00112,High-quality product item 112 with premium features,MSK-000112,Gray,S,35.43,74x41x45cm
+PROD00113,High-quality product item 113 with premium features,MSK-000113,Red,N/A,7.31,17x53x12cm
+PROD00114,High-quality product item 114 with premium features,MSK-000114,Green,XS,39.26,49x50x39cm
+PROD00115,High-quality product item 115 with premium features,MSK-000115,Red,M,11.2,67x13x24cm
+PROD00116,High-quality product item 116 with premium features,MSK-000116,Blue,M,47.31,97x22x17cm
+PROD00117,High-quality product item 117 with premium features,MSK-000117,Black,S,29.85,67x41x20cm
+PROD00118,High-quality product item 118 with premium features,MSK-000118,Purple,M,42.83,42x42x44cm
+PROD00119,High-quality product item 119 with premium features,MSK-000119,White,XXL,25.57,69x27x19cm
+PROD00120,High-quality product item 120 with premium features,MSK-000120,White,XL,34.5,96x20x24cm
+PROD00121,High-quality product item 121 with premium features,MSK-000121,White,N/A,28.32,13x49x50cm
+PROD00122,High-quality product item 122 with premium features,MSK-000122,Orange,XS,28.54,78x88x36cm
+PROD00123,High-quality product item 123 with premium features,MSK-000123,Gray,N/A,2.37,50x45x14cm
+PROD00124,High-quality product item 124 with premium features,MSK-000124,Yellow,M,28.68,41x85x30cm
+PROD00125,High-quality product item 125 with premium features,MSK-000125,Blue,XXL,41.5,24x32x13cm
+PROD00126,High-quality product item 126 with premium features,MSK-000126,Black,XL,2.14,50x50x6cm
+PROD00127,High-quality product item 127 with premium features,MSK-000127,Purple,One Size,24.7,64x40x11cm
+PROD00128,High-quality product item 128 with premium features,MSK-000128,White,L,3.16,15x47x25cm
+PROD00129,High-quality product item 129 with premium features,MSK-000129,Yellow,XXL,43.36,60x30x32cm
+PROD00130,High-quality product item 130 with premium features,MSK-000130,Purple,XXL,18.81,20x35x46cm
+PROD00131,High-quality product item 131 with premium features,MSK-000131,White,One Size,34.78,73x25x41cm
+PROD00132,High-quality product item 132 with premium features,MSK-000132,Pink,XL,43.63,23x36x47cm
+PROD00133,High-quality product item 133 with premium features,MSK-000133,White,One Size,18.12,81x49x48cm
+PROD00134,High-quality product item 134 with premium features,MSK-000134,Blue,XL,11.95,52x48x37cm
+PROD00135,High-quality product item 135 with premium features,MSK-000135,Gray,One Size,30.64,27x15x50cm
+PROD00136,High-quality product item 136 with premium features,MSK-000136,Yellow,M,14.5,82x68x14cm
+PROD00137,High-quality product item 137 with premium features,MSK-000137,Yellow,XL,26.78,42x91x24cm
+PROD00138,High-quality product item 138 with premium features,MSK-000138,Yellow,One Size,25.33,92x74x16cm
+PROD00139,High-quality product item 139 with premium features,MSK-000139,Purple,N/A,21.14,70x19x5cm
+PROD00140,High-quality product item 140 with premium features,MSK-000140,Red,L,34.11,33x86x21cm
+PROD00141,High-quality product item 141 with premium features,MSK-000141,Red,N/A,31.96,30x96x35cm
+PROD00142,High-quality product item 142 with premium features,MSK-000142,Blue,S,44.16,15x22x15cm
+PROD00143,High-quality product item 143 with premium features,MSK-000143,Orange,N/A,46.21,76x29x6cm
+PROD00144,High-quality product item 144 with premium features,MSK-000144,Red,S,11.16,42x37x36cm
+PROD00145,High-quality product item 145 with premium features,MSK-000145,Gray,XXL,29.8,56x36x42cm
+PROD00146,High-quality product item 146 with premium features,MSK-000146,Green,N/A,22.39,38x64x13cm
+PROD00147,High-quality product item 147 with premium features,MSK-000147,Pink,XL,9.2,71x16x38cm
+PROD00148,High-quality product item 148 with premium features,MSK-000148,Yellow,N/A,39.25,10x35x48cm
+PROD00149,High-quality product item 149 with premium features,MSK-000149,White,XL,37.66,90x81x11cm
+PROD00150,High-quality product item 150 with premium features,MSK-000150,Pink,XXL,39.35,10x40x8cm
+PROD00151,High-quality product item 151 with premium features,MSK-000151,Yellow,M,37.51,62x62x14cm
+PROD00152,High-quality product item 152 with premium features,MSK-000152,Purple,N/A,20.03,35x56x9cm
+PROD00153,High-quality product item 153 with premium features,MSK-000153,Black,XL,21.36,94x58x18cm
+PROD00154,High-quality product item 154 with premium features,MSK-000154,Black,XL,9.74,83x28x31cm
+PROD00155,High-quality product item 155 with premium features,MSK-000155,Green,N/A,5.64,40x27x21cm
+PROD00156,High-quality product item 156 with premium features,MSK-000156,Green,N/A,30.37,62x19x49cm
+PROD00157,High-quality product item 157 with premium features,MSK-000157,Blue,S,44.03,82x47x11cm
+PROD00158,High-quality product item 158 with premium features,MSK-000158,Orange,M,24.76,49x55x43cm
+PROD00159,High-quality product item 159 with premium features,MSK-000159,Orange,N/A,15.81,30x39x6cm
+PROD00160,High-quality product item 160 with premium features,MSK-000160,Blue,One Size,46.16,25x69x23cm
+PROD00161,High-quality product item 161 with premium features,MSK-000161,Gray,XL,39.06,76x23x19cm
+PROD00162,High-quality product item 162 with premium features,MSK-000162,Yellow,XS,44.21,87x83x6cm
+PROD00163,High-quality product item 163 with premium features,MSK-000163,Green,One Size,28.99,70x21x6cm
+PROD00164,High-quality product item 164 with premium features,MSK-000164,Pink,One Size,12.72,40x44x40cm
+PROD00165,High-quality product item 165 with premium features,MSK-000165,Black,L,29.95,15x27x35cm
+PROD00166,High-quality product item 166 with premium features,MSK-000166,White,XXL,4.36,97x76x11cm
+PROD00167,High-quality product item 167 with premium features,MSK-000167,Blue,XL,36.77,19x61x27cm
+PROD00168,High-quality product item 168 with premium features,MSK-000168,Red,M,26.5,76x56x28cm
+PROD00169,High-quality product item 169 with premium features,MSK-000169,White,M,19.35,82x23x19cm
+PROD00170,High-quality product item 170 with premium features,MSK-000170,Red,One Size,46.84,79x12x14cm
+PROD00171,High-quality product item 171 with premium features,MSK-000171,Pink,M,14.47,84x36x48cm
+PROD00172,High-quality product item 172 with premium features,MSK-000172,Orange,XS,45.78,97x60x5cm
+PROD00173,High-quality product item 173 with premium features,MSK-000173,Purple,XS,6.87,86x43x11cm
+PROD00174,High-quality product item 174 with premium features,MSK-000174,Gray,L,20.71,76x66x20cm
+PROD00175,High-quality product item 175 with premium features,MSK-000175,Pink,L,19.58,95x97x17cm
+PROD00176,High-quality product item 176 with premium features,MSK-000176,Purple,N/A,17.41,45x69x19cm
+PROD00177,High-quality product item 177 with premium features,MSK-000177,Blue,N/A,21.35,68x70x21cm
+PROD00178,High-quality product item 178 with premium features,MSK-000178,Purple,L,23.81,50x93x21cm
+PROD00179,High-quality product item 179 with premium features,MSK-000179,Purple,XS,49.49,93x48x9cm
+PROD00180,High-quality product item 180 with premium features,MSK-000180,Blue,One Size,27.99,52x73x20cm
+PROD00181,High-quality product item 181 with premium features,MSK-000181,Green,One Size,34.03,91x73x50cm
+PROD00182,High-quality product item 182 with premium features,MSK-000182,Gray,S,20.26,20x76x20cm
+PROD00183,High-quality product item 183 with premium features,MSK-000183,White,XXL,21.01,38x77x42cm
+PROD00184,High-quality product item 184 with premium features,MSK-000184,Yellow,XL,27.13,16x88x23cm
+PROD00185,High-quality product item 185 with premium features,MSK-000185,Orange,XS,4.75,21x45x22cm
+PROD00186,High-quality product item 186 with premium features,MSK-000186,Yellow,L,33.54,86x16x7cm
+PROD00187,High-quality product item 187 with premium features,MSK-000187,Yellow,XXL,31.53,59x74x37cm
+PROD00188,High-quality product item 188 with premium features,MSK-000188,Purple,XS,48.02,55x53x31cm
+PROD00189,High-quality product item 189 with premium features,MSK-000189,White,N/A,45.44,78x57x23cm
+PROD00190,High-quality product item 190 with premium features,MSK-000190,Black,S,29.57,11x39x8cm
+PROD00191,High-quality product item 191 with premium features,MSK-000191,Purple,XL,18.36,44x80x38cm
+PROD00192,High-quality product item 192 with premium features,MSK-000192,Pink,S,22.54,36x61x30cm
+PROD00193,High-quality product item 193 with premium features,MSK-000193,Purple,XXL,38.88,71x58x38cm
+PROD00194,High-quality product item 194 with premium features,MSK-000194,Gray,XXL,9.51,70x55x13cm
+PROD00195,High-quality product item 195 with premium features,MSK-000195,Pink,XS,28.31,39x73x19cm
+PROD00196,High-quality product item 196 with premium features,MSK-000196,Black,One Size,24.17,41x16x25cm
+PROD00197,High-quality product item 197 with premium features,MSK-000197,Purple,M,24.65,79x42x22cm
+PROD00198,High-quality product item 198 with premium features,MSK-000198,Black,One Size,5.72,37x34x50cm
+PROD00199,High-quality product item 199 with premium features,MSK-000199,Red,M,27.71,97x85x8cm
+PROD00200,High-quality product item 200 with premium features,MSK-000200,Purple,M,14.6,28x57x46cm

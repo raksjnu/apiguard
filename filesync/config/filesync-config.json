@@ -1,0 +1,63 @@
+{
+  "version": "1.0",
+  "metadata": {
+    "created": "2026-01-09",
+    "description": "Sample FileSync mapping configuration"
+  },
+  "paths": {
+    "sourceDirectory": "C:/raks/apiguard/filesync/source",
+    "targetDirectory": "C:/raks/apiguard/filesync/target"
+  },
+  "fileMappings": [
+    {
+      "sourceFile": "products_export.csv",
+      "targetFile": "ATG_FinishedSKU.csv",
+      "fieldMappings": [
+        {
+          "sourceField": "product_id",
+          "targetField": "Attr_PartNumber",
+          "transformation": "direct",
+          "description": "Part number mapping"
+        },
+        {
+          "sourceField": "product_description",
+          "targetField": "Attr_SAPName",
+          "transformation": "direct",
+          "description": "SAP name mapping"
+        },
+        {
+          "sourceField": "master_sku",
+          "targetField": "Attr_MasterSKU",
+          "transformation": "direct"
+        },
+        {
+          "sourceField": "color",
+          "targetField": "Attr_Color",
+          "transformation": "direct"
+        }
+      ]
+    },
+    {
+      "sourceFile": "Salsify_Extract.csv",
+      "targetFile": "ATG_AllYetiAttributeGroup.csv",
+      "fieldMappings": [
+        {
+          "sourceField": "product_category",
+          "targetField": "Attr_Category",
+          "transformation": "direct"
+        },
+        {
+          "sourceField": "Launch Quarter",
+          "targetField": "Attr_LaunchQuarter",
+          "transformation": "direct"
+        },
+        {
+          "sourceField": "Season",
+          "targetField": "Attr_Season",
+          "transformation": "direct"
+        }
+      ]
+    }
+  ],
+  "rules": []
+}

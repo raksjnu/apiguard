@@ -1,0 +1,151 @@
+product_id,product_name,category,brand,price,stock_quantity,last_updated
+SAL00001,Product 1 - Clothing,Electronics,BrandE,552.69,387,2025-05-09
+SAL00002,Product 2 - Clothing,Clothing,BrandD,25.12,286,2025-10-30
+SAL00003,Product 3 - Electronics,Books,BrandD,296.21,111,2025-10-06
+SAL00004,Product 4 - Electronics,Toys,BrandE,25.41,177,2025-02-09
+SAL00005,Product 5 - Toys,Food & Beverage,BrandD,793.73,440,2025-07-15
+SAL00006,Product 6 - Clothing,Food & Beverage,BrandE,520.85,149,2025-10-26
+SAL00007,Product 7 - Electronics,Home & Garden,BrandF,67.2,145,2025-02-15
+SAL00008,Product 8 - Sports,Sports,BrandB,445.48,491,2025-07-08
+SAL00009,Product 9 - Food & Beverage,Food & Beverage,BrandE,392.55,243,2025-03-02
+SAL00010,Product 10 - Sports,Clothing,BrandE,330.36,494,2025-12-14
+SAL00011,Product 11 - Clothing,Sports,BrandD,896.71,117,2025-07-24
+SAL00012,Product 12 - Electronics,Home & Garden,BrandA,42.32,496,2025-06-24
+SAL00013,Product 13 - Sports,Food & Beverage,BrandF,878.19,134,2025-01-26
+SAL00014,Product 14 - Home & Garden,Books,BrandD,44.89,377,2025-01-09
+SAL00015,Product 15 - Books,Home & Garden,BrandC,988.54,9,2025-01-20
+SAL00016,Product 16 - Food & Beverage,Food & Beverage,BrandE,201.01,232,2025-01-19
+SAL00017,Product 17 - Clothing,Toys,BrandB,480.37,382,2025-04-17
+SAL00018,Product 18 - Electronics,Books,BrandB,604.59,93,2025-12-08
+SAL00019,Product 19 - Clothing,Toys,BrandB,63.87,489,2025-10-22
+SAL00020,Product 20 - Clothing,Sports,BrandA,604.37,221,2025-09-03
+SAL00021,Product 21 - Toys,Home & Garden,BrandF,179.13,364,2025-07-16
+SAL00022,Product 22 - Clothing,Books,BrandA,435.48,281,2025-09-11
+SAL00023,Product 23 - Books,Home & Garden,BrandF,339.61,90,2025-11-14
+SAL00024,Product 24 - Clothing,Sports,BrandA,149.92,234,2025-12-27
+SAL00025,Product 25 - Books,Toys,BrandE,126.24,179,2025-04-21
+SAL00026,Product 26 - Books,Clothing,BrandB,347.06,124,2025-04-08
+SAL00027,Product 27 - Home & Garden,Sports,BrandC,903.39,346,2025-07-05
+SAL00028,Product 28 - Home & Garden,Electronics,BrandF,373.47,389,2025-04-12
+SAL00029,Product 29 - Toys,Sports,BrandC,816.34,238,2025-09-14
+SAL00030,Product 30 - Food & Beverage,Home & Garden,BrandB,29.58,104,2025-12-13
+SAL00031,Product 31 - Food & Beverage,Electronics,BrandC,153.56,189,2025-04-22
+SAL00032,Product 32 - Electronics,Sports,BrandD,211.1,256,2026-01-09
+SAL00033,Product 33 - Books,Electronics,BrandE,177.14,368,2025-10-09
+SAL00034,Product 34 - Clothing,Clothing,BrandE,692.29,101,2025-03-01
+SAL00035,Product 35 - Food & Beverage,Toys,BrandC,951.56,48,2025-10-06
+SAL00036,Product 36 - Books,Clothing,BrandE,184.23,358,2025-11-23
+SAL00037,Product 37 - Sports,Food & Beverage,BrandD,911.01,334,2025-06-05
+SAL00038,Product 38 - Books,Food & Beverage,BrandF,141.63,189,2025-10-25
+SAL00039,Product 39 - Toys,Sports,BrandD,243.86,259,2025-09-18
+SAL00040,Product 40 - Food & Beverage,Electronics,BrandD,400.5,91,2025-03-13
+SAL00041,Product 41 - Food & Beverage,Home & Garden,BrandC,747.31,291,2025-03-04
+SAL00042,Product 42 - Toys,Home & Garden,BrandF,814.64,183,2025-07-14
+SAL00043,Product 43 - Sports,Clothing,BrandD,598.5,175,2025-10-01
+SAL00044,Product 44 - Food & Beverage,Toys,BrandD,664.51,345,2025-11-26
+SAL00045,Product 45 - Food & Beverage,Sports,BrandE,504.34,34,2025-07-11
+SAL00046,Product 46 - Clothing,Sports,BrandF,679.29,161,2025-08-25
+SAL00047,Product 47 - Clothing,Food & Beverage,BrandC,883.1,429,2025-01-24
+SAL00048,Product 48 - Food & Beverage,Toys,BrandD,304.01,377,2025-06-30
+SAL00049,Product 49 - Toys,Clothing,BrandB,447.3,306,2025-09-06
+SAL00050,Product 50 - Electronics,Books,BrandB,128.88,474,2025-07-31
+SAL00051,Product 51 - Toys,Electronics,BrandA,813.38,360,2025-06-13
+SAL00052,Product 52 - Books,Electronics,BrandC,320.59,204,2025-11-16
+SAL00053,Product 53 - Home & Garden,Food & Beverage,BrandB,98.97,54,2025-11-17
+SAL00054,Product 54 - Sports,Toys,BrandA,168.22,211,2025-05-30
+SAL00055,Product 55 - Books,Toys,BrandE,296.64,341,2025-02-25
+SAL00056,Product 56 - Clothing,Sports,BrandF,95.5,89,2025-10-27
+SAL00057,Product 57 - Electronics,Clothing,BrandD,655.08,126,2025-05-03
+SAL00058,Product 58 - Toys,Sports,BrandA,972.48,298,2025-12-29
+SAL00059,Product 59 - Food & Beverage,Toys,BrandD,299.72,319,2025-02-10
+SAL00060,Product 60 - Food & Beverage,Home & Garden,BrandC,815.73,329,2025-10-17
+SAL00061,Product 61 - Clothing,Home & Garden,BrandB,398.7,117,2025-07-02
+SAL00062,Product 62 - Toys,Food & Beverage,BrandE,801.82,336,2025-09-02
+SAL00063,Product 63 - Books,Books,BrandD,302.78,17,2025-06-18
+SAL00064,Product 64 - Home & Garden,Home & Garden,BrandB,848.96,230,2025-10-26
+SAL00065,Product 65 - Home & Garden,Food & Beverage,BrandB,265.56,495,2025-03-08
+SAL00066,Product 66 - Books,Clothing,BrandF,644.58,281,2025-06-21
+SAL00067,Product 67 - Electronics,Books,BrandA,196.27,461,2025-07-04
+SAL00068,Product 68 - Toys,Home & Garden,BrandC,508.29,355,2025-03-08
+SAL00069,Product 69 - Food & Beverage,Clothing,BrandD,320.29,389,2025-04-05
+SAL00070,Product 70 - Books,Home & Garden,BrandA,576.58,221,2025-05-12
+SAL00071,Product 71 - Books,Clothing,BrandD,777.0,291,2025-08-19
+SAL00072,Product 72 - Toys,Books,BrandD,486.6,390,2025-10-09
+SAL00073,Product 73 - Food & Beverage,Food & Beverage,BrandB,352.44,164,2025-05-25
+SAL00074,Product 74 - Toys,Sports,BrandD,260.98,309,2025-06-05
+SAL00075,Product 75 - Sports,Clothing,BrandD,347.44,124,2025-12-21
+SAL00076,Product 76 - Books,Toys,BrandE,495.9,486,2025-07-14
+SAL00077,Product 77 - Home & Garden,Toys,BrandE,472.86,223,2025-08-02
+SAL00078,Product 78 - Sports,Sports,BrandB,736.45,128,2025-05-08
+SAL00079,Product 79 - Clothing,Food & Beverage,BrandD,96.69,161,2025-11-06
+SAL00080,Product 80 - Food & Beverage,Books,BrandE,68.92,453,2025-09-19
+SAL00081,Product 81 - Clothing,Books,BrandA,637.22,93,2025-04-18
+SAL00082,Product 82 - Home & Garden,Home & Garden,BrandB,908.82,378,2025-05-03
+SAL00083,Product 83 - Food & Beverage,Electronics,BrandF,283.83,415,2025-10-05
+SAL00084,Product 84 - Food & Beverage,Clothing,BrandE,147.52,129,2025-01-23
+SAL00085,Product 85 - Sports,Books,BrandB,157.88,348,2025-07-18
+SAL00086,Product 86 - Electronics,Sports,BrandD,672.78,142,2025-09-04
+SAL00087,Product 87 - Books,Food & Beverage,BrandB,427.39,278,2025-09-28
+SAL00088,Product 88 - Books,Toys,BrandC,344.72,133,2025-07-29
+SAL00089,Product 89 - Home & Garden,Toys,BrandD,151.42,352,2025-09-26
+SAL00090,Product 90 - Electronics,Food & Beverage,BrandE,751.93,178,2025-09-09
+SAL00091,Product 91 - Home & Garden,Clothing,BrandE,803.46,499,2025-12-19
+SAL00092,Product 92 - Toys,Home & Garden,BrandE,818.92,127,2025-05-12
+SAL00093,Product 93 - Food & Beverage,Clothing,BrandE,754.93,42,2025-05-02
+SAL00094,Product 94 - Books,Sports,BrandF,81.25,290,2025-05-09
+SAL00095,Product 95 - Clothing,Books,BrandF,534.24,353,2025-07-21
+SAL00096,Product 96 - Clothing,Home & Garden,BrandC,645.86,337,2025-05-31
+SAL00097,Product 97 - Books,Electronics,BrandC,773.98,212,2025-05-03
+SAL00098,Product 98 - Clothing,Home & Garden,BrandB,34.78,335,2025-11-28
+SAL00099,Product 99 - Home & Garden,Electronics,BrandD,227.16,104,2025-10-22
+SAL00100,Product 100 - Clothing,Toys,BrandF,168.83,152,2025-09-15
+SAL00101,Product 101 - Sports,Food & Beverage,BrandB,205.56,445,2025-03-29
+SAL00102,Product 102 - Books,Food & Beverage,BrandB,966.38,123,2025-12-14
+SAL00103,Product 103 - Food & Beverage,Electronics,BrandB,657.37,77,2025-08-31
+SAL00104,Product 104 - Food & Beverage,Books,BrandF,76.88,109,2025-08-25
+SAL00105,Product 105 - Food & Beverage,Books,BrandD,431.61,44,2025-05-04
+SAL00106,Product 106 - Food & Beverage,Electronics,BrandB,422.12,426,2025-08-14
+SAL00107,Product 107 - Electronics,Electronics,BrandE,610.25,48,2025-09-14
+SAL00108,Product 108 - Clothing,Books,BrandC,661.6,218,2025-02-27
+SAL00109,Product 109 - Sports,Electronics,BrandB,969.47,193,2025-08-13
+SAL00110,Product 110 - Food & Beverage,Clothing,BrandE,754.86,173,2025-11-16
+SAL00111,Product 111 - Clothing,Home & Garden,BrandB,994.68,305,2025-02-08
+SAL00112,Product 112 - Books,Clothing,BrandE,29.91,479,2025-06-15
+SAL00113,Product 113 - Sports,Books,BrandE,418.24,334,2025-10-22
+SAL00114,Product 114 - Clothing,Sports,BrandF,504.62,162,2025-10-06
+SAL00115,Product 115 - Electronics,Clothing,BrandD,432.17,472,2025-01-16
+SAL00116,Product 116 - Books,Food & Beverage,BrandB,864.99,355,2025-02-23
+SAL00117,Product 117 - Clothing,Sports,BrandB,669.12,369,2025-11-06
+SAL00118,Product 118 - Sports,Books,BrandB,381.26,65,2025-08-08
+SAL00119,Product 119 - Electronics,Toys,BrandA,392.57,60,2025-06-01
+SAL00120,Product 120 - Clothing,Clothing,BrandA,736.12,191,2026-01-09
+SAL00121,Product 121 - Clothing,Toys,BrandF,781.97,431,2025-09-04
+SAL00122,Product 122 - Books,Clothing,BrandD,567.42,86,2025-03-12
+SAL00123,Product 123 - Books,Books,BrandF,220.86,30,2025-03-24
+SAL00124,Product 124 - Clothing,Home & Garden,BrandB,293.77,493,2025-02-24
+SAL00125,Product 125 - Clothing,Toys,BrandA,20.3,314,2025-06-18
+SAL00126,Product 126 - Electronics,Clothing,BrandC,226.13,179,2025-04-01
+SAL00127,Product 127 - Home & Garden,Sports,BrandF,507.7,426,2025-06-04
+SAL00128,Product 128 - Clothing,Home & Garden,BrandD,746.69,488,2025-03-06
+SAL00129,Product 129 - Books,Books,BrandA,979.39,129,2025-10-23
+SAL00130,Product 130 - Electronics,Clothing,BrandE,545.66,160,2025-03-24
+SAL00131,Product 131 - Sports,Books,BrandF,637.83,475,2025-07-13
+SAL00132,Product 132 - Toys,Sports,BrandC,741.47,471,2025-05-11
+SAL00133,Product 133 - Food & Beverage,Home & Garden,BrandC,784.77,453,2025-12-23
+SAL00134,Product 134 - Toys,Books,BrandE,141.32,188,2025-08-02
+SAL00135,Product 135 - Toys,Clothing,BrandF,270.2,341,2025-11-12
+SAL00136,Product 136 - Sports,Home & Garden,BrandC,452.19,36,2025-09-26
+SAL00137,Product 137 - Books,Books,BrandF,773.94,301,2025-10-01
+SAL00138,Product 138 - Home & Garden,Food & Beverage,BrandC,427.83,385,2025-07-02
+SAL00139,Product 139 - Food & Beverage,Books,BrandC,418.28,403,2025-05-25
+SAL00140,Product 140 - Electronics,Books,BrandA,590.83,37,2025-06-08
+SAL00141,Product 141 - Clothing,Toys,BrandE,884.69,241,2025-08-31
+SAL00142,Product 142 - Clothing,Sports,BrandD,257.17,310,2025-10-09
+SAL00143,Product 143 - Food & Beverage,Electronics,BrandA,630.52,202,2025-05-10
+SAL00144,Product 144 - Food & Beverage,Clothing,BrandC,207.36,420,2025-11-23
+SAL00145,Product 145 - Toys,Clothing,BrandA,480.3,237,2025-10-22
+SAL00146,Product 146 - Food & Beverage,Books,BrandF,491.89,161,2025-11-29
+SAL00147,Product 147 - Electronics,Toys,BrandB,818.07,262,2025-04-07
+SAL00148,Product 148 - Food & Beverage,Home & Garden,BrandF,998.22,204,2025-11-11
+SAL00149,Product 149 - Home & Garden,Books,BrandD,704.13,451,2025-02-16
+SAL00150,Product 150 - Books,Toys,BrandA,653.69,349,2025-07-14
