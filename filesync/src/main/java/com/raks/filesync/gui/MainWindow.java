@@ -12,7 +12,6 @@ public class MainWindow extends JFrame {
     private DiscoveryPanel discoveryPanel;
     private MappingPanel mappingPanel;
     private ExecutePanel executePanel;
-    private HelpPanel helpPanel;
     
     public MainWindow() {
         initializeUI();
@@ -56,20 +55,18 @@ public class MainWindow extends JFrame {
         discoveryPanel = new DiscoveryPanel();
         mappingPanel = new MappingPanel(discoveryPanel);
         executePanel = new ExecutePanel(mappingPanel);
-        helpPanel = new HelpPanel();
         
-        // Add tabs
+        // Add tabs (Help removed - accessible via menu)
         tabbedPane.addTab(ThemeConfig.getString("tab.discovery"), discoveryPanel);
         tabbedPane.addTab(ThemeConfig.getString("tab.mapping"), mappingPanel);
         tabbedPane.addTab(ThemeConfig.getString("tab.execute"), executePanel);
-        tabbedPane.addTab(ThemeConfig.getString("tab.help"), helpPanel);
         
-        // Add listener to refresh mapping panel when switching to it
+        // Add listener to refresh panels when switching tabs
         tabbedPane.addChangeListener(e -> {
             int selectedIndex = tabbedPane.getSelectedIndex();
             if (selectedIndex == 1) { // Mapping tab
                 mappingPanel.refreshSourceFiles();
-            } else if (selectedIndex == 2) { // Execute tab
+            } else if (selectedIndex == 2) { // Execute tab (now index 2, not 3)
                 executePanel.refreshFromMappingTab();
             }
         });
@@ -174,7 +171,7 @@ public class MainWindow extends JFrame {
         helpMenu.setForeground(ThemeConfig.TEXT_PRIMARY);
         
         JMenuItem guideItem = new JMenuItem(ThemeConfig.getString("menu.help.guide"));
-        guideItem.addActionListener(e -> tabbedPane.setSelectedIndex(3)); // Switch to Help tab
+        guideItem.addActionListener(e -> showHelpDialog());
         
         JMenuItem aboutItem = new JMenuItem(ThemeConfig.getString("menu.help.about"));
         aboutItem.addActionListener(e -> showAboutDialog());
@@ -187,6 +184,14 @@ public class MainWindow extends JFrame {
         menuBar.add(helpMenu);
         
         setJMenuBar(menuBar);
+    }
+    
+    private void showHelpDialog() {
+        JDialog helpDialog = new JDialog(this, "Help & Guide", false);
+        helpDialog.setSize(900, 650);
+        helpDialog.setLocationRelativeTo(this);
+        helpDialog.add(new HelpPanel());
+        helpDialog.setVisible(true);
     }
     
     private void showAboutDialog() {

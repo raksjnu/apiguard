@@ -9,7 +9,7 @@ import java.awt.*;
 import java.io.File;
 
 /**
- * Execute panel for running transformations
+ * Execute panel for running transformations - Redesigned layout
  */
 public class ExecutePanel extends JPanel {
     private final MappingPanel mappingPanel;
@@ -17,12 +17,14 @@ public class ExecutePanel extends JPanel {
     private JTextField configPathField;
     private JButton browseConfigButton;
     private JButton loadConfigButton;
-    private JTextArea configInfoArea;
     private JButton executeButton;
+    private JButton resetButton;
+    private JTextArea configInfoArea;
     private JProgressBar progressBar;
     private JTextArea logArea;
     
     private MappingConfig loadedConfig;
+    private String loadedConfigFilePath; // Track the actual file path
     
     public ExecutePanel(MappingPanel mappingPanel) {
         this.mappingPanel = mappingPanel;
@@ -38,6 +40,7 @@ public class ExecutePanel extends JPanel {
         MappingConfig config = mappingPanel.getCurrentConfig();
         if (config != null && !config.getFileMappings().isEmpty()) {
             loadedConfig = config;
+            loadedConfigFilePath = null; // No file path for auto-loaded config
             displayConfigInfo(config, "[From Mapping Tab]");
             configPathField.setText("[Using mappings from Mapping tab]");
         }
@@ -47,10 +50,11 @@ public class ExecutePanel extends JPanel {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        // Top panel - Config loading
+        // Top panel - Config loading and execution controls
         JPanel topPanel = new JPanel(new BorderLayout(10, 10));
         topPanel.setBorder(BorderFactory.createTitledBorder("Configuration"));
         
+        // Config file selection panel
         JPanel configLoadPanel = new JPanel(new BorderLayout(5, 5));
         configPathField = new JTextField();
         browseConfigButton = new JButton("Browse...");
@@ -61,39 +65,51 @@ public class ExecutePanel extends JPanel {
         JPanel pathPanel = new JPanel(new BorderLayout(5, 5));
         pathPanel.add(new JLabel("Config File:"), BorderLayout.WEST);
         pathPanel.add(configPathField, BorderLayout.CENTER);
-        pathPanel.add(browseConfigButton, BorderLayout.EAST);
         
-        configLoadPanel.add(pathPanel, BorderLayout.CENTER);
-        configLoadPanel.add(loadConfigButton, BorderLayout.EAST);
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+        buttonPanel.add(browseConfigButton);
+        buttonPanel.add(loadConfigButton);
+        pathPanel.add(buttonPanel, BorderLayout.EAST);
         
-        configInfoArea = new JTextArea(4, 40);
+        configLoadPanel.add(pathPanel, BorderLayout.NORTH);
+        
+        // Config info area
+        configInfoArea = new JTextArea(3, 40);
         configInfoArea.setEditable(false);
         configInfoArea.setFont(new Font("Consolas", Font.PLAIN, 11));
-        configInfoArea.setText("No configuration loaded.\nYou can load a saved configuration or use mappings from the Mapping tab.");
+        configInfoArea.setText("No configuration loaded.\\nYou can load a saved configuration or use mappings from the Mapping tab.");
+        configLoadPanel.add(new JScrollPane(configInfoArea), BorderLayout.CENTER);
         
-        topPanel.add(configLoadPanel, BorderLayout.NORTH);
-        topPanel.add(new JScrollPane(configInfoArea), BorderLayout.CENTER);
+        // Execution controls panel (always visible at bottom of config section)
+        JPanel execControlPanel = new JPanel(new BorderLayout(10, 5));
         
-        // Middle panel - Execute controls
-        JPanel middlePanel = new JPanel(new BorderLayout(10, 10));
-        middlePanel.setBorder(BorderFactory.createTitledBorder("Execution"));
-        
+        JPanel execButtonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 5));
         executeButton = new JButton("▶ Execute Transformation");
         executeButton.setFont(new Font("Arial", Font.BOLD, 14));
-        executeButton.setPreferredSize(new Dimension(250, 40));
+        executeButton.setPreferredSize(new Dimension(220, 35));
         executeButton.addActionListener(e -> executeTransformation());
+        
+        resetButton = new JButton("↺ Reset");
+        resetButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        resetButton.setPreferredSize(new Dimension(100, 35));
+        resetButton.addActionListener(e -> resetPanel());
+        
+        execButtonPanel.add(executeButton);
+        execButtonPanel.add(resetButton);
         
         progressBar = new JProgressBar();
         progressBar.setStringPainted(true);
         progressBar.setString("Ready");
+        progressBar.setPreferredSize(new Dimension(0, 25));
         
-        JPanel executePanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
-        executePanel.add(executeButton);
+        execControlPanel.add(execButtonPanel, BorderLayout.NORTH);
+        execControlPanel.add(progressBar, BorderLayout.CENTER);
         
-        middlePanel.add(executePanel, BorderLayout.NORTH);
-        middlePanel.add(progressBar, BorderLayout.CENTER);
+        configLoadPanel.add(execControlPanel, BorderLayout.SOUTH);
         
-        // Bottom panel - Log
+        topPanel.add(configLoadPanel, BorderLayout.CENTER);
+        
+        // Bottom panel - Log (takes remaining space)
         JPanel bottomPanel = new JPanel(new BorderLayout());
         bottomPanel.setBorder(BorderFactory.createTitledBorder("Execution Log"));
         
@@ -110,10 +126,20 @@ public class ExecutePanel extends JPanel {
         logButtonPanel.add(clearLogButton);
         bottomPanel.add(logButtonPanel, BorderLayout.SOUTH);
         
-        // Add panels
+        // Add panels with proper sizing
         add(topPanel, BorderLayout.NORTH);
-        add(middlePanel, BorderLayout.CENTER);
-        add(bottomPanel, BorderLayout.SOUTH);
+        add(bottomPanel, BorderLayout.CENTER);
+    }
+    
+    private void resetPanel() {
+        loadedConfig = null;
+        loadedConfigFilePath = null;
+        configPathField.setText("");
+        configInfoArea.setText("No configuration loaded.\\nYou can load a saved configuration or use mappings from the Mapping tab.");
+        logArea.setText("");
+        progressBar.setValue(0);
+        progressBar.setString("Ready");
+        log("Panel reset. Ready for new configuration.");
     }
     
     private void browseConfig() {
@@ -132,6 +158,7 @@ public class ExecutePanel extends JPanel {
             File file = chooser.getSelectedFile();
             String path = file.getAbsolutePath();
             configPathField.setText(path);
+            loadedConfigFilePath = path; // Store the file path
             UserPreferences.setLastConfigFile(path);
         }
     }
@@ -139,7 +166,7 @@ public class ExecutePanel extends JPanel {
     private void loadConfig() {
         String configPath = configPathField.getText().trim();
         
-        if (configPath.isEmpty()) {
+        if (configPath.isEmpty() || configPath.equals("[Using mappings from Mapping tab]")) {
             JOptionPane.showMessageDialog(this,
                     "Please select a configuration file.",
                     "No File Selected",
@@ -150,6 +177,7 @@ public class ExecutePanel extends JPanel {
         try {
             ConfigLoader loader = new ConfigLoader();
             loadedConfig = loader.loadConfig(configPath);
+            loadedConfigFilePath = configPath; // Store the actual file path
             
             // Display config info
             displayConfigInfo(loadedConfig, configPath);
@@ -170,14 +198,19 @@ public class ExecutePanel extends JPanel {
     
     private void displayConfigInfo(MappingConfig config, String source) {
         StringBuilder info = new StringBuilder();
-        info.append("Configuration loaded successfully!\n");
-        info.append("Source: ").append(source).append("\n\n");
-        info.append("Version: ").append(config.getVersion()).append("\n");
-        info.append("Source Directory: ").append(config.getPaths().getSourceDirectory()).append("\n");
-        info.append("Target Directory: ").append(config.getPaths().getTargetDirectory()).append("\n");
-        info.append("File Mappings: ").append(config.getFileMappings().size()).append("\n");
+        info.append("Configuration loaded successfully!\\n");
+        info.append("Source: ").append(source).append("\\n\\n");
+        info.append("Version: ").append(config.getVersion()).append("\\n");
+        info.append("Source Directory: ").append(config.getPaths().getSourceDirectory()).append("\\n");
+        info.append("Target Directory: ").append(config.getPaths().getTargetDirectory()).append("\\n");
+        info.append("File Mappings: ").append(config.getFileMappings().size()).append("\\n");
         
         configInfoArea.setText(info.toString());
+        
+        // Update config path field to show actual file path if it was saved
+        if (loadedConfigFilePath != null && !loadedConfigFilePath.isEmpty()) {
+            configPathField.setText(loadedConfigFilePath);
+        }
     }
     
     private void executeTransformation() {
@@ -186,11 +219,12 @@ public class ExecutePanel extends JPanel {
         
         if (config == null) {
             // Try to use config from mapping panel
-            config = mappingPanel.getCurrentConfig();
+            refreshFromMappingTab();
+            config = loadedConfig;
             
             if (config == null || config.getFileMappings().isEmpty()) {
                 JOptionPane.showMessageDialog(this,
-                        "No configuration available.\nPlease load a configuration file or create mappings in the Mapping tab.",
+                        "No configuration available.\\nPlease load a configuration file or create mappings in the Mapping tab.",
                         "No Configuration",
                         JOptionPane.WARNING_MESSAGE);
                 return;
@@ -280,7 +314,7 @@ public class ExecutePanel extends JPanel {
                     
                     if (result.hasErrors()) {
                         JOptionPane.showMessageDialog(ExecutePanel.this,
-                                "Transformation completed with errors.\nCheck the log for details.",
+                                "Transformation completed with errors.\\nCheck the log for details.",
                                 "Execution Complete",
                                 JOptionPane.WARNING_MESSAGE);
                     } else {
@@ -313,7 +347,7 @@ public class ExecutePanel extends JPanel {
     
     private void log(String message) {
         String timestamp = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm:ss"));
-        logArea.append("[" + timestamp + "] " + message + "\n");
+        logArea.append("[" + timestamp + "] " + message + "\\n");
         logArea.setCaretPosition(logArea.getDocument().getLength());
     }
     
@@ -321,6 +355,7 @@ public class ExecutePanel extends JPanel {
         String lastConfig = UserPreferences.getLastConfigFile();
         if (!lastConfig.isEmpty()) {
             configPathField.setText(lastConfig);
+            loadedConfigFilePath = lastConfig;
         }
     }
 }
