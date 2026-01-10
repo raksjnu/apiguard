@@ -243,6 +243,14 @@ output application/java
 
                 <!-- Debug: Log extracted values -->
                 <logger level="INFO" message="#['Extracted - sessionId: ' ++ (vars.userSessionId default 'null') ++ ', mode: ' ++ (vars.validationMode default 'null') ++ ', path: ' ++ (vars.pathContent default 'N/A') ++ ', zipFile: ' ++ (vars.zipFileContent != null) ++ ', customRules: ' ++ (vars.customRulesContent != null) ++ ', Attach[Report=' ++ vars.userWantsReportAttachment ++ ', Input=' ++ vars.userWantsInputAttachment ++ ', LocalProject=' ++ vars.userWantsProjectAttachment ++ ']']"/>
+                
+                <!-- Generate session ID if not provided or empty -->
+                <choice>
+                    <when expression="#[isEmpty(vars.userSessionId)]">
+                        <set-variable variableName="userSessionId" value="#[uuid()]"/>
+                        <logger level="INFO" message="#['Generated new session ID: ' ++ vars.userSessionId]"/>
+                    </when>
+                </choice>
             </when>
             
             <!-- Handle JSON (if ever needed for API calls) -->

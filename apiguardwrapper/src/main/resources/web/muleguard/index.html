@@ -187,8 +187,7 @@
 
         <div class="logo">
             <!-- Logo path will be adjusted by JS if needed -->
-            <img id="logoImg" src="web/raksLogo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;"
-                 onerror="this.style.display='none'; this.parentNode.innerText='MuleGuard';">
+            <img id="logoImg" src="web/raksLogo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;">
             <h1>MuleGuard</h1>
         </div>
 
@@ -329,9 +328,19 @@
                 selectMode('local');
             }
 
-            // Update image sources if in standalone
-            if (!isWrapper) {
-                document.getElementById('logoImg').src = 'logo.svg';
+            // Update logo path based on context
+            const logoImg = document.getElementById('logoImg');
+            if (isWrapper) {
+                // If we are in the statically served /web/ directory, the logo is a sibling
+                if (window.location.pathname.includes('/web/')) {
+                    logoImg.src = 'raksLogo.svg';
+                } else {
+                    // If we are at /main (virtual path), logo is in web/
+                    logoImg.src = 'web/raksLogo.svg';
+                }
+            } else {
+                // Standalone mode
+                logoImg.src = 'raksLogo.svg';
             }
         });
 
