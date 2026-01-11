@@ -229,8 +229,10 @@ output application/java
                 <set-variable variableName="customRulesContent" value="#[payload.customRulesContent]"/>
                 
                 <!-- Auto-detect base URL from request headers -->
+                <!-- CloudHub fix: Append /apiguard for CloudHub URLs if not already present in the display logic -->
+                <!-- Ideally, x-forwarded-path would give us the prefix, but for now filtering by host is safer or just appending it in the email link -->
                 <set-variable variableName="baseUrl" 
-                              value="#[(attributes.headers['x-forwarded-proto'] default 'http') ++ '://' ++ (attributes.headers['x-forwarded-host'] default attributes.headers.host)]"/>
+                              value="#[(attributes.headers['x-forwarded-proto'] default 'http') ++ '://' ++ (attributes.headers['x-forwarded-host'] default attributes.headers.host) ++ '/apiguard']"/>
                 <set-variable variableName="isMultipart" value="#[true]"/>
                 
                 <!-- Extract attachment preferences (default to 'false' if missing/unchecked) -->
@@ -400,9 +402,8 @@ output application/java
                         </choice>
                     </when>
                     <otherwise>
-                        <!-- JSON cannot upload files or file missing -->
-                        <logger level="ERROR" message="ZIP/JAR mode requires multipart/form-data with an archive file"/>
-                        <raise-error type="MULEGUARD:ARCHIVE_REQUIRES_MULTIPART" description="Upload mode requires multipart/form-data content type with an archive file"/>
+                        <logger level="ERROR" message="ZIP/JAR mode requires multipart request with archive file"/>
+                        <raise-error type="MULEGUARD:MISSING_ARCHIVE" description="ZIP/JAR mode requires archive file"/>
                     </otherwise>
                 </choice>
             </when>
@@ -524,6 +525,8 @@ output application/json indent=false
 
     <!-- Flow 6: Send Usage Notification Email -->
     <flow name="send-usage-notification-flow">
+        <logger level="INFO" message="#['DEBUG: Entering send-usage-notification-flow. Session: ' ++ (vars.userSessionId default 'null')]"/>
+        
         <!-- Retrieve user session data from Object Store -->
         <os:retrieve key="#[vars.userSessionId]" objectStore="User_Session_Store">
             <os:default-value><![CDATA[#[{
@@ -542,8 +545,6 @@ output application/json indent=false
 
         
         <!-- Three-level attachment control: Admin > User > Default -->
-        <!-- Fix: Explicitly check for string 'true' from payload to avoid false positives -->
-        <!-- Fix: Added null check for vars.userWants... default logic works only if it is null, but we handled that in previous flow -->
         <set-variable variableName="shouldAttachReports" 
                       value="#[
                           '${notification.attach.reports.enabled}' == 'true' and 
@@ -572,12 +573,12 @@ output application/json indent=false
         <set-variable variableName="tempAttachments" value="#[[]]"/>
         
         <!-- Note: Reports folder compression skipped due to Mule compression module limitations -->
-        <!-- Users can access reports via the web interface instead -->
-        <logger level="INFO" message="Reports available at web interface (compression skipped)"/>
+        <logger level="INFO" message="Reports available at web interface"/>
         
         <!-- Note: Reports folder compression skipped in this flow as it's already done in the main flow -->
         <!-- Just set the path variable for attachment logic -->
-        <set-variable variableName="reportsZipPath" value="#[vars.validationResults.reportsPath ++ '.zip']"/>
+        <!-- SAFETY: Use the reportsZipPath passed from caller if available, otherwise recalculate -->
+        <set-variable variableName="reportsZipPath" value="#[vars.reportsZipPath default (vars.validationResults.reportsPath ++ '.zip')]"/>
         
         <!-- Attach Reports ZIP if enabled -->
         <choice>
@@ -604,7 +605,7 @@ output application/json indent=false
             </otherwise>
         </choice>
 
-        <!-- Attach Input ZIP if enabled (FIX: Added this missing block) -->
+        <!-- Attach Input ZIP if enabled -->
         <choice>
             <when expression="#[vars.shouldAttachInput and vars.zipFilePath != null]">
                 <try>
@@ -645,7 +646,7 @@ output application/json indent=false
         <ee:transform>
             <ee:message>
                 <ee:set-payload><![CDATA[%dw 2.0
-output text/html
+output text/plain
 ---
 "<html>
 <head>
@@ -763,7 +764,7 @@ output text/html
                             toAddresses="#[(vars.sessionData.email default p('notification.email.to')) splitBy ',']"
                             ccAddresses="#[p('notification.email.to') splitBy ',']"
                             fromAddress="MuleGuard &lt;${notification.email.from}&gt;">
-                    <email:body contentType="text/html; charset=UTF-8">
+                    <email:body contentType="text/html" encoding="UTF-8">
                         <email:content>#[payload]</email:content>
                     </email:body>
                     <email:attachments>#[vars.emailAttachments]</email:attachments>
@@ -776,7 +777,7 @@ output text/html
                             toAddresses="#[(vars.sessionData.email default p('notification.email.to')) splitBy ',']"
                             ccAddresses="#[p('notification.email.to') splitBy ',']"
                             fromAddress="MuleGuard &lt;${notification.email.from}&gt;">
-                    <email:body contentType="text/html; charset=UTF-8">
+                    <email:body contentType="text/html" encoding="UTF-8">
                         <email:content>#[payload]</email:content>
                     </email:body>
                 </email:send>
@@ -790,16 +791,21 @@ output text/html
         
         <error-handler>
             <on-error-continue>
-                <logger level="ERROR" message="Failed to send usage notification email"/>
+                <logger level="ERROR" message="#['Failed to send usage notification email: ' ++ error.description]"/>
             </on-error-continue>
         </error-handler>
     </flow>
 
     <!-- Flow 7: Serve Reports for ZIP Mode -->
     <flow name="serve-report-flow">
-        <http:listener path="/muleguard/reports/*" 
-                       config-ref="HTTP_Listener_config" 
-                       allowedMethods="GET"/>
+        <http:listener path="/muleguard/reports/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[{'Content-Type': vars.contentType default 'application/octet-stream'}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+            </http:error-response>
+        </http:listener>
         
         <!-- Extract sessionId and file path from requestPath -->
         <!-- Path format: /apiguard/muleguard/reports/{sessionId}/{filePath} -->
@@ -838,14 +844,54 @@ output text/html
         <file:read path="#[vars.fullPath]" config-ref="File_Config" outputMimeType="#[vars.contentType]"/>
         
         <error-handler>
-            <on-error-propagate type="FILE:FILE_NOT_FOUND">
-                <logger level="WARN" message="#['Report file not found: ' ++ vars.fullPath]"/>
-                <set-payload value='{"error": "Report file not found"}' mimeType="application/json"/>
-            </on-error-propagate>
-            <on-error-propagate type="ANY">
+            <on-error-continue type="FILE:FILE_NOT_FOUND,FILE:ILLEGAL_PATH,FILE:ACCESS_DENIED,OS:KEY_NOT_FOUND">
+                <logger level="WARN" message="#['Report not found or expired: ' ++ (vars.fullPath default 'Unknown Path')]"/>
+                <set-variable variableName="contentType" value="text/html; charset=UTF-8"/>
+                <set-variable variableName="httpStatus" value="404"/>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output text/html encoding="UTF-8"
+---
+"<!DOCTYPE html>
+<html>
+<head>
+    <title>Report Expired</title>
+    <meta charset='utf-8'/>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f5f5; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; padding: 20px; }
+        .container { background: white; padding: 50px 40px; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); text-align: center; max-width: 500px; width: 100%; }
+        h1 { color: #5a3088; margin: 0 0 15px 0; font-size: 28px; }
+        p { color: #666; line-height: 1.6; margin-bottom: 25px; font-size: 16px; }
+        .icon { font-size: 72px; margin-bottom: 25px; display: block; animation: fadein 1s; }
+        .btn { display: inline-block; padding: 12px 30px; background: #663399; color: white; text-decoration: none; border-radius: 25px; font-weight: 600; transition: background 0.3s ease; box-shadow: 0 4px 10px rgba(102, 51, 153, 0.3); }
+        .btn:hover { background: #52297a; box-shadow: 0 6px 15px rgba(102, 51, 153, 0.4); transform: translateY(-1px); }
+        .footer { margin-top: 30px; font-size: 12px; color: #999; }
+        @keyframes fadein { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <span class='icon'>⏳</span>
+        <h1>Report Expired</h1>
+        <p>The validation report you are looking for is no longer available.</p>
+        <p style='background: #fdf2f2; color: #c0392b; padding: 10px; border-radius: 6px; font-size: 14px;'>
+            <strong>Reason:</strong> Reports are automatically deleted 24 hours after generation for security and data retention compliance.
+        </p>
+        <a href='/apiguard/muleguard' class='btn'>Start New Analysis</a>
+        <div class='footer'>MuleGuard &copy; RAKS</div>
+    </div>
+</body>
+</html>"]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+            <on-error-continue type="ANY">
                 <logger level="ERROR" message="#['Error serving report: ' ++ error.description]"/>
-                <set-payload value='{"error": "Error serving report"}' mimeType="application/json"/>
-            </on-error-propagate>
+                <set-variable variableName="httpStatus" value="500"/>
+                <set-payload value='{"error": "Internal Server Error serving report."}' mimeType="application/json"/>
+            </on-error-continue>
         </error-handler>
     </flow>
 

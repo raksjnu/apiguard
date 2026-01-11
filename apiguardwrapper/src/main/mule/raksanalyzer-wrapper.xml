@@ -558,8 +558,8 @@ output text/plain
                     <logger level="INFO" message="RaksAnalyzer workspace cleanup completed"/>
                     
                     <error-handler>
-                        <on-error-continue type="FILE:ILLEGAL_PATH">
-                            <logger level="WARN" message="#['Working directory does not exist yet: ' ++ vars.workingDir]"/>
+                        <on-error-continue type="FILE:ILLEGAL_PATH,FILE:ACCESS_DENIED,FILE:FILE_DOESNT_EXIST">
+                             <logger level="WARN" message="RaksAnalyzer workspace directory not found or inaccessible for cleanup (ignoring)"/>
                         </on-error-continue>
                     </error-handler>
                 </try>
