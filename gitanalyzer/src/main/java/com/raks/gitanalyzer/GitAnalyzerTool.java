@@ -30,7 +30,7 @@ public class GitAnalyzerTool {
         context.setContextPath("/");
         server.setHandler(context);
 
-        // API Servlet (Jersey)
+        // API Servlet
         ServletHolder jerseyServlet = context.addServlet(
             org.glassfish.jersey.servlet.ServletContainer.class, "/api/*");
         jerseyServlet.setInitOrder(0);
@@ -39,7 +39,7 @@ public class GitAnalyzerTool {
             "com.raks.gitanalyzer.api.RestApplication"
         );
 
-        // Static Content Servlet (Web UI)
+        // Web UI Servlet
         ServletHolder staticServlet = context.addServlet(
             org.eclipse.jetty.servlet.DefaultServlet.class, "/*");
         staticServlet.setInitParameter("resourceBase", 

@@ -268,36 +268,6 @@ public class AnalyzerService {
              }
         }
         
-        // Reconstruct Diff Content if Smart XML was active AND we have ignored lines
-        // Only trigger this reconstruction if we actually did semantic separation to improve readability
-        // Reconstruct Diff Content if Smart XML was active AND we have ignored lines
-        // Only trigger this reconstruction if we actually did semantic separation to improve readability
-        /* DISABLE DIFF RECONSTRUCTION TO PRESERVE CONTEXT (PER USER REQUEST)
-        if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
-            StringBuilder newDiff = new StringBuilder();
-            
-            // Keep original Header (diff --git ...)
-            String[] originalLines = diffContent.split("\n");
-            for(String line : originalLines) {
-                if (line.startsWith("diff --git") || line.startsWith("index ") || line.startsWith("new file") || line.startsWith("deleted file") || line.startsWith("---") || line.startsWith("+++")) {
-                    newDiff.append(line).append("\n");
-                } else {
-                    break; // Stop at first hunk
-                }
-            }
-            
-            // Append Valid Lines
-            for(String line : validDiffLines) newDiff.append(line).append("\n");
-            
-            // Append Separator if needed
-            if (!ignoredDiffLines.isEmpty()) {
-                newDiff.append("--- Ignored Semantic Matches ---\n");
-                for(String line : ignoredDiffLines) newDiff.append(line).append("\n");
-            }
-            
-            change.setDiffContent(newDiff.toString());
-        }
-        */
 
         change.setValidChangedLines(valid);
         change.setIgnoredLines(ignored);
@@ -334,9 +304,6 @@ public class AnalyzerService {
         
         if (lines < lowThreshold) return "LOW";
         if (lines < mediumThreshold) return "MEDIUM";
-        return "HIGH"; // Changed from CRITICAL to HIGH to match consistent terminology if needed, or keep CRITICAL? Legend says High/Medium/Low? Legend image shows High/Medium/Low. The code previously returned "CRITICAL". Check legend image. 
-        // Legend image shows: High (Red), Medium (Yellow), Low (Green).
-        // Previous code returned CRITICAL.
-        // Let's stick to HIGH to match the UI legend "High".
+        return "HIGH";
     }
 }
