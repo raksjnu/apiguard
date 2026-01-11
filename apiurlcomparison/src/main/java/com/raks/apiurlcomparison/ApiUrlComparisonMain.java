@@ -37,13 +37,11 @@ public class ApiUrlComparisonMain implements Callable<Integer> {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         Config config = null;
 
-        // 1. Explicit Config
         if (configFile != null && configFile.exists()) {
              logger.info("Loading config from explicit file: {}", configFile.getAbsolutePath());
              config = mapper.readValue(configFile, Config.class);
         } 
         
-        // 2. CWD Config
         if (config == null) {
             File cwdConfig = new File("config.yaml");
             if (cwdConfig.exists()) {
@@ -52,7 +50,6 @@ public class ApiUrlComparisonMain implements Callable<Integer> {
             }
         }
 
-        // 3. Classpath Config
         if (config == null) {
              logger.info("Loading config from classpath resources");
              try (java.io.InputStream is = getClass().getClassLoader().getResourceAsStream("config.yaml")) {
@@ -86,9 +83,7 @@ public class ApiUrlComparisonMain implements Callable<Integer> {
     }
     public static void main(String[] args) {
         int exitCode = new CommandLine(new ApiUrlComparisonMain()).execute(args);
-        // Do not call System.exit(exitCode) here as it will kill the GUI server threads.
-        // The JVM will terminate naturally if only daemon threads are left (CLI mode),
-        // or stay alive if there are non-daemon threads (GUI mode).
+        
         if (exitCode != 0) {
             System.exit(exitCode);
         }

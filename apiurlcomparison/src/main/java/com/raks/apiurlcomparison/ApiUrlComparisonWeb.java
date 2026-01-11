@@ -18,7 +18,6 @@ public class ApiUrlComparisonWeb {
     private static Config loadConfig() throws java.io.IOException {
         ObjectMapper yamlMapper = new ObjectMapper(new com.fasterxml.jackson.dataformat.yaml.YAMLFactory());
         
-
         if (explicitConfigFile != null && explicitConfigFile.exists()) {
             logger.info("Loading config from explicit file: {}", explicitConfigFile.getAbsolutePath());
             return yamlMapper.readValue(explicitConfigFile, Config.class);
