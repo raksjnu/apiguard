@@ -20,18 +20,18 @@ public class ProcessAnalyzer {
         
         ProcessStructure structure = new ProcessStructure(processName, startName);
         
-        // Step 1: Analyze all groups first (including nested groups)
+
         NodeList groups = doc.getElementsByTagNameNS("*", "group");
         for (int i = 0; i < groups.getLength(); i++) {
             Element groupElement = (Element) groups.item(i);
             if (!isInsideGroup(groupElement)) {
-                // Top-level group
+
                 ProcessStructure.GroupNode groupNode = analyzeGroup(groupElement, doc);
                 structure.addGroup(groupNode);
             }
         }
         
-        // Step 2: Analyze all activities (excluding those inside groups)
+
         NodeList activities = doc.getElementsByTagNameNS("*", "activity");
         for (int i = 0; i < activities.getLength(); i++) {
             Element activityElement = (Element) activities.item(i);
@@ -45,7 +45,7 @@ public class ProcessAnalyzer {
             }
         }
         
-        // Step 3: Analyze starter
+
         NodeList starters = doc.getElementsByTagNameNS("*", "starter");
         if (starters != null && starters.getLength() > 0) {
             Element starter = (Element) starters.item(0);
@@ -56,7 +56,7 @@ public class ProcessAnalyzer {
             structure.addActivity(starterNode);
         }
         
-        // Step 4: Analyze all transitions (excluding those inside groups)
+
         NodeList transitions = doc.getElementsByTagNameNS("*", "transition");
         for (int i = 0; i < transitions.getLength(); i++) {
             Element transition = (Element) transitions.item(i);
@@ -80,7 +80,7 @@ public class ProcessAnalyzer {
         
         ProcessStructure.GroupNode groupNode = new ProcessStructure.GroupNode(name, type, groupType, groupElement);
         
-        // Find internal start name
+
         NodeList internalTransitions = groupElement.getElementsByTagNameNS("*", "transition");
         for (int i = 0; i < internalTransitions.getLength(); i++) {
             Element t = (Element) internalTransitions.item(i);
@@ -96,7 +96,7 @@ public class ProcessAnalyzer {
             }
         }
         
-        // Analyze internal activities
+
         NodeList internalActivities = groupElement.getElementsByTagNameNS("*", "activity");
         for (int i = 0; i < internalActivities.getLength(); i++) {
             Element actElement = (Element) internalActivities.item(i);
@@ -106,7 +106,7 @@ public class ProcessAnalyzer {
             }
         }
         
-        // Analyze nested groups
+
         NodeList nestedGroups = groupElement.getElementsByTagNameNS("*", "group");
         for (int i = 0; i < nestedGroups.getLength(); i++) {
             Element nestedGroupElement = (Element) nestedGroups.item(i);
@@ -130,7 +130,7 @@ public class ProcessAnalyzer {
         
         ProcessStructure.ActivityNode actNode = new ProcessStructure.ActivityNode(name, type, resourceType, activityElement, isCatch);
         
-        // If it's a CallProcessActivity, extract subprocess info
+
         if (type != null && type.contains("CallProcessActivity")) {
             Element config = (Element) activityElement.getElementsByTagName("config").item(0);
             if (config == null) {

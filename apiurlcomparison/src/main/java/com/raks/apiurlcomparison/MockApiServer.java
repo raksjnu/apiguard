@@ -31,7 +31,7 @@ public class MockApiServer {
 
         ObjectMapper mapper = new ObjectMapper();
 
-        // API 1 (REST)
+
         api1 = Service.ignite();
         api1.port(9091);
         api1.before((req, res) -> {
@@ -71,7 +71,7 @@ public class MockApiServer {
         api1.awaitInitialization();
         logger.info("Mock API 1 started on http://localhost:9091");
 
-        // API 2 (REST)
+
         api2 = Service.ignite();
         api2.port(9092);
         api2.before((req, res) -> {
@@ -97,7 +97,7 @@ public class MockApiServer {
         api2.awaitInitialization();
         logger.info("Mock API 2 started on http://localhost:9092");
 
-        // SOAP API 1
+
         soapApi1 = Service.ignite();
         soapApi1.port(9093);
         soapApi1.before((req, res) -> {
@@ -136,7 +136,7 @@ public class MockApiServer {
         soapApi1.awaitInitialization();
         logger.info("Mock SOAP API 1 started on http://localhost:9093");
 
-        // SOAP API 2
+
         soapApi2 = Service.ignite();
         soapApi2.port(9094);
         soapApi2.before((req, res) -> {

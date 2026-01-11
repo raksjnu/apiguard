@@ -1,5 +1,22 @@
+# Build output
 target/
+!target/apiurlcomparison-1.0.0-jar-with-raks.jar
+build/
+*.class
+
+# IDE files
 .idea/
+.vscode/
 *.iml
+.classpath
+.project
+.settings/
 .DS_Store
+
+# Temporary & Runtime files
+logs/
+reports/
+temp/
+results.html
+results.json
 *.log

@@ -24,7 +24,7 @@ public class CallChain {
     public boolean contains(String processPath) {
         if (processPath == null) return false;
         
-        // Normalize path for comparison
+
         String normalized = normalizePath(processPath);
         
         for (String existing : chain) {
@@ -70,7 +70,7 @@ public class CallChain {
         int lastSlash = normalized.lastIndexOf('/');
         String fileName = lastSlash >= 0 ? normalized.substring(lastSlash + 1) : normalized;
         
-        // Remove .process extension if present
+
         if (fileName.endsWith(".process")) {
             fileName = fileName.substring(0, fileName.length() - 8);
         }
@@ -84,10 +84,10 @@ public class CallChain {
     private String normalizePath(String path) {
         if (path == null) return "";
         
-        // Remove leading slash
+
         String normalized = path.startsWith("/") ? path.substring(1) : path;
         
-        // Convert backslashes to forward slashes
+
         normalized = normalized.replace('\\', '/');
         
         return normalized;

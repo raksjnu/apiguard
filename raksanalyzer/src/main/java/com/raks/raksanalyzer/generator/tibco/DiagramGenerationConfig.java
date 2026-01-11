@@ -34,13 +34,13 @@ public class DiagramGenerationConfig {
      */
     public static DiagramGenerationConfig forIntegrationDiagram() {
         return new DiagramGenerationConfig(
-            false,  // showAllActivities - connectors only
-            true,   // traverseSubprocesses - recursive
-            50,     // maxDepth
-            true,   // detectCircularReferences
-            true,   // showSpawnOverride
-            true,   // usePartitions
-            50      // maxActivitiesPerPage
+            false,  
+            true,   
+            50,     
+            true,   
+            true,   
+            true,   
+            50      
         );
     }
 
@@ -52,13 +52,13 @@ public class DiagramGenerationConfig {
      */
     public static DiagramGenerationConfig forFlowDiagram() {
         return new DiagramGenerationConfig(
-            true,   // showAllActivities - all activities
-            false,  // traverseSubprocesses - single level
-            0,      // maxDepth
-            false,  // detectCircularReferences - not needed
-            true,   // showSpawnOverride
-            true,   // usePartitions
-            50      // maxActivitiesPerPage
+            true,   
+            false,  
+            0,      
+            false,  
+            true,   
+            true,   
+            50      
         );
     }
 

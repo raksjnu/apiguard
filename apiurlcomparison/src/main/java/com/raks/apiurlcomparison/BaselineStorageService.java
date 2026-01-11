@@ -181,7 +181,7 @@ public class BaselineStorageService {
     public String getRunEndpoint(String serviceName, String date, String runId) throws IOException {
         Path runDir = getRunDirectory(serviceName, date, runId);
         
-        // Find iteration-001 or first available
+
         Path iterDir = runDir.resolve("iteration-001");
         if (!Files.exists(iterDir)) {
             File[] files = runDir.toFile().listFiles((dir, name) -> name.startsWith("iteration-"));
@@ -209,7 +209,7 @@ public class BaselineStorageService {
     public java.util.Map<String, String> getRunRequestHeaders(String serviceName, String date, String runId) throws IOException {
         Path runDir = getRunDirectory(serviceName, date, runId);
         
-        // Find iteration-001 or first available
+
         Path iterDir = runDir.resolve("iteration-001");
         if (!Files.exists(iterDir)) {
              try (java.util.stream.Stream<Path> stream = Files.list(runDir)) {
@@ -245,7 +245,7 @@ public class BaselineStorageService {
     public String getRunRequestPayload(String serviceName, String date, String runId) throws IOException {
         Path runDir = getRunDirectory(serviceName, date, runId);
         
-        // Find iteration-001 or first available
+
         Path iterDir = runDir.resolve("iteration-001");
         if (!Files.exists(iterDir)) {
              try (java.util.stream.Stream<Path> stream = Files.list(runDir)) {

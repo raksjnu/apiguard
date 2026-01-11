@@ -16,7 +16,7 @@ public class ComparisonEngine {
     private static final Logger logger = LoggerFactory.getLogger(ComparisonEngine.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
 
-    // Headers to always ignore during comparison (dynamic/transport headers)
+
     private static final Set<String> IGNORED_HEADERS = new HashSet<>(Arrays.asList(
             "Date", "Server", "Transfer-Encoding", "Keep-Alive", "Connection", "ETag", "Last-Modified", 
             "X-Request-ID", "Strict-Transport-Security", "Content-Length", "Vary"
@@ -36,7 +36,7 @@ public class ComparisonEngine {
             return;
         }
         
-        // 1. Check HTTP Errors
+
         int status1 = api1Result.getStatusCode();
         int status2 = api2Result.getStatusCode();
         if (status1 >= 400 || status2 >= 400) {
@@ -56,17 +56,17 @@ public class ComparisonEngine {
 
         List<String> differences = new ArrayList<>();
 
-        // 2. Compare Headers
+
         if (!ignoreHeaders) {
             compareHeaders(result.getApi1().getResponseHeaders(), result.getApi2().getResponseHeaders(), differences, ignoredFields);
         }
 
-        // 3. Compare Payloads (Body)
+
         String response1 = api1Result.getResponsePayload();
         String response2 = api2Result.getResponsePayload();
         
         if (response1 == null && response2 == null) {
-            // Both empty/null - match (assuming headers matched, otherwise differences has entries)
+
             if (differences.isEmpty()) {
                  result.setStatus(ComparisonResult.Status.MATCH);
             } else {
@@ -86,10 +86,8 @@ public class ComparisonEngine {
         try {
             boolean isBodyMatch = false;
             if ("SOAP".equalsIgnoreCase(apiType)) {
-                // For SOAP/XML
-                // Note: Implementing recursive ignore for XML is complex with string manipulation. 
-                // Using generic DiffBuilder. If ignoredFields provided, simple text removal fallback or specific node filter could work.
-                // For now, standard XML comparison. If user needs extensive XML ignore, might need XSLT or similar.
+
+
                 try {
                     Diff xmlDiff = DiffBuilder.compare(response1).withTest(response2)
                             .ignoreComments()
@@ -104,12 +102,12 @@ public class ComparisonEngine {
                         xmlDiff.getDifferences().forEach(d -> differences.add(d.toString()));
                     }
                 } catch (Exception e) {
-                   // Fallback
+
                    isBodyMatch = safeStringEquals(response1, response2);
                    if (!isBodyMatch) differences.add("XML Parsing failed and strings differ.");
                 }
             } else {
-                // For REST/JSON
+
                 try {
                     JsonNode json1 = objectMapper.readTree(response1);
                     JsonNode json2 = objectMapper.readTree(response2);
@@ -152,7 +150,7 @@ public class ComparisonEngine {
         
         for (String key : allKeys) {
             if (isIgnoredHeader(key)) continue;
-            // Also ignore if user requested it specifically
+
             if (ignoredFields != null && ignoredFields.contains(key)) continue;
             
             String v1 = h1.get(key);
@@ -174,12 +172,12 @@ public class ComparisonEngine {
     private static void removeIgnoredFields(JsonNode node, List<String> ignoredFields) {
         if (node.isObject()) {
             ObjectNode obj = (ObjectNode) node;
-            // Create a list of fields to remove to avoid concurrent modification during iteration
+
             List<String> toRemove = new ArrayList<>();
             Iterator<String> fieldNames = obj.fieldNames();
             while (fieldNames.hasNext()) {
                 String name = fieldNames.next();
-                if (ignoredFields.contains(name)) { // Name match
+                if (ignoredFields.contains(name)) {
                     toRemove.add(name);
                 } else {
                     removeIgnoredFields(obj.get(name), ignoredFields);

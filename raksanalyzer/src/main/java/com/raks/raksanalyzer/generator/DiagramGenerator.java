@@ -99,11 +99,10 @@ public class DiagramGenerator {
             if (!java.nio.file.Files.exists(iconsDir)) {
                 java.nio.file.Files.createDirectories(iconsDir);
             }
-            // iterate over known icons to ensure they are available? 
-            // Lazy loading in getIconPath handles individual files.
+
         } catch (IOException e) {
             e.printStackTrace();
-            // Fallback
+
             iconsDir = java.nio.file.Paths.get(".");
         }
 
@@ -139,7 +138,7 @@ public class DiagramGenerator {
                 return p;
             }
         } catch (Exception e) {
-            // Ignore extraction errors
+
         }
         return null;
     }

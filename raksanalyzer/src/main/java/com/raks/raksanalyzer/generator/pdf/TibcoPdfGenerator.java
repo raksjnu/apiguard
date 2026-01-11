@@ -1352,16 +1352,14 @@ public class TibcoPdfGenerator {
         float imgWidth = pdImage.getWidth();
         float imgHeight = pdImage.getHeight();
         
-        // Default PDF DPI is 72. We generated images at 300 DPI.
-        // To render at natural size (physically correct 100% zoom), we line up pixels to points.
-        // Scale factor = target_dpi / source_dpi = 72 / 300 = ~0.24
+
         float dpiScale = 72f / 300f;
         
-        // Initial scaled dimensions (Natural Size)
+
         float finalWidth = imgWidth * dpiScale;
         float finalHeight = imgHeight * dpiScale;
         
-        // Now constrain to page bounds if natural size is too big
+
         if (finalWidth > availableWidth) {
             float widthScale = availableWidth / finalWidth;
             finalWidth *= widthScale;
@@ -1386,8 +1384,7 @@ public class TibcoPdfGenerator {
         }
         contentStream.drawImage(pdImage, MARGIN, currentY - finalHeight, finalWidth, finalHeight);
         currentY -= (finalHeight + 20);
-        // Check if we touched the bounds significantly vs natural size
-        // naturalWidth = imgWidth * dpiScale
+
         if (finalWidth < (imgWidth * dpiScale * 0.9f)) {
             drawText("(Diagram scaled to fit page)", fontItalic, 8, Color.GRAY);
             currentY -= 10;

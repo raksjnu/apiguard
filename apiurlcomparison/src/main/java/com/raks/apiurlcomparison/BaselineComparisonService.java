@@ -115,7 +115,7 @@ public class BaselineComparisonService {
                 result.setBaselineCaptureTimestamp(baseline.getMetadata().getCaptureTimestamp());
                 compareWithBaselineIteration(result, baselineIter, config.getTestType(), config.getIgnoredFields(), config.isIgnoreHeaders());
                 results.add(result);
-                // results.add(result); // Removed duplicate
+
             } catch (Exception e) {
                 logger.error("Error comparing iteration {}: {}", iterNum, e.getMessage(), e);
                 ComparisonResult errorResult = new ComparisonResult();
@@ -155,7 +155,7 @@ public class BaselineComparisonService {
         com.raks.apiurlcomparison.http.HttpResponse httpResponse = client.sendRequest(url, method, operation.getHeaders(), payload);
         apiCallResult.setDuration(System.currentTimeMillis() - start);
         
-        // Reconstruct actual headers including Auth for saving
+
         Map<String, String> actualHeaders = new HashMap<>(operation.getHeaders() != null ? operation.getHeaders() : new HashMap<>());
         if (client.getAccessToken() != null) {
             actualHeaders.put("Authorization", "Bearer " + client.getAccessToken());
@@ -169,7 +169,7 @@ public class BaselineComparisonService {
 
         apiCallResult.setUrl(url);
         apiCallResult.setMethod(method);
-        apiCallResult.setRequestHeaders(actualHeaders); // Save full headers including Auth
+        apiCallResult.setRequestHeaders(actualHeaders);
         apiCallResult.setRequestPayload(payload);
 
         apiCallResult.setStatusCode(httpResponse.getStatusCode());
@@ -202,7 +202,7 @@ public class BaselineComparisonService {
         responseMetadata.put("statusCode", apiCall.getStatusCode());
         responseMetadata.put("duration", apiCall.getDuration());
         responseMetadata.put("timestamp", result.getTimestamp());
-        // Simple heuristic for content type (could extract from headers if available)
+
         responseMetadata.put("contentType", apiCall.getResponseHeaders().getOrDefault("Content-Type", "text/xml;charset=UTF-8"));
         return new BaselineStorageService.BaselineIteration(
                 iterationNumber,
@@ -229,7 +229,7 @@ public class BaselineComparisonService {
         }
         result.setBaselineCaptureTimestamp(baseline.getRequestMetadata().getTimestamp());
         result.setApi2(baselineApi);
-        // Use ignoreHeaders param to control header comparison
+
         ComparisonEngine.compare(result, testType, ignoredFields, ignoreHeaders);
     }
     private RunMetadata createRunMetadata(String runId, String serviceName, String date,
@@ -291,15 +291,15 @@ public class BaselineComparisonService {
         for (BaselineStorageService.BaselineIteration iter : baselineIterations) {
             ComparisonResult result = new ComparisonResult();
             
-            // Map Metadata
+
             result.setOperationName(metadata.getOperation() + " (Baseline)");
             result.setIterationTokens(convertTokensToMap(iter.getRequestMetadata().getTokensUsed()));
-            result.setTimestamp(iter.getRequestMetadata().getTimestamp()); // Use capture time as timestamp
+            result.setTimestamp(iter.getRequestMetadata().getTimestamp());
             
-            // Set Status to MATCH (as it's a capture view)
+
             result.setStatus(ComparisonResult.Status.MATCH);
             
-            // Set Baseline Info
+
             result.setBaselineServiceName(serviceName);
             result.setBaselineDate(date);
             result.setBaselineRunId(runId);
@@ -308,7 +308,7 @@ public class BaselineComparisonService {
             result.setBaselineTags(tags);
             result.setBaselineCaptureTimestamp(captureTime);
 
-            // Populate API 1 (The Baseline Data)
+
             ApiCallResult apiCall = new ApiCallResult();
             apiCall.setUrl(iter.getRequestMetadata().getEndpoint());
             apiCall.setMethod(iter.getRequestMetadata().getMethod());
@@ -326,7 +326,7 @@ public class BaselineComparisonService {
 
             result.setApi1(apiCall);
             
-            // API 2 is null for baseline view
+
             result.setApi2(null);
 
             results.add(result);

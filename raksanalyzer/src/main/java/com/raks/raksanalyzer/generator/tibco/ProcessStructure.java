@@ -112,8 +112,8 @@ public class ProcessStructure {
     
     public static class GroupNode {
         private final String name;
-        private final String type; // e.g., "transactionGroup", "inputLoop", "criticalSection"
-        private final String groupType; // Full type from config
+        private final String type;
+        private final String groupType;
         private final Element element;
         private final Map<String, ActivityNode> internalActivities;
         private final Map<String, List<String>> internalTransitions;

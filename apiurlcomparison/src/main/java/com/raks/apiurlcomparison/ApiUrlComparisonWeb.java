@@ -18,20 +18,20 @@ public class ApiUrlComparisonWeb {
     private static Config loadConfig() throws java.io.IOException {
         ObjectMapper yamlMapper = new ObjectMapper(new com.fasterxml.jackson.dataformat.yaml.YAMLFactory());
         
-        // 1. Explicitly provided config
+
         if (explicitConfigFile != null && explicitConfigFile.exists()) {
             logger.info("Loading config from explicit file: {}", explicitConfigFile.getAbsolutePath());
             return yamlMapper.readValue(explicitConfigFile, Config.class);
         }
 
-        // 2. CWD config.yaml
+
         java.io.File cwdConfig = new java.io.File("config.yaml");
         if (cwdConfig.exists()) {
             logger.info("Loading config from CWD: {}", cwdConfig.getAbsolutePath());
             return yamlMapper.readValue(cwdConfig, Config.class);
         }
 
-        // 3. Classpath config.yaml
+
         logger.info("Loading config from classpath resources");
         try (java.io.InputStream is = ApiUrlComparisonWeb.class.getClassLoader().getResourceAsStream("config.yaml")) {
              if (is == null) {
@@ -41,7 +41,7 @@ public class ApiUrlComparisonWeb {
         }
     }
     
-    // Helper to get storage dir
+
     private static String getStorageDir() {
         try {
             Config config = loadConfig();
@@ -60,7 +60,7 @@ public class ApiUrlComparisonWeb {
         staticFiles.location("/public"); 
         logger.info("Starting Web GUI on port {}", port);
 
-        // Mock Server Control Endpoints
+
         post("/api/mock/start", (req, res) -> {
             res.type("application/json");
             try {
@@ -87,7 +87,7 @@ public class ApiUrlComparisonWeb {
 
         get("/api/mock/status", (req, res) -> {
             res.type("application/json");
-            // Match Mule Wrapper format: { "status": "running" } or { "status": "stopped" }
+
             String status = MockApiServer.isRunning() ? "running" : "stopped";
             return "{\"status\": \"" + status + "\"}";
         });
@@ -110,13 +110,13 @@ public class ApiUrlComparisonWeb {
             res.type("application/json");
             try {
                 Config config = loadConfig();
-                // Resolve payload file paths to content (parity with Wrapper)
+
                 resolvePayloads(config);
                 ObjectMapper jsonMapper = new ObjectMapper();
                 return jsonMapper.writeValueAsString(config);
             } catch (Exception e) {
                 logger.error("Error reading config", e);
-                // Return empty object if config fails to load, instead of error to allow UI to load defaults
+
                 return "{}";
             }
         });
@@ -261,7 +261,7 @@ public class ApiUrlComparisonWeb {
             if (op.getPayloadTemplatePath() != null && !op.getPayloadTemplatePath().isEmpty()) {
                 try {
                     java.nio.file.Path path = java.nio.file.Paths.get(op.getPayloadTemplatePath());
-                    // Check if file exists relative to CWD or absolute
+
                     if (java.nio.file.Files.exists(path)) {
                         String content = new String(java.nio.file.Files.readAllBytes(path), java.nio.charset.StandardCharsets.UTF_8);
                         op.setPayloadTemplatePath(content);
