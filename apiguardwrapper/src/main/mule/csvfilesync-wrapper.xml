@@ -471,7 +471,7 @@ output application/java
                 </on-error-continue>
             </error-handler>
         </try>
-        <async><flow-ref name="csvfilesync-cleanup-delayed-flow"/></async>
+        <!-- Cleanup removed to ensure session persistence -->
     </flow>
 
     <!-- Flow 14: Download Config -->

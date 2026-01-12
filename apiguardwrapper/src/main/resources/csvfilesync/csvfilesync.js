@@ -424,8 +424,18 @@ function importConfig(input) {
     const reader = new FileReader();
     
     reader.onload = function(e) {
+        const content = e.target.result.trim();
+        
+        // Pre-check for common text error responses masquerading as files
+        if (content.startsWith('Configurat') || content.startsWith('Error') || !content.startsWith('{')) {
+             showNotification('Invalid Config File: The file contains a text message/error, not JSON.', 'error');
+             console.error('Import detection: File content starts with non-JSON characters:', content.substring(0, 50));
+             input.value = ''; // Reset
+             return;
+        }
+
         try {
-            const config = JSON.parse(e.target.result);
+            const config = JSON.parse(content);
             
             // Handle new structure (fileMappings) vs legacy (mappings)
             let loadedMappings = [];
@@ -455,6 +465,7 @@ function importConfig(input) {
             }
             
             // Apply to UI
+            document.getElementById('mappingsList').innerHTML = ''; // Clear existing visual elements
             document.getElementById('targetFileName').value = targetFile;
             currentMappings = loadedMappings;
             displayMappings();
