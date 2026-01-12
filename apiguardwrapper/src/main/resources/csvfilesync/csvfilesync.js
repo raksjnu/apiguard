@@ -6,13 +6,60 @@ let autocompleteData = { fileNames: [], fieldNames: [] };
 let selectedMappings = new Set();
 let logPanelInitialized = false;
 let configSaved = false; // Track if config is ready for execution
+let importedFileMappings = []; // Store full multi-file config for preservation
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
     initLogPanel();
+    initModal(); // Initialize modal system
     loadAutocomplete();
     updateAutocompleteStats();
 });
+
+// --- Modal System ---
+function initModal() {
+    if (document.getElementById('customModal')) return;
+    
+    const modalHTML = `
+    <div id="customModal" class="modal-overlay" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Alert</h3>
+                <button onclick="closeModal()" class="btn-icon">✖️</button>
+            </div>
+            <div id="modalBody" class="modal-body"></div>
+            <div class="modal-footer">
+                <button onclick="closeModal()" class="btn-primary">OK</button>
+            </div>
+        </div>
+    </div>
+    <style>
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 8px; width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); animation: modalPop 0.3s ease-out; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .modal-header h3 { margin: 0; color: #333; }
+        .modal-body { font-size: 16px; color: #555; margin-bottom: 20px; }
+        .modal-footer { text-align: right; }
+        @keyframes modalPop { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+    `;
+    document.body.insertAdjacentHTML('beforeend', modalHTML);
+}
+
+function showModal(title, message) {
+    const modal = document.getElementById('customModal');
+    if (modal) {
+        document.getElementById('modalTitle').innerText = title;
+        document.getElementById('modalBody').innerHTML = message; // Allow HTML
+        modal.style.display = 'flex';
+    } else {
+        alert(`${title}\n${message}`); // Fallback
+    }
+}
+
+function closeModal() {
+    document.getElementById('customModal').style.display = 'none';
+}
 
 // --- Log Panel System ---
 function initLogPanel() {
@@ -408,7 +455,7 @@ function downloadConfig() {
     }
     // Check if saved
     if (!configSaved) {
-        if(!confirm('Configuration has NOT been saved yet. You might download an empty or old config. Save first?')) {
+        if (!confirm('Configuration has NOT been saved yet. You might download an empty or old config. Save first?')) {
              // proceed anyway
         } else {
             return;
@@ -442,6 +489,11 @@ function importConfig(input) {
             let targetFile = config.targetFile || '';
             
             if (config.fileMappings && Array.isArray(config.fileMappings) && config.fileMappings.length > 0) {
+                // Store ALL mappings for preservation
+                importedFileMappings = config.fileMappings;
+                const fileCount = config.fileMappings.length;
+                addToLog(`Imported multi-file config with ${fileCount} target files.`, 'info');
+                
                 // Load first mapping
                 const firstMapping = config.fileMappings[0];
                 loadedMappings = firstMapping.fieldMappings || [];
@@ -459,19 +511,24 @@ function importConfig(input) {
                 }
             } else if (config.mappings && Array.isArray(config.mappings)) {
                 // Legacy
+                importedFileMappings = [{
+                    sourceFile: targetFile, // Assuming legacy structure, this might be imprecise but sufficient
+                    targetFile: targetFile,
+                    fieldMappings: config.mappings
+                }];
                 loadedMappings = config.mappings;
             } else {
                 throw new Error('Invalid config structure: missing mappings');
             }
             
             // Apply to UI
-            document.getElementById('mappingsList').innerHTML = ''; // Clear existing visual elements
+            document.getElementById('mappingsList').innerHTML = ''; // Clear existing visual elements (Correct ID)
             document.getElementById('targetFileName').value = targetFile;
             currentMappings = loadedMappings;
             displayMappings();
             
             showNotification(`Configuration loaded! Target: ${targetFile}`, 'success');
-            addToLog(`Loaded configuration from ${file.name}`, 'info');
+            addToLog(`Loaded mapping view for ${targetFile} from ${file.name}`, 'info');
             
             // Reset Input
             input.value = '';
@@ -493,14 +550,14 @@ function importConfig(input) {
 async function saveConfig() {
     const targetFile = document.getElementById('targetFileName').value;
     if (!targetFile) {
-        showNotification('Please enter Target File Name', 'error');
+        showModal('Validation Error', 'Please enter a <b>Target File Name</b> before saving.');
         return;
     }
     
     // Get Source File name
     const sourceSelect = document.getElementById('sourceFileSelect');
     if (!sourceSelect || !sourceSelect.value) {
-        showNotification('Please select a source file first', 'error');
+        showModal('Validation Error', 'Please select a <b>Source File</b> first.');
         return;
     }
     const sourceFileName = sourceSelect.options[sourceSelect.selectedIndex].text;
@@ -522,19 +579,52 @@ async function saveConfig() {
     const sanitizedSourceFile = sanitize(sourceFileName);
 
     if (!sanitizedTargetFile) {
-        showNotification('Invalid Target File Name', 'error');
+        showModal('Validation Error', 'Invalid Target File Name.');
         return;
     }
 
     // Construct Backend-Compatible Payload
-    const config = {
-        fileMappings: [
+    // MERGE STRATEGY: Start with imported mappings (if any), then update/add current one
+    let finalFileMappings = [];
+    
+    if (importedFileMappings && importedFileMappings.length > 0) {
+        // Clone to avoid side effects
+        finalFileMappings = JSON.parse(JSON.stringify(importedFileMappings));
+        
+        // Find if we are editing an existing mapping block (Unique key = Source + Target)
+        const existingIndex = finalFileMappings.findIndex(m => 
+            m.targetFile === sanitizedTargetFile && 
+            m.sourceFile === sanitizedSourceFile
+        );
+        
+        if (existingIndex >= 0) {
+            // Update existing block for this specific Source->Target pair
+            finalFileMappings[existingIndex] = {
+                sourceFile: sanitizedSourceFile,
+                targetFile: sanitizedTargetFile,
+                fieldMappings: sanitizedMappings
+            };
+        } else {
+            // Append new block (e.g. same target but new source, or completely new target)
+            finalFileMappings.push({
+                sourceFile: sanitizedSourceFile,
+                targetFile: sanitizedTargetFile,
+                fieldMappings: sanitizedMappings
+            });
+        }
+    } else {
+        // No import / Fresh Start
+        finalFileMappings = [
             {
                 sourceFile: sanitizedSourceFile,
                 targetFile: sanitizedTargetFile,
                 fieldMappings: sanitizedMappings
             }
-        ]
+        ];
+    }
+    
+    const config = {
+        fileMappings: finalFileMappings
     };
     
     console.log('Save Payload:', JSON.stringify({sessionId: sanitizedSessionId, config}));
@@ -559,8 +649,11 @@ async function saveConfig() {
             
             // Capture target files list from response
             if (res.targetFiles && Array.isArray(res.targetFiles)) {
-                window.savedTargetFiles = res.targetFiles;
-                showNotification(`Configuration saved! Targets: ${res.targetFiles.join(', ')}`, 'success');
+                window.savedTargetFiles = [...new Set(res.targetFiles)]; // Deduplicate
+                showNotification(`Configuration saved! Targets: ${window.savedTargetFiles.join(', ')}`, 'success');
+                // Log detailed stats as requested
+                const fileCount = window.savedTargetFiles.length;
+                addToLog(`Configuration Added/Updated. Total Targets: ${fileCount} (${window.savedTargetFiles.join(', ')})`, 'success');
             } else {
                 window.savedTargetFiles = [sanitizedTargetFile];
                 showNotification(`Configuration saved! Target: ${sanitizedTargetFile}`, 'success');
@@ -576,10 +669,10 @@ async function saveConfig() {
             setTimeout(() => { if(saveBtn) saveBtn.innerText = originalText; }, 2000);
             
         } else {
-            showNotification('Save failed: ' + res.message, 'error');
+            showModal('Save Failed', res.message);
         }
     } catch (e) {
-        showNotification('Save failed: ' + e.message, 'error');
+        showModal('Save Failed', e.message);
     }
 }
 
@@ -614,9 +707,10 @@ async function executeTransformation() {
             showNotification('Transformation complete!', 'success');
         } else {
             resultDiv.innerHTML = `<div class="alert status-error">❌ Error: ${res.message}</div>`;
-            showNotification('Execution failed', 'error');
+            showModal('Execution Failed', `The transformation process failed.<br><br><b>Reason:</b> ${res.message}`);
         }
     } catch (e) {
         resultDiv.innerHTML = `<div class="alert status-error">❌ Exception: ${e.message}</div>`;
+        showModal('Execution Error', e.message);
     }
 }

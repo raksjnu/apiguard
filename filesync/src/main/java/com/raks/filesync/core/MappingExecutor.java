@@ -17,11 +17,13 @@ public class MappingExecutor {
     private final CsvReader csvReader;
     private final CsvWriter csvWriter;
     private final TransformationEngine transformationEngine;
+    private final Set<String> createdFiles; // Track files created in this execution session
     
     public MappingExecutor() {
         this.csvReader = new CsvReader();
         this.csvWriter = new CsvWriter();
         this.transformationEngine = new TransformationEngine();
+        this.createdFiles = new HashSet<>();
     }
     
     /**
@@ -71,24 +73,71 @@ public class MappingExecutor {
             return;
         }
         
-        // Build target headers from field mappings
-        List<String> targetHeaders = new ArrayList<>();
+        // Build current mapping target headers
+        List<String> currentTargetHeaders = new ArrayList<>();
         for (FieldMapping fieldMapping : fileMapping.getFieldMappings()) {
-            targetHeaders.add(fieldMapping.getTargetField());
+            currentTargetHeaders.add(fieldMapping.getTargetField());
         }
         
-        // Transform rows
-        List<Map<String, String>> targetRows = new ArrayList<>();
+        // Transform current rows
+        List<Map<String, String>> currentTargetRows = new ArrayList<>();
         for (Map<String, String> sourceRow : sourceRows) {
             Map<String, String> targetRow = transformRow(sourceRow, fileMapping.getFieldMappings());
-            targetRows.add(targetRow);
+            currentTargetRows.add(targetRow);
         }
         
-        // Write target CSV
-        csvWriter.writeCsv(targetFilePath, targetHeaders, targetRows);
-        
-        result.addSuccess("Processed " + fileMapping.getSourceFile() + " -> " + fileMapping.getTargetFile() + 
-                         " (" + targetRows.size() + " rows)");
+        // MULTI-SOURCE MERGE LOGIC
+        // If we have already written to this file in this session, we must merge
+        if (createdFiles.contains(targetFilePath)) {
+            // Read Existing Data
+            List<Map<String, String>> existingRows = csvReader.readCsv(targetFilePath);
+            
+            // Should not happen if we just wrote it, but handling empty case safe-guard
+            if (existingRows.isEmpty()) {
+                 // Fallback: Overwrite if empty (headers lost)
+                 csvWriter.writeCsv(targetFilePath, currentTargetHeaders, currentTargetRows);
+                 result.addSuccess("Processed (Overwrite Empty) " + fileMapping.getSourceFile() + " -> " + fileMapping.getTargetFile());
+                 return;
+            }
+            
+            // Merge Headers (Existing + New unique)
+            Set<String> mergedHeaderSet = new LinkedHashSet<>(existingRows.get(0).keySet());
+            mergedHeaderSet.addAll(currentTargetHeaders);
+            List<String> finalHeaders = new ArrayList<>(mergedHeaderSet);
+            
+            // Merge Rows (Index-based)
+            List<Map<String, String>> finalRows = new ArrayList<>();
+            int maxRows = Math.max(existingRows.size(), currentTargetRows.size());
+            
+            for (int i = 0; i < maxRows; i++) {
+                Map<String, String> mergedRow = new LinkedHashMap<>();
+                
+                // Add existing data (if available)
+                if (i < existingRows.size()) {
+                    mergedRow.putAll(existingRows.get(i));
+                }
+                
+                // Add new data (if available) - This effectively appends columns
+                if (i < currentTargetRows.size()) {
+                    mergedRow.putAll(currentTargetRows.get(i));
+                }
+                
+                finalRows.add(mergedRow);
+            }
+            
+            // Write Merged Result
+            csvWriter.writeCsv(targetFilePath, finalHeaders, finalRows);
+            result.addSuccess("Processed (Merged) " + fileMapping.getSourceFile() + " -> " + fileMapping.getTargetFile() + 
+                             " (Total " + finalRows.size() + " rows)");
+            
+        } else {
+            // first time writing this file
+            csvWriter.writeCsv(targetFilePath, currentTargetHeaders, currentTargetRows);
+            createdFiles.add(targetFilePath);
+            
+            result.addSuccess("Processed " + fileMapping.getSourceFile() + " -> " + fileMapping.getTargetFile() + 
+                             " (" + currentTargetRows.size() + " rows)");
+        }
     }
     
     /**
