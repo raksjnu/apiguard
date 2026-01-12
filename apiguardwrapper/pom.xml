@@ -53,6 +53,10 @@
 							<groupId>com.raks</groupId>
 							<artifactId>gitanalyzer</artifactId>
 						</sharedLibrary>
+						<sharedLibrary>
+							<groupId>com.raks</groupId>
+							<artifactId>filesync</artifactId>
+						</sharedLibrary>
 					</sharedLibraries>
 				</configuration>
 			</plugin>
@@ -210,6 +214,13 @@
 			<version>1.0.0</version>
 			<scope>system</scope>
 			<systemPath>${project.basedir}/lib/gitanalyzer-1.0.0.jar</systemPath>
+		</dependency>
+		<dependency>
+			<groupId>com.raks</groupId>
+			<artifactId>filesync</artifactId>
+			<version>1.0.0</version>
+			<scope>system</scope>
+			<systemPath>${project.basedir}/lib/filesync-1.0.0.jar</systemPath>
 		</dependency>
 	</dependencies>
 

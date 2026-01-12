@@ -26,6 +26,7 @@ logs/
 
 # Sensitive Configuration
 **/mule-app.properties
+**/mule-app.properties.txt
 **/gitanalyzer.properties
 *.local
 *.backup

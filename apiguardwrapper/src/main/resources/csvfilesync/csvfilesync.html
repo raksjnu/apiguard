@@ -1,0 +1,147 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAKS CSV FileSync - Transform CSV Files</title>
+    <link rel="stylesheet" href="/apiguard/csvfilesync/csvfilesync.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <h1 class="logo">
+                <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj4KICA8cGF0aCBkPSJNIDE1IDIwIEwgNDAgMTAgTCA2NSAyMCBMIDY1IDQ1IFEgNjUgNjAgNDAgNzUgUSAxNSA2MCAxNSA0NSBaIiBmaWxsPSIjNjYzMzk5IiBzdHJva2U9IiM2NjMzOTkiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjQwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlJBS1M8L3RleHQ+Cjwvc3ZnPg==" 
+                     alt="RAKS Logo" style="height: 50px; vertical-align: middle; margin-right: 15px;">
+                RAKS CSV FileSync
+            </h1>
+            <p class="subtitle">Transform and map CSV files with ease</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab-button active" onclick="switchTab('upload')">📤 Upload</button>
+            <button class="tab-button" onclick="switchTab('mapping')">🔗 Mapping</button>
+            <button class="tab-button" onclick="switchTab('execute')">⚡ Execute</button>
+            <button class="tab-button" onclick="switchTab('settings')">⚙️ Settings</button>
+        </div>
+
+        <!-- Tab 1: Upload -->
+        <div id="upload-tab" class="tab-content active">
+            <div class="card">
+                <h2>Upload Source Files</h2>
+                
+                <div class="upload-section">
+                    <h3>Option 1: Upload ZIP File</h3>
+                    <input type="file" id="zipUpload" accept=".zip" class="file-input">
+                    <button onclick="uploadZip()" class="btn-primary">📦 Upload & Extract</button>
+                </div>
+
+                <div class="upload-section">
+                    <h3>Option 2: Upload CSV Files</h3>
+                    <input type="file" id="csvUpload" accept=".csv" multiple class="file-input">
+                    <button onclick="uploadCsvs()" class="btn-primary">📄 Upload Files</button>
+                </div>
+
+                <div id="fileList" class="file-list"></div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Mapping -->
+        <div id="mapping-tab" class="tab-content">
+            <div class="card">
+                <h2>Create Field Mappings</h2>
+                
+                <div class="mapping-controls">
+                    <div class="form-group">
+                        <label>Source File:</label>
+                        <select id="sourceFileSelect" class="form-control" onchange="loadFileForMapping()">
+                            <option value="">Select a file...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Target File Name:</label>
+                        <input type="text" id="targetFileName" class="form-control" placeholder="output.csv" list="targetFileList">
+                        <datalist id="targetFileList"></datalist>
+                    </div>
+                </div>
+                
+                <!-- Bulk Operations Toolbar -->
+                <div class="bulk-operations">
+                    <div class="select-all-container">
+                        <input type="checkbox" id="selectAllMappings" class="mapping-checkbox" onchange="toggleSelectAll()">
+                        <label for="selectAllMappings">Select All</label>
+                    </div>
+                    <button onclick="autoFillSameNames()" class="btn-secondary">✨ Auto-Fill Same Names</button>
+                    <button onclick="deleteSelectedMappings()" class="btn-danger">🗑️ Delete Selected</button>
+                </div>
+
+                <div id="mappingsList" class="mappings-list"></div>
+
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button class="btn-success" onclick="addMapping()">➕ Add Field Mapping</button>
+                    <button class="btn-primary" onclick="saveConfig()">💾 Save Configuration</button>
+                </div>
+
+                <div style="margin-top: 30px; border-top: 2px dashed #ddd; padding-top: 15px;">
+                    <h3>📂 Configuration Management</h3>
+                    <p style="font-size:0.9em; color:#666;">Reuse your work by saving (downloading) and loading (importing) configuration files.</p>
+                    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                         <button onclick="downloadConfig()" class="btn-secondary">⬇️ Download Config</button>
+                         <label for="importConfig" class="btn-secondary" style="cursor: pointer; display: inline-block;">
+                            ⬆️ Import Config
+                            <input type="file" id="importConfig" accept=".json" style="display:none;" onchange="importConfig(this)">
+                         </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Execute -->
+        <div id="execute-tab" class="tab-content">
+            <div class="card">
+                <h2>Execute Transformation</h2>
+                
+                <div id="configPreview" class="config-preview">
+                    <p>No configuration loaded. Please create mappings first.</p>
+                </div>
+
+                <button onclick="executeTransformation()" class="btn-primary" id="executeBtn">⚡ Execute Transformation</button>
+
+                <div id="executionStatus" class="execution-status"></div>
+
+                <div id="downloadSection" class="download-section" style="display:none;">
+                    <button onclick="downloadResults()" class="btn-success">⬇️ Download Results (ZIP)</button>
+                    <button onclick="downloadConfig()" class="btn-secondary">📋 Download Config</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Settings -->
+        <div id="settings-tab" class="tab-content">
+            <div class="card">
+                <h2>Autocomplete History</h2>
+                
+                <div class="settings-section">
+                    <h3>Manage Autocomplete Suggestions</h3>
+                    <p>File and field names are saved for autocomplete. You can download, upload, or clear this history.</p>
+                    
+                    <div class="button-group">
+                        <button onclick="downloadAutocomplete()" class="btn-secondary">⬇️ Download History</button>
+                        <label for="autocompleteUpload" class="btn-secondary">⬆️ Upload History
+                            <input type="file" id="autocompleteUpload" accept=".json" style="display:none;" onchange="uploadAutocomplete()">
+                        </label>
+                        <button onclick="viewHistory()" class="btn-info">📜 View History</button>
+                        <button onclick="clearAutocomplete()" class="btn-danger">🗑️ Clear History</button>
+                    </div>
+                </div>
+
+                <div id="autocompleteStats" class="stats-section"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="notification" class="notification"></div>
+
+    <script src="/apiguard/csvfilesync/csvfilesync.js"></script>
+</body>
+</html>

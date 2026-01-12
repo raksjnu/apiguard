@@ -1,0 +1,477 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:file="http://www.mulesoft.org/schema/mule/file"
+      xmlns:os="http://www.mulesoft.org/schema/mule/os"
+      xmlns:java="http://www.mulesoft.org/schema/mule/java"
+      xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+        http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+        http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
+        http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+
+    <!-- Object Stores for FileSync -->
+    <os:object-store name="FileSync_Sessions" persistent="false" maxEntries="100" entryTtl="1" entryTtlUnit="HOURS"/>
+    <os:object-store name="FileSync_Autocomplete" persistent="true"/>
+
+    <!-- Flow 1: Serve FileSync Main UI -->
+    <flow name="csvfilesync-main-flow">
+        <http:listener path="/csvfilesync" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <logger level="INFO" message="Serving CSV FileSync UI"/>
+        <file:read path="${app.home}/csvfilesync/csvfilesync.html" config-ref="File_Config"/>
+        <set-payload value="#[payload]" mimeType="text/html; charset=UTF-8"/>
+    </flow>
+
+    <!-- Flow 2: Serve CSS -->
+    <flow name="csvfilesync-css-flow">
+        <http:listener path="/csvfilesync/csvfilesync.css" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <file:read path="${app.home}/csvfilesync/csvfilesync.css" config-ref="File_Config"/>
+        <set-payload value="#[payload]" mimeType="text/css; charset=UTF-8"/>
+    </flow>
+
+    <!-- Flow 3: Serve JavaScript -->
+    <flow name="csvfilesync-js-flow">
+        <http:listener path="/csvfilesync/csvfilesync.js" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <file:read path="${app.home}/csvfilesync/csvfilesync.js" config-ref="File_Config"/>
+        <set-payload value="#[payload]" mimeType="application/javascript; charset=UTF-8"/>
+    </flow>
+
+    <!-- Flow 4: Upload ZIP File -->
+    <flow name="csvfilesync-upload-zip-flow">
+        <http:listener path="/csvfilesync/upload/zip" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
+        
+        <set-variable variableName="sessionId" value="#[uuid()]"/>
+        <set-variable variableName="workDir" value="${filesync.work.dir}"/>
+        <set-variable variableName="sessionDir" value="#[vars.workDir ++ '/' ++ vars.sessionId]"/>
+        
+        <logger level="INFO" message="#['FileSync: Uploading ZIP for session ' ++ vars.sessionId]"/>
+        
+        <file:write path="#[vars.sessionDir ++ '/upload.zip']" config-ref="File_Config">
+            <file:content>#[payload.parts.file.content]</file:content>
+        </file:write>
+        
+        <java:invoke-static class="com.raks.filesync.bridge.FileSyncBridge" method="extractZip(String, String)">
+            <java:args>#[{
+                arg0: vars.sessionDir ++ '/upload.zip',
+                arg1: vars.sessionDir ++ '/source/'
+            }]</java:args>
+        </java:invoke-static>
+        
+        <java:invoke-static class="com.raks.filesync.bridge.FileSyncBridge" method="scanCsvFiles(String)">
+            <java:args>#[{
+                arg0: vars.sessionDir ++ '/source/'
+            }]</java:args>
+        </java:invoke-static>
+        
+        <os:store key="#[vars.sessionId]" objectStore="FileSync_Sessions">
+            <os:value>#[{
+                sessionId: vars.sessionId,
+                createdAt: now(),
+                status: 'uploaded'
+            }]</os:value>
+        </os:store>
+        
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    sessionId: vars.sessionId,
+    files: payload.files default [],
+    fileCount: payload.fileCount default 0
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- Flow 5: Upload CSV Files -->
+    <flow name="csvfilesync-upload-csvs-flow">
+        <http:listener path="/csvfilesync/upload/csvs" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
+        
+        <set-variable variableName="sessionId" value="#[uuid()]"/>
+        <set-variable variableName="workDir" value="${filesync.work.dir}"/>
+        <set-variable variableName="sessionDir" value="#[vars.workDir ++ '/' ++ vars.sessionId]"/>
+        
+        <logger level="INFO" message="#['FileSync: Uploading CSVs for session ' ++ vars.sessionId]"/>
+        
+        <!-- Save uploaded CSV files -->
+        <foreach collection="#[payload.parts pluck $]">
+            <choice>
+                <when expression="#[payload.headers.'Content-Disposition'.'filename' != null]">
+                    <set-variable variableName="fileName" value="#[payload.headers.'Content-Disposition'.'filename']"/>
+                    <logger level="INFO" message="#['FileSync: Saving file: ' ++ vars.fileName]"/>
+                    <file:write path="#[vars.sessionDir ++ '/source/' ++ vars.fileName]" config-ref="File_Config">
+                        <file:content>#[payload.content]</file:content>
+                    </file:write>
+                </when>
+            </choice>
+        </foreach>
+        
+        <!-- Scan CSV files using Try-Block to catch Java errors -->
+        <try>
+            <java:invoke-static class="com.raks.filesync.bridge.FileSyncBridge" method="scanCsvFiles(String)" target="scanResult">
+                <java:args>#[{
+                    arg0: vars.sessionDir ++ '/source/'
+                }]</java:args>
+            </java:invoke-static>
+            
+             <choice>
+                <when expression="#[vars.scanResult.error != null]">
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: 'error',
+    message: vars.scanResult.error
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </when>
+                <otherwise>
+                    <os:store key="#[vars.sessionId]" objectStore="FileSync_Sessions">
+                        <os:value>#[{
+                            sessionId: vars.sessionId,
+                            createdAt: now(),
+                            status: 'uploaded'
+                        }]</os:value>
+                    </os:store>
+                    
+                    <!-- EXPLICITLY set JSON payload to prevent multipart leak -->
+                    <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: 'success',
+    sessionId: vars.sessionId,
+    files: vars.scanResult.files default [],
+    fileCount: vars.scanResult.fileCount default 0
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </otherwise>
+            </choice>
+            <error-handler>
+                <on-error-continue>
+                     <logger level="ERROR" message="#['FileSync: Upload Flow Error: ' ++ error.description]"/>
+                     <ee:transform>
+                        <ee:message>
+                            <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: 'error',
+    message: 'Upload failed: ' ++ error.description
+}]]></ee:set-payload>
+                        </ee:message>
+                    </ee:transform>
+                </on-error-continue>
+            </error-handler>
+        </try>
+    </flow>
+
+    <!-- Flow 6: Save Config from UI (Recursive Unwrap & List Target Files) -->
+    <flow name="csvfilesync-save-config-flow">
+        <http:listener path="/csvfilesync/config/save" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
+        
+        <!-- RECURSIVE UNWRAP FUNCTION for Incoming Payload -->
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="configObj"><![CDATA[%dw 2.0
+output application/java
+fun unwrap(data) = 
+    if (typeOf(data) as String == "String") 
+        unwrap(read(data, "application/json")) 
+    else 
+        data
+---
+unwrap(payload.config)]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        
+        <set-variable variableName="sessionId" value="#[payload.sessionId]"/>
+        <set-variable variableName="workDir" value="${filesync.work.dir}"/>
+        <set-variable variableName="sessionDir" value="#[vars.workDir ++ '/' ++ vars.sessionId]"/>
+        
+        <logger level="INFO" message="#['FileSync: Saving config for session ' ++ vars.sessionId]"/>
+        
+        <!-- Read existing config -->
+        <set-variable variableName="existingConfig" value="#[{}]"/>
+        
+        <try>
+            <file:read path="#[vars.sessionDir ++ '/config.json']" config-ref="File_Config" target="existingConfigData"/>
+             <ee:transform>
+                <ee:variables>
+                    <!-- RECURSIVE UNWRAP for Existing Config -->
+                    <ee:set-variable variableName="existingConfig"><![CDATA[%dw 2.0
+output application/java
+fun unwrap(data) = 
+    if (typeOf(data) as String == "String") 
+        unwrap(read(data, "application/json")) 
+    else 
+        data
+---
+unwrap(vars.existingConfigData)]]></ee:set-variable>
+                </ee:variables>
+            </ee:transform>
+            <error-handler>
+                <on-error-continue>
+                    <logger level="INFO" message="Config file not found, creating new one."/>
+                </on-error-continue>
+            </error-handler>
+        </try>
+        
+        <!-- MERGE LOGIC -->
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="mergedConfig"><![CDATA[%dw 2.0
+output application/java
+var newMappings = vars.configObj.fileMappings default []
+var oldMappings = vars.existingConfig.fileMappings default []
+var filteredOld = oldMappings filter (old) -> 
+    not (newMappings map $.targetFile contains old.targetFile)
+---
+{
+    fileMappings: filteredOld ++ newMappings
+}]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+
+        <!-- SAVE merged config -->
+        <file:write path="#[vars.sessionDir ++ '/config.json']" config-ref="File_Config">
+            <file:content>#[write(vars.mergedConfig, 'application/json', {indent: true})]</file:content>
+        </file:write>
+        
+        <!-- Update Autocomplete -->
+        <java:invoke-static class="com.raks.filesync.bridge.FileSyncBridge" method="updateAutocompleteHistory(Map)">
+            <java:args>#[{
+                arg0: vars.mergedConfig
+            }]</java:args>
+        </java:invoke-static>
+        
+        <!-- Return Success with Target Files List -->
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: 'success',
+    message: 'Configuration saved',
+    targetFiles: vars.mergedConfig.fileMappings.targetFile default []
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <error-handler>
+            <on-error-continue enableNotifications="true" logException="true">
+                <logger level="ERROR" message="#['Error saving config: ' ++ error.description]"/>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: 'error',
+    message: error.description
+}]]></ee:set-payload>
+                        <ee:set-attributes><![CDATA[%dw 2.0
+output application/java
+---
+{
+    statusCode: 500
+}]]></ee:set-attributes>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+
+    <!-- Flow 7: Autocomplete Get (Unchanged) -->
+    <flow name="csvfilesync-autocomplete-get-flow">
+        <http:listener path="/csvfilesync/autocomplete" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <os:retrieve key="autocomplete_fileNames" objectStore="FileSync_Autocomplete" target="fileNames">
+            <os:default-value>#[[]]</os:default-value>
+        </os:retrieve>
+        <os:retrieve key="autocomplete_fieldNames" objectStore="FileSync_Autocomplete" target="fieldNames">
+            <os:default-value>#[[]]</os:default-value>
+        </os:retrieve>
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    fileNames: vars.fileNames,
+    fieldNames: vars.fieldNames
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <!-- Flow 8: Autocomplete Clear (Unchanged) -->
+    <flow name="csvfilesync-autocomplete-clear-flow">
+        <http:listener path="/csvfilesync/autocomplete/clear" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
+        <set-variable variableName="providedKey" value="#[payload.adminKey default '']"/>
+        <set-variable variableName="adminKey" value="${filesync.admin.key}"/>
+        <choice>
+            <when expression="#[vars.providedKey == vars.adminKey]">
+                <os:store key="autocomplete_fileNames" objectStore="FileSync_Autocomplete"><os:value>#[[]]</os:value></os:store>
+                <os:store key="autocomplete_fieldNames" objectStore="FileSync_Autocomplete"><os:value>#[[]]</os:value></os:store>
+                <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ status: "success", message: "History cleared" }]]></ee:set-payload></ee:message></ee:transform>
+            </when>
+            <otherwise>
+                <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ status: "error", message: "Invalid Admin Key" }]]></ee:set-payload><ee:set-attributes><![CDATA[%dw 2.0
+output application/java
+---
+{ statusCode: 401 }]]></ee:set-attributes></ee:message></ee:transform>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <!-- Flow 11: Execute Transformation (Recursive Unwrap Fix) -->
+    <flow name="csvfilesync-execute-flow">
+        <http:listener path="/csvfilesync/execute" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
+        
+        <set-variable variableName="sessionId" value="#[payload.sessionId]"/>
+        <set-variable variableName="workDir" value="${filesync.work.dir}"/>
+        <set-variable variableName="sessionDir" value="#[vars.workDir ++ '/' ++ vars.sessionId]"/>
+        
+        <file:read path="#[vars.sessionDir ++ '/config.json']" config-ref="File_Config" target="configData"/>
+        
+        <!-- RECURSIVE UNWRAP for Config Reading -->
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="config"><![CDATA[%dw 2.0
+output application/java
+fun unwrap(data) = 
+    if (typeOf(data) as String == "String") 
+        unwrap(read(data, "application/json")) 
+    else 
+        data
+---
+unwrap(vars.configData)]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        
+        <!-- Logging Metadata -->
+        <logger level="INFO" message="#['FileSync Execution: ' ++ vars.sessionId ++ ' | Targets: ' ++ ((vars.config.fileMappings.targetFile default []) joinBy ', ')]"/>
+        
+        <java:invoke-static class="com.raks.filesync.bridge.FileSyncBridge" method="executeTransformation(String, String)">
+            <java:args>#[{
+                arg0: vars.sessionDir,
+                arg1: vars.sessionDir ++ '/config.json'
+            }]</java:args>
+        </java:invoke-static>
+        
+        <set-variable variableName="execResult" value="#[payload]"/>
+        
+        <java:invoke-static class="com.raks.filesync.bridge.FileSyncBridge" method="createResultsZip(String)">
+            <java:args>#[{
+                arg0: vars.sessionDir
+            }]</java:args>
+        </java:invoke-static>
+        
+        <file:write path="#[vars.sessionDir ++ '/results.zip']" config-ref="File_Config"/>
+        
+        <!-- Return Response with Mapped Messages -->
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: vars.execResult.status,
+    message: vars.execResult.error default (if (sizeOf(vars.execResult.errors default []) > 0) (vars.execResult.errors joinBy ", ") else "Transformation failed"),
+    downloadUrl: '/apiguard/csvfilesync/download/' ++ vars.sessionId,
+    fileCount: vars.execResult.fileCount default 0,
+    rowsProcessed: vars.execResult.rowsProcessed default 0,
+    successes: vars.execResult.successes default [],
+    warnings: vars.execResult.warnings default [],
+    errors: vars.execResult.errors default []
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <error-handler>
+            <on-error-continue enableNotifications="true" logException="true">
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    status: 'error',
+    message: error.description
+}]]></ee:set-payload>
+                        <ee:set-attributes><![CDATA[%dw 2.0
+output application/java
+---
+{
+    statusCode: 500
+}]]></ee:set-attributes>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+    
+    <!-- Download Flows (Results, Config, History) - Condensed for brevity (Checked & Correct) -->
+    <flow name="csvfilesync-download-results-flow">
+        <http:listener path="/csvfilesync/download/{sessionId}" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response>
+                <http:headers>#[{'Content-Disposition': 'attachment; filename="filesync-results.zip"', 'Content-Type': 'application/zip'}]</http:headers>
+            </http:response>
+        </http:listener>
+        <set-variable variableName="sessionId" value="#[attributes.uriParams.sessionId]"/>
+        <file:read path="#['${filesync.work.dir}/' ++ vars.sessionId ++ '/results.zip']" config-ref="File_Config"/>
+        <async><flow-ref name="csvfilesync-cleanup-delayed-flow"/></async>
+    </flow>
+
+    <flow name="csvfilesync-download-config-flow">
+        <http:listener path="/csvfilesync/config/download/{sessionId}" config-ref="HTTP_Listener_config" allowedMethods="GET">
+             <http:response>
+                <http:headers>#[{'Content-Disposition': 'attachment; filename="filesync-config.json"', 'Content-Type': 'application/json'}]</http:headers>
+            </http:response>
+        </http:listener>
+        <set-variable variableName="sessionId" value="#[attributes.uriParams.sessionId]"/>
+        <file:read path="#['${filesync.work.dir}/' ++ vars.sessionId ++ '/config.json']" config-ref="File_Config"/>
+    </flow>
+
+    <flow name="csvfilesync-autocomplete-download-flow">
+        <http:listener path="/csvfilesync/autocomplete/download" config-ref="HTTP_Listener_config" allowedMethods="GET">
+             <http:response>
+                <http:headers>#[{'Content-Disposition': 'attachment; filename="filesync-autocomplete.json"', 'Content-Type': 'application/json'}]</http:headers>
+            </http:response>
+        </http:listener>
+        <os:retrieve key="autocomplete_fileNames" objectStore="FileSync_Autocomplete" target="fileNames"><os:default-value>#[[]]</os:default-value></os:retrieve>
+        <os:retrieve key="autocomplete_fieldNames" objectStore="FileSync_Autocomplete" target="fieldNames"><os:default-value>#[[]]</os:default-value></os:retrieve>
+        <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ fileNames: vars.fileNames, fieldNames: vars.fieldNames, exportedAt: now() }]]></ee:set-payload></ee:message></ee:transform>
+    </flow>
+    
+    <flow name="csvfilesync-cleanup-delayed-flow">
+        <until-successful maxRetries="1" millisBetweenRetries="300000"><logger level="INFO" message="Cleanup wait"/></until-successful>
+        <try>
+            <file:delete path="#['${filesync.work.dir}/' ++ vars.sessionId]" config-ref="File_Config"/>
+            <os:remove key="#[vars.sessionId]" objectStore="FileSync_Sessions"/>
+            <error-handler><on-error-continue><logger level="WARN" message="Cleanup failed"/></on-error-continue></error-handler>
+        </try>
+    </flow>
+</mule>
