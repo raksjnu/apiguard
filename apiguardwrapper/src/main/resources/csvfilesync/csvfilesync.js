@@ -232,7 +232,8 @@ async function uploadCsvs() {
 
     const formData = new FormData();
     for (let i = 0; i < fileInput.files.length; i++) {
-        formData.append('file', fileInput.files[i]);
+        // Use unique key for each part to avoid "multipart object does not have 'parts' field" error
+        formData.append('file_' + i, fileInput.files[i]);
     }
 
     try {

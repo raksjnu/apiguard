@@ -106,9 +106,21 @@ output application/json
         <set-variable variableName="sessionDir" value="#[vars.workDir ++ '/' ++ vars.sessionId]"/>
         
         <logger level="INFO" message="#[output application/java --- 'DEBUG: Uploading CSVs. Path: ' ++ vars.sessionDir]"/>
+
         
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="uploadParts"><![CDATA[%dw 2.0
+output application/java
+---
+payload.parts pluck $]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        
+        <logger level="INFO" message="#[output application/java --- 'DEBUG: Found ' ++ sizeOf(vars.uploadParts) ++ ' parts. Uploading to ' ++ vars.sessionDir]"/>
+
         <!-- Save uploaded CSV files -->
-        <foreach collection="#[payload.parts pluck $]">
+        <foreach collection="#[vars.uploadParts]">
             <choice>
                 <when expression="#[payload.headers.'Content-Disposition'.'filename' != null]">
                     <set-variable variableName="fileName" value="#[payload.headers.'Content-Disposition'.'filename']"/>
