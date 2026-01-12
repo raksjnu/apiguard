@@ -18,37 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
 // --- Help System ---
 
-function showHelp() {
-    const helpContent = `
-        <div style="text-align: left; max-height: 60vh; overflow-y: auto;">
-            <h3>User Guide</h3>
-            
-            <h4>1. Discovery Tab (Start Here)</h4>
-            <p>Upload a ZIP file (containing CSVs in a 'source' folder) or select multiple CSV files directly. The tool will scan and list all available files.</p>
-            
-            <h4>2. Mapping Tab</h4>
-            <ul>
-                <li><strong>Source File:</strong> Select one of the discovered CSVs.</li>
-                <li><strong>Target File:</strong> Enter the name of the output file (e.g., 'output.csv').</li>
-                <li><strong>Mappings:</strong> Select source fields and map them to target fields. The tool supports 'Direct' mapping (copy value).</li>
-                <li><strong>Horizontal Merge:</strong> If you map multiple source files to the <em>same</em> target file name, the tool will merge them by appending columns!</li>
-            </ul>
-            
-            <h4>3. Execute Tab</h4>
-            <p>Click "Execute Transformation" to run the engine. You can then download the result as a ZIP file.</p>
-            
-            <h4>4. Configuration</h4>
-            <p>You can <strong>Download</strong> your mapping configuration to save it for later. Use <strong>Import</strong> to restore a previous session.</p>
-            
-            <h4>Tips</h4>
-            <ul>
-                <li>Use <strong>Auto-Fill</strong> to quickly map fields with identical names.</li>
-                <li>The tool <strong>auto-saves</strong> your progress (Discovery path, target names).</li>
-            </ul>
-        </div>
-    `;
-    
-    showModal('FileSync Help', helpContent);
+function openHelp() {
+    window.open('help.html', '_blank');
 }
 
 // --- Modal System ---

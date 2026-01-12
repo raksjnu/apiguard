@@ -40,7 +40,15 @@
         <set-payload value="#[payload]" mimeType="application/javascript; charset=UTF-8"/>
     </flow>
 
-    <!-- Flow 4: Upload ZIP File -->
+    <!-- Flow 4: Serve Help Page -->
+    <flow name="csvfilesync-help-flow">
+        <http:listener path="/csvfilesync/help.html" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <logger level="INFO" message="Serving CSV FileSync Help Page"/>
+        <file:read path="${app.home}/csvfilesync/help.html" config-ref="File_Config"/>
+        <set-payload value="#[payload]" mimeType="text/html; charset=UTF-8"/>
+    </flow>
+
+    <!-- Flow 5: Upload ZIP File -->
     <flow name="csvfilesync-upload-zip-flow">
         <http:listener path="/csvfilesync/upload/zip" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
         
