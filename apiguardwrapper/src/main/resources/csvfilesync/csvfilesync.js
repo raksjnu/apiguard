@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
 // --- Help System ---
 
 function openHelp() {
-    window.open('help.html', '_blank');
+    window.open('csvfilesync/help.html', '_blank');
 }
 
 // --- Modal System ---

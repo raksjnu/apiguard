@@ -637,3 +637,22 @@ input[type="file"] {
     font-size: 11px;
     margin-right: 10px;
 }
+
+.btn-help {
+    background: var(--primary-purple);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--border-radius);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: var(--transition);
+}
+
+.btn-help:hover {
+    background: var(--secondary-purple);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+}
