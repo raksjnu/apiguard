@@ -4,7 +4,7 @@ Configuration-driven CSV transformation tool with GUI and CLI support.
 
 ## Features
 
-- **Dynamic CSV Discovery**: Automatically scan directories and detect CSV file schemas
+- **Multi-Source Merge**: **[NEW]** Horizontally merge columns from multiple source files into a single target file
 - **Visual Mapping Builder**: GUI to create field mappings between source and target files
 - **Configuration-Based**: Save and reuse mappings as JSON configuration files
 - **Session Persistence**: Remembers your last used directories and configuration files

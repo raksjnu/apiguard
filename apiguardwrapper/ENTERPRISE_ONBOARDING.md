@@ -1,5 +1,5 @@
 # Enterprise Onboarding Guide
-## ApiGuardWrapper - MuleSoft Integration Wrapper
+## ApiGuard Wrapper - Enterprise Solutions Suite
 
 **Version:** 1.0.0  
 **Last Updated:** January 2026
@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-ApiGuardWrapper is a specialized MuleSoft Application acting as an orchestration layer and release vehicle for the APITestingGuard suite (`raksanalyzer`, `muleguard`, `apidiscovery`). It exposes these Java-based tools via Mule flows, allowing them to be triggered via HTTP APIs, scheduled events, or integrated into broader Anypoint Platform workflows.
+The **ApiGuard Wrapper** is a unified Mule 4 Application that packages multiple enterprise tools into a single deployable artifact. It serves as the hosting container for **ApiGuard Portal**, **MuleGuard**, **RaksAnalyzer**, and the newly integrated **FileSync Tool**. This document provides technical details for enterprise security review, deployment, and onboarding.
 
 ---
 
@@ -18,134 +18,125 @@ ApiGuardWrapper is a specialized MuleSoft Application acting as an orchestration
 
 | Component | Technology | Version | Purpose |
 |-----------|-----------|---------|---------|
-| **Runtime** | Mule Runtime | 4.9.1 | MuleSoft execution engine |
-| **Language** | DataWeave / XML | 2.0 | Integration logic |
-| **Packaging** | Mule Application | .jar | Deployable Mule artifact |
-| **JDK** | Java | 17 | Underlying JVM |
+| **Runtime** | Mule Runtime | 4.6.0+ | Enterprise Integration Platform |
+| **Language** | Java (JDK) | 17 | Core logic execution |
+| **Build Tool** | Apache Maven | 3.x | Dependency management |
 
-### 1.2 Core Dependencies
+### 1.2 Included Solutions
 
-| Dependency | Version | Purpose |
-|------------|---------|---------|
-| **Spring Framework** | 5.3.39 | Service bean management (Patched for CVEs) |
-| **Mule HTTP Connector** | 1.10.3 | Exposes REST APIs |
-| **Mule Email Connector** | 1.7.3 | Sends reports via email |
-| **Mule Guard** | 1.0.0 | Embedded analysis library |
-| **Raks Analyzer** | 1.0.0 | Embedded doc gen library |
-| **ApiUrlComparison** | 1.0.0 | Embedded comparison & baseline library |
-| **GitAnalyzer** | 1.0.0 | Embedded semantic code analysis & diff tool |
+| Tool | Purpose | Status |
+|------|---------|--------|
+| **MuleGuard** | MuleSoft project validation and policy enforcement | Active |
+| **RaksAnalyzer - MuleDocgen** | Automated documentation for MuleSoft projects | Active |
+| **RaksAnalyzer - TibcoDocgen** | Automated documentation for TIBCO BusinessWorks | Active |
+| **TibcoGuard** | TIBCO code analysis and validation | Inactive |
+| **ApiUrlComparison** | Compare API responses vs baseline (Regression Testing) | Active |
+| **API Discovery** | Scan and discover APIs from GitLab repositories | Active |
+| **GitAnalyzer** | Semantic code analysis for Git repositories | Active |
+| **CSV FileSync** | **[NEW]** Configuration-driven CSV transformation & mapping | Active |
 
 ---
 
 ## 2. Architecture & Design
 
-### 2.1 Application Architecture
+### 2.1 Component Architecture
 
 ```mermaid
 graph TB
-    subgraph "Mule Runtime"
-        API[HTTP Listener]
-        Scheduler[Cron Scheduler]
+    subgraph "Mule Runtime (ApiGuard Wrapper)"
+        Mule[Mule Execution Engine]
         
-        subgraph "Flows"
-            Orch[Orchestration Flow]
-            Java[Java Invoke Static]
+        subgraph "Web Interface"
+            Portal[ApiGuard Portal]
+            SyncUI[FileSync Web UI]
         end
         
-        subgraph "Embedded Libraries"
-            MG[MuleGuard JAR]
-            RA[RaksAnalyzer JAR]
-            AD[ApiDiscovery JAR]
-            AUC[ApiUrlComparison JAR]
-            GA[GitAnalyzer JAR]
+        subgraph "Backend Services (Java)"
+            MG[MuleGuard Engine]
+            RA[RaksAnalyzer Engine]
+            TG[TibcoGuard Engine]
+            AUC[ApiUrlComparison Engine]
+            GA[GitAnalyzer Engine]
+            FS[FileSync Engine]
+        end
+        
+        subgraph "Shared Resources"
+            Temp[Temp Storage]
+            Logs[Log4j2 Logging]
         end
     end
     
-    API --> Orch
-    Scheduler --> Orch
-    Orch --> Java
-    Java --> MG
-    Java --> RA
-    Java --> AD
-    Java --> AUC
-    Java --> GA
+    Portal --> MG
+    Portal --> RA
+    Portal --> TG
+    Portal --> AUC
+    Portal --> GA
+    SyncUI --> FS
+    
+    Mule --> Portal
+    Mule --> SyncUI
+    
+    note1[RaksAnalyzer handles<br/>MuleDocgen & TibcoDocgen]
+    note2[GitAnalyzer handles<br/>Code Analysis & API Discovery]
+    
+    RA --- note1
+    GA --- note2
 ```
 
-### 2.2 Key Flows
-
-| Flow Name | Responsibility |
-|-----------|---------------|
-| `api-guard-main` | Main entry point for API requests |
-| `scheduler-flow` | Triggers nightly scans |
-| `report-distribution` | Emails generated reports to stakeholders |
+### 2.2 Integration Model
+The "Wrapper" pattern allows these distinct Java-based tools to run within a unified Mule soft-container.
+- **Java Bridge**: Each tool exposes a static Java Bridge class (`FileSyncBridge`, `RaksAnalyzerBridge`) that Mule flows invoke.
+- **Resource Sharing**: Tools share the Mule application's classpath and temp directory `${mule.home}/apps/apiguardwrapper/temp`.
 
 ---
 
-## 3. Security Analysis
+## 3. FileSync Tool (New Feature)
 
-### 3.1 Dependency Security Status
+### 3.1 Overview
+The **FileSync Tool** is a powerful ETL utility for transforming CSV files. It solves the problem of mapping fields between Disparate systems (e.g., Salsify to SAP) without writing custom code.
 
-| Dependency | Security Status | Notes |
-|------------|----------------|-------|
-| **Spring 5.3.39** | ✅ Secure | Critical upgrade from 5.3.x baseline |
-| **Commons Text** | ✅ Secure | Patched against Text4Shell |
+### 3.2 Key Capabilities
+- **Dynamic Discovery**: Scans uploaded ZIPs or folders for CSVs.
+- **Visual Mapping**: Drag-and-drop or dropdown-based field mapping.
+- **Multi-Source Merge**: **[NEW]** Ability to merge columns from multiple source files into a single target file (Horizontal Merge).
+- **Configuration Persistence**: Save/Load JSON mapping configurations.
 
-### 3.2 Security Features
-
-#### MuleSoft Security
-- **Secure Properties**: Uses `mule-secure-configuration-property-module` to encrypt sensitive config (passwords, tokens).
-- **HTTPS**: HTTP Listeners configured for TLS.
-
-### 3.3 Security Considerations
-
-| Risk Area | Mitigation |
-|-----------|-----------|
-| **Java Invocation** | The wrapper invokes static Java methods. Ensure input to these methods is sanitized in DataWeave. |
-| **File Access** | Mule App requires IO permissions to read project files and write reports. |
+### 3.3 Data Flow
+Input (ZIP/CSV) -> Extract -> Visual Mapping (JSON) -> Transform Engine -> Output (CSV)
 
 ---
 
-## 4. Packaging & Distribution
+## 4. Security Analysis
 
-### 4.1 Build Process
+### 4.1 Data Handling
+- **Local Processing**: All file processing occurs within the ephemeral temp directory of the Mule worker.
+- **No Persistence**: Source files are cleaned up automatically (24h retention policy).
+- **No External Calls**: The tools operate entirely within the runtime; no data is sent to external SaaS.
 
-```bash
-mvn clean package
-```
-**Output:** `target/apiguardwrapper-1.0.0-mule-application.jar`
-
-### 4.2 System Requirements
-- **Runtime**: Mule Runtime 4.4+ (Standard or Enterprise)
-- **Cores**: 0.1 vCore minimum
-- **Memory**: 512MB Metaspace (due to embedded heavy JARs)
+### 4.2 Dependency Security
+- **Secure Libraries**: Uses standard enterprise libraries (Apache Commons, Jackson, PDFBox, OpenCSV).
+- **Scanned**: All dependencies are vetted against internal security policies.
 
 ---
 
 ## 5. Deployment Models
 
-### 5.1 CloudHub / Runtime Fabric
-Deploy as a standard Mule Application:
-1.  Upload JAR to Runtime Manager.
-2.  Set properties (`secure.key`, etc.).
-3.  Start application.
+### 5.1 CloudHub (PaaS)
+- **Safe Paths**: Uses `${mule.home}` for all file operations.
+- **Stateless**: No dependency on persistent disk (uses ObjectStore for session metadata).
 
-### 5.2 On-Premise / Hybrid
-Deploy to `$MULE_HOME/apps`.
-
----
-
-## 6. Compliance & Governance
-
-### 6.1 License Compliance
-- **Commercial**: MuleSoft Connectors (Requires valid subscription for Enterprise connectors).
-- **Open Source**: Wrapped libraries are Apache 2.0.
-
-### 6.2 Data Privacy
-Wrapper does not persist data. It acts as a passthrough to the underlying analysis tools.
+### 5.2 On-Premise / Standalone
+- **Standard Deploy**: Copy `apiguardwrapper.jar` to `apps` folder.
+- **Windows/Linux**: Fully compatible with both OS file systems.
 
 ---
 
-## 7. Support
+## 6. Support & Governance
 
-- **MuleSoft Support**: For runtime issues.
-- **Internal Support**: For wrapper logic and embedded tool issues.
+### 6.1 Versioning
+- **Semantic Versioning**: 1.0.0 (Major.Minor.Patch)
+- **Release Cycle**: Quarterly feature updates.
+
+### 6.2 Contact
+- **Owner**: RAKS Integration Center of Excellence (ICoE)
+- **Support**: `raksjnu@gmail.com`
