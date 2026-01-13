@@ -27,6 +27,8 @@ public class ThemeConfig {
     public static final Color HEADER_BACKGROUND;
     public static final Color HEADER_TEXT;
     
+    private static float fontScale = 1.0f;
+    
     static {
         try (InputStream is = ThemeConfig.class.getResourceAsStream("/ui.properties")) {
             if (is != null) {
@@ -36,7 +38,7 @@ public class ThemeConfig {
             System.err.println("Failed to load ui.properties: " + e.getMessage());
         }
         
-        // Initialize colors
+        // Initialize colors from properties or defaults
         PRIMARY_COLOR = parseColor(props.getProperty("theme.primary.color", "#6B46C1"));
         PRIMARY_DARK = parseColor(props.getProperty("theme.primary.dark", "#553C9A"));
         PRIMARY_LIGHT = parseColor(props.getProperty("theme.primary.light", "#805AD5"));
@@ -51,11 +53,14 @@ public class ThemeConfig {
         BUTTON_BORDER = parseColor(props.getProperty("theme.button.border", "#553C9A"));
         HEADER_BACKGROUND = parseColor(props.getProperty("theme.header.background", "#6B46C1"));
         HEADER_TEXT = parseColor(props.getProperty("theme.header.text", "#FFFFFF"));
+        
+        // Load initial scale
+        fontScale = getFloat("ui.font.scale", 1.0f);
     }
     
     private static Color parseColor(String hex) {
         try {
-            return Color.decode(hex);
+            return Color.decode(hex.startsWith("#") ? hex : "#" + hex);
         } catch (Exception e) {
             return Color.BLACK;
         }
@@ -76,5 +81,26 @@ public class ThemeConfig {
         } catch (NumberFormatException e) {
             return defaultValue;
         }
+    }
+
+    public static float getFloat(String key, float defaultValue) {
+        try {
+            return Float.parseFloat(props.getProperty(key, String.valueOf(defaultValue)));
+        } catch (Exception e) {
+            return defaultValue;
+        }
+    }
+
+    public static float getFontScale() {
+        return fontScale;
+    }
+
+    public static void setFontScale(float scale) {
+        fontScale = Math.max(0.5f, Math.min(3.0f, scale));
+        props.setProperty("ui.font.scale", String.valueOf(fontScale));
+    }
+
+    public static Font getScaledFont(String name, int style, int size) {
+        return new Font(name, style, (int)(size * fontScale));
     }
 }

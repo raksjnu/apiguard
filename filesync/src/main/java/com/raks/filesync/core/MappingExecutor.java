@@ -29,23 +29,44 @@ public class MappingExecutor {
     /**
      * Execute all mappings in the configuration
      */
+    /**
+     * Execute all mappings with auto-generated timestamp
+     */
     public ExecutionResult execute(MappingConfig config) {
+        return execute(config, null);
+    }
+
+    /**
+     * Execute all mappings in the configuration with specific timestamp
+     */
+    public ExecutionResult execute(MappingConfig config, String timestampOverride) {
         ExecutionResult result = new ExecutionResult();
         
-        // Ensure target directory exists
+        // Create timestamped output directory
+        String timestamp = (timestampOverride != null) ? timestampOverride : 
+            java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyyMMdd_HHmm"));
+            
+        String outputDir = Paths.get(config.getPaths().getTargetDirectory(), "Output", timestamp).toString();
+        String errorDir = Paths.get(config.getPaths().getTargetDirectory(), "Error", timestamp).toString();
+        
         try {
-            Files.createDirectories(Paths.get(config.getPaths().getTargetDirectory()));
+            Files.createDirectories(Paths.get(outputDir));
         } catch (IOException e) {
-            result.addError("Failed to create target directory: " + e.getMessage());
+            result.addError("Failed to create output directory: " + e.getMessage());
             return result;
         }
         
+        // Sort by sequence number
+        List<FileMapping> sortedMappings = config.getFileMappings().stream()
+                .sorted(Comparator.comparing(fm -> fm.getSequenceNumber() != null ? fm.getSequenceNumber() : Integer.MAX_VALUE))
+                .collect(java.util.stream.Collectors.toList());
+        
         // Process each file mapping
-        for (FileMapping fileMapping : config.getFileMappings()) {
+        for (FileMapping fileMapping : sortedMappings) {
             try {
-                processFileMapping(config, fileMapping, result);
+                processFileMapping(config, fileMapping, outputDir, result);
             } catch (Exception e) {
-                result.addError("Error processing " + fileMapping.getSourceFile() + ": " + e.getMessage());
+                handleError(config, fileMapping, errorDir, e, result);
             }
         }
         
@@ -55,15 +76,20 @@ public class MappingExecutor {
     /**
      * Process a single file mapping
      */
-    private void processFileMapping(MappingConfig config, FileMapping fileMapping, ExecutionResult result) throws IOException {
-        String sourceFilePath = Paths.get(config.getPaths().getSourceDirectory(), fileMapping.getSourceFile()).toString();
-        String targetFilePath = Paths.get(config.getPaths().getTargetDirectory(), fileMapping.getTargetFile()).toString();
+    private void processFileMapping(MappingConfig config, FileMapping fileMapping, String outputDir, ExecutionResult result) throws IOException {
+        // Discover all source files to get actual paths
+        CsvDiscovery discovery = new CsvDiscovery();
+        Map<String, CsvDiscovery.FileSchema> schemas = discovery.discoverAllSchemas(config.getPaths().getSourceDirectory());
         
-        // Check if source file exists
-        if (!new File(sourceFilePath).exists()) {
-            result.addWarning("Source file not found: " + sourceFilePath);
+        // Find the actual file path
+        CsvDiscovery.FileSchema schema = schemas.get(fileMapping.getSourceFile());
+        if (schema == null) {
+            result.addWarning("Source file not found: " + fileMapping.getSourceFile());
             return;
         }
+        
+        String sourceFilePath = schema.getFilePath();
+        String targetFilePath = Paths.get(outputDir, fileMapping.getTargetFile()).toString();
         
         // Read source CSV
         List<Map<String, String>> sourceRows = csvReader.readCsv(sourceFilePath);
@@ -96,7 +122,10 @@ public class MappingExecutor {
             if (existingRows.isEmpty()) {
                  // Fallback: Overwrite if empty (headers lost)
                  csvWriter.writeCsv(targetFilePath, currentTargetHeaders, currentTargetRows);
-                 result.addSuccess("Processed (Overwrite Empty) " + fileMapping.getSourceFile() + " -> " + fileMapping.getTargetFile());
+                 result.addSuccess(String.format("Processed (Overwrite): %s -> %s | Records: %d | Size: %s", 
+                      new File(sourceFilePath).getName(), new File(targetFilePath).getName(), currentTargetRows.size(), formatFileSize(new File(targetFilePath).length())));
+                 result.addTargetRows(fileMapping.getTargetFile(), currentTargetRows.size());
+                 result.addSourceRows(fileMapping.getSourceFile(), sourceRows.size());
                  return;
             }
             
@@ -127,16 +156,20 @@ public class MappingExecutor {
             
             // Write Merged Result
             csvWriter.writeCsv(targetFilePath, finalHeaders, finalRows);
-            result.addSuccess("Processed (Merged) " + fileMapping.getSourceFile() + " -> " + fileMapping.getTargetFile() + 
-                             " (Total " + finalRows.size() + " rows)");
+            result.addSuccess(String.format("Merged: %s Into -> %s | Final Records: %d | Size: %s", 
+                new File(sourceFilePath).getName(), new File(targetFilePath).getName(), finalRows.size(), formatFileSize(new File(targetFilePath).length())));
+            result.addTargetRows(fileMapping.getTargetFile(), finalRows.size());
+            result.addSourceRows(fileMapping.getSourceFile(), sourceRows.size());
             
         } else {
             // first time writing this file
             csvWriter.writeCsv(targetFilePath, currentTargetHeaders, currentTargetRows);
             createdFiles.add(targetFilePath);
             
-            result.addSuccess("Processed " + fileMapping.getSourceFile() + " -> " + fileMapping.getTargetFile() + 
-                             " (" + currentTargetRows.size() + " rows)");
+            result.addSuccess(String.format("Processed: %s -> %s | Records: %d | Size: %s", 
+                new File(sourceFilePath).getName(), new File(targetFilePath).getName(), currentTargetRows.size(), formatFileSize(new File(targetFilePath).length())));
+            result.addTargetRows(fileMapping.getTargetFile(), currentTargetRows.size());
+            result.addSourceRows(fileMapping.getSourceFile(), sourceRows.size());
         }
     }
     
@@ -156,12 +189,56 @@ public class MappingExecutor {
     }
     
     /**
+     * Handle errors by moving file to Error folder and logging
+     */
+    private void handleError(MappingConfig config, FileMapping fileMapping, String errorDir, Exception e, ExecutionResult result) {
+        try {
+            Files.createDirectories(Paths.get(errorDir));
+            
+            // Copy source file to error folder
+            String sourceFilePath = Paths.get(config.getPaths().getSourceDirectory(), fileMapping.getSourceFile()).toString();
+            File sourceFile = new File(sourceFilePath);
+            if (sourceFile.exists()) {
+                String errorFilePath = Paths.get(errorDir, fileMapping.getSourceFile()).toString();
+                Files.copy(sourceFile.toPath(), Paths.get(errorFilePath), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
+            
+            // Write error log
+            String logPath = Paths.get(errorDir, "error_log.txt").toString();
+            String logEntry = String.format("[%s] Error processing %s -> %s: %s%n",
+                    java.time.LocalDateTime.now(), fileMapping.getSourceFile(), fileMapping.getTargetFile(), e.getMessage());
+            Files.write(Paths.get(logPath), logEntry.getBytes(), 
+                    java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND);
+            
+            result.addError("Error processing " + fileMapping.getSourceFile() + ": " + e.getMessage());
+        } catch (IOException ioEx) {
+            result.addError("Failed to handle error for " + fileMapping.getSourceFile() + ": " + ioEx.getMessage());
+        }
+    }
+
+    /**
+     * Helper to format file size smartly
+     */
+    private String formatFileSize(long bytes) {
+        if (bytes < 1024) {
+            return "< 1 KB";
+        } else if (bytes < 1024 * 1024) {
+            return (bytes / 1024) + " KB";
+        } else {
+            return String.format("%.2f MB", bytes / (1024.0 * 1024.0));
+        }
+    }
+    
+    /**
      * Result of execution
      */
     public static class ExecutionResult {
         private final List<String> successes = new ArrayList<>();
         private final List<String> warnings = new ArrayList<>();
         private final List<String> errors = new ArrayList<>();
+        
+        private final Map<String, Integer> sourceRowCounts = new LinkedHashMap<>();
+        private final Map<String, Integer> targetRowCounts = new LinkedHashMap<>();
         
         public void addSuccess(String message) {
             successes.add(message);
@@ -173,6 +250,14 @@ public class MappingExecutor {
         
         public void addError(String message) {
             errors.add(message);
+        }
+        
+        public void addSourceRows(String fileName, int count) {
+            sourceRowCounts.put(fileName, count);
+        }
+        
+        public void addTargetRows(String fileName, int count) {
+            targetRowCounts.put(fileName, count);
         }
         
         public List<String> getSuccesses() {
@@ -193,10 +278,21 @@ public class MappingExecutor {
         
         public String getSummary() {
             StringBuilder sb = new StringBuilder();
-            sb.append("Execution Summary:\n");
-            sb.append("  Successes: ").append(successes.size()).append("\n");
-            sb.append("  Warnings: ").append(warnings.size()).append("\n");
-            sb.append("  Errors: ").append(errors.size()).append("\n");
+            sb.append("═══ EXECUTION AUDIT ═══\n");
+            sb.append(String.format("Files Processed: %d\n", successes.size()));
+            sb.append(String.format("Warnings Found: %d\n", warnings.size()));
+            sb.append(String.format("Errors Encountered: %d\n", errors.size()));
+            
+            sb.append("\n📈 RECORD COUNTS (Audit Support):\n");
+            sb.append("   Source Records:\n");
+            for (Map.Entry<String, Integer> entry : sourceRowCounts.entrySet()) {
+                sb.append(String.format("     • %s: %d\n", entry.getKey(), entry.getValue()));
+            }
+            sb.append("   Target Records:\n");
+            for (Map.Entry<String, Integer> entry : targetRowCounts.entrySet()) {
+                sb.append(String.format("     • %s: %d\n", entry.getKey(), entry.getValue()));
+            }
+            
             return sb.toString();
         }
     }

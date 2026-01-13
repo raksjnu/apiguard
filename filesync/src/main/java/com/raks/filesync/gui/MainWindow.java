@@ -16,6 +16,7 @@ public class MainWindow extends JFrame {
     public MainWindow() {
         initializeUI();
         applyTheme();
+        setupZoomShortcuts();
     }
     
     private void initializeUI() {
@@ -29,7 +30,7 @@ public class MainWindow extends JFrame {
         
         // Set window icon to RAKS logo
         try {
-            java.net.URL logoUrl = getClass().getResource("/logo.png");
+            java.net.URL logoUrl = getClass().getResource("/raksLogo.png");
             if (logoUrl != null) {
                 ImageIcon icon = new ImageIcon(logoUrl);
                 setIconImage(icon.getImage());
@@ -65,9 +66,8 @@ public class MainWindow extends JFrame {
         tabbedPane.addChangeListener(e -> {
             int selectedIndex = tabbedPane.getSelectedIndex();
             if (selectedIndex == 1) { // Mapping tab
-                mappingPanel.refreshSourceFiles();
-                mappingPanel.refreshAutocompleteData();
-            } else if (selectedIndex == 2) { // Execute tab (now index 2, not 3)
+                mappingPanel.refreshMappingFiles();
+            } else if (selectedIndex == 2) { // Execute tab
                 executePanel.refreshFromMappingTab();
             }
         });
@@ -93,22 +93,41 @@ public class MainWindow extends JFrame {
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
         titlePanel.setBackground(ThemeConfig.HEADER_BACKGROUND);
         
-        // RAKS Logo
+        // RAKS Logo wrapped in rounded white box
+        JPanel logoWrapper = new JPanel() {
+            @Override
+            protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Color.WHITE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 15, 15);
+                g2.dispose();
+                super.paintComponent(g); // Paint children
+            }
+        };
+        logoWrapper.setOpaque(false);
+        logoWrapper.setBorder(new EmptyBorder(5, 5, 5, 5));
+        logoWrapper.setLayout(new BorderLayout());
+        
         try {
-            java.net.URL logoUrl = getClass().getResource("/logo.png");
+            java.net.URL logoUrl = getClass().getResource("/raksLogo.png");
             if (logoUrl != null) {
                 ImageIcon originalIcon = new ImageIcon(logoUrl);
-                Image scaledImage = originalIcon.getImage().getScaledInstance(45, 45, Image.SCALE_SMOOTH);
+                Image scaledImage = originalIcon.getImage().getScaledInstance(80, 80, Image.SCALE_SMOOTH);
                 JLabel logoLabel = new JLabel(new ImageIcon(scaledImage));
-                titlePanel.add(logoLabel);
+                logoWrapper.add(logoLabel, BorderLayout.CENTER);
+            } else {
+                throw new Exception("Logo not found");
             }
         } catch (Exception e) {
             // Fallback to text if logo not found
             JLabel logoLabel = new JLabel("RAKS");
-            logoLabel.setFont(new Font("Arial", Font.BOLD, 24));
-            logoLabel.setForeground(Color.WHITE);
-            titlePanel.add(logoLabel);
+            logoLabel.setFont(ThemeConfig.getScaledFont("Arial", Font.BOLD, 20));
+            logoLabel.setForeground(ThemeConfig.PRIMARY_COLOR); // Purple text on white box
+            logoWrapper.add(logoLabel, BorderLayout.CENTER);
         }
+        
+        titlePanel.add(logoWrapper);
         
         // Title and subtitle
         JPanel textPanel = new JPanel();
@@ -116,11 +135,11 @@ public class MainWindow extends JFrame {
         textPanel.setBackground(ThemeConfig.HEADER_BACKGROUND);
         
         JLabel titleLabel = new JLabel(ThemeConfig.getString("app.name"));
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setFont(ThemeConfig.getScaledFont("Arial", Font.BOLD, 24));
         titleLabel.setForeground(Color.WHITE);
         
         JLabel subtitleLabel = new JLabel(ThemeConfig.getString("app.subtitle"));
-        subtitleLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        subtitleLabel.setFont(ThemeConfig.getScaledFont("Arial", Font.BOLD, 12));
         subtitleLabel.setForeground(Color.WHITE);
         
         textPanel.add(titleLabel);
@@ -132,11 +151,46 @@ public class MainWindow extends JFrame {
         
         // Version label
         JLabel versionLabel = new JLabel("v" + ThemeConfig.getString("app.version"));
-        versionLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        versionLabel.setFont(ThemeConfig.getScaledFont("Arial", Font.BOLD, 14));
         versionLabel.setForeground(Color.WHITE);
         header.add(versionLabel, BorderLayout.EAST);
         
         return header;
+    }
+
+    private void setupZoomShortcuts() {
+        JRootPane root = getRootPane();
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control EQUALS"), "zoomIn");
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control ADD"), "zoomIn");
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control MINUS"), "zoomOut");
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control SUBTRACT"), "zoomOut");
+        root.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke("control 0"), "zoomReset");
+
+        root.getActionMap().put("zoomIn", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                ThemeConfig.setFontScale(ThemeConfig.getFontScale() + 0.1f);
+                refreshUI();
+            }
+        });
+        root.getActionMap().put("zoomOut", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                ThemeConfig.setFontScale(ThemeConfig.getFontScale() - 0.1f);
+                refreshUI();
+            }
+        });
+        root.getActionMap().put("zoomReset", new AbstractAction() {
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                ThemeConfig.setFontScale(1.0f);
+                refreshUI();
+            }
+        });
+    }
+
+    private void refreshUI() {
+        // Redraw current tab and components
+        applyTheme();
+        SwingUtilities.updateComponentTreeUI(this);
+        // We might need to manually tell panels to update their scaled fonts if they don't use UI defaults
     }
     
     private JPanel createFooter() {
@@ -210,7 +264,7 @@ public class MainWindow extends JFrame {
         
         // RAKS Logo
         try {
-            java.net.URL logoUrl = getClass().getResource("/logo.png");
+            java.net.URL logoUrl = getClass().getResource("/raksLogo.png");
             if (logoUrl != null) {
                 ImageIcon originalIcon = new ImageIcon(logoUrl);
                 Image scaledImage = originalIcon.getImage().getScaledInstance(60, 60, Image.SCALE_SMOOTH);
@@ -252,21 +306,32 @@ public class MainWindow extends JFrame {
         contentPanel.add(subtitleLabel);
         contentPanel.add(Box.createVerticalStrut(15));
         contentPanel.add(copyrightLabel);
+        contentPanel.add(Box.createVerticalStrut(5));
+        
+        // Contact Info (Configurable)
+        JLabel contactLabel = new JLabel(ThemeConfig.getString("about.contact"));
+        contactLabel.setFont(new Font("Arial", Font.PLAIN, 11));
+        contactLabel.setForeground(ThemeConfig.PRIMARY_COLOR);
+        contactLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        contentPanel.add(contactLabel);
         
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
         buttonPanel.setBackground(Color.WHITE);
         
         JButton okButton = new JButton("OK");
+        // Force Basic UI to ensure background color works on all platforms/LAFs
+        okButton.setUI(new javax.swing.plaf.basic.BasicButtonUI());
         okButton.setBackground(ThemeConfig.BUTTON_BACKGROUND);
         okButton.setForeground(Color.WHITE);
         okButton.setFont(new Font("Arial", Font.BOLD, 12));
+        // Thicken border to 2px
         okButton.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(ThemeConfig.BUTTON_BORDER, 1),
+            BorderFactory.createLineBorder(ThemeConfig.BUTTON_BORDER, 2),
             new EmptyBorder(8, 30, 8, 30)
         ));
         okButton.setFocusPainted(false);
-        okButton.setOpaque(true);
+        okButton.setOpaque(true); // Required for background color
         okButton.addActionListener(e -> dialog.dispose());
         
         buttonPanel.add(okButton);
@@ -281,31 +346,30 @@ public class MainWindow extends JFrame {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
             
-            // Customize UI defaults for better button visibility
-            UIManager.put("Button.background", ThemeConfig.BUTTON_BACKGROUND);
-            UIManager.put("Button.foreground", ThemeConfig.BUTTON_TEXT);
-            UIManager.put("Button.font", new Font("Arial", Font.BOLD, 12));
-            UIManager.put("Button.select", ThemeConfig.PRIMARY_DARK);
+            // Customize UI defaults
+            // UIManager.put("Button.background", ThemeConfig.BUTTON_BACKGROUND);
+            // UIManager.put("Button.foreground", ThemeConfig.BUTTON_TEXT);
+            // UIManager.put("Button.font", ThemeConfig.getScaledFont("Arial", Font.BOLD, 12));
+            
+            // Headlines and Titles in Purple
+            UIManager.put("TitledBorder.titleColor", ThemeConfig.PRIMARY_COLOR);
+            UIManager.put("TitledBorder.font", ThemeConfig.getScaledFont("Arial", Font.BOLD, 14));
+            
+            // Tabbed Pane
+            UIManager.put("TabbedPane.foreground", ThemeConfig.PRIMARY_COLOR);
+            UIManager.put("TabbedPane.font", ThemeConfig.getScaledFont("Arial", Font.BOLD, 13));
             
             // Panel and general UI
             UIManager.put("Panel.background", ThemeConfig.PANEL_BACKGROUND);
             UIManager.put("TabbedPane.selected", ThemeConfig.PRIMARY_COLOR);
-            UIManager.put("TabbedPane.contentBorderInsets", new Insets(2, 2, 2, 2));
             
             // Text components
-            UIManager.put("TextField.background", Color.WHITE);
-            UIManager.put("TextArea.background", Color.WHITE);
-            
-            // Option pane buttons
-            UIManager.put("OptionPane.buttonFont", new Font("Arial", Font.BOLD, 12));
-            UIManager.put("OptionPane.messageFont", new Font("Arial", Font.PLAIN, 13));
+            UIManager.put("TextField.font", ThemeConfig.getScaledFont("Arial", Font.PLAIN, 13));
+            UIManager.put("TextArea.font", ThemeConfig.getScaledFont("Consolas", Font.PLAIN, 12));
             
         } catch (Exception e) {
             // Use default look and feel
         }
-        
-        // Apply custom button renderer to ensure colors are applied
-        UIManager.put("ButtonUI", "javax.swing.plaf.basic.BasicButtonUI");
     }
     
     public static void launch() {

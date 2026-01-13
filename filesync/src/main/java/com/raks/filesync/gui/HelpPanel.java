@@ -5,7 +5,7 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 /**
- * Help and Guide panel with comprehensive documentation
+ * Help and Guide panel with comprehensive documentation (HTML Based)
  */
 public class HelpPanel extends JPanel {
     
@@ -23,29 +23,23 @@ public class HelpPanel extends JPanel {
         helpTabs.setBackground(ThemeConfig.BACKGROUND_COLOR);
         helpTabs.setForeground(ThemeConfig.TEXT_PRIMARY);
         
-        // Add help sections
-        helpTabs.addTab(ThemeConfig.getString("help.tab.overview"), createOverviewPanel());
-        helpTabs.addTab(ThemeConfig.getString("help.tab.features"), createFeaturesPanel());
-        helpTabs.addTab(ThemeConfig.getString("help.tab.architecture"), createArchitecturePanel());
-        helpTabs.addTab(ThemeConfig.getString("help.tab.usage"), createUsagePanel());
-        helpTabs.addTab(ThemeConfig.getString("help.tab.cli"), createCLIPanel());
+        // Add help sections (HTML Content)
+        helpTabs.addTab(ThemeConfig.getString("help.tab.overview"), createHtmlPanel(getOverviewHtml()));
+        helpTabs.addTab(ThemeConfig.getString("help.tab.features"), createHtmlPanel(getFeaturesHtml()));
+        helpTabs.addTab(ThemeConfig.getString("help.tab.usage"), createHtmlPanel(getUsageHtml()));
+        helpTabs.addTab(ThemeConfig.getString("help.tab.cli"), createHtmlPanel(getCliHtml()));
         
         // Add listener to scroll to top when tab changes
         helpTabs.addChangeListener(e -> {
             int selectedIndex = helpTabs.getSelectedIndex();
             if (selectedIndex >= 0) {
                 Component comp = helpTabs.getComponentAt(selectedIndex);
-                if (comp instanceof JPanel) {
-                    JPanel panel = (JPanel) comp;
-                    for (Component c : panel.getComponents()) {
-                        if (c instanceof JScrollPane) {
-                            JScrollPane scrollPane = (JScrollPane) c;
-                            SwingUtilities.invokeLater(() -> {
-                                scrollPane.getVerticalScrollBar().setValue(0);
-                                scrollPane.getHorizontalScrollBar().setValue(0);
-                            });
-                        }
-                    }
+                if (comp instanceof JScrollPane) {
+                    JScrollPane scrollPane = (JScrollPane) comp;
+                    SwingUtilities.invokeLater(() -> {
+                        scrollPane.getVerticalScrollBar().setValue(0);
+                        scrollPane.getHorizontalScrollBar().setValue(0);
+                    });
                 }
             }
         });
@@ -53,360 +47,150 @@ public class HelpPanel extends JPanel {
         add(helpTabs, BorderLayout.CENTER);
     }
     
-    private JPanel createOverviewPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(ThemeConfig.BACKGROUND_COLOR);
+    private JScrollPane createHtmlPanel(String htmlContent) {
+        JEditorPane editorPane = new JEditorPane();
+        editorPane.setContentType("text/html");
+        editorPane.setText(htmlContent);
+        editorPane.setEditable(false);
+        editorPane.setBackground(Color.WHITE);
+        editorPane.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, Boolean.TRUE);
+        editorPane.setFont(ThemeConfig.getScaledFont("SansSerif", Font.PLAIN, 12));
         
-        JTextArea textArea = createStyledTextArea();
-        textArea.setText(
-            "FILESYNC TOOL - OVERVIEW\n" +
-            "========================\n\n" +
-            "FileSync is a configuration-driven CSV transformation tool designed to handle\n" +
-            "hundreds of different source files with unknown layouts.\n\n" +
-            "KEY CONCEPTS:\n\n" +
-            "• Dynamic Discovery: Automatically scans directories and detects CSV schemas\n" +
-            "• Configuration-Based: Uses JSON files to define reusable mappings\n" +
-            "• Session Persistence: Remembers your last used directories and files\n" +
-            "• Auto-Load: Automatically loads mappings when switching to Execute tab\n" +
-            "• Dual Interface: Both GUI and CLI for different workflows\n" +
-            "• Extensible: Ready for future rule-based conditional mappings\n\n" +
-            "PURPOSE:\n\n" +
-            "This tool eliminates the need for hardcoded transformation logic by allowing\n" +
-            "you to visually create field mappings between source and target CSV files,\n" +
-            "save them as configurations, and execute transformations automatically.\n\n" +
-            "TYPICAL WORKFLOW:\n\n" +
-            "1. Discover: Scan source directory to identify CSV files and their fields\n" +
-            "2. Map: Create field-to-field mappings between source and target files\n" +
-            "3. Save: Export mappings as a reusable JSON configuration\n" +
-            "4. Execute: Run transformations to generate target CSV files\n\n" +
-            "VERSION: " + ThemeConfig.getString("app.version") + "\n" +
-            ThemeConfig.getString("app.copyright")
-        );
-        
-        JScrollPane scrollPane = new JScrollPane(textArea);
+        JScrollPane scrollPane = new JScrollPane(editorPane);
         scrollPane.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1));
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
+        return scrollPane;
     }
     
-    private JPanel createFeaturesPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(ThemeConfig.BACKGROUND_COLOR);
-        
-        JTextArea textArea = createStyledTextArea();
-        textArea.setText(
-            "FEATURES\n" +
-            "========\n\n" +
-            "CORE FEATURES:\n\n" +
-            "✓ Dynamic CSV Discovery\n" +
-            "  - Scans directories for CSV files\n" +
-            "  - Automatically extracts headers (field names)\n" +
-            "  - No hardcoded file structures required\n\n" +
-            "✓ Visual Mapping Builder\n" +
-            "  - Intuitive GUI for creating field mappings\n" +
-            "  - Source file/field selection\n" +
-            "  - Target file/field definition\n" +
-            "  - Mapping table view with add/remove/edit\n\n" +
-            "✓ Configuration Management\n" +
-            "  - JSON-based mapping definitions\n" +
-            "  - Save/Load configurations\n" +
-            "  - Reusable across different scenarios\n" +
-            "  - Version controlled\n\n" +
-            "✓ Flexible Transformation\n" +
-            "  - File-to-file mappings\n" +
-            "  - Field-to-field mappings\n" +
-            "  - Multiple source → multiple target files\n" +
-            "  - Configurable transformation types\n\n" +
-            "✓ Dual Interface\n" +
-            "  - GUI: Visual mapping creation and interactive use\n" +
-            "  - CLI: Automation, scripting, and batch processing\n\n" +
-            "✓ Robust Error Handling\n" +
-            "  - Configuration validation\n" +
-            "  - Missing file warnings\n" +
-            "  - Detailed execution logs\n" +
-            "  - Success/Warning/Error categorization\n\n" +
-            "✓ Session Persistence\n" +
-            "  - Remembers last source directory\n" +
-            "  - Remembers last target directory\n" +
-            "  - Remembers last config file location\n" +
-            "  - Remembers window size and position\n" +
-            "  - Persists across application restarts\n\n" +
-            "✓ Smart Autocomplete\n" +
-            "  - Target file name suggestions\n" +
-            "  - Target field name suggestions\n" +
-            "  - History-based dropdown (10 most recent)\n" +
-            "  - Persistent across sessions (~1-2 KB storage)\n" +
-            "  - Faster mapping creation\n\n" +
-            "✓ Auto-Load Configuration\n" +
-            "  - Automatically loads mappings from Mapping tab\n" +
-            "  - No manual save/load required during workflow\n" +
-            "  - Seamless tab switching\n" +
-            "  - Shows configuration source\n\n" +
-            "TRANSFORMATION TYPES:\n\n" +
-            "• Direct: Copy value as-is (currently supported)\n" +
-            "• Formula: Mathematical or string formulas (future)\n" +
-            "• Conditional: Rule-based logic (future)\n" +
-            "• Lookup: Reference table mapping (future)\n\n" +
-            "SUPPORTED FORMATS:\n\n" +
-            "• Input: CSV files (comma-separated)\n" +
-            "• Output: CSV files with custom headers\n" +
-            "• Configuration: JSON format"
-        );
-        
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1));
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
+    private String getCommonCss() {
+        return "<style>" +
+               "body { font-family: SansSerif; font-size: 12px; padding: 10px; color: #333; }" +
+               "h1 { color: #6B46C1; border-bottom: 2px solid #6B46C1; padding-bottom: 5px; margin-top: 0; }" +
+               "h2 { color: #553C9A; margin-top: 20px; border-bottom: 1px solid #ddd; padding-bottom: 3px; }" +
+               "h3 { color: #805AD5; margin-top: 15px; }" +
+               "ul { margin-left: 20px; }" +
+               "li { margin-bottom: 5px; }" +
+               "code { font-family: Consolas, monospace; background-color: #f0f0f0; padding: 2px 5px; border-radius: 3px; color: #d63384; }" +
+               ".box { background-color: #f8f9fa; border: 1px solid #e9ecef; padding: 10px; border-radius: 5px; margin: 10px 0; }" +
+               ".note { background-color: #e9f5ff; border-left: 4px solid #007bff; padding: 10px; margin: 10px 0; }" +
+               ".highlight { color: #6B46C1; font-weight: bold; }" +
+               "</style>";
     }
     
-    private JPanel createArchitecturePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(ThemeConfig.BACKGROUND_COLOR);
-        
-        JTextArea textArea = createStyledTextArea();
-        textArea.setText(
-            "ARCHITECTURE\n" +
-            "============\n\n" +
-            "DESIGN PRINCIPLES:\n\n" +
-            "• Configuration-Driven: All mappings defined in JSON, not code\n" +
-            "• Scalable: Handles hundreds of files with unknown layouts\n" +
-            "• Reusable: Configurations can be shared and version controlled\n" +
-            "• Extensible: Ready for future rule-based logic\n\n" +
-            "COMPONENTS:\n\n" +
-            "1. Configuration Module (com.raks.filesync.config)\n" +
-            "   • MappingConfig: Root configuration model\n" +
-            "   • FileMapping: Source → Target file mappings\n" +
-            "   • FieldMapping: Field-level mappings with transformations\n" +
-            "   • ConfigLoader: JSON deserialization and validation\n" +
-            "   • ConfigWriter: JSON serialization\n\n" +
-            "2. Core Processing Engine (com.raks.filesync.core)\n" +
-            "   • CsvDiscovery: Dynamic file and schema discovery\n" +
-            "   • CsvReader: CSV parsing with OpenCSV\n" +
-            "   • CsvWriter: CSV output generation\n" +
-            "   • MappingExecutor: Main transformation engine\n" +
-            "   • TransformationEngine: Field value transformations\n\n" +
-            "3. CLI Interface (com.raks.filesync.cli)\n" +
-            "   • CliInterface: Command-line interface\n" +
-            "   • Modes: discover, execute, validate\n\n" +
-            "4. GUI Interface (com.raks.filesync.gui)\n" +
-            "   • MainWindow: Main application window\n" +
-            "   • DiscoveryPanel: Directory browser and file tree\n" +
-            "   • MappingPanel: Visual mapping builder\n" +
-            "   • ExecutePanel: Execution controls and logging\n" +
-            "   • HelpPanel: User guide and documentation\n\n" +
-            "CONFIGURATION SCHEMA:\n\n" +
-            "{\n" +
-            "  \"version\": \"1.0\",\n" +
-            "  \"paths\": {\n" +
-            "    \"sourceDirectory\": \"path/to/source\",\n" +
-            "    \"targetDirectory\": \"path/to/target\"\n" +
-            "  },\n" +
-            "  \"fileMappings\": [\n" +
-            "    {\n" +
-            "      \"sourceFile\": \"source.csv\",\n" +
-            "      \"targetFile\": \"target.csv\",\n" +
-            "      \"fieldMappings\": [\n" +
-            "        {\n" +
-            "          \"sourceField\": \"field1\",\n" +
-            "          \"targetField\": \"field2\",\n" +
-            "          \"transformation\": \"direct\"\n" +
-            "        }\n" +
-            "      ]\n" +
-            "    }\n" +
-            "  ]\n" +
-            "}\n\n" +
-            "DEPENDENCIES:\n\n" +
-            "• OpenCSV 5.9: CSV processing\n" +
-            "• Gson 2.10.1: JSON configuration\n" +
-            "• Commons CLI 1.6.0: Command-line parsing\n" +
-            "• SLF4J 2.0.9: Logging"
-        );
-        
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1));
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
+    private String getOverviewHtml() {
+        return "<html><head>" + getCommonCss() + "</head><body>" +
+               "<h1>FileSync Tool Overview</h1>" +
+               "<div class='box'>" +
+               "<p><b>FileSync</b> is an enterprise-grade CSV transformation platform designed to simplify complex data integration tasks. " +
+               "It eliminates the need for hardcoded scripts by providing a flexible, configuration-driven approach to mapping and transforming files.</p>" +
+               "</div>" +
+               
+               "<h2>Why FileSync? (The Use Case)</h2>" +
+               "<p>If you have <b>tons of CSV files</b> and need to create different output files by extracting and combining fields from one or more sources, this tool is the answer.</p>" +
+               "<ul>" +
+               "<li><b>Automates File Creation:</b> Just define simple mapping rules, and the tool handles the rest.</li>" +
+               "<li><b>Smart Detection:</b> Automatically detects fields and maps them, saving you hours of manual work.</li>" +
+               "<li><b>Mass Processing:</b> specialized for handling large datasets and numerous files efficiently.</li>" +
+               "</ul>" +
+               
+               "<h2>Key Concepts</h2>" +
+               "<ul>" +
+               "<li><b>Dynamic Discovery:</b> Automatically scans directories to detect CSV files and their schemas recursively.</li>" +
+               "<li><b>Visual Mapping:</b> Drag-and-drop style field mapping with a clean, user-friendly interface.</li>" +
+               "<li><b>Configuration-Driven:</b> Save your mappings as reusable JSON configurations for repeated use.</li>" +
+               "<li><b>Validation Loop:</b> Real-time validation ensures data integrity before execution.</li>" +
+               "</ul>" +
+               "</body></html>";
     }
     
-    private JPanel createUsagePanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(ThemeConfig.BACKGROUND_COLOR);
-        
-        JTextArea textArea = createStyledTextArea();
-        textArea.setText(
-            "HOW TO USE - GUI WORKFLOW\n" +
-            "=========================\n\n" +
-            "TAB 1: DISCOVERY\n\n" +
-            "Purpose: Scan source directory and identify CSV files\n\n" +
-            "Steps:\n" +
-            "1. Click 'Browse...' to select your source directory\n" +
-            "2. Click 'Scan Directory' to discover CSV files\n" +
-            "3. Review the file tree showing all discovered files and their fields\n\n" +
-            "Tips:\n" +
-            "• The tool automatically extracts column headers from each CSV\n" +
-            "• You can scan multiple times if you add new files to the directory\n\n\n" +
-            "TAB 2: MAPPING\n\n" +
-            "Purpose: Create field-to-field mappings visually\n\n" +
-            "Steps:\n" +
-            "1. Select a Source File from the dropdown\n" +
-            "2. Select a Source Field from the dropdown\n" +
-            "3. Enter the Target File name (e.g., 'output.csv')\n" +
-            "4. Enter the Target Field name (e.g., 'CustomerID')\n" +
-            "5. Click 'Add Mapping →' to create the mapping\n" +
-            "6. Repeat for all field mappings you need\n" +
-            "7. Enter the Target Directory path\n" +
-            "8. Click 'Save Configuration' to export as JSON\n\n" +
-            "Tips:\n" +
-            "• You can map multiple source files to different target files\n" +
-            "• Use 'Remove Selected' to delete a mapping from the table\n" +
-            "• Use 'Clear All' to start over\n" +
-            "• Save configurations for reuse across different runs\n\n\n" +
-            "TAB 3: EXECUTE\n\n" +
-            "Purpose: Run transformations and generate target CSV files\n\n" +
-            "AUTO-LOAD FEATURE:\n" +
-            "When you switch to the Execute tab, the tool automatically loads\n" +
-            "the mappings you created in the Mapping tab. No manual steps needed!\n\n" +
-            "Steps:\n" +
-            "Option A - Use auto-loaded mappings (RECOMMENDED):\n" +
-            "1. Switch to Execute tab (mappings auto-load!)\n" +
-            "2. Review the configuration details\n" +
-            "3. Click '▶ Execute Transformation'\n\n" +
-            "Option B - Load a saved configuration file:\n" +
-            "1. Click 'Browse...' to select a saved config JSON file\n" +
-            "2. Click 'Load Config' to load the configuration\n" +
-            "3. Review the configuration details\n" +
-            "4. Click '▶ Execute Transformation'\n\n" +
-            "Tips:\n" +
-            "• The tool shows '[From Mapping Tab]' when using auto-loaded config\n" +
-            "• Watch the progress bar during execution\n" +
-            "• Review the execution log for detailed results with full paths\n" +
-            "• Check the target directory for generated CSV files\n" +
-            "• Use 'Clear Log' to clean up the log area\n\n" +
-            "SESSION PERSISTENCE:\n" +
-            "The tool remembers your last session:\n" +
-            "• Source directory auto-fills in Discovery tab\n" +
-            "• Target directory auto-fills in Mapping tab\n" +
-            "• Config file location is remembered\n" +
-            "• Window size and position are preserved\n\n\n" +
-            "TAB 4: HELP & GUIDE\n\n" +
-            "Purpose: Access documentation and help\n\n" +
-            "• Overview: Introduction and key concepts\n" +
-            "• Features: List of all features\n" +
-            "• Architecture: Technical design and components\n" +
-            "• How to Use: This guide\n" +
-            "• CLI Reference: Command-line usage"
-        );
-        
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1));
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
+    private String getFeaturesHtml() {
+        return "<html><head>" + getCommonCss() + "</head><body>" +
+               "<h1>Powerful Features</h1>" +
+               
+               "<h2>Core Capabilities</h2>" +
+               "<ul>" +
+               "<li><b>Recursive Scanning:</b> Detects data deep within directory structures.</li>" +
+               "<li><b>Smart Schema Detection:</b> Automatically reads headers to simplify mapping.</li>" +
+               "<li><b>Advanced Filtering:</b> Quickly find fields in large datasets with the built-in search filter.</li>" +
+               "</ul>" +
+               
+               "<h2>User Experience</h2>" +
+               "<ul>" +
+               "<li><b>Persistent Sessions:</b> Remembers your last used settings so you can pick up where you left off.</li>" +
+               "<li><b>Resizable Layouts:</b> Adjust panels to fit your screen and workflow.</li>" +
+               "<li><b>Accessibility:</b> Global zoom (Ctrl +/-) and high-contrast purple theme.</li>" +
+               "</ul>" +
+               
+               "<h2>Transformation & Output</h2>" +
+               "<ul>" +
+               "<li><b>Multi-Source Merge:</b> Intelligently merges data from multiple source files into a single target.</li>" +
+               "<li><b>Audit Logging:</b> Detailed logs with record counts and file sizes for compliance.</li>" +
+               "<li><b>Error Handling:</b> Robust validation prevents bad data from breaking the process.</li>" +
+               "</ul>" +
+               "</body></html>";
     }
     
-    private JPanel createCLIPanel() {
-        JPanel panel = new JPanel(new BorderLayout());
-        panel.setBackground(ThemeConfig.BACKGROUND_COLOR);
-        
-        JTextArea textArea = createStyledTextArea();
-        textArea.setText(
-            "CLI REFERENCE\n" +
-            "=============\n\n" +
-            "LAUNCHING CLI:\n\n" +
-            "java -jar filesync-1.0.0.jar [options]\n\n" +
-            "If no arguments are provided, the GUI will launch.\n\n\n" +
-            "MODES:\n\n" +
-            "1. DISCOVER MODE\n" +
-            "   Purpose: Scan source directory and display CSV schemas\n\n" +
-            "   Syntax:\n" +
-            "   java -jar filesync-1.0.0.jar -m discover -s <source_directory>\n\n" +
-            "   Example:\n" +
-            "   java -jar filesync-1.0.0.jar -m discover -s C:\\data\\source\n\n" +
-            "   Output:\n" +
-            "   - Lists all CSV files found\n" +
-            "   - Shows field names for each file\n" +
-            "   - Displays field count\n\n\n" +
-            "2. EXECUTE MODE\n" +
-            "   Purpose: Run transformations from a configuration file\n\n" +
-            "   Syntax:\n" +
-            "   java -jar filesync-1.0.0.jar -m execute -c <config_file.json>\n\n" +
-            "   Example:\n" +
-            "   java -jar filesync-1.0.0.jar -m execute -c C:\\config\\mapping.json\n\n" +
-            "   Output:\n" +
-            "   - Loads configuration\n" +
-            "   - Executes transformations\n" +
-            "   - Shows success/warning/error summary\n" +
-            "   - Lists processed files and row counts\n\n\n" +
-            "3. VALIDATE MODE\n" +
-            "   Purpose: Validate configuration file syntax\n\n" +
-            "   Syntax:\n" +
-            "   java -jar filesync-1.0.0.jar -m validate -c <config_file.json>\n\n" +
-            "   Example:\n" +
-            "   java -jar filesync-1.0.0.jar -m validate -c C:\\config\\mapping.json\n\n" +
-            "   Output:\n" +
-            "   - Validates JSON syntax\n" +
-            "   - Checks required fields\n" +
-            "   - Reports configuration details\n\n\n" +
-            "OPTIONS:\n\n" +
-            "-h, --help\n" +
-            "   Show help message and examples\n\n" +
-            "-m, --mode <mode>\n" +
-            "   Operation mode: discover, execute, validate\n\n" +
-            "-s, --source <directory>\n" +
-            "   Source directory path (for discover mode)\n\n" +
-            "-c, --config <file>\n" +
-            "   Configuration file path (for execute/validate modes)\n\n\n" +
-            "EXAMPLES:\n\n" +
-            "# Show help\n" +
-            "java -jar filesync-1.0.0.jar -h\n\n" +
-            "# Launch GUI\n" +
-            "java -jar filesync-1.0.0.jar\n" +
-            "java -jar filesync-1.0.0.jar gui\n\n" +
-            "# Discover files\n" +
-            "java -jar filesync-1.0.0.jar -m discover -s C:\\data\\source\n\n" +
-            "# Execute transformation\n" +
-            "java -jar filesync-1.0.0.jar -m execute -c config.json\n\n" +
-            "# Validate configuration\n" +
-            "java -jar filesync-1.0.0.jar -m validate -c config.json\n\n\n" +
-            "HEAP MEMORY CONFIGURATION:\n\n" +
-            "For processing large CSV files, increase Java heap memory:\n\n" +
-            "# 2GB heap (medium files: 1,000-10,000 rows)\n" +
-            "java -Xmx2g -jar filesync-1.0.0.jar\n\n" +
-            "# 4GB heap (large files: 10,000-100,000 rows)\n" +
-            "java -Xmx4g -jar filesync-1.0.0.jar\n\n" +
-            "# Set min and max (recommended for consistent performance)\n" +
-            "java -Xms1g -Xmx4g -jar filesync-1.0.0.jar\n\n" +
-            "# 8GB for very large datasets (100,000+ rows)\n" +
-            "java -Xms2g -Xmx8g -jar filesync-1.0.0.jar\n\n" +
-            "Guidelines:\n" +
-            "• Default (256MB-512MB): Small files (<1,000 rows)\n" +
-            "• 2GB: Medium files (1,000-10,000 rows)\n" +
-            "• 4GB: Large files (10,000-100,000 rows)\n" +
-            "• 8GB+: Very large files (100,000+ rows)\n\n\n" +
-            "EXIT CODES:\n\n" +
-            "0 - Success\n" +
-            "1 - Error (check console output for details)"
-        );
-        
-        JScrollPane scrollPane = new JScrollPane(textArea);
-        scrollPane.setBorder(BorderFactory.createLineBorder(ThemeConfig.BORDER_COLOR, 1));
-        panel.add(scrollPane, BorderLayout.CENTER);
-        
-        return panel;
+    private String getUsageHtml() {
+        return "<html><head>" + getCommonCss() + "</head><body>" +
+               "<h1>How to Use & Rules</h1>" +
+               
+               "<div class='note' style='border-color: #d53f8c; background-color: #fff5f7;'>" +
+               "<h3 style='margin-top:0; color: #b83280;'>⚠ Mandatory Rules & Formats</h3>" +
+               "<ul>" +
+               "<li><b>Input Folder Location:</b> You MUST have your source data in a folder named <code>Input/YYYYMMDD_HHMM</code> (e.g., <code>.../Raks/Input/20240101_1200</code>).</li>" +
+               "<li><b>Mapping File Name:</b> Adhere to the standard naming convention (e.g., <code>mapping.json</code> or <code>*.csv</code>) to ensure auto-detection by the picker.</li>" +
+               "<li><b>Target Directory:</b> ensure the target directory is writable. The tool will automatically create an <code>Output</code> folder sibling to your Input.</li>" +
+               "</ul>" +
+               "</div>" +
+
+               "<h2>1. Discovery Phase</h2>" +
+               "<ul>" +
+               "<li>Click <span class='highlight'>Browse...</span> to select your root data directory.</li>" +
+               "<li>Click <span class='highlight'>Scan Directory</span> to index all CSV files.</li>" +
+               "<li>Use the dropdown pickers to select the specific <b>Data Folder</b> and <b>Mapping File</b> you want to work with.</li>" +
+               "</ul>" +
+               
+               "<h2>2. Mapping Phase</h2>" +
+               "<ul>" +
+               "<li>Review the automatically loaded mappings in the central table.</li>" +
+               "<li>Use the <span class='highlight'>Filter Search Bar</span> to quickly locate specific fields.</li>" +
+               "<li>Click <span class='highlight'>Validate Mapping & Files</span> to integrity-check your configuration.</li>" +
+               "<li>Look at the validation results panel for a summary of what will be processed.</li>" +
+               "</ul>" +
+               
+               "<h2>3. Execution Phase</h2>" +
+               "<ul>" +
+               "<li>Switch to the <b>Execute</b> tab. Your validated configuration loads automatically.</li>" +
+               "<li>Click <span class='highlight'>Execute Transformation</span> to start the job.</li>" +
+               "<li>Watch the <b>Execution Log</b> for real-time progress, file sizes, and record counts.</li>" +
+               "</ul>" +
+               "</body></html>";
     }
     
-    private JTextArea createStyledTextArea() {
-        JTextArea textArea = new JTextArea();
-        textArea.setEditable(false);
-        textArea.setFont(new Font("Consolas", Font.PLAIN, 12));
-        textArea.setForeground(ThemeConfig.TEXT_PRIMARY);
-        textArea.setBackground(ThemeConfig.BACKGROUND_COLOR);
-        textArea.setMargin(new Insets(10, 10, 10, 10));
-        textArea.setLineWrap(true);
-        textArea.setWrapStyleWord(true);
-        return textArea;
+    private String getCliHtml() {
+        return "<html><head>" + getCommonCss() + "</head><body>" +
+               "<h1>CLI Reference</h1>" +
+               "<div class='box'>The FileSync CLI allows you to integrate transformations into automated pipelines and scheduled jobs.</div>" +
+               
+               "<h2>Syntax</h2>" +
+               "<code>java -jar filesync.jar -m execute -c &lt;config_file.json&gt;</code>" +
+               
+               "<h2>Modes</h2>" +
+               "<table border='0' cellspacing='5'>" +
+               "<tr><td><b>discover</b></td><td>Scans a directory for schemas.</td></tr>" +
+               "<tr><td><b>validate</b></td><td>Checks a configuration file for errors.</td></tr>" +
+               "<tr><td><b>execute</b></td><td>Runs the actual data transformation.</td></tr>" +
+               "</table>" +
+               
+               "<h2>Examples</h2>" +
+               "<h3>1. Discover Files</h3>" +
+               "<code>java -jar filesync.jar -m discover -s C:\\Data\\Input</code>" +
+               
+               "<h3>2. Execute Transformation</h3>" +
+               "<code>java -jar filesync.jar -m execute -c C:\\Configs\\daily_map.json</code>" +
+               
+               "<h2>Memory Configuration</h2>" +
+               "<p>For large datasets (100k+ rows), allocate more memory:</p>" +
+               "<code>java -Xmx4g -jar filesync.jar ...</code>" +
+               "</body></html>";
     }
 }

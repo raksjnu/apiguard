@@ -10,6 +10,7 @@ public class FileMapping {
     private String sourceFile;
     private String targetFile;
     private List<FieldMapping> fieldMappings;
+    private Integer sequenceNumber;
 
     public FileMapping() {
         this.fieldMappings = new ArrayList<>();
@@ -48,6 +49,14 @@ public class FileMapping {
 
     public void addFieldMapping(FieldMapping fieldMapping) {
         this.fieldMappings.add(fieldMapping);
+    }
+
+    public Integer getSequenceNumber() {
+        return sequenceNumber;
+    }
+
+    public void setSequenceNumber(Integer sequenceNumber) {
+        this.sequenceNumber = sequenceNumber;
     }
 
     @Override

@@ -51,28 +51,56 @@ public class CsvDiscovery {
     /**
      * Build a complete schema for a CSV file
      */
-    public FileSchema buildFileSchema(File csvFile) throws IOException {
-        List<String> headers = extractHeaders(csvFile);
-        return new FileSchema(csvFile.getName(), headers);
+    private FileSchema buildFileSchema(File file) throws IOException {
+        List<String> headers = extractHeaders(file);
+        return new FileSchema(file.getName(), file.getAbsolutePath(), headers);
     }
     
     /**
-     * Discover all files and build schemas
+     * Discover all CSV files in a directory and extract their schemas
      */
-    public Map<String, FileSchema> discoverAllSchemas(String directory) {
+    public Map<String, FileSchema> discoverAllSchemas(String directoryPath) {
         Map<String, FileSchema> schemas = new LinkedHashMap<>();
-        List<File> csvFiles = discoverFiles(directory);
+        File directory = new File(directoryPath);
         
-        for (File file : csvFiles) {
-            try {
-                FileSchema schema = buildFileSchema(file);
-                schemas.put(file.getName(), schema);
-            } catch (IOException e) {
-                System.err.println("Error processing file " + file.getName() + ": " + e.getMessage());
-            }
+        if (!directory.exists() || !directory.isDirectory()) {
+            return schemas;
         }
         
+        // Recursively scan for CSV files
+        scanDirectoryRecursive(directory, schemas);
+        
         return schemas;
+    }
+    
+    private void scanDirectoryRecursive(File directory, Map<String, FileSchema> schemas) {
+        File[] files = directory.listFiles();
+        if (files == null) return;
+        
+        for (File file : files) {
+            if (file.isDirectory()) {
+                // Recursively scan subdirectories
+                scanDirectoryRecursive(file, schemas);
+            } else if (file.getName().toLowerCase().endsWith(".csv") && 
+                       !file.getName().toLowerCase().startsWith("mapping")) {
+                // Process CSV files (but not mapping files)
+                try {
+                    FileSchema schema = discoverSchema(file.getAbsolutePath());
+                    schemas.put(file.getName(), schema);
+                } catch (IOException e) {
+                    System.err.println("Error reading " + file.getName() + ": " + e.getMessage());
+                }
+            }
+        }
+    }
+
+    /**
+     * Discovers the schema for a single CSV file given its path.
+     * This method is introduced to support the recursive scanning logic.
+     */
+    public FileSchema discoverSchema(String filePath) throws IOException {
+        File csvFile = new File(filePath);
+        return buildFileSchema(csvFile);
     }
     
     /**
@@ -80,15 +108,21 @@ public class CsvDiscovery {
      */
     public static class FileSchema {
         private final String fileName;
+        private final String filePath;
         private final List<String> headers;
         
-        public FileSchema(String fileName, List<String> headers) {
+        public FileSchema(String fileName, String filePath, List<String> headers) {
             this.fileName = fileName;
+            this.filePath = filePath;
             this.headers = headers;
         }
         
         public String getFileName() {
             return fileName;
+        }
+
+        public String getFilePath() {
+            return filePath;
         }
         
         public List<String> getHeaders() {

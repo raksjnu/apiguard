@@ -8,6 +8,8 @@ import javax.swing.tree.DefaultTreeModel;
 import java.awt.*;
 import java.io.File;
 import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Discovery panel for scanning source CSV files
@@ -19,6 +21,10 @@ public class DiscoveryPanel extends JPanel {
     private JTree fileTree;
     private DefaultTreeModel treeModel;
     private Map<String, CsvDiscovery.FileSchema> discoveredSchemas;
+    private JComboBox<String> dataFolderCombo;
+    private JComboBox<String> mappingFileCombo;
+    private File inputFolder;
+    private List<File> discoveredMappingFiles;
     
     public DiscoveryPanel() {
         initializeUI();
@@ -50,9 +56,38 @@ public class DiscoveryPanel extends JPanel {
         topPanel.add(pathPanel, BorderLayout.CENTER);
         topPanel.add(scanButton, BorderLayout.EAST);
         
+        // Selection Picker Panel (Hidden initially)
+        JPanel pickerPanel = new JPanel(new GridBagLayout());
+        pickerPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(ThemeConfig.PRIMARY_COLOR, 1, true),
+            "Configuration selection (Pick and proceed)",
+            javax.swing.border.TitledBorder.DEFAULT_JUSTIFICATION,
+            javax.swing.border.TitledBorder.DEFAULT_POSITION,
+            new Font("Arial", Font.BOLD, 12),
+            ThemeConfig.PRIMARY_COLOR));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+
+        gbc.gridx = 0; gbc.gridy = 0;
+        pickerPanel.add(new JLabel("Data Folder:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        dataFolderCombo = new JComboBox<>();
+        pickerPanel.add(dataFolderCombo, gbc);
+
+        gbc.gridx = 0; gbc.gridy = 1; gbc.weightx = 0;
+        pickerPanel.add(new JLabel("Mapping File:"), gbc);
+        gbc.gridx = 1; gbc.weightx = 1.0;
+        mappingFileCombo = new JComboBox<>();
+        pickerPanel.add(mappingFileCombo, gbc);
+
+        JPanel pickerContainer = new JPanel(new BorderLayout());
+        pickerContainer.add(pickerPanel, BorderLayout.NORTH);
+
         // Center panel - File tree
-        JPanel centerPanel = new JPanel(new BorderLayout());
-        centerPanel.setBorder(BorderFactory.createTitledBorder("Discovered Files"));
+        JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
+        centerPanel.setBorder(BorderFactory.createTitledBorder("Discovered Files & Schema"));
         
         DefaultMutableTreeNode root = new DefaultMutableTreeNode("No files scanned");
         treeModel = new DefaultTreeModel(root);
@@ -62,9 +97,14 @@ public class DiscoveryPanel extends JPanel {
         JScrollPane scrollPane = new JScrollPane(fileTree);
         centerPanel.add(scrollPane, BorderLayout.CENTER);
         
+        // Combine Picker and Tree
+        JPanel mainCenter = new JPanel(new BorderLayout(5, 5));
+        mainCenter.add(pickerContainer, BorderLayout.NORTH);
+        mainCenter.add(centerPanel, BorderLayout.CENTER);
+
         // Add panels
         add(topPanel, BorderLayout.NORTH);
-        add(centerPanel, BorderLayout.CENTER);
+        add(mainCenter, BorderLayout.CENTER);
     }
     
     private void browseDirectory() {
@@ -105,28 +145,77 @@ public class DiscoveryPanel extends JPanel {
             return;
         }
         
-        // Save the source directory
         UserPreferences.setLastSourceDirectory(sourcePath);
         
-        // Scan directory
-        CsvDiscovery discovery = new CsvDiscovery();
-        discoveredSchemas = discovery.discoverAllSchemas(sourcePath);
+        // Look for Input folder
+        inputFolder = new File(sourceDir, "Input");
+        String scanPath = inputFolder.exists() ? inputFolder.getAbsolutePath() : sourcePath;
         
-        if (discoveredSchemas.isEmpty()) {
+        // Scan CSV files
+        CsvDiscovery discovery = new CsvDiscovery();
+        discoveredSchemas = discovery.discoverAllSchemas(scanPath);
+        
+        // Look for Mapping CSV files
+        com.raks.filesync.core.CsvMappingParser parser = new com.raks.filesync.core.CsvMappingParser();
+        discoveredMappingFiles = parser.findMappingFiles(sourcePath);
+        
+        if (discoveredSchemas.isEmpty() && discoveredMappingFiles.isEmpty()) {
             JOptionPane.showMessageDialog(this,
-                    "No CSV files found in the selected directory.",
+                    "No CSV or Mapping files found.",
                     "No Files Found",
                     JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         
-        // Update tree
         updateFileTree();
+        updatePickers();
         
-        JOptionPane.showMessageDialog(this,
-                "Found " + discoveredSchemas.size() + " CSV file(s).",
-                "Scan Complete",
-                JOptionPane.INFORMATION_MESSAGE);
+        String msg = String.format("Found %d CSV file(s) and %d Mapping file(s).", 
+                discoveredSchemas.size(), discoveredMappingFiles.size());
+        JOptionPane.showMessageDialog(this, msg, "Scan Complete", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    private void updatePickers() {
+        dataFolderCombo.removeAllItems();
+        mappingFileCombo.removeAllItems();
+
+        // Populate Data Folders
+        if (inputFolder != null && inputFolder.exists()) {
+            File[] subfolders = inputFolder.listFiles(File::isDirectory);
+            if (subfolders != null && subfolders.length > 0) {
+                for (File f : subfolders) dataFolderCombo.addItem(f.getName());
+            } else {
+                dataFolderCombo.addItem("Input (root)");
+            }
+        } else {
+            dataFolderCombo.addItem("Source (root)");
+        }
+
+        // Populate Mapping Files
+        if (discoveredMappingFiles != null && !discoveredMappingFiles.isEmpty()) {
+            for (File f : discoveredMappingFiles) mappingFileCombo.addItem(f.getName());
+        } else {
+            mappingFileCombo.addItem("No mapping files found");
+        }
+    }
+
+    public File getSelectedDataFolder() {
+        String selectedName = (String) dataFolderCombo.getSelectedItem();
+        if (selectedName == null) return inputFolder != null ? inputFolder : new File(getSourcePath());
+        
+        if (selectedName.contains("(root)")) return inputFolder != null ? inputFolder : new File(getSourcePath());
+        
+        return new File(inputFolder, selectedName);
+    }
+
+    public File getSelectedMappingFile() {
+        String selectedName = (String) mappingFileCombo.getSelectedItem();
+        if (selectedName == null || selectedName.startsWith("No mapping")) return null;
+        
+        return discoveredMappingFiles.stream()
+            .filter(f -> f.getName().equals(selectedName))
+            .findFirst()
+            .orElse(null);
     }
     
     private void updateFileTree() {
@@ -194,5 +283,13 @@ public class DiscoveryPanel extends JPanel {
         if (!lastDir.isEmpty()) {
             sourcePathField.setText(lastDir);
         }
+    }
+    
+    public List<File> getDiscoveredMappingFiles() {
+        return discoveredMappingFiles != null ? discoveredMappingFiles : new ArrayList<>();
+    }
+    
+    public File getInputFolder() {
+        return inputFolder;
     }
 }
