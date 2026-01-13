@@ -1089,28 +1089,44 @@
      }
 
      // --- Correlation & History ---
-     async function runCorrelation() {
-         const input = document.getElementById('trafficInput').value;
-         if(!input.trim()) return alert("Enter some traffic data");
-         
-         try {
-             const res = await fetch(getApiPath('/correlate'), { method: 'POST', body: input });
-             const results = await res.json();
-             
-             const container = document.getElementById('correlation-results');
-             if(results.length === 0) {
-                 container.innerHTML = "<h3>No matches found in scanned repositories.</h3>";
-                 return;
-             }
-             
-             let html = "<h3>Correlation Matches:</h3><table><tr><th>Traffic Item</th><th>Matched Repo</th><th>Confidence</th></tr>";
-             results.forEach(r => {
-                 html += `<tr><td>${r.traffic_item}</td><td><b>${r.matched_repo}</b></td><td>${r.confidence}</td></tr>`;
-             });
-             html += "</table>";
-             container.innerHTML = html;
-         } catch (e) { alert("Correlation error: " + e); }
-     }
+           async function runCorrelation() {
+          const input = document.getElementById('trafficInput').value;
+          if(!input.trim()) return alert("Enter some traffic data");
+          
+          try {
+              showLoading("Analyzing Traffic...");
+              const res = await fetch(getApiPath('/correlate'), { method: 'POST', body: input });
+              const results = await res.json();
+              hideLoading();
+              
+              const container = document.getElementById('correlation-results');
+              if(results.length === 0) {
+                  container.innerHTML = "<h3>No matches found in scanned repositories.</h3>";
+                  return;
+              }
+              
+              let html = "<h3>Correlation Matches:</h3>";
+              results.forEach(r => {
+                  const filesHtml = r.files && r.files.length > 0 
+                      ? `<ul style="font-size:0.9rem; color:#555;">${r.files.map(f => `<li>${f}</li>`).join('')}</ul>`
+                      : '<p>No specific file matches.</p>';
+                      
+                  html += `<div class="card" style="margin-bottom:10px;">
+                      <p><strong>Item:</strong> <code>${r.traffic_item}</code></p>
+                      <p><strong>Repo:</strong> ${r.matched_repo} (${r.scan_id})</p>
+                      <p><strong>Confidence:</strong> ${r.confidence}</p>
+                      <div style="background:#eee; padding:10px; border-radius:4px;">
+                          <strong>Matching Files:</strong>
+                          ${filesHtml}
+                      </div>
+                  </div>`;
+              });
+              container.innerHTML = html;
+          } catch (e) { 
+              hideLoading();
+              alert("Correlation error: " + e); 
+          }
+      }
  
      async function ignoreItem(url, btnElement) {
          if(!confirm("Ignore this item?")) return;
@@ -1193,27 +1209,35 @@
          }
      }
  
-     // Get scan information (type, source, count)
-     async function getScanInfo(scanName) {
-         try {
-             const res = await fetch(getApiPath(`/scans/view?scanName=${scanName}`));
-             const reports = await res.json();
-             const arr = Array.isArray(reports) ? reports : [reports];
-             
-              // Determine type based on result count
+           // Get scan information (type, source, count)
+      async function getScanInfo(scanName) {
+          try {
+              // 1. Try to fetch metadata first (best source)
+              try {
+                  const metaRes = await fetch(getApiPath(`/scans/view?scanName=${scanName}&fileName=scan_metadata.json`));
+                  if (metaRes.ok) {
+                      const meta = await metaRes.json();
+                      if (meta.source) {
+                          return {
+                              type: meta.type || (meta.count > 1 ? 'API Discovery' : 'Quick Scan'),
+                              typeColor: (meta.count > 1) ? '#663399' : '#00a1df',
+                              source: meta.source,
+                              count: meta.count
+                          };
+                      }
+                  }
+              } catch (e) { /* fallback if metadata not found */ }
+
+              // 2. Fallback: Find common prefix from repository URLs
+              const res = await fetch(getApiPath(`/scans/view?scanName=${scanName}`));
+              const reports = await res.json();
+              const arr = Array.isArray(reports) ? reports : [reports];
               const isMulti = arr.length > 1;
 
-              // Helper to find common prefix for source display
               let source = 'Unknown Source';
-              if(arr.length > 0) {
-                  const first = arr[0].url || arr[0].repoPath || '';
-                  if(isMulti && first.includes('gitlab.com')) {
-                       // Try to find group path (remove last repos name)
-                       const parts = first.split('/');
-                       source = parts.length > 3 ? parts.slice(0, -1).join('/') : first;
-                  } else {
-                       source = first;
-                  }
+              if (arr.length > 0) {
+                  const urls = arr.map(r => r.url || r.repoPath || '').filter(u => u);
+                  if (urls.length > 0) source = findCommonPrefix(urls);
               }
 
               return {
@@ -1223,8 +1247,39 @@
                   count: arr.length
               };
           } catch (e) {
-              return { type: 'Unknown' + e.message, typeColor: '#999', source: 'N/A', count: 0 };
+              return { type: 'Error', typeColor: '#999', source: 'N/A', count: 0 };
           }
+      }
+
+      // Utility to find root source from multiple URLs
+      function findCommonPrefix(urls) {
+          if (!urls || urls.length === 0) return 'Multiple repositories';
+          if (urls.length === 1) return urls[0];
+
+          // For GitLab URLs, find common group segments
+          if (urls[0].includes('gitlab.com')) {
+              const splitUrls = urls.map(u => u.split('/'));
+              const minLen = Math.min(...splitUrls.map(u => u.length));
+              let common = [];
+              for (let i = 0; i < minLen; i++) {
+                  const seg = splitUrls[0][i];
+                  if (splitUrls.every(u => u[i] === seg)) {
+                      common.push(seg);
+                  } else {
+                      break;
+                  }
+              }
+              let res = common.join('/');
+              if (res.endsWith('/') && res.length > 8) res = res.slice(0, -1);
+              return res;
+          }
+
+          const sorted = urls.slice().sort();
+          const first = sorted[0];
+          const last = sorted[sorted.length - 1];
+          let i = 0;
+          while (i < first.length && first[i] === last[i]) i++;
+          return first.substring(0, i).replace(/[/\\]$/, '') || 'Multiple repositories';
       }
      
      // View historical scan results
@@ -1387,48 +1442,34 @@
          document.getElementById('history-view-list').style.display = 'block';
      }
      
-     // Delete scan
+           // Delete scan
       async function deleteScan(scanName) {
-         if (!confirm(`Are you sure you want to delete scan "${scanName}"? This action cannot be undone.`)) return;
-          
+          if (!confirm(`Are you sure you want to delete scan "${scanName}"?`)) return;
           try {
               showLoading('Deleting scan...');
-              
               const res = await fetch(getApiPath(`/scans/delete`), {
                   method: 'POST',
-                  body: JSON.stringify({ folders: [scanName] }) // Method changed to POST with body as per backend handler
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ folders: [scanName] })
               });
               
               const data = await res.json();
               hideLoading();
 
-              if (res.ok) {
-                  const failed = data.failed || [];
-                  const deleted = data.deleted || [];
-                  
-                  if (failed.includes(scanName)) {
-                      alert(`Failed to delete scan: ${scanName}. It may be in use or locked.`);
-                  } else if (deleted.includes(scanName)) {
-                      alert('Scan deleted successfully');
-                      
-                      // Clear global results if they match the deleted scan
-                      if (window.lastScanResults && window.lastScanResults[0] && window.lastScanResults[0].scanFolder === scanName) {
-                          window.lastScanResults = null;
-                      }
-                      
-                      // Small delay to ensure FS update, then reload
-                      setTimeout(() => loadHistory(), 500);
-                  } else {
-                       // Should not happen, but fallback
-                       alert('Scan deletion processed but status unknown.');
-                       loadHistory();
+              // Check for success in response
+              if (res.ok && (data.deleted?.includes(scanName) || data.status === 'success')) {
+                  alert('Scan deleted successfully');
+                  if (window.lastScanResults && window.lastScanResults[0]?.scanFolder === scanName) {
+                      window.lastScanResults = null;
                   }
+                  setTimeout(() => loadHistory(), 300);
               } else {
-                  throw new Error(data.error || 'Delete request failed');
+                  alert('Delete failed. The folder might be locked by the system or already deleted.');
+                  loadHistory();
               }
           } catch (e) {
               hideLoading();
-              alert('Failed to delete scan: ' + e.message);
+              alert('Delete failed: ' + e.message);
           }
       }
  

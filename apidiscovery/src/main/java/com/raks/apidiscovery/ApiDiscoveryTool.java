@@ -54,6 +54,7 @@ public class ApiDiscoveryTool {
         // Ignore List & State
         server.createContext("/api/ignore", new IgnoreListHandler());
         server.createContext("/api/state", new StateHandler());
+        server.createContext("/api/correlate", new TrafficCorrelationHandler());
         
         server.setExecutor(null); 
         server.start();
@@ -380,7 +381,19 @@ public class ApiDiscoveryTool {
                     new File(scanDir, "scan_results.json").toPath(), 
                     jsonResults.getBytes(StandardCharsets.UTF_8)
                 );
-                System.out.println("Saved scan results to: " + scanDir.getAbsolutePath());
+                
+                // Save Metadata
+                Map<String, Object> meta = new java.util.HashMap<>();
+                meta.put("source", source);
+                meta.put("timestamp", System.currentTimeMillis());
+                meta.put("count", reports.size());
+                meta.put("type", (reports.size() > 1) ? "API Discovery" : "Quick Scan");
+                java.nio.file.Files.write(
+                    new File(scanDir, "scan_metadata.json").toPath(), 
+                    gson.toJson(meta).getBytes(StandardCharsets.UTF_8)
+                );
+                
+                System.out.println("Saved scan results and metadata to: " + scanDir.getAbsolutePath());
             } catch (Exception e) {
                 System.err.println("Failed to save scan results: " + e.getMessage());
                 e.printStackTrace();
@@ -394,21 +407,18 @@ public class ApiDiscoveryTool {
             try {
                  File tempDir = getTempDir();
                  File scanDir = new File(tempDir, scanId);
-                 if (scanDir.exists()) {
+                     // Preserving repositories for Traffic Correlation feature
+                     /*
                      File[] files = scanDir.listFiles();
                      if (files != null) {
                          for (File file : files) {
                              if (file.isDirectory()) {
-                                 if (!deleteDirectory(file)) {
-                                     System.gc();
-                                     try { Thread.sleep(2000); } catch (Exception e) {}
-                                     if (!deleteDirectory(file)) {
-                                     }
-                                 }
+                                 deleteDirectory(file);
                              }
                          }
                      }
-                 }
+                     */
+
             } catch (Exception e) {
                 System.err.println("Cleanup failed: " + e.getMessage());
             }
@@ -537,12 +547,15 @@ public class ApiDiscoveryTool {
                 try {
                     String query = t.getRequestURI().getQuery();
                     String scanName = null;
+                    String fileName = "scan_results.json";
                     if (query != null) {
                         for (String param : query.split("&")) {
                             String[] pair = param.split("=");
                             if (pair.length == 2) {
                                 if ("scan".equals(pair[0]) || "scanName".equals(pair[0])) {
                                     scanName = pair[1];
+                                } else if ("file".equals(pair[0]) || "fileName".equals(pair[0])) {
+                                    fileName = pair[1];
                                 }
                             }
                         }
@@ -557,8 +570,8 @@ public class ApiDiscoveryTool {
                         sendError(t, 404, "{\"error\": \"Scan folder not found\"}");
                         return;
                     }
-                    File resultsFile = new File(scanFolder, "scan_results.json");
-                    if (resultsFile.exists()) {
+                    File resultsFile = new File(scanFolder, fileName);
+                    if (resultsFile.exists() && !fileName.contains("..")) {
                          byte[] bytes = java.nio.file.Files.readAllBytes(resultsFile.toPath());
                          t.getResponseHeaders().set("Content-Type", "application/json");
                          t.sendResponseHeaders(200, bytes.length);
@@ -762,7 +775,7 @@ public class ApiDiscoveryTool {
                     // If JSON input, extract a specific field? For now assume raw text or JSON body is the traffic list
                     // Actually, let's assume raw text payload for simplicity as per plan "Paste IPs"
                     
-                    List<Map<String, String>> results = TrafficCorrelator.correlate(trafficData, getTempDir().getAbsolutePath());
+                    List<Map<String, Object>> results = TrafficCorrelator.correlate(trafficData, getTempDir().getAbsolutePath());
                     
                     Gson gson = new Gson();
                     String jsonResponse = gson.toJson(results);

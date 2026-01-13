@@ -45,7 +45,7 @@ public class ApiDiscoveryService {
         return GitService.fetchProjects(baseUrl, token, groupId);
     }
 
-    public static List<Map<String, String>> correlateTraffic(String trafficData, String tempDir) {
+    public static List<Map<String, Object>> correlateTraffic(String trafficData, String tempDir) {
         return TrafficCorrelator.correlate(trafficData, tempDir);
     }
     // ------------------------------------
@@ -220,11 +220,24 @@ public class ApiDiscoveryService {
             File resultsFile = new File(outputDir, "scan_results.json");
             String json = gson.toJson(reports);
             java.nio.file.Files.write(resultsFile.toPath(), json.getBytes());
-            java.nio.file.Files.write(resultsFile.toPath(), json.getBytes());
-            // System.out.println("Saved consolidated report: " + resultsFile.getAbsolutePath());
+            
+            // Save metadata as well
+            Map<String, Object> meta = new HashMap<>();
+            meta.put("scan_id", scanFolder);
+            meta.put("source", source);
+            meta.put("timestamp", new java.util.Date().toString());
+            meta.put("projects_count", reports.size());
+            meta.put("type", (reports.size() > 1) ? "API Discovery" : "Quick Scan");
+            
+            File metaFile = new File(outputDir, "scan_metadata.json");
+            java.nio.file.Files.write(metaFile.toPath(), gson.toJson(meta).getBytes());
+            
+            // System.out.println("Saved consolidated report and metadata: " + outputDir.getAbsolutePath());
         } catch (IOException e) {
             // System.err.println("Failed to save report: " + e.getMessage());
         }
+        // REMOVED: Deletion of subdirectories to support Traffic Correlation deep search
+        /*
         File[] everything = outputDir.listFiles();
         if (everything != null) {
             for (File file : everything) {
@@ -243,6 +256,7 @@ public class ApiDiscoveryService {
                 }
             }
         }
+        */
         progress.setMessage("Scan completed successfully");
         progress.setPercent(100);
         progress.setComplete(true);
