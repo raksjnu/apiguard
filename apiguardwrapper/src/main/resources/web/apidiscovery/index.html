@@ -714,6 +714,17 @@
           const identified = allResults.filter(r => (r.classification && r.classification === 'API Service') || (r.technology && r.technology.toLowerCase().includes('mule'))).length;
           const avgConf = Math.round(allResults.reduce((acc, r) => acc + (r.confidenceScore||0), 0) / (total||1));
           
+          // Sort: Confidence (DESC) then Technology (ASC)
+          allResults.sort((a, b) => {
+              const scoreA = parseFloat(a.confidenceScore || (a.governanceScore ? a.governanceScore : 0));
+              const scoreB = parseFloat(b.confidenceScore || (b.governanceScore ? b.governanceScore : 0));
+              const diff = scoreB - scoreA;
+              if (diff !== 0) return diff;
+              const tA = (a.technology || '').toLowerCase();
+              const tB = (b.technology || '').toLowerCase();
+              return tA.localeCompare(tB);
+          });
+
           resultsContainer.innerHTML = `
              <div class="summary-cards" style="display:flex; gap:20px; margin-bottom:20px;">
                 <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
