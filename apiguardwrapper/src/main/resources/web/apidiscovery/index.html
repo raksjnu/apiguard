@@ -2,621 +2,999 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>Raks API Discovery & Governance</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Raks API Discovery Tool</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --primary-color: #6B3FA0; /* Raks Purple */
-            --secondary-color: #8A4EBC;
-            --bg-color: #f4f6f9;
+            --primary-color: #663399; /* Corporate Purple */
+            --secondary-color: #03dac6;
+            --bg-color: #f5f5f5;
             --card-bg: #ffffff;
             --text-color: #333;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --header-bg: #5a2d82;
+            --header-bg: #663399;
         }
+        body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); }
+        header { background-color: var(--header-bg); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
+        .brand { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        
+        .tabs { display: flex; gap: 1rem; margin-bottom: 20px; }
+        .tab { padding: 10px 20px; background: #ddd; cursor: pointer; border-radius: 4px 4px 0 0; margin-right: 5px; font-weight: bold; transition: all 0.2s ease; }
+        .tab:hover:not(.active) { background: #e0e0e0; transform: translateY(-2px); }
+        .tab.active { background: var(--primary-color); color: white; transform: translateY(0); }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            margin: 0;
-            padding: 0;
-            color: var(--text-color);
-        }
+        .card { background: var(--card-bg); border-radius: 8px; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; border: 2px solid var(--primary-color); }
+        .card h2 { margin-top: 0; color: var(--primary-color); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        
+        /* Breadcrumbs */
+        .breadcrumbs { background: #f0f0f0; padding: 10px 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9rem; border-left: 4px solid var(--primary-color); }
+        .breadcrumbs strong { color: var(--primary-color); }
+        .breadcrumbs span { color: #666; margin: 0 5px; }
 
-        header {
-            background-color: var(--header-bg);
+        /* Wizard Steps */
+        .wizard-step { display: none; }
+        .wizard-step.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        
+        button { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: all 0.2s ease; }
+        button:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(102, 51, 153, 0.3); background-color: #552b80; }
+        button:active { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(102, 51, 153, 0.3); }
+        button.secondary { background-color: #757575; }
+        button.small { padding: 5px 10px; font-size: 0.8rem; }
+        
+        /* Grid/List View */
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; max-height: 70vh; overflow-y: auto; padding: 5px; }
+        .grid-container.list-view { grid-template-columns: 1fr; }
+        
+        .grid-item { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 6px; cursor: pointer; transition: all 0.2s; position: relative; }
+        .list-view .grid-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; }
+        
+        .grid-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-color: var(--primary-color); }
+        .list-view .grid-item:hover { transform: none; background-color: #f9f9f9; }
+        
+        .grid-item.selected { background-color: #f3e5f5; border-color: var(--primary-color); border-width: 2px; }
+        
+        .grid-item h3 { margin: 0 0 5px 0; font-size: 1.1rem; }
+        .grid-item p { margin: 0; font-size: 0.9rem; color: #666; word-break: break-all; }
+        
+        /* Tables & Lists */
+        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
+        th { background-color: #f9f9f9; color: #555; }
+        
+        .progress-bar-container { width: 100%; background-color: #ddd; border-radius: 4px; margin-top: 10px; height: 10px; overflow: hidden; display: none; }
+        .progress-bar { height: 100%; background-color: var(--secondary-color); width: 0%; transition: width 0.3s; }
+
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background-color: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto; position: relative; }
+        .close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; font-weight: bold; color: #666; }
+        
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; margin-right: 5px; color: white; }
+        .badge.mule { background-color: #00a1df; }
+        .badge.spring { background-color: #6db33f; }
+        .badge.python { background-color: #ffe873; color: #333; }
+        .badge.tibco { background-color: #ce000c; }
+        
+        .view-controls { display: flex; gap: 5px; align-items: center; }
+        
+        .ignore-btn {
+            background-color: #d32f2f !important;
             color: white;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            width: 100%;
-        }
-
-        .header-inner {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0.5rem 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 1rem;
-        }
-
-        .card {
-            background: var(--card-bg);
-            border-radius: 8px;
-            padding: 1.5rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-            margin-bottom: 2rem;
-            border: 3px solid #7b2cbf;
-        }
-
-        .form-group {
-            margin-bottom: 1rem;
-        }
-
-        label {
-            display: block;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        input[type="text"] {
-            width: 100%;
-            padding: 0.75rem;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 1rem;
-        }
-
-        button {
-            background-color: var(--primary-color);
-            color: white;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
             border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 4px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 1rem;
             transition: background 0.2s;
         }
+        .ignore-btn:hover { background-color: #b71c1c !important; }
 
-        button:hover {
-            background-color: var(--secondary-color);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 8px;
-            text-align: center;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border-top: 4px solid var(--primary-color);
-            border: 3px solid #7b2cbf;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: bold;
-            color: var(--primary-color);
-        }
-
-        .stat-label {
-            color: #666;
-            margin-top: 0.5rem;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 1rem;
-        }
-
-        th, td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
-
-        th {
-            background-color: #f8f9fa;
-            font-weight: 600;
-        }
-
-        .badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.85rem;
-            font-weight: 600;
-        }
-
-        .badge-api { background-color: #d4edda; color: #155724; }
-        .badge-batch { background-color: #fff3cd; color: #856404; }
-        .badge-lib { background-color: #e2e3e5; color: #383d41; }
-
-        .score-high { color: var(--success-color); font-weight: bold; }
-        .score-med { color: var(--warning-color); font-weight: bold; }
-        .score-low { color: #999; font-weight: bold; }
-
-        .details-row {
-            background-color: #f8f9fa;
+        /* Loading Overlay */
+        #loading-overlay {
             display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 2000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
         }
-
-        .details-content {
-            padding: 1rem;
-            margin-left: 1rem;
-            border-left: 3px solid var(--primary-color);
-        }
+        /* Spinner & Progress */
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         
-        .loading {
-            display: none;
+        .progress-container { width: 100%; background-color: #fff; border: 2px solid var(--primary-color) !important; border-radius: 4px; margin-top: 10px; height: 12px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--primary-color); width: 0%; transition: width 0.3s ease; }
+        
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 2px solid var(--primary-color) !important;
+            max-width: 500px;
+            width: 90%;
             text-align: center;
-            padding: 2rem;
         }
     </style>
 </head>
 <body>
-    <header>
-        <!-- DEPLOY CHECK MARKER -->
-        <div class="header-inner">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <img src="/apiguard/apidiscovery/assets/logo.svg" alt="RAKS Logo" style="height: 40px; background: white; padding: 2px; border-radius: 4px;">
-                <div>
-                    <div style="font-size: 1.5rem; font-weight: bold;">API Discovery Tool</div>
-                </div>
-            </div>
-            <div>
-                <a href="/apiguard/apidiscovery/guide.html" target="_blank" style="background-color: rgba(255,255,255,0.2); color: white; text-decoration: none; padding: 0.5rem 1rem; border-radius: 4px; font-weight: 500; display: flex; align-items: center; gap: 0.5rem; transition: background 0.2s;">
-                    <span>📘</span> Guide / Help
-                </a>
-            </div>
-        </div>
-    </header>
 
-    <div class="container">
-        <!-- Input Section -->
+<header>
+    <div class="brand">
+        <!-- Base64 Logo for robustness -->
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj4KICA8cGF0aCBkPSJNIDE1IDIwIEwgNDAgMTAgTCA2NSAyMCBMIDY1IDQ1IFEgNjUgNjAgNDAgNzUgUSAxNSA2MCAxNSA0NSBaIiBmaWxsPSIjNjYzMzk5IiBzdHJva2U9IiM2NjMzOTkiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjQwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlJBS1M8L3RleHQ+Cjwvc3ZnPg==" alt="Raks Logo" style="height: 40px;">
+        Raks API Discovery
+    </div>
+    <div>
+        <a href="guide.html" target="_blank" style="color: white; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 5px; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">
+            📘 Guide / Help
+        </a>
+    </div>
+</header>
+
+<div class="container">
+    
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('quick')">⚡ Quick Scan</div>
+        <div class="tab" onclick="switchTab('discovery')">🔍 API Discovery</div>
+        <div class="tab" onclick="switchTab('correlation')">🔗 Traffic Correlation</div>
+        <div class="tab" onclick="switchTab('history')">📜 Scan History</div>
+        <div class="tab" onclick="switchTab('settings')">⚙️ Settings</div>
+    </div>
+
+    <!-- TAB: DISCOVERY (WIZARD) -->
+    <div id="tab-discovery" class="tab-content" style="display:none;">
         <div class="card">
-            <h2>🔍 Smart Discovery Scan</h2>
-            <p style="color: #666; margin-bottom: 1rem;">
-                Enter a local directory path OR a GitLab URL. We'll verify and scan it automatically.
-            </p>
-            <div class="form-group">
-                <label for="scanSource">Source (Local Path or GitLab URL)</label>
-                <input type="text" id="scanSource" placeholder="e.g. C:\raks\workspace OR https://gitlab.com/raks-group" value="https://gitlab.com/raks-group" style="width: 100%; box-sizing: border-box;">
-            </div>
-            <div class="form-group">
-                <label for="accessToken">GitLab Access Token (Optional for Local)</label>
-                <input type="password" id="accessToken" placeholder="glpat-...">
-            </div>
-            <button onclick="runSmartScan()">🚀 Start Discovery</button>
-        </div>
-
-        <!-- Manage Previous Scans Section -->
-        <div class="card">
-            <h2>📁 Manage Previous Scans</h2>
-            <p style="color: #666; margin-bottom: 1rem;">
-                View and manage previously scanned results. Select scans to delete or keep for comparison.
-            </p>
-            <div style="margin-bottom: 1rem;">
-                <button onclick="loadPreviousScans()" style="background-color: #6c757d;">🔄 Refresh List</button>
-                <button onclick="deleteSelectedScans()" style="background-color: #dc3545; margin-left: 0.5rem;">🗑️ Delete Selected</button>
-            </div>
-            <div id="scanListContainer" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 4px; padding: 1rem;">
-                <p style="color: #999; text-align: center;">Click "Refresh List" to load previous scans</p>
-            </div>
-        </div>
-
-        <!-- Loading Modal Popup -->
-        <div id="loadingModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 9999; justify-content: center; align-items: center;">
-            <div style="background: white; padding: 2rem 3rem; border-radius: 12px; text-align: center; min-width: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.3);">
-                <div class="spinner" style="margin: 0 auto 1rem;"></div>
-                <h3 id="loadingTitle" style="margin-bottom: 0.5rem; color: #333;">Scanning repositories...</h3>
-                <p id="loadingMessage" style="color: #666; margin-bottom: 1rem;">Please wait, this may take a minute.</p>
-                <div style="background: #e0e0e0; border-radius: 10px; height: 20px; overflow: hidden; margin-bottom: 0.5rem;">
-                    <div id="progressBar" style="background: var(--primary-color); height: 100%; width: 0%; transition: width 0.3s;"></div>
-                </div>
-                <p id="progressPercent" style="font-weight: bold; color: var(--primary-color);">0%</p>
-            </div>
-        </div>
-
-        <!-- Dashboard -->
-        <div id="resultsArea" style="display: none;">
-            <div style="margin-bottom: 1rem; padding: 0.75rem; background: #f0f0f0; border-radius: 4px;">
-                <span id="scanFolderName" style="color: #333; font-weight: bold; font-size: 1.2rem;"></span>
-            </div>
             
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalRepos">0</div>
-                    <div class="stat-label">Total Repositories</div>
+            <!-- Step 1: Connect -->
+            <div id="step-1" class="wizard-step active">
+                <h3>Step 1: Connect to GitLab</h3>
+                <p>Ensure your credentials are configured in the <strong>Settings</strong> tab.</p>
+                <div class="info-box">
+                     <p>Target: <strong id="disp-gitlab-url">Loading...</strong></p>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="identifiedApis">0</div>
-                    <div class="stat-label">Identified APIs</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="avgConfidence">0%</div>
-                    <div class="stat-label">Avg Confidence</div>
-                </div>
+                <button onclick="fetchGroups()">Fetch Groups &rarr;</button>
             </div>
 
-            <div class="card">
-                <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Discovery Results</h2>
-                <table id="resultsTable">
-                    <thead>
-                        <tr>
-                            <th>Repository</th>
-                            <th>Technology</th>
-                            <th>Classification</th>
-                            <th>Confidence</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <!-- Rows will be added here -->
-                    </tbody>
-                </table>
+            <!-- Step 2: Select Group -->
+            <div id="step-2" class="wizard-step">
+                <h2>Step 2: Select a Group</h2>
+                <div class="breadcrumbs" id="bc-step-2">Connected to GitLab <span>&gt;</span> <strong>Select Group</strong></div>
+                
+                <button class="secondary" onclick="prevStep(1)">&larr; Back</button>
+                <p>Select the group you want to scan.</p>
+                
+                <div style="margin-bottom: 10px; display: flex; gap: 10px;">
+                     <input type="text" id="manualGroupInput" placeholder="Or enter Group Name/ID (e.g. raksjnu)">
+                     <button onclick="manualGroupSelect()" style="padding: 5px 10px; font-size: 0.9rem;">Go</button>
+                </div>
+                <div id="groups-grid" class="grid-container"></div>
+            </div>
+
+            <!-- Step 3: Select Projects -->
+            <div id="step-3" class="wizard-step">
+                <h2>
+                    Step 3: Select Projects
+                    <div class="view-controls">
+                        <button class="small secondary" onclick="setViewMode('grid')" title="Grid View">Tiles</button>
+                        <button class="small secondary" onclick="setViewMode('list')" title="List View">List</button>
+                    </div>
+                </h2>
+                <div class="breadcrumbs" id="bc-step-3">GitLab <span>&gt;</span> <span id="bc-group-name">Group</span> <span>&gt;</span> <strong>Select Projects</strong></div>
+                
+                <button class="secondary" onclick="prevStep(2)">&larr; Back</button>
+                <p>Select one or more projects to include in the scan.</p>
+                
+                <div style="margin-bottom: 10px;">
+                    <button onclick="selectAllProjects()">Select All</button>
+                    <button class="secondary" onclick="deselectAllProjects()">Deselect All</button>
+                </div>
+                
+                <div id="projects-grid" class="grid-container"></div>
+                
+                <br>
+                <button onclick="nextStep(4)">Configure Scan &rarr;</button>
+            </div>
+
+            <!-- Step 4: Configure & Run -->
+            <div id="step-4" class="wizard-step">
+                <h2>Step 4: Scan Configuration</h2>
+                <div class="breadcrumbs" id="bc-step-4">GitLab <span>&gt;</span> <span id="bc-group-name-4">Group</span> <span>&gt;</span> Projects Selected <span>&gt;</span> <strong>Configure</strong></div>
+                
+                <button class="secondary" onclick="prevStep(3)">&larr; Back</button>
+                
+                <div class="form-group" style="margin-top: 20px;">
+                    <label>Scan Mode</label>
+                    <select id="scanMode">
+                        <option value="full">Full Analysis (Code + Metadata)</option>
+                        <option value="metadata">Metadata Only (Fast - Owner, Certs, Docs)</option>
+                    </select>
+                </div>
+                
+                <div id="scan-review">
+                    <p><strong>Selected Target:</strong> <span id="review-target-count">0</span> Projects</p>
+                    <div id="review-project-list" style="max-height: 150px; overflow-y: auto; background: #fff; border: 1px solid #eee; padding: 10px; margin-bottom: 20px; font-size: 0.9rem; border-radius: 4px;"></div>
+                </div>
+
+                <button onclick="startWizardScan()">🚀 Start Scan</button>
+                
+                <div id="scan-progress-container" class="progress-bar-container">
+                    <div id="scan-progress-bar" class="progress-bar"></div>
+                </div>
+                <div id="scan-status-text" style="margin-top: 10px; font-style: italic;"></div>
+            </div>
+
+            <!-- Step 5: Results -->
+            <div id="step-5" class="wizard-step">
+                <h2>Step 5: Scan Results</h2>
+                <div class="breadcrumbs" id="bc-step-5">GitLab <span>&gt;</span> Group <span>&gt;</span> Projects <span>&gt;</span> Configure <span>&gt;</span> <strong>Results</strong></div>
+                
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h3 style="color: var(--primary-color);">🎉 Scanning Complete!</h3>
+                    <p>Here are the immediate results from your selected projects.</p>
+                </div>
+                
+                <div id="results-container" class="grid-container">
+                    <!-- Results injected here -->
+                </div>
+                
+                <div style="margin-top: 30px; text-align: center;">
+                    <button onclick="switchTab('history')">View Full History</button>
+                    <button class="secondary" onclick="location.reload()">Start New Scan</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <script>
-        let currentScanId = null;
-        
-        async function runSmartScan() {
-            const source = document.getElementById('scanSource').value;
-            const token = document.getElementById('accessToken').value;
+    <!-- TAB: QUICK SCAN -->
+    <div id="tab-quick" class="tab-content">
+        <div class="card">
+            <h2>⚡ Quick Scan</h2>
+            <p>Directly scan a single repository without browsing groups.</p>
             
-            if (!source) {
-                alert("Please enter a Source path or URL.");
-                return;
-            }
+            <div class="form-group">
+                <label>GitLab URL or Local Path</label>
+                <input type="text" id="quickSource" placeholder="https://gitlab.com/group/project.git or C:/work/repo">
+            </div>
             
-            document.getElementById('loadingModal').style.display = 'flex';
-            document.getElementById('resultsArea').style.display = 'none';
-
-            try {
-                // Call Java Backend (POST)
-                const response = await fetch('/apiguard/apidiscovery/api/scan', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ source: source, token: token })
-                });
-                
-                const data = await response.json();
-                
-                if (data.error) {
-                    alert("Scan Error: " + data.error);
-                    document.getElementById('loadingModal').style.display = 'none';
-                    return;
-                }
-                
-                // Store scan ID and start progress polling
-                currentScanId = data.scanId;
-                const progressInterval = setInterval(async () => {
-                    const progress = await checkProgress();
-                    if (progress && progress.complete) {
-                        clearInterval(progressInterval);
-                        // Reload scan list
-                        loadPreviousScans();
-                        document.getElementById('loadingModal').style.display = 'none';
-                        alert("Scan completed! Check 'Manage Previous Scans' section below to view results.");
-                    }
-                }, 1000);
-                
-            } catch (error) {
-                alert("Network/Server Error: " + error);
-                document.getElementById('loadingModal').style.display = 'none';
-            }
-        }
-        
-        async function checkProgress() {
-            try {
-                const response = await fetch('/apiguard/apidiscovery/api/progress?scanId=' + currentScanId);
-                const progress = await response.json();
-                
-                if (progress.message) {
-                    document.getElementById('loadingMessage').textContent = progress.message;
-                }
-                if (progress.percent !== undefined) {
-                    document.getElementById('progressBar').style.width = progress.percent + '%';
-                    document.getElementById('progressPercent').textContent = progress.percent + '%';
-                }
-                
-                return progress;
-            } catch (error) {
-                // Ignore errors during progress polling
-                return null;
-            }
-        }
-
-        function renderResults(data) {
-            const tbody = document.querySelector('#resultsTable tbody');
-            tbody.innerHTML = '';
-
-            let apiCount = 0;
-            let totalScore = 0;
-            
-            data.forEach((repo, index) => {
-                if(repo.classification === 'API Service') apiCount++;
-                totalScore += repo.confidenceScore;
-
-                // Main Row
-                const row = document.createElement('tr');
-                
-                let badgeClass = 'badge-lib';
-                if(repo.classification === 'API Service') badgeClass = 'badge-api';
-                if(repo.classification.includes('Batch')) badgeClass = 'badge-batch';
-                
-                let scoreClass = 'score-low';
-                if(repo.confidenceScore >= 70) scoreClass = 'score-high';
-                else if(repo.confidenceScore > 0) scoreClass = 'score-med';
-
-                row.innerHTML = `
-                    <td><strong>${repo.repoName}</strong><br><small style="color:#666">${repo.repoPath}</small></td>
-                    <td>${repo.technology}</td>
-                    <td><span class="badge ${badgeClass}">${repo.classification}</span></td>
-                    <td class="${scoreClass}">${repo.confidenceScore}%</td>
-                    <td><button style="padding:0.25rem 0.5rem; font-size:0.8rem;" onclick="toggleDetails(${index})">Details</button></td>
-                `;
-                tbody.appendChild(row);
-
-                // Detail Row
-                const detailRow = document.createElement('tr');
-                detailRow.id = `detail-${index}`;
-                detailRow.style.display = 'none';
-
-                detailRow.innerHTML = `
-                    <td colspan="5">
-                        <div class="details-content">
-                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
-                                <!-- Column 1: Evidence & Capabilities -->
-                                <div>
-                                    <h4 style="margin-top:0; color: var(--primary-color);">🔍 Identification & Capabilities</h4>
-                                    <strong>Evidence:</strong>
-                                    <ul style="margin-top:0.5rem; padding-left:1.2rem;">${repo.evidence.map(e => `<li>${e}</li>`).join('')}</ul>
-                                    <strong>Capabilities:</strong>
-                                     <ul style="margin-top:0.5rem; padding-left:1.2rem;">${repo.indicators.length > 0 ? repo.indicators.map(i => `<li>${i}</li>`).join('') : '<li>No API signatures found</li>'}</ul>
-                                </div>
-
-                                <!-- Column 2: Governance Dashboard -->
-                                <div>
-                                    <h4 style="margin-top:0; color: var(--primary-color);">⚖️ Governance Standards</h4>
-                                    <div style="background: white; padding: 1rem; border-radius: 8px; border: 1px solid #eee;">
-                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Standards', 'RESTful Architecture')}
-                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Documentation', 'API Documentation')}
-                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Gateway', 'API Gateway Managed')}
-                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Security', 'Security Enforcement')}
-                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Versioning', 'Semantic Versioning')}
-                                        ${renderGovernanceCheck(repo.metadata, 'Governance: Logging', 'Centralized Logging')}
-                                    </div>
-                                </div>
-
-                                <!-- Column 3: Other Metadata -->
-                                <div>
-                                    <h4 style="margin-top:0; color: var(--primary-color);">📋 Risk & Settings</h4>
-                                    ${renderOtherMetadata(repo.metadata)}
-                                </div>
-                            </div>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(detailRow);
-            });
-
-            // Update Stats
-            document.getElementById('totalRepos').innerText = data.length;
-            document.getElementById('identifiedApis').innerText = apiCount;
-            document.getElementById('avgConfidence').innerText = data.length > 0 ? Math.round(totalScore / data.length) + '%' : '0%';
-        }
-        
-        function renderGovernanceCheck(metadata, key, label) {
-            const exists = metadata && metadata[key];
-            const statusIcon = exists ? '✅' : '❌';
-            const statusColor = exists ? 'green' : '#dc3545';
-            const statusText = exists ? metadata[key] : 'Not Detected';
-            
-            return `
-                <div style="margin-bottom: 0.75rem; border-bottom: 1px solid #f0f0f0; padding-bottom: 0.5rem;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem;">
-                        <span style="font-weight:600; color:#444;">${label}</span>
-                        <span style="font-size:1.2rem;">${statusIcon}</span>
-                    </div>
-                    <div style="font-size:0.85rem; color:${statusColor};">${statusText}</div>
+            <div class="form-group" style="display:flex; gap:20px;">
+                <div style="flex:1;">
+                     <label>Scan Mode</label>
+                     <select id="quickMode">
+                         <option value="full">Full Analysis</option>
+                         <option value="metadata">Metadata Only</option>
+                     </select>
                 </div>
-            `;
-        }
-
-        function renderOtherMetadata(metadata) {
-            if (!metadata || Object.keys(metadata).length === 0) return '<p>No data.</p>';
+            </div>
             
-            let html = '<ul style="padding-left:1.2rem;">';
-            for (const [key, value] of Object.entries(metadata)) {
-                if (key.startsWith('Governance:')) continue; // Skip governance items as they are in the middle column
-                
-                let color = '#333';
-                if (key.includes('Risk') && !value.includes('Safe')) color = '#dc3545'; // Red for Risk
-                if (value.includes('Safe') || value.includes('Best Practice')) color = '#28a745'; // Green for Safe
-                
-                html += `<li style="margin-bottom:0.5rem;"><strong>${key}:</strong> <span style="color:${color}">${value}</span></li>`;
-            }
-            html += '</ul>';
-            return html;
-        }
-
-        function toggleDetails(index) {
-            const row = document.getElementById(`detail-${index}`);
-            if (row.style.display === 'table-row') {
-                row.style.display = 'none';
-            } else {
-                row.style.display = 'table-row';
-            }
-        }
-
-        async function loadPreviousScans() {
-            try {
-                // Show loading modal
-                document.getElementById('loadingTitle').innerText = "Loading Scans...";
-                document.getElementById('loadingMessage').innerText = "Fetching previous scan results...";
-                document.getElementById('progressBar').style.display = 'none'; // Hide progress bar for simple load
-                document.getElementById('loadingModal').style.display = 'flex';
-
-                const response = await fetch('/apiguard/apidiscovery/api/scans/list');
-                const scans = await response.json();
-                
-                const container = document.getElementById('scanListContainer');
-                
-                if (scans.length === 0) {
-                    container.innerHTML = '<p style="color: #999; text-align: center;">No previous scans found</p>';
-                    return;
-                }
-                
-                let html = '<div style="display: flex; flex-direction: column; gap: 0.5rem;">';
-                scans.forEach(scan => {
-                    const date = new Date(scan.lastModified);
-                    const dateStr = date.toLocaleString('en-US', { 
-                        year: 'numeric', 
-                        month: 'numeric', 
-                        day: 'numeric', 
-                        hour: 'numeric', 
-                        minute: 'numeric', 
-                        second: 'numeric',
-                        timeZoneName: 'short' 
-                    });
-                    html += `
-                        <label style="display: flex; align-items: center; padding: 0.5rem; border: 1px solid #eee; border-radius: 4px; background: #f9f9f9;">
-                            <input type="checkbox" value="${scan.name}" style="margin-right: 0.75rem;">
-                            <div style="flex: 1;">
-                                <strong>${scan.name}</strong><br>
-                                <small style="color: #666;">${dateStr}</small>
-                            </div>
-                            <button onclick="viewScanResults('${scan.name}'); event.stopPropagation();" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; background-color: var(--primary-color);">👁️ View Results</button>
-                        </label>
-                    `;
-                });
-                html += '</div>';
-                container.innerHTML = html;
-            } catch (error) {
-                alert('Failed to load scans: ' + error.message);
-            } finally {
-                // Hide modal
-                document.getElementById('loadingModal').style.display = 'none';
-                document.getElementById('progressBar').style.display = 'block'; // Reset for scans
-            }
-        }
-
-        async function deleteSelectedScans() {
-            const checkboxes = document.querySelectorAll('#scanListContainer input[type="checkbox"]:checked');
-            const selectedFolders = Array.from(checkboxes).map(cb => cb.value);
+            <button onclick="startQuickScan()">🚀 Start Discovery</button>
             
-            if (selectedFolders.length === 0) {
-                alert('Please select at least one scan to delete');
-                return;
-            }
-            
-            if (!confirm(`Are you sure you want to delete ${selectedFolders.length} scan(s)?\n\n${selectedFolders.join('\n')}\n\nThis action cannot be undone.`)) {
-                return;
-            }
-            
-            try {
-                const response = await fetch('/apiguard/apidiscovery/api/scans/delete', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ folders: selectedFolders })
-                });
-                
-                const result = await response.json();
-                
-                if (result.deleted.length > 0) {
-                    alert(`Successfully deleted ${result.deleted.length} scan(s)`);
-                }
-                if (result.failed.length > 0) {
-                    alert(`Failed to delete ${result.failed.length} scan(s): ${result.failed.join(', ')}`);
-                }
-                
-                // Reload the list
-                loadPreviousScans();
-            } catch (error) {
-                alert('Failed to delete scans: ' + error.message);
-            }
-        }
+            <div id="quick-results-container" style="margin-top: 30px;"></div>
+        </div>
+    </div>
 
-        async function viewScanResults(scanName) {
-            try {
-                document.getElementById('loadingModal').style.display = 'flex';
-                document.getElementById('resultsArea').style.display = 'none';
-                
-                const response = await fetch('/apiguard/apidiscovery/api/scans/view?scanName=' + encodeURIComponent(scanName));
-                const data = await response.json();
-                
-                if (data.error) {
-                    alert('Error loading scan: ' + data.error);
-                    document.getElementById('loadingModal').style.display = 'none';
-                    return;
-                }
-                
-                // Handle new response format
-                const reports = data.reports || data;
-                const actualScanName = data.scanFolder || scanName;
-                
-                // Display scan folder name
-                document.getElementById('scanFolderName').textContent = '📁 Scan: ' + actualScanName;
-                
-                // Display results using existing renderResults function
-                renderResults(reports);
-                document.getElementById('resultsArea').style.display = 'block';
-                document.getElementById('loadingModal').style.display = 'none';
-                
-                // Scroll to results
-                document.getElementById('resultsArea').scrollIntoView({ behavior: 'smooth' });
-            } catch (error) {
-                alert('Failed to load scan results: ' + error.message);
-                document.getElementById('loadingModal').style.display = 'none';
-            }
-        }
-        
-        // Load configuration on page load
-        window.addEventListener('DOMContentLoaded', async function() {
-            console.log('[API Discovery] Loading configuration...');
-            try {
-                const response = await fetch('/apiguard/apidiscovery/api/config');
-                if (!response.ok) {
-                    console.error('[API Discovery] Config fetch failed:', response.status);
-                    return;
-                }
-                const config = await response.json();
-                console.log('[API Discovery] Config loaded:', config);
-                
-                // Populate default values
-                const sourceField = document.getElementById('scanSource');
-                const tokenField = document.getElementById('accessToken');
-                
-                if (config.defaultGroup && sourceField) {
-                    sourceField.value = config.defaultGroup;
-                    console.log('[API Discovery] Set default group:', config.defaultGroup);
-                }
-                if (config.defaultToken && tokenField) {
-                    tokenField.value = config.defaultToken;
-                    console.log('[API Discovery] Set default token (length):', config.defaultToken.length);
-                }
-            } catch (error) {
-                console.error('[API Discovery] Failed to load config:', error);
-                // Continue without defaults
-            }
+    <!-- TAB: SETTINGS -->
+    <div id="tab-settings" class="tab-content" style="display:none;">
+        <div class="card">
+            <h2>⚙️ Configuration</h2>
+            <p>Configure your global GitLab credentials here. These will be used for all scans.</p>
+            
+            <div class="form-group">
+                <label>GitLab Base URL</label>
+                <input type="text" id="setting-url" placeholder="https://gitlab.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Personal Access Token</label>
+                <input type="password" id="setting-token" placeholder="glpat-...">
+            </div>
+            
+            <button onclick="saveSettings()">💾 Save Configuration</button>
+            <span id="save-msg" style="margin-left:10px; color:green; display:none;">Saved!</span>
+        </div>
+    </div>
+
+    <!-- TAB: CORRELATION -->
+    <div id="tab-correlation" class="tab-content" style="display:none;">
+        <div class="card">
+            <h2>Traffic Correlation Engine</h2>
+            <p>Paste network traffic logs (IPs, Hostnames, or Domains) to find which Repository they belong to.</p>
+            <div class="form-group">
+                <textarea id="trafficInput" rows="10" placeholder="192.168.1.50&#10;api.finance.raks.com&#10;payment-service-prod"></textarea>
+            </div>
+            <button onclick="runCorrelation()">Analyze Traffic</button>
+            <div id="correlation-results" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <!-- TAB: HISTORY -->
+    <div id="tab-history" class="tab-content" style="display:none;">
+        <div class="card">
+            <h2>Scan History</h2>
+            
+             <div class="stats-container" style="display:flex; gap:20px; align-items:center; margin-bottom: 20px;">
+                <div class="stat-card" style="background:#eee; padding:10px; border-radius:4px;">
+                    <div class="value" id="total-scans" style="font-weight:bold;font-size:1.2rem;">0</div>
+                    <div class="label" style="font-size:0.8rem;">Total Scans</div>
+                </div>
+                <div class="stat-card" style="background:#eee; padding:10px; border-radius:4px;">
+                    <div class="value" id="ignored-count" style="font-weight:bold;font-size:1.2rem;">0</div>
+                    <div class="label" style="font-size:0.8rem;">Ignored Items</div>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0; display: flex; gap: 10px; justify-content: flex-end;">
+                <button class="secondary" onclick="exportWorkspace()">💾 Export Workspace</button>
+                <button class="secondary" onclick="document.getElementById('import-file').click()">📂 Import Workspace</button>
+                <input type="file" id="import-file" style="display: none;" onchange="importWorkspace(this)">
+            </div>
+
+            <button onclick="loadHistory()">Refresh List</button>
+            <table id="history-table">
+                <thead><tr><th>Scan ID</th><th>Date</th><th>Action</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+ 
+ </div>
+ 
+ <!-- Modals -->
+ <div id="resultsModal" class="modal">
+     <div class="modal-content">
+         <span class="close-btn" onclick="document.getElementById('resultsModal').style.display='none'">&times;</span>
+         <h2 id="modalTitle">Scan Results</h2>
+         <div id="modalBody"></div>
+         <button onclick="document.getElementById('resultsModal').style.display='none'" style="margin-top:20px;">Close</button>
+     </div>
+ </div>
+
+ <div id="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <h2 style="color: var(--primary-color);">Processing...</h2>
+        <p id="loading-text" style="color: #666;">Please wait...</p>
+    </div>
+ </div>
+ 
+ <script>
+     let currentStep = 1;
+     let selectedGroup = null;
+     let selectedProjects = [];
+     
+     // --- UI Controls ---
+     function switchTab(tabName) {
+         document.querySelectorAll('.tab-content').forEach(d => d.style.display = 'none');
+         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+         document.getElementById('tab-' + tabName).style.display = 'block';
+         event.currentTarget.classList.add('active');
+         if(tabName === 'history') loadHistory();
+         
+         // If moving to discovery, update display
+         if(tabName === 'discovery') {
+            document.getElementById('disp-gitlab-url').innerText = localStorage.getItem('apiguard_url') || 'https://gitlab.com';
+         }
+         // If moving to settings, populate
+         if(tabName === 'settings') {
+            document.getElementById('setting-url').value = localStorage.getItem('apiguard_url') || 'https://gitlab.com';
+            document.getElementById('setting-token').value = localStorage.getItem('apiguard_token') || '';
+         }
+     }
+
+     function setViewMode(mode) {
+         const grid = document.getElementById('projects-grid');
+         if(mode === 'list') grid.classList.add('list-view');
+         else grid.classList.remove('list-view');
+     }
+
+     function showStep(step) {
+         document.querySelectorAll('.wizard-step').forEach(d => d.classList.remove('active'));
+         document.getElementById('step-' + step).classList.add('active');
+         currentStep = step;
+     }
+     function nextStep(step) { 
+         if(step === 4) populateReviewList();
+         showStep(step); 
+     }
+     function prevStep(step) { showStep(step); }
+     
+     function populateReviewList() {
+        const container = document.getElementById('review-project-list');
+        if(!container) return;
+        container.innerHTML = '';
+        selectedProjects.forEach(p => {
+             const div = document.createElement('div');
+             div.style.padding = '4px 0';
+             div.style.borderBottom = '1px solid #f9f9f9';
+             div.innerText = '• ' + p.name;
+             container.appendChild(div);
         });
-    </script>
-</body>
-</html>
+     }
+
+     // --- API Utils ---
+     function getApiPath(endpoint) {
+        return window.location.pathname.includes('apiguard') 
+            ? '/apiguard/apidiscovery/api' + endpoint 
+            : '/api' + endpoint; // local fallback
+     }
+     
+     // --- Settings Logic ---
+     function saveSettings() {
+        const url = document.getElementById('setting-url').value;
+        const token = document.getElementById('setting-token').value;
+        localStorage.setItem('apiguard_url', url);
+        localStorage.setItem('apiguard_token', token);
+        
+        const msg = document.getElementById('save-msg');
+        msg.style.display = 'inline';
+        setTimeout(() => msg.style.display = 'none', 2000);
+     }
+     
+     function getSettings() {
+        const url = localStorage.getItem('apiguard_url') || 'https://gitlab.com';
+        const token = localStorage.getItem('apiguard_token');
+        if(!token) {
+            alert("Please configure your Access Token in the Settings tab first.");
+            switchTab('settings');
+            throw new Error("Missing Token"); // Stop execution
+        }
+        return { url, token };
+     }
+
+     // --- Wizard Flow ---
+     async function fetchGroups() {
+         const { url, token } = getSettings();
+
+         showLoading("Connecting to GitLab...");
+
+         try {
+             const res = await fetch(`${getApiPath('/gitlab/groups')}?token=${encodeURIComponent(token)}&baseUrl=${encodeURIComponent(url)}`);
+             if(!res.ok) throw new Error("Failed to fetch groups. Check Token/Network.");
+             const groups = await res.json();
+             
+             const grid = document.getElementById('groups-grid');
+             grid.innerHTML = '';
+             groups.forEach(g => {
+                 const div = document.createElement('div');
+                 div.className = 'grid-item';
+                 div.innerHTML = `<h3>${g.name}</h3><p>${g.full_path}</p>`;
+                 div.onclick = () => selectGroup(g);
+                 grid.appendChild(div);
+             });
+             nextStep(2);
+         } catch(e) {
+             console.error(e);
+             alert("Error: " + e.message);
+         } finally {
+             hideLoading();
+         }
+     }
+
+     function manualGroupSelect() {
+         const groupName = document.getElementById('manualGroupInput').value;
+         if(!groupName) return alert("Enter a group name");
+         selectGroup({ id: groupName, name: groupName, full_path: groupName });
+     }
+ 
+     async function selectGroup(group) {
+         selectedGroup = group;
+         // Update Breadcrumbs
+         document.getElementById('bc-group-name').innerText = group.name;
+         document.getElementById('bc-group-name-4').innerText = group.name;
+         
+         const token = document.getElementById('gitlabToken').value;
+
+         showLoading(`Fetching projects for ${group.name}...`);
+
+         try {
+             const res = await fetch(`${getApiPath('/gitlab/projects')}?token=${encodeURIComponent(token)}&groupId=${group.id}`);
+             const projects = await res.json();
+             
+             const grid = document.getElementById('projects-grid');
+             grid.innerHTML = '';
+             selectedProjects = [];
+             
+             if(projects.length === 0) grid.innerHTML = '<p>No projects found.</p>';
+
+             projects.forEach(p => {
+                 const div = document.createElement('div');
+                 div.className = 'grid-item';
+                 div.innerHTML = `
+                     <div>
+                        <h3>${p.name}</h3>
+                        <p>${p.path_with_namespace || p.web_url}</p>
+                     </div>
+                     <button class="ignore-btn" onclick="event.stopPropagation(); ignoreItem('${p.http_url_to_repo}', this)">🚫 Ignore</button>
+                 `;
+                 div.dataset.id = p.id;
+                 div.onclick = () => toggleProjectSelection(div, p);
+                 grid.appendChild(div);
+             });
+             nextStep(3);
+         } catch(e) {
+             alert("Error fetching projects: " + e.message);
+         } finally {
+             hideLoading();
+         }
+     }
+ 
+     function toggleProjectSelection(el, project) {
+         if(el.classList.contains('selected')) {
+             el.classList.remove('selected');
+             selectedProjects = selectedProjects.filter(p => p.id !== project.id);
+         } else {
+             el.classList.add('selected');
+             selectedProjects.push(project);
+         }
+         
+         // Update selected count display if needed (added a badge logic or bottom bar could be cool)
+         document.getElementById('review-target-count').innerText = selectedProjects.length;
+     }
+     
+     function selectAllProjects() {
+         document.querySelectorAll('#projects-grid .grid-item').forEach(el => {
+            if (!el.classList.contains('selected')) el.click();
+         });
+     }
+     
+     function deselectAllProjects() {
+         document.querySelectorAll('#projects-grid .grid-item').forEach(el => {
+            if (el.classList.contains('selected')) el.click();
+         });
+     }
+ 
+     async function startWizardScan() {
+         if(selectedProjects.length === 0) return alert("No projects selected!");
+         const token = document.getElementById('gitlabToken').value;
+         const scanMode = document.getElementById('scanMode').value;
+         
+         showLoading("Initiating scans for " + selectedProjects.length + " projects...");
+         const resultsContainer = document.getElementById('results-container');
+         resultsContainer.innerHTML = '';
+         
+         const scanPromises = selectedProjects.map(async (proj) => {
+             try {
+                 // 1. Start Scan
+                 const res = await fetch(getApiPath('/scan'), {
+                     method: 'POST',
+                     body: JSON.stringify({ 
+                         source: proj.http_url_to_repo, 
+                         token: token,
+                         group: selectedGroup.name,
+                         mode: scanMode
+                     })
+                 });
+                 const data = await res.json(); // { scanId: ... }
+                 if(data.error) throw new Error(data.error);
+                 if(!data.scanId) throw new Error("No Scan ID returned (Unknown Backend Error)");
+                 
+                 // 2. Poll for Completion
+                 return await pollScanProgress(data.scanId, proj.name);
+                 
+             } catch(e) {
+                 console.error(e);
+                 return { error: e.message, repoName: proj.name, technology: 'Error' };
+             }
+         });
+ 
+         try {
+             // Flatten results in case one scan returned multiple reports
+             const rawResults = await Promise.all(scanPromises);
+             const results = rawResults.flat();
+             
+             // Render Results
+             results.forEach(r => {
+                 let badge = r.error 
+                    ? '<span class="badge" style="background:red">Failed</span>'
+                    : `<span class="badge ${ (r.technology||'').toLowerCase().includes('mule') ? 'mule' : 'spring' }">${r.technology||'Unknown'}</span>`;
+                 
+                 const div = document.createElement('div');
+                 div.className = 'grid-item';
+                 div.style.cursor = 'default';
+                 div.innerHTML = `
+                     <h3>${badge} ${r.repoName}</h3>
+                     ${r.error ? `<p style="color:red">${r.error}</p>` : `<p>Score: <strong>${r.governanceScore}/100</strong></p>`}
+                     ${r.metadata ? `<p style="font-size:0.8rem">Owner: ${r.metadata.owner || 'N/A'}</p>` : ''}
+                 `;
+                 resultsContainer.appendChild(div);
+             });
+             
+             hideLoading();
+             nextStep(5); // Show Results Step
+             
+         } catch(e) {
+             hideLoading();
+             alert("Global Scan Error: " + e.message);
+         }
+     }
+     
+     async function startQuickScan() {
+         const source = document.getElementById('quickSource').value;
+         const { token } = getSettings(); // Uses global token
+         const mode = document.getElementById('quickMode').value;
+         
+         if(!source) return alert("Please enter a URL or Path");
+         
+         showLoading("Starting Quick Scan...");
+         const container = document.getElementById('quick-results-container');
+         container.innerHTML = '';
+         
+         try {
+             // 1. Start Scan
+             const res = await fetch(getApiPath('/scan'), {
+                 method: 'POST',
+                 body: JSON.stringify({ 
+                     source: source, 
+                     token: token,
+                     group: "QuickScan",
+                     mode: mode
+                 })
+             });
+             const data = await res.json();
+             if(data.error) throw new Error(data.error);
+             if(!data.scanId) throw new Error("No Scan ID returned");
+             
+             // 2. Poll
+             const results = await pollScanProgress(data.scanId, source);
+             const resultsArray = Array.isArray(results) ? results : [results]; // Ensure array
+             
+             // CRITICAL: Inject scanFolder from backend response into each result
+             // The backend returns scanFolder in the progress object, we need to fetch it
+             const progressRes = await fetch(getApiPath(`/progress?scanId=${data.scanId}`));
+             const finalProgress = await progressRes.json();
+             if(finalProgress.scanFolder) {
+                 resultsArray.forEach(r => r.scanFolder = finalProgress.scanFolder);
+             }
+
+             // 3. Render
+             
+             // Sort: API Service first
+             // Sort: API Service first, then Confidence (High to Low)
+             resultsArray.sort((a,b) => {
+                const isAMule = (a.classification === 'API Service');
+                const isBMule = (b.classification === 'API Service');
+                if(isAMule && !isBMule) return -1;
+                if(!isAMule && isBMule) return 1;
+                
+                // Secondary: Confidence
+                const sA = parseFloat(a.confidenceScore || a.governanceScore || 0);
+                const sB = parseFloat(b.confidenceScore || b.governanceScore || 0);
+                return sB - sA;
+             });
+             
+             // Save for index-based access
+             window.lastScanResults = resultsArray;
+
+             // Calculate Stats
+             const total = resultsArray.length;
+             const identified = resultsArray.filter(r => r.confidenceScore > 0 || r.technology !== 'Unknown').length;
+             const avgConf = Math.round(resultsArray.reduce((acc, r) => acc + (r.confidenceScore||0), 0) / (total||1));
+             
+             container.innerHTML = `
+                <!-- Summary Cards -->
+                <div style="display:flex; gap:20px; margin-bottom:20px;">
+                    <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${total}</div>
+                         <div style="font-size:0.9rem; color:#666;">Total Repositories</div>
+                    </div>
+                    <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${identified}</div>
+                         <div style="font-size:0.9rem; color:#666;">Identified APIs</div>
+                    </div>
+                    <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${avgConf}%</div>
+                         <div style="font-size:0.9rem; color:#666;">Avg Confidence</div>
+                    </div>
+                </div>
+
+                <h3 style="color:var(--primary-color)">Discovery Results (${total} Projects):</h3>
+             `;
+             
+             let tableHtml = `
+                <table style="width:100%; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 2px solid var(--primary-color) !important;">
+                    <tr style="background:#f9f9f9; text-transform:uppercase; font-size:0.85rem; color:var(--primary-color); border-bottom: 2px solid var(--primary-color) !important; font-weight:bold;">
+                        <th style="padding:15px; color:var(--primary-color);">Repository</th>
+                        <th style="color:var(--primary-color);">Technology</th>
+                        <th style="color:var(--primary-color);">Classification</th>
+                        <th style="color:var(--primary-color);">Confidence</th>
+                        <th style="color:var(--primary-color);">Actions</th>
+                    </tr>
+             `;
+             
+             resultsArray.forEach((r, i) => {
+                 const tech = r.technology || 'Unknown';
+                 const isMule = tech.toLowerCase().includes('mule');
+                 const score = r.confidenceScore || (r.governanceScore ? '100%' : '0%');
+                 
+                 // Classification Colors
+                 let classStyle = 'background:#f5f5f5; color:#616161;'; // Default/Unknown
+                 const cls = r.classification || (isMule ? 'API Service' : 'Standalone / Library');
+                 
+                 if(cls === 'API Service') classStyle = 'background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;'; // Green (Light)
+                 else if(cls.includes('Standalone') || cls.includes('Library')) classStyle = 'background:#fff3e0; color:#ef6c00; border:1px solid #ffe0b2;'; // Orange
+                 else if(cls.includes('Potential')) classStyle = 'background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb;'; // Blue
+                 
+                 // Technology Colors
+                 // Unknown types should not be green. Using gray/neutral.
+                 let techStyle = '';
+                 if(tech === 'Unknown' || tech === 'Unknown / Generic') {
+                     techStyle = 'background:#f5f5f5; color:#757575; border:1px solid #e0e0e0; font-weight:normal;';
+                 } else if(isMule) {
+                     techStyle = 'background:#00a1df; color:white;';
+                 } else {
+                     techStyle = 'background:#6db33f; color:white;';
+                 }
+
+                 const scanId = r.scanId || r.scanFolder || data.scanId;
+                 
+                 tableHtml += `
+                    <tr style="border-bottom:1px solid #eee;">
+                        <td style="padding:15px;">
+                            <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
+                            <a href="${r.url || source}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem;">${(r.url || source).substring(0, 50)}...</a>
+                        </td>
+                        <td><span class="badge" style="${techStyle}">${tech}</span></td>
+                        <td><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
+                        <td style="color:green; font-weight:bold;">${score}</td>
+                        <td>
+                            <button class="small" onclick="viewScanByIndex('${scanId}', ${i})" style="background:var(--primary-color);">Details</button>
+                        </td>
+                    </tr>
+                 `;
+             });
+             
+             tableHtml += '</table>';
+             container.innerHTML += tableHtml;
+             
+         } catch(e) {
+             alert("Quick Scan Failed: " + e.message);
+         } finally {
+             hideLoading();
+         }
+     }
+
+     async function pollScanProgress(scanId, projName) {
+         // Show detailed progress UI
+         const overlayContent = document.querySelector('#loading-overlay .loading-content');
+         
+         return new Promise((resolve) => {
+             const interval = setInterval(async () => {
+                 try {
+                     const res = await fetch(getApiPath(`/progress?scanId=${scanId}`));
+                     const progress = await res.json();
+                     
+                     // Update UI
+                     const percent = progress.complete ? 100 : (progress.percent || 0);
+                     const status = progress.message || 'Processing...';
+                     
+                     overlayContent.innerHTML = `
+                        <div class="spinner"></div>
+                        <h3 style="color:var(--primary-color)">Scanning ${projName}...</h3>
+                        <div class="progress-container">
+                            <div class="progress-bar" style="width: ${percent}%"></div>
+                        </div>
+                        <p style="margin-top:5px; color:#666;">${status} (${percent}%)</p>
+                     `;
+                     
+                     if (progress.complete) {
+                         clearInterval(interval);
+                         // Fetch Final Report
+                         try {
+                             const vRes = await fetch(`${getApiPath('/scans/view')}?scanName=${progress.scanFolder}`);
+                             const reports = await vRes.json();
+                             resolve(reports); // Return FULL array
+                         } catch(e) {
+                             resolve([{ repoName: projName, error: "Failed to load report: " + e.message }]);
+                         }
+                     }
+                 } catch (e) {
+                     console.error("Poll error", e);
+                     // Don't stop polling on transient network error, but if many fail...
+                 }
+             }, 1000); // Poll every 2s
+         });
+     }
+ 
+     // --- Correlation & History ---
+     async function runCorrelation() {
+         const input = document.getElementById('trafficInput').value;
+         if(!input.trim()) return alert("Enter some traffic data");
+         
+         try {
+             const res = await fetch(getApiPath('/correlate'), { method: 'POST', body: input });
+             const results = await res.json();
+             
+             const container = document.getElementById('correlation-results');
+             if(results.length === 0) {
+                 container.innerHTML = "<h3>No matches found in scanned repositories.</h3>";
+                 return;
+             }
+             
+             let html = "<h3>Correlation Matches:</h3><table><tr><th>Traffic Item</th><th>Matched Repo</th><th>Confidence</th></tr>";
+             results.forEach(r => {
+                 html += `<tr><td>${r.traffic_item}</td><td><b>${r.matched_repo}</b></td><td>${r.confidence}</td></tr>`;
+             });
+             html += "</table>";
+             container.innerHTML = html;
+         } catch (e) { alert("Correlation error: " + e); }
+     }
+ 
+     async function ignoreItem(url, btnElement) {
+         if(!confirm("Ignore this item?")) return;
+         await fetch(getApiPath('/ignore'), { method: 'POST', body: url });
+         // Visual removal
+         if(btnElement) {
+           const card = btnElement.closest('.grid-item');
+           if(card) {
+               card.style.opacity = '0.5';
+               card.style.pointerEvents = 'none';
+               // If selected, deselect
+               if(card.classList.contains('selected')) card.click();
+           }
+         }
+     }
+ 
+     async function loadHistory() {
+         try {
+             showLoading("Loading History...");
+             const res = await fetch(getApiPath('/scans/list'));
+             if(!res.ok) throw new Error("API Error");
+             const list = await res.json();
+             
+             const tbody = document.querySelector('#history-table tbody');
+             tbody.innerHTML = '';
+             
+             if(list.length === 0) {
+                 tbody.innerHTML = '<tr><td colspan="3">No scans found.</td></tr>';
+             }
+ 
+             list.forEach(item => {
+                 const tr = document.createElement('tr');
+                 tr.innerHTML = `
+                     <td>${item.name}</td>
+                     <td>${new Date(item.lastModified).toLocaleString()}</td>
+                     <td><button onclick="viewScan('${item.name}')">View Report</button></td>
+                 `;
+                 tbody.appendChild(tr);
+             });
+ 
+             document.getElementById('total-scans').innerText = list.length;
+             
+             // Ignored stats
+             const iRes = await fetch(getApiPath('/ignore'));
+             const ignored = await iRes.json();
+             document.getElementById('ignored-count').innerText = ignored.length || 0;
+         } catch(e) {
+             console.error("Load History Failed", e);
+             document.querySelector('#history-table tbody').innerHTML = '<tr><td colspan="3">Error loading history. Ensure backend is running.</td></tr>';
+         } finally {
+            hideLoading();
+         }
+     }
+ 
+     async function viewScanByIndex(scanId, index) {
+        if(window.lastScanResults && window.lastScanResults[index]) {
+            await viewScan(scanId, window.lastScanResults[index].repoName);
+        } else {
+            console.error("Result index not found", index);
+        }
+     }
+     
+
+     async function viewScanByIndex(scanId, index) {
+        console.log("DEBUG: viewScanByIndex triggered", { scanId, index });
+        if(window.lastScanResults && window.lastScanResults[index]) {
+            const result = window.lastScanResults[index];
+            const scanFolder = result.scanFolder || scanId;
+            console.log("DEBUG: Using scanFolder", scanFolder, "for repo", result.repoName);
+            await viewScan(scanFolder, result.repoName);
+        } else {
+            const msg = "Result index not found: " + index;
+            console.error(msg, window.lastScanResults);
+            alert(msg);
+        }
+     }
+     
+     async function viewScan(scanName, filterRepoName) {
+         console.log("DEBUG: viewScan called", { scanName, filterRepoName });
+         showLoading("Loading Report...");
+         try {
+             const res = await fetch(`${getApiPath('/scans/view')}?scanName=${scanName}`);
+             let reports = await res.json();
+             
+             // Ensure reports is an array
+             if (reports && !Array.isArray(reports)) {
+                 if (reports.error) throw new Error(reports.error);
+                 reports = [reports]; 
+             }
+             if (!reports) reports = [];
+             
+             const modal = document.getElementById('resultsModal');
+             const body = document.getElementById('modalBody');
+             body.innerHTML = '';
+             
+             // If filterRepoName is provided, find that specific report
+             const displayReports = filterRepoName ? reports.filter(r => r.repoName === filterRepoName) : reports;
+             const targetReports = displayReports.length > 0 ? displayReports : reports; // Fallback to all if filter misses
+
+             targetReports.forEach(r => {
+                let techBadge = `<span class="badge ${r.technology.toLowerCase().includes('mule') ? 'mule' : 'spring'}">${r.technology}</span>`;
+                body.innerHTML += `<div class="card" style="margin-bottom:10px; padding:10px; border:1px solid #ddd;">
+                     <h3>${techBadge} ${r.repoName || 'Unknown Repo'}</h3>
+                     <p><strong>Score:</strong> ${r.governanceScore}/100</p>
+                     ${r.metadata ? '<p><strong>Metadata:</strong> <pre style="background:#eee;padding:5px;overflow:auto;">' + JSON.stringify(r.metadata, null, 2) + '</pre></p>' : ''}
+                </div>`;
+             });
+             
+             modal.style.display = 'flex';
+         } catch(e) {
+             alert("Load failed: " + e);
+         } finally {
+             hideLoading();
+         }
+     }
+ 
+     // Export/Import
+     async function exportWorkspace() {
+         const res = await fetch(getApiPath('/state'));
+         const json = await res.json();
+         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json, null, 2));
+         const anchor = document.createElement('a');
+         anchor.href = dataStr;
+         anchor.download = "apidiscovery_workspace.json";
+         document.body.appendChild(anchor);
+         anchor.click();
+         anchor.remove();
+     }
+     
+     async function importWorkspace(input) {
+         const file = input.files[0];
+         if(!file) return;
+         const reader = new FileReader();
+         reader.onload = async function(e) {
+             const json = e.target.result;
+             await fetch(getApiPath('/state'), { method: 'POST', body: json });
+             location.reload();
+         };
+         reader.readAsText(file);
+     }
+     
+     // UI Helper
+     function showLoading(msg) {
+        document.getElementById('loading-text').innerText = msg;
+        document.getElementById('loading-overlay').style.display = 'flex';
+     }
+     function hideLoading() {
+        document.getElementById('loading-overlay').style.display = 'none';
+     }
+
+     window.onclick = function(event) {
+          if (event.target == document.getElementById('resultsModal')) {
+              document.getElementById('resultsModal').style.display = "none";
+          }
+      }
+      // Override helpers for robustness
+      function showLoading(msg) {
+         const el = document.getElementById('loading-text');
+         if(el) el.innerText = msg;
+         else console.warn("ShowLoading: Missing loading-text");
+         const ov = document.getElementById('loading-overlay');
+         if(ov) ov.style.display = 'flex';
+      }
+      function hideLoading() {
+         const ov = document.getElementById('loading-overlay');
+         if(ov) ov.style.display = 'none';
+      }
+ </script>
+ </body>
+ </html>
