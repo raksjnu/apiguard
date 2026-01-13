@@ -50,6 +50,7 @@ public class ApiDiscoveryTool {
         server.createContext("/api/config", new ConfigHandler());
         // New Endpoints for Hierarchical Scanning & Correlation
         server.createContext("/api/gitlab/groups", new GitLabGroupsHandler());
+        server.createContext("/api/gitlab/subgroups", new GitLabSubGroupsHandler());
         server.createContext("/api/gitlab/projects", new GitLabProjectsHandler());
         // Ignore List & State
         server.createContext("/api/ignore", new IgnoreListHandler());
@@ -332,42 +333,56 @@ public class ApiDiscoveryTool {
         updateProgress("Initializing scan...", 0);
         try {
             List<DiscoveryReport> reports = new ArrayList<>();
-            File localFile = new File(source);
-            if (localFile.exists() && localFile.isDirectory()) {
-                System.out.println("Detected Local Directory: " + source);
-                updateProgress("Scanning local directory...", 10);
-                reports.add(engine.scanRepository(localFile));
-                File[] subs = localFile.listFiles(File::isDirectory);
-                if (subs != null) {
-                    int total = subs.length;
-                    int count = 0;
-                    for (File sub : subs) {
-                        count++;
-                        if (!sub.getName().startsWith(".")) {
-                            updateProgress("Scanning " + sub.getName(), 10 + (int)((count / (float)total) * 80));
-                            reports.add(engine.scanRepository(sub));
+            Gson gson = new Gson();
+            List<String> sources = new ArrayList<>();
+            if (source.trim().startsWith("[")) {
+                try {
+                    sources = gson.fromJson(source, new TypeToken<List<String>>(){}.getType());
+                } catch (Exception e) {
+                    sources.add(source);
+                }
+            } else {
+                sources.add(source);
+            }
+
+            for (int i = 0; i < sources.size(); i++) {
+                String s = sources.get(i);
+                int basePct = (i * 90 / sources.size());
+                int nextBasePct = ((i + 1) * 90 / sources.size());
+                
+                final int currentIdx = i;
+                final int totalSources = sources.size();
+                
+                File localFile = new File(s);
+                if (localFile.exists() && localFile.isDirectory()) {
+                    System.out.println("Detected Local Directory: " + s);
+                    updateProgress("[" + (i+1) + "/" + totalSources + "] Scanning local directory...", basePct + 5);
+                    reports.add(engine.scanRepository(localFile));
+                    File[] subs = localFile.listFiles(File::isDirectory);
+                    if (subs != null) {
+                        for (File sub : subs) {
+                            if (!sub.getName().startsWith(".")) {
+                                reports.add(engine.scanRepository(sub));
+                            }
                         }
                     }
+                } else if (token != null && !token.isEmpty()) {
+                    System.out.println("Detected GitLab Source: " + s);
+                    String cleanGroup = s.trim();
+                    if (cleanGroup.startsWith("https://gitlab.com/")) cleanGroup = cleanGroup.substring("https://gitlab.com/".length());
+                    else if (cleanGroup.startsWith("http://gitlab.com/")) cleanGroup = cleanGroup.substring("http://gitlab.com/".length());
+                    
+                    if (cleanGroup.endsWith("/")) cleanGroup = cleanGroup.substring(0, cleanGroup.length() - 1);
+                    if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
+                    
+                    GitLabConnector connector = new GitLabConnector();
+                    setScanFolder(scanId); 
+                    List<DiscoveryReport> groupResults = connector.scanGroup(cleanGroup, token, scanId, getTempDir(), (msg, pct) -> {
+                        int scaledPct = basePct + (pct * (nextBasePct - basePct) / 100);
+                        updateProgress("[" + (currentIdx+1) + "/" + totalSources + "] " + msg, scaledPct);
+                    });
+                    reports.addAll(groupResults);
                 }
-                setScanFolder(scanId); 
-            } 
-            else if (token != null && !token.isEmpty()) {
-                System.out.println("Detected GitLab Source: " + source);
-                updateProgress("Connecting to GitLab...", 5);
-                String cleanGroup = source.trim();
-                if (cleanGroup.startsWith("https://gitlab.com/")) {
-                    cleanGroup = cleanGroup.substring("https://gitlab.com/".length());
-                } else if (cleanGroup.startsWith("http://gitlab.com/")) {
-                    cleanGroup = cleanGroup.substring("http://gitlab.com/".length());
-                }
-                if (cleanGroup.endsWith("/")) cleanGroup = cleanGroup.substring(0, cleanGroup.length() - 1);
-                if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
-                GitLabConnector connector = new GitLabConnector();
-                setScanFolder(scanId); 
-                reports = connector.scanGroup(cleanGroup, token, scanId, getTempDir(), ApiDiscoveryTool::updateProgress);
-            } else {
-                 updateProgress("Error: Invalid source", 0);
-                 return;
             }
             try {
                 String folderName = getScanFolderName();
@@ -375,7 +390,6 @@ public class ApiDiscoveryTool {
                 if (!tempDir.exists()) tempDir.mkdirs();
                 File scanDir = new File(tempDir, folderName);
                 if (!scanDir.exists()) scanDir.mkdirs();
-                Gson gson = new Gson();
                 String jsonResults = gson.toJson(reports);
                 java.nio.file.Files.write(
                     new File(scanDir, "scan_results.json").toPath(), 
@@ -689,6 +703,55 @@ public class ApiDiscoveryTool {
                     if (token == null) token = loadConfig("gitlab.token");
                     
                     String json = GitService.fetchGroups(baseUrl, token);
+                    sendResponse(t, 200, json);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    sendError(t, 500, "{\"error\": \"" + e.getMessage() + "\"}");
+                }
+            } else {
+                sendError(t, 405, "{\"error\": \"Method Not Allowed\"}");
+            }
+        }
+        private void sendResponse(HttpExchange t, int code, String json) throws IOException {
+             t.getResponseHeaders().set("Content-Type", "application/json");
+             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+             t.sendResponseHeaders(code, bytes.length);
+             OutputStream os = t.getResponseBody();
+             os.write(bytes);
+             os.close();
+        }
+        private void sendError(HttpExchange t, int code, String json) throws IOException {
+             sendResponse(t, code, json);
+        }
+    }
+
+    static class GitLabSubGroupsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if ("GET".equalsIgnoreCase(t.getRequestMethod())) {
+                try {
+                    String query = t.getRequestURI().getQuery();
+                    String token = null;
+                    String groupId = null;
+                    String baseUrl = "https://gitlab.com";
+
+                    if (query != null) {
+                        for (String param : query.split("&")) {
+                            String[] pair = param.split("=");
+                            if (pair.length == 2) {
+                                if ("token".equals(pair[0])) token = pair[1];
+                                else if ("groupId".equals(pair[0])) groupId = pair[1];
+                                else if ("baseUrl".equals(pair[0])) baseUrl = java.net.URLDecoder.decode(pair[1], StandardCharsets.UTF_8);
+                            }
+                        }
+                    }
+                    if (token == null) token = loadConfig("gitlab.token");
+                    if (groupId == null) {
+                        sendError(t, 400, "{\"error\": \"Missing groupId parameter\"}");
+                        return;
+                    }
+
+                    String json = GitService.fetchSubGroups(baseUrl, token, groupId);
                     sendResponse(t, 200, json);
                 } catch (Exception e) {
                     e.printStackTrace();

@@ -41,6 +41,10 @@ public class ApiDiscoveryService {
         return GitService.fetchGroups(baseUrl, token);
     }
 
+    public static String fetchSubGroups(String baseUrl, String token, String groupId) throws Exception {
+        return GitService.fetchSubGroups(baseUrl, token, groupId);
+    }
+
     public static String fetchProjects(String baseUrl, String token, String groupId) throws Exception {
         return GitService.fetchProjects(baseUrl, token, groupId);
     }
@@ -156,59 +160,76 @@ public class ApiDiscoveryService {
     }
     private static void performScan(String scanId, String source, String token, String scanFolder, ScanProgress progress, String tempDir) throws Exception {
         List<DiscoveryReport> reports = new ArrayList<>();
-        File localFile = new File(source);
-        progress.setMessage("Initializing scan...");
-        progress.setPercent(5);
-        if (localFile.exists() && localFile.isDirectory()) {
-            // System.out.println("Detected Local Directory: " + source);
-            progress.setMessage("Scanning local directory: " + source);
-            progress.setPercent(20);
-            reports.add(engine.scanRepository(localFile));
-            File[] subs = localFile.listFiles(File::isDirectory);
-            if (subs != null) {
-                int total = subs.length;
-                int current = 0;
-                for (File sub : subs) {
-                    if (!sub.getName().startsWith(".")) {
-                        progress.setMessage("Scanning subdirectory: " + sub.getName());
-                        progress.setPercent(20 + (current * 60 / total));
-                        reports.add(engine.scanRepository(sub));
-                        current++;
-                    }
-                }
-            }
-        } 
-        else if (token != null && !token.isEmpty()) {
-            // System.out.println("Detected GitLab Source: " + source);
-            progress.setMessage("Connecting to GitLab...");
-            progress.setPercent(10);
-            String cleanGroup = source.trim();
-            if (cleanGroup.startsWith("https://gitlab.com/")) {
-                cleanGroup = cleanGroup.substring("https://gitlab.com/".length());
-            } else if (cleanGroup.startsWith("http://gitlab.com/")) {
-                cleanGroup = cleanGroup.substring("http://gitlab.com/".length());
-            }
-            if (cleanGroup.endsWith("/")) cleanGroup = cleanGroup.substring(0, cleanGroup.length() - 1);
-            if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
-            progress.setMessage("Scanning GitLab group: " + cleanGroup);
-            progress.setPercent(30);
-            
-            GitLabConnector connector = new GitLabConnector();
-            reports = connector.scanGroup(cleanGroup, token, scanFolder, new File(tempDir), (msg, pct) -> {
-                progress.setMessage(msg);
-                progress.setPercent(pct);
-            });
-            
-            // Check for ignored repositories in the result and adjust status
-            for (DiscoveryReport r : reports) {
-                if (IgnoredRepoManager.isIgnored(r.getRepoPath()) || IgnoredRepoManager.isIgnored(r.getRepoName())) {
-                    r.setClassification("IGNORED");
-                    r.setConfidenceScore(0);
-                    r.setTechnology("Skipped by User");
-                }
+        List<String> tempSources = new ArrayList<>();
+        if (source.trim().startsWith("[")) {
+            try {
+                tempSources = gson.fromJson(source, new TypeToken<List<String>>(){}.getType());
+            } catch (Exception e) {
+                tempSources.add(source);
             }
         } else {
-            throw new IllegalArgumentException("Source not found locally and no GitLab Token provided");
+            tempSources.add(source);
+        }
+        final List<String> sourcesList = tempSources;
+
+        progress.setMessage("Initializing scan for " + sourcesList.size() + " sources...");
+        progress.setPercent(5);
+
+        for (int i = 0; i < sourcesList.size(); i++) {
+            String s = sourcesList.get(i);
+            int basePct = (i * 90 / sourcesList.size());
+            int nextBasePct = ((i + 1) * 90 / sourcesList.size());
+            
+            try {
+                File localFile = new File(s);
+                if (localFile.exists() && localFile.isDirectory()) {
+                    progress.setMessage("Scanning local dir: " + s);
+                    reports.add(engine.scanRepository(localFile));
+                    File[] subs = localFile.listFiles(File::isDirectory);
+                    if (subs != null) {
+                        for (File sub : subs) {
+                            if (!sub.getName().startsWith(".")) {
+                                reports.add(engine.scanRepository(sub));
+                            }
+                        }
+                    }
+                } else if (token != null && !token.isEmpty()) {
+                    String cleanGroup = s.trim();
+                    if (cleanGroup.startsWith("https://gitlab.com/")) cleanGroup = cleanGroup.substring("https://gitlab.com/".length());
+                    else if (cleanGroup.startsWith("http://gitlab.com/")) cleanGroup = cleanGroup.substring("http://gitlab.com/".length());
+                    
+                    if (cleanGroup.endsWith("/")) cleanGroup = cleanGroup.substring(0, cleanGroup.length() - 1);
+                    if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
+                    
+                    final int currentIdx = i;
+                    final int totalSources = sourcesList.size();
+                    GitLabConnector connector = new GitLabConnector();
+                    List<DiscoveryReport> groupResults = connector.scanGroup(cleanGroup, token, scanFolder, new File(tempDir), (msg, pct) -> {
+                        // Rescale percentage for batch
+                        int scaledPct = basePct + (pct * (nextBasePct - basePct) / 100);
+                        progress.setMessage("[" + (currentIdx + 1) + "/" + totalSources + "] " + msg);
+                        progress.setPercent(scaledPct);
+                    });
+                    reports.addAll(groupResults);
+                }
+            } catch (Exception e) {
+                System.err.println("Failed to scan source " + s + ": " + e.getMessage());
+                DiscoveryReport err = new DiscoveryReport();
+                err.setRepoName("Error: " + s);
+                err.setClassification("Scan Failed");
+                err.addEvidence(e.getMessage());
+                reports.add(err);
+            }
+        }
+
+        // Apply Ignored Filter
+        for (DiscoveryReport r : reports) {
+            String path = r.getRepoPath() != null ? r.getRepoPath() : r.getRepoName();
+            if (IgnoredRepoManager.isIgnored(path)) {
+                r.setClassification("IGNORED");
+                r.setConfidenceScore(0);
+                r.setTechnology("Skipped by User");
+            }
         }
         progress.setMessage("Saving results...");
         progress.setPercent(90);

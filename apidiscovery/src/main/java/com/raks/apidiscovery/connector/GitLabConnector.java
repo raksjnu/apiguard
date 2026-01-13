@@ -108,7 +108,11 @@ public class GitLabConnector {
             if (progressCallback != null) {
                 progressCallback.accept("Finalizing results...", 95);
             }
-            System.out.println("[GitLab] Scan complete. Processed " + allReports.size() + " projects.");
+            if (allReports.isEmpty()) {
+                System.out.println("[GitLab] No reports generated for " + groupPath);
+            } else {
+                System.out.println("[GitLab] Scan complete. Processed " + allReports.size() + " projects.");
+            }
         } catch (Exception e) {
             System.err.println("[GitLab] Fatal error during scan: " + e.getMessage());
             e.printStackTrace();
@@ -123,13 +127,30 @@ public class GitLabConnector {
         return allReports;
     }
     private List<GitLabProject> fetchProjects(String groupPath, String token) throws Exception {
-        String encodedPath = groupPath.replace("/", "%2F");
+        String cleanPath = groupPath.trim();
+        if (cleanPath.endsWith(".git")) cleanPath = cleanPath.substring(0, cleanPath.length() - 4);
+        
+        String encodedPath = cleanPath.replace("/", "%2F");
         String urlString = GITLAB_API_BASE + "/groups/" + encodedPath + "/projects?include_subgroups=true&per_page=100";
         
         try {
             return invokeGitLabApi(urlString, token);
         } catch (RuntimeException e) {
             if (e.getMessage().contains("404")) {
+                // Try as Project first before falling back to User
+                System.out.println("[GitLab] Path " + groupPath + " not found as group. Trying as project...");
+                try {
+                    String projUrl = GITLAB_API_BASE + "/projects/" + encodedPath;
+                    GitLabProject singleProj = invokeGitLabApiSingle(projUrl, token);
+                    if (singleProj != null) {
+                        List<GitLabProject> list = new ArrayList<>();
+                        list.add(singleProj);
+                        return list;
+                    }
+                } catch (Exception ex) {
+                    // Not a project either, or error. Fall through.
+                }
+
                 // Fallback: Try identifying as a User Namespace
                 System.out.println("[GitLab] Group not found. Checking if '" + groupPath + "' is a user...");
                 try {
@@ -145,6 +166,23 @@ public class GitLabConnector {
             }
             throw e; // Rethrow original if fallback fails
         }
+    }
+
+    private GitLabProject invokeGitLabApiSingle(String urlString, String token) throws Exception {
+        URL url = new URL(urlString);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("PRIVATE-TOKEN", token);
+        conn.setConnectTimeout(HTTP_TIMEOUT_MS);
+        conn.setReadTimeout(HTTP_TIMEOUT_MS);
+        
+        if (conn.getResponseCode() == 200) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                Gson gson = new Gson();
+                return gson.fromJson(br, GitLabProject.class);
+            }
+        }
+        return null;
     }
 
     private Integer fetchUserId(String username, String token) throws Exception {

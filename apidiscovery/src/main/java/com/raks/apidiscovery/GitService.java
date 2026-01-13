@@ -23,6 +23,11 @@ public class GitService {
         return makeRequest(url, token);
     }
 
+    public static String fetchSubGroups(String baseUrl, String token, String groupId) throws Exception {
+        String url = baseUrl + String.format(API_V4_GROUPS + "/%s/subgroups", groupId) + "?simple=true&per_page=100";
+        return makeRequest(url, token);
+    }
+
     public static String fetchProjects(String baseUrl, String token, String groupId) throws Exception {
         String url = baseUrl + String.format(API_V4_PROJECTS, groupId) + "?simple=true&per_page=100&include_subgroups=true";
         return makeRequest(url, token);
