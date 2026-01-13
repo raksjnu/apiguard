@@ -125,6 +125,50 @@ public class GitLabConnector {
     private List<GitLabProject> fetchProjects(String groupPath, String token) throws Exception {
         String encodedPath = groupPath.replace("/", "%2F");
         String urlString = GITLAB_API_BASE + "/groups/" + encodedPath + "/projects?include_subgroups=true&per_page=100";
+        
+        try {
+            return invokeGitLabApi(urlString, token);
+        } catch (RuntimeException e) {
+            if (e.getMessage().contains("404")) {
+                // Fallback: Try identifying as a User Namespace
+                System.out.println("[GitLab] Group not found. Checking if '" + groupPath + "' is a user...");
+                try {
+                    Integer userId = fetchUserId(groupPath, token);
+                    if (userId != null) {
+                         System.out.println("[GitLab] Found User ID: " + userId + ". Scanning user projects...");
+                         String userProjectsUrl = GITLAB_API_BASE + "/users/" + userId + "/projects?per_page=100";
+                         return invokeGitLabApi(userProjectsUrl, token);
+                    }
+                } catch (Exception ex) {
+                    System.err.println("[GitLab] User lookup failed: " + ex.getMessage());
+                }
+            }
+            throw e; // Rethrow original if fallback fails
+        }
+    }
+
+    private Integer fetchUserId(String username, String token) throws Exception {
+        String urlString = GITLAB_API_BASE + "/users?username=" + username;
+        URL url = new URL(urlString);
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod("GET");
+        conn.setRequestProperty("PRIVATE-TOKEN", token);
+        conn.setConnectTimeout(HTTP_TIMEOUT_MS);
+        conn.setReadTimeout(HTTP_TIMEOUT_MS);
+        
+        if (conn.getResponseCode() == 200) {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                Gson gson = new Gson();
+                List<GitLabUser> users = gson.fromJson(br, new TypeToken<List<GitLabUser>>(){}.getType());
+                if (users != null && !users.isEmpty()) {
+                    return users.get(0).id;
+                }
+            }
+        }
+        return null;
+    }
+
+    private List<GitLabProject> invokeGitLabApi(String urlString, String token) throws Exception {
         URL url = new URL(urlString);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestMethod("GET");
@@ -150,6 +194,11 @@ public class GitLabConnector {
             List<GitLabProject> projects = gson.fromJson(br, new TypeToken<List<GitLabProject>>(){}.getType());
             return projects != null ? projects : new ArrayList<>();
         }
+    }
+
+    private static class GitLabUser {
+        int id;
+        String username;
     }
     private void deleteDirectory(File file) {
         if (!file.exists()) return;

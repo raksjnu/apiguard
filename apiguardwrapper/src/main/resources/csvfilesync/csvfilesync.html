@@ -17,7 +17,10 @@
                 </h1>
                 <p class="subtitle" style="margin: 0;">Transform and map CSV files with ease</p>
             </div>
-            <button onclick="openHelp()" class="btn-help" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%);">❓ Help</button>
+            <div style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); display: flex; gap: 10px;">
+                <button onclick="startOver()" class="btn-danger" style="padding: 6px 12px; font-size: 0.9em;">🔄 Start Over</button>
+                <button onclick="openHelp()" class="btn-help">❓ Help</button>
+            </div>
         </header>
         </header>
 
@@ -130,12 +133,10 @@
                     <p>File and field names are saved for autocomplete. You can download, upload, or clear this history.</p>
                     
                     <div class="button-group">
-                        <button onclick="downloadAutocomplete()" class="btn-secondary">⬇️ Download History</button>
-                        <label for="autocompleteUpload" class="btn-secondary">⬆️ Upload History
-                            <input type="file" id="autocompleteUpload" accept=".json" style="display:none;" onchange="uploadAutocomplete()">
-                        </label>
-                        <button onclick="viewHistory()" class="btn-info">📜 View History</button>
-                        <button onclick="clearAutocomplete()" class="btn-danger">🗑️ Clear History</button>
+                        <button onclick="showFeatureNotImplemented()" class="btn-secondary">⬇️ Download History</button>
+                        <button onclick="showFeatureNotImplemented()" class="btn-secondary">⬆️ Upload History</button>
+                        <button onclick="showFeatureNotImplemented()" class="btn-info">📜 View History</button>
+                        <button onclick="showFeatureNotImplemented()" class="btn-danger">🗑️ Clear History</button>
                     </div>
                 </div>
 

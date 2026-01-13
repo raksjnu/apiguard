@@ -48,6 +48,13 @@ public class ApiDiscoveryTool {
         server.createContext("/api/scans/view", new ScanViewHandler());
         server.createContext("/api/progress", new ProgressHandler());
         server.createContext("/api/config", new ConfigHandler());
+        // New Endpoints for Hierarchical Scanning & Correlation
+        server.createContext("/api/gitlab/groups", new GitLabGroupsHandler());
+        server.createContext("/api/gitlab/projects", new GitLabProjectsHandler());
+        // Ignore List & State
+        server.createContext("/api/ignore", new IgnoreListHandler());
+        server.createContext("/api/state", new StateHandler());
+        
         server.setExecutor(null); 
         server.start();
         disableJGitMmap();
@@ -193,33 +200,36 @@ public class ApiDiscoveryTool {
     }
     private static boolean deleteDirectory(File directory) {
         if (!directory.exists()) return true;
-        try {
-            java.nio.file.Path path = directory.toPath();
-            java.nio.file.Files.walkFileTree(path, new java.nio.file.SimpleFileVisitor<java.nio.file.Path>() {
-                @Override
-                public java.nio.file.FileVisitResult visitFile(java.nio.file.Path file, java.nio.file.attribute.BasicFileAttributes attrs) throws IOException {
-                    try {
+        
+        // Hint to GC to release file handles
+        System.gc();
+        
+        for (int i = 0; i < 3; i++) {
+            try {
+                java.nio.file.Path path = directory.toPath();
+                java.nio.file.Files.walkFileTree(path, new java.nio.file.SimpleFileVisitor<java.nio.file.Path>() {
+                    @Override
+                    public java.nio.file.FileVisitResult visitFile(java.nio.file.Path file, java.nio.file.attribute.BasicFileAttributes attrs) throws IOException {
                         java.nio.file.Files.delete(file);
-                    } catch (IOException e) {
-                        throw e;
+                        return java.nio.file.FileVisitResult.CONTINUE;
                     }
-                    return java.nio.file.FileVisitResult.CONTINUE;
-                }
-                @Override
-                public java.nio.file.FileVisitResult postVisitDirectory(java.nio.file.Path dir, IOException exc) throws IOException {
-                    try {
-                         java.nio.file.Files.delete(dir);
-                    } catch (IOException e) {
-                        throw e;
+                    @Override
+                    public java.nio.file.FileVisitResult postVisitDirectory(java.nio.file.Path dir, IOException exc) throws IOException {
+                        java.nio.file.Files.delete(dir);
+                        return java.nio.file.FileVisitResult.CONTINUE;
                     }
-                    return java.nio.file.FileVisitResult.CONTINUE;
+                });
+                return true;
+            } catch (IOException e) {
+                if (i == 2) {
+                    System.err.println("[CLEANUP] Final Failure deleting " + directory.getName() + ": " + e.getMessage());
+                    return false;
                 }
-            });
-            return true;
-        } catch (IOException e) {
-             System.err.println("[CLEANUP] Critical Failure deleting " + directory.getName() + ": " + e.getMessage());
-             return false;
+                try { Thread.sleep(200); } catch (InterruptedException ie) {}
+                System.gc();
+            }
         }
+        return false;
     }
     static class StaticFileHandler implements HttpHandler {
         @Override
@@ -641,5 +651,221 @@ public class ApiDiscoveryTool {
         String customHome = System.getProperty("apidiscovery.home");
         File baseDir = (customHome != null && !customHome.isEmpty()) ? new File(customHome) : new File(".");
         return new File(baseDir, "temp");
+    }
+
+    // --- New Handlers ---
+
+    static class GitLabGroupsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if ("GET".equalsIgnoreCase(t.getRequestMethod())) {
+                try {
+                    String query = t.getRequestURI().getQuery();
+                    String token = null;
+                    String baseUrl = "https://gitlab.com"; 
+
+                    if (query != null) {
+                        for (String param : query.split("&")) {
+                            String[] pair = param.split("=");
+                            if (pair.length == 2) {
+                                if ("token".equals(pair[0])) token = pair[1];
+                                else if ("baseUrl".equals(pair[0])) baseUrl = java.net.URLDecoder.decode(pair[1], StandardCharsets.UTF_8);
+                            }
+                        }
+                    }
+                    if (token == null) token = loadConfig("gitlab.token");
+                    
+                    String json = GitService.fetchGroups(baseUrl, token);
+                    sendResponse(t, 200, json);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    sendError(t, 500, "{\"error\": \"" + e.getMessage() + "\"}");
+                }
+            } else {
+                sendError(t, 405, "{\"error\": \"Method Not Allowed\"}");
+            }
+        }
+        private void sendResponse(HttpExchange t, int code, String json) throws IOException {
+             t.getResponseHeaders().set("Content-Type", "application/json");
+             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+             t.sendResponseHeaders(code, bytes.length);
+             OutputStream os = t.getResponseBody();
+             os.write(bytes);
+             os.close();
+        }
+        private void sendError(HttpExchange t, int code, String json) throws IOException {
+             sendResponse(t, code, json);
+        }
+    }
+
+    static class GitLabProjectsHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if ("GET".equalsIgnoreCase(t.getRequestMethod())) {
+                try {
+                    String query = t.getRequestURI().getQuery();
+                    String token = null;
+                    String groupId = null;
+                    String baseUrl = "https://gitlab.com";
+
+                    if (query != null) {
+                        for (String param : query.split("&")) {
+                            String[] pair = param.split("=");
+                            if (pair.length == 2) {
+                                if ("token".equals(pair[0])) token = pair[1];
+                                else if ("groupId".equals(pair[0])) groupId = pair[1];
+                                else if ("baseUrl".equals(pair[0])) baseUrl = java.net.URLDecoder.decode(pair[1], StandardCharsets.UTF_8);
+                            }
+                        }
+                    }
+                    if (token == null) token = loadConfig("gitlab.token");
+                    if (groupId == null) {
+                        sendError(t, 400, "{\"error\": \"Missing groupId parameter\"}");
+                        return;
+                    }
+
+                    String json = GitService.fetchProjects(baseUrl, token, groupId);
+                    sendResponse(t, 200, json);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    sendError(t, 500, "{\"error\": \"" + e.getMessage() + "\"}");
+                }
+            } else {
+                sendError(t, 405, "{\"error\": \"Method Not Allowed\"}");
+            }
+        }
+        private void sendResponse(HttpExchange t, int code, String json) throws IOException {
+             t.getResponseHeaders().set("Content-Type", "application/json");
+             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+             t.sendResponseHeaders(code, bytes.length);
+             OutputStream os = t.getResponseBody();
+             os.write(bytes);
+             os.close();
+        }
+        private void sendError(HttpExchange t, int code, String json) throws IOException {
+             sendResponse(t, code, json);
+        }
+    }
+
+    static class TrafficCorrelationHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            if ("POST".equalsIgnoreCase(t.getRequestMethod())) {
+                try {
+                    InputStreamReader isr = new InputStreamReader(t.getRequestBody(), StandardCharsets.UTF_8);
+                    BufferedReader br = new BufferedReader(isr);
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) sb.append(line).append("\n");
+                    
+                    String trafficData = sb.toString();
+                    // If JSON input, extract a specific field? For now assume raw text or JSON body is the traffic list
+                    // Actually, let's assume raw text payload for simplicity as per plan "Paste IPs"
+                    
+                    List<Map<String, String>> results = TrafficCorrelator.correlate(trafficData, getTempDir().getAbsolutePath());
+                    
+                    Gson gson = new Gson();
+                    String jsonResponse = gson.toJson(results);
+                    
+                    t.getResponseHeaders().set("Content-Type", "application/json");
+                    byte[] bytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+                    t.sendResponseHeaders(200, bytes.length);
+                    OutputStream os = t.getResponseBody();
+                    os.write(bytes);
+                    os.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    t.sendResponseHeaders(500, 0);
+                    t.getResponseBody().close();
+                }
+            } else {
+                t.sendResponseHeaders(405, 0);
+                t.getResponseBody().close();
+            }
+        }
+    }
+
+    static class IgnoreListHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            try {
+                if ("GET".equalsIgnoreCase(t.getRequestMethod())) {
+                    List<String> list = ApiDiscoveryService.getIgnoredItems();
+                    sendResponse(t, 200, new Gson().toJson(list));
+                } else if ("POST".equalsIgnoreCase(t.getRequestMethod())) {
+                    String item = readBody(t);
+                    ApiDiscoveryService.ignoreItem(item);
+                    sendResponse(t, 200, "{\"status\": \"ok\", \"message\": \"Item ignored\"}");
+                } else if ("DELETE".equalsIgnoreCase(t.getRequestMethod())) {
+                    String item = readBody(t);
+                    ApiDiscoveryService.removeIgnoredItem(item);
+                    sendResponse(t, 200, "{\"status\": \"ok\", \"message\": \"Item removed from ignore list\"}");
+                } else {
+                    sendError(t, 405, "Method Not Allowed");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendError(t, 500, e.getMessage());
+            }
+        }
+        private String readBody(HttpExchange t) throws IOException {
+             InputStreamReader isr = new InputStreamReader(t.getRequestBody(), StandardCharsets.UTF_8);
+             BufferedReader br = new BufferedReader(isr);
+             StringBuilder sb = new StringBuilder();
+             String line;
+             while ((line = br.readLine()) != null) sb.append(line);
+             return sb.toString();
+        }
+        private void sendResponse(HttpExchange t, int code, String json) throws IOException {
+             t.getResponseHeaders().set("Content-Type", "application/json");
+             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+             t.sendResponseHeaders(code, bytes.length);
+             OutputStream os = t.getResponseBody();
+             os.write(bytes);
+             os.close();
+        }
+        private void sendError(HttpExchange t, int code, String msg) throws IOException {
+             sendResponse(t, code, "{\"error\": \"" + msg + "\"}");
+        }
+    }
+
+    static class StateHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange t) throws IOException {
+            try {
+                if ("GET".equalsIgnoreCase(t.getRequestMethod())) { // EXPORT
+                    String json = ApiDiscoveryService.exportState(ApiDiscoveryTool.getTempDir().getAbsolutePath());
+                    sendResponse(t, 200, json);
+                } else if ("POST".equalsIgnoreCase(t.getRequestMethod())) { // IMPORT
+                    String json = readBody(t);
+                    ApiDiscoveryService.importState(json, ApiDiscoveryTool.getTempDir().getAbsolutePath());
+                    sendResponse(t, 200, "{\"status\": \"import_success\"}");
+                } else {
+                    sendError(t, 405, "Method Not Allowed");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+                sendError(t, 500, e.getMessage());
+            }
+        }
+        private String readBody(HttpExchange t) throws IOException {
+             InputStreamReader isr = new InputStreamReader(t.getRequestBody(), StandardCharsets.UTF_8);
+             BufferedReader br = new BufferedReader(isr);
+             StringBuilder sb = new StringBuilder();
+             String line;
+             while ((line = br.readLine()) != null) sb.append(line);
+             return sb.toString();
+        }
+        private void sendResponse(HttpExchange t, int code, String json) throws IOException {
+             t.getResponseHeaders().set("Content-Type", "application/json");
+             byte[] bytes = json.getBytes(StandardCharsets.UTF_8);
+             t.sendResponseHeaders(code, bytes.length);
+             OutputStream os = t.getResponseBody();
+             os.write(bytes);
+             os.close();
+        }
+        private void sendError(HttpExchange t, int code, String msg) throws IOException {
+             sendResponse(t, code, "{\"error\": \"" + msg + "\"}");
+        }
     }
 }

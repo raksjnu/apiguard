@@ -16,6 +16,49 @@ document.addEventListener('DOMContentLoaded', () => {
     updateAutocompleteStats();
 });
 
+function startOver() {
+    if (!confirm('Are you sure you want to start over? This will clear all current files and mappings.')) return;
+
+    // Reset State
+    sessionId = null;
+    sourceFiles = [];
+    currentMappings = [];
+    selectedMappings = new Set();
+    configSaved = false;
+    importedFileMappings = [];
+    window.savedTargetFiles = [];
+
+    // Reset UI - File List
+    const fileList = document.getElementById('fileList');
+    if (fileList) fileList.innerHTML = '';
+    
+    // Reset UI - Inputs
+    document.getElementById('zipUpload').value = '';
+    document.getElementById('csvUpload').value = '';
+    
+    // Reset UI - Mapping Tab
+    document.getElementById('sourceFileSelect').innerHTML = '<option value="">Select a file...</option>';
+    document.getElementById('targetFileName').value = '';
+    document.getElementById('mappingsList').innerHTML = '';
+    document.getElementById('selectAllMappings').checked = false;
+    
+    // Reset UI - Execute Tab
+    const resultDiv = document.getElementById('executionResult');
+    if (resultDiv) resultDiv.innerHTML = '';
+    updateExecuteTabState(); // Reset execute tab content
+
+    // Log
+    addToLog('Application reset. Ready for new session.', 'info');
+    showNotification('Application reset successfully.', 'success');
+
+    // Switch to first tab
+    switchTab('upload');
+}
+
+function showFeatureNotImplemented() {
+    showModal('Feature Not Available', 'This feature is currently under development. Please check back later.');
+}
+
 // --- Help System ---
 
 function openHelp() {

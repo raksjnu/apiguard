@@ -15,6 +15,7 @@ import java.util.stream.Stream;
 public class ScannerEngine {
     private List<ApiDetector> detectors = new ArrayList<>();
     private List<RuleConfig.MetadataRule> metadataRules = new ArrayList<>();
+    private List<RuleConfig.ExtractionRule> extractionRules = new ArrayList<>();
     public ScannerEngine() {
         loadRules();
     }
@@ -31,6 +32,9 @@ public class ScannerEngine {
                 }
                 if (config.getMetadataRules() != null) {
                     this.metadataRules = config.getMetadataRules();
+                }
+                if (config.getExtractionRules() != null) {
+                    this.extractionRules = config.getExtractionRules();
                 }
             }
         } catch (Exception e) {
@@ -108,6 +112,30 @@ public class ScannerEngine {
                     }
                 }
             }
+
+            // --- NEW: Process Regex Extraction Rules ---
+            if (this.extractionRules != null) {
+                for (RuleConfig.ExtractionRule rule : this.extractionRules) {
+                    String filePattern = rule.getFile();
+                    for (Path path : allFiles) {
+                        String fileName = path.getFileName().toString();
+                        if (fileName.equals(filePattern) || (filePattern.startsWith("*.") && fileName.endsWith(filePattern.substring(1)))) {
+                            try {
+                                String content = Files.readString(path);
+                                java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(rule.getRegex(), java.util.regex.Pattern.CASE_INSENSITIVE);
+                                java.util.regex.Matcher matcher = pattern.matcher(content);
+                                if (matcher.find()) {
+                                    String value = matcher.group(1); // Extract capture group 1
+                                    if (value != null && !value.trim().isEmpty()) {
+                                        report.addMetadata(rule.getCategory(), value.trim());
+                                    }
+                                }
+                            } catch (Exception e) {}
+                        }
+                    }
+                }
+            }
+            // -------------------------------------------
             ensureMetadataPresent(report, "Logging", "Best Practices Followed (No prohibited patterns found)");
             ensureMetadataPresent(report, "Documentation", "None Detected");
             ensureMetadataPresent(report, "Security", "No Specific Framework Detected");

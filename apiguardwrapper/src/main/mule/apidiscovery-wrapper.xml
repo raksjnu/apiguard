@@ -51,6 +51,12 @@ output application/json
 		</http:listener>
 		
 		<file:read doc:name="Read API Discovery Index" path="${apidiscovery.web.dir}/index.html" config-ref="File_Config"/>
+        <error-handler>
+            <on-error-propagate type="MULE:SOURCE_RESPONSE_SEND" logException="false">
+                <logger level="DEBUG" message="Client connection closed - Ignored"/>
+            </on-error-propagate>
+            <on-error-propagate type="ANY"/>
+        </error-handler>
 	</flow>
 
 	<flow name="apidiscovery-ui-flow">
@@ -106,7 +112,7 @@ output application/json
 				<ee:set-payload><![CDATA[%dw 2.0
 output application/java
 ---
-payload]]></ee:set-payload>
+read(payload, "application/json")]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
 		
@@ -292,6 +298,112 @@ output application/json
 payload]]></ee:set-payload>
 			</ee:message>
 		</ee:transform>
+	</flow>
+
+    <!-- END apidiscovery-api-view-flow -->
+
+	<flow name="apidiscovery-groups-flow">
+		<http:listener path="/apidiscovery/api/gitlab/groups" config-ref="HTTP_Listener_config" allowedMethods="GET">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+		<set-variable variableName="token" value="#[attributes.queryParams.token default p('apidiscovery.gitlab.token')]"/>
+		<set-variable variableName="baseUrl" value="#[attributes.queryParams.baseUrl default 'https://gitlab.com']"/>
+		<java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="fetchGroups(String,String)">
+			<java:args>#[{ arg0: vars.baseUrl, arg1: vars.token }]</java:args>
+		</java:invoke-static>
+		<set-payload value="#[payload]"/>
+	</flow>
+
+	<flow name="apidiscovery-projects-flow">
+		<http:listener path="/apidiscovery/api/gitlab/projects" config-ref="HTTP_Listener_config" allowedMethods="GET">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+		<set-variable variableName="token" value="#[attributes.queryParams.token default p('apidiscovery.gitlab.token')]"/>
+		<set-variable variableName="baseUrl" value="#[attributes.queryParams.baseUrl default 'https://gitlab.com']"/>
+		<set-variable variableName="groupId" value="#[attributes.queryParams.groupId]"/>
+		<java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="fetchProjects(String,String,String)">
+			<java:args>#[{ arg0: vars.baseUrl, arg1: vars.token, arg2: vars.groupId }]</java:args>
+		</java:invoke-static>
+		<set-payload value="#[payload]"/>
+	</flow>
+
+	<flow name="apidiscovery-correlate-flow">
+		<http:listener path="/apidiscovery/api/correlate" config-ref="HTTP_Listener_config" allowedMethods="POST">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output text/plain
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="correlateTraffic(String,String)">
+			<java:args>#[{ arg0: payload, arg1: p('apidiscovery.temp.dir') }]</java:args>
+		</java:invoke-static>
+		<ee:transform>
+			<ee:message>
+				<ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+
+
+	<flow name="apidiscovery-ignore-flow">
+		<http:listener path="/apidiscovery/api/ignore" config-ref="HTTP_Listener_config" allowedMethods="GET, POST, DELETE">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+        <choice>
+            <when expression="#[attributes.method == 'GET']">
+                 <java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="getIgnoredItems()"/>
+            </when>
+            <when expression="#[attributes.method == 'POST']">
+                 <java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="ignoreItem(String)">
+                    <java:args>#[{ arg0: payload }]</java:args>
+                 </java:invoke-static>
+                 <set-payload value='{"status": "ok", "message": "Item ignored"}'/>
+            </when>
+            <when expression="#[attributes.method == 'DELETE']">
+                 <java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="removeIgnoredItem(String)">
+                    <java:args>#[{ arg0: payload }]</java:args>
+                 </java:invoke-static>
+                 <set-payload value='{"status": "ok", "message": "Item removed from ignore list"}'/>
+            </when>
+        </choice>
+	</flow>
+
+	<flow name="apidiscovery-state-flow">
+		<http:listener path="/apidiscovery/api/state" config-ref="HTTP_Listener_config" allowedMethods="GET, POST">
+			<http:response>
+				<http:headers><![CDATA[#[{"Content-Type": "application/json"}]]]></http:headers>
+			</http:response>
+		</http:listener>
+        <choice>
+            <when expression="#[attributes.method == 'GET']">
+                 <java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="exportState(String)">
+                     <java:args>#[{ arg0: p('apidiscovery.temp.dir') }]</java:args>
+                 </java:invoke-static>
+            </when>
+            <when expression="#[attributes.method == 'POST']">
+                 <java:invoke-static class="com.raks.apidiscovery.ApiDiscoveryService" method="importState(String,String)">
+                    <java:args>#[{ arg0: payload, arg1: p('apidiscovery.temp.dir') }]</java:args>
+                 </java:invoke-static>
+                 <set-payload value='{"status": "import_success"}'/>
+            </when>
+        </choice>
 	</flow>
 
     <!-- NEW: API Discovery Email Notification Flow -->

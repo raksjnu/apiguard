@@ -68,5 +68,13 @@
     { "category": "Governance: Security", "file": "*.xml", "content": "oauth2-provider:config", "value": "OAuth2 Provider Enforced", "caseInsensitive": true },
     { "category": "Governance: Security", "file": "*.xml", "content": "client-id-enforcement", "value": "Client ID Enforcement", "caseInsensitive": true },
     { "category": "Governance: Security", "file": "*.xml", "content": "https:listener-config", "value": "HTTPS Secured Endpoint", "caseInsensitive": true }
+  ],
+  "extraction_rules": [
+    { "category": "Owner", "file": "README.md", "regex": "owner=(.+)", "description": "Project Owner" },
+    { "category": "Owner", "file": "pom.xml", "regex": "<developer>\\s*<id>(.+?)</id>", "description": "Maven Developer ID" },
+    { "category": "Endpoint", "file": "README.md", "regex": "endpoint=(https?://[^\\s]+)", "description": "API Endpoint" },
+    { "category": "Endpoint", "file": "api.xml", "regex": "basePath=\"([^\"]+)\"", "description": "Mule API BasePath" },
+    { "category": "Certificate", "file": "manual-metadata.txt", "regex": "cert_cn=(.+)", "description": "Associated Certificate CN" },
+    { "category": "PII Risk", "file": "README.md", "regex": "PII_Risk=(.+)", "description": "PII Risk Level" }
   ]
 }

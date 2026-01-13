@@ -17,7 +17,7 @@
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); }
         header { background-color: var(--header-bg); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .brand { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .container { max-width: 95%; margin: 2rem auto; padding: 0 2rem; }
         
         .tabs { display: flex; gap: 1rem; margin-bottom: 20px; }
         .tab { padding: 10px 20px; background: #ddd; cursor: pointer; border-radius: 8px 8px 0 0; margin-right: 5px; font-weight: bold; transition: all 0.2s ease; border: 2px solid #ddd; }
@@ -39,7 +39,7 @@
 
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 2px solid var(--primary-color); border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 2px solid var(--primary-color); border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; color: var(--primary-color); font-weight: 500; }
         .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #552b80; box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1); }
         
         button { background: var(--primary-color); color: white; border: 2px solid var(--primary-color); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.2s ease; }
@@ -64,9 +64,9 @@
         .grid-item p { margin: 0; font-size: 0.9rem; color: #666; word-break: break-all; }
         
         /* Tables & Lists */
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; border: 2px solid var(--primary-color); border-radius: 8px; overflow: hidden; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; border: 2px solid var(--primary-color); border-radius: 8px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-        th { background-color: #f9f9f9; color: #555; border-bottom: 2px solid var(--primary-color); }
+        th { background-color: #f9f9f9; color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
         
         .progress-bar-container { width: 100%; background-color: #ddd; border-radius: 8px; margin-top: 10px; height: 10px; overflow: hidden; display: none; border: 1px solid var(--primary-color); }
         .progress-bar { height: 100%; background-color: var(--secondary-color); width: 0%; transition: width 0.3s; }
@@ -137,7 +137,7 @@
         Raks API Discovery
     </div>
     <div>
-        <a href="#" onclick="switchTab('settings'); return false;" style="color: white; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 5px; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">
+        <a href="javascript:void(0)" onclick="showGuide(); return false;" style="color: white; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 5px; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">
             📘 Guide / Help
         </a>
     </div>
@@ -320,40 +320,54 @@
 
     <!-- TAB: HISTORY -->
     <div id="tab-history" class="tab-content" style="display:none;">
-        <div class="card">
-            <h2>Scan History</h2>
-            
-             <div class="stats-container" style="display:flex; gap:20px; align-items:center; margin-bottom: 20px;">
-                <div class="stat-card" style="background:#eee; padding:10px; border-radius:4px;">
-                    <div class="value" id="total-scans" style="font-weight:bold;font-size:1.2rem;">0</div>
-                    <div class="label" style="font-size:0.8rem;">Total Scans</div>
+        <!-- List View -->
+        <div id="history-view-list">
+            <div class="card">
+                <h2>Scan History</h2>
+                
+                 <div class="stats-container" style="display:flex; gap:20px; margin-bottom: 20px;">
+                    <div class="stat-card" style="background:white; padding:15px; border-radius:8px; border:1px solid #ddd; min-width: 150px; text-align: center;">
+                        <div class="value" id="total-scans" style="font-weight:bold;font-size:1.5rem; color:var(--primary-color);">0</div>
+                        <div class="label" style="font-size:0.9rem; color:#666;">Total Scans</div>
+                    </div>
+                    <div class="stat-card" style="background:white; padding:15px; border-radius:8px; border:1px solid #ddd; min-width: 150px; text-align: center;">
+                        <div class="value" id="ignored-count" style="font-weight:bold;font-size:1.5rem; color:var(--primary-color);">0</div>
+                        <div class="label" style="font-size:0.9rem; color:#666;">Ignored Items</div>
+                    </div>
                 </div>
-                <div class="stat-card" style="background:#eee; padding:10px; border-radius:4px;">
-                    <div class="value" id="ignored-count" style="font-weight:bold;font-size:1.2rem;">0</div>
-                    <div class="label" style="font-size:0.8rem;">Ignored Items</div>
+
+                <div style="margin: 20px 0; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="secondary" onclick="exportWorkspace()">💾 Export Workspace</button>
+                    <button class="secondary" onclick="document.getElementById('import-file').click()">📂 Import Workspace</button>
+                    <input type="file" id="import-file" style="display: none;" onchange="importWorkspace(this)">
                 </div>
-            </div>
 
-            <div style="margin: 20px 0; display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="secondary" onclick="exportWorkspace()">💾 Export Workspace</button>
-                <button class="secondary" onclick="document.getElementById('import-file').click()">📂 Import Workspace</button>
-                <input type="file" id="import-file" style="display: none;" onchange="importWorkspace(this)">
+                <button onclick="loadHistory()">🔄 Refresh List</button>
+                <table id="history-table" style="width:100%; border-collapse:separate; border-spacing:0; margin-top:1rem; border:2px solid #663399; border-radius:8px; overflow:hidden;">
+                    <thead>
+                        <tr style="background:#f9f9f9; border-bottom:2px solid #663399;">
+                            <th style="padding:12px; text-align:left; color:#663399;">SCAN ID</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">TYPE</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">SOURCE</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">DATE</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">RESULTS</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
-
-            <button onclick="loadHistory()">🔄 Refresh List</button>
-            <table id="history-table" style="width:100%; border-collapse:collapse; margin-top:1rem;">
-                <thead>
-                    <tr style="background:#f9f9f9; border-bottom:2px solid var(--primary-color);">
-                        <th style="padding:12px; text-align:left; color:var(--primary-color);">SCAN ID</th>
-                        <th style="padding:12px; text-align:left; color:var(--primary-color);">TYPE</th>
-                        <th style="padding:12px; text-align:left; color:var(--primary-color);">SOURCE</th>
-                        <th style="padding:12px; text-align:left; color:var(--primary-color);">DATE</th>
-                        <th style="padding:12px; text-align:left; color:var(--primary-color);">RESULTS</th>
-                        <th style="padding:12px; text-align:left; color:var(--primary-color);">ACTIONS</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
+        </div>
+        
+        <!-- Results View (Hidden by default) -->
+        <div id="history-view-results" style="display:none;">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-bottom:20px;">
+                    <h2 style="margin:0; border:none; color:#663399;">Scan Results</h2>
+                    <button onclick="closeHistoryResults()" class="secondary" style="border:2px solid #757575;">← Back to History</button>
+                </div>
+                <div id="history-results-container"></div>
+            </div>
         </div>
     </div>
  
@@ -384,10 +398,25 @@
      
      // --- UI Controls ---
      function switchTab(tabName) {
+         // Clean up any lingering states
+         hideLoading(); 
+         if(window.scanInterval) {
+             clearInterval(window.scanInterval);
+             window.scanInterval = null;
+         }
+
          document.querySelectorAll('.tab-content').forEach(d => d.style.display = 'none');
          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
          document.getElementById('tab-' + tabName).style.display = 'block';
-         event.currentTarget.classList.add('active');
+         
+         // Find and activate the corresponding tab button
+         const tabs = document.querySelectorAll('.tab');
+         tabs.forEach(tab => {
+             if(tab.textContent.toLowerCase().includes(tabName.replace('quick', 'quick scan').replace('discovery', 'api discovery').replace('correlation', 'traffic correlation').replace('history', 'scan history').replace('settings', 'settings'))) {
+                 tab.classList.add('active');
+             }
+         });
+         
          if(tabName === 'history') loadHistory();
          
          // If moving to discovery, update display
@@ -668,29 +697,29 @@
 
              // 3. Render
              
-             // Sort: API Service first
-             // Sort: API Service first, then Confidence (High to Low)
-             resultsArray.sort((a,b) => {
-                const isAMule = (a.classification === 'API Service');
-                const isBMule = (b.classification === 'API Service');
-                if(isAMule && !isBMule) return -1;
-                if(!isAMule && isBMule) return 1;
-                
-                // Secondary: Confidence
-                const sA = parseFloat(a.confidenceScore || a.governanceScore || 0);
-                const sB = parseFloat(b.confidenceScore || b.governanceScore || 0);
-                return sB - sA;
-             });
+             // Results Array is sorted below
+
              
              // Save for index-based access
              window.lastScanResults = resultsArray;
 
              // Calculate Stats
              const total = resultsArray.length;
-             const identified = resultsArray.filter(r => r.confidenceScore > 0 || r.technology !== 'Unknown').length;
+             // Sort: Confidence (DESC) then Technology (ASC)
+             resultsArray.sort((a, b) => {
+                 const diff = (b.confidenceScore || 0) - (a.confidenceScore || 0);
+                 if (diff !== 0) return diff;
+                 const tA = (a.technology || '').toLowerCase();
+                 const tB = (b.technology || '').toLowerCase();
+                 return tA.localeCompare(tB);
+             });
+
+             const identified = resultsArray.filter(r => (r.classification && r.classification === 'API Service') || (r.technology && r.technology.toLowerCase().includes('mule'))).length;
              const avgConf = Math.round(resultsArray.reduce((acc, r) => acc + (r.confidenceScore||0), 0) / (total||1));
              
              container.innerHTML = `
+                <h3 style="color:#663399; margin-top:0;">📊 Scan: ${resultsArray.scanFolder || data.scanId} <span style="font-weight:normal; font-size:1rem; color:#666; margin-left:10px;">: ${source}</span></h3>
+                
                 <!-- Summary Cards -->
                 <div style="display:flex; gap:20px; margin-bottom:20px;">
                     <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
@@ -711,7 +740,7 @@
              `;
              
              let tableHtml = `
-                <table style="width:100%; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 2px solid var(--primary-color) !important;">
+                <table style="width:100%; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 2px solid #663399 !important;">
                     <tr style="background:#f9f9f9; text-transform:uppercase; font-size:0.85rem; color:var(--primary-color); border-bottom: 2px solid var(--primary-color) !important; font-weight:bold;">
                         <th style="padding:15px; color:var(--primary-color);">Repository</th>
                         <th style="color:var(--primary-color);">Technology</th>
@@ -735,14 +764,19 @@
                  else if(cls.includes('Potential')) classStyle = 'background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb;'; // Blue
                  
                  // Technology Colors
-                 // Unknown types should not be green. Using gray/neutral.
-                 let techStyle = '';
-                 if(tech === 'Unknown' || tech === 'Unknown / Generic') {
-                     techStyle = 'background:#f5f5f5; color:#757575; border:1px solid #e0e0e0; font-weight:normal;';
-                 } else if(isMule) {
+                 let techStyle = 'background:#f5f5f5; color:#757575; border:1px solid #e0e0e0; font-weight:normal;';
+                 const tLower = tech.toLowerCase();
+                 
+                 if(tLower.includes('mule')) {
                      techStyle = 'background:#00a1df; color:white;';
-                 } else {
+                 } else if(tLower.includes('spring') || tLower.includes('java')) {
                      techStyle = 'background:#6db33f; color:white;';
+                 } else if(tLower.includes('tibco')) {
+                    techStyle = 'background:#f57c00; color:white;';
+                 } else if(tLower.includes('python')) {
+                    techStyle = 'background:#fbc02d; color:#333;';
+                 } else if(tech !== 'Unknown' && tech !== 'Unknown / Generic') {
+                    techStyle = 'background:#607d8b; color:white;';
                  }
 
                  const scanId = r.scanId || r.scanFolder || data.scanId;
@@ -756,7 +790,7 @@
                      <tr id="row-${i}" style="border-bottom:1px solid #eee;">
                          <td style="padding:15px;">
                              <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
-                             <a href="${r.url || source}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem;">${(r.url || source).substring(0, 50)}...</a>
+                             ${r.url ? `<a href="${r.url}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px;" title="${r.url}"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> View on GitLab</a>` : `<span style="color:#999; font-size:0.85rem;">Local Repository</span>`}
                          </td>
                          <td><span class="badge" style="${techStyle}">${tech}</span></td>
                          <td><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
@@ -825,44 +859,235 @@
          // Show detailed progress UI
          const overlayContent = document.querySelector('#loading-overlay .loading-content');
          
-         return new Promise((resolve) => {
-             const interval = setInterval(async () => {
-                 try {
-                     const res = await fetch(getApiPath(`/progress?scanId=${scanId}`));
-                     const progress = await res.json();
-                     
-                     // Update UI
-                     const percent = progress.complete ? 100 : (progress.percent || 0);
-                     const status = progress.message || 'Processing...';
-                     
-                     overlayContent.innerHTML = `
-                        <div class="spinner"></div>
-                        <h3 style="color:var(--primary-color)">Scanning ${projName}...</h3>
-                        <div class="progress-container">
-                            <div class="progress-bar" style="width: ${percent}%"></div>
-                        </div>
-                        <p style="margin-top:5px; color:#666;">${status} (${percent}%)</p>
-                     `;
-                     
-                     if (progress.complete) {
-                         clearInterval(interval);
-                         // Fetch Final Report
-                         try {
-                             const vRes = await fetch(`${getApiPath('/scans/view')}?scanName=${progress.scanFolder}`);
-                             const reports = await vRes.json();
-                             resolve(reports); // Return FULL array
-                         } catch(e) {
-                             resolve([{ repoName: projName, error: "Failed to load report: " + e.message }]);
-                         }
-                     }
-                 } catch (e) {
-                     console.error("Poll error", e);
-                     // Don't stop polling on transient network error, but if many fail...
-                 }
-             }, 1000); // Poll every 2s
-         });
+          return new Promise((resolve) => {
+              if(window.scanInterval) clearInterval(window.scanInterval);
+              window.scanInterval = setInterval(async () => {
+                  try {
+                      const res = await fetch(getApiPath(`/progress?scanId=${scanId}`));
+                      const progress = await res.json();
+                      
+                      // Update UI
+                      const percent = progress.complete ? 100 : (progress.percent || 0);
+                      const status = progress.message || 'Processing...';
+                      
+                      overlayContent.innerHTML = `
+                         <div class="spinner"></div>
+                         <h3 style="color:var(--primary-color)">Scanning ${projName}...</h3>
+                         <div class="progress-container">
+                             <div class="progress-bar" style="width: ${percent}%"></div>
+                         </div>
+                         <p style="margin-top:5px; color:#666;">${status} (${percent}%)</p>
+                      `;
+                      
+                      if (progress.complete) {
+                          clearInterval(window.scanInterval);
+                          window.scanInterval = null;
+                          // Fetch Final Report
+                          try {
+                              const vRes = await fetch(`${getApiPath('/scans/view')}?scanName=${progress.scanFolder}`);
+                              const reports = await vRes.json();
+                              reports.scanFolder = progress.scanFolder;
+                              resolve(reports); // Return FULL array
+                          } catch(e) {
+                              resolve([{ repoName: projName, error: "Failed to load report: " + e.message }]);
+                          }
+                      }
+                  } catch (e) {
+                      console.error("Poll error", e);
+                  }
+              }, 1000); 
+          });
      }
  
+     function toggleDetails(arg) {
+         // Fallback for ID-based calls (Quick Scan legacy)
+         let id;
+         if (typeof arg === 'number' || (typeof arg === 'string' && !isNaN(arg))) {
+             id = 'detail-' + arg;
+         } else {
+             id = arg;
+         }
+         const row = document.getElementById(id);
+         if(row) row.style.display = (row.style.display === 'none' || row.style.display === '') ? 'table-row' : 'none';
+     }
+
+     function toggleResultDetails(btn) {
+         // DOM-based toggle: Finds the next TR element
+         const tr = btn.closest('tr');
+         if(tr) {
+             const nextTr = tr.nextElementSibling;
+             if(nextTr) {
+                 nextTr.style.display = (nextTr.style.display === 'none' || nextTr.style.display === '') ? 'table-row' : 'none';
+             } else {
+                 console.error("No next row found for toggle");
+             }
+         }
+     }
+
+     function renderGovernanceCheck(metadata, key, label) {
+         const val = metadata ? metadata[key] : false;
+         const pass = val === true || val === 'true';
+         const icon = pass ? '✓' : '✗';
+         const color = pass ? '#28a745' : '#d32f2f';
+         return `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span>${label}</span><strong style="color:${color}">${icon} ${pass?'Pass':'Fail'}</strong></div>`;
+     }
+     
+     function renderOtherMetadata(metadata) {
+         if(!metadata) return '<div style="color:#999">No additional settings.</div>';
+         return Object.keys(metadata).filter(k => !k.startsWith('Governance')).map(k => 
+             `<div style="display:flex; justify-content:space-between; margin-bottom:5px;"><span style="text-transform:capitalize">${k.replace(/_/g,' ')}</span><strong>${metadata[k]}</strong></div>`
+         ).join('');
+     }
+
+     async function toggleHistoryScan(scanName) {
+         const rowId = `expand-${scanName}`;
+         const row = document.getElementById(rowId);
+         if (!row) return;
+
+         // Toggle visibility
+         if (row.style.display !== 'none') {
+             row.style.display = 'none';
+             return;
+         }
+         row.style.display = 'table-row';
+
+         const container = document.getElementById(`content-${scanName}`);
+         if (container.innerHTML.trim() !== '') return; // Already loaded
+
+         // Load data
+         try {
+             container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Loading details... <div class="spinner" style="width:20px; height:20px; border-width:2px; display:inline-block; vertical-align:middle; margin:0 0 0 10px;"></div></div>';
+             
+             const res = await fetch(getApiPath(`/scans/view?scanName=${scanName}`));
+             const reports = await res.json();
+             const arr = Array.isArray(reports) ? reports : [reports];
+             
+             // Sort: Confidence (DESC) then Technology (ASC)
+             arr.sort((a, b) => {
+                 const diff = (b.confidenceScore || 0) - (a.confidenceScore || 0);
+                 if (diff !== 0) return diff;
+                 const tA = (a.technology || '').toLowerCase();
+                 const tB = (b.technology || '').toLowerCase();
+                 return tA.localeCompare(tB);
+             });
+
+             // Identify source
+             const firstUrl = arr[0]?.url || '';
+             const srcDisplay = firstUrl || 'Merged Results';
+
+             // Build Table HTML (Namespaced IDs)
+             let html = `
+                 <div style="background:#fff; border:1px solid #ddd; padding:15px; border-radius:8px; margin:10px 0;">
+                     <h4 style="margin:0 0 10px 0; color:#663399;">Scan Results (${arr.length} Repositories)</h4>
+                     <table style="width:100%; border-collapse:separate; border-spacing:0; border:1px solid #eee;">
+                         <thead>
+                             <tr style="background:#f5f5f5;">
+                                 <th style="padding:12px; text-align:left; color:#663399;">REPOSITORY</th>
+                                 <th style="padding:12px; text-align:left; color:#663399;">TECHNOLOGY</th>
+                                 <th style="padding:12px; text-align:left; color:#663399;">CLASSIFICATION</th>
+                                 <th style="padding:12px; text-align:left; color:#663399;">CONFIDENCE</th>
+                                 <th style="padding:12px; text-align:left; color:#663399;">ACTIONS</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+             `;
+
+             arr.forEach((r, i) => {
+                 const detailId = `detail-${scanName}-${i}`;
+                 const tech = r.technology || 'Unknown';
+                 const isMule = tech.toLowerCase().includes('mule');
+                 const score = r.confidenceScore || r.governanceScore || 0;
+                 const cls = r.classification || (isMule ? 'API Service' : 'Standalone / Library');
+                 
+                 // Tech Style
+                 let techStyle = 'background:#f5f5f5; color:#757575; border:1px solid #e0e0e0; font-weight:normal;';
+                 const tLower = tech.toLowerCase();
+
+                 if(tLower.includes('mule')) {
+                      techStyle = 'background:#00a1df; color:white;';
+                 } else if(tLower.includes('spring') || tLower.includes('java')) {
+                      techStyle = 'background:#6db33f; color:white;';
+                 } else if(tLower.includes('tibco')) {
+                      techStyle = 'background:#f57c00; color:white;';
+                 } else if(tLower.includes('python')) {
+                      techStyle = 'background:#fbc02d; color:#333;';
+                 } else if(tech !== 'Unknown' && tech !== 'Unknown / Generic') {
+                      techStyle = 'background:#607d8b; color:white;';
+                 }
+
+                 // Class Style
+                 let classStyle = 'background:#f5f5f5; color:#616161;';
+                 if(cls === 'API Service') classStyle = 'background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;';
+                 else if(cls.includes('Standalone') || cls.includes('Library')) classStyle = 'background:#fff3e0; color:#ef6c00; border:1px solid #ffe0b2;';
+
+
+                 // Evidence/Indicators
+                 const evidence = r.evidence || [];
+                 const indicators = r.indicators || [];
+                 const metadata = r.metadata || {};
+
+                 html += `
+                     <tr style="border-bottom:1px solid #eee;">
+                         <td style="padding:15px;">
+                             <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
+                             ${r.url ? `<a href="${r.url}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px;"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> View on GitLab</a>` : ''}
+                         </td>
+                         <td style="padding:8px;"><span class="badge" style="${techStyle}">${tech}</span></td>
+                         <td style="padding:8px;"><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
+                         <td style="padding:8px; color:green; font-weight:bold;">${score}</td>
+                         <td style="padding:8px;">
+                             <button class="small" onclick="toggleResultDetails(this)" style="background:var(--primary-color);">Details</button>
+                         </td>
+                     </tr>
+                     <tr id="${detailId}" style="display:none;">
+                          <td colspan="5" style="padding:0; background:#f9f9f9;">
+                              <div style="padding:20px; border-left:4px solid var(--primary-color);">
+                                  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                                      <div>
+                                          <h4 style="margin-top:0; color: var(--primary-color);">🔍 Identification & Capabilities</h4>
+                                          <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                              <strong>Evidence:</strong>
+                                              <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                  ${evidence.length ? evidence.map(e=>`<li>${e}</li>`).join('') : '<li>None</li>'}
+                                              </ul>
+                                              <strong style="margin-top:1rem; display:block;">Capabilities:</strong>
+                                              <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                  ${indicators.length > 0 ? indicators.map(ind => `<li>${ind}</li>`).join('') : '<li style="color:#999;">No API signatures found</li>'}
+                                              </ul>
+                                          </div>
+                                      </div>
+                                      <div>
+                                           <h4 style="margin-top:0; color: var(--primary-color);">📊 Governance Standards</h4>
+                                           <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                              ${renderGovernanceCheck(metadata, 'Governance: Standards', 'RESTful Architecture')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Documentation', 'API Documentation')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Gateway', 'API Gateway Managed')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Security', 'Security Enforcement')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Versioning', 'Semantic Versioning')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Logging', 'Centralized Logging')}
+                                           </div>
+                                      </div>
+                                      <div>
+                                           <h4 style="margin-top:0; color: var(--primary-color);">🔥 Risk & Settings</h4>
+                                           <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                               ${renderOtherMetadata(metadata)}
+                                           </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </td>
+                     </tr>
+                 `;
+             });
+
+             html += `</tbody></table></div>`;
+             container.innerHTML = html;
+
+         } catch(e) {
+             container.innerHTML = `<div style="color:red; padding:20px;">Error loading details: ${e.message}</div>`;
+         }
+     }
+
      // --- Correlation & History ---
      async function runCorrelation() {
          const input = document.getElementById('trafficInput').value;
@@ -925,7 +1150,7 @@
              // Load scan details for each
              for (const item of list) {
                  const scanInfo = await getScanInfo(item.name);
-                 const date = new Date(item.lastModified).toLocaleString();
+                 const date = new Date(item.lastModified).toLocaleString('en-US', { timeZoneName: 'short' });
                  
                  const tr = document.createElement('tr');
                  tr.style.borderBottom = '1px solid #eee';
@@ -936,11 +1161,18 @@
                      <td>${date}</td>
                      <td><strong>${scanInfo.count}</strong> repositories</td>
                      <td>
-                         <button class="small" onclick="viewHistoryScan('${item.name}')" style="background:var(--primary-color); margin-right:5px;">View Results</button>
+                         <button class="small" onclick="toggleHistoryScan('${item.name}')" style="background:var(--primary-color); margin-right:5px;">View Results</button>
                          <button class="small" onclick="deleteScan('${item.name}')" style="background:#d32f2f;">Delete</button>
                      </td>
                  `;
                  tbody.appendChild(tr);
+                 
+                 // Add Expansion Row
+                 const trExp = document.createElement('tr');
+                 trExp.id = `expand-${item.name}`;
+                 trExp.style.display = 'none';
+                 trExp.innerHTML = `<td colspan="6" style="padding:0;"><div id="content-${item.name}"></div></td>`;
+                 tbody.appendChild(trExp);
              }
  
              document.getElementById('total-scans').innerText = list.length;
@@ -968,32 +1200,32 @@
              const reports = await res.json();
              const arr = Array.isArray(reports) ? reports : [reports];
              
-             if (arr.length === 1) {
-                 return {
-                     type: 'Quick Scan',
-                     typeColor: '#00a1df',
-                     source: arr[0].url || arr[0].repoPath || 'Local',
-                     count: 1
-                 };
-             } else {
-                 // Extract group/project from first result
-                 const firstUrl = arr[0]?.url || '';
-                 let source = 'Multiple repositories';
-                 if (firstUrl.includes('gitlab.com')) {
-                     const parts = firstUrl.split('/');
-                     source = parts.slice(0, -1).join('/');
-                 }
-                 return {
-                     type: 'API Discovery',
-                     typeColor: '#663399',
-                     source: source,
-                     count: arr.length
-                 };
-             }
-         } catch (e) {
-             return { type: 'Unknown', typeColor: '#999', source: 'N/A', count: 0 };
-         }
-     }
+              // Determine type based on result count
+              const isMulti = arr.length > 1;
+
+              // Helper to find common prefix for source display
+              let source = 'Unknown Source';
+              if(arr.length > 0) {
+                  const first = arr[0].url || arr[0].repoPath || '';
+                  if(isMulti && first.includes('gitlab.com')) {
+                       // Try to find group path (remove last repos name)
+                       const parts = first.split('/');
+                       source = parts.length > 3 ? parts.slice(0, -1).join('/') : first;
+                  } else {
+                       source = first;
+                  }
+              }
+
+              return {
+                  type: isMulti ? 'API Discovery' : 'Quick Scan',
+                  typeColor: isMulti ? '#663399' : '#00a1df',
+                  source: source,
+                  count: arr.length
+              };
+          } catch (e) {
+              return { type: 'Unknown' + e.message, typeColor: '#999', source: 'N/A', count: 0 };
+          }
+      }
      
      // View historical scan results
      async function viewHistoryScan(scanName) {
@@ -1004,45 +1236,51 @@
              const reports = await res.json();
              const arr = Array.isArray(reports) ? reports : [reports];
              
+             // Sort by Confidence (Highest First)
+             arr.sort((a, b) => (b.confidenceScore || 0) - (a.confidenceScore || 0));
+             
              // Inject scanFolder for Details button
              arr.forEach(r => r.scanFolder = scanName);
              
              // Store in global variable
              window.lastScanResults = arr;
              
-             // Render results in Quick Scan results container
-             const container = document.getElementById('quick-results-container');
+             // Render results in History Results Container
+             const container = document.getElementById('history-results-container');
              if (!container) {
                  hideLoading();
                  throw new Error('Results container not found');
              }
              
              // Build results HTML (reuse Quick Scan rendering logic)
+             const firstUrl = arr[0]?.url || '';
+             const srcDisplay = firstUrl || 'Merged Results';
+
              let tableHtml = `
-                 <h3 style="color:var(--primary-color); margin-top:2rem;">📊 Scan: ${scanName}</h3>
+                 <h3 style="color:#663399; margin-top:0;">📊 Scan: ${scanName} <span style="font-weight:normal; font-size:1rem; color:#666; margin-left:10px;">: ${srcDisplay}</span></h3>
                  <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
-                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid var(--primary-color); text-align:center;">
-                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${arr.length}</div>
+                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid #663399; text-align:center;">
+                         <div style="font-size:2rem; font-weight:bold; color:#663399;">${arr.length}</div>
                          <div style="color:#666; margin-top:0.5rem;">Total Repositories</div>
                      </div>
-                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid var(--primary-color); text-align:center;">
-                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${arr.filter(r => r.classification === 'API Service').length}</div>
+                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid #663399; text-align:center;">
+                         <div style="font-size:2rem; font-weight:bold; color:#663399;">${arr.filter(r => r.classification === 'API Service').length}</div>
                          <div style="color:#666; margin-top:0.5rem;">Identified APIs</div>
                      </div>
-                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid var(--primary-color); text-align:center;">
+                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid #663399; text-align:center;">
                          <div style="font-size:2rem; font-weight:bold; color:#28a745;">${Math.round(arr.reduce((sum, r) => sum + (parseFloat(r.confidenceScore || r.governanceScore || 0)), 0) / arr.length)}%</div>
                          <div style="color:#666; margin-top:0.5rem;">Avg Confidence</div>
                      </div>
                  </div>
-                 <h3 style="color:var(--primary-color);">Discovery Results</h3>
-                 <table style="width:100%; border-collapse:collapse; margin-top:1rem; border:2px solid var(--primary-color) !important;">
+                 <h3 style="color:#663399; margin-top:2rem;">Discovery Results</h3>
+                 <table style="width:100%; border-collapse:collapse; margin-top:1rem; border:2px solid #663399; border-radius:8px; overflow:hidden;">
                      <thead>
-                         <tr style="background:#f9f9f9; border-bottom:2px solid var(--primary-color) !important;">
-                             <th style="padding:12px; text-align:left; color:var(--primary-color);">REPOSITORY</th>
-                             <th style="padding:12px; text-align:left; color:var(--primary-color);">TECHNOLOGY</th>
-                             <th style="padding:12px; text-align:left; color:var(--primary-color);">CLASSIFICATION</th>
-                             <th style="padding:12px; text-align:left; color:var(--primary-color);">CONFIDENCE</th>
-                             <th style="padding:12px; text-align:left; color:var(--primary-color);">ACTIONS</th>
+                         <tr style="background:#f9f9f9; border-bottom:2px solid #663399 !important;">
+                             <th style="padding:12px; text-align:left; color:#663399;">REPOSITORY</th>
+                             <th style="padding:12px; text-align:left; color:#663399;">TECHNOLOGY</th>
+                             <th style="padding:12px; text-align:left; color:#663399;">CLASSIFICATION</th>
+                             <th style="padding:12px; text-align:left; color:#663399;">CONFIDENCE</th>
+                             <th style="padding:12px; text-align:left; color:#663399;">ACTIONS</th>
                          </tr>
                      </thead>
                      <tbody>
@@ -1077,7 +1315,7 @@
                      <tr id="row-${i}" style="border-bottom:1px solid #eee;">
                          <td style="padding:15px;">
                              <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
-                             <a href="${r.url || ''}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem;">${(r.url || '').substring(0, 50)}...</a>
+                             ${r.url ? `<a href="${r.url}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px;" title="${r.url}"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> View on GitLab</a>` : `<span style="color:#999; font-size:0.85rem;">Local Repository</span>`}
                          </td>
                          <td><span class="badge" style="${techStyle}">${tech}</span></td>
                          <td><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
@@ -1130,41 +1368,69 @@
              tableHtml += '</tbody></table>';
              container.innerHTML = tableHtml;
              
-             // Hide loading before switching tabs
+             // Hide loading before switching
              hideLoading();
              
-             // Switch to Quick Scan tab to show results
-             switchTab('quick');
+             // Show Results View, Hide List View
+             document.getElementById('history-view-list').style.display = 'none';
+             document.getElementById('history-view-results').style.display = 'block';
+             
          } catch (e) {
              hideLoading();
              alert('Failed to load scan: ' + e.message);
          }
      }
      
-     // Delete scan
-     async function deleteScan(scanName) {
-         if (!confirm(`Are you sure you want to delete scan "${scanName}"?\n\nThis action cannot be undone.`)) return;
-         
-         try {
-             showLoading('Deleting scan...');
-             
-             const res = await fetch(getApiPath(`/scans/delete?scanName=${scanName}`), {
-                 method: 'POST'
-             });
-             
-             if (res.ok) {
-                 alert('Scan deleted successfully');
-                 loadHistory(); // Refresh list
-             } else {
-                 throw new Error('Delete failed');
-             }
-             
-             hideLoading();
-         } catch (e) {
-             hideLoading();
-             alert('Failed to delete scan: ' + e.message);
-         }
+     // Close History Results & Show List
+     function closeHistoryResults() {
+         document.getElementById('history-view-results').style.display = 'none';
+         document.getElementById('history-view-list').style.display = 'block';
      }
+     
+     // Delete scan
+      async function deleteScan(scanName) {
+         if (!confirm(`Are you sure you want to delete scan "${scanName}"? This action cannot be undone.`)) return;
+          
+          try {
+              showLoading('Deleting scan...');
+              
+              const res = await fetch(getApiPath(`/scans/delete`), {
+                  method: 'POST',
+                  body: JSON.stringify({ folders: [scanName] }) // Method changed to POST with body as per backend handler
+              });
+              
+              const data = await res.json();
+              hideLoading();
+
+              if (res.ok) {
+                  const failed = data.failed || [];
+                  const deleted = data.deleted || [];
+                  
+                  if (failed.includes(scanName)) {
+                      alert(`Failed to delete scan: ${scanName}. It may be in use or locked.`);
+                  } else if (deleted.includes(scanName)) {
+                      alert('Scan deleted successfully');
+                      
+                      // Clear global results if they match the deleted scan
+                      if (window.lastScanResults && window.lastScanResults[0] && window.lastScanResults[0].scanFolder === scanName) {
+                          window.lastScanResults = null;
+                      }
+                      
+                      // Small delay to ensure FS update, then reload
+                      setTimeout(() => loadHistory(), 500);
+                  } else {
+                       // Should not happen, but fallback
+                       alert('Scan deletion processed but status unknown.');
+                       loadHistory();
+                  }
+              } else {
+                  throw new Error(data.error || 'Delete request failed');
+              }
+          } catch (e) {
+              hideLoading();
+              alert('Failed to delete scan: ' + e.message);
+          }
+      }
  
      
      // Toggle inline details display
@@ -1271,15 +1537,6 @@
          reader.readAsText(file);
      }
      
-     // UI Helper
-     function showLoading(msg) {
-        document.getElementById('loading-text').innerText = msg;
-        document.getElementById('loading-overlay').style.display = 'flex';
-     }
-     function hideLoading() {
-        document.getElementById('loading-overlay').style.display = 'none';
-     }
-
      window.onclick = function(event) {
           if (event.target == document.getElementById('resultsModal')) {
               document.getElementById('resultsModal').style.display = "none";
@@ -1296,7 +1553,40 @@
       function hideLoading() {
          const ov = document.getElementById('loading-overlay');
          if(ov) ov.style.display = 'none';
+         if(window.scanInterval) {
+             clearInterval(window.scanInterval);
+             window.scanInterval = null;
+         }
       }
+      function showGuide() { document.getElementById('guide-modal').style.display='flex'; }
  </script>
+
+ <div id="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <div id="loading-text" style="font-size:1.2rem; color:#555;">Processing...</div>
+        <div class="progress-container">
+            <div id="global-progress-bar" class="progress-bar"></div>
+        </div>
+    </div>
+</div>
+
+ <!-- Guide Modal -->
+ <div id="guide-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('guide-modal').style.display='none'">&times;</span>
+        <h2 style="color:var(--primary-color)">📘 User Guide</h2>
+        <div style="line-height:1.6; color:#444;">
+            <h3>Quick Scan</h3>
+            <p>Directly analyze a single repository by URL or local path. Supports "Full Analysis" for deep inspection.</p>
+            <h3>API Discovery</h3>
+            <p>Connect to GitLab to browse Groups and Projects. Select multiple projects to scan in bulk.</p>
+            <h3>Traffic Correlation</h3>
+            <p>Upload access logs to correlate discovered APIs with actual usage traffic, identifying unused endpoints.</p>
+            <h3>Scan History</h3>
+            <p>View past results, track trends, and export your workspace state. Click "View Results" to see full details.</p>
+        </div>
+    </div>
+ </div>
  </body>
  </html>

@@ -37,11 +37,17 @@
             <version>2.10.1</version>
         </dependency>
 
-        <!-- For YAML Processing (OpenAPI/Swagger) -->
         <dependency>
             <groupId>org.yaml</groupId>
             <artifactId>snakeyaml</artifactId>
             <version>2.2</version>
+        </dependency>
+
+        <!-- Required for TrafficCorrelator -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
         </dependency>
 
         <!-- Testing -->

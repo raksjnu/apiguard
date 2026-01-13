@@ -35,6 +35,21 @@ public class ApiDiscoveryService {
     public static ScanProgress getProgress(String scanId) {
         return activeScans.get(scanId);
     }
+    
+    // --- New Static Wrappers for Mule ---
+    public static String fetchGroups(String baseUrl, String token) throws Exception {
+        return GitService.fetchGroups(baseUrl, token);
+    }
+
+    public static String fetchProjects(String baseUrl, String token, String groupId) throws Exception {
+        return GitService.fetchProjects(baseUrl, token, groupId);
+    }
+
+    public static List<Map<String, String>> correlateTraffic(String trafficData, String tempDir) {
+        return TrafficCorrelator.correlate(trafficData, tempDir);
+    }
+    // ------------------------------------
+
     public static List<Map<String, Object>> listScans(String tempDir) {
         List<Map<String, Object>> scanFolders = new ArrayList<>();
         File dir = new File(tempDir);
@@ -82,6 +97,31 @@ public class ApiDiscoveryService {
         result.put("failed", failed);
         return result;
     }
+    // --- Ignore List Management ---
+    public static void ignoreItem(String item) { IgnoredRepoManager.add(item); }
+    public static void removeIgnoredItem(String item) { IgnoredRepoManager.remove(item); }
+    public static java.util.List<String> getIgnoredItems() { return IgnoredRepoManager.getList(); }
+
+    // --- State Management ---
+    public static String exportState(String tempDir) {
+        java.util.Map<String, Object> state = new java.util.HashMap<>();
+        state.put("ignored", IgnoredRepoManager.getList());
+        state.put("history", listScans(tempDir));
+        return gson.toJson(state);
+    }
+    
+    public static void importState(String jsonState, String tempDir) {
+        try {
+            java.util.Map<String, Object> state = gson.fromJson(jsonState, new TypeToken<java.util.Map<String, Object>>(){}.getType());
+            if (state.containsKey("ignored")) {
+                java.util.List<String> ignored = (java.util.List<String>) state.get("ignored");
+                for (String s : ignored) IgnoredRepoManager.add(s);
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     public static List<DiscoveryReport> viewScan(String scanName, String tempDir) throws IOException {
         if (scanName == null || scanName.trim().isEmpty()) {
             throw new IllegalArgumentException("Missing scan name");
@@ -120,7 +160,7 @@ public class ApiDiscoveryService {
         progress.setMessage("Initializing scan...");
         progress.setPercent(5);
         if (localFile.exists() && localFile.isDirectory()) {
-            System.out.println("Detected Local Directory: " + source);
+            // System.out.println("Detected Local Directory: " + source);
             progress.setMessage("Scanning local directory: " + source);
             progress.setPercent(20);
             reports.add(engine.scanRepository(localFile));
@@ -139,7 +179,7 @@ public class ApiDiscoveryService {
             }
         } 
         else if (token != null && !token.isEmpty()) {
-            System.out.println("Detected GitLab Source: " + source);
+            // System.out.println("Detected GitLab Source: " + source);
             progress.setMessage("Connecting to GitLab...");
             progress.setPercent(10);
             String cleanGroup = source.trim();
@@ -152,11 +192,21 @@ public class ApiDiscoveryService {
             if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
             progress.setMessage("Scanning GitLab group: " + cleanGroup);
             progress.setPercent(30);
+            
             GitLabConnector connector = new GitLabConnector();
             reports = connector.scanGroup(cleanGroup, token, scanFolder, new File(tempDir), (msg, pct) -> {
                 progress.setMessage(msg);
                 progress.setPercent(pct);
             });
+            
+            // Check for ignored repositories in the result and adjust status
+            for (DiscoveryReport r : reports) {
+                if (IgnoredRepoManager.isIgnored(r.getRepoPath()) || IgnoredRepoManager.isIgnored(r.getRepoName())) {
+                    r.setClassification("IGNORED");
+                    r.setConfidenceScore(0);
+                    r.setTechnology("Skipped by User");
+                }
+            }
         } else {
             throw new IllegalArgumentException("Source not found locally and no GitLab Token provided");
         }
@@ -170,9 +220,10 @@ public class ApiDiscoveryService {
             File resultsFile = new File(outputDir, "scan_results.json");
             String json = gson.toJson(reports);
             java.nio.file.Files.write(resultsFile.toPath(), json.getBytes());
-            System.out.println("Saved consolidated report: " + resultsFile.getAbsolutePath());
+            java.nio.file.Files.write(resultsFile.toPath(), json.getBytes());
+            // System.out.println("Saved consolidated report: " + resultsFile.getAbsolutePath());
         } catch (IOException e) {
-            System.err.println("Failed to save report: " + e.getMessage());
+            // System.err.println("Failed to save report: " + e.getMessage());
         }
         File[] everything = outputDir.listFiles();
         if (everything != null) {
@@ -248,7 +299,7 @@ public class ApiDiscoveryService {
         }
         public synchronized void setMessage(String message) {
             this.message = message;
-            System.out.println("[PROGRESS] " + percent + "% - " + message);
+            // System.out.println("[PROGRESS] " + percent + "% - " + message);
         }
         public synchronized void setPercent(int percent) {
             this.percent = percent;
