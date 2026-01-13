@@ -339,9 +339,18 @@
                 <input type="file" id="import-file" style="display: none;" onchange="importWorkspace(this)">
             </div>
 
-            <button onclick="loadHistory()">Refresh List</button>
-            <table id="history-table">
-                <thead><tr><th>Scan ID</th><th>Date</th><th>Action</th></tr></thead>
+            <button onclick="loadHistory()">🔄 Refresh List</button>
+            <table id="history-table" style="width:100%; border-collapse:collapse; margin-top:1rem;">
+                <thead>
+                    <tr style="background:#f9f9f9; border-bottom:2px solid var(--primary-color);">
+                        <th style="padding:12px; text-align:left; color:var(--primary-color);">SCAN ID</th>
+                        <th style="padding:12px; text-align:left; color:var(--primary-color);">TYPE</th>
+                        <th style="padding:12px; text-align:left; color:var(--primary-color);">SOURCE</th>
+                        <th style="padding:12px; text-align:left; color:var(--primary-color);">DATE</th>
+                        <th style="padding:12px; text-align:left; color:var(--primary-color);">RESULTS</th>
+                        <th style="padding:12px; text-align:left; color:var(--primary-color);">ACTIONS</th>
+                    </tr>
+                </thead>
                 <tbody></tbody>
             </table>
         </div>
@@ -737,20 +746,68 @@
 
                  const scanId = r.scanId || r.scanFolder || data.scanId;
                  
-                 tableHtml += `
-                    <tr style="border-bottom:1px solid #eee;">
-                        <td style="padding:15px;">
-                            <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
-                            <a href="${r.url || source}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem;">${(r.url || source).substring(0, 50)}...</a>
-                        </td>
-                        <td><span class="badge" style="${techStyle}">${tech}</span></td>
-                        <td><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
-                        <td style="color:green; font-weight:bold;">${score}</td>
-                        <td>
-                            <button class="small" onclick="viewScanByIndex('${scanId}', ${i})" style="background:var(--primary-color);">Details</button>
-                        </td>
-                    </tr>
-                 `;
+                                   // Prepare evidence and indicators
+                  const evidence = r.evidence || [];
+                  const indicators = r.indicators || [];
+                  const metadata = r.metadata || {};
+                  
+                  tableHtml += `
+                     <tr id="row-${i}" style="border-bottom:1px solid #eee;">
+                         <td style="padding:15px;">
+                             <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
+                             <a href="${r.url || source}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem;">${(r.url || source).substring(0, 50)}...</a>
+                         </td>
+                         <td><span class="badge" style="${techStyle}">${tech}</span></td>
+                         <td><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
+                         <td style="color:green; font-weight:bold;">${score}</td>
+                         <td>
+                             <button class="small" onclick="toggleDetails(${i})" style="background:var(--primary-color);">Details</button>
+                         </td>
+                     </tr>
+                     <tr id="detail-${i}" style="display:none;">
+                         <td colspan="5" style="padding:0; background:#f9f9f9;">
+                             <div style="padding:20px; border-left:4px solid var(--primary-color);">
+                                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                                     <!-- Column 1: Identification & Capabilities -->
+                                     <div>
+                                         <h4 style="margin-top:0; color: var(--primary-color);">🔍 Identification & Capabilities</h4>
+                                         <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                             <strong>Evidence:</strong>
+                                             <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                 ${evidence.length > 0 ? evidence.map(e => `<li>${e}</li>`).join('') : '<li style="color:#999;">No evidence files detected</li>'}
+                                             </ul>
+                                             <strong style="margin-top:1rem; display:block;">Capabilities:</strong>
+                                             <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                 ${indicators.length > 0 ? indicators.map(ind => `<li>${ind}</li>`).join('') : '<li style="color:#999;">No API signatures found</li>'}
+                                             </ul>
+                                         </div>
+                                     </div>
+                                     
+                                     <!-- Column 2: Governance Standards -->
+                                     <div>
+                                         <h4 style="margin-top:0; color: var(--primary-color);">📊 Governance Standards</h4>
+                                         <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                             ${renderGovernanceCheck(metadata, 'Governance: Standards', 'RESTful Architecture')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Documentation', 'API Documentation')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Gateway', 'API Gateway Managed')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Security', 'Security Enforcement')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Versioning', 'Semantic Versioning')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Logging', 'Centralized Logging')}
+                                         </div>
+                                     </div>
+                                     
+                                     <!-- Column 3: Risk & Settings -->
+                                     <div>
+                                         <h4 style="margin-top:0; color: var(--primary-color);">🔥 Risk & Settings</h4>
+                                         <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                             ${renderOtherMetadata(metadata)}
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </td>
+                     </tr>
+                  `;
              });
              
              tableHtml += '</table>';
@@ -855,54 +912,296 @@
              tbody.innerHTML = '';
              
              if(list.length === 0) {
-                 tbody.innerHTML = '<tr><td colspan="3">No scans found.</td></tr>';
+                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No scans found. Run a scan to get started.</td></tr>';
+                 document.getElementById('total-scans').innerText = '0';
+                 hideLoading();
+                 return;
              }
  
-             list.forEach(item => {
+             // Sort by date (newest first)
+             list.sort((a, b) => b.lastModified - a.lastModified);
+             
+             // Load scan details for each
+             for (const item of list) {
+                 const scanInfo = await getScanInfo(item.name);
+                 const date = new Date(item.lastModified).toLocaleString();
+                 
                  const tr = document.createElement('tr');
+                 tr.style.borderBottom = '1px solid #eee';
                  tr.innerHTML = `
-                     <td>${item.name}</td>
-                     <td>${new Date(item.lastModified).toLocaleString()}</td>
-                     <td><button onclick="viewScan('${item.name}')">View Report</button></td>
+                     <td><strong>${item.name}</strong></td>
+                     <td><span class="badge" style="background:${scanInfo.typeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:0.8rem;">${scanInfo.type}</span></td>
+                     <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${scanInfo.source}">${scanInfo.source}</td>
+                     <td>${date}</td>
+                     <td><strong>${scanInfo.count}</strong> repositories</td>
+                     <td>
+                         <button class="small" onclick="viewHistoryScan('${item.name}')" style="background:var(--primary-color); margin-right:5px;">View Results</button>
+                         <button class="small" onclick="deleteScan('${item.name}')" style="background:#d32f2f;">Delete</button>
+                     </td>
                  `;
                  tbody.appendChild(tr);
-             });
+             }
  
              document.getElementById('total-scans').innerText = list.length;
              
              // Ignored stats
-             const iRes = await fetch(getApiPath('/ignore'));
-             const ignored = await iRes.json();
-             document.getElementById('ignored-count').innerText = ignored.length || 0;
+             try {
+                 const iRes = await fetch(getApiPath('/ignore'));
+                 const ignored = await iRes.json();
+                 document.getElementById('ignored-count').innerText = ignored.length || 0;
+             } catch(e) {
+                 document.getElementById('ignored-count').innerText = '0';
+             }
          } catch(e) {
              console.error("Load History Failed", e);
-             document.querySelector('#history-table tbody').innerHTML = '<tr><td colspan="3">Error loading history. Ensure backend is running.</td></tr>';
+             document.querySelector('#history-table tbody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#d32f2f;">Error loading history. Ensure backend is running.</td></tr>';
          } finally {
             hideLoading();
          }
      }
  
-     async function viewScanByIndex(scanId, index) {
-        if(window.lastScanResults && window.lastScanResults[index]) {
-            await viewScan(scanId, window.lastScanResults[index].repoName);
-        } else {
-            console.error("Result index not found", index);
-        }
+     // Get scan information (type, source, count)
+     async function getScanInfo(scanName) {
+         try {
+             const res = await fetch(getApiPath(`/scans/view?scanName=${scanName}`));
+             const reports = await res.json();
+             const arr = Array.isArray(reports) ? reports : [reports];
+             
+             if (arr.length === 1) {
+                 return {
+                     type: 'Quick Scan',
+                     typeColor: '#00a1df',
+                     source: arr[0].url || arr[0].repoPath || 'Local',
+                     count: 1
+                 };
+             } else {
+                 // Extract group/project from first result
+                 const firstUrl = arr[0]?.url || '';
+                 let source = 'Multiple repositories';
+                 if (firstUrl.includes('gitlab.com')) {
+                     const parts = firstUrl.split('/');
+                     source = parts.slice(0, -1).join('/');
+                 }
+                 return {
+                     type: 'API Discovery',
+                     typeColor: '#663399',
+                     source: source,
+                     count: arr.length
+                 };
+             }
+         } catch (e) {
+             return { type: 'Unknown', typeColor: '#999', source: 'N/A', count: 0 };
+         }
      }
      
-
-     async function viewScanByIndex(scanId, index) {
-        console.log("DEBUG: viewScanByIndex triggered", { scanId, index });
-        if(window.lastScanResults && window.lastScanResults[index]) {
-            const result = window.lastScanResults[index];
-            const scanFolder = result.scanFolder || scanId;
-            console.log("DEBUG: Using scanFolder", scanFolder, "for repo", result.repoName);
-            await viewScan(scanFolder, result.repoName);
-        } else {
-            const msg = "Result index not found: " + index;
-            console.error(msg, window.lastScanResults);
-            alert(msg);
-        }
+     // View historical scan results
+     async function viewHistoryScan(scanName) {
+         try {
+             showLoading('Loading scan results...');
+             
+             const res = await fetch(getApiPath(`/scans/view?scanName=${scanName}`));
+             const reports = await res.json();
+             const arr = Array.isArray(reports) ? reports : [reports];
+             
+             // Inject scanFolder for Details button
+             arr.forEach(r => r.scanFolder = scanName);
+             
+             // Store in global variable
+             window.lastScanResults = arr;
+             
+             // Render results in Quick Scan results container
+             const container = document.getElementById('quickscan-results');
+             if (!container) {
+                 throw new Error('Results container not found');
+             }
+             
+             // Build results HTML (reuse Quick Scan rendering logic)
+             let tableHtml = `
+                 <h3 style="color:var(--primary-color); margin-top:2rem;">📊 Scan: ${scanName}</h3>
+                 <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem;">
+                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid var(--primary-color); text-align:center;">
+                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${arr.length}</div>
+                         <div style="color:#666; margin-top:0.5rem;">Total Repositories</div>
+                     </div>
+                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid var(--primary-color); text-align:center;">
+                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${arr.filter(r => r.classification === 'API Service').length}</div>
+                         <div style="color:#666; margin-top:0.5rem;">Identified APIs</div>
+                     </div>
+                     <div style="background:white; padding:1.5rem; border-radius:8px; border:2px solid var(--primary-color); text-align:center;">
+                         <div style="font-size:2rem; font-weight:bold; color:#28a745;">${Math.round(arr.reduce((sum, r) => sum + (parseFloat(r.confidenceScore || r.governanceScore || 0)), 0) / arr.length)}%</div>
+                         <div style="color:#666; margin-top:0.5rem;">Avg Confidence</div>
+                     </div>
+                 </div>
+                 <h3 style="color:var(--primary-color);">Discovery Results</h3>
+                 <table style="width:100%; border-collapse:collapse; margin-top:1rem; border:2px solid var(--primary-color) !important;">
+                     <thead>
+                         <tr style="background:#f9f9f9; border-bottom:2px solid var(--primary-color) !important;">
+                             <th style="padding:12px; text-align:left; color:var(--primary-color);">REPOSITORY</th>
+                             <th style="padding:12px; text-align:left; color:var(--primary-color);">TECHNOLOGY</th>
+                             <th style="padding:12px; text-align:left; color:var(--primary-color);">CLASSIFICATION</th>
+                             <th style="padding:12px; text-align:left; color:var(--primary-color);">CONFIDENCE</th>
+                             <th style="padding:12px; text-align:left; color:var(--primary-color);">ACTIONS</th>
+                         </tr>
+                     </thead>
+                     <tbody>
+             `;
+             
+             // Render each result row (same as Quick Scan)
+             arr.forEach((r, i) => {
+                 const tech = r.technology || 'Unknown';
+                 const isMule = tech.toLowerCase().includes('mule');
+                 const score = r.confidenceScore || r.governanceScore || 0;
+                 
+                 let classStyle = 'background:#f5f5f5; color:#616161;';
+                 const cls = r.classification || (isMule ? 'API Service' : 'Standalone / Library');
+                 
+                 if(cls === 'API Service') classStyle = 'background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;';
+                 else if(cls.includes('Standalone') || cls.includes('Library')) classStyle = 'background:#fff3e0; color:#ef6c00; border:1px solid #ffe0b2;';
+                 
+                 let techStyle = '';
+                 if(tech === 'Unknown' || tech === 'Unknown / Generic') {
+                     techStyle = 'background:#f5f5f5; color:#757575; border:1px solid #e0e0e0; font-weight:normal;';
+                 } else if(isMule) {
+                     techStyle = 'background:#00a1df; color:white;';
+                 } else {
+                     techStyle = 'background:#6db33f; color:white;';
+                 }
+                 
+                 const evidence = r.evidence || [];
+                 const indicators = r.indicators || [];
+                 const metadata = r.metadata || {};
+                 
+                 tableHtml += `
+                     <tr id="row-${i}" style="border-bottom:1px solid #eee;">
+                         <td style="padding:15px;">
+                             <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
+                             <a href="${r.url || ''}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem;">${(r.url || '').substring(0, 50)}...</a>
+                         </td>
+                         <td><span class="badge" style="${techStyle}">${tech}</span></td>
+                         <td><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
+                         <td style="color:green; font-weight:bold;">${score}</td>
+                         <td>
+                             <button class="small" onclick="toggleDetails(${i})" style="background:var(--primary-color);">Details</button>
+                         </td>
+                     </tr>
+                     <tr id="detail-${i}" style="display:none;">
+                         <td colspan="5" style="padding:0; background:#f9f9f9;">
+                             <div style="padding:20px; border-left:4px solid var(--primary-color);">
+                                 <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                                     <div>
+                                         <h4 style="margin-top:0; color: var(--primary-color);">🔍 Identification & Capabilities</h4>
+                                         <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                             <strong>Evidence:</strong>
+                                             <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                 ${evidence.length > 0 ? evidence.map(e => `<li>${e}</li>`).join('') : '<li style="color:#999;">No evidence files detected</li>'}
+                                             </ul>
+                                             <strong style="margin-top:1rem; display:block;">Capabilities:</strong>
+                                             <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                 ${indicators.length > 0 ? indicators.map(ind => `<li>${ind}</li>`).join('') : '<li style="color:#999;">No API signatures found</li>'}
+                                             </ul>
+                                         </div>
+                                     </div>
+                                     <div>
+                                         <h4 style="margin-top:0; color: var(--primary-color);">📊 Governance Standards</h4>
+                                         <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                             ${renderGovernanceCheck(metadata, 'Governance: Standards', 'RESTful Architecture')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Documentation', 'API Documentation')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Gateway', 'API Gateway Managed')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Security', 'Security Enforcement')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Versioning', 'Semantic Versioning')}
+                                             ${renderGovernanceCheck(metadata, 'Governance: Logging', 'Centralized Logging')}
+                                         </div>
+                                     </div>
+                                     <div>
+                                         <h4 style="margin-top:0; color: var(--primary-color);">🔥 Risk & Settings</h4>
+                                         <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                             ${renderOtherMetadata(metadata)}
+                                         </div>
+                                     </div>
+                                 </div>
+                             </div>
+                         </td>
+                     </tr>
+                 `;
+             });
+             
+             tableHtml += '</tbody></table>';
+             container.innerHTML = tableHtml;
+             
+             // Switch to Quick Scan tab to show results
+             switchTab('quickscan');
+             
+             hideLoading();
+         } catch (e) {
+             hideLoading();
+             alert('Failed to load scan: ' + e.message);
+         }
+     }
+     
+     // Delete scan
+     async function deleteScan(scanName) {
+         if (!confirm(`Are you sure you want to delete scan "${scanName}"?\n\nThis action cannot be undone.`)) return;
+         
+         try {
+             showLoading('Deleting scan...');
+             
+             const res = await fetch(getApiPath(`/scans/delete?scanName=${scanName}`), {
+                 method: 'POST'
+             });
+             
+             if (res.ok) {
+                 alert('Scan deleted successfully');
+                 loadHistory(); // Refresh list
+             } else {
+                 throw new Error('Delete failed');
+             }
+             
+             hideLoading();
+         } catch (e) {
+             hideLoading();
+             alert('Failed to delete scan: ' + e.message);
+         }
+     }
+ 
+     
+     // Toggle inline details display
+     function toggleDetails(index) {
+         const detailRow = document.getElementById(`detail-${index}`);
+         if (detailRow) {
+             detailRow.style.display = detailRow.style.display === 'table-row' ? 'none' : 'table-row';
+         }
+     }
+     
+     // Render governance check with status indicator
+     function renderGovernanceCheck(metadata, key, label) {
+         const exists = metadata && metadata[key];
+         const statusIcon = exists ? '✓' : '✗';
+         const statusColor = exists ? '#28a745' : '#dc3545';
+         const statusText = exists ? metadata[key] : 'Not Detected';
+         return `
+             <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #f0f0f0;">
+                 <span style="font-weight:600; color:#555;">${label}</span>
+                 <div style="font-size:0.85rem; color:${statusColor};">${statusIcon} ${statusText}</div>
+             </div>
+         `;
+     }
+     
+     // Render other metadata (Risk & Settings)
+     function renderOtherMetadata(metadata) {
+         if (!metadata) return '<p style="color:#999;">No additional metadata available</p>';
+         
+         let html = '<ul style="margin:0; padding-left:1.2rem; list-style:none;">';
+         for (const [key, value] of Object.entries(metadata)) {
+             if (key.startsWith('Governance:')) continue; // Skip governance items
+             
+             let color = '#333';
+             if (key.includes('Risk') && !value.includes('Safe')) color = '#dc3545'; // Red for Risk
+             if (value.includes('Safe') || value.includes('Best Practice')) color = '#28a745'; // Green for Safe
+             
+             html += `<li style="margin-bottom:0.5rem;"><strong>${key}:</strong> <span style="color:${color}">${value}</span></li>`;
+         }
+         html += '</ul>';
+         return html;
      }
      
      async function viewScan(scanName, filterRepoName) {
