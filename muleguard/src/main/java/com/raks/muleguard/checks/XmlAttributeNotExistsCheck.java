@@ -90,22 +90,5 @@ public class XmlAttributeNotExistsCheck extends AbstractCheck {
         DocumentBuilder builder = factory.newDocumentBuilder();
         return builder.parse(file.toFile());
     }
-    private boolean matchesAnyPattern(Path path, List<String> patterns, Path projectRoot) {
-        String relativePath = projectRoot.relativize(path).toString().replace("\\", "/");
-        for (String pattern : patterns) {
-            if (matchesPattern(relativePath, pattern)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean matchesPattern(String path, String pattern) {
-        String regex = pattern
-                .replace(".", "\\.")
-                .replace("**/", ".*")
-                .replace("**", ".*")
-                .replace("*", "[^/]*")
-                .replace("?", ".");
-        return path.matches(regex);
-    }
+
 }

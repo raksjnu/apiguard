@@ -109,24 +109,5 @@ public class GenericTokenSearchRequiredCheck extends AbstractCheck {
             return content.toLowerCase().contains(token.toLowerCase());
         }
     }
-    private boolean matchesAnyPattern(Path path, List<String> patterns, Path projectRoot) {
-        if (patterns.isEmpty())
-            return false;
-        String relativePath = projectRoot.relativize(path).toString().replace("\\", "/");
-        for (String pattern : patterns) {
-            if (matchesPattern(relativePath, pattern)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean matchesPattern(String path, String pattern) {
-        String regex = pattern
-                .replace(".", "\\.")
-                .replace("**/", ".*")
-                .replace("**", ".*")
-                .replace("*", "[^/]*")
-                .replace("?", ".");
-        return path.matches(regex);
-    }
+
 }

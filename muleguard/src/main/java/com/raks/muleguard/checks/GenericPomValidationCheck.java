@@ -41,6 +41,8 @@ public class GenericPomValidationCheck extends AbstractCheck {
                     return validateProperties(model, check, true);
                 case "PROPERTY_NOT_EXISTS":
                     return validateProperties(model, check, false);
+                case "DEPENDENCIES_REGEX":
+                     return validateDependenciesRegex(model, check);
                 default:
                     return CheckResult.fail(check.getRuleId(), check.getDescription(),
                             "Unknown validationType: " + validationType);
@@ -50,12 +52,59 @@ public class GenericPomValidationCheck extends AbstractCheck {
                     "Error reading pom.xml: " + e.getMessage());
         }
     }
+
+    private CheckResult validateDependenciesRegex(Model model, Check check) {
+         @SuppressWarnings("unchecked")
+         List<Map<String, String>> forbiddenPatterns = (List<Map<String, String>>) check.getParams().get("forbiddenDependencyPatterns");
+
+         if (forbiddenPatterns == null || forbiddenPatterns.isEmpty()) {
+             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Configuration error: 'forbiddenDependencyPatterns' is required");
+         }
+
+         List<Dependency> actualDeps = model.getDependencies();
+         if (actualDeps == null) actualDeps = new ArrayList<>();
+         
+         List<String> failures = new ArrayList<>();
+
+         for (Map<String, String> pattern : forbiddenPatterns) {
+             String groupPattern = pattern.get("groupId");
+             String artifactPattern = pattern.get("artifactId");
+             String versionPattern = pattern.get("versionPattern");
+
+             for (Dependency dep : actualDeps) {
+                 boolean groupMatch = (groupPattern == null) || dep.getGroupId().matches(groupPattern);
+                 boolean artifactMatch = (artifactPattern == null) || dep.getArtifactId().matches(artifactPattern);
+                 boolean versionMatch = (versionPattern == null) || (dep.getVersion() != null && dep.getVersion().matches(versionPattern));
+
+                 if (groupMatch && artifactMatch && versionMatch) {
+                      failures.add(String.format("Forbidden dependency pattern matched: %s:%s:%s (Matched rule: G=%s, A=%s, V=%s)",
+                              dep.getGroupId(), dep.getArtifactId(), dep.getVersion(),
+                              groupPattern, artifactPattern, versionPattern));
+                 }
+             }
+         }
+
+         if (failures.isEmpty()) {
+             return CheckResult.pass(check.getRuleId(), check.getDescription(), "No forbidden dependency patterns found.");
+         } else {
+             return CheckResult.fail(check.getRuleId(), check.getDescription(), String.join("\n", failures));
+         }
+    }
+
     private CheckResult validateDependencies(Model model, Check check, boolean shouldExist) {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> expectedDeps = (List<Map<String, String>>) check.getParams().get("dependencies");
+
+        if (expectedDeps == null) {
+             expectedDeps = (List<Map<String, String>>) check.getParams().get("forbiddenDependencies");
+        }
+        if (expectedDeps == null) {
+              expectedDeps = (List<Map<String, String>>) check.getParams().get("requiredDependencies");
+        }
+
         if (expectedDeps == null || expectedDeps.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "Configuration error: 'dependencies' parameter is required");
+                    "Configuration error: 'dependencies' (or 'forbiddenDependencies'/'requiredDependencies') parameter is required");
         }
         List<Dependency> actualDeps = model.getDependencies();
         if (actualDeps == null) {
@@ -65,16 +114,21 @@ public class GenericPomValidationCheck extends AbstractCheck {
         for (Map<String, String> expectedDep : expectedDeps) {
             String groupId = expectedDep.get("groupId");
             String artifactId = expectedDep.get("artifactId");
+
+            String version = expectedDep.get("version"); 
+            
             if (groupId == null || artifactId == null) {
                 failures.add("Invalid dependency configuration: groupId and artifactId are required");
                 continue;
             }
             boolean found = actualDeps.stream()
-                    .anyMatch(dep -> groupId.equals(dep.getGroupId()) && artifactId.equals(dep.getArtifactId()));
+                    .anyMatch(dep -> groupId.equals(dep.getGroupId()) && artifactId.equals(dep.getArtifactId())
+                             && (version == null || version.equals(dep.getVersion())));
+            
             if (shouldExist && !found) {
-                failures.add(String.format("Required dependency not found: %s:%s", groupId, artifactId));
+                failures.add(String.format("Required dependency not found: %s:%s%s", groupId, artifactId, (version!=null?":"+version:"")));
             } else if (!shouldExist && found) {
-                failures.add(String.format("Forbidden dependency found: %s:%s", groupId, artifactId));
+                failures.add(String.format("Forbidden dependency found: %s:%s%s", groupId, artifactId, (version!=null?":"+version:"")));
             }
         }
         if (failures.isEmpty()) {

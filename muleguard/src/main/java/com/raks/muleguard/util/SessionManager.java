@@ -33,7 +33,7 @@ public class SessionManager {
         activeSessions.put(sessionId, System.currentTimeMillis());
         logger.debug("Created new session: {}", sessionId);
         
-        // Register shutdown hook on first session creation
+
         if (!shutdownHookRegistered) {
             registerShutdownHook();
         }
@@ -128,7 +128,7 @@ public class SessionManager {
             logger.warn("Failed to cleanup all sessions", e);
         }
         
-        // Clear the active sessions map
+
         activeSessions.clear();
     }
 

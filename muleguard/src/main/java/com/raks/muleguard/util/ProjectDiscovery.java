@@ -18,17 +18,17 @@ public class ProjectDiscovery {
             List<String> exactIgnoredNames,
             List<String> ignoredPrefixes) {
         List<Path> projects = new ArrayList<>();
-        logger.info("Searching for Mule projects in: {}", searchPath.toAbsolutePath());
-        logger.info("Maximum search depth: {}", maxDepth);
+        logger.debug("Searching for Mule projects in: {}", searchPath.toAbsolutePath());
+        logger.debug("Maximum search depth: {}", maxDepth);
         searchForProjects(searchPath, projects, 0, maxDepth,
                 markerFiles, matchMode, configFolderPattern,
                 exactIgnoredNames, ignoredPrefixes);
         if (projects.isEmpty()) {
             logger.info("No Mule projects found in: {}", searchPath.toAbsolutePath());
         } else {
-            logger.info("Found {} Mule project(s):", projects.size());
+            logger.info("Found {} Mule project(s)", projects.size());
             for (int i = 0; i < projects.size(); i++) {
-                logger.info("  {}. {}", (i + 1), projects.get(i).toAbsolutePath());
+                logger.debug("  {}. {}", (i + 1), projects.get(i).toAbsolutePath());
             }
         }
         return projects;

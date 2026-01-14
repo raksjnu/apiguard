@@ -40,7 +40,7 @@ public class ArchiveExtractor {
             while ((entry = zis.getNextEntry()) != null) {
                 Path targetPath = tempDir.resolve(entry.getName());
 
-                // Security: Prevent path traversal attacks
+
                 if (!targetPath.normalize().startsWith(tempDir)) {
                     throw new IOException("Invalid ZIP entry (path traversal detected): " + entry.getName());
                 }
@@ -62,7 +62,7 @@ public class ArchiveExtractor {
         return projectRoot.toString();
     }
 
-    // Overload for String path (Wrapper compatibility)
+
     public static String extractZip(String zipPath, String sessionId, String baseTempDir) throws IOException {
         return extractZip(Paths.get(zipPath), sessionId, baseTempDir);
     }
@@ -79,13 +79,13 @@ public class ArchiveExtractor {
     public static String extractZip(InputStream zipStream, String sessionId, String baseTempDir) throws IOException {
         logger.info("Extracting ZIP from stream for session: {}", sessionId);
         
-        // Save stream to temporary file first
+
         Path tempZipFile = Files.createTempFile("muleguard-upload-", ".zip");
         try {
             Files.copy(zipStream, tempZipFile, StandardCopyOption.REPLACE_EXISTING);
             return extractZip(tempZipFile, sessionId, baseTempDir);
         } finally {
-            // Clean up temporary ZIP file
+
             try {
                 Files.deleteIfExists(tempZipFile);
             } catch (IOException e) {
@@ -112,7 +112,7 @@ public class ArchiveExtractor {
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(jarPath.toFile()))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                // Extract only from META-INF/mule-src/ directory
+
                 if (entry.getName().startsWith("META-INF/mule-src/")) {
                     foundMuleSrc = true;
                     String relativePath = entry.getName().substring("META-INF/mule-src/".length());
@@ -123,7 +123,7 @@ public class ArchiveExtractor {
 
                     Path targetPath = tempDir.resolve(relativePath);
 
-                    // Security: Prevent path traversal attacks
+
                     if (!targetPath.normalize().startsWith(tempDir)) {
                         throw new IOException("Invalid JAR entry (path traversal detected): " + entry.getName());
                     }
@@ -150,7 +150,7 @@ public class ArchiveExtractor {
         return projectRoot.toString();
     }
 
-    // Overload for String path (Wrapper compatibility)
+
     public static String extractJar(String jarPath, String sessionId, String baseTempDir) throws IOException {
         return extractJar(Paths.get(jarPath), sessionId, baseTempDir);
     }
@@ -167,13 +167,13 @@ public class ArchiveExtractor {
     public static String extractJar(InputStream jarStream, String sessionId, String baseTempDir) throws IOException {
         logger.info("Extracting JAR from stream for session: {}", sessionId);
         
-        // Save stream to temporary file first
+
         Path tempJarFile = Files.createTempFile("muleguard-upload-", ".jar");
         try {
             Files.copy(jarStream, tempJarFile, StandardCopyOption.REPLACE_EXISTING);
             return extractJar(tempJarFile, sessionId, baseTempDir);
         } finally {
-            // Clean up temporary JAR file
+
             try {
                 Files.deleteIfExists(tempJarFile);
             } catch (IOException e) {
@@ -190,12 +190,12 @@ public class ArchiveExtractor {
      * @throws IOException if directory traversal fails
      */
     private static Path findProjectRoot(Path extractedDir) throws IOException {
-        // Check if pom.xml is in the extracted directory itself
+
         if (Files.exists(extractedDir.resolve("pom.xml"))) {
             return extractedDir;
         }
 
-        // Check immediate subdirectories for pom.xml
+
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(extractedDir)) {
             for (Path entry : stream) {
                 if (Files.isDirectory(entry) && Files.exists(entry.resolve("pom.xml"))) {
@@ -204,7 +204,7 @@ public class ArchiveExtractor {
             }
         }
 
-        // If no pom.xml found, return base path (might be a folder with multiple projects)
+
         logger.warn("pom.xml not found in extracted directory. Returning base path: {}", extractedDir);
         return extractedDir;
     }
@@ -224,7 +224,7 @@ public class ArchiveExtractor {
              try {
                  Files.createDirectories(tempSessionsDir);
              } catch (FileAlreadyExistsException e) {
-                 // Ignore if created concurrently
+
              }
         }
         
@@ -302,7 +302,7 @@ public class ArchiveExtractor {
             throw new FileNotFoundException("Source directory not found: " + sourceDir);
         }
 
-        // Create parent directories if needed
+
         if (targetZip.getParent() != null) {
             Files.createDirectories(targetZip.getParent());
         }
@@ -313,7 +313,7 @@ public class ArchiveExtractor {
             Files.walk(sourceDir)
                 .filter(path -> !Files.isDirectory(path))
                 .forEach(path -> {
-                    // Use forward slashes for ZIP entries (cross-platform)
+
                     String zipEntryName = sourceDir.relativize(path).toString().replace("\\", "/");
                     ZipEntry zipEntry = new ZipEntry(zipEntryName);
                     try {
@@ -330,7 +330,7 @@ public class ArchiveExtractor {
         return targetZip;
     }
 
-    // Overload for String paths (Wrapper compatibility)
+
     public static Path zipDirectory(String sourceDir, String targetZip) throws IOException {
         return zipDirectory(Paths.get(sourceDir), Paths.get(targetZip));
     }

@@ -9,7 +9,7 @@ set "SCRIPT_DIR=%~dp0"
 cd /d "%SCRIPT_DIR%"
 
 REM Configure Mule location
-set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.1"
+set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.2"
 set "MULE_APPS=%MULE_HOME%\apps"
 set "APP_NAME=muleguardwrapper"
 

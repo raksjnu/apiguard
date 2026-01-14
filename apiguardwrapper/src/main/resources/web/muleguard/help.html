@@ -6,8 +6,8 @@
     <title>MuleGuard - Help & Documentation</title>
     <style>
         :root {
-            --truist-purple: #663399;
-            --truist-purple-light: #7d4fb2;
+            --raks-purple: #663399;
+            --raks-purple-light: #7d4fb2;
             --text-white: #FFFFFF;
         }
 
@@ -18,7 +18,7 @@
         }
 
         .report-container {
-            border: 5px solid var(--truist-purple);
+            border: 5px solid var(--raks-purple);
             padding: 20px 40px;
             margin: 20px;
             border-radius: 8px;
@@ -29,15 +29,15 @@
         }
 
         h1 {
-            color: var(--truist-purple);
+            color: var(--raks-purple);
             margin-bottom: 20px;
         }
 
         h2 {
-            color: var(--truist-purple);
+            color: var(--raks-purple);
             margin-top: 30px;
             margin-bottom: 15px;
-            border-bottom: 2px solid var(--truist-purple);
+            border-bottom: 2px solid var(--raks-purple);
             padding-bottom: 5px;
         }
 
@@ -59,7 +59,7 @@
 
         .highlight-box {
             background: #f5f5f5;
-            border-left: 4px solid var(--truist-purple);
+            border-left: 4px solid var(--raks-purple);
             padding: 15px;
             margin: 15px 0;
             border-radius: 4px;
@@ -80,23 +80,18 @@
         }
 
         .feature-card h4 {
-            color: var(--truist-purple);
+            color: var(--raks-purple);
             margin-top: 0;
         }
 
-        .top-nav-container {
+        .dashboard-button {
             position: absolute;
             top: 20px;
             right: 40px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .top-nav-button {
-            background-color: var(--truist-purple);
+            background-color: var(--raks-purple);
             color: var(--text-white);
             border: none;
-            padding: 8px 16px;
+            padding: 10px 20px;
             text-align: center;
             text-decoration: none;
             display: inline-block;
@@ -108,8 +103,8 @@
             box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
 
-        .top-nav-button:hover {
-            background-color: var(--truist-purple-light);
+        .dashboard-button:hover {
+            background-color: var(--raks-purple-light);
         }
 
         code {
@@ -123,7 +118,7 @@
         .rule-count {
             font-size: 1.2em;
             font-weight: bold;
-            color: var(--truist-purple);
+            color: var(--raks-purple);
         }
     </style>
 </head>
@@ -131,25 +126,23 @@
 <body>
     <div class="report-container">
         <!-- Buttons container to manage absolute positioning easily -->
-        <div class="top-nav-container">
-            <a href="index.html" id="dashboardBtn" class="top-nav-button"
-                title="Return to home">🏠 Home</a>
-            <a href="checklist.html" class="top-nav-button">Checklist</a>
-            <a href="rule_guide.html" class="top-nav-button">Rule Guide</a>
+        <div class="header-buttons">
+            <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button"
+                title="Return to main dashboard">← Dashboard</a>
+            <a href="#" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
+                style="display: none; background-color: #0078d4;">🏠 Main Page</a>
         </div>
 
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <img src="raksLogo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
+            <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
             <h1 style="margin: 0;">MuleGuard - Help & Documentation</h1>
         </div>
 
         <div class="highlight-box">
-            <strong>MuleGuard</strong> is a versatile and comprehensive static analysis solution designed specifically
-            for MuleSoft applications. It is highly flexible and capable of validating any component of your
-            integration,
-            including <code>flow.xml</code>, global configurations, <code>dataweave.dwl</code> files, and more.
-            MuleGuard can be easily configured to support countless rules, tailored to meet your organization's specific
-            needs for standard or customized code review and validation.
+            <strong>MuleGuard</strong> is a versatile and comprehensive static analysis solution featuring a 
+            <strong>Universal Trigger Engine</strong>. It can conditionally validate any component of your
+            integration—including <code>flow.xml</code>, <code>pom.xml</code>, <code>dataweave.dwl</code>, and configuration files—based on 
+            complex architectural contexts.
         </div>
 
         <h2>📋 What MuleGuard Validates</h2>
@@ -162,82 +155,23 @@
             <li><strong>Environment-specific property files:</strong> .properties and .policy files</li>
         </ul>
 
-        <h2>⚙️ Configuration File Structure Requirements</h2>
-        <div class="highlight-box">
-            <p><strong>Important:</strong> MuleGuard validates environment-specific configuration files based on a standardized structure. 
-            If your organization uses configuration files, they must follow this format:</p>
-        </div>
-        
-        <h3>Required Structure</h3>
-        <ul>
-            <li><strong>Folder Name:</strong> Configuration files must be in a folder containing <code>_config</code> in the name
-                <ul style="margin-top: 5px;">
-                    <li>Examples: <code>muleapp_config</code>, <code>api_config</code>, <code>myproject_config</code></li>
-                    <li>Pattern: Any folder name containing <code>_config</code></li>
-                </ul>
-            </li>
-            <li><strong>File Extensions:</strong> Supported extensions are:
-                <ul style="margin-top: 5px;">
-                    <li><code>.properties</code> - Standard property files</li>
-                    <li><code>.policy</code> - Policy configuration files</li>
-                    <li><code>.deployment</code> - Deployment configuration files</li>
-                </ul>
-            </li>
-            <li><strong>File Format:</strong> Properties must use the format: <code>propertyName=propertyValue</code>
-                <ul style="margin-top: 5px;">
-                    <li>Delimiter must be <code>=</code> (equals sign)</li>
-                    <li>Example: <code>database.host=localhost</code></li>
-                    <li>Example: <code>api.timeout=30000</code></li>
-                </ul>
-            </li>
-            <li><strong>Location:</strong> The config folder should be at the same level as your API project folders</li>
-        </ul>
-
-        <h3>Example Project Structure</h3>
-        <div class="highlight-box">
-            <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">
-your-mule-projects/
-├── api-project-1/
-├── api-project-2/
-└── muleapp_config/
-    ├── dev.properties
-    ├── qa.properties
-    ├── prod.properties
-    └── security.policy</pre>
-        </div>
-
-        <div class="highlight-box" style="background: #fff3cd; border-left-color: #ffc107;">
-            <p><strong>⚠️ Note:</strong> The folder name must contain <code>_config</code> somewhere in the name. 
-            If your organization uses a different pattern, you can modify the <code>namePattern</code> in <code>rules.yaml</code>:</p>
-            <ul style="margin-top: 5px;">
-                <li>Current pattern: <code>".*_config.*"</code> (matches any folder containing <code>_config</code>)</li>
-                <li>You can change this to match your naming convention</li>
-            </ul>
-            <p style="margin-top: 10px;">Configuration validation rules (RULE-100 through RULE-199) will only apply to files 
-            in folders matching this pattern.</p>
-        </div>
-
         <h2>🎯 Key Features</h2>
         <div class="feature-grid">
             <div class="feature-card">
-                <h4>📊 Comprehensive Checks</h4>
-                <p>Perform a wide variety of checks on code and configuration files. Validates one or more Mule project
-                    folders and their configurations with a single click.</p>
+                <h4>📊 Universal Trigger Engine</h4>
+                <p>Conditional logic allows any check (XML, POM, etc.) to trigger specialized validation paths for high-fidelity compliance.</p>
             </div>
             <div class="feature-card">
-                <h4>🚀 Multiple Input Modes</h4>
-                <p><strong>Standalone:</strong> Local folder, ZIP upload, or JAR upload<br>
-                   <strong>Wrapper:</strong> ZIP upload or JAR upload<br>
-                   <strong>Coming Soon:</strong> Git repository integration</p>
+                <h4>🚀 Standards Encyclopedia</h4>
+                <p>Rules include deep context: Use Cases, Architectural Rationales, and visual Good/Bad code examples.</p>
             </div>
             <div class="feature-card">
-                <h4>📈 Enhanced Reporting</h4>
-                <p>Generates detailed HTML and Excel reports. View reports in-browser and download as ZIP. Email notifications available in wrapper mode.</p>
+                <h4>📈 Alphanumeric IDs</h4>
+                <p>Uses audit-ready identifiers (e.g., RULE-SEC-01) for clear alignment with organizational security policies.</p>
             </div>
             <div class="feature-card">
-                <h4>⚙️ Custom Rules Support</h4>
-                <p>Fully configurable via the GUI or <code>rules.yaml</code> to support custom rules and
-                    organization-specific needs.</p>
+                <h4>⚙️ Multi-Project Analysis</h4>
+                <p>Scan deep directory structures of multiple APIs and generate a single consolidated executive dashboard.</p>
             </div>
         </div>
 
@@ -256,44 +190,28 @@ your-mule-projects/
                 validate element content.</li>
             <li><strong>Property Management:</strong> Validate environment-specific property files, check for mandatory
                 properties, and ensure secure property handling.</li>
+            <li><strong>Conditional Logic:</strong> Smart validation that executes specific checks only when preconditions 
+                (like asset type, namespaces, or file existence) are met.</li>
             <li><strong>Custom Logic:</strong> Define custom checks for JSON validation, generic token searches, and
                 more to cover any specific organizational requirement.</li>
         </ul>
 
-
-        <h2>📂 Input Modes</h2>
-        <p>MuleGuard Wrapper supports the following input methods:</p>
-        
-        <h3>Available Input Modes</h3>
-        <ul>
-            <li><strong>📦 ZIP Upload:</strong> Upload a ZIP file containing your project(s) (default mode)</li>
-            <li><strong>📚 JAR Upload:</strong> Upload a Mule application JAR file for validation</li>
-        </ul>
-        
-        <h3>Wrapper-Specific Features</h3>
-        <ul>
-            <li><strong>📥 Download Reports:</strong> Download validation reports as ZIP file</li>
-            <li><strong>📧 Email Notifications:</strong> Receive reports via email with configurable attachments</li>
-            <li><strong>🌐 Browser Viewing:</strong> View detailed reports directly in your browser</li>
-        </ul>
-        
-        <div class="highlight-box">
-            <strong>Note:</strong> Local folder mode is available in the standalone Java version. 
-            For Git repository support, please check for future updates.
-        </div>
-
         <h2>🚀 How to Use</h2>
 
-        <h3>Access via Browser</h3>
+        <h3>Command Line</h3>
         <div class="highlight-box">
-            <p>Navigate to: <code>http://your-mule-server:8081/apiguard/muleguard/main</code></p>
-            <p><strong>Supports:</strong> ZIP upload, JAR upload</p>
-            <p><strong>Features:</strong> Email notifications, Download reports, Browser viewing</p>
+            <code>java -jar muleguard-1.0.0-jar-with-raks.jar -p /path/to/your/mule-projects</code>
+        </div>
+
+        <h3>GUI Mode</h3>
+        <div class="highlight-box">
+            <p>Run <code>start-gui.bat</code> (Windows) or <code>start-gui.sh</code> (Mac/Linux)</p>
+            <p>Opens browser at <code>http://localhost:8080</code></p>
         </div>
 
         <h2>📖 Documentation</h2>
         <p>Detailed rule type documentation is available in the <a href="rule_guide.html"
-                style="color: var(--truist-purple); font-weight: bold;">Rule Guide</a>:</p>
+                style="color: var(--raks-purple); font-weight: bold;">Rule Guide</a>:</p>
         <ul>
             <li>Interactive guide with detailed documentation for all rule types</li>
             <li>Includes parameter reference and configuration examples</li>
@@ -311,8 +229,10 @@ your-mule-projects/
 
         <h2>📊 Report Output</h2>
         <ul>
-            <li><strong>CONSOLIDATED-REPORT.html:</strong> Dashboard for all scanned APIs</li>
-            <li><strong>Individual reports:</strong> Detailed results for each API</li>
+            <li><strong>CONSOLIDATED-REPORT.html:</strong> Executive dashboard matching MuleSoft C4E standards.</li>
+            <li><strong>Individual reports:</strong> Detailed, rule-by-rule analysis with "Rule Config" visibility.</li>
+            <li><strong>Downloadable ZIP:</strong> Clean, portable report package (excludes documentation files).</li>
+            <li><strong>checklist.html:</strong> Interactive list of all validation rules.</li>
             <li><strong>checklist.html:</strong> Complete list of all validation rules</li>
             <li><strong>Excel reports:</strong> .xlsx format for data analysis</li>
         </ul>
@@ -330,9 +250,10 @@ your-mule-projects/
         <div class="highlight-box" style="margin-top: 15px;">
             <p><strong>For further information, support, or questions:</strong></p>
             <p style="margin-top: 10px;">
+            <p style="margin-top: 10px;">
                 Reach out to <strong>Rakesh Kumar (Raks)</strong><br>
-                Email: <a href="mailto:rakesh.kumar@ibmcom"
-                    style="color: var(--truist-purple); font-weight: bold; text-decoration: none;">rakesh.kumar@ibmcom</a>
+                Email: <a href="mailto:Rakesh.kumar@ibm.com"
+                    style="color: var(--raks-purple); font-weight: bold; text-decoration: none;">Rakesh.kumar@ibm.com</a>
             </p>
         </div>
     </div>

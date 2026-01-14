@@ -13,19 +13,19 @@ The tool scans various project files, including:
 
 It generates detailed HTML and Excel reports highlighting compliance and identifying any violations.
 
-## Features
-
+- **Universal Trigger Engine**: Any check type (XML, POM, JSON, Properties) can serve as a conditional trigger.
+- **Rich Standards Knowledge Base**: Rules now support detailed Use Cases, Rationales, and visual Good/Bad examples.
+- **Alphanumeric Rule IDs**: Enhanced audit-ready IDs (e.g., `RULE-SEC-001`) for clear organizational alignment.
+- **Comprehensive Rule Set**: 25+ built-in architectural standards with complex cross-file validation.
 - **Multiple Input Modes**: 
   - **Local Folder**: Scan projects from your filesystem
   - **ZIP Upload**: Upload and validate ZIP archives
   - **JAR Upload**: Validate Mule application JAR files
   - **Git Repository**: (Coming Soon) Clone and validate from Git
-- **Comprehensive Rule Set**: Validates against a wide range of best practices.
 - **Multi-Project Analysis**: Scan a single API or a directory containing multiple APIs.
 - **Consolidated Reporting**: Generates a summary dashboard for all scanned APIs.
-- **Detailed Individual Reports**: Provides rule-by-rule results for each API, with links from the consolidated report.
-- **Multiple Formats**: Reports are generated in both user-friendly HTML and easy-to-process Excel formats.
-- **Checklist View**: Includes a `checklist.html` page that lists all possible validation rules the tool checks for.
+- **Detailed Individual Reports**: Provides rule-by-rule results for each API with deep context and examples.
+- **Checklist View**: Includes an interactive `rule_guide.html` that acts as a searchable standards encyclopedia.
 - **Enterprise Ready**: No trial restrictions, professional SLF4J logging, cross-platform compatible.
 
 ## Configuration File Requirements
@@ -203,7 +203,10 @@ For a complete list of dependencies and their versions, see `pom.xml`.
 
 ### Security
 
-For security vulnerabilities or concerns, please contact: **raksjnu@gmail.com**
+### Security
 
-**Last Security Audit**: December 2025  
-**Status**: All dependencies updated to secure versions (see `SECURITY_COMPLIANCE_REPORT.md`)
+For security vulnerabilities or concerns, please contact: **Rakesh Kumar (Rakesh.kumar@ibm.com)**
+
+**Last Security Audit**: January 2026
+**Status**: All dependencies updated to secure versions.
+

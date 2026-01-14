@@ -15,9 +15,9 @@ else
 fi
 # --------------------------
 
-MULE_HOME="$SCRIPT_DIR/mule/mule-enterprise-standalone-4.10.1"
+MULE_HOME="$SCRIPT_DIR/mule/mule-enterprise-standalone-4.10.2"
 if [ ! -d "$MULE_HOME" ]; then
-    MULE_HOME="/Users/raks/Library/CloudStorage/OneDrive-IBM/Documents/GitHub/mule-enterprise-standalone-4.10.1"
+    MULE_HOME="/Users/raks/Library/CloudStorage/OneDrive-IBM/Documents/GitHub/mule-enterprise-standalone-4.10.2"
 fi
 export MULE_HOME
 export MULE_BASE="$MULE_HOME"

@@ -1,131 +1,125 @@
 package com.raks.muleguard.checks;
+
 import com.raks.muleguard.model.Check;
 import com.raks.muleguard.model.CheckResult;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
+
+/**
+ * Checks for existence of XPath expressions. By default fails if NOT found.
+ * Can be configured to Fail if FOUND (failIfFound: true).
+ * Can be configured to match ANY file instead of ALL (matchMode: ANY_FILE).
+ */
 public class XmlXPathExistsCheck extends AbstractCheck {
+
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
+        if (!isRuleApplicable(projectRoot, check)) {
+             return CheckResult.pass(check.getRuleId(), check.getDescription(), "Rule skipped: Pre-conditions not met.");
+        }
+
+        Map<String, Object> params = check.getParams();
         @SuppressWarnings("unchecked")
-        List<String> filePatterns = (List<String>) check.getParams().get("filePatterns");
+        List<String> filePatterns = (List<String>) params.get("filePatterns");
         @SuppressWarnings("unchecked")
-        List<Map<String, String>> xpathExpressions = (List<Map<String, String>>) check.getParams()
-                .get("xpathExpressions");
-        Boolean requireAll = (Boolean) check.getParams().getOrDefault("requireAll", true);
-        Boolean propertyResolution = (Boolean) check.getParams().getOrDefault("propertyResolution", false);
+        List<Map<String, String>> xpathExpressions = (List<Map<String, String>>) params.get("xpathExpressions");
+        
+        String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
+        boolean failIfFound = (Boolean) params.getOrDefault("failIfFound", false);
+
         if (filePatterns == null || filePatterns.isEmpty()) {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "Configuration error: 'filePatterns' parameter is required");
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), "Configuration error: 'filePatterns' is required");
         }
-        if (xpathExpressions == null || xpathExpressions.isEmpty()) {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "Configuration error: 'xpathExpressions' parameter is required");
-        }
+
         List<String> failures = new ArrayList<>();
         List<Path> matchingFiles = new ArrayList<>();
-        List<String> successes = new ArrayList<>();
+        boolean foundInAnyFile = false; // Tracks if we found the element in AT LEAST one file (for ANY_FILE mode)
+
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             matchingFiles = paths
                     .filter(Files::isRegularFile)
                     .filter(path -> matchesAnyPattern(path, filePatterns, projectRoot))
-                    .filter(path -> !shouldIgnorePath(projectRoot, path))  
+                    .filter(path -> !shouldIgnorePath(projectRoot, path))
                     .toList();
+            
+
+
+
             if (matchingFiles.isEmpty()) {
-                return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                        "No files found matching patterns: " + filePatterns);
+
             }
+
             for (Path file : matchingFiles) {
-                validateXPathsInFile(file, xpathExpressions, requireAll, propertyResolution,
-                        projectRoot, failures, successes);
+
+
+                
+                for (Map<String, String> expr : xpathExpressions) {
+                    String xpath = expr.get("xpath");
+                    String failureMsg = expr.get("failureMessage");
+                    boolean exists = checkXPath(file, xpath);
+                    
+                    if (failIfFound) {
+
+                        if (exists) {
+                            failures.add("Forbidden element found matching '" + xpath + "' in " + projectRoot.relativize(file));
+                        }
+                    } else {
+
+                        if (exists) {
+                            foundInAnyFile = true;
+                        } else {
+                            if ("ALL_FILES".equals(matchMode)) {
+                                failures.add(failureMsg + " (Missing in " + projectRoot.relativize(file) + ")");
+                            }
+                        }
+                    }
+                }
             }
-        } catch (IOException e) {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "Error scanning files: " + e.getMessage());
+            
+
+            if (!failIfFound && "ANY_FILE".equals(matchMode)) {
+                if (!foundInAnyFile && !matchingFiles.isEmpty()) {
+
+
+                     String msg = xpathExpressions.isEmpty() ? "Element not found" : xpathExpressions.get(0).get("failureMessage");
+                     failures.add(msg + " (Not found in any matching files)");
+                }
+            }
+
+        } catch (Exception e) {
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), "Error scanning files: " + e.getMessage());
         }
-        if (requireAll) {
-            if (failures.isEmpty()) {
-            String fileList = matchingFiles.stream()
-                    .map(projectRoot::relativize)
-                    .map(Path::toString)
-                    .collect(java.util.stream.Collectors.joining("; "));
-                return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                        "All required XPath expressions found\nFiles validated: " + fileList);
-            } else {
-                return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                        "XPath validation failures:\n• " + String.join("\n• ", failures));
-            }
+
+        if (failures.isEmpty()) {
+             return CheckResult.pass(check.getRuleId(), check.getDescription(), "XPath checks passed.");
         } else {
-            if (!successes.isEmpty()) {
-                return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                        "At least one required XPath expression found");
-            } else {
-                return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                        "No XPath expressions matched:\n• " + String.join("\n• ", failures));
-            }
+             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Failures:\n• " + String.join("\n• ", failures));
         }
     }
-    private void validateXPathsInFile(Path file, List<Map<String, String>> xpathExpressions,
-            boolean requireAll, boolean propertyResolution,
-            Path projectRoot, List<String> failures, List<String> successes) {
+
+    private boolean checkXPath(Path file, String expression) {
         try {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             DocumentBuilder builder = factory.newDocumentBuilder();
             Document doc = builder.parse(file.toFile());
-            XPathFactory xPathFactory = XPathFactory.newInstance();
-            XPath xpath = xPathFactory.newXPath();
-            for (Map<String, String> xpathExpr : xpathExpressions) {
-                String xpathString = xpathExpr.get("xpath");
-                String failureMessage = xpathExpr.getOrDefault("failureMessage",
-                        "XPath not found: " + xpathString);
-                if (xpathString == null || xpathString.isEmpty()) {
-                    failures.add("Invalid XPath expression (empty) in file: " + projectRoot.relativize(file));
-                    continue;
-                }
-                try {
-                    NodeList nodes = (NodeList) xpath.evaluate(xpathString, doc, XPathConstants.NODESET);
-                    if (nodes.getLength() > 0) {
-                        successes.add("XPath found in " + projectRoot.relativize(file) + ": " + xpathString);
-                    } else {
-                        failures.add(failureMessage + " in file: " + projectRoot.relativize(file));
-                    }
-                } catch (Exception e) {
-                    failures.add("XPath evaluation error in " + projectRoot.relativize(file) +
-                            ": " + xpathString + " - " + e.getMessage());
-                }
-            }
+            XPath xpath = XPathFactory.newInstance().newXPath();
+            NodeList nodes = (NodeList) xpath.evaluate(expression, doc, XPathConstants.NODESET);
+            return nodes.getLength() > 0;
         } catch (Exception e) {
-            failures.add("Error parsing XML file " + projectRoot.relativize(file) + ": " + e.getMessage());
+            return false;
         }
-    }
-    private boolean matchesAnyPattern(Path path, List<String> patterns, Path projectRoot) {
-        String relativePath = projectRoot.relativize(path).toString().replace("\\", "/");
-        for (String pattern : patterns) {
-            if (matchesPattern(relativePath, pattern)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean matchesPattern(String path, String pattern) {
-        String regex = pattern
-                .replace(".", "\\.")
-                .replace("**/", ".*")
-                .replace("**", ".*")
-                .replace("*", "[^/]*")
-                .replace("?", ".");
-        return path.matches(regex);
     }
 }

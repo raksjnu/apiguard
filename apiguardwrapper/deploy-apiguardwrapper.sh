@@ -24,7 +24,7 @@ fi
 # --------------------------
 
 # --- Mule Runtime Configuration ---
-PREFERRED_MULE_HOME="/Users/raks/Library/CloudStorage/OneDrive-IBM/Documents/GitHub/mule-enterprise-standalone-4.10.1"
+PREFERRED_MULE_HOME="/Users/raks/Library/CloudStorage/OneDrive-IBM/Documents/GitHub/mule-enterprise-standalone-4.10.2"
 # --------------------------
 
 # Configure the JAR file path
@@ -40,7 +40,7 @@ elif [ -d "$PREFERRED_MULE_HOME" ]; then
     MULE_HOME="$PREFERRED_MULE_HOME"
     echo "[INFO] Using Preferred Mule Runtime at: $MULE_HOME"
 else
-    MULE_HOME="$SCRIPT_DIR/../mule-enterprise-standalone-4.10.1"
+    MULE_HOME="$SCRIPT_DIR/../mule-enterprise-standalone-4.10.2"
     echo "[INFO] Using relative Mule Runtime at: $MULE_HOME"
 fi
 

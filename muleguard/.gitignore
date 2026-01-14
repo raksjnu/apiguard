@@ -32,4 +32,4 @@ dependency-reduced-pom.xml
 META-INF/
 
 # Log files
-*.log
+# *.log

@@ -18,7 +18,7 @@ if defined JAVA_HOME (
 REM --------------------------
 
 REM --- Mule Runtime Configuration ---
-set "PREFERRED_MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.1"
+set "PREFERRED_MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.2"
 REM --------------------------
 
 REM ===================================================================
@@ -38,7 +38,7 @@ if defined MULE_RUNTIME_HOME (
     set "MULE_HOME=%PREFERRED_MULE_HOME%"
     echo [INFO] Using Preferred Mule Runtime at: %MULE_HOME%
 ) else (
-    set "MULE_HOME=%~dp0..\mule-enterprise-standalone-4.10.1"
+    set "MULE_HOME=%~dp0..\mule-enterprise-standalone-4.10.2"
     echo [INFO] Using relative Mule Runtime at: %MULE_HOME%
 )
 

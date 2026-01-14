@@ -24,8 +24,8 @@ set "JAR_PATH=%~dp0target\muleguardwrapper-1.0.0-mule-application.jar"
 set "APP_NAME=muleguardwrapper.jar"
 
 REM Configure Mule Runtime location (Relative first, then absolute fallback)
-set "MULE_HOME=%~dp0..\mule\mule-enterprise-standalone-4.10.1"
-if not exist "%MULE_HOME%" set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.1"
+set "MULE_HOME=%~dp0..\mule\mule-enterprise-standalone-4.10.2"
+if not exist "%MULE_HOME%" set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.2"
 
 set "MULE_APPS=%MULE_HOME%\apps"
 

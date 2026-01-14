@@ -24,6 +24,9 @@ public class CheckFactory {
         registry.put("POM_VALIDATION_FORBIDDEN", PomValidationForbiddenCheck.class);
         registry.put("JSON_VALIDATION_REQUIRED", JsonValidationRequiredCheck.class);
         registry.put("JSON_VALIDATION_FORBIDDEN", JsonValidationForbiddenCheck.class);
+        registry.put("CONDITIONAL_CHECK", ConditionalCheck.class);
+        registry.put("PROJECT_CONTEXT", ProjectContextCheck.class);
+        registry.put("FILE_EXISTS", FileExistsCheck.class);
         registry.put("GENERIC_CODE_TOKEN_CHECK", GenericTokenSearchCheck.class);
         registry.put("DLP_REFERENCE_CHECK", GenericTokenSearchCheck.class);
         registry.put("FORBIDDEN_TOKEN_IN_ELEMENT", GenericTokenSearchCheck.class);
@@ -39,6 +42,8 @@ public class CheckFactory {
         registry.put("POM_DEPENDENCY_REMOVED", GenericPomValidationCheck.class);
         registry.put("POM_DEPENDENCY_ADDED", GenericPomValidationCheck.class);
         registry.put("CLIENTIDMAP_VALIDATOR", ClientIDMapCheck.class);
+        registry.put("XML_ATTRIBUTE_EXTERNALIZED", XmlAttributeExternalizedCheck.class);
+        registry.put("GENERIC_CODE_CHECK", GenericTokenSearchCheck.class);
     }
     public static AbstractCheck create(Check check) {
         try {

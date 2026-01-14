@@ -46,8 +46,8 @@ public class MuleGuardMain {
             logger.error("Error: Not a valid folder: {}", parentFolder);
             return;
         }
-        logger.info("Starting MuleGuard validation on: {}", parentFolder);
-        logger.info("Scanning for Mule API projects...");
+        logger.info("MuleGuard started for project: {}", parentFolder);
+        logger.debug("Scanning for Mule API projects...");
         RootWrapper configWrapper = loadConfig(configFilePath);
         List<Rule> allRules = configWrapper.getRules();
         Map<String, Object> projectIdConfig = configWrapper.getConfig().getProjectIdentification();
@@ -93,24 +93,31 @@ public class MuleGuardMain {
             List<Rule> applicableRules = allRules.stream()
                     .filter(Rule::isEnabled)
                     .filter(rule -> {
-                        int ruleIdNum = Integer.parseInt(rule.getId().replace("RULE-", ""));
+
+                        String idDigits = rule.getId().replaceAll("[^0-9]", "");
+                        int ruleIdNum = idDigits.isEmpty() ? -1 : Integer.parseInt(idDigits);
+                        
                         boolean isConfigRule = (ruleIdNum >= configRuleStart && ruleIdNum <= configRuleEnd);
-                        if (isConfigRule && globalEnvironments != null && !globalEnvironments.isEmpty()) {
-                            rule.getChecks().forEach(check -> {
-                                if (check.getParams() == null) {
-                                    check.setParams(new java.util.HashMap<>());
-                                }
-                                @SuppressWarnings("unchecked")
-                                List<String> envs = (List<String>) check.getParams().get("environments");
-                                if (envs != null && envs.size() == 1
-                                        && "ALL".equalsIgnoreCase(envs.get(0))) {
-                                    check.getParams().put("environments",
-                                            new ArrayList<>(globalEnvironments));
-                                } else if (envs == null || envs.isEmpty()) {
-                                    check.getParams().put("environments",
-                                            new ArrayList<>(globalEnvironments));
-                                }
-                            });
+                        if (globalEnvironments != null && !globalEnvironments.isEmpty()) {
+                            if (rule.getChecks() != null) {
+                                rule.getChecks().forEach(check -> {
+                                    if (check.getParams() == null) {
+                                        check.setParams(new java.util.HashMap<>());
+                                    }
+                                    @SuppressWarnings("unchecked")
+                                    List<String> envs = (List<String>) check.getParams().get("environments");
+                                    if (envs != null && envs.size() == 1
+                                            && "ALL".equalsIgnoreCase(envs.get(0))) {
+                                        check.getParams().put("environments",
+                                                new ArrayList<>(globalEnvironments));
+                                    } else if (envs == null || envs.isEmpty()) {
+                                        if (isConfigRule) {
+                                            check.getParams().put("environments",
+                                                new ArrayList<>(globalEnvironments));
+                                        }
+                                    }
+                                });
+                            }
                         }
                         return isConfigProject == isConfigRule;
                     }).collect(Collectors.toList());
@@ -129,8 +136,8 @@ public class MuleGuardMain {
             int failed = report.failed.size();
             int skipped = report.skipped.size();
             results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
-            logger.info("   {} | Passed: {} | Failed: {} | Skipped: {}", 
-                    (failed == 0 ? "PASS" : "FAIL"), passed, failed, skipped);
+            logger.info("   {} | Files Scanned: {} | Passed: {} | Failed: {}", 
+                    (failed == 0 ? "PASS" : "FAIL"), (passed + failed + skipped), passed, failed);
         }
         try {
             ReportGenerator.generateConsolidatedReport(results, reportsRoot);
@@ -139,13 +146,14 @@ public class MuleGuardMain {
             logger.error("Exception: {}", t.getClass().getSimpleName());
             String msg = t.getMessage();
             if (msg != null) {
-                logger.error("Message: {}", msg.replace('%', '％'));
+                logger.error("Message: {}", msg);
             }
             logger.error("Stack trace:", t);
         }
-        logger.info("BATCH VALIDATION COMPLETE!");
+        int totalPassed = results.stream().mapToInt(r -> r.passed).sum();
+        int totalFailed = results.stream().mapToInt(r -> r.failed).sum();
+        logger.info("MuleGuard Validation Complete | Total APIs: {} | Passed: {} | Failed: {}", results.size(), totalPassed, totalFailed);
         logger.info("Consolidated report: {}", reportsRoot.resolve("CONSOLIDATED-REPORT.html"));
-        logger.info("Individual reports in: {}", reportsRoot);
     }
     public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath) {
         return validateAndReturnResults(projectPath, customRulesPath, null);
@@ -217,7 +225,8 @@ public class MuleGuardMain {
                         .filter(Rule::isEnabled)
                         .filter(rule -> {
                             try {
-                                int ruleIdNum = Integer.parseInt(rule.getId().replace("RULE-", ""));
+                                String idDigits = rule.getId().replaceAll("[^0-9]", "");
+                                int ruleIdNum = idDigits.isEmpty() ? -1 : Integer.parseInt(idDigits);
                                 boolean isConfigRule = (ruleIdNum >= configRuleStart
                                         && ruleIdNum <= configRuleEnd);
                                 if (isConfigRule && globalEnvironments != null
@@ -292,8 +301,7 @@ public class MuleGuardMain {
             result.put("skipped", skipped);
             result.put("reportsPath", reportsRoot.toString());
             result.put("customRulesUsed", customRulesPath != null);
-            logger.info("BATCH VALIDATION COMPLETE!");
-            logger.info("Validation results: Passed={}, Failed={}, Status={}", totalPassed, totalFailed, overallStatus);
+            logger.info("MuleGuard Validation Complete | Total APIs: {} | Passed: {} | Failed: {} | Status: {}", results.size(), totalPassed, totalFailed, overallStatus);
         } catch (Exception e) {
             result.put("status", "ERROR");
             result.put("passed", new ArrayList<>());

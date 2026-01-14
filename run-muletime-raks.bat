@@ -16,9 +16,9 @@ if exist "%PREFERRED_JAVA_HOME%" (
 REM --------------------------
 
 REM Configure relative paths
-set "MULE_HOME=%~dp0\mule\mule-enterprise-standalone-4.10.1" 
+set "MULE_HOME=%~dp0\mule\mule-enterprise-standalone-4.10.2" 
 REM Fallback to hardcoded if relative doesn't exist (legacy support)
-if not exist "%MULE_HOME%" set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.1"
+if not exist "%MULE_HOME%" set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.2"
 
 set "MULE_BASE=%MULE_HOME%"
 

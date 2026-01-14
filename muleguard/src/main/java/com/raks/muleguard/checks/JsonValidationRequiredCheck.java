@@ -98,10 +98,24 @@ public class JsonValidationRequiredCheck extends AbstractCheck {
             if (node == null) {
                 failures.add(String.format("Field '%s' missing in %s", field, projectRoot.relativize(jsonFile)));
             } else {
-                String actualValue = node.asText();
-                if (!expectedValue.equals(actualValue)) {
-                    failures.add(String.format("Field '%s' has wrong value in %s: expected '%s', got '%s'",
-                            field, projectRoot.relativize(jsonFile), expectedValue, actualValue));
+                if (node.isArray()) {
+                    boolean found = false;
+                    for (JsonNode element : node) {
+                        if (expectedValue.equals(element.asText())) {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) {
+                         failures.add(String.format("Field '%s' (array) does not contain expected value '%s' in %s",
+                            field, expectedValue, projectRoot.relativize(jsonFile)));
+                    }
+                } else {
+                    String actualValue = node.asText();
+                    if (!expectedValue.equals(actualValue)) {
+                        failures.add(String.format("Field '%s' has wrong value in %s: expected '%s', got '%s'",
+                                field, projectRoot.relativize(jsonFile), expectedValue, actualValue));
+                    }
                 }
             }
         }

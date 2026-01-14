@@ -19,11 +19,11 @@ JAR_PATH="$SCRIPT_DIR/target/muleguardwrapper-1.0.0-mule-application.jar"
 APP_NAME="muleguardwrapper.jar"
 
 # Relative path to Mule Home (up one level, then into mule)
-MULE_HOME="$SCRIPT_DIR/../mule/mule-enterprise-standalone-4.10.1"
+MULE_HOME="$SCRIPT_DIR/../mule/mule-enterprise-standalone-4.10.2"
 
 if [ ! -d "$MULE_HOME" ]; then
     echo "[INFO] Relative MULE_HOME not found, trying absolute fallback..."
-    MULE_HOME="/c/raks/mule-enterprise-standalone-4.10.1"
+    MULE_HOME="/c/raks/mule-enterprise-standalone-4.10.2"
 fi
 
 MULE_APPS="$MULE_HOME/apps"

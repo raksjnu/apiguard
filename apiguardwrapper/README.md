@@ -9,6 +9,8 @@ Mule 4 wrapper application for ApiGuard portal, MuleGuard validator, and RaksAna
   - **Multiple Input Modes**: ZIP upload, JAR upload (Local folder in standalone)
   - **Download Reports**: Download validation reports as ZIP file
   - **Email Notifications**: Receive reports via email (wrapper only)
+  - **Smart Conditional Checks**: Enhanced "Rule Config" display showing full logical hierarchy
+  - **Enterprise Clean Artifacts**: Downloadable ZIPs are optimized, excluding redundant help files
 - **RaksAnalyzer**: Universal document generation framework for Mule, TIBCO, and other projects
 - **ApiUrlComparison**: API response comparison and baseline testing tool
 - **GitAnalyzer**: Semantic code analysis tool for validating migrations and configuration changes

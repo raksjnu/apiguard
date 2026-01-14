@@ -37,7 +37,10 @@ public class ReportGenerator {
             "CODE_XML_ELEMENT_CONTENT_FORBIDDEN.md",
             "CODE_XML_ELEMENT_CONTENT_REQUIRED.md",
             "CODE_XML_XPATH_EXISTS.md",
-            "CODE_XML_XPATH_NOT_EXISTS.md"
+            "CODE_XML_XPATH_NOT_EXISTS.md",
+            "CONDITIONAL_CHECK.md",
+            "CODE_PROJECT_CONTEXT.md",
+            "CODE_FILE_EXISTS.md"
     };
     public static void generateIndividualReports(ValidationReport report, Path outputDir) {
         try {
@@ -62,33 +65,71 @@ public class ReportGenerator {
     public static void generateHtml(ValidationReport report, Path outputPath) {
         try {
             Files.createDirectories(outputPath.getParent());
+            
+
+
+
+            List<RuleResult> allResults = new java.util.ArrayList<>();
+            allResults.addAll(report.passed);
+            allResults.addAll(report.failed);
+            
+
+            allResults.sort((r1, r2) -> {
+                if (r1.passed != r2.passed) {
+                    return r1.passed ? 1 : -1; // FAIL (passed=false) comes first
+                }
+                return r1.id.compareTo(r2.id);
+            });
+            
+
+            int codeSeq = 1;
+            int configSeq = 100; // Reset config start if we want separate blocks, or just sequence 1..N.
+
+
+            int seq = 1;
+            for (RuleResult r : allResults) {
+
+                r.displayId = String.format("%03d", seq++);
+            }
+
+
             StringBuilder rows = new StringBuilder();
-            for (RuleResult r : report.passed) {
-                String message = r.checks.isEmpty() ? "All checks passed" : r.checks.get(0).message;
-                rows.append(String.format(
-                        "<tr style='background-color:#e8f5e9'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:green'>PASS</strong></td><td>%s</td></tr>",
-                        escape(r.id), escape(r.name), escape(r.severity), escape(message)));
-            }
-            for (RuleResult r : report.failed) {
-                List<String> messages = r.checks.stream()
-                        .filter(c -> !c.passed)
-                        .map(c -> escape(c.message))
-                        .toList();
-                String details = messages.stream()
-                        .collect(Collectors.groupingBy(
-                                s -> s.contains(" not found in file: ") ? s.substring(0, s.lastIndexOf(":") + 1) : s,
-                                Collectors.mapping(
-                                        s -> s.contains(" not found in file: ")
-                                                ? s.substring(s.lastIndexOf(":") + 1).trim()
-                                                : "",
-                                        Collectors.joining(", "))))
-                        .entrySet().stream()
-                        .map(entry -> "• " + entry.getKey() + entry.getValue())
-                        .collect(Collectors.joining("<br>"));
-                rows.append(String.format(
-                        "<tr style='background-color:#ffebee'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:red'>FAIL</strong></td><td>%s</td></tr>",
-                        escape(r.id), escape(r.name), escape(r.severity), details));
-            }
+            
+
+
+
+            for (RuleResult r : allResults) {
+                String configRow = (r.ruleConfig != null && !r.ruleConfig.isEmpty())
+                        ? "<div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><strong>Rule Config:</strong> " + escape(r.ruleConfig) + "</div>"
+                        : "";
+                
+                if (r.passed) {
+                    String message = r.checks.isEmpty() ? "All checks passed" : r.checks.get(0).message;
+                    rows.append(String.format(
+                            "<tr style='background-color:#e8f5e9'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:green'>PASS</strong></td><td><div>%s</div>%s</td></tr>",
+                            escape(r.displayId), escape(r.name), escape(r.severity), escape(message), configRow));
+                } else {
+                    List<String> messages = r.checks.stream()
+                            .filter(c -> !c.passed)
+                            .map(c -> escape(c.message))
+                            .toList();
+                    String details = messages.stream()
+                            .collect(Collectors.groupingBy(
+                                    s -> s.contains(" not found in file: ") ? s.substring(0, s.lastIndexOf(":") + 1) : s,
+                                    Collectors.mapping(
+                                            s -> s.contains(" not found in file: ")
+                                                    ? s.substring(s.lastIndexOf(":") + 1).trim()
+                                                    : "",
+                                            Collectors.joining(", "))))
+                            .entrySet().stream()
+                            .map(entry -> "• " + entry.getKey() + entry.getValue())
+                            .collect(Collectors.joining("<br>"));
+                    rows.append(String.format(
+                            "<tr style='background-color:#ffebee'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:red'>FAIL</strong></td><td><div>%s</div>%s</td></tr>",
+                            escape(r.displayId), escape(r.name), escape(r.severity), details, configRow));
+                }
+            } // End loop
+
             String html = """
                     <!DOCTYPE html>
                     <html>
@@ -97,90 +138,138 @@ public class ReportGenerator {
                         <title>MuleGuard Report - %s</title>
                         <style>
                             :root {
-                                --truist-purple: #663399;
-                                --truist-purple-light: #7d4fb2;
+                                --raks-purple: #663399;
+                                --raks-purple-light: #7d4fb2;
                                 --text-white: #FFFFFF;
                             }
                             body {font-family: Arial, sans-serif; margin: 0; background-color: #f5f5f5;}
-                            .report-container { border: 5px solid var(--truist-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; position: relative; }
-                            h1 {color: var(--truist-purple);}
+                            .report-container { border: 5px solid var(--raks-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; position: relative; }
+                            h1 {color: var(--raks-purple);}
                             .summary {background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;}
+                            .search-box { margin-bottom: 20px; width: 100%%; }
+                            #searchInput { width: 100%%; padding: 12px; border: 2px solid var(--raks-purple); border-radius: 5px; font-size: 16px; box-sizing: border-box; }
                             table {width: 100%%; border-collapse: collapse; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
                             th, td {border: 1px solid #ddd; padding: 12px; text-align: left;}
-                            th {background-color: var(--truist-purple); color: var(--text-white);}
-                            .contact-button {
-                                background-color: var(--truist-purple);
-                                color: var(--text-white);
-                                border: none;
-                                padding: 12px 24px;
-                                text-align: center;
-                                text-decoration: none;
-                                display: inline-block;
-                                font-size: 16px;
-                                font-weight: bold;
-                                margin-top: 25px;
-                                cursor: pointer;
-                                border-radius: 5px;
-                                transition: background-color 0.3s ease;
-                                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                            }
-                            .contact-button:hover { background-color: var(--truist-purple-light); }
-                            .top-nav-container {
-                                position: absolute;
-                                top: 20px;
-                                right: 40px;
-                                display: flex;
-                                gap: 10px;
-                            }
+                            th {background-color: var(--raks-purple); color: var(--text-white); cursor: pointer; position: sticky; top: 0; z-index: 10; }
+                            th:hover { background-color: var(--raks-purple-light); }
+                            th::after { content: ' ↕'; font-size: 0.8em; }
+                            .top-nav-container { position: absolute; top: 20px; right: 40px; display: flex; gap: 10px; }
                             .top-nav-button {
-                                background-color: var(--truist-purple);
-                                color: var(--text-white);
-                                border: none;
-                                padding: 8px 16px;
-                                text-align: center;
-                                text-decoration: none;
-                                display: inline-block;
-                                font-size: 14px;
-                                font-weight: bold;
-                                cursor: pointer;
-                                border-radius: 5px;
-                                transition: background-color 0.3s ease;
+                                background-color: var(--raks-purple); color: var(--text-white);
+                                border: none; padding: 8px 16px; text-align: center; text-decoration: none;
+                                display: inline-block; font-size: 14px; font-weight: bold;
+                                cursor: pointer; border-radius: 5px; transition: background-color 0.3s ease;
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
-                            .top-nav-button:hover { background-color: var(--truist-purple-light); }
+                            .top-nav-button:hover { background-color: var(--raks-purple-light); }
                         </style>
                     </head>
                     <body>
                         <div class="report-container">
-                            <div class="top-nav-container">
+                                <div class="top-nav-container">
                                 <a href="../CONSOLIDATED-REPORT.html" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
                                 <a href="../checklist.html" class="top-nav-button">Checklist</a>
-                                <a href="../rule_guide.html" class="top-nav-button">Rule Guide</a>
-                                <a href="../help.html" class="top-nav-button">Help</a>
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
-                                <h1 style="margin: 0;">MuleGuard - Mulesoft Application Review & Validation</h1>
+                                <h1 style="margin: 0;">MuleGuard Report</h1>
                             </div>
                             <div class="summary">
                                 <strong>Project:</strong> %s<br>
                                 <strong>Generated:</strong> %s<br>
                                 <strong>Total Rules:</strong> %d | <strong style="color:green">Passed:</strong> %d | <strong style="color:red">Failed:</strong> %d
                             </div>
-                            <table><tr><th>Rule ID</th><th>Name</th><th>Severity</th><th>Status</th><th>Details</th></tr>%s</table>
+                            <div class="search-box">
+                                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by name, status, or details...">
+                            </div>
+                            <table id="resultsTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable(0)">Rule #</th>
+                                        <th onclick="sortTable(1)">Name</th>
+                                        <th onclick="sortTable(2)">Severity</th>
+                                        <th onclick="sortTable(3)">Status</th>
+                                        <th onclick="sortTable(4)">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    %s
+                                </tbody>
+                            </table>
                         </div>
+                        <script>
+                            function filterTable() {
+                                var input, filter, table, tr, td, i, txtValue;
+                                input = document.getElementById("searchInput");
+                                filter = input.value.toUpperCase();
+                                table = document.getElementById("resultsTable");
+                                tr = table.getElementsByTagName("tr");
+                                for (i = 1; i < tr.length; i++) {
+                                    var found = false;
+                                    var tds = tr[i].getElementsByTagName("td");
+                                    for (var j = 0; j < tds.length; j++) {
+                                        if (tds[j]) {
+                                            txtValue = tds[j].textContent || tds[j].innerText;
+                                            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    tr[i].style.display = found ? "" : "none";
+                                }
+                            }
+
+                            function sortTable(n) {
+                                var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                                table = document.getElementById("resultsTable");
+                                switching = true;
+                                dir = "asc";
+                                while (switching) {
+                                    switching = false;
+                                    rows = table.rows;
+                                    for (i = 1; i < (rows.length - 1); i++) {
+                                        shouldSwitch = false;
+                                        x = rows[i].getElementsByTagName("TD")[n];
+                                        y = rows[i + 1].getElementsByTagName("TD")[n];
+                                        if (dir == "asc") {
+                                            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                                                shouldSwitch = true;
+                                                break;
+                                            }
+                                        } else if (dir == "desc") {
+                                            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                                shouldSwitch = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (shouldSwitch) {
+                                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                                        switching = true;
+                                        switchcount++;
+                                    } else {
+                                        if (switchcount == 0 && dir == "asc") {
+                                            dir = "desc";
+                                            switching = true;
+                                        }
+                                    }
+                                }
+                            }
+                        </script>
                     </body>
                     </html>
-                    """
-                    .formatted(
-                            escape(report.projectPath),
-                            escape(report.projectPath),
-                            LocalDateTime.now(),
-                            report.passed.size() + report.failed.size(),
-                            report.passed.size(),
-                            report.failed.size(),
-                            rows.toString());
-            Files.writeString(outputPath, html, java.nio.charset.StandardCharsets.UTF_8);
+                    """;
+            
+            String finalHtml = String.format(html,
+                    escape(report.projectPath),
+                    escape(report.projectPath),
+                    LocalDateTime.now().toString(),
+                    report.passed.size() + report.failed.size(),
+                    report.passed.size(),
+                    report.failed.size(),
+                    rows.toString());
+            Files.writeString(outputPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
         } catch (Exception e) {
             logger.error("Failed to generate HTML: {}", e.getMessage());
         }
@@ -298,17 +387,21 @@ public class ReportGenerator {
                         <title>MuleGuard - Consolidated Report</title>
                         <style>
                             :root {
-                                --truist-purple: #663399;
-                                --truist-purple-light: #7d4fb2;
+                                --raks-purple: #663399;
+                                --raks-purple-light: #7d4fb2;
                                 --text-white: #FFFFFF;
                             }
                             body {font-family: Arial, sans-serif; margin: 0; background-color: #f0f0f0;}
-                            .report-container { border: 5px solid var(--truist-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; }
-                            h1 {color: var(--truist-purple);}
+                            .report-container { border: 5px solid var(--raks-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; }
+                            h1 {color: var(--raks-purple);}
                             .card {background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); margin-bottom: 20px;}
+                            .search-box { margin-bottom: 20px; width: 100%%; }
+                            #searchInput { width: 100%%; padding: 12px; border: 2px solid var(--raks-purple); border-radius: 5px; font-size: 16px; box-sizing: border-box; }
                             table {width: 100%%; border-collapse: collapse;}
                             th, td {border: 1px solid #ddd; padding: 12px; text-align: left;}
-                            th {background: var(--truist-purple); color: var(--text-white);}
+                            th {background: var(--raks-purple); color: var(--text-white); cursor: pointer; position: sticky; top: 0; z-index: 10; }
+                            th:hover { background-color: var(--raks-purple-light); }
+                            th::after { content: ' ↕'; font-size: 0.8em; }
                             .top-nav-container {
                                 position: absolute;
                                 top: 20px;
@@ -317,7 +410,7 @@ public class ReportGenerator {
                                 gap: 10px;
                             }
                             .top-nav-button {
-                                background-color: var(--truist-purple);
+                                background-color: var(--raks-purple);
                                 color: var(--text-white);
                                 border: none;
                                 padding: 8px 16px;
@@ -331,41 +424,117 @@ public class ReportGenerator {
                                 transition: background-color 0.3s ease;
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
-                            .top-nav-button:hover { background-color: var(--truist-purple-light); }
+                            .top-nav-button:hover { background-color: var(--raks-purple-light); }
                         </style>
                     </head>
                     <body>
                         <div class="report-container">
-                            <div class="top-nav-container">
+                                <div class="top-nav-container">
                                 <a href="checklist.html" class="top-nav-button">Checklist</a>
-                                <a href="rule_guide.html" class="top-nav-button">Rule Guide</a>
-                                <a href="help.html" class="top-nav-button">Help</a>
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
-                                <h1 style="margin: 0;">MuleGuard - Mulesoft Application Review & Validation</h1>
+                                <h1 style="margin: 0;">MuleGuard Consolidated Report</h1>
                             </div>
                             <div style="border: 1px solid #ccc; padding: 10px 20px; margin-top: 15px; margin-bottom: 20px; background-color: #fbfbfbff; border-radius: 5px;">
-                            <h4 style="margin-top: 0; color: #333;">Report Details:</h4>
+                            <h4 style="margin-top: 0; color: #333;">Scan Summary:</h4>
                                 <strong>Generated:</strong> %s<br>
                                 <strong>Total APIs Scanned:</strong> %d<br>
                                 <strong>Total Rules:</strong> %d | <strong style="color:green">Passed:</strong> %d | <strong style="color:red">Failed:</strong> %d
                             </div>
-                            <table><tr><th>API Name</th><th>Total Rules</th><th>Passed</th><th>Failed</th><th>Status</th><th>Report</th></tr>%s</table>
+                            <div class="search-box">
+                                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by API name, status, or counts...">
                             </div>
+                            <table id="resultsTable">
+                                <thead>
+                                    <tr>
+                                        <th onclick="sortTable(0)">API Name</th>
+                                        <th onclick="sortTable(1)">Total Rules</th>
+                                        <th onclick="sortTable(2)">Passed</th>
+                                        <th onclick="sortTable(3)">Failed</th>
+                                        <th onclick="sortTable(4)">Status</th>
+                                        <th>Report</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tableBody">
+                                    %s
+                                </tbody>
+                            </table>
+                        </div>
+                        <script>
+                            function filterTable() {
+                                var input, filter, table, tr, td, i, txtValue;
+                                input = document.getElementById("searchInput");
+                                filter = input.value.toUpperCase();
+                                table = document.getElementById("resultsTable");
+                                tr = table.getElementsByTagName("tr");
+                                for (i = 1; i < tr.length; i++) {
+                                    var found = false;
+                                    var tds = tr[i].getElementsByTagName("td");
+                                    for (var j = 0; j < tds.length; j++) {
+                                        if (tds[j]) {
+                                            txtValue = tds[j].textContent || tds[j].innerText;
+                                            if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                                                found = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    tr[i].style.display = found ? "" : "none";
+                                }
+                            }
+
+                            function sortTable(n) {
+                                var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+                                table = document.getElementById("resultsTable");
+                                switching = true;
+                                dir = "asc";
+                                while (switching) {
+                                    switching = false;
+                                    rows = table.rows;
+                                    for (i = 1; i < (rows.length - 1); i++) {
+                                        shouldSwitch = false;
+                                        x = rows[i].getElementsByTagName("TD")[n];
+                                        y = rows[i + 1].getElementsByTagName("TD")[n];
+                                        if (dir == "asc") {
+                                            if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                                                shouldSwitch = true;
+                                                break;
+                                            }
+                                        } else if (dir == "desc") {
+                                            if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                                                shouldSwitch = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                    if (shouldSwitch) {
+                                        rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                                        switching = true;
+                                        switchcount++;
+                                    } else {
+                                        if (switchcount == 0 && dir == "asc") {
+                                            dir = "desc";
+                                            switching = true;
+                                        }
+                                    }
+                                }
+                            }
+                        </script>
                     </body>
                     </html>
-                    """
-                    .formatted(
-                            LocalDateTime.now(),
+                    """;
+            
+            String finalHtml = String.format(html,
+                            LocalDateTime.now().toString(),
                             totalApis,
                             totalRules,
                             totalPassed,
                             totalFailed,
                             tableRows);
             Path htmlPath = outputPath.resolve("CONSOLIDATED-REPORT.html");
-            Files.writeString(htmlPath, html, java.nio.charset.StandardCharsets.UTF_8);
-            logger.info("Consolidated report generated: {}", htmlPath.toAbsolutePath());
+            Files.writeString(htmlPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
+            logger.debug("Consolidated report generated: {}", htmlPath.toAbsolutePath());
             copyHelpFile(outputPath);
             generateConsolidatedExcel(results, outputPath);
             generateChecklistReport(outputPath); 
@@ -386,7 +555,7 @@ public class ReportGenerator {
                 int srNo = 1;
                 String line;
                 while ((line = reader.readLine()) != null) {
-                    String[] parts = line.split(",", 3);
+                    String[] parts = line.split(";", 3);
                     if (parts.length == 3) {
                         rows.append(String.format("<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>", srNo++,
                                 escape(parts[0]), escape(parts[1]), escape(parts[2])));
@@ -401,18 +570,18 @@ public class ReportGenerator {
                         <title>MuleGuard - Validation Checklist</title>
                         <style>
                             :root {
-                                --truist-purple: #663399;
-                                --truist-purple-light: #7d4fb2;
+                                --raks-purple: #663399;
+                                --raks-purple-light: #7d4fb2;
                                 --text-white: #FFFFFF;
                             }
                             body {font-family: Arial, sans-serif; margin: 0; background-color: #f0f0f0;}
-                            .report-container { border: 5px solid var(--truist-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; position: relative; }
-                            h1 {color: var(--truist-purple);}
+                            .report-container { border: 5px solid var(--raks-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; position: relative; }
+                            h1 {color: var(--raks-purple);}
                             table {width: 100%%; border-collapse: collapse; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
                             th, td {border: 1px solid #ddd; padding: 12px; text-align: left;}
-                            th {background-color: var(--truist-purple); color: var(--text-white);}
+                            th {background-color: var(--raks-purple); color: var(--text-white);}
                             .contact-button {
-                                background-color: var(--truist-purple);
+                                background-color: var(--raks-purple);
                                 color: var(--text-white);
                                 border: none;
                                 padding: 12px 24px;
@@ -427,7 +596,7 @@ public class ReportGenerator {
                                 transition: background-color 0.3s ease;
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
-                            .contact-button:hover { background-color: var(--truist-purple-light); }
+                            .contact-button:hover { background-color: var(--raks-purple-light); }
                             .top-nav-container {
                                 position: absolute;
                                 top: 20px;
@@ -436,7 +605,7 @@ public class ReportGenerator {
                                 gap: 10px;
                             }
                             .top-nav-button {
-                                background-color: var(--truist-purple);
+                                background-color: var(--raks-purple);
                                 color: var(--text-white);
                                 border: none;
                                 padding: 8px 16px;
@@ -450,19 +619,18 @@ public class ReportGenerator {
                                 transition: background-color 0.3s ease;
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
-                            .top-nav-button:hover { background-color: var(--truist-purple-light); }
+                            .top-nav-button:hover { background-color: var(--raks-purple-light); }
                         </style>
                     </head>
                     <body>
                         <div class="report-container">
-                            <div class="top-nav-container">
+                                <div class="top-nav-container">
                                 <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
                                 <a href="/muleguard/main" id="mainPageBtn" class="top-nav-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
-                                <a href="help.html" class="top-nav-button">Help</a>
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
-                                <h1 style="margin: 0;">MuleGuard - Mulesoft Application Review & Validation</h1>
+                                <h1 style="margin: 0;">MuleGuard Checklist</h1>
                             </div>
                             <p>This page lists all the individual checks performed by the MuleGuard tool.</p>
                             <table>
@@ -478,7 +646,7 @@ public class ReportGenerator {
                                     var dashboardBtn = document.getElementById('dashboardBtn');
                                     var mainPageBtn = document.getElementById('mainPageBtn');
                                     
-                                    // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+
                                     var isInMuleWrapper = path.includes('/apiguard/');
                                     var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
                                     
@@ -510,40 +678,67 @@ public class ReportGenerator {
                             </script>
                     </body>
                     </html>
-                    """
-                    .formatted(rows.toString());
+                    """;
+            String finalHtml = String.format(html, rows.toString());
             Path checklistPath = outputDir.resolve("checklist.html");
-            Files.writeString(checklistPath, html, java.nio.charset.StandardCharsets.UTF_8);
-            logger.info("Checklist generated");
+            Files.writeString(checklistPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
+            logger.debug("Checklist generated");
         } catch (Exception e) {
             logger.error("Failed to generate checklist report: {}", e.getMessage());
         }
     }
-    private static void generateRuleGuide(Path outputDir) {
+    public static void generateRuleGuide(Path outputDir) {
         try {
+
             StringBuilder sidebar = new StringBuilder();
             StringBuilder content = new StringBuilder();
             int index = 0;
-            for (String fileName : RULE_DOCS) {
-                String ruleName = fileName.replace(".md", "");
-                String contentHtml = "";
-                try (InputStream is = ReportGenerator.class.getResourceAsStream("/docs/" + fileName)) {
-                    if (is != null) {
-                        BufferedReader reader = new BufferedReader(new InputStreamReader(is, java.nio.charset.StandardCharsets.UTF_8));
-                        String md = reader.lines().collect(Collectors.joining("\n"));
-                        contentHtml = convertMdToHtml(md);
-                    } else {
-                        contentHtml = "<p>Documentation not found for " + ruleName + "</p>";
-                    }
-                } catch (Exception e) {
-                    contentHtml = "<p>Error loading documentation: " + e.getMessage() + "</p>";
+            for (String docFile : RULE_DOCS) {
+                String ruleName = docFile.replace(".md", "").replace("CODE_", "").replace("CONFIG_", "");
+                String mdContent = readResource("/docs/" + docFile);
+                if (mdContent == null) {
+                    mdContent = "# " + ruleName + "\n\nDocumentation not found for " + ruleName;
                 }
-                String activeClass = (index == 0) ? "active" : "";
-                String displayStyle = (index == 0) ? "block" : "none";
-                sidebar.append(String.format("<li><a href='#' class='%s' onclick=\"showRule(event, '%s')\">%s</a></li>",
-                        activeClass, ruleName, ruleName));
-                content.append(String.format("<div id='%s' class='rule-content' style='display: %s;'>%s</div>",
-                        ruleName, displayStyle, contentHtml));
+
+
+                StringBuilder subNav = new StringBuilder();
+                java.util.regex.Pattern headerPattern = java.util.regex.Pattern.compile("(?m)^## (.*)$");
+                java.util.regex.Matcher matcher = headerPattern.matcher(mdContent);
+                
+                if (matcher.find()) {
+                    subNav.append("<ul class=\"sub-nav\" id=\"sub-").append(ruleName).append("\">");
+                    matcher.reset();
+                    while (matcher.find()) {
+                        String headerTitle = matcher.group(1).trim();
+
+                        String sectionId = ruleName + "_" + headerTitle.replaceAll("[^a-zA-Z0-9]", "");
+                        
+                        subNav.append(String.format("<li><a href=\"#\" onclick=\"showRule(event, '%s', '%s')\">%s</a></li>", 
+                                ruleName, sectionId, headerTitle));
+                        
+
+                        mdContent = mdContent.replace("## " + headerTitle, "<h2 id=\"" + sectionId + "\">" + headerTitle + "</h2>");
+                    }
+                    subNav.append("</ul>");
+                }
+
+
+                boolean hasSubNav = subNav.length() > 0;
+                sidebar.append("<li>");
+                if (hasSubNav) {
+                    sidebar.append("<div class=\"rule-header\">");
+                    sidebar.append(String.format("<span class=\"toggle-icon\" onclick=\"toggleSubNav(event, '%s')\">&#9654;</span>", ruleName));
+                    sidebar.append(String.format("<a href=\"#\" onclick=\"showRule(event, '%s')\">%s</a>", ruleName, ruleName));
+                    sidebar.append("</div>");
+                    sidebar.append(subNav.toString());
+                } else {
+                     sidebar.append(String.format("<a href=\"#\" onclick=\"showRule(event, '%s')\">%s</a>", ruleName, ruleName));
+                }
+                sidebar.append("</li>");
+
+                String htmlContent = convertMdToHtml(mdContent);
+                content.append(String.format("<div id=\"%s\" class=\"rule-content\" style=\"display: %s;\">%s</div>", 
+                        ruleName, (index == 0 ? "block" : "none"), htmlContent));
                 index++;
             }
             String html = """
@@ -551,15 +746,16 @@ public class ReportGenerator {
                     <html>
                     <head>
                         <meta charset="UTF-8">
-                        <title>MuleGuard - Rule Guide</title>
+                        <title>MuleGuard - Standard Rule Guide</title>
                         <style>
                             :root {
-                                --truist-purple: #663399;
-                                --truist-purple-light: #7d4fb2;
+                                --raks-purple: #663399;
+                                --raks-purple-light: #7d4fb2;
                                 --text-white: #FFFFFF;
                                 --sidebar-width: 300px;
                             }
-                            body {font-family: Arial, sans-serif; margin: 0; background-color: #f0f0f0; display: flex; height: 100vh; overflow: hidden;}
+                            html { height: 100%%; margin: 0; padding: 0; }
+                            body { font-family: Arial, sans-serif; margin: 0; background-color: #f0f0f0; display: flex; height: 100%%; overflow: hidden; width: 100%%; }
                             .sidebar {
                                 width: var(--sidebar-width);
                                 background: white;
@@ -567,55 +763,37 @@ public class ReportGenerator {
                                 display: flex;
                                 flex-direction: column;
                                 height: 100%%;
-                                overflow: auto;
+                                overflow: hidden; 
                                 min-width: 200px;
                                 max-width: 600px;
                                 flex-shrink: 0;
                             }
                             .sidebar-header {
                                 padding: 20px;
-                                background: var(--truist-purple);
+                                background: var(--raks-purple);
                                 color: white;
                             }
                             .sidebar-header h2 { margin: 0; font-size: 1.2rem; color: white; }
-                            .sidebar-nav {
-                                flex: 1;
-                                overflow-y: auto;
-                                list-style: none;
-                                padding: 0;
-                                margin: 0;
-                            }
-                            .sidebar-nav li a {
-                                display: block;
-                                padding: 15px 20px;
-                                color: #333;
-                                text-decoration: none;
-                                border-bottom: 1px solid #eee;
-                                transition: background 0.2s;
-                            }
-                            .sidebar-nav li a:hover { background: #f5f5f5; }
-                            .sidebar-nav li a.active {
-                                background: var(--truist-purple-light);
-                                color: white;
-                            }
-                            .resizer {
-                                width: 5px;
-                                background-color: #ddd;
-                                cursor: col-resize;
-                                height: 100%%;
-                                flex-shrink: 0;
-                                transition: background-color 0.2s;
-                            }
-                            .resizer:hover, .resizer.resizing {
-                                background-color: var(--truist-purple);
-                            }
-                            .main-content {
-                                flex: 1;
-                                padding: 40px;
-                                overflow-y: auto;
-                                background: #f9f9f9;
-                                position: relative;  
-                            }
+                            .sidebar-nav { list-style-type: none; padding: 0; overflow-y: auto; flex-grow: 1; }
+                            .sidebar-nav li { border-bottom: 1px solid #eee; }
+                            .sidebar-nav a { display: block; color: #333; padding: 15px 20px; text-decoration: none; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+                            .sidebar-nav a:hover { background-color: #f5f5f5; color: #000; }
+                            .sidebar-nav a.active { background-color: var(--raks-purple); color: white; border-left: 4px solid #7d4fb2; }
+                            
+                            
+                            .rule-header { display: flex; align-items: center; width: 100%%; cursor: pointer; }
+                            .rule-header:hover { background-color: #f5f5f5; }
+                            .rule-header a { flex-grow: 1; padding: 15px 10px; border: none; }
+                            .toggle-icon { padding: 15px 10px; color: #666; cursor: pointer; font-size: 10px; width: 20px; text-align: center; }
+                            .toggle-icon:hover { color: #000; }
+                            .sub-nav { list-style-type: none; padding: 0; display: none; background-color: #f9f9f9; border-top: 1px solid #eee; }
+                            .sub-nav.expanded { display: block; }
+                            .sub-nav li { border-bottom: 1px solid #eee; }
+                            .sub-nav a { padding: 8px 10px 8px 45px; font-size: 13px; color: #555; }
+                            .sub-nav a:hover { color: #000; background-color: #eee; }
+                            .sub-nav a.active { background-color: var(--raks-purple); color: white; font-weight: bold; }
+
+                            .main-content { flex: 1; padding: 40px; overflow-y: auto; background-color: white; position: relative; }
                             .report-container {
                                 background: white;
                                 padding: 40px;
@@ -623,7 +801,7 @@ public class ReportGenerator {
                                 box-shadow: 0 2px 10px rgba(0,0,0,0.1);
                                 max-width: 1400px;
                                 margin: 0 auto;
-                                border: 5px solid var(--truist-purple);
+                                border: 5px solid var(--raks-purple);
                                 position: relative;
                             }
                             .top-nav-container {
@@ -635,7 +813,7 @@ public class ReportGenerator {
                                 z-index: 100;
                             }
                             .top-nav-button {
-                                background-color: var(--truist-purple);
+                                background-color: var(--raks-purple);
                                 color: var(--text-white);
                                 border: none;
                                 padding: 8px 16px;
@@ -649,50 +827,288 @@ public class ReportGenerator {
                                 transition: background-color 0.3s ease;
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
-                            .top-nav-button:hover { background-color: var(--truist-purple-light); }
-                            h1 { color: var(--truist-purple); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }  
-                            h2 { color: #444; margin-top: 30px; }
-                            h3 { color: #666; }
+                            .top-nav-button:hover { background-color: var(--raks-purple-light); }
+                            h1 { color: var(--raks-purple); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }  
+                            h2 { color: var(--raks-purple); margin-top: 30px; }
+                            h3 { color: var(--raks-purple-light); }
                             pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; border: 1px solid #ddd; }
-                            code { font-family: Consolas, monospace; color: #d63384; }
+                            code { font-family: Consolas, monospace; color: #0078d4; }
                             pre code { color: #333; }
                             table { border-collapse: collapse; width: 100%%; margin: 20px 0; }
                             th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
                             th { background: #f1f1f1; }
-                            blockquote { border-left: 4px solid var(--truist-purple); margin: 0; padding-left: 20px; color: #555; }
+                            blockquote { border-left: 4px solid var(--raks-purple); margin: 0; padding-left: 20px; color: #555; }
+                            .search-highlight { background-color: #ffeb3b; color: black; font-weight: bold; border-radius: 2px; }
+                            ::highlight(search-results) { background-color: #ffeb3b; color: black; }
+                            .match-count { background: #663399; color: white; border-radius: 10px; padding: 2px 8px; font-size: 0.8em; margin-left: 10px; font-weight: bold; white-space: nowrap; }
                         </style>
                         <script>
-                            function showRule(event, ruleId) {
-                                event.preventDefault();
-                                document.querySelectorAll('.rule-content').forEach(el => el.style.display = 'none');
-                                document.getElementById(ruleId).style.display = 'block';
-                                document.querySelectorAll('.sidebar-nav a').forEach(el => el.classList.remove('active'));
-                                event.target.classList.add('active');
+                            var currentFilter = "";
+                            var searchTimeout = null;
+                            var searchIndex = []; // { id: ruleId, content: upperCaseText }
+
+                            function buildIndex() {
+                                var rules = document.querySelectorAll('.rule-content');
+                                rules.forEach(function(el) {
+                                    var id = el.id;
+                                    var text = (el.textContent || el.innerText).toUpperCase();
+
+                                    searchIndex.push({ id: id, content: text });
+                                });
+                                console.log("Search index built: " + searchIndex.length + " items.");
                             }
+
+                            function showRule(event, ruleId, sectionId) {
+                                if (event) event.preventDefault();
+                                document.querySelectorAll('.rule-content').forEach(el => el.style.display = 'none');
+                                var contentDiv = document.getElementById(ruleId);
+                                if (contentDiv) {
+                                    contentDiv.style.display = 'block';
+                                    
+
+                                    expandRuleTree(ruleId);
+
+
+                                    if (sectionId) {
+                                        var section = document.getElementById(sectionId);
+                                        if (section) section.scrollIntoView({block: 'start'});
+                                    } else {
+
+                                        document.querySelector('.main-content').scrollTop = 0;
+                                    }
+                                    
+                                    setTimeout(function(){
+                                        applyHighlight(contentDiv, currentFilter, false);
+                                    }, 0);
+                                }
+                                
+
+                                document.querySelectorAll('.sidebar-nav a').forEach(el => {
+                                    el.classList.remove('active');
+                                    var onclick = el.getAttribute('onclick');
+
+                                    if (onclick && onclick.includes("'" + ruleId + "'")) {
+
+                                        if (!sectionId || (sectionId && onclick.includes("'" + sectionId + "'"))) {
+                                             el.classList.add('active');
+                                        }
+                                    }
+                                });
+                            }
+                            
+                            function toggleSubNav(event, ruleId) {
+                                if(event) event.stopPropagation();
+                                var subNav = document.getElementById('sub-' + ruleId);
+                                var icon = event.target;
+                                if (subNav) {
+                                    if (subNav.classList.contains('expanded')) {
+                                        subNav.classList.remove('expanded');
+                                        icon.innerHTML = '&#9654;'; // Right Arrow
+                                    } else {
+                                        subNav.classList.add('expanded');
+                                        icon.innerHTML = '&#9660;'; // Down Arrow
+                                    }
+                                }
+                            }
+                            
+                            function expandRuleTree(ruleId) {
+                                var subNav = document.getElementById('sub-' + ruleId);
+                                if (subNav && !subNav.classList.contains('expanded')) {
+                                    subNav.classList.add('expanded');
+
+                                    var header = subNav.previousElementSibling;
+                                    if (header) {
+                                        var icon = header.querySelector('.toggle-icon');
+                                        if (icon) icon.innerHTML = '&#9660;';
+                                    }
+                                }
+                            }
+                            
+                            function escapeRegExp(string) {
+                                return string.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'); 
+                            }
+
+                            function applyHighlight(container, term, shouldScroll) {
+                                if (!container) return;
+                                
+
+                                if (window.CSS && CSS.highlights) {
+                                    CSS.highlights.clear();
+                                }
+                                
+                                if (!term || term.length < 2) return;
+
+                                var ranges = [];
+                                var termUpper = term.toUpperCase();
+                                var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+                                var node;
+                                var matchCount = 0;
+                                var maxMatches = 100;
+
+                                while (node = walker.nextNode()) {
+                                    if (matchCount >= maxMatches) break;
+                                    var text = node.nodeValue;
+                                    var valUpper = text.toUpperCase();
+                                    var idx = valUpper.indexOf(termUpper);
+                                    
+                                    while (idx >= 0 && matchCount < maxMatches) {
+                                        var range = new Range();
+                                        range.setStart(node, idx);
+                                        range.setEnd(node, idx + term.length);
+                                        ranges.push(range);
+                                        matchCount++;
+                                        idx = valUpper.indexOf(termUpper, idx + term.length);
+                                    }
+                                }
+
+
+                                if (window.CSS && CSS.highlights) {
+                                    var highlight = new Highlight(...ranges);
+                                    CSS.highlights.set("search-results", highlight);
+                                }
+
+
+                                if (shouldScroll && ranges.length > 0) {
+                                    var firstRange = ranges[0];
+                                    if (firstRange) {
+                                        var startNode = firstRange.startContainer;
+                                        var element = startNode.nodeType === 3 ? startNode.parentElement : startNode;
+                                        if (element) {
+                                            element.scrollIntoView({block: "center"});
+                                        }
+                                    }
+                                }
+                            }
+
+                            function onSearchInput() {
+                                if (searchTimeout) clearTimeout(searchTimeout);
+
+                                searchTimeout = setTimeout(filterSidebar, 300);
+                            }
+
+                            function filterSidebar() {
+                                var input = document.getElementById("filterInput");
+                                currentFilter = input.value.trim().toUpperCase();
+                                
+
+
+                                
+                                var matchedIds = new Set();
+                                var matchesMap = {}; // id -> count
+
+                                if (currentFilter.length < 2) {
+
+                                    var lis = document.getElementById("sidebarNav").getElementsByTagName("li");
+                                    for (var i = 0; i < lis.length; i++) {
+                                        lis[i].style.display = "";
+                                        var a = lis[i].getElementsByTagName("a")[0];
+                                        var oldBadge = a.querySelector('.match-count');
+                                        if (oldBadge) oldBadge.remove();
+                                    }
+                                    return;
+                                }
+
+
+                                for (var i = 0; i < searchIndex.length; i++) {
+                                    var item = searchIndex[i];
+                                    var count = 0;
+                                    
+
+                                    if (item.id.toUpperCase().indexOf(currentFilter) > -1) {
+                                        count++; 
+                                    } 
+                                    
+
+                                    var pos = item.content.indexOf(currentFilter);
+                                    while (pos !== -1 && count < 101) {
+                                        count++;
+                                        pos = item.content.indexOf(currentFilter, pos + currentFilter.length);
+                                    }
+                                    
+                                    if (count > 0) {
+                                        matchedIds.add(item.id);
+                                        matchesMap[item.id] = count;
+                                    }
+                                }
+
+
+                                var ul = document.getElementById("sidebarNav");
+                                var lis = ul.getElementsByTagName("li");
+
+                                requestAnimationFrame(() => {
+                                    for (var i = 0; i < lis.length; i++) {
+                                        var a = lis[i].getElementsByTagName("a")[0];
+
+
+
+
+                                        var onclickStr = a.getAttribute("onclick"); 
+                                        var ruleId = onclickStr.match(/'([^']+)'/)[1]; 
+
+                                        var oldBadge = a.querySelector('.match-count');
+                                        if (oldBadge) oldBadge.remove();
+
+                                        if (matchedIds.has(ruleId) || currentFilter === "") {
+                                            lis[i].style.display = "";
+                                            var count = matchesMap[ruleId] || 0;
+                                            if (count > 0) {
+                                                var badge = document.createElement("span");
+                                                badge.className = "match-count";
+                                                badge.innerText = count > 100 ? "100+" : count;
+                                                a.appendChild(badge);
+                                            }
+                                        } else {
+                                            lis[i].style.display = "none";
+                                        }
+                                    }
+                                    
+
+                                    var visible = document.querySelector('.rule-content[style*="block"]');
+                                    if (visible) {
+                                        applyHighlight(visible, currentFilter, false); 
+                                    }
+                                });
+                            }
+
                             document.addEventListener('DOMContentLoaded', function() {
+
+                                setTimeout(buildIndex, 100);
+
+
+                                var hash = window.location.hash;
+                                if (hash && hash.length > 1) {
+                                    var ruleId = hash.substring(1); // Remove #
+
+                                    if (document.getElementById(ruleId)) {
+                                        showRule(null, ruleId);
+                                    }
+                                }
+
                                 const sidebar = document.getElementById('sidebar');
                                 const resizer = document.getElementById('resizer');
                                 if (!sidebar || !resizer) return; 
                                 let isResizing = false;
+                                
                                 resizer.addEventListener('mousedown', function(e) {
+                                    e.preventDefault(); // Critical: Prevents text selection during drag
                                     isResizing = true;
                                     resizer.classList.add('resizing');
                                     document.body.style.cursor = 'col-resize'; 
-                                    document.body.style.userSelect = 'none'; 
                                 });
+                                
                                 document.addEventListener('mousemove', function(e) {
                                     if (!isResizing) return;
                                     const newWidth = e.clientX;
-                                    if (newWidth > 200 && newWidth < 600) {
+                                    if (newWidth > 200 && newWidth < 800) {
                                         sidebar.style.width = newWidth + 'px';
                                     }
                                 });
+                                
                                 document.addEventListener('mouseup', function(e) {
                                     if (isResizing) {
                                         isResizing = false;
                                         resizer.classList.remove('resizing');
                                         document.body.style.cursor = '';
-                                        document.body.style.userSelect = '';
                                     }
                                 });
                             });
@@ -702,8 +1118,10 @@ public class ReportGenerator {
                         <div class="sidebar" id="sidebar">
                             <div class="sidebar-header">
                                 <h2>MuleGuard Rules</h2>
+                                <input type="text" id="filterInput" onkeyup="onSearchInput()" placeholder="Search rules..." 
+                                       style="width: 100%%; padding: 8px; margin-top: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
                             </div>
-                            <ul class="sidebar-nav">
+                            <ul class="sidebar-nav" id="sidebarNav">
                                 %s
                             </ul>
                         </div>
@@ -720,54 +1138,67 @@ public class ReportGenerator {
                             <script>
                                 document.addEventListener('DOMContentLoaded', function() {
                                     var path = window.location.pathname;
-                                    var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
-                                    var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
+                                    var isReport = path.includes('/reports/');
+                                    var isStandalone = path.endsWith('/rule_guide.html');
                                     var dashboardBtn = document.getElementById('dashboardBtn');
                                     var mainPageBtn = document.getElementById('mainPageBtn');
                                     
-                                    // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+
                                     var isInMuleWrapper = path.includes('/apiguard/');
-                                    var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+                                    var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '';
                                     
                                     var sessionId = new URLSearchParams(window.location.search).get('session');
-                                    if (!sessionId && isMuleReport) {
-                                        var parts = path.split('/muleguard/reports/');
+                                    if (!sessionId && isReport) {
+                                        var parts = path.split('/reports/');
                                         if (parts.length > 1) {
                                             var subparts = parts[1].split('/');
                                             if (subparts.length > 0) sessionId = subparts[0];
                                         }
                                     }
-                                    if (isMuleStatic || isMuleReport) {
-                                        if (mainPageBtn) {
-                                            mainPageBtn.style.display = 'inline-block';
-                                            var mainPageUrl = basePath + '/main';
-                                            if (sessionId) mainPageUrl += '?session=' + sessionId;
-                                            mainPageBtn.href = mainPageUrl;
-                                            if (isMuleStatic) {
-                                                mainPageBtn.style.right = '40px';
-                                                if (dashboardBtn) dashboardBtn.style.display = 'none'; 
-                                            } else {
-                                                mainPageBtn.style.right = '180px';
-                                            }
+                                    
+                                    if (dashboardBtn) {
+                                        if (isStandalone) {
+                                            dashboardBtn.innerText = "Home";
+                                            dashboardBtn.href = basePath + "/";
+                                            dashboardBtn.title = "Go to Main Page";
+                                            dashboardBtn.style.display = 'inline-block';
+                                            if (mainPageBtn) mainPageBtn.style.display = 'none';
+                                        } else {
+                                            dashboardBtn.style.display = 'inline-block';
                                         }
-                                    } else {
-                                        if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+                                    }
+                                    
+                                    if (isReport && mainPageBtn) {
+                                        mainPageBtn.style.display = 'inline-block';
+                                        var mainPageUrl = basePath + '/main'; 
+                                        if (!isInMuleWrapper) mainPageUrl = '/';
+                                        if (sessionId) mainPageUrl += '?session=' + sessionId;
+                                        mainPageBtn.href = mainPageUrl;
                                     }
                                 });
                             </script>
                     </body>
                     </html>
-                    """
-                    .formatted(sidebar.toString(), content.toString());
+                    """;
+            String finalHtml = String.format(html, sidebar.toString(), content.toString());
             Path ruleGuidePath = outputDir.resolve("rule_guide.html");
-            Files.writeString(ruleGuidePath, html, java.nio.charset.StandardCharsets.UTF_8);
-            logger.info("Rule guide generated");
+            Files.writeString(ruleGuidePath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
+            logger.debug("Rule guide generated (dynamic)");
         } catch (Exception e) {
             logger.error("Failed to generate rule guide: {}", e.getMessage(), e);
         }
     }
     private static String convertMdToHtml(String md) {
         String html = md;
+
+        html = html.replaceAll("(?i)(?m)^#{1,6}\\s*Version History[\\s\\S]*$", "");
+        
+
+
+
+        html = html.replaceAll("\\[([^\\]]+)\\]\\((?:CODE_|CONFIG_)?([^)]+)\\.md\\)", "<a href=\"#\" onclick=\"showRule(event, '$2')\">$1</a>");
+        
+
         html = html.replaceAll("(?m)^# (.*)$", "<h1>$1</h1>");
         html = html.replaceAll("(?m)^## (.*)$", "<h2>$1</h2>");
         html = html.replaceAll("(?m)^### (.*)$", "<h3>$1</h3>");
@@ -847,7 +1278,7 @@ public class ReportGenerator {
             try (FileOutputStream fos = new FileOutputStream(excelPath.toFile())) {
                 workbook.write(fos);
             }
-            logger.info("Consolidated Excel report generated");
+            logger.debug("Consolidated Excel report generated");
         } catch (Exception e) {
             logger.error("Failed to generate consolidated Excel report: {}", e.getMessage(), e);
         }
@@ -857,6 +1288,16 @@ public class ReportGenerator {
             return "";
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
+    private static String readResource(String path) {
+        try (InputStream is = ReportGenerator.class.getResourceAsStream(path)) {
+            if (is == null) return null;
+            return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            logger.error("Failed to read resource {}: {}", path, e.getMessage());
+            return null;
+        }
+    }
+
     private static void copyHelpFile(Path outputDir) {
         try {
             InputStream helpStream = ReportGenerator.class.getResourceAsStream("/help.html");
@@ -866,7 +1307,7 @@ public class ReportGenerator {
                 Path helpPath = outputDir.resolve("help.html");
                 Files.copy(helpStream, helpPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 helpStream.close();
-                logger.info("Help file copied");
+                logger.debug("Help file copied");
             }
             InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg");
             if (logoStream == null) {
@@ -875,7 +1316,7 @@ public class ReportGenerator {
                 Path logoPath = outputDir.resolve("logo.svg");
                 Files.copy(logoStream, logoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 logoStream.close();
-                logger.info("Logo copied");
+                logger.debug("Logo copied");
             }
         } catch (Exception e) {
             logger.warn("Failed to copy help files: {}", e.getMessage());

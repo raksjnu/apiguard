@@ -41,13 +41,26 @@ public class MuleGuardGUI {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
             
-            // Serve static resources and main page
+
+            Path appTempDir = Paths.get("temp").toAbsolutePath();
+            Files.createDirectories(appTempDir);
+            try {
+                com.raks.muleguard.engine.ReportGenerator.generateRuleGuide(appTempDir);
+                logger.info("Rule Guide generated at startup in: {}", appTempDir);
+            } catch (Exception e) {
+                logger.error("Failed to generate Rule Guide at startup", e);
+            }
+
+
             server.createContext("/", new StaticResourceHandler());
             
-            // Serve generated reports
+
+            server.createContext("/rule_guide.html", new RuleGuidePageHandler());
+
+
             server.createContext("/reports/", new ReportHandler());
             
-            // API endpoints
+
             server.createContext("/api/validate", new ValidationHandler());
             server.createContext("/api/open", new OpenReportHandler());
             server.createContext("/download", new DownloadHandler()); // Added Download Handler
@@ -59,12 +72,39 @@ public class MuleGuardGUI {
             logger.info("MuleGuard GUI started at {}", url);
             logger.info("Press Ctrl+C to stop");
 
-            // Open browser
+
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(new URI(url));
             }
         } catch (Exception e) {
             logger.error("Failed to start GUI server", e);
+        }
+    }
+
+    /**
+     * Handler for the Rule Guide page.
+     * Serves the pre-generated rule_guide.html from the temp directory.
+     */
+    static class RuleGuidePageHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            Path appTempDir = Paths.get("temp").toAbsolutePath();
+            Path ruleGuidePath = appTempDir.resolve("rule_guide.html");
+
+            if (Files.exists(ruleGuidePath)) {
+                byte[] content = Files.readAllBytes(ruleGuidePath);
+                exchange.getResponseHeaders().set("Content-Type", "text/html");
+                exchange.sendResponseHeaders(200, content.length);
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(content);
+                }
+            } else {
+                String response = "404 Not Found - Rule Guide not generated.";
+                exchange.sendResponseHeaders(404, response.length());
+                try (OutputStream os = exchange.getResponseBody()) {
+                    os.write(response.getBytes());
+                }
+            }
         }
     }
 
@@ -90,9 +130,9 @@ public class MuleGuardGUI {
                 return;
             }
 
-            // Expecting file to be in the temp directory (or a specific downloads folder if we architecture it that way)
-            // For now, assuming we might want to download the ZIP report which might be in the temp root or session dir.
-            // Simplified: We'll look in the app's temp directory.
+
+
+
             Path appTempDir = Paths.get("temp").toAbsolutePath();
             Path file = appTempDir.resolve(filename);
 
@@ -162,7 +202,7 @@ public class MuleGuardGUI {
                         sessionId = SessionManager.createSession();
                     }
 
-                    // Use local 'temp' directory in the application folder
+
                     String appTempDir = Paths.get("temp").toAbsolutePath().toString();
                     Files.createDirectories(Paths.get(appTempDir));
 
@@ -196,13 +236,13 @@ public class MuleGuardGUI {
                                 }
                             }
                             
-                     // Calculate relative path for web serving (ZIP/JAR mode)
+
                             String relativeReportUrl = "";
                             String reportZipName = null;
                             
                             if (!"local".equals(mode)) {
-                                // For web serving, we need the path relative to the session directory
-                                // Structure: {temp}/muleguard-sessions/{sessionId}/{...}/reports/...
+
+
                                 Path sessionBase = Paths.get(appTempDir, "muleguard-sessions", sessionId);
                                 try {
                                     Path relPath = sessionBase.relativize(consolidatedReport);
@@ -211,11 +251,11 @@ public class MuleGuardGUI {
                                     logger.warn("Could not relativize report path: " + e.getMessage());
                                 }
                                 
-                                // ZIP the report directory for download
+
                                 try {
                                     Path zipPath = reportDir.getParent().resolve("validation-report.zip");
                                     zipFolder(reportDir, zipPath);
-                                    // Make zip name relative to app temp dir for download handler
+
                                     reportZipName = Paths.get("temp").toAbsolutePath().relativize(zipPath).toString();
                                 } catch (Exception e) {
                                     logger.error("Failed to zip report directory", e);
@@ -250,6 +290,10 @@ public class MuleGuardGUI {
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipPath.toFile()))) {
                 Files.walk(sourceFolderPath)
                     .filter(path -> !Files.isDirectory(path))
+                    .filter(path -> {
+                        String name = path.getFileName().toString();
+                        return !name.equalsIgnoreCase("help.html") && !name.equalsIgnoreCase("rule_guide.html");
+                    })
                     .forEach(path -> {
                         ZipEntry zipEntry = new ZipEntry(sourceFolderPath.relativize(path).toString().replace("\\", "/"));
                         try {
@@ -388,7 +432,7 @@ public class MuleGuardGUI {
         public void handle(HttpExchange exchange) throws IOException {
              if ("POST".equalsIgnoreCase(exchange.getRequestMethod())) {
                  Map<String, Object> params = new java.util.HashMap<>();
-                 // Quick URL decode
+
                  String query = new String(readAllBytes(exchange.getRequestBody()), StandardCharsets.UTF_8);
                  if (!query.isEmpty()) {
                      for (String pair : query.split("&")) {
@@ -440,7 +484,7 @@ public class MuleGuardGUI {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
-            // Expected: /reports/sessionId/nested/path/to/report.html
+
             
             String prefix = "/reports/";
             if (!path.startsWith(prefix)) {
@@ -452,7 +496,7 @@ public class MuleGuardGUI {
             int slashIndex = subPath.indexOf("/");
             
             if (slashIndex == -1) {
-                // Must specify at least session ID
+
                 exchange.sendResponseHeaders(404, -1);
                 return;
             }
@@ -460,17 +504,17 @@ public class MuleGuardGUI {
             String sessionId = subPath.substring(0, slashIndex);
             String resourcePath = subPath.substring(slashIndex + 1);
             
-            // Security check: prevent ../ traversal
+
             if (resourcePath.contains("..") || sessionId.contains("..") || sessionId.contains("\\")) {
                  exchange.sendResponseHeaders(403, -1);
                  return;
             }
             
-            // Use local temp dir
+
             Path appTempDir = Paths.get("temp").toAbsolutePath();
             Path sessionDir = appTempDir.resolve("muleguard-sessions").resolve(sessionId);
             
-            // Resource path is relative to the session root
+
             Path requestFile = sessionDir.resolve(resourcePath);
             
             if (Files.exists(requestFile) && !Files.isDirectory(requestFile)) {

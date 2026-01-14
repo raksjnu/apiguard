@@ -6,8 +6,8 @@
     <title>MuleGuard - Validation Checklist</title>
     <style>
         :root {
-            --truist-purple: #663399;
-            --truist-purple-light: #7d4fb2;
+            --raks-purple: #663399;
+            --raks-purple-light: #7d4fb2;
             --text-white: #FFFFFF;
         }
 
@@ -18,7 +18,7 @@
         }
 
         .report-container {
-            border: 5px solid var(--truist-purple);
+            border: 5px solid var(--raks-purple);
             padding: 20px 40px;
             margin: 20px;
             border-radius: 8px;
@@ -27,7 +27,7 @@
         }
 
         h1 {
-            color: var(--truist-purple);
+            color: var(--raks-purple);
         }
 
         table {
@@ -44,12 +44,12 @@
         }
 
         th {
-            background-color: var(--truist-purple);
+            background-color: var(--raks-purple);
             color: var(--text-white);
         }
 
         .contact-button {
-            background-color: var(--truist-purple);
+            background-color: var(--raks-purple);
             color: var(--text-white);
             border: none;
             padding: 12px 24px;
@@ -66,14 +66,14 @@
         }
 
         .contact-button:hover {
-            background-color: var(--truist-purple-light);
+            background-color: var(--raks-purple-light);
         }
 
         .dashboard-button {
             position: absolute;
             top: 20px;
             right: 40px;
-            background-color: var(--truist-purple);
+            background-color: var(--raks-purple);
             color: var(--text-white);
             border: none;
             padding: 10px 20px;
@@ -89,7 +89,7 @@
         }
 
         .dashboard-button:hover {
-            background-color: var(--truist-purple-light);
+            background-color: var(--raks-purple-light);
         }
     </style>
 </head>
@@ -301,10 +301,28 @@
             <tr>
                 <td>29</td>
                 <td>The authorization policy client ID mappings must follow the pattern:
-                    truist.authz.policy.clientIDmap.&lt;METHOD&gt;:/&lt;path&gt;=&lt;id&gt;:&lt;name&gt;;&lt;id&gt;:&lt;name&gt;;...
+                    raks.authz.policy.clientIDmap.&lt;METHOD&gt;:/&lt;path&gt;=&lt;id&gt;:&lt;name&gt;;&lt;id&gt;:&lt;name&gt;;...
                 </td>
                 <td>Config</td>
                 <td>RULE-104</td>
+            </tr>
+            <tr>
+                <td>30</td>
+                <td>Arch: JMS Dependency Alignment - If JMS is in POM, it must be configured in XML.</td>
+                <td>Code</td>
+                <td>RULE-C-104</td>
+            </tr>
+            <tr>
+                <td>31</td>
+                <td>Governance: Prod Secure Config - If env is PROD, secure-prod file must exist.</td>
+                <td>Config</td>
+                <td>RULE-C-105</td>
+            </tr>
+            <tr>
+                <td>32</td>
+                <td>Standard: APIKit Error Handling - If APIKit is used, an Error Handler must exist.</td>
+                <td>Code</td>
+                <td>RULE-C-106</td>
             </tr>
         </table>
         <a href="help.html" class="contact-button" title="View help and documentation about MuleGuard">Help</a>

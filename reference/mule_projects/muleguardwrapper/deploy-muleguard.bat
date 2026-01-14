@@ -15,7 +15,7 @@ REM Configure the deployment name (the name it will have in Mule apps folder)
 set "APP_NAME=muleguardwrapper.jar"
 
 REM Configure Mule Runtime location
-set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.1"
+set "MULE_HOME=C:\raks\mule-enterprise-standalone-4.10.2"
 set "MULE_APPS=%MULE_HOME%\apps"
 
 REM ===================================================================

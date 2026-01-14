@@ -19,16 +19,27 @@ public class XmlElementContentForbiddenCheck extends AbstractCheck {
     public CheckResult execute(Path projectRoot, Check check) {
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) check.getParams().get("filePatterns");
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> elementTokenPairs = (List<Map<String, Object>>) check.getParams()
-                .get("elementTokenPairs");
+        Object pairsObj = check.getParams().get("elementTokenPairs");
+        List<Map<String, Object>> elementTokenPairs = new ArrayList<>();
+
+        if (pairsObj instanceof List) {
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> list = (List<Map<String, Object>>) pairsObj;
+            elementTokenPairs.addAll(list);
+        } else if (pairsObj instanceof Map) {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> map = (Map<String, Object>) pairsObj;
+            elementTokenPairs.add(map);
+        }
+
         Boolean caseSensitive = (Boolean) check.getParams().getOrDefault("caseSensitive", true);
         String matchMode = (String) check.getParams().getOrDefault("matchMode", "SUBSTRING");
+
         if (filePatterns == null || filePatterns.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Configuration error: 'filePatterns' parameter is required");
         }
-        if (elementTokenPairs == null || elementTokenPairs.isEmpty()) {
+        if (elementTokenPairs.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Configuration error: 'elementTokenPairs' parameter is required");
         }
@@ -116,22 +127,5 @@ public class XmlElementContentForbiddenCheck extends AbstractCheck {
         DocumentBuilder builder = factory.newDocumentBuilder();
         return builder.parse(file.toFile());
     }
-    private boolean matchesAnyPattern(Path path, List<String> patterns, Path projectRoot) {
-        String relativePath = projectRoot.relativize(path).toString().replace("\\", "/");
-        for (String pattern : patterns) {
-            if (matchesPattern(relativePath, pattern)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean matchesPattern(String path, String pattern) {
-        String regex = pattern
-                .replace(".", "\\.")
-                .replace("**/", ".*")
-                .replace("**", ".*")
-                .replace("*", "[^/]*")
-                .replace("?", ".");
-        return path.matches(regex);
-    }
+
 }

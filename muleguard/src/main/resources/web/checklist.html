@@ -105,7 +105,6 @@
         <div class="top-nav-container">
             <a href="index.html" id="dashboardBtn" class="top-nav-button"
                 title="Return to home">🏠 Home</a>
-            <a href="help.html" class="top-nav-button">Help</a>
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
             <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
@@ -338,25 +337,39 @@
             }
 
             if (isMuleStatic || isMuleReport) {
-                // We are in Mule Wrapper Environment
-                if (mainPageBtn) {
-                    mainPageBtn.style.display = 'inline-block';
-                    // Build Main Page URL with correct base path
-                    var mainPageUrl = basePath + '/main';
-                    if (sessionId) mainPageUrl += '?session=' + sessionId;
-                    mainPageBtn.href = mainPageUrl;
-
-                    if (isMuleStatic) {
-                        mainPageBtn.style.right = '40px';
-                        if (dashboardBtn) dashboardBtn.style.display = 'none'; // No dashboard in static view
-                    } else {
-                        // In Mule Report
-                        mainPageBtn.style.right = '180px';
+                // In Mule Wrapper Environment
+                
+                // Static View (Home flow)
+                if (isMuleStatic) {
+                   if (dashboardBtn) {
+                       dashboardBtn.innerText = "🏠 Home";
+                       dashboardBtn.href = basePath + "/";
+                       dashboardBtn.title = "Go to Home Page";
+                       dashboardBtn.style.display = 'inline-block';
+                   }
+                   if (mainPageBtn) mainPageBtn.style.display = 'none';
+                } 
+                // Report View (Flow from Report)
+                else if (isMuleReport) {
+                    if (dashboardBtn) {
+                        dashboardBtn.innerText = "← Dashboard";
+                        if (sessionId) {
+                            dashboardBtn.href = basePath + "/reports/" + sessionId + "/CONSOLIDATED-REPORT.html";
+                        } else {
+                            dashboardBtn.href = "CONSOLIDATED-REPORT.html"; // Fallback
+                        }
+                        dashboardBtn.title = "Return to Report Dashboard";
+                        dashboardBtn.style.display = 'inline-block';
                     }
+                    if (mainPageBtn) mainPageBtn.style.display = 'none';
                 }
             } else {
-                // Standalone Java or Local File - Main Page button stays hidden
-                if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+                // Standalone Java / Local File
+                if (dashboardBtn) {
+                    dashboardBtn.innerText = "🏠 Home";
+                    dashboardBtn.href = "index.html"; 
+                    dashboardBtn.style.display = 'inline-block';
+                }
             }
         });
     </script>

@@ -94,22 +94,5 @@ public class XmlXPathNotExistsCheck extends AbstractCheck {
             failures.add("Error parsing XML file " + file.getFileName().toString() + ": " + e.getMessage());
         }
     }
-    private boolean matchesAnyPattern(Path path, List<String> patterns, Path projectRoot) {
-        String relativePath = projectRoot.relativize(path).toString().replace("\\", "/");
-        for (String pattern : patterns) {
-            if (matchesPattern(relativePath, pattern)) {
-                return true;
-            }
-        }
-        return false;
-    }
-    private boolean matchesPattern(String path, String pattern) {
-        String regex = pattern
-                .replace(".", "\\.")
-                .replace("**/", ".*")
-                .replace("**", ".*")
-                .replace("*", "[^/]*")
-                .replace("?", ".");
-        return path.matches(regex);
-    }
+
 }
