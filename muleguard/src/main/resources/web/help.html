@@ -132,15 +132,14 @@
     <div class="report-container">
         <!-- Buttons container to manage absolute positioning easily -->
         <div class="top-nav-container">
-            <a href="index.html" id="dashboardBtn" class="top-nav-button"
-                title="Return to home">🏠 Home</a>
-            <a href="checklist.html" class="top-nav-button">Checklist</a>
-            <a href="rule_guide.html" class="top-nav-button">Rule Guide</a>
+            <a href="./" class="top-nav-button" title="Back to Dashboard">🏠 Home</a>
+            <a href="checklist.html" target="_blank" class="top-nav-button">Checklist</a>
+            <a href="rule_guide.html" target="_blank" class="top-nav-button">Rule Guide</a>
         </div>
 
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
-            <h1 style="margin: 0;">MuleGuard - Help & Documentation</h1>
+        <div class="logo-section">
+            <img src="logo.svg" alt="MuleGuard Logo">
+            <h1>MuleGuard Help & Documentation</h1>
         </div>
 
         <div class="highlight-box">
@@ -229,7 +228,8 @@ your-mule-projects/
                 <h4>🚀 Multiple Input Modes</h4>
                 <p><strong>Standalone:</strong> Local folder, ZIP upload, or JAR upload<br>
                    <strong>Wrapper:</strong> ZIP upload or JAR upload<br>
-                   <strong>Coming Soon:</strong> Git repository integration</p>
+                   <strong>Wrapper:</strong> ZIP upload or JAR upload<br>
+                   <strong>Git Repository:</strong> Direct Clone & Scan (GitLab/GitHub/Other)</p>
             </div>
             <div class="feature-card">
                 <h4>📈 Enhanced Reporting</h4>
@@ -260,7 +260,23 @@ your-mule-projects/
             <li><strong>Custom Logic:</strong> Define custom checks for JSON validation, generic token searches, and
                 more to cover any specific organizational requirement.</li>
         </ul>
-
+        
+        <h2>🔗 Git Integration Guide</h2>
+        <div class="highlight-box">
+             <p><strong>New in v1.0:</strong> MuleGuard now supports direct integration with Git providers.</p>
+             <ul>
+                 <li><strong>Discovery Mode:</strong> Browse and select repositories from your GitLab Group or GitHub Organization/User.</li>
+                 <li><strong>Manual Mode:</strong> Paste any direct Git clone URL (HTTPS).</li>
+                 <li><strong>Public Access:</strong> You can now search public groups/users without needing a token!</li>
+             </ul>
+        </div>
+        
+        <h3>Configuration (Settings Page)</h3>
+        <ul>
+            <li><strong>Tokens:</strong> Add your Personal Access Tokens (PAT) in Settings. <br><em>Tip: After clicking "Validate", your settings are auto-saved!</em></li>
+            <li><strong>Default Group/Org:</strong> Set a default Group (GitLab) or Organization (GitHub) to auto-fill the search field on startup.</li>
+            <li><strong>Base URLs:</strong> Default to public clouds (gitlab.com, api.github.com) but can be configured for Enterprise instances.</li>
+        </ul>
 
         <h2>📂 Input Modes</h2>
         <p>MuleGuard supports multiple input methods to fit your workflow:</p>
@@ -270,7 +286,7 @@ your-mule-projects/
             <li><strong>📁 Local Folder:</strong> Point to a folder containing your Mule projects</li>
             <li><strong>📦 ZIP Upload:</strong> Upload a ZIP file containing your project(s)</li>
             <li><strong>📚 JAR Upload:</strong> Upload a Mule application JAR file for validation</li>
-            <li><strong>🔗 Git Repository:</strong> (Coming Soon) Clone and validate directly from Git</li>
+            <li><strong>🔗 Git Repository:</strong> Connect to GitLab or GitHub. Supports private repos (with token) and public repos (no token required).</li>
         </ul>
         
         <h3>Mule Wrapper Deployment</h3>
@@ -336,65 +352,25 @@ your-mule-projects/
             <p><strong>For further information, support, or questions:</strong></p>
             <p style="margin-top: 10px;">
                 Reach out to <strong>Rakesh Kumar (Raks)</strong><br>
-                Email: <a href="mailto:rakesh.kumar@ibmcom"
-                    style="color: var(--truist-purple); font-weight: bold; text-decoration: none;">rakesh.kumar@ibmcom</a>
+                Email: <a href="mailto:rakesh.kumar@ibm.com"
+                    style="color: var(--truist-purple); font-weight: bold; text-decoration: none;">rakesh.kumar@ibm.com</a>
             </p>
         </div>
     </div>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var path = window.location.pathname;
-            var isMuleStatic = path.includes('/apiguard/muleguard/web/');
-            var isMuleReport = path.includes('/apiguard/muleguard/reports/');
-            var dashboardBtn = document.getElementById('dashboardBtn');
-            var mainPageBtn = document.getElementById('mainPageBtn');
-
-            console.log('[MuleGuard Help JAR] Path:', path);
-            console.log('[MuleGuard Help JAR] isMuleStatic:', isMuleStatic, 'isMuleReport:', isMuleReport);
-
-            // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
-            var isInMuleWrapper = path.includes('/apiguard/');
-            var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
-            console.log('[MuleGuard Help JAR] Environment:', isInMuleWrapper ? 'Mule Wrapper' : 'Standalone Java');
-            console.log('[MuleGuard Help JAR] Base path:', basePath);
-
-            // Session Handling
+            // Simple session persistence for navigation links
             var sessionId = new URLSearchParams(window.location.search).get('session');
-            // If in report path, extract sessionId from path
-            if (!sessionId && isMuleReport) {
-                var reportPath = basePath + '/reports/';
-                var parts = path.split(reportPath);
-                if (parts.length > 1) {
-                    var subparts = parts[1].split('/');
-                    if (subparts.length > 0) sessionId = subparts[0];
-                }
-            }
-
-            if (isMuleStatic || isMuleReport) {
-                // We are in Mule Wrapper Environment
-                if (mainPageBtn) {
-                    mainPageBtn.style.display = 'inline-block';
-                    // Use environment-appropriate base path
-                    var mainPageUrl = basePath + '/main';
-                    if (sessionId) {
-                        mainPageUrl += '?session=' + sessionId;
+            if (sessionId) {
+                var links = document.querySelectorAll('.top-nav-button');
+                links.forEach(function(link) {
+                    var href = link.getAttribute('href');
+                    if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                        var separator = href.includes('?') ? '&' : '?';
+                        link.setAttribute('href', href + separator + 'session=' + sessionId);
                     }
-                    mainPageBtn.href = mainPageUrl;
-                    console.log('[MuleGuard Help JAR] SessionId:', sessionId);
-                    console.log('[MuleGuard Help JAR] Main Page href set to:', mainPageBtn.href);
-
-                    if (isMuleStatic) {
-                        mainPageBtn.style.right = '40px';
-                        if (dashboardBtn) dashboardBtn.style.display = 'none'; // No dashboard in static view
-                    } else {
-                        // In Mule Report
-                        mainPageBtn.style.right = '180px';
-                    }
-                }
-            } else {
-                // Standalone Java or Local File - Main Page button stays hidden
-                if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+                });
             }
         });
     </script>

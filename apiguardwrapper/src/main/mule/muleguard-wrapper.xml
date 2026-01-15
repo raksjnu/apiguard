@@ -41,44 +41,38 @@ output application/json
         </on-error-continue>
     </error-handler>
 
-    <!-- Flow 0: Root Path Redirect & Notification Trigger -->
-    <flow name="muleguard-root-flow">
-        <!-- Listens on /muleguard which equates to /apiguard/muleguard due to base path -->
-        <http:listener path="/muleguard" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+    <!-- Flow 0 & 3: Consolidated Landing Page & Redirect Handler -->
+    <flow name="muleguard-landing-flow">
+        <!-- Listens on /muleguard and /muleguard/ -->
+        <http:listener path="/muleguard" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[vars.httpHeaders default {}]</http:headers>
+            </http:response>
+        </http:listener>
         
-        <!-- Capture session ID from query param -->
-        <set-variable variableName="sessionId" value="#[attributes.queryParams.session]"/>
-        
-        <!-- Logic: If session exists, use it. If not, create anonymous. Then trigger notification and redirect to main. -->
         <choice>
-            <when expression="#[vars.sessionId != null]">
-                <logger level="INFO" message="#['Existing session detected: ' ++ vars.sessionId]"/>
-                <!-- Verify session validity (optional, but good practice) -->
-                <os:contains key="#[vars.sessionId]" objectStore="User_Session_Store" target="sessionExists"/>
-                <choice>
-                    <when expression="#[!vars.sessionExists]">
-                        <logger level="WARN" message="Session ID provided but not found in store. Creating new anonymous session."/>
-                        <flow-ref name="create-anonymous-session-subflow"/>
-                    </when>
-                    <otherwise>
-                        <logger level="DEBUG" message="Session valid."/>
-                    </otherwise>
-                </choice>
+            <!-- Case 1: Missing trailing slash -> Redirect to add it -->
+            <when expression="#[! (attributes.requestPath endsWith '/') ]">
+                <set-variable variableName="httpStatus" value="302"/>
+                <set-variable variableName="httpHeaders" value="#[{
+                    'Location': p('http.listener.basePath') ++ '/muleguard/?session=' ++ (attributes.queryParams.session default uuid())
+                }]"/>
+                <logger level="INFO" message="Redirecting to enforce trailing slash: /apiguard/muleguard/"/>
             </when>
+            
+            <!-- Case 2: Correct path -> Serve Landing Page -->
             <otherwise>
-                <logger level="INFO" message="No session provided. Creating anonymous session."/>
-                <flow-ref name="create-anonymous-session-subflow"/>
+                <set-variable variableName="sessionId" value="#[attributes.queryParams.session default uuid()]"/>
+                <set-variable variableName="httpHeaders" value="#[{
+                    'Content-Type': 'text/html; charset=UTF-8',
+                    'Cache-Control': 'no-cache, no-store, must-revalidate'
+                }]"/>
+                <async>
+                     <flow-ref name="send-launch-notification-flow"/>
+                </async>
+                <parse-template location="web/muleguard/index.html"/>
             </otherwise>
         </choice>
-        
-        <!-- Async Launch Notification -->
-        <async>
-            <flow-ref name="send-launch-notification-flow"/>
-        </async>
-        
-        <!-- Redirect to Main Page with Session -->
-        <set-variable variableName="redirectLocation" value="#['/apiguard/muleguard/main?session=' ++ vars.sessionId]"/>
-        <set-payload value="#['&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=' ++ vars.redirectLocation ++ '&quot;&gt;&lt;/head&gt;&lt;body&gt;Redirecting...&lt;/body&gt;&lt;/html&gt;']" mimeType="text/html"/>
     </flow>
 
     <sub-flow name="create-anonymous-session-subflow">
@@ -122,52 +116,61 @@ output application/json
         </error-handler>
     </flow>
 
-    <!-- Flow 3: Main Landing Page -->
-    <flow name="main-landing-page-flow">
-        <!-- Listens on /muleguard/main which equates to /apiguard/muleguard/main -->
-        <http:listener path="/muleguard/main" config-ref="HTTP_Listener_config" allowedMethods="GET">
+    <!-- Flow 4: Static Resource Serving (Flat Context) -->
+    <flow name="static-resource-flow">
+        <http:listener path="/muleguard/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
             <http:response>
                 <http:headers>#[{
-                    "Content-Type": "text/html; charset=UTF-8"
+                    "Content-Type": vars.mimeType default "text/html",
+                    "Cache-Control": "no-cache, no-store, must-revalidate"
                 }]</http:headers>
             </http:response>
         </http:listener>
-        <!-- Inject configuration for GUI -->
-        <set-variable variableName="localInputEnabled" value="${muleguard.input.local.enabled}"/>
-        <set-variable variableName="registrationRequired" value="${registration.required}"/>
-        <!-- Determine readonly mode based on property or other logic if needed -->
-        <parse-template location="web/muleguard/index.html"/>
-    </flow>
+        
+        <!-- Robust path resolution -->
+        <set-variable variableName="resourcePath" value="#[attributes.relativePath replace '/muleguard/' with '' replace 'web/' with '']"/>
+        
+        <choice>
+            <!-- Case 1: Directory path or empty -> Redirect to Home or Error to prevent download -->
+            <when expression="#[vars.resourcePath == '' or vars.resourcePath == '/']">
+                <logger level="INFO" message="Blocking directory read in static-resource-flow"/>
+                <set-payload value="Invalid Resource"/>
+            </when>
+            
+            <otherwise>
+                <!-- Determine MIME type based on extension -->
+                <set-variable variableName="mimeType" value="#[
+                    if (vars.resourcePath endsWith '.css') 'text/css'
+                    else if (vars.resourcePath endsWith '.js') 'application/javascript'
+                    else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
+                    else if (vars.resourcePath endsWith '.png') 'image/png'
+                    else if (vars.resourcePath endsWith '.html') 'text/html'
+                    else 'application/octet-stream'
+                ]"/>
 
-    <!-- Flow 4: Static Resource Serving (Logo, CSS, etc) -->
-    <!-- Flow 4: Static Resource Serving (Logo, CSS, etc) -->
-    <flow name="static-resource-flow">
-        <http:listener path="/muleguard/web/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
+                <file:read path="#[p('app.home') ++ '/web/muleguard/' ++ vars.resourcePath]" config-ref="File_Config"/>
+            </otherwise>
+        </choice>
+    </flow>
+    
+    <flow name="rule-guide-page-flow">
+        <http:listener path="/muleguard/rule_guide.html" config-ref="HTTP_Listener_config" allowedMethods="GET">
             <http:response>
-                <http:headers><![CDATA[#[
-                    output application/java
-                    ---
-                    {
-                        "Content-Type": vars.mimeType default "application/octet-stream"
-                    }
-                ]]]></http:headers>
+                <http:headers>#[{"Content-Type": "text/html; charset=UTF-8"}]</http:headers>
             </http:response>
         </http:listener>
-        <set-variable variableName="resourcePath" value="#[attributes.relativePath replace '/muleguard/web/' with '']"/>
         
-        <!-- Determine MIME type based on extension -->
-        <set-variable variableName="mimeType" value="#[
-            if (vars.resourcePath endsWith '.html') 'text/html; charset=UTF-8'
-            else if (vars.resourcePath endsWith '.css') 'text/css; charset=UTF-8'
-            else if (vars.resourcePath endsWith '.js') 'application/javascript; charset=UTF-8'
-            else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
-            else if (vars.resourcePath endsWith '.png') 'image/png'
-            else if (vars.resourcePath endsWith '.jpg') 'image/jpeg'
-            else if (vars.resourcePath endsWith '.json') 'application/json; charset=UTF-8'
-            else 'application/octet-stream'
-        ]"/>
-
-        <file:read path="#[p('app.home') ++ '/web/muleguard/' ++ vars.resourcePath]" config-ref="File_Config"/>
+        <logger level="INFO" message="Serving dynamic Rule Guide..."/>
+        
+        <!-- Call generator to create rule_guide.html in temp location -->
+        <java:invoke-static class="com.raks.muleguard.engine.ReportGenerator" method="generateRuleGuide(String)">
+            <java:args>#[{
+                arg0: p('muleguard.work.dir')
+            }]</java:args>
+        </java:invoke-static>
+        
+        <!-- Read the generated file -->
+        <file:read path="#[p('muleguard.work.dir') ++ '/rule_guide.html']" config-ref="File_Config"/>
     </flow>
 
     <!-- NEW FLOW: Recursive Git Discovery for Wrapper -->
@@ -300,28 +303,17 @@ payload]]></ee:set-payload>
 
     <flow name="git-discovery-branches-flow">
         <http:listener path="/muleguard/api/git/branches" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
-        <set-variable variableName="provider" value="#[attributes.queryParams.provider default 'gitlab']"/>
-        <set-variable variableName="token" value="#[attributes.queryParams.token default '']"/>
+        <set-variable variableName="provider" value="#[attributes.queryParams.provider default attributes.headers['x-git-provider'] default 'gitlab']"/>
+        <set-variable variableName="token" value="#[attributes.headers['x-git-token'] default attributes.queryParams.token default '']"/>
         <set-variable variableName="repo" value="#[attributes.queryParams.repo default '']"/>
         
-        <ee:transform>
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/java
----
-{
-    "gitlab.url": p('gitanalyzer.gitlab.url') default 'https://gitlab.com',
-    "github.url": p('gitanalyzer.github.url') default 'https://api.github.com'
-}]]></ee:set-payload>
-            </ee:message>
-        </ee:transform>
-        
-        <java:invoke-static class="com.raks.muleguard.wrapper.GitDiscoveryHelper" method="listBranches(String, String, String, Map)">
+        <java:invoke-static class="com.raks.muleguard.util.GitHelper" method="listBranches(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
             <java:args>#[{
                 arg0: vars.provider,
                 arg1: vars.token,
                 arg2: vars.repo,
-                arg3: payload
+                arg3: p('gitanalyzer.gitlab.url'),
+                arg4: p('gitanalyzer.github.url')
             }]</java:args>
         </java:invoke-static>
         

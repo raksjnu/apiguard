@@ -49,8 +49,21 @@ if exist "%SCRIPT_DIR%..\muleguard" (
     
     REM Copy muleguard JAR to apiguardwrapper/lib
     echo.
-    echo [INFO] Copying muleguard JAR to lib folder...
-    cmd /c "if exist "%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar" (xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1 && echo [INFO] muleguard-1.0.0.jar copied successfully || echo [WARN] Failed to copy muleguard JAR) else (echo [WARN] muleguard JAR not found in .m2 repository)"
+    echo [INFO] Copying muleguard FAT JAR to lib folder...
+    if exist "%SCRIPT_DIR%..\muleguard\target\muleguard-1.0.0-jar-with-raks.jar" (
+        xcopy /Y /Q "%SCRIPT_DIR%..\muleguard\target\muleguard-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\muleguard-1.0.0.jar*" >nul 2>&1
+        echo [INFO] muleguard fat JAR copied successfully to lib\muleguard-1.0.0.jar
+    ) else (
+        echo [WARN] muleguard fat JAR not found in target folder!
+        if exist "%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar" (
+            xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1
+            echo [INFO] Fallback: Standard muleguard-1.0.0.jar copied from .m2
+        ) else (
+            echo [ERROR] No muleguard JAR found anywhere.
+            pause
+            exit /b 1
+        )
+    )
 ) else (
     echo [ERROR] MuleGuard project not found at ..\muleguard
     pause

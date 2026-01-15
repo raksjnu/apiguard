@@ -9,13 +9,15 @@
     <div class="container" style="position: relative;">
         <!-- Top Navigation -->
         <div style="position: absolute; top: 20px; right: 20px;">
-            <a id="homeLink" href="index.html" class="nav-button" style="padding: 8px 12px; font-size: 12px;">&larr; Back to Home</a>
+            <a href="./" class="nav-button" style="padding: 8px 12px; font-size: 12px;">🏠 Home</a>
         </div>
 
         <!-- Logo & Header -->
         <div class="logo">
-            <img src="logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;" onerror="this.style.display='none'; this.parentNode.innerText='MuleGuard';">
-            <h1>Settings</h1>
+            <a href="./" id="homeLink" title="Back to Home">
+                <img src="logo.svg" alt="MuleGuard Logo">
+            </a>
+            <h1>MuleGuard Settings</h1>
         </div>
 
         <p class="subtitle">Configure global preferences for MuleGuard</p>
@@ -123,16 +125,9 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Fix Links for Wrapper
-            if (isWrapper && CONFIG.resourceBase) {
-                 const cssLink = document.querySelector('link[rel="stylesheet"]');
-                 if (cssLink) cssLink.href = CONFIG.resourceBase + '/style.css';
-                 
-                 const homeLink = document.getElementById('homeLink');
-                 if(homeLink) homeLink.href = CONFIG.baseUrl + '/main';
-                 
-                 const logo = document.querySelector('.logo img');
-                 if(logo) logo.src = CONFIG.resourceBase + '/logo.svg';
+            if (isWrapper) {
+                const homeLink = document.getElementById('homeLink');
+                if (homeLink) homeLink.href = '/apiguard/muleguard/';
             }
 
             // Load settings
@@ -283,6 +278,22 @@
         function closeModal() {
             document.getElementById('customModal').style.display = 'none';
         }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Simple session persistence for navigation links
+            var sessionId = new URLSearchParams(window.location.search).get('session');
+            if (sessionId) {
+                var links = document.querySelectorAll('.nav-button');
+                links.forEach(function(link) {
+                    var href = link.getAttribute('href');
+                    if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                        var separator = href.includes('?') ? '&' : '?';
+                        link.setAttribute('href', href + separator + 'session=' + sessionId);
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

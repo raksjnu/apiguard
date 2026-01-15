@@ -4,6 +4,28 @@
 <head>
     <meta charset="UTF-8">
     <title>MuleGuard - Validation Tool</title>
+    <script>
+        // ULTRA-EARLY Context & Trailing Slash Enforcement (Prevent FOUC)
+        (function() {
+            const loc = window.location;
+            const path = loc.pathname;
+            const isWrapper = path.includes('/apiguard/');
+            
+            // 1. Enforce trailing slash IMMEDIATELY if in wrapper
+            if (isWrapper && !path.endsWith('/')) {
+                loc.replace(loc.href + '/');
+                return;
+            }
+
+            // 2. Global resolution helper
+            window.resolvePath = function(url) {
+                if (isWrapper && !url.startsWith('http') && !url.startsWith('/')) {
+                    return '/apiguard/muleguard/' + url;
+                }
+                return url;
+            };
+        })();
+    </script>
     <!-- Relative paths for standalone -->
     <link rel="stylesheet" href="style.css">
     <script>
@@ -13,7 +35,7 @@
            const provider = localStorage.getItem('muleguard_git_provider');
            if (!token && document.querySelector('input[name="mode"]:checked').value === 'git') {
                if(confirm("Git Token is not configured. Go to Settings?")) {
-                   window.location.href = 'settings.html';
+                   window.location.href = resolvePath('settings.html');
                    return false;
                }
            }
@@ -24,10 +46,10 @@
 <body>
     <div class="container" style="position: relative;">
         <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
-            <a id="linkChecklist" href="checklist.html" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
-            <a id="linkRules" href="rule_guide.html" target="_blank" class="nav-button" title="Guide to all MuleGuard validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
-            <a id="linkSettings" href="settings.html" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
-            <a id="linkHelp" href="help.html" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
+            <a id="linkChecklist" href="#" onclick="window.open(resolvePath('checklist.html'), '_blank'); return false;" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
+            <a id="linkRules" href="#" onclick="window.open(resolvePath('rule_guide.html'), '_blank'); return false;" class="nav-button" title="Guide to all MuleGuard validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
+            <a id="linkSettings" href="#" onclick="window.open(resolvePath('settings.html'), '_blank'); return false;" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
+            <a id="linkHelp" href="#" onclick="window.open(resolvePath('help.html'), '_blank'); return false;" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
         </div>
 
         <div class="logo">
@@ -253,9 +275,6 @@
 
         // Initialize UI
         document.addEventListener('DOMContentLoaded', function () {
-            // Set up links based on environment
-            setupLinks();
-            
             // Handle mode visibility based on environment
             if (isWrapper) {
                 // Wrapper: Hide Local, Show ZIP/JAR
@@ -270,11 +289,8 @@
                 selectMode('local');
             }
 
-            // Update image sources if in standalone
+            // Hide email section in standalone mode (no SMTP configured)
             if (!isWrapper) {
-                document.getElementById('logoImg').src = 'logo.svg';
-                
-                // Hide email section in standalone mode (no SMTP configured)
                 const emailSection = document.getElementById('emailSection');
                 if (emailSection) {
                     emailSection.style.display = 'none';
@@ -355,36 +371,6 @@
             }
         }
 
-        function setupLinks() {
-            try {
-                if (isWrapper && CONFIG.resourceBase) {
-                     // Add debug indicator
-                     console.log('Running setupLinks for Wrapper. Base:', CONFIG.resourceBase);
-                     
-                     // CSS and Logo logic removed - fixed directly in HTML to prevent FOUC
-                     
-                     // Fix Nav Links
-                     const links = ['linkChecklist', 'linkRules', 'linkSettings', 'linkHelp'];
-                     links.forEach(id => {
-                         const el = document.getElementById(id);
-                         if (el) {
-                             const page = el.getAttribute('href');
-                             if (!page.startsWith(CONFIG.resourceBase)) {
-                                 el.href = CONFIG.resourceBase + '/' + page;
-                             }
-                         }
-                     });
-                }
-            } catch (e) {
-                console.error('Error in setupLinks:', e);
-                // Fallback: visual alert
-                const errDiv = document.createElement('div');
-                errDiv.style.background='red';
-                errDiv.style.color='white';
-                errDiv.innerText = 'UI Error: ' + e.message;
-                document.body.prepend(errDiv);
-            }
-        }
 
         // Use localStorage for Session Preferences (Non-sensitive)
         function loadSessionPrefs() {
@@ -979,10 +965,11 @@
             
             try {
                 // Adjust API base for discovery
-                // Adjust API base for discovery -> Use GitAnalyzer endpoints
+                // Adjust API base for discovery -> Use MuleGuard Wrapper endpoints
                 // Use new MuleGuard Recursive Discovery flow
-                const apiBase = isWrapper ? '/apiguard/gitanalyzer' : CONFIG.baseUrl;
-                // GitAnalyzer uses /api/git/discovery, MuleGuard Standalone uses /api/git/repos
+                const apiBase = isWrapper ? '/apiguard/muleguard' : CONFIG.baseUrl;
+                // GitAnalyzer uses /api/download/list, MuleGuard Standalone uses /api/git/repos
+                // WRAPPER NOW USES /api/git/discovery via MuleGuard-Wrapper Flow
                 const endpoint = isWrapper ? '/api/git/discovery' : '/api/git/repos';
                 let url = apiBase + `${endpoint}?group=${encodeURIComponent(group)}&filter=${encodeURIComponent(filter)}&provider=${encodeURIComponent(provider)}`;
                 
@@ -1133,9 +1120,10 @@
             showProgress(true, "Discovering Branches", `Fetching branches for ${repoToFetch}...`);
             
             try {
-                const apiBase = isWrapper ? '/apiguard/gitanalyzer' : CONFIG.baseUrl;
+                const apiBase = isWrapper ? '/apiguard/muleguard' : CONFIG.baseUrl;
                 // GitAnalyzer uses /api/download/branches, MuleGuard Standalone uses /api/git/branches
-                const endpoint = isWrapper ? '/api/download/branches' : '/api/git/branches';
+                // WRAPPER NOW USES /api/git/branches via MuleGuard-Wrapper Flow
+                const endpoint = '/api/git/branches';
                 let url = apiBase + `${endpoint}?repo=${encodeURIComponent(repoToFetch)}`;
                 
                 if(gitlabUrl) url += `&gitlabUrl=${encodeURIComponent(gitlabUrl)}`;

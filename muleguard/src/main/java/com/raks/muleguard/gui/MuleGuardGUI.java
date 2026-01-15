@@ -60,6 +60,7 @@ public class MuleGuardGUI {
             
 
             server.createContext("/rule_guide.html", new RuleGuidePageHandler());
+            server.createContext("/web/rule_guide.html", new RuleGuidePageHandler());
 
 
             server.createContext("/reports/", new ReportHandler());
@@ -124,10 +125,17 @@ public class MuleGuardGUI {
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
             if (path.equals("/")) path = "/web/index.html";
-            else if (!path.startsWith("/web/")) path = "/web" + path;
+            else if (!path.startsWith("/web/")) {
+                // Try /web prefix first, if it fails, the stream check below will handle direct resources
+                path = "/web/" + (path.startsWith("/") ? path.substring(1) : path);
+            }
 
             InputStream is = getClass().getResourceAsStream(path);
-            if (is == null && path.startsWith("/web/")) is = getClass().getResourceAsStream(path.substring(4));
+            if (is == null) {
+                // Fallback for direct resources or legacy paths
+                String altPath = path.replace("/web/", "/");
+                is = getClass().getResourceAsStream(altPath);
+            }
 
             try (InputStream ris = is) {
                 if (ris != null) {

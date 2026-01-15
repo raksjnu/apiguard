@@ -103,8 +103,7 @@
     <div class="report-container">
         <!-- Buttons container to manage absolute positioning easily -->
         <div class="top-nav-container">
-            <a href="index.html" id="dashboardBtn" class="top-nav-button"
-                title="Return to home">🏠 Home</a>
+                <a href="./" class="top-nav-button" title="Back to Dashboard">🏠 Home</a>
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
             <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
@@ -310,66 +309,21 @@
                 <td>RULE-104</td>
             </tr>
         </table>
-        <a href="help.html" class="contact-button" title="View help and documentation about MuleGuard">Help</a>
+        <a href="help.html" target="_blank" class="contact-button" title="View help and documentation about MuleGuard">Help</a>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            var path = window.location.pathname;
-            var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
-            var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
-            var dashboardBtn = document.getElementById('dashboardBtn');
-            var mainPageBtn = document.getElementById('mainPageBtn');
-
-            // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
-            var isInMuleWrapper = path.includes('/apiguard/');
-            var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
-
-            // Session Handling
+            // Simple session persistence for navigation links
             var sessionId = new URLSearchParams(window.location.search).get('session');
-            // If in report path, extract sessionId from path
-            if (!sessionId && isMuleReport) {
-                var reportPath = basePath + '/reports/';
-                var parts = path.split(reportPath);
-                if (parts.length > 1) {
-                    var subparts = parts[1].split('/');
-                    if (subparts.length > 0) sessionId = subparts[0];
-                }
-            }
-
-            if (isMuleStatic || isMuleReport) {
-                // In Mule Wrapper Environment
-                
-                // Static View (Home flow)
-                if (isMuleStatic) {
-                   if (dashboardBtn) {
-                       dashboardBtn.innerText = "🏠 Home";
-                       dashboardBtn.href = basePath + "/";
-                       dashboardBtn.title = "Go to Home Page";
-                       dashboardBtn.style.display = 'inline-block';
-                   }
-                   if (mainPageBtn) mainPageBtn.style.display = 'none';
-                } 
-                // Report View (Flow from Report)
-                else if (isMuleReport) {
-                    if (dashboardBtn) {
-                        dashboardBtn.innerText = "← Dashboard";
-                        if (sessionId) {
-                            dashboardBtn.href = basePath + "/reports/" + sessionId + "/CONSOLIDATED-REPORT.html";
-                        } else {
-                            dashboardBtn.href = "CONSOLIDATED-REPORT.html"; // Fallback
-                        }
-                        dashboardBtn.title = "Return to Report Dashboard";
-                        dashboardBtn.style.display = 'inline-block';
+            if (sessionId) {
+                var links = document.querySelectorAll('.top-nav-button, .contact-button');
+                links.forEach(function(link) {
+                    var href = link.getAttribute('href');
+                    if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                        var separator = href.includes('?') ? '&' : '?';
+                        link.setAttribute('href', href + separator + 'session=' + sessionId);
                     }
-                    if (mainPageBtn) mainPageBtn.style.display = 'none';
-                }
-            } else {
-                // Standalone Java / Local File
-                if (dashboardBtn) {
-                    dashboardBtn.innerText = "🏠 Home";
-                    dashboardBtn.href = "index.html"; 
-                    dashboardBtn.style.display = 'inline-block';
-                }
+                });
             }
         });
     </script>

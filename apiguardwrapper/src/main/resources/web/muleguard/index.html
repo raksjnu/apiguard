@@ -4,8 +4,30 @@
 <head>
     <meta charset="UTF-8">
     <title>MuleGuard - Validation Tool</title>
-    <!-- FIX: Use web/ prefix for wrapper compatibility to avoid FOUC -->
-    <link rel="stylesheet" href="web/style.css">
+    <script>
+        // ULTRA-EARLY Context & Trailing Slash Enforcement (Prevent FOUC)
+        (function() {
+            const loc = window.location;
+            const path = loc.pathname;
+            const isWrapper = path.includes('/apiguard/');
+            
+            // 1. Enforce trailing slash IMMEDIATELY if in wrapper
+            if (isWrapper && !path.endsWith('/')) {
+                loc.replace(loc.href + '/');
+                return;
+            }
+
+            // 2. Global resolution helper
+            window.resolvePath = function(url) {
+                if (isWrapper && !url.startsWith('http') && !url.startsWith('/')) {
+                    return '/apiguard/muleguard/' + url;
+                }
+                return url;
+            };
+        })();
+    </script>
+    <!-- Relative paths for standalone -->
+    <link rel="stylesheet" href="style.css">
     <script>
        // Helper to check settings
        function checkSettings() {
@@ -13,7 +35,7 @@
            const provider = localStorage.getItem('muleguard_git_provider');
            if (!token && document.querySelector('input[name="mode"]:checked').value === 'git') {
                if(confirm("Git Token is not configured. Go to Settings?")) {
-                   window.location.href = 'settings.html';
+                   window.location.href = resolvePath('settings.html');
                    return false;
                }
            }
@@ -24,15 +46,14 @@
 <body>
     <div class="container" style="position: relative;">
         <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
-            <a id="linkChecklist" href="checklist.html" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
-            <a id="linkRules" href="rule_guide.html" class="nav-button" title="Guide to all MuleGuard validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
-            <a id="linkSettings" href="settings.html" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
-            <a id="linkHelp" href="help.html" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
+            <a id="linkChecklist" href="#" onclick="window.open(resolvePath('checklist.html'), '_blank'); return false;" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
+            <a id="linkRules" href="#" onclick="window.open(resolvePath('rule_guide.html'), '_blank'); return false;" class="nav-button" title="Guide to all MuleGuard validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
+            <a id="linkSettings" href="#" onclick="window.open(resolvePath('settings.html'), '_blank'); return false;" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
+            <a id="linkHelp" href="#" onclick="window.open(resolvePath('help.html'), '_blank'); return false;" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
         </div>
 
         <div class="logo">
-            <!-- Logo path fixed for wrapper context -->
-            <img id="logoImg" src="web/logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;">
+            <img id="logoImg" src="logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;">
             <h1>MuleGuard</h1>
         </div>
 
@@ -42,22 +63,22 @@
             <label>Choose Input Method:</label>
             
             <label id="localLabel">
-                <input type="radio" name="mode" value="local" onchange="toggleMode()">
+                <input type="radio" name="mode" value="local" onchange="handleModeChange()">
                 &#128193; Local Folder Path
             </label>
             
             <label id="zipLabel">
-                <input type="radio" name="mode" value="zip" onchange="toggleMode()">
+                <input type="radio" name="mode" value="zip" onchange="handleModeChange()">
                 &#128230; Upload ZIP File
             </label>
 
             <label id="jarLabel">
-                <input type="radio" name="mode" value="jar" onchange="toggleMode()">
+                <input type="radio" name="mode" value="jar" onchange="handleModeChange()">
                 &#128218; Upload JAR/Archive
             </label>
 
             <label id="gitLabel">
-                <input type="radio" name="mode" value="git" onchange="toggleMode()">
+                <input type="radio" name="mode" value="git" onchange="handleModeChange()">
                 &#128279; Git Repository
             </label>
         </div>
@@ -94,15 +115,30 @@
 
         <!-- Git Repo Input -->
         <div id="gitInput" class="optional-section hidden">
+            <!-- Global Git Provider Selection -->
+            <!-- Global Git Provider Selection -->
+            <div style="margin-bottom: 15px; display:flex; justify-content:center; align-items:center; gap:20px; flex-wrap:nowrap;">
+                <label style="font-weight:bold;">Git Provider:</label>
+                <label style="cursor:pointer; display:flex; align-items:center; white-space:nowrap;">
+                    <input type="radio" name="gitProvider" value="gitlab" checked onchange="handleProviderChange()" style="margin-right:8px;"> GitLab
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; white-space:nowrap;">
+                    <input type="radio" name="gitProvider" value="github" onchange="handleProviderChange()" style="margin-right:8px;"> GitHub
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; white-space:nowrap;">
+                    <input type="radio" name="gitProvider" value="other" onchange="handleProviderChange()" style="margin-right:8px;"> Other
+                </label>
+            </div>
+
             <!-- View Mode Toggle -->
             <div style="display:flex; justify-content:center; margin-bottom: 20px;">
-                <div style="background:white; border:1px solid #663399; border-radius:4px; overflow:hidden; display:flex;">
-                    <label style="padding: 10px 20px; cursor:pointer; background:#663399; color:white; margin:0;" id="modeDiscoveryLabel">
-                        <input type="radio" name="gitViewMode" value="discovery" checked style="display:none;" onchange="toggleGitView()"> 
+                <div style="background:white; border:1px solid #663399; border-radius:4px; overflow:hidden; display:flex;" id="viewModeContainer">
+                    <label style="padding: 10px 20px; cursor:pointer; background:white; color:#663399; margin:0;" id="modeDiscoveryLabel">
+                        <input type="radio" name="gitViewMode" value="discovery" style="display:none;" onchange="toggleGitView()"> 
                         Discover Repositories
                     </label>
-                    <label style="padding: 10px 20px; cursor:pointer; background:white; color:#663399; margin:0;" id="modeManualLabel">
-                        <input type="radio" name="gitViewMode" value="manual" style="display:none;" onchange="toggleGitView()"> 
+                    <label style="padding: 10px 20px; cursor:pointer; background:#663399; color:white; margin:0;" id="modeManualLabel">
+                        <input type="radio" name="gitViewMode" value="manual" checked style="display:none;" onchange="toggleGitView()"> 
                         Manual Git URL
                     </label>
                 </div>
@@ -239,9 +275,6 @@
 
         // Initialize UI
         document.addEventListener('DOMContentLoaded', function () {
-            // Set up links based on environment
-            setupLinks();
-            
             // Handle mode visibility based on environment
             if (isWrapper) {
                 // Wrapper: Hide Local, Show ZIP/JAR
@@ -256,11 +289,8 @@
                 selectMode('local');
             }
 
-            // Update image sources if in standalone
+            // Hide email section in standalone mode (no SMTP configured)
             if (!isWrapper) {
-                document.getElementById('logoImg').src = 'logo.svg';
-                
-                // Hide email section in standalone mode (no SMTP configured)
                 const emailSection = document.getElementById('emailSection');
                 if (emailSection) {
                     emailSection.style.display = 'none';
@@ -272,45 +302,75 @@
             
             // Add listeners for exclusivity? No longer needed with View Switcher
             
+
+            
             // Initialize view state
+            // 1. Restore Git Provider
+            const savedProvider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
+            // Only update DOM if mismatch to prevent false change events
+            const currentChecked = document.querySelector('input[name="gitProvider"]:checked');
+            if (currentChecked && currentChecked.value !== savedProvider) {
+                 const targetRadio = document.querySelector(`input[name="gitProvider"][value="${savedProvider}"]`);
+                 if(targetRadio) targetRadio.checked = true;
+            }
+            // Explicitly handle without clearing input
+            handleProviderChange(false);
+
+            // 2. Attach Auto-save listeners to Inputs
+            const inputsToSave = ['gitGroup', 'gitRepoFilter', 'gitUrl'];
+            inputsToSave.forEach(id => {
+                const el = document.getElementById(id);
+                if(el) el.addEventListener('input', saveSessionPrefs);
+            });
             toggleGitView();
+
+            // Restore persisted mode validation mode
+            try {
+                const savedMode = localStorage.getItem('muleguard_validation_mode');
+                console.log('[DEBUG] Restoring saved mode:', savedMode);
+                if (savedMode) {
+                    const radio = document.querySelector(`input[name="mode"][value="${savedMode}"]`);
+                    if (radio) {
+                        radio.checked = true;
+                    } else {
+                        console.warn('[DEBUG] Saved mode radio not found:', savedMode);
+                    }
+                } else {
+                     // Default to Local if nothing saved
+                     const localRadio = document.querySelector('input[name="mode"][value="local"]');
+                     if(localRadio) localRadio.checked = true;
+                }
+                
+                // Initial toggle based on restored or default
+                handleModeChange(false);
+            } catch (e) {
+                console.error('[DEBUG] Error restoring session prefs:', e);
+                alert('MuleGuard UI Error (Restore): ' + e.message);
+            }
 
             // Initialize GitAnalyzer Bridge if in wrapper mode to ensure correct git config
             if (isWrapper) {
                 fetch('/apiguard/gitanalyzer/api/config/ui').catch(e => console.warn('Failed to init GitAnalyzer config', e));
             }
         });
-
-        function setupLinks() {
+        
+        function handleModeChange(save = true) {
+            console.log('[DEBUG] handleModeChange called. Save:', save);
             try {
-                if (isWrapper && CONFIG.resourceBase) {
-                     // Add debug indicator
-                     console.log('Running setupLinks for Wrapper. Base:', CONFIG.resourceBase);
-                     
-                     // CSS and Logo logic removed - fixed directly in HTML to prevent FOUC
-                     
-                     // Fix Nav Links
-                     const links = ['linkChecklist', 'linkRules', 'linkSettings', 'linkHelp'];
-                     links.forEach(id => {
-                         const el = document.getElementById(id);
-                         if (el) {
-                             const page = el.getAttribute('href');
-                             if (!page.startsWith(CONFIG.resourceBase)) {
-                                 el.href = CONFIG.resourceBase + '/' + page;
-                             }
-                         }
-                     });
+                if (save) {
+                    const checked = document.querySelector('input[name="mode"]:checked');
+                    if (checked) {
+                        localStorage.setItem('muleguard_validation_mode', checked.value);
+                        console.log('[DEBUG] Saved mode:', checked.value);
+                    }
                 }
+                toggleMode();
             } catch (e) {
-                console.error('Error in setupLinks:', e);
-                // Fallback: visual alert
-                const errDiv = document.createElement('div');
-                errDiv.style.background='red';
-                errDiv.style.color='white';
-                errDiv.innerText = 'UI Error: ' + e.message;
-                document.body.prepend(errDiv);
+                console.error('[DEBUG] Error in handleModeChange:', e);
+                alert('MuleGuard UI Error (Mode Change): ' + e.message);
             }
         }
+
 
         // Use localStorage for Session Preferences (Non-sensitive)
         function loadSessionPrefs() {
@@ -318,7 +378,21 @@
             const savedFilter = localStorage.getItem('muleguard_session_filter');
             const savedUrl = localStorage.getItem('muleguard_session_url');
             
-            if (savedGroup) document.getElementById('gitGroup').value = savedGroup;
+            // Logic to fallback to Defaults if session is empty for Group
+            if (savedGroup) {
+                document.getElementById('gitGroup').value = savedGroup;
+            } else {
+                 // Try default from settings based on current provider
+                 const provider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
+                 if (provider === 'gitlab') {
+                     const def = localStorage.getItem('muleguard_gitlab_group');
+                     if(def) document.getElementById('gitGroup').value = def;
+                 } else if (provider === 'github') {
+                     const def = localStorage.getItem('muleguard_github_group');
+                     if(def) document.getElementById('gitGroup').value = def;
+                 }
+            }
+            
             if (savedFilter) document.getElementById('gitRepoFilter').value = savedFilter;
             if (savedUrl) document.getElementById('gitUrl').value = savedUrl;
         }
@@ -469,26 +543,54 @@
         }
 
         function toggleMode() {
-            const radio = document.querySelector('input[name="mode"]:checked');
-            if (!radio) return;
-            
-            const mode = radio.value;
-            
-            document.getElementById('localInput').classList.toggle('hidden', mode !== 'local');
-            document.getElementById('zipInput').classList.toggle('hidden', mode !== 'zip');
-            document.getElementById('jarInput').classList.toggle('hidden', mode !== 'jar');
-            document.getElementById('gitInput').classList.toggle('hidden', mode !== 'git');
-            
-            // Show/hide attachment options
-            if (mode === 'zip' || mode === 'jar') {
-                document.getElementById('attachInputLabel').style.display = 'block';
-                document.getElementById('attachProjectLabel').style.display = 'none';
-            } else if (mode === 'git') {
-                document.getElementById('attachInputLabel').style.display = 'none';
-                document.getElementById('attachProjectLabel').style.display = 'block';
-            } else {
-                document.getElementById('attachInputLabel').style.display = 'none';
-                document.getElementById('attachProjectLabel').style.display = 'block';
+            try {
+                const radio = document.querySelector('input[name="mode"]:checked');
+                if (!radio) {
+                    console.warn('[DEBUG] No mode radio selected');
+                    return;
+                }
+                
+                const mode = radio.value;
+                console.log('[DEBUG] toggleMode executing. Mode:', mode);
+                
+                const localInput = document.getElementById('localInput');
+                const zipInput = document.getElementById('zipInput');
+                const jarInput = document.getElementById('jarInput');
+                const gitInput = document.getElementById('gitInput');
+                
+                if (!localInput || !zipInput || !jarInput || !gitInput) {
+                    console.error('[DEBUG] One or more input sections missing from DOM', {
+                        local: !!localInput, zip: !!zipInput, jar: !!jarInput, git: !!gitInput
+                    });
+                    return;
+                }
+                
+                localInput.classList.toggle('hidden', mode !== 'local');
+                zipInput.classList.toggle('hidden', mode !== 'zip');
+                jarInput.classList.toggle('hidden', mode !== 'jar');
+                gitInput.classList.toggle('hidden', mode !== 'git');
+                
+                console.log('[DEBUG] gitInput hidden?', gitInput.classList.contains('hidden'));
+                if (mode === 'git' && gitInput.classList.contains('hidden')) {
+                     // Force remove if classList toggle failed logic somehow
+                     gitInput.classList.remove('hidden'); 
+                     console.log('[DEBUG] Forced remove hidden from gitInput');
+                }
+                
+                // Show/hide attachment options
+                if (mode === 'zip' || mode === 'jar') {
+                    document.getElementById('attachInputLabel').style.display = 'block';
+                    document.getElementById('attachProjectLabel').style.display = 'none';
+                } else if (mode === 'git') {
+                    document.getElementById('attachInputLabel').style.display = 'none';
+                    document.getElementById('attachProjectLabel').style.display = 'block';
+                } else {
+                    document.getElementById('attachInputLabel').style.display = 'none';
+                    document.getElementById('attachProjectLabel').style.display = 'block';
+                }
+            } catch (e) {
+                console.error('[DEBUG] Error in toggleMode:', e);
+                alert('MuleGuard UI Error (Toggle): ' + e.message);
             }
         }
 
@@ -554,7 +656,9 @@
                 showProgress(true, "Uploading & Scanning", "Uploading " + file.name + " and running analysis...");
             } else if (mode === 'git') {
                 // Determine Provider
-                let provider = 'gitlab'; // Default
+                // Global Selection
+                const providerSelect = document.querySelector('input[name="gitProvider"]:checked');
+                let provider = providerSelect ? providerSelect.value : 'gitlab';
                 const gitViewMode = document.querySelector('input[name="gitViewMode"]:checked').value;
                 let gitUrls = "";
                 
@@ -565,9 +669,7 @@
                          return;
                      }
                      gitUrls = fetchedUrls;
-                     // In discovery mode, provider is selected explicitly
-                     const providerSelect = document.querySelector('input[name="gitProvider"]:checked');
-                     if (providerSelect) provider = providerSelect.value;
+                      // In discovery mode, provider is selected explicitly - ALREADY SET TO GLOBAL 'provider'
                 } else {
                      const manualUrl = document.getElementById('gitUrl').value;
                      if (!manualUrl) {
@@ -576,13 +678,8 @@
                      }
                      gitUrls = manualUrl;
                      
-                     // Infer provider from URL if possible
-                     if (manualUrl.includes("github.com")) provider = 'github';
-                     else if (manualUrl.includes("gitlab.com")) provider = 'gitlab';
-                     else {
-                         // Fallback to default setting
-                         provider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
-                     }
+                     // Use explicit selection in manual mode
+                     // Use explicit selection in manual mode
                 }
                 
                 formData.append('gitUrls', gitUrls);
@@ -593,11 +690,14 @@
                 let token = "";
                 if (provider === 'github') {
                     token = localStorage.getItem('muleguard_github_token') || "";
-                } else {
+                } else if (provider === 'gitlab') {
                     token = localStorage.getItem('muleguard_gitlab_token') || "";
+                } else {
+                    // Other provider - user should have set 'Other' token if needed
+                    token = localStorage.getItem('muleguard_other_token') || "";
                 }
                 
-                // Fallback to legacy key if not found (migration)
+                // Fallback (Legacy)
                 if (!token) token = localStorage.getItem('muleguard_git_token') || "";
 
                 if(!token) {
@@ -736,6 +836,63 @@
         function closeModal() {
             document.getElementById('customModal').style.display = 'none';
         }
+
+         function handleProviderChange(clearInputs = true) {
+              const provider = document.querySelector('input[name="gitProvider"]:checked').value;
+              localStorage.setItem('muleguard_git_provider', provider);
+              
+              if (clearInputs) {
+                  // Contextual Input Clearing
+                  document.getElementById('gitGroup').value = '';
+                  document.getElementById('gitRepoFilter').value = '';
+                  document.getElementById('gitUrl').value = '';
+                  document.getElementById('repoList').innerHTML = '';
+                  document.getElementById('repoResultsSection').style.display = 'none';
+                  // Also clear session prefs to avoid restoring confused state
+                  localStorage.removeItem('muleguard_session_group');
+                  localStorage.removeItem('muleguard_session_filter');
+                  localStorage.removeItem('muleguard_session_url');
+                  
+                  // Auto-fill defaults from Settings
+                  if (provider === 'gitlab') {
+                      const def = localStorage.getItem('muleguard_gitlab_group');
+                      if(def) {
+                          document.getElementById('gitGroup').value = def;
+                          saveSessionPrefs();
+                      }
+                  } else if (provider === 'github') {
+                      const def = localStorage.getItem('muleguard_github_group');
+                      if(def) {
+                          document.getElementById('gitGroup').value = def;
+                          saveSessionPrefs();
+                      }
+                  }
+
+             }
+             
+             // Logic: disable Discovery for 'Other'
+             const discoveryRadio = document.querySelector('input[name="gitViewMode"][value="discovery"]');
+             const discoveryLabel = document.getElementById('modeDiscoveryLabel');
+             const viewContainer = document.getElementById('viewModeContainer');
+             
+             if (provider === 'other') {
+                 // Force Manual Mode
+                 document.querySelector('input[name="gitViewMode"][value="manual"]').checked = true;
+                 toggleGitView(); // Switch view
+                 
+                 // Disable Discovery UI
+                 discoveryRadio.disabled = true;
+                 discoveryLabel.style.opacity = '0.5';
+                 discoveryLabel.style.pointerEvents = 'none';
+                 discoveryLabel.title = "Discovery not available for Other providers";
+             } else {
+                 // Enable Discovery
+                 discoveryRadio.disabled = false;
+                 discoveryLabel.style.opacity = '1';
+                 discoveryLabel.style.pointerEvents = 'auto';
+                 discoveryLabel.title = "";
+             }
+        }
         
         function copyToClipboard(text) {
             navigator.clipboard.writeText(text).then(() => {
@@ -751,6 +908,13 @@
 
         // Git Discovery Functions
         async function fetchGitRepos() {
+            // Check Provider first
+            const provider = document.querySelector('input[name="gitProvider"]:checked').value;
+            if (provider === 'other') {
+                showAlert("Discovery Mode is not supported for 'Other' providers. Please use Manual Git URL.");
+                return;
+            }
+
             let group = document.getElementById('gitGroup').value;
             const filter = document.getElementById('gitRepoFilter').value;
             const btn = document.getElementById('fetchReposBtn');
@@ -772,13 +936,27 @@
             }
             
             // Get credentials from Settings
-            const provider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
-            const token = localStorage.getItem('muleguard_git_token') || '';
+            let token = '';
+            // const provider already defined above
+            if (provider === 'github') {
+                token = localStorage.getItem('muleguard_github_token') || '';
+            } else if (provider === 'gitlab') {
+                token = localStorage.getItem('muleguard_gitlab_token') || '';
+            }
+            
+            // Fallback
+            // Fallback
+            if (!token) token = localStorage.getItem('muleguard_git_token') || '';
+            
+            console.log(`[DEBUG] fetchGitRepos: Provider=${provider}, TokenLength=${token ? token.length : 0}`);
+            if(token && token.length > 0) console.log(`[DEBUG] Token starts with: ${token.substring(0, 4)}...`);
+            
             const gitlabUrl = localStorage.getItem('muleguard_gitlab_url') || '';
             const githubUrl = localStorage.getItem('muleguard_github_url') || '';
             
+            // Optional: Warn about missing token but don't block
             if (!token) {
-                if(!confirm("No Git Token configured in Settings. Fetching private repos will fail. Continue?")) return;
+                console.warn("No Token found for " + provider + ". Attempting public access.");
             }
 
             btn.disabled = true;
@@ -787,10 +965,13 @@
             
             try {
                 // Adjust API base for discovery
-                // Adjust API base for discovery -> Use GitAnalyzer endpoints
+                // Adjust API base for discovery -> Use MuleGuard Wrapper endpoints
                 // Use new MuleGuard Recursive Discovery flow
                 const apiBase = isWrapper ? '/apiguard/muleguard' : CONFIG.baseUrl;
-                let url = apiBase + `/api/git/discovery?group=${encodeURIComponent(group)}&filter=${encodeURIComponent(filter)}`;
+                // GitAnalyzer uses /api/download/list, MuleGuard Standalone uses /api/git/repos
+                // WRAPPER NOW USES /api/git/discovery via MuleGuard-Wrapper Flow
+                const endpoint = isWrapper ? '/api/git/discovery' : '/api/git/repos';
+                let url = apiBase + `${endpoint}?group=${encodeURIComponent(group)}&filter=${encodeURIComponent(filter)}&provider=${encodeURIComponent(provider)}`;
                 
                 if(gitlabUrl) url += `&gitlabUrl=${encodeURIComponent(gitlabUrl)}`;
                 if(githubUrl) url += `&githubUrl=${encodeURIComponent(githubUrl)}`;
@@ -798,7 +979,27 @@
                 const headers = { 'x-git-token': token, 'x-git-provider': provider };
                 
                 const response = await fetch(url, { headers: headers });
-                if (!response.ok) throw new Error('Failed to fetch repositories. Check token and group/org.');
+                if (!response.ok) {
+                    let errMsg = 'Failed to fetch repositories.';
+                    try {
+                        // The backend might return standard error page or JSON
+                        const errText = await response.text(); 
+                        // Try parsing JSON first
+                        try {
+                            const errJson = JSON.parse(errText);
+                            if (errJson.message) errMsg = errJson.message;
+                        } catch(e) {
+                             // If not JSON, check for HTML error
+                             if (errText.includes('GitLab Group/User not found')) {
+                                 errMsg = "GitLab Group/User not found (404). Please check the name.";
+                             } else {
+                                 errMsg += " Server responded with " + response.status;
+                             }
+                        }
+                    } catch(e) { console.warn("Failed to parse error response", e); }
+                    
+                    throw new Error(errMsg);
+                }
                 
                 let repos = await response.json();
                 
@@ -883,10 +1084,19 @@
             let token = '';
 
             if (isManual) {
-                // Infer from URL in manual mode
-                if (repoToFetch.includes("github.com")) provider = 'github';
-                else if (repoToFetch.includes("gitlab.com")) provider = 'gitlab';
-                else provider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
+                // Smart Provider Detection
+                if (repoToFetch.includes('github.com')) {
+                     provider = 'github';
+                     // Auto-update UI to match? Optional, but good for feedback
+                     // const radio = document.querySelector('input[name="gitProvider"][value="github"]');
+                     // if(radio) radio.checked = true;
+                } else if (repoToFetch.includes('gitlab.com')) {
+                     provider = 'gitlab';
+                } else {
+                     // Use explicit selection as fallback
+                     const providerSelect = document.querySelector('input[name="gitProvider"]:checked');
+                     provider = providerSelect ? providerSelect.value : 'gitlab';
+                }
             } else {
                 // Use selected provider in discovery mode
                  const providerSelect = document.querySelector('input[name="gitProvider"]:checked');
@@ -910,8 +1120,11 @@
             showProgress(true, "Discovering Branches", `Fetching branches for ${repoToFetch}...`);
             
             try {
-                const apiBase = isWrapper ? '/apiguard/gitanalyzer' : CONFIG.baseUrl;
-                let url = apiBase + `/api/download/branches?repo=${encodeURIComponent(repoToFetch)}`;
+                const apiBase = isWrapper ? '/apiguard/muleguard' : CONFIG.baseUrl;
+                // GitAnalyzer uses /api/download/branches, MuleGuard Standalone uses /api/git/branches
+                // WRAPPER NOW USES /api/git/branches via MuleGuard-Wrapper Flow
+                const endpoint = '/api/git/branches';
+                let url = apiBase + `${endpoint}?repo=${encodeURIComponent(repoToFetch)}`;
                 
                 if(gitlabUrl) url += `&gitlabUrl=${encodeURIComponent(gitlabUrl)}`;
                 if(githubUrl) url += `&githubUrl=${encodeURIComponent(githubUrl)}`;
@@ -919,7 +1132,14 @@
                 const headers = { 'x-git-token': token, 'x-git-provider': provider };
                 
                 const response = await fetch(url, { headers: headers });
-                if (!response.ok) throw new Error('Failed to fetch branches');
+                if (!response.ok) {
+                    let errMsg = 'Failed to fetch branches';
+                    try {
+                         const errData = await response.json();
+                         if(errData && errData.message) errMsg = errData.message;
+                    } catch(e) { console.warn("Failed to parse error response", e); }
+                    throw new Error(errMsg);
+                }
                 
                 const branches = await response.json();
                 const select = document.getElementById('gitBranchDropdown');
@@ -927,6 +1147,10 @@
                 
                 if (!branches || branches.length === 0) {
                     select.innerHTML = '<option value="">No branches found</option>';
+                } else if (!Array.isArray(branches)) {
+                    // Handle error response from backend
+                    const errorMsg = branches.error || branches.message || JSON.stringify(branches);
+                    throw new Error('Backend Error: ' + errorMsg);
                 } else {
                     branches.forEach(b => {
                         const opt = document.createElement('option');

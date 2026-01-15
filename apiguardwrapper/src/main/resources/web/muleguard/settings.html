@@ -9,13 +9,15 @@
     <div class="container" style="position: relative;">
         <!-- Top Navigation -->
         <div style="position: absolute; top: 20px; right: 20px;">
-            <a id="homeLink" href="index.html" class="nav-button" style="padding: 8px 12px; font-size: 12px;">&larr; Back to Home</a>
+            <a href="./" class="nav-button" style="padding: 8px 12px; font-size: 12px;">🏠 Home</a>
         </div>
 
         <!-- Logo & Header -->
         <div class="logo">
-            <img src="logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;" onerror="this.style.display='none'; this.parentNode.innerText='MuleGuard';">
-            <h1>Settings</h1>
+            <a href="./" id="homeLink" title="Back to Home">
+                <img src="logo.svg" alt="MuleGuard Logo">
+            </a>
+            <h1>MuleGuard Settings</h1>
         </div>
 
         <p class="subtitle">Configure global preferences for MuleGuard</p>
@@ -27,38 +29,62 @@
                 
                 <div style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Git Provider:</label>
-                    <div style="display:flex; gap: 20px;">
-                        <label style="cursor:pointer; display:flex; align-items:center;">
-                            <input type="radio" name="gitProvider" value="gitlab" checked style="margin-right:8px;"> GitLab
+                    <div style="display:flex; flex-direction:row; align-items:center; gap: 20px; flex-wrap:nowrap;">
+                        <label style="cursor:pointer; display:flex; align-items:center; white-space:nowrap;">
+                            <input type="radio" name="gitProvider" value="gitlab" checked onchange="updateSettingsUI()" style="margin-right:8px;"> GitLab
                         </label>
-                        <label style="cursor:pointer; display:flex; align-items:center;">
-                            <input type="radio" name="gitProvider" value="github" style="margin-right:8px;"> GitHub
+                        <label style="cursor:pointer; display:flex; align-items:center; white-space:nowrap;">
+                            <input type="radio" name="gitProvider" value="github" onchange="updateSettingsUI()" style="margin-right:8px;"> GitHub
+                        </label>
+                        <label style="cursor:pointer; display:flex; align-items:center; white-space:nowrap;">
+                            <input type="radio" name="gitProvider" value="other" onchange="updateSettingsUI()" style="margin-right:8px;"> Other
                         </label>
                     </div>
                 </div>
 
-                <div style="margin-bottom: 15px;">
+                <div style="margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-left: 4px solid #fc6d26;" id="gitlabSection">
+                    <h4 style="margin-top:0; color: #fc6d26;">GitLab Configuration</h4>
+                    
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitLab Auth Token (Personal Access Token):</label>
-                    <input type="password" id="gitlabToken" placeholder="Enter your GitLab Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    <small style="color: #666;">Required for accessing private GitLab repositories.</small>
+                    <div style="display:flex; gap:10px; margin-bottom: 10px;">
+                        <input type="password" id="gitlabToken" placeholder="Enter your GitLab Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <button type="button" class="nav-button" onclick="validateToken('gitlab')" style="width:auto; padding:0 15px; background:#fc6d26; color:white; border:none;">Validate</button>
+                    </div>
+
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitLab Base URL (Optional):</label>
+                    <input type="text" id="gitlabUrl" placeholder="https://gitlab.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                    <small style="display:block; color: #666; margin-bottom: 10px;">Leave empty for public GitLab.com.</small>
+                    
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Group / User (Optional):</label>
+                    <input type="text" id="gitlabDefaultGroup" placeholder="e.g. raks-group" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
                 </div>
                 
-                <div style="margin-bottom: 15px;">
+                <div style="margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-left: 4px solid #333;" id="githubSection">
+                    <h4 style="margin-top:0; color: #333;">GitHub Configuration</h4>
+                    
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitHub Auth Token (Personal Access Token):</label>
-                    <input type="password" id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    <small style="color: #666;">Required for accessing private GitHub repositories.</small>
-                </div>
+                    <div style="display:flex; gap:10px; margin-bottom: 10px;">
+                        <input type="password" id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <button type="button" class="nav-button" onclick="validateToken('github')" style="width:auto; padding:0 15px; background:#663399; color:white; border:none;">Validate</button>
+                    </div>
 
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitLab Base URL (Optional):</label>
-                    <input type="text" id="gitlabUrl" placeholder="https://gitlab.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    <small style="color: #666;">Leave empty for public GitLab.com. Specify for Enterprise/Self-Hosted.</small>
-                </div>
-
-                <div style="margin-bottom: 15px;">
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitHub Base URL (Optional):</label>
-                    <input type="text" id="githubUrl" placeholder="https://api.github.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    <small style="color: #666;">Leave empty for public GitHub.com. Specify for Enterprise Server.</small>
+                    <input type="text" id="githubUrl" placeholder="https://api.github.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                    <small style="display:block; color: #666; margin-bottom: 10px;">Leave empty for public GitHub.com.</small>
+                    
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Organization / User (Optional):</label>
+                    <input type="text" id="githubDefaultGroup" placeholder="e.g. RAKS" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                </div>
+
+
+
+                <div style="margin-bottom: 15px;" id="otherSection">
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">Other Git Provider Base URL:</label>
+                    <input type="text" id="otherUrl" placeholder="http://git.raks.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom:10px;">
+                    
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">Other Git Provider Token:</label>
+                    <input type="password" id="otherToken" placeholder="Enter Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <small style="color: #666;">Generic token for cloning repositories from custom providers.</small>
                 </div>
             </div>
 
@@ -74,12 +100,21 @@
             </div>
 
             <div style="text-align: center; margin-top: 30px;">
-                <button type="button" class="nav-button" onclick="saveSettings()" style="width: auto; padding: 12px 40px; font-size: 16px; margin-right: 10px;">Save Settings</button>
+                <button type="button" class="nav-button" onclick="saveSettings()" style="width: auto; padding: 12px 40px; font-size: 16px; margin-right: 10px; background:#663399; color:white;">Save Settings</button>
                 <button type="button" class="nav-button" onclick="clearSettings()" style="width: auto; padding: 12px 40px; font-size: 16px; background-color: #999;">Clear All</button>
             </div>
             
             <p id="statusMsg" style="text-align: center; margin-top: 15px; font-weight: bold; min-height: 20px;"></p>
         </form>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="customModal" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000; justify-content:center; align-items:center;">
+        <div class="modal-content" style="background:white; padding:20px; border-radius:8px; box-shadow:0 2px 10px rgba(0,0,0,0.1); max-width:400px; width:90%; text-align:center;">
+            <h3 style="color: #663399; margin-bottom: 15px; margin-top:0;">Notification</h3>
+            <div id="modalMessage" style="margin-bottom: 20px; color: #333;"></div>
+            <button onclick="closeModal()" style="padding: 8px 20px; background: #663399; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
+        </div>
     </div>
 
     <script>
@@ -90,16 +125,9 @@
         };
 
         document.addEventListener('DOMContentLoaded', function() {
-            // Fix Links for Wrapper
-            if (isWrapper && CONFIG.resourceBase) {
-                 const cssLink = document.querySelector('link[rel="stylesheet"]');
-                 if (cssLink) cssLink.href = CONFIG.resourceBase + '/style.css';
-                 
-                 const homeLink = document.getElementById('homeLink');
-                 if(homeLink) homeLink.href = CONFIG.baseUrl + '/main';
-                 
-                 const logo = document.querySelector('.logo img');
-                 if(logo) logo.src = CONFIG.resourceBase + '/logo.svg';
+            if (isWrapper) {
+                const homeLink = document.getElementById('homeLink');
+                if (homeLink) homeLink.href = '/apiguard/muleguard/';
             }
 
             // Load settings
@@ -108,10 +136,77 @@
             
             document.getElementById('gitlabToken').value = localStorage.getItem('muleguard_gitlab_token') || '';
             document.getElementById('githubToken').value = localStorage.getItem('muleguard_github_token') || '';
-            document.getElementById('gitlabUrl').value = localStorage.getItem('muleguard_gitlab_url') || '';
-            document.getElementById('githubUrl').value = localStorage.getItem('muleguard_github_url') || '';
+            document.getElementById('gitlabUrl').value = localStorage.getItem('muleguard_gitlab_url') || 'https://gitlab.com';
+            document.getElementById('githubUrl').value = localStorage.getItem('muleguard_github_url') || 'https://api.github.com';
+            document.getElementById('gitlabDefaultGroup').value = localStorage.getItem('muleguard_gitlab_group') || '';
+            document.getElementById('githubDefaultGroup').value = localStorage.getItem('muleguard_github_group') || '';
+            
+            document.getElementById('otherUrl').value = localStorage.getItem('muleguard_other_url') || '';
+            document.getElementById('otherToken').value = localStorage.getItem('muleguard_other_token') || '';
             document.getElementById('customRulesPath').value = localStorage.getItem('muleguard_custom_rules_path') || '';
+            
+            updateSettingsUI();
         });
+        
+        function updateSettingsUI() {
+            const provider = document.querySelector('input[name="gitProvider"]:checked').value;
+            
+            // Helper to toggle section
+            const toggle = (id, enable) => {
+                const el = document.getElementById(id);
+                const inputs = el.querySelectorAll('input, button');
+                if (enable) {
+                    el.style.opacity = '1';
+                    inputs.forEach(i => i.disabled = false);
+                } else {
+                    el.style.opacity = '0.4';
+                    inputs.forEach(i => i.disabled = true);
+                }
+            };
+            
+            toggle('gitlabSection', provider === 'gitlab');
+            // toggle('gitlabUrlSection', provider === 'gitlab'); // Merged
+            
+            toggle('githubSection', provider === 'github');
+            // toggle('githubUrlSection', provider === 'github'); // Merged
+            
+            toggle('otherSection', provider === 'other');
+        }
+
+        async function validateToken(provider) {
+            let token = '', url = '';
+            
+            if (provider === 'gitlab') {
+                token = document.getElementById('gitlabToken').value;
+                url = (document.getElementById('gitlabUrl').value || 'https://gitlab.com') + '/api/v4/user';
+            } else if (provider === 'github') {
+                token = document.getElementById('githubToken').value;
+                url = (document.getElementById('githubUrl').value || 'https://api.github.com') + '/user';
+            }
+            
+            if(!token) {
+                alert('Please enter a token first.');
+                return;
+            }
+            
+            showStatus('Validating...', '#666');
+            
+            try {
+                // Wrapper environments might need proxying if CORS is an issue, but standard calls usually work if allowed.
+                // Assuming direct call for now.
+                const resp = await fetch(url, { headers: { 'Authorization': 'Bearer ' + token } });
+                if (resp.ok) {
+                    const user = await resp.json();
+                    showStatus(`Success! Logged in as ${user.username || user.login || 'User'}`, 'green');
+                    // Auto-save on success to prevent data loss
+                    saveSettings();
+                } else {
+                    showStatus('Validation Failed: ' + resp.status + ' ' + resp.statusText, 'red');
+                }
+            } catch (e) {
+                showStatus('Error validating: ' + e.message, 'red');
+            }
+        }
 
         function saveSettings() {
             const provider = document.querySelector('input[name="gitProvider"]:checked').value;
@@ -125,19 +220,28 @@
             
             const gitlabUrl = document.getElementById('gitlabUrl').value.trim();
             localStorage.setItem('muleguard_gitlab_url', gitlabUrl);
+            const gitlabGroup = document.getElementById('gitlabDefaultGroup').value.trim();
+            localStorage.setItem('muleguard_gitlab_group', gitlabGroup);
             
             const githubUrl = document.getElementById('githubUrl').value.trim();
             localStorage.setItem('muleguard_github_url', githubUrl);
+            const githubGroup = document.getElementById('githubDefaultGroup').value.trim();
+            localStorage.setItem('muleguard_github_group', githubGroup);
+            
+            const otherUrl = document.getElementById('otherUrl').value.trim();
+            localStorage.setItem('muleguard_other_url', otherUrl);
+            const otherToken = document.getElementById('otherToken').value.trim();
+            localStorage.setItem('muleguard_other_token', otherToken);
             
             const rulesPath = document.getElementById('customRulesPath').value.trim();
             localStorage.setItem('muleguard_custom_rules_path', rulesPath);
             
             showStatus('Settings saved successfully!', 'green');
             
-            // Should we update the legacy token for backward compatibility or just rely on specific ones?
-            // Let's set the generic one to match the default provider for safety
+            // Legacy token handling
             if(provider === 'gitlab') localStorage.setItem('muleguard_git_token', gitlabToken);
-            else localStorage.setItem('muleguard_git_token', githubToken);
+            else if(provider === 'github') localStorage.setItem('muleguard_git_token', githubToken);
+            else localStorage.setItem('muleguard_git_token', otherToken);
         }
 
         function clearSettings() {
@@ -146,7 +250,11 @@
                 localStorage.removeItem('muleguard_gitlab_token');
                 localStorage.removeItem('muleguard_github_token');
                 localStorage.removeItem('muleguard_gitlab_url');
+                localStorage.removeItem('muleguard_gitlab_group');
                 localStorage.removeItem('muleguard_github_url');
+                localStorage.removeItem('muleguard_github_group');
+                localStorage.removeItem('muleguard_other_url');
+                localStorage.removeItem('muleguard_other_token');
                 localStorage.removeItem('muleguard_custom_rules_path');
                 
                 // Clear form
@@ -158,11 +266,34 @@
         }
 
         function showStatus(msg, color) {
-            const el = document.getElementById('statusMsg');
-            el.style.color = color;
-            el.innerText = msg;
-            setTimeout(() => { el.innerText = ''; }, 3000);
+            // Use Modal instead
+            showAlert(msg);
         }
+        
+        function showAlert(message) {
+            document.getElementById('modalMessage').innerText = message;
+            document.getElementById('customModal').style.display = 'flex';
+        }
+        
+        function closeModal() {
+            document.getElementById('customModal').style.display = 'none';
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Simple session persistence for navigation links
+            var sessionId = new URLSearchParams(window.location.search).get('session');
+            if (sessionId) {
+                var links = document.querySelectorAll('.nav-button');
+                links.forEach(function(link) {
+                    var href = link.getAttribute('href');
+                    if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                        var separator = href.includes('?') ? '&' : '?';
+                        link.setAttribute('href', href + separator + 'session=' + sessionId);
+                    }
+                });
+            }
+        });
     </script>
 </body>
 </html>

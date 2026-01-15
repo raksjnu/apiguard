@@ -21,7 +21,8 @@ It generates detailed HTML and Excel reports highlighting compliance and identif
   - **Local Folder**: Scan projects from your filesystem
   - **ZIP Upload**: Upload and validate ZIP archives
   - **JAR Upload**: Validate Mule application JAR files
-  - **Git Repository**: (Coming Soon) Clone and validate from Git
+  - **Git Repository**: Connect to GitLab/GitHub. Supports Public (no token) and Private (token) repositories.
+- **Smart Git Discovery**: Browse repositories by Group/User, or clone directly via URL.
 - **Multi-Project Analysis**: Scan a single API or a directory containing multiple APIs.
 - **Consolidated Reporting**: Generates a summary dashboard for all scanned APIs.
 - **Detailed Individual Reports**: Provides rule-by-rule results for each API with deep context and examples.

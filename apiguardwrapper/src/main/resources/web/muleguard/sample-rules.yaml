@@ -47,7 +47,6 @@
 config:
   environments:
   - SBX
-  - TDV
   - ITE
   - PREP
   - DRL

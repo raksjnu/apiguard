@@ -716,6 +716,10 @@ public class ReportGenerator {
             logger.error("Failed to generate checklist report: {}", e.getMessage());
         }
     }
+    public static void generateRuleGuide(String outputDir) {
+        generateRuleGuide(java.nio.file.Paths.get(outputDir));
+    }
+
     public static void generateRuleGuide(Path outputDir) {
         try {
 
@@ -1179,7 +1183,7 @@ public class ReportGenerator {
                         <div class="main-content">
                             <div class="top-nav-container">
                                 <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
-                                <a href="/muleguard/main" id="mainPageBtn" class="top-nav-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+                                <a href="#" id="mainPageBtn" class="top-nav-button" title="Go to Home" style="display: none; background-color: #0078d4;">🏠 Home</a>
                             </div>
                             <div class="report-container">
                                 %s
@@ -1220,7 +1224,7 @@ public class ReportGenerator {
                                     
                                     if (isReport && mainPageBtn) {
                                         mainPageBtn.style.display = 'inline-block';
-                                        var mainPageUrl = basePath + '/main'; 
+                                        var mainPageUrl = basePath + '/'; 
                                         if (!isInMuleWrapper) mainPageUrl = '/';
                                         if (sessionId) mainPageUrl += '?session=' + sessionId;
                                         mainPageBtn.href = mainPageUrl;
@@ -1232,6 +1236,11 @@ public class ReportGenerator {
                     """;
             String finalHtml = String.format(html, sidebar.toString(), content.toString());
             Path ruleGuidePath = outputDir.resolve("rule_guide.html");
+            java.util.Optional.ofNullable(ruleGuidePath.getParent()).ifPresent(p -> {
+                try {
+                    java.nio.file.Files.createDirectories(p);
+                } catch (Exception e) {}
+            });
             Files.writeString(ruleGuidePath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
             logger.debug("Rule guide generated (dynamic)");
         } catch (Exception e) {
