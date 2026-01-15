@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MuleGuard - Settings</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container" style="position: relative;">
+        <!-- Top Navigation -->
+        <div style="position: absolute; top: 20px; right: 20px;">
+            <a href="/" class="nav-button" style="padding: 8px 12px; font-size: 12px;">&larr; Back to Home</a>
+        </div>
+
+        <!-- Logo & Header -->
+        <div class="logo">
+            <img src="logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;" onerror="this.style.display='none'; this.parentNode.innerText='MuleGuard';">
+            <h1>Settings</h1>
+        </div>
+
+        <p class="subtitle">Configure global preferences for MuleGuard</p>
+
+        <form id="settingsForm">
+            <!-- Git Configuration -->
+            <div class="optional-section" style="max-width: 800px; margin: 20px auto; text-align: left; padding: 25px;">
+                <h3 style="margin-top:0; color: #663399; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#128279; Git Configuration</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Git Provider:</label>
+                    <div style="display:flex; gap: 20px;">
+                        <label style="cursor:pointer; display:flex; align-items:center;">
+                            <input type="radio" name="gitProvider" value="gitlab" checked style="margin-right:8px;"> GitLab
+                        </label>
+                        <label style="cursor:pointer; display:flex; align-items:center;">
+                            <input type="radio" name="gitProvider" value="github" style="margin-right:8px;"> GitHub
+                        </label>
+                    </div>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitLab Auth Token (Personal Access Token):</label>
+                    <input type="password" id="gitlabToken" placeholder="Enter your GitLab Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <small style="color: #666;">Required for accessing private GitLab repositories.</small>
+                </div>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitHub Auth Token (Personal Access Token):</label>
+                    <input type="password" id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <small style="color: #666;">Required for accessing private GitHub repositories.</small>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitLab Base URL (Optional):</label>
+                    <input type="text" id="gitlabUrl" placeholder="https://gitlab.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <small style="color: #666;">Leave empty for public GitLab.com. Specify for Enterprise/Self-Hosted.</small>
+                </div>
+
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitHub Base URL (Optional):</label>
+                    <input type="text" id="githubUrl" placeholder="https://api.github.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <small style="color: #666;">Leave empty for public GitHub.com. Specify for Enterprise Server.</small>
+                </div>
+            </div>
+
+            <!-- General Preferences -->
+            <div class="optional-section" style="max-width: 800px; margin: 20px auto; text-align: left; padding: 25px;">
+                <h3 style="margin-top:0; color: #663399; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#9881; General Preferences</h3>
+                
+                <div style="margin-bottom: 15px;">
+                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Custom Rules File Path (Local Mode Only):</label>
+                    <input type="text" id="customRulesPath" placeholder="C:\path\to\default-rules.yaml" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <small style="color: #666;">Automatically load this rules file when running validations.</small>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px;">
+                <button type="button" class="nav-button" onclick="saveSettings()" style="width: auto; padding: 12px 40px; font-size: 16px; margin-right: 10px;">Save Settings</button>
+                <button type="button" class="nav-button" onclick="clearSettings()" style="width: auto; padding: 12px 40px; font-size: 16px; background-color: #999;">Clear All</button>
+            </div>
+            
+            <p id="statusMsg" style="text-align: center; margin-top: 15px; font-weight: bold; min-height: 20px;"></p>
+        </form>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load settings
+            const provider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
+            document.querySelector(`input[name="gitProvider"][value="${provider}"]`).checked = true;
+            
+            document.getElementById('gitlabToken').value = localStorage.getItem('muleguard_gitlab_token') || '';
+            document.getElementById('githubToken').value = localStorage.getItem('muleguard_github_token') || '';
+            document.getElementById('gitlabUrl').value = localStorage.getItem('muleguard_gitlab_url') || '';
+            document.getElementById('githubUrl').value = localStorage.getItem('muleguard_github_url') || '';
+            document.getElementById('customRulesPath').value = localStorage.getItem('muleguard_custom_rules_path') || '';
+        });
+
+        function saveSettings() {
+            const provider = document.querySelector('input[name="gitProvider"]:checked').value;
+            localStorage.setItem('muleguard_git_provider', provider);
+            
+            const gitlabToken = document.getElementById('gitlabToken').value.trim();
+            localStorage.setItem('muleguard_gitlab_token', gitlabToken);
+
+            const githubToken = document.getElementById('githubToken').value.trim();
+            localStorage.setItem('muleguard_github_token', githubToken);
+            
+            const gitlabUrl = document.getElementById('gitlabUrl').value.trim();
+            localStorage.setItem('muleguard_gitlab_url', gitlabUrl);
+            
+            const githubUrl = document.getElementById('githubUrl').value.trim();
+            localStorage.setItem('muleguard_github_url', githubUrl);
+            
+            const rulesPath = document.getElementById('customRulesPath').value.trim();
+            localStorage.setItem('muleguard_custom_rules_path', rulesPath);
+            
+            showStatus('Settings saved successfully!', 'green');
+        }
+
+        function clearSettings() {
+            if(confirm('Are you sure you want to clear all saved settings?')) {
+                localStorage.removeItem('muleguard_git_provider');
+                localStorage.removeItem('muleguard_gitlab_token');
+                localStorage.removeItem('muleguard_github_token');
+                localStorage.removeItem('muleguard_gitlab_url');
+                localStorage.removeItem('muleguard_github_url');
+                localStorage.removeItem('muleguard_custom_rules_path');
+                
+                // Clear form
+                document.getElementById('settingsForm').reset();
+                document.querySelector('input[value="gitlab"]').checked = true;
+                
+                showStatus('Settings cleared.', '#666');
+            }
+        }
+
+        function showStatus(msg, color) {
+            const el = document.getElementById('statusMsg');
+            el.style.color = color;
+            el.innerText = msg;
+            setTimeout(() => { el.innerText = ''; }, 3000);
+        }
+    </script>
+</body>
+</html>

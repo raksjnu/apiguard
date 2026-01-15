@@ -11,6 +11,8 @@ import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -20,7 +22,6 @@ import org.slf4j.LoggerFactory;
 public class ReportGenerator {
     private static final Logger logger = LoggerFactory.getLogger(ReportGenerator.class);
     private static final String[] RULE_DOCS = {
-            "CONFIG_CLIENTIDMAP_VALIDATOR.md",
             "CONFIG_GENERIC_PROPERTY_FILE_CHECK.md",
             "CONFIG_MANDATORY_PROPERTY_VALUE_CHECK.md",
             "CONFIG_MANDATORY_SUBSTRING_CHECK.md",
@@ -40,7 +41,8 @@ public class ReportGenerator {
             "CODE_XML_XPATH_NOT_EXISTS.md",
             "CONDITIONAL_CHECK.md",
             "CODE_PROJECT_CONTEXT.md",
-            "CODE_FILE_EXISTS.md"
+            "CODE_FILE_EXISTS.md",
+            "CONFIG_CLIENTIDMAP_VALIDATOR.md"
     };
     public static void generateIndividualReports(ValidationReport report, Path outputDir) {
         try {
@@ -264,7 +266,7 @@ public class ReportGenerator {
             String finalHtml = String.format(html,
                     escape(report.projectPath),
                     escape(report.projectPath),
-                    LocalDateTime.now().toString(),
+                    ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z")),
                     report.passed.size() + report.failed.size(),
                     report.passed.size(),
                     report.failed.size(),
@@ -369,6 +371,7 @@ public class ReportGenerator {
                     relativeLink = "report.html"; 
                 }
                 tableRows.append("<tr style='background-color:").append(color).append("'>")
+                        .append("<td>").append(escape(r.repository)).append("</td>")
                         .append("<td>").append(escape(r.name)).append("</td>")
                         .append("<td>").append(r.passed + r.failed).append("</td>")
                         .append("<td>").append(r.passed).append("</td>")
@@ -442,17 +445,19 @@ public class ReportGenerator {
                                 <strong>Total APIs Scanned:</strong> %d<br>
                                 <strong>Total Rules:</strong> %d | <strong style="color:green">Passed:</strong> %d | <strong style="color:red">Failed:</strong> %d
                             </div>
+                            %s 
                             <div class="search-box">
                                 <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by API name, status, or counts...">
                             </div>
                             <table id="resultsTable">
                                 <thead>
                                     <tr>
-                                        <th onclick="sortTable(0)">API Name</th>
-                                        <th onclick="sortTable(1)">Total Rules</th>
-                                        <th onclick="sortTable(2)">Passed</th>
-                                        <th onclick="sortTable(3)">Failed</th>
-                                        <th onclick="sortTable(4)">Status</th>
+                                        <th onclick="sortTable(0)">Repository</th>
+                                        <th onclick="sortTable(1)">API Name</th>
+                                        <th onclick="sortTable(2)">Total Rules</th>
+                                        <th onclick="sortTable(3)">Passed</th>
+                                        <th onclick="sortTable(4)">Failed</th>
+                                        <th onclick="sortTable(5)">Status</th>
                                         <th>Report</th>
                                     </tr>
                                 </thead>
@@ -525,12 +530,36 @@ public class ReportGenerator {
                     </html>
                     """;
             
+
+            // Check for git warnings
+            String warningHtml = "";
+            try {
+                Path warningPath = outputPath.getParent().resolve(".muleguard_git_warnings");
+                if (Files.exists(warningPath)) {
+                    List<String> warnings = Files.readAllLines(warningPath);
+                    if (!warnings.isEmpty()) {
+                        StringBuilder sb = new StringBuilder();
+                        sb.append("<div style=\"border: 1px solid #ffcccc; padding: 10px 20px; margin-bottom: 20px; background-color: #fff5f5; border-radius: 5px; color: #d9534f;\">");
+                        sb.append("<h4 style=\"margin-top: 0; margin-bottom: 10px; color: #d9534f;\">⚠️ Git Clone Restrictions Applied:</h4>");
+                        sb.append("<ul style=\"margin: 0; padding-left: 20px;\">");
+                        for (String w : warnings) {
+                            sb.append("<li>").append(escape(w)).append("</li>");
+                        }
+                        sb.append("</ul></div>");
+                        warningHtml = sb.toString();
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to read git warnings: " + e.getMessage());
+            }
+
             String finalHtml = String.format(html,
-                            LocalDateTime.now().toString(),
+                            ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z")),
                             totalApis,
                             totalRules,
                             totalPassed,
                             totalFailed,
+                            warningHtml,
                             tableRows);
             Path htmlPath = outputPath.resolve("CONSOLIDATED-REPORT.html");
             Files.writeString(htmlPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
@@ -737,6 +766,14 @@ public class ReportGenerator {
                 sidebar.append("</li>");
 
                 String htmlContent = convertMdToHtml(mdContent);
+                
+                if ("CLIENTIDMAP_VALIDATOR".equals(ruleName)) {
+                    htmlContent = "<div style=\"background-color: #e3f2fd; border-left: 4px solid #2196F3; padding: 15px; margin-bottom: 20px; border-radius: 4px;\">" +
+                            "<strong style=\"color: #0d47a1;\">ℹ️ Custom Coded Rule</strong><br>" +
+                            "This validation is implemented as a custom Java rule and cannot be configured via standard YAML parameters." +
+                            "</div>" + htmlContent;
+                }
+
                 content.append(String.format("<div id=\"%s\" class=\"rule-content\" style=\"display: %s;\">%s</div>", 
                         ruleName, (index == 0 ? "block" : "none"), htmlContent));
                 index++;
@@ -841,6 +878,16 @@ public class ReportGenerator {
                             .search-highlight { background-color: #ffeb3b; color: black; font-weight: bold; border-radius: 2px; }
                             ::highlight(search-results) { background-color: #ffeb3b; color: black; }
                             .match-count { background: #663399; color: white; border-radius: 10px; padding: 2px 8px; font-size: 0.8em; margin-left: 10px; font-weight: bold; white-space: nowrap; }
+                            .resizer {
+                                width: 5px;
+                                background-color: #ddd;
+                                cursor: col-resize;
+                                transition: background-color 0.2s;
+                                z-index: 10;
+                            }
+                            .resizer:hover, .resizer.resizing {
+                                background-color: var(--raks-purple);
+                            }
                         </style>
                         <script>
                             var currentFilter = "";
@@ -1117,6 +1164,9 @@ public class ReportGenerator {
                     <body>
                         <div class="sidebar" id="sidebar">
                             <div class="sidebar-header">
+                                <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                    <img src="logo.svg" alt="MuleGuard" style="height: 30px; display: block;">
+                                </div>
                                 <h2>MuleGuard Rules</h2>
                                 <input type="text" id="filterInput" onkeyup="onSearchInput()" placeholder="Search rules..." 
                                        style="width: 100%%; padding: 8px; margin-top: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">

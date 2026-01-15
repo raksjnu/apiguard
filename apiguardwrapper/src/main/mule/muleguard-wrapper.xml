@@ -167,7 +167,60 @@ output application/json
             else 'application/octet-stream'
         ]"/>
 
-        <set-payload value="#[readUrl('classpath://web/muleguard/' ++ vars.resourcePath, 'application/octet-stream')]"/>
+        <file:read path="#[p('app.home') ++ '/web/muleguard/' ++ vars.resourcePath]" config-ref="File_Config"/>
+    </flow>
+
+    <!-- NEW FLOW: Recursive Git Discovery for Wrapper -->
+    <flow name="muleguard-git-discovery-flow">
+        <http:listener path="/muleguard/api/git/discovery" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[{"Content-Type": "application/json"}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        
+        <logger level="INFO" message="#['Starting Recursive Git Discovery for Group: ' ++ (attributes.queryParams.group default 'None')]"/>
+
+        <java:invoke-static class="com.raks.muleguard.util.GitHelper" method="listRepositories(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
+            <java:args>#[{
+                arg0: attributes.headers['x-git-provider'] default 'gitlab',
+                arg1: attributes.headers['x-git-token'] default '',
+                arg2: attributes.queryParams.group,
+                arg3: attributes.queryParams.filter,
+                arg4: p('gitanalyzer.gitlab.url'),
+                arg5: p('gitanalyzer.github.url')
+            }]</java:args>
+        </java:invoke-static>
+        
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <error-handler>
+            <on-error-continue type="ANY">
+                <logger level="ERROR" message="#['Git Discovery Failed: ' ++ error.description]"/>
+                <set-variable variableName="httpStatus" value="500"/>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    error: "Failed to fetch repositories",
+    details: error.description
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </on-error-continue>
+        </error-handler>
     </flow>
 
     <!-- Flow 4.5: Session Validation Endpoint -->
@@ -207,6 +260,81 @@ output application/json
         </try>
     </flow>
 
+    <!-- Flow 4.6: Git Discovery Endpoints -->
+    <flow name="git-discovery-repos-flow">
+        <http:listener path="/muleguard/api/git/repos" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <set-variable variableName="provider" value="#[attributes.queryParams.provider default 'gitlab']"/>
+        <set-variable variableName="token" value="#[attributes.queryParams.token default '']"/>
+        <set-variable variableName="query" value="#[attributes.queryParams.query default '']"/>
+        
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    "gitlab.url": p('gitanalyzer.gitlab.url') default 'https://gitlab.com',
+    "github.url": p('gitanalyzer.github.url') default 'https://api.github.com'
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <java:invoke-static class="com.raks.muleguard.wrapper.GitDiscoveryHelper" method="listRepos(String, String, String, Map)">
+            <java:args>#[{
+                arg0: vars.provider,
+                arg1: vars.token,
+                arg2: vars.query,
+                arg3: payload
+            }]</java:args>
+        </java:invoke-static>
+        
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
+    <flow name="git-discovery-branches-flow">
+        <http:listener path="/muleguard/api/git/branches" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <set-variable variableName="provider" value="#[attributes.queryParams.provider default 'gitlab']"/>
+        <set-variable variableName="token" value="#[attributes.queryParams.token default '']"/>
+        <set-variable variableName="repo" value="#[attributes.queryParams.repo default '']"/>
+        
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    "gitlab.url": p('gitanalyzer.gitlab.url') default 'https://gitlab.com',
+    "github.url": p('gitanalyzer.github.url') default 'https://api.github.com'
+}]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+        
+        <java:invoke-static class="com.raks.muleguard.wrapper.GitDiscoveryHelper" method="listBranches(String, String, String, Map)">
+            <java:args>#[{
+                arg0: vars.provider,
+                arg1: vars.token,
+                arg2: vars.repo,
+                arg3: payload
+            }]</java:args>
+        </java:invoke-static>
+        
+        <ee:transform>
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+        </ee:transform>
+    </flow>
+
     <!-- Flow 5: Validation Trigger (Local & ZIP Modes) -->
     <flow name="validation-trigger-flow">
         <http:listener path="/muleguard/validate" config-ref="HTTP_Listener_config" allowedMethods="POST"/>
@@ -237,7 +365,11 @@ output application/java
     customRulesContent: payload.parts.customRules.content default null,
     attachReports: payload.parts.attachReports.content default null,
     attachInput: payload.parts.attachInput.content default null,
-    attachProject: payload.parts.attachProject.content default null
+    attachProject: payload.parts.attachProject.content default null,
+    gitUrl: payload.parts.gitUrl.content default null,
+    gitUrls: payload.parts.gitUrls.content default null,
+    gitBranch: payload.parts.gitBranch.content default null,
+    gitToken: payload.parts.gitToken.content default null
 }]]></ee:set-payload>
                     </ee:message>
                 </ee:transform>
@@ -250,6 +382,10 @@ output application/java
                 <set-variable variableName="zipFileContent" value="#[payload.zipFileContent]"/>
                 <set-variable variableName="zipFilename" value="#[payload.zipFilename]"/>
                 <set-variable variableName="customRulesContent" value="#[payload.customRulesContent]"/>
+                <set-variable variableName="gitUrl" value="#[trim(payload.gitUrl default '')]"/>
+                <set-variable variableName="gitUrls" value="#[trim(payload.gitUrls default '')]"/>
+                <set-variable variableName="gitBranch" value="#[trim(payload.gitBranch default '')]"/>
+                <set-variable variableName="gitToken" value="#[trim(payload.gitToken default '')]"/>
                 
                 <!-- Auto-detect base URL from request headers -->
                 <!-- CloudHub fix: Append /apiguard for CloudHub URLs if not already present in the display logic -->
@@ -286,6 +422,10 @@ output application/java
                 <set-variable variableName="pathContent" value="#[payload.path default null]"/>
                 <set-variable variableName="zipFileContent" value="#[null]"/>
                 <set-variable variableName="customRulesContent" value="#[null]"/>
+                <set-variable variableName="gitUrl" value="#[payload.gitUrl default null]"/>
+                <set-variable variableName="gitUrls" value="#[payload.gitUrls default null]"/>
+                <set-variable variableName="gitBranch" value="#[payload.gitBranch default null]"/>
+                <set-variable variableName="gitToken" value="#[payload.gitToken default null]"/>
                 <set-variable variableName="isMultipart" value="#[false]"/>
             </when>
             
@@ -311,7 +451,9 @@ output application/java
             <!-- Local Folder Mode -->
             <when expression="#[trim(vars.validationMode as String) == 'local']">
                 <set-variable variableName="projectPath" value="#[vars.pathContent]"/>
+                <set-variable variableName="projectPath" value="#[vars.pathContent]"/>
                 <set-variable variableName="displayPath" value="#[vars.pathContent]"/>
+                <set-variable variableName="reportBaseName" value="#[if (vars.pathContent contains '/') (vars.pathContent splitBy '/')[-1] else (vars.pathContent splitBy '\\')[-1]]"/>
                 
                 <!-- Handle custom rules if provided -->
                 <choice>
@@ -406,6 +548,7 @@ output application/java
                         <!-- Set project path for validation -->
                         <set-variable variableName="projectPath" value="#[vars.extractedPath]"/>
                         <set-variable variableName="displayPath" value="#[vars.zipFilename]"/>
+                        <set-variable variableName="reportBaseName" value="#[vars.zipFilename replace '.zip' with '' replace '.jar' with '']"/>
                         
                         <logger level="INFO" message="#['Archive extracted to: ' ++ (vars.projectPath as String)]"/>
                         
@@ -431,10 +574,87 @@ output application/java
                 </choice>
             </when>
             
+            <!-- Git Repository Mode -->
+            <when expression="#[trim(vars.validationMode as String) == 'git']">
+                <!-- Use userSessionId for workspace -->
+                <set-variable variableName="workingDir" 
+                    value="#[p('muleguard.work.dir') ++ '/' ++ vars.userSessionId]"/>
+                
+                <!-- Delete existing directory if present to allow re-runs -->
+                <try>
+                    <file:delete path="#[vars.workingDir]" config-ref="File_Config"/>
+                    <logger level="INFO" message="#['Deleted existing working directory for Git clone: ' ++ vars.workingDir]"/>
+                    <error-handler>
+                        <on-error-continue type="ANY" logException="false">
+                            <logger level="DEBUG" message="Working directory does not exist yet or cannot be deleted (ignoring error)"/>
+                        </on-error-continue>
+                    </error-handler>
+                </try>
+                
+                <!-- Create working directory -->
+                <file:create-directory directoryPath="#[vars.workingDir]" config-ref="File_Config"/>
+
+                <!-- Handle Multiple URLs if gitUrls is provided -->
+                <set-variable variableName="gitUrlList" value="#[if (vars.gitUrls != null and vars.gitUrls != '') (vars.gitUrls splitBy ',') else [vars.gitUrl]]"/>
+                
+                <foreach collection="#[vars.gitUrlList]" counterVariableName="gitCounter">
+                    <set-variable variableName="currentGitUrl" value="#[trim(payload)]"/>
+                    <ee:transform>
+                        <ee:message />
+                        <ee:variables>
+                            <ee:set-variable variableName="currentRepoName"><![CDATA[%dw 2.0
+output application/java
+---
+((vars.currentGitUrl splitBy "/")[-1] replace ".git" with "") default ("git-repo-" ++ vars.gitCounter)]]></ee:set-variable>
+                        </ee:variables>
+                    </ee:transform>
+                    
+                    <set-variable variableName="currentProjectPath" value="#[vars.workingDir ++ '/' ++ vars.currentRepoName]"/>
+                    
+                    <logger level="INFO" message="#['Cloning Git Repo [' ++ vars.gitCounter ++ ']: ' ++ vars.currentGitUrl ++ ' to ' ++ vars.currentProjectPath]"/>
+                
+                    <java:invoke-static class="com.raks.muleguard.util.GitHelper" 
+                                        method="cloneRepository(String, String, String, String)">
+                        <java:args>#[{
+                            arg0: vars.currentGitUrl,
+                            arg1: vars.gitBranch default "",
+                            arg2: vars.gitToken default "",
+                            arg3: vars.currentProjectPath
+                        }]</java:args>
+                    </java:invoke-static>
+                </foreach>
+                
+                <set-variable variableName="projectPath" value="#[vars.workingDir]"/>
+                <!-- Audit requirement: Show full Git URLs -->
+                <set-variable variableName="displayPath" value="#[vars.gitUrlList joinBy ', ']"/>
+                <set-variable variableName="reportBaseName" value="#[
+                    if (sizeOf(vars.gitUrlList) > 3) 
+                        ((vars.gitUrlList[0 to 2] map ((url) -> (url splitBy '/')[-1] replace '.git' with '')) joinBy '-') ++ '-and-others' 
+                    else 
+                        ((vars.gitUrlList map ((url) -> (url splitBy '/')[-1] replace '.git' with '')) joinBy '-')
+                ]"/>
+                
+                <logger level="INFO" message="Git clone(s) successful."/>
+
+                <!-- Handle custom rules if provided -->
+                <choice>
+                    <when expression="#[vars.customRulesContent != null]">
+                         <file:write path="#[vars.workingDir ++ '/rules.yaml']" mode="OVERWRITE" config-ref="File_Config">
+                            <file:content>#[vars.customRulesContent]</file:content>
+                        </file:write>
+                        <set-variable variableName="customRulesPath" value="#[vars.workingDir ++ '/rules.yaml']"/>
+                        <logger level="INFO" message="#['Custom rules saved to: ' ++ vars.customRulesPath]"/>
+                    </when>
+                    <otherwise>
+                        <set-variable variableName="customRulesPath" value="#[null]"/>
+                    </otherwise>
+                </choice>
+            </when>
+
             <!-- Invalid mode -->
             <otherwise>
                 <logger level="ERROR" message="#['Invalid validation mode: ' ++ vars.validationMode]"/>
-                <raise-error type="MULEGUARD:INVALID_MODE" description="#['Invalid validation mode: ' ++ vars.validationMode ++ '. Must be local, zip, or jar']"/>
+                <raise-error type="MULEGUARD:INVALID_MODE" description="#['Invalid validation mode: ' ++ vars.validationMode ++ '. Must be local, zip, jar, or git']"/>
             </otherwise>
         </choice>
         
@@ -483,7 +703,7 @@ output application/java
 
         <!-- Store project path for report serving as concatenated string -->
         <os:store key="#[vars.userSessionId]" objectStore="Report_Path_Store">
-            <os:value>#[vars.projectPath ++ '||' ++ vars.reportDirName]</os:value>
+            <os:value>#[vars.projectPath ++ '||' ++ vars.reportDirName ++ '||' ++ (vars.reportBaseName default 'project')]</os:value>
         </os:store>
         
         <!-- Generate ZIP for Download Button (Synchronous) -->
@@ -716,7 +936,7 @@ output text/plain
                 <tr><td class='label'>Session ID:</td><td><code>" ++ vars.userSessionId ++ "</code></td></tr>
                 <tr><td class='label'>Project Path:</td><td>" ++ vars.displayPath ++ "</td></tr>
                 <tr><td class='label'>Custom Rules:</td><td>" ++ (if (vars.customRulesPath != null) "Yes" else "No") ++ "</td></tr>
-                <tr><td class='label'>Timestamp:</td><td>" ++ now() as String {format: "yyyy-MM-dd HH:mm:ss"} ++ "</td></tr>
+                <tr><td class='label'>Timestamp:</td><td>" ++ (now() >> p('raksanalyzer.email.timezone')) as String {format: "yyyy-MM-dd HH:mm:ss z"} ++ "</td></tr>
             </table>
         </div>
         
@@ -1108,7 +1328,7 @@ output text/html encoding="UTF-8"
                     ---
                     {
                         "Content-Type": "application/zip",
-                        "Content-Disposition": "attachment; filename=\"validation-report.zip\""
+                        "Content-Disposition": "attachment; filename=\"" ++ (vars.downloadFilename default "validation-report.zip") ++ "\""
                     }
                 ]]]></http:headers>
             </http:response>
@@ -1147,9 +1367,12 @@ output text/html encoding="UTF-8"
                  
                  <choice>
                     <when expression="#[vars.storedPath != null]">
-                        <!-- storedPath format: projectPath || reportDirName -->
+                        <!-- storedPath format: projectPath || reportDirName || reportBaseName -->
                         <set-variable variableName="projectPath" value="#[(vars.storedPath splitBy '||')[0]]"/>
                         <set-variable variableName="reportDirName" value="#[(vars.storedPath splitBy '||')[1]]"/>
+                        <set-variable variableName="baseName" value="#[(vars.storedPath splitBy '||')[2] default 'project']"/>
+                        <!-- Construct filename: baseName_validation-report.zip -->
+                        <set-variable variableName="downloadFilename" value="#[vars.baseName ++ '_validation-report.zip']"/>
                         
                         <!-- The ZIP is created at projectPath/reportDirName.zip -->
                         <set-variable variableName="zipFilePath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>

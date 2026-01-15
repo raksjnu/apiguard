@@ -135,7 +135,10 @@ public class MuleGuardMain {
             int passed = report.passed.size();
             int failed = report.failed.size();
             int skipped = report.skipped.size();
-            results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
+            Path rel = parentFolder.relativize(apiDir);
+            String repoName = rel.getNameCount() > 1 ? rel.getName(0).toString() : apiName;
+            
+            results.add(new ApiResult(apiName, repoName, apiDir, passed, failed, skipped, apiReportDir));
             logger.info("   {} | Files Scanned: {} | Passed: {} | Failed: {}", 
                     (failed == 0 ? "PASS" : "FAIL"), (passed + failed + skipped), passed, failed);
         }
@@ -260,7 +263,65 @@ public class MuleGuardMain {
                     continue;
                 }
                 if (displayName != null && !displayName.trim().isEmpty()) {
-                    report.projectPath = displayName;
+                    if (displayName.contains(",")) {
+                        String matchedProject = null;
+                        String[] projects = displayName.split(",");
+                        
+                        // Calculate root folder name (the cloned repo folder)
+                        Path relMatch = parentFolder.relativize(apiDir);
+                        String rootFolder = (relMatch.getNameCount() > 0) ? relMatch.getName(0).toString() : apiName;
+                        
+                        // 1. Try Exact Match with Root Folder
+                        for (String proj : projects) {
+                            String p = proj.trim();
+                            String pName = p;
+                            if (pName.endsWith("/")) pName = pName.substring(0, pName.length() - 1);
+                            int lastSlash = pName.lastIndexOf('/');
+                            if (lastSlash >= 0) pName = pName.substring(lastSlash + 1);
+                            if (pName.endsWith(".git")) pName = pName.substring(0, pName.length() - 4);
+                            
+                            if (pName.trim().equalsIgnoreCase(rootFolder.trim())) {
+                                matchedProject = p;
+                                break;
+                            }
+                        }
+                        
+                        // 2. Fallback: Try Exact Match with ApiName (if different)
+                        if (matchedProject == null && !apiName.equals(rootFolder)) {
+                             for (String proj : projects) {
+                                String p = proj.trim();
+                                String pName = p;
+                                if (pName.endsWith("/")) pName = pName.substring(0, pName.length() - 1);
+                                int lastSlash = pName.lastIndexOf('/');
+                                if (lastSlash >= 0) pName = pName.substring(lastSlash + 1);
+                                if (pName.endsWith(".git")) pName = pName.substring(0, pName.length() - 4);
+                                
+                                if (pName.trim().equalsIgnoreCase(apiName.trim())) {
+                                    matchedProject = p;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        // 3. Fallback: Contains Check (Desperate Measure)
+                        if (matchedProject == null) {
+                             for (String proj : projects) {
+                                String p = proj.trim();
+                                if (p.contains("/" + rootFolder + ".git") || p.contains("/" + rootFolder + "/")) {
+                                    matchedProject = p;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (matchedProject != null) {
+                            report.projectPath = matchedProject;
+                        } else {
+                            report.projectPath = displayName;
+                        }
+                    } else {
+                        report.projectPath = displayName;
+                    }
                 } else {
                     report.projectPath = apiName + " (" + apiDir.toString() + ")";
                 }
@@ -268,7 +329,10 @@ public class MuleGuardMain {
                 int passed = report.passed.size();
                 int failed = report.failed.size();
                 int skipped = report.skipped.size();
-                results.add(new ApiResult(apiName, apiDir, passed, failed, skipped, apiReportDir));
+                Path rel = parentFolder.relativize(apiDir);
+                String repoName = rel.getNameCount() > 1 ? rel.getName(0).toString() : apiName;
+
+                results.add(new ApiResult(apiName, repoName, apiDir, passed, failed, skipped, apiReportDir));
                 logger.info("Validating API: {}", apiName);
                 logger.info("   {} | Passed: {} | Failed: {} | Skipped: {}",
                         (failed == 0 ? "PASS" : "FAIL"), passed, failed, skipped);
@@ -403,11 +467,13 @@ public class MuleGuardMain {
     }
     public static class ApiResult {
         public final String name;
+        public final String repository;
         public final Path path;
         public final int passed, failed, skipped;
         public final Path reportDir;
-        public ApiResult(String name, Path path, int passed, int failed, int skipped, Path reportDir) {
+        public ApiResult(String name, String repository, Path path, int passed, int failed, int skipped, Path reportDir) {
             this.name = name;
+            this.repository = repository;
             this.path = path;
             this.passed = passed;
             this.failed = failed;

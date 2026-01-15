@@ -1,10 +1,12 @@
 package com.raks.muleguard.checks;
+
 import com.raks.muleguard.model.Check;
 import com.raks.muleguard.model.CheckResult;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+
 import java.io.FileReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -12,7 +14,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+
 public class GenericPomValidationCheck extends AbstractCheck {
+
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
         String validationType = (String) check.getParams().get("validationType");
@@ -139,6 +143,7 @@ public class GenericPomValidationCheck extends AbstractCheck {
                     String.join("\n", failures));
         }
     }
+    
     private CheckResult validatePlugins(Model model, Check check, boolean shouldExist) {
         @SuppressWarnings("unchecked")
         List<String> expectedPlugins = (List<String>) check.getParams().get("plugins");
@@ -177,6 +182,7 @@ public class GenericPomValidationCheck extends AbstractCheck {
                     String.join("\n", failures));
         }
     }
+    
     private CheckResult validateProperties(Model model, Check check, boolean shouldExist) {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> expectedProps = (List<Map<String, String>>) check.getParams().get("properties");

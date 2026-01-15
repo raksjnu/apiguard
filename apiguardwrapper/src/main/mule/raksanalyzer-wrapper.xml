@@ -472,7 +472,7 @@ output text/plain
         <div class='section'>
             <h3 style='color: #663399; margin-top: 0;'>Project Analysis Complete</h3>
             <p>Please find attached the analysis documents for project: <strong>" ++ payload.projectName ++ "</strong></p>
-            <p><span class='label'>Generated:</span> " ++ (now() >> "${raksanalyzer.email.timezone}") as String {format: "yyyy-MM-dd HH:mm:ss z"} ++ "</p>
+            <p><span class='label'>Generated:</span> " ++ (now() >>  p('raksanalyzer.email.timezone')) as String {format: "yyyy-MM-dd HH:mm:ss z"} ++ "</p>
         </div>
         
         <div class='footer'>

@@ -47,15 +47,7 @@
 config:
   environments:
   - SBX
-  - ATDV
-  - TDV1
-  - TDV
-  - IBF
-  - MNE
-  - MNE1
-  - MNE2
   - ITE
-  - PITE
   - PREP
   - DRL
   - TRN

@@ -147,6 +147,20 @@
             <version>1.4.14</version>
         </dependency>
 
+        <!-- JGit for Git Cloning -->
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>6.6.1.202309021850-r</version>
+        </dependency>
+
+        <!-- HTTP Client for Git API interactions -->
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>4.5.14</version>
+        </dependency>
+
     </dependencies>
 
     <build>

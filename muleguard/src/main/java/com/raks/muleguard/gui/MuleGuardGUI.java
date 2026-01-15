@@ -24,6 +24,10 @@ import java.util.UUID;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
+import java.util.List;
+import java.util.ArrayList;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.UnsupportedEncodingException;
 
 /**
  * MuleGuard Standalone GUI
@@ -63,7 +67,9 @@ public class MuleGuardGUI {
 
             server.createContext("/api/validate", new ValidationHandler());
             server.createContext("/api/open", new OpenReportHandler());
-            server.createContext("/download", new DownloadHandler()); // Added Download Handler
+            server.createContext("/api/git/repos", new GitDiscoveryReposHandler());
+            server.createContext("/api/git/branches", new GitDiscoveryBranchesHandler());
+            server.createContext("/download", new DownloadHandler());
             
             server.setExecutor(null);
             server.start();
@@ -108,45 +114,7 @@ public class MuleGuardGUI {
         }
     }
 
-    /**
-     * Handler for downloading files (e.g. reports).
-     */
-    static class DownloadHandler implements HttpHandler {
-        @Override
-        public void handle(HttpExchange exchange) throws IOException {
-            String query = exchange.getRequestURI().getQuery();
-            Map<String, String> params = new HashMap<>();
-            if (query != null) {
-                for (String pair : query.split("&")) {
-                    int idx = pair.indexOf("=");
-                    if (idx > 0)
-                        params.put(URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8), URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8));
-                }
-            }
 
-            String filename = params.get("file");
-            if (filename == null || filename.isEmpty() || filename.contains("..")) {
-                exchange.sendResponseHeaders(400, -1);
-                return;
-            }
-
-
-
-
-            Path appTempDir = Paths.get("temp").toAbsolutePath();
-            Path file = appTempDir.resolve(filename);
-
-            if (Files.exists(file) && !Files.isDirectory(file)) {
-                exchange.getResponseHeaders().set("Content-Type", "application/octet-stream");
-                exchange.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-                byte[] content = Files.readAllBytes(file);
-                exchange.sendResponseHeaders(200, content.length);
-                try (OutputStream os = exchange.getResponseBody()) { os.write(content); }
-            } else {
-                exchange.sendResponseHeaders(404, -1);
-            }
-        }
-    }
 
     /**
      * Handler for static resources and the main index page.
@@ -219,11 +187,60 @@ public class MuleGuardGUI {
                                 }
                                 projectPath = extractPath;
                             }
+                        } else if ("git".equals(mode)) {
+                            String gitUrl = (String) params.get("gitUrl");
+                            String gitUrls = (String) params.get("gitUrls");
+                            String gitBranch = (String) params.get("gitBranch");
+                            String gitToken = (String) params.get("gitToken");
+                            
+                            java.util.List<String> urlList = new java.util.ArrayList<>();
+                            if (gitUrls != null && !gitUrls.trim().isEmpty()) {
+                                for (String u : gitUrls.split(",")) if (!u.trim().isEmpty()) urlList.add(u.trim());
+                            } else if (gitUrl != null && !gitUrl.trim().isEmpty()) {
+                                urlList.add(gitUrl.trim());
+                            }
+
+                            if (urlList.isEmpty()) {
+                                throw new IllegalArgumentException("No Git URLs provided");
+                            }
+                            
+                            // Create a dedicated directory for this session, aligned with ReportHandler expectation
+                            Path sessionWorkDir = Paths.get(appTempDir, "muleguard-sessions", sessionId);
+                            Files.createDirectories(sessionWorkDir);
+                            
+                            for (String url : urlList) {
+                                String repoName = url;
+                                if (repoName.contains("/")) repoName = repoName.substring(repoName.lastIndexOf("/") + 1);
+                                if (repoName.endsWith(".git")) repoName = repoName.substring(0, repoName.length() - 4);
+                                
+                                Path repoDir = sessionWorkDir.resolve(repoName);
+                                logger.info("Cloning Git Repo: {} to {}", url, repoDir);
+                                com.raks.muleguard.util.GitHelper.cloneRepository(url, gitBranch, gitToken, repoDir.toAbsolutePath().toString());
+                            }
+                            
+                            projectPath = sessionWorkDir.toAbsolutePath().toString();
                         }
 
                     if (projectPath != null) {
                         logger.info("Running validation on: {}", projectPath);
-                        MuleGuardMain.main(new String[]{"-p", projectPath});
+                        
+                        List<String> args = new ArrayList<>();
+                        args.add("-p");
+                        args.add(projectPath);
+                        
+                        // Handle Custom Rules
+                        File customRulesFile = (File) params.get("customRules");
+                        String customRulesPath = (String) params.get("customRulesPath");
+                        
+                        if (customRulesFile != null) {
+                            args.add("-r");
+                            args.add(customRulesFile.getAbsolutePath());
+                        } else if (customRulesPath != null && !customRulesPath.isBlank()) {
+                             args.add("-r");
+                             args.add(customRulesPath);
+                        }
+                        
+                        MuleGuardMain.main(args.toArray(new String[0]));
                         
                         Path reportDir = Paths.get(projectPath, "muleguard-reports");
                         if (!Files.exists(reportDir)) reportDir = Paths.get("muleguard-reports");
@@ -253,10 +270,44 @@ public class MuleGuardGUI {
                                 
 
                                 try {
-                                    Path zipPath = reportDir.getParent().resolve("validation-report.zip");
+                                    // Determine a clean base name for the zip
+                                    // Use projectPath filename or fallback
+                                    String safeBaseName = Paths.get(projectPath).getFileName().toString();
+                                    if(mode.equals("git") && args.contains("-p")) {
+                                         // In git mode, projectPath is the temp dir which might be just session ID or similar unless we use sessionWorkDir logic
+                                         // Actually in git mode above, projectPath is sessionWorkDir which ends in valid name?
+                                         // sessionWorkDir was Paths.get(appTempDir, "muleguard-sessions", sessionId);
+                                         // Wait, we cloned into sessionWorkDir/RepoName.
+                                         // But projectPath is set to sessionWorkDir (line 259).
+                                         // So projectPath ends with sessionId. That is annoying.
+                                         
+                                         // Let's improve the name for Git mode.
+                                         // We cloned repos into subfolders.
+                                         // Let's use the first repo name if possible.
+                                         if (Files.list(Paths.get(projectPath)).anyMatch(p -> Files.isDirectory(p) && !p.getFileName().toString().equals("muleguard-reports"))) {
+                                            // Find first project dir
+                                            safeBaseName = Files.list(Paths.get(projectPath))
+                                                .filter(p -> Files.isDirectory(p) && !p.getFileName().toString().equals("muleguard-reports"))
+                                                .findFirst()
+                                                .map(p -> p.getFileName().toString())
+                                                .orElse("GitProject");
+                                                
+                                            // If multiple, maybe append etc. but simple is fine.
+                                         } else {
+                                             safeBaseName = "GitProject";
+                                         }
+                                    }
+                                    
+                                    // Sanitize
+                                    safeBaseName = safeBaseName.replaceAll("[^a-zA-Z0-9._-]", "_");
+                                    
+                                    String zipFileName = safeBaseName + "_validation-report.zip";
+                                    // Ensure zip is saved in the session root so DownloadHandler can find it
+                                    Path zipPath = sessionBase.resolve(zipFileName);
                                     zipFolder(reportDir, zipPath);
 
-                                    reportZipName = Paths.get("temp").toAbsolutePath().relativize(zipPath).toString();
+                                    // Return ONLY the filename so frontend can request via /download?file=...&session=...
+                                    reportZipName = zipFileName;
                                 } catch (Exception e) {
                                     logger.error("Failed to zip report directory", e);
                                 }
@@ -323,15 +374,24 @@ public class MuleGuardGUI {
         private Map<String, Object> parseRequest(HttpExchange exchange) throws IOException {
             Map<String, Object> params = new HashMap<>();
             String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
+            logger.info("DEBUG: Received Content-Type: {}", contentType);
+            
             if (contentType != null && contentType.startsWith("multipart/form-data")) {
                 String boundary = contentType.substring(contentType.indexOf("boundary=") + 9);
+                int semi = boundary.indexOf(';');
+                if (semi != -1) boundary = boundary.substring(0, semi);
+                boundary = boundary.trim();
                 if (boundary.startsWith("\"") && boundary.endsWith("\"")) boundary = boundary.substring(1, boundary.length() - 1);
+                
+                logger.info("DEBUG: Parsed Boundary: '{}'", boundary);
+                
                 try (InputStream is = exchange.getRequestBody()) {
                     MultipartParser parser = new MultipartParser(is, boundary);
                     params.putAll(parser.parse());
                 }
             } else {
                 String query = new String(readAllBytes(exchange.getRequestBody()), StandardCharsets.UTF_8);
+                logger.info("DEBUG: Received URL Encoded Body: {}", query);
                 if (!query.isEmpty()) {
                     String[] pairs = query.split("&");
                     for (String pair : pairs) {
@@ -340,6 +400,7 @@ public class MuleGuardGUI {
                     }
                 }
             }
+            logger.info("DEBUG: Parsed Params Keys: {}", params.keySet());
             return params;
         }
     }
@@ -366,6 +427,9 @@ public class MuleGuardGUI {
             Map<String, Object> params = new HashMap<>();
             byte[] data = readAllBytes(input);
             int offset = 0;
+            org.slf4j.Logger logger = LoggerFactory.getLogger(MuleGuardGUI.class);
+            logger.info("DEBUG: Multipart details - Total Size: {}", data.length);
+            
             while (offset < data.length) {
                 int boundaryIndex = indexOf(data, boundaryBytes, offset);
                 if (boundaryIndex == -1) break;
@@ -385,6 +449,8 @@ public class MuleGuardGUI {
                 if (disposition != null) {
                     String name = extractAttribute(disposition, "name");
                     String filename = extractAttribute(disposition, "filename");
+                    logger.info("DEBUG: Found Part: name='{}', filename='{}'", name, filename);
+                    
                     int nextBoundary = indexOf(data, boundaryBytes, offset);
                     if (nextBoundary == -1) nextBoundary = data.length;
                     int contentEnd = nextBoundary - 2;
@@ -399,6 +465,8 @@ public class MuleGuardGUI {
                         String value = new String(data, offset, length, StandardCharsets.UTF_8);
                         params.put(name, value);
                     }
+                } else {
+                     logger.warn("DEBUG: Part found without Content-Disposition header at offset {}", offset);
                 }
             }
             return params;
@@ -532,12 +600,139 @@ public class MuleGuardGUI {
                     os.write(content);
                 }
             } else {
-                 String msg = "404 Not Found: " + resourcePath;
-                 exchange.sendResponseHeaders(404, msg.length());
-                 try (OutputStream os = exchange.getResponseBody()) {
-                     os.write(msg.getBytes());
-                 }
+                exchange.sendResponseHeaders(404, -1);
             }
         }
+    }
+
+    /**
+     * Handler for downloading files from session.
+     */
+    static class DownloadHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+             String query = exchange.getRequestURI().getQuery();
+             Map<String, String> params = new HashMap<>();
+             if (query != null) {
+                 for (String pair : query.split("&")) {
+                     int idx = pair.indexOf("=");
+                     if (idx > 0)
+                         params.put(URLDecoder.decode(pair.substring(0, idx), StandardCharsets.UTF_8), URLDecoder.decode(pair.substring(idx + 1), StandardCharsets.UTF_8));
+                 }
+             }
+
+             String filename = params.get("file");
+             String sessionId = params.get("session");
+             
+             if (filename == null || filename.isEmpty() || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+                 exchange.sendResponseHeaders(400, -1);
+                 return;
+             }
+             
+             // If sessionId is missing, we might try to find it? No, require it.
+             if (sessionId == null || sessionId.isEmpty() || sessionId.contains("..") || sessionId.contains("/") || sessionId.contains("\\")) {
+                 // For backward compatibility, if filename is a relative path like "muleguard-sessions/UUID/file.zip", we could parse it.
+                 // But clean approach is session+file.
+                  exchange.sendResponseHeaders(400, -1);
+                  return;
+             }
+
+             Path appTempDir = Paths.get("temp").toAbsolutePath();
+             Path sessionDir = appTempDir.resolve("muleguard-sessions").resolve(sessionId);
+             Path file = sessionDir.resolve(filename);
+
+             if (Files.exists(file) && !Files.isDirectory(file)) {
+                 byte[] content = Files.readAllBytes(file);
+                 
+                 exchange.getResponseHeaders().set("Content-Type", "application/zip");
+                 exchange.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+                 exchange.sendResponseHeaders(200, content.length);
+                 try (OutputStream os = exchange.getResponseBody()) { os.write(content); }
+             } else {
+                 exchange.sendResponseHeaders(404, -1);
+             }
+        }
+    }
+
+
+    /**
+     * Handler for discovering Git repositories.
+     */
+    static class GitDiscoveryReposHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            try {
+                Map<String, String> queryParams = parseQueryParams(exchange.getRequestURI().getQuery());
+                String provider = queryParams.getOrDefault("provider", "gitlab");
+                String token = queryParams.getOrDefault("token", "");
+                String group = queryParams.getOrDefault("group", queryParams.getOrDefault("query", ""));
+                String filter = queryParams.getOrDefault("filter", "");
+                
+                // For standalone, we might not have p('...') properties easily, so use defaults or env if needed.
+                // But let's assume standard URLs or allow overriding via query?
+                String gitlabUrl = queryParams.get("gitlabUrl");
+                String githubUrl = queryParams.get("githubUrl");
+
+                java.util.List<String> repos = com.raks.muleguard.util.GitHelper.listRepositories(provider, token, group, filter, gitlabUrl, githubUrl);
+                
+                ObjectMapper mapper = new ObjectMapper();
+                String response = mapper.writeValueAsString(repos);
+                
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+            } catch (Exception e) {
+                logger.error("Git discovery (repos) failed", e);
+                String err = "{\"success\":false, \"message\":\"" + e.getMessage().replace("\"", "\\\"") + "\"}";
+                exchange.sendResponseHeaders(500, err.length());
+                try (OutputStream os = exchange.getResponseBody()) { os.write(err.getBytes()); }
+            }
+        }
+    }
+
+    /**
+     * Handler for discovering Git branches.
+     */
+    static class GitDiscoveryBranchesHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            try {
+                Map<String, String> queryParams = parseQueryParams(exchange.getRequestURI().getQuery());
+                String provider = queryParams.getOrDefault("provider", "gitlab");
+                String token = queryParams.getOrDefault("token", "");
+                String repo = queryParams.getOrDefault("repo", "");
+                
+                String gitlabUrl = queryParams.get("gitlabUrl");
+                String githubUrl = queryParams.get("githubUrl");
+
+                java.util.List<String> branches = com.raks.muleguard.util.GitHelper.listBranches(provider, token, repo, gitlabUrl, githubUrl);
+                
+                ObjectMapper mapper = new ObjectMapper();
+                String response = mapper.writeValueAsString(branches);
+                
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
+                exchange.sendResponseHeaders(200, bytes.length);
+                try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
+            } catch (Exception e) {
+                logger.error("Git discovery (branches) failed", e);
+                String err = "{\"success\":false, \"message\":\"" + e.getMessage().replace("\"", "\\\"") + "\"}";
+                exchange.sendResponseHeaders(500, err.length());
+                try (OutputStream os = exchange.getResponseBody()) { os.write(err.getBytes()); }
+            }
+        }
+    }
+
+    private static Map<String, String> parseQueryParams(String query) throws UnsupportedEncodingException {
+        Map<String, String> params = new HashMap<>();
+        if (query != null) {
+            for (String pair : query.split("&")) {
+                int idx = pair.indexOf("=");
+                if (idx > 0)
+                    params.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+            }
+        }
+        return params;
     }
 }
