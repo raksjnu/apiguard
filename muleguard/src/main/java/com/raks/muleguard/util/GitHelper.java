@@ -55,17 +55,28 @@ public class GitHelper {
      */
     public static void cloneRepository(String repoUrl, String branch, String token, String destinationPath) throws Exception {
         Path destination = Path.of(destinationPath);
-        logger.info("Cloning repository: {} (Branch: {}) to {}", repoUrl, branch, destination);
+        logger.info("[GitHelper] Cloning repository: {} (Branch: {}) to {}", repoUrl, branch, destination);
+        
+        // Debugging Token presence (Masked)
+        if (token != null && !token.isBlank()) {
+             String masked = token.length() > 4 ? token.substring(0, 2) + "***" + token.substring(token.length()-2) : "***";
+             logger.info("[GitHelper] Using Auth Token: {}", masked);
+        } else {
+             logger.info("[GitHelper] No Auth Token provided.");
+        }
 
         String finalUrl = repoUrl.trim();
         CredentialsProvider credentials = null;
 
         if (token != null && !token.isBlank()) {
             if (finalUrl.contains("gitlab")) {
+                logger.info("[GitHelper] Detected GitLab URL. Using 'oauth2' username strategy.");
                 credentials = new UsernamePasswordCredentialsProvider("oauth2", token);
             } else if (finalUrl.contains("github")) {
+                 logger.info("[GitHelper] Detected GitHub URL. Using token-as-username strategy.");
                  credentials = new UsernamePasswordCredentialsProvider(token, ""); 
             } else {
+                 logger.info("[GitHelper] Unknown Provider. Using generic token strategy.");
                  credentials = new UsernamePasswordCredentialsProvider("", token);
             }
         }
@@ -190,6 +201,7 @@ public class GitHelper {
      * Lists repositories for discovery.
      */
     public static List<String> listRepositories(String provider, String token, String group, String filter, String gitlabUrl, String githubUrl) throws Exception {
+        logger.info("[GitHelper] listRepositories invoked. Provider: {}, Group: {}, Filter: {}", provider, group, filter);
         if ("github".equalsIgnoreCase(provider)) {
             return listGitHubRepos(token, group, filter, githubUrl);
         } else {
@@ -202,8 +214,6 @@ public class GitHelper {
         String encodedGroup = URLEncoder.encode(group, StandardCharsets.UTF_8);
         String apiUrl = cleanBase + "/api/v4/groups/" + encodedGroup + "/projects?include_subgroups=true&per_page=100";
         
-        // If filter is simple (no commas), let GitLab handle it efficiently.
-        // If complex, fetch list and filter client-side.
         boolean clientSideFilter = false;
         if (filter != null && !filter.isBlank()) {
             if (filter.contains(",")) {
@@ -213,17 +223,67 @@ public class GitHelper {
             }
         }
         
+        logger.info("[GitHelper] Fetching GitLab Repos. URL: {}", apiUrl);
+        if(token != null && !token.isBlank()) logger.info("[GitHelper] Token present.");
+
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("PRIVATE-TOKEN", token)
-                .GET()
-                .build();
+        HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl));
+        if (token != null && !token.isBlank()) {
+            reqBuilder.header("PRIVATE-TOKEN", token);
+        }
+        
+        HttpRequest request = reqBuilder.GET().build();
         
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        logger.info("[GitHelper] Initial GitLab Group Response: {}", response.statusCode());
+        
+        if (response.statusCode() == 404) {
+             logger.info("[GitHelper] Group not found (404). Attempting User Lookup for: {}", group);
+             // Try fetching as User
+             // First, get User ID from username
+             String userApiUrl = cleanBase + "/api/v4/users?username=" + encodedGroup;
+             logger.info("[GitHelper] User Lookup URL: {}", userApiUrl);
+
+             HttpRequest.Builder userReqBuilder = HttpRequest.newBuilder().uri(URI.create(userApiUrl));
+             if (token != null && !token.isBlank()) {
+                 userReqBuilder.header("PRIVATE-TOKEN", token);
+             }
+             HttpRequest userReq = userReqBuilder.GET().build();
+             HttpResponse<String> userResp = client.send(userReq, HttpResponse.BodyHandlers.ofString());
+             logger.info("[GitHelper] User Lookup Response: {}", userResp.statusCode());
+             
+             if (userResp.statusCode() == 200) {
+                 ObjectMapper mapper = new ObjectMapper();
+                 JsonNode userRoot = mapper.readTree(userResp.body());
+                 if (userRoot.isArray() && userRoot.size() > 0) {
+                     String userId = userRoot.get(0).get("id").asText();
+                     logger.info("[GitHelper] Found User ID: {}. Fetching User Projects...", userId);
+                     
+                     // Now fetch projects for this user
+                     String projectsUrl = cleanBase + "/api/v4/users/" + userId + "/projects?per_page=100";
+                     logger.info("[GitHelper] User Projects URL: {}", projectsUrl);
+                     
+                     HttpRequest.Builder projReqBuilder = HttpRequest.newBuilder().uri(URI.create(projectsUrl));
+                     if (token != null && !token.isBlank()) {
+                         projReqBuilder.header("PRIVATE-TOKEN", token);
+                     }
+                     HttpRequest projReq = projReqBuilder.GET().build();
+                     response = client.send(projReq, HttpResponse.BodyHandlers.ofString());
+                     logger.info("[GitHelper] User Projects Response: {}", response.statusCode());
+                 } else {
+                     logger.warn("[GitHelper] User lookup returned empty array.");
+                 }
+             } else {
+                 logger.warn("[GitHelper] User lookup failed. Body: {}", userResp.body());
+             }
+        }
+
         if (response.statusCode() == 401) throw new Exception("GitLab Authentication Failed (401). Check your Token.");
-        if (response.statusCode() == 404) throw new Exception("GitLab Group/Org not found (404). Check your search query.");
-        if (response.statusCode() != 200) throw new Exception("GitLab API Error: " + response.statusCode());
+        if (response.statusCode() == 404) throw new Exception("GitLab Group/User not found (404). Check your search query.");
+        if (response.statusCode() != 200) {
+            logger.error("[GitHelper] GitLab Error Body: {}", response.body());
+            throw new Exception("GitLab API Error: " + response.statusCode());
+        }
         
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
@@ -245,6 +305,7 @@ public class GitHelper {
                 }
             }
         }
+        logger.info("[GitHelper] Found {} GitLab repos.", repos.size());
         return repos;
     }
 
@@ -252,24 +313,38 @@ public class GitHelper {
         String cleanBase = (baseUrl == null || baseUrl.isBlank()) ? "https://api.github.com" : (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl);
         String apiUrl = cleanBase + "/orgs/" + group + "/repos?per_page=100";
         
+        logger.info("[GitHelper] Fetching GitHub Repos (Org). URL: {}", apiUrl);
+
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Authorization", "token " + token)
-                .GET()
-                .build();
+        HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
+        if (token != null && !token.isBlank()) {
+            reqBuilder.header("Authorization", "token " + token);
+        }
+        HttpRequest request = reqBuilder.build();
         
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        logger.info("[GitHelper] GitHub Org Response: {}", response.statusCode());
+        
         if (response.statusCode() == 404) {
             // Try users
             apiUrl = cleanBase + "/users/" + group + "/repos?per_page=100";
-            request = HttpRequest.newBuilder().uri(URI.create(apiUrl)).header("Authorization", "Bearer " + token).GET().build();
+            logger.info("[GitHelper] Org not found. Trying User URL: {}", apiUrl);
+            
+            HttpRequest.Builder userReqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
+            if (token != null && !token.isBlank()) {
+                userReqBuilder.header("Authorization", "token " + token);
+            }
+            request = userReqBuilder.build();
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            logger.info("[GitHelper] GitHub User Response: {}", response.statusCode());
         }
         
         if (response.statusCode() == 401) throw new Exception("GitHub Authentication Failed (401). Check your Token.");
         if (response.statusCode() == 404) throw new Exception("GitHub Group/Org not found (404). Check your search query.");
-        if (response.statusCode() != 200) throw new Exception("GitHub API Error: " + response.statusCode());
+        if (response.statusCode() != 200) {
+             logger.error("[GitHelper] GitHub Error Body: {}", response.body());
+             throw new Exception("GitHub API Error: " + response.statusCode());
+        }
         
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
@@ -292,6 +367,7 @@ public class GitHelper {
                 }
             }
         }
+        logger.info("[GitHelper] Found {} GitHub repos.", repos.size());
         return repos;
     }
 
@@ -299,6 +375,7 @@ public class GitHelper {
      * Lists branches for discovery.
      */
     public static List<String> listBranches(String provider, String token, String repo, String gitlabUrl, String githubUrl) throws Exception {
+        logger.info("[GitHelper] listBranches invoked. Provider: {}, Repo: {}", provider, repo);
         if ("github".equalsIgnoreCase(provider)) {
             return listGitHubBranches(token, repo, githubUrl);
         } else {
@@ -310,11 +387,12 @@ public class GitHelper {
         String cleanBase = (baseUrl == null || baseUrl.isBlank()) ? "https://gitlab.com" : (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl);
         String repoPath = repo;
         if (repo.startsWith("http")) {
-             // Handle full URL: https://gitlab.com/group/subgroup/project.git
              repoPath = repo.replaceFirst("https?://[^/]+/", "").replace(".git", "");
         }
         String encodedRepo = URLEncoder.encode(repoPath, StandardCharsets.UTF_8);
         String apiUrl = cleanBase + "/api/v4/projects/" + encodedRepo + "/repository/branches";
+        
+        logger.info("[GitHelper] Fetching GitLab Branches. URL: {}", apiUrl);
         
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
@@ -324,9 +402,14 @@ public class GitHelper {
                 .build();
         
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        logger.info("[GitHelper] GitLab Branch Response: {}", response.statusCode());
+
         if (response.statusCode() == 401) throw new Exception("GitLab Authentication Failed (401). Check your Token.");
         if (response.statusCode() == 404) throw new Exception("GitLab Repository not found (404).");
-        if (response.statusCode() != 200) throw new Exception("GitLab API Error: " + response.statusCode());
+        if (response.statusCode() != 200) {
+            logger.error("[GitHelper] GitLab Branch Error Body: {}", response.body());
+            throw new Exception("GitLab API Error: " + response.statusCode());
+        }
         
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
@@ -343,22 +426,28 @@ public class GitHelper {
         String cleanBase = (baseUrl == null || baseUrl.isBlank()) ? "https://api.github.com" : (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl);
         String repoPath = repo;
         if (repo.startsWith("http")) {
-             // Handle full URL: https://github.com/owner/repo.git
              repoPath = repo.replaceFirst("https?://[^/]+/", "").replace(".git", "");
         }
         String apiUrl = cleanBase + "/repos/" + repoPath + "/branches";
         
+        logger.info("[GitHelper] Fetching GitHub Branches. URL: {}", apiUrl);
+
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Authorization", "token " + token)
-                .GET()
-                .build();
+        HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
+        if (token != null && !token.isBlank()) {
+            reqBuilder.header("Authorization", "token " + token);
+        }
+        HttpRequest request = reqBuilder.build();
         
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        logger.info("[GitHelper] GitHub Branch Response: {}", response.statusCode());
+
         if (response.statusCode() == 401) throw new Exception("GitHub Authentication Failed (401). Check your Token.");
         if (response.statusCode() == 404) throw new Exception("GitHub Repository not found (404).");
-        if (response.statusCode() != 200) throw new Exception("GitHub API Error: " + response.statusCode());
+        if (response.statusCode() != 200) {
+            logger.error("[GitHelper] GitHub Branch Error Body: {}", response.body());
+            throw new Exception("GitHub API Error: " + response.statusCode());
+        }
         
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
@@ -371,3 +460,4 @@ public class GitHelper {
         return branches;
     }
 }
+

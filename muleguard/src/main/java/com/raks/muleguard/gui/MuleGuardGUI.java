@@ -662,11 +662,35 @@ public class MuleGuardGUI {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             try {
+                // Debug Headers
+                String xTokenHeader = exchange.getRequestHeaders().getFirst("x-git-token");
+                String xProviderHeader = exchange.getRequestHeaders().getFirst("x-git-provider");
+                
+                String maskedHeaderToken = (xTokenHeader != null && xTokenHeader.length() > 4) 
+                                           ? xTokenHeader.substring(0, 2) + "***" 
+                                           : (xTokenHeader == null ? "null" : "short");
+                                           
+                System.out.println("[GitDiscoveryReposHandler] START. Headers -> Token: " + maskedHeaderToken + ", Provider: " + xProviderHeader);
+
                 Map<String, String> queryParams = parseQueryParams(exchange.getRequestURI().getQuery());
+                
                 String provider = queryParams.getOrDefault("provider", "gitlab");
                 String token = queryParams.getOrDefault("token", "");
+                
+                if (token.isEmpty() && xTokenHeader != null) {
+                    token = xTokenHeader;
+                }
+                
+                // Also check for x-git-provider header as fallback
+                if (xProviderHeader != null && !xProviderHeader.isBlank()) {
+                    provider = xProviderHeader;
+                }
+                
                 String group = queryParams.getOrDefault("group", queryParams.getOrDefault("query", ""));
                 String filter = queryParams.getOrDefault("filter", "");
+                
+                System.out.println("[GitDiscoveryReposHandler] Resolved Params -> Group: " + group + ", Provider: " + provider + ", Filter: " + filter);
+
                 
                 // For standalone, we might not have p('...') properties easily, so use defaults or env if needed.
                 // But let's assume standard URLs or allow overriding via query?
@@ -701,6 +725,14 @@ public class MuleGuardGUI {
                 Map<String, String> queryParams = parseQueryParams(exchange.getRequestURI().getQuery());
                 String provider = queryParams.getOrDefault("provider", "gitlab");
                 String token = queryParams.getOrDefault("token", "");
+                if (token.isEmpty() && exchange.getRequestHeaders().containsKey("x-git-token")) {
+                    token = exchange.getRequestHeaders().getFirst("x-git-token");
+                }
+
+                // Also check for x-git-provider header as fallback
+                if (exchange.getRequestHeaders().containsKey("x-git-provider")) {
+                   provider = exchange.getRequestHeaders().getFirst("x-git-provider");
+                }
                 String repo = queryParams.getOrDefault("repo", "");
                 
                 String gitlabUrl = queryParams.get("gitlabUrl");
