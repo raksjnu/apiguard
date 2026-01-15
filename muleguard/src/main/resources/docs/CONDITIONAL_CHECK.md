@@ -9,7 +9,7 @@ IT IS NOT LIMITED TO CODE! You can combine Configuration checks, XML checks, Fil
 ## Use Cases
 
 *   **Context-Specific Rules**: "If this is an Experience API (`-exp-`), THEN it must have Autodiscovery."
-*   **Cross-File Dependencies**: "If `secure-prod.properties` exists, THEN all passwords in `config.xml` must use `secure::`."
+*   **Cross-File Dependencies**: "If `secure-prod.properties` exists, THEN all `CODE` `config.xml` must use `secure::`."
 *   **Technology Standards**: "If an `IBM MQ` connector is found (XML), THEN the project must have the `mule-ibm-mq-connector` dependency (POM)."
 *   **Environment Validation**: "If `env` property is `PROD` (Config), THEN `munit-maven-plugin` must be disabled (POM)."
 

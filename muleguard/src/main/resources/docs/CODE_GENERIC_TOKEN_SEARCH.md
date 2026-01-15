@@ -1,6 +1,6 @@
 # GENERIC_TOKEN_SEARCH
 
-**Rule Type:** `CODE` | **Applies To:** All source code files
+**Rule Type:** `CODE` - **Applies To:** Any text-based source files
 
 ## Overview
 

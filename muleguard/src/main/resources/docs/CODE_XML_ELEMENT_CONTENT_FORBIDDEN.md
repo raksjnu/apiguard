@@ -1,6 +1,6 @@
 # XML_ELEMENT_CONTENT_FORBIDDEN
 
-**Rule Type:** `CODE` | **Applies To:** Mule XML configuration files
+**Rule Type:** `CODE` - **Applies To:** XML configuration files
 
 ## Overview
 

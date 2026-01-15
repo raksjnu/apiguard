@@ -1,6 +1,6 @@
 # JSON_VALIDATION_FORBIDDEN
 
-**Rule Type:** `CODE` | **Applies To:** JSON configuration files (package.json, etc.)
+**Rule Type:** `CODE` - **Applies To:** JSON configuration files (package.json, etc.)
 
 ## Overview
 

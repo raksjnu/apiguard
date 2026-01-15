@@ -1,0 +1,464 @@
+# =============================================================================
+# MuleGuard Custom Rules - Bank/Client Specific
+# Author: Rakesh KUmar (Rakesh.Kumar@ibm.com)
+# =============================================================================
+
+config:
+  # ---------------------------------------------------------------------------
+  # Global Configuration
+  # ---------------------------------------------------------------------------
+  # environments: Defines which environments these rules apply to. 'ALL' applies to any scan.
+  environments:
+  - ALL
+
+  # ---------------------------------------------------------------------------
+  # Project Identification Logic
+  # ---------------------------------------------------------------------------
+  # This section tells MuleGuard how to identify if a scanned folder is a valid "Mule API Project".
+  # Config projects (*_config) are identified automatically by directory naming convention.
+  projectIdentification:
+    muleApiProject:
+      # matchMode: ALL means BOTH pom.xml AND mule-artifact.json must be present to identify as a Mule App.
+      matchMode: ALL
+      markerFiles:
+      - pom.xml              # Maven configuration file (Mule App)
+      - mule-artifact.json   # Mule application descriptor (Mule App)
+
+rules:
+
+  # ===========================================================================
+  # SECTION 1: CODE & APPLICATION CHECKS
+  # (XML Flows, POM Dependencies, Metadata, App Properties)
+  # ===========================================================================
+
+  # ---------------------------------------------------------------------------
+  # BANK-001: mule-artifact.json Validation
+  # ---------------------------------------------------------------------------
+  - id: "BANK-001"
+    name: "Validate mule-artifact.json Structure"
+    description: "Enforces: Min Mule Version 4.9.7, Java 17, and Secure Properties. (Checklist Item 1)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: JSON_VALIDATION_REQUIRED
+      params:
+        filePattern: mule-artifact.json
+        minVersions:
+          minMuleVersion: 4.9.7
+        requiredFields:
+          javaSpecificationVersions: 
+          - "17"
+        requiredElements:
+        - secureProperties
+
+  # ---------------------------------------------------------------------------
+  # BANK-023: Parent POM
+  # ---------------------------------------------------------------------------
+  - id: "BANK-023"
+    name: "Validate Parent POM Configuration"
+    description: "Enforce Parent POM 3.0.0. (Checklist Item 23)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PARENT
+        parent:
+          groupId: com.truist.eapi
+          artifactId: MuleParentPom
+          version: 3.0.0
+
+  # ---------------------------------------------------------------------------
+  # BANK-024: POM Properties (Merged Items 24 & 25)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-024"
+    name: "Validate POM Properties"
+    description: "Enforce versions for maven-plugin (4.6.0), runtime (4.9.LTS), cicd (4.9.LTS), and munit (3.5.0). (Checklist Items 24, 25)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PROPERTIES
+        properties:
+        # Item 24
+        - name: muleMavenPluginVersion
+          expectedValue: 4.6.0
+        - name: app.runtime
+          expectedValue: 4.9.LTS
+        - name: cicd.mule.version
+          expectedValue: 4.9.LTS
+        # Item 25
+        - name: munit.version
+          expectedValue: 3.5.0
+
+  # ---------------------------------------------------------------------------
+  # BANK-026: Forbidden Plugins
+  # ---------------------------------------------------------------------------
+  - id: "BANK-026"
+    name: "Remove Forbidden Plugins"
+    description: "Remove explicit maven-clean, maven-compiler, munit-maven plugins. (Checklist Item 26)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: PLUGINS
+        forbiddenPlugins:
+        - groupId: org.apache.maven.plugins
+          artifactId: maven-clean-plugin
+        - groupId: org.apache.maven.plugins
+          artifactId: maven-compiler-plugin
+        - groupId: com.mulesoft.munit.tools
+          artifactId: munit-maven-plugin
+
+  # ---------------------------------------------------------------------------
+  # BANK-027: Forbidden Dependencies (Merged Items 27 & 28)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-027"
+    name: "Remove Forbidden Dependencies"
+    description: "Remove forbidden runtime deps (mule-core-ee, spring-config-ee) and shared libs (spring-security). (Checklist Items 27, 28)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+        # Item 27
+        - groupId: com.mulesoft.mule.runtime
+          artifactId: mule-core-ee
+        - groupId: com.mulesoft.mule.runtime.modules
+          artifactId: mule-module-spring-config-ee
+        # Item 28
+        - groupId: org.springframework.security
+          artifactId: spring-security-ldap
+        - groupId: org.springframework.security
+          artifactId: spring-security-web
+
+  # ---------------------------------------------------------------------------
+  # BANK-029: Required Dependency
+  # ---------------------------------------------------------------------------
+  - id: "BANK-029"
+    name: "Require 'eapimuleutilities' Dependency"
+    description: "Ensure eapimuleutilities is present. (Checklist Item 29)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: DEPENDENCIES
+        dependencies:
+        - groupId: com.truist.eapi.crypto
+          artifactId: eapimuleutilities
+
+  # ---------------------------------------------------------------------------
+  # BANK-002: Logger Cleanup (Merged Item 2 & 3)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-002"
+    name: "Forbid Legacy Logger Attributes"
+    description: "Ensures 'toApplicationCode' and 'fromApplicationCode' attributes are removed from all Logger components. (Checklist Items 2, 3) [Match: ALL files must comply]"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: XML_ATTRIBUTE_NOT_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        elements:
+        - logger
+        forbiddenAttributes:
+        - toApplicationCode
+        - fromApplicationCode
+
+  # ---------------------------------------------------------------------------
+  # BANK-004: Encryption Standards (Merged Items 4 & 31)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-004"
+    name: "Enforce New Encryption Standards"
+    description: "Forbids 'jce-encrypt' token and legacy 'crypto:jce-encrypt-pbe' components. Requires usage of 'EncUtil::encryptJcePbe'. (Checklist Items 4, 31) [Match: New Logic must exist in AT LEAST ONE file]"
+    enabled: true
+    severity: HIGH
+    checks:
+    # Item 4: Token Check
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        tokens:
+        - jce-encrypt
+        matchMode: SUBSTRING
+        caseSensitive: true
+    # Item 31: Legacy Component Check
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[contains(local-name(), 'jce-encrypt-pbe')]
+          failureMessage: "Legacy crypto component found."
+    # Item 31: New Logic Check
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        matchMode: ANY_FILE
+        xpathExpressions:
+        - xpath: //*[local-name()='set-variable' and contains(@value, 'EncUtil::encryptJcePbe')]
+          failureMessage: "New EncUtil::encryptJcePbe logic missing."
+
+  # ---------------------------------------------------------------------------
+  # BANK-005: soapVersion Checks
+  # ---------------------------------------------------------------------------
+  - id: "BANK-005"
+    name: "Validate SOAP Version"
+    description: "Ensures apikit-soap:config uses SOAP_11 or SOAP_12. (Checklist Item 5) [Match: ALL files must comply]"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*-config.xml
+        elementAttributeSets:
+        - element: apikit-soap:config
+          attributes: 
+            soapVersion: SOAP_11
+        - element: apikit-soap:config
+          attributes:
+            soapVersion: SOAP_12
+
+  # ---------------------------------------------------------------------------
+  # BANK-008: Legacy Auth Policies
+  # ---------------------------------------------------------------------------
+  - id: "BANK-008"
+    name: "Forbid Legacy Auth Policies"
+    description: "Forbids Truist-AAA-SOAP, Truist-AAA-HTTP, and TruistBasicAuthnPolicy. (Checklist Item 8) [Match: ALL files must comply]"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[contains(local-name(), 'Truist-AAA-SOAP')]
+          failureMessage: "Found forbidden policy: Truist-AAA-SOAP"
+        - xpath: //*[contains(local-name(), 'Truist-AAA-HTTP')]
+          failureMessage: "Found forbidden policy: Truist-AAA-HTTP"
+        - xpath: //*[contains(local-name(), 'TruistBasicAuthnPolicy')]
+          failureMessage: "Found forbidden policy: TruistBasicAuthnPolicy"
+
+  # ---------------------------------------------------------------------------
+  # BANK-019: DLP Removal (Merged Items 19 & 20)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-019"
+    name: "Remove DLP Logic and Properties"
+    description: "Ensures DLP logic is removed from http-proxy.xml and DLP properties are removed from property files. (Checklist Items 19, 20) [Match: ALL files must comply]"
+    enabled: true
+    severity: HIGH
+    checks:
+    # Item 19: XML Check
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/http-proxy.xml
+        xpathExpressions:
+        - xpath: //choice/when[contains(@expression, 'north.bound.dlp.flag')]
+          failureMessage: "DLP flag logic found in http-proxy.xml."
+    # Item 20: Property Check
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+        - src/main/resources/*.properties
+        tokens:
+        - north.bound.dlp.flag
+        - south.bound.dlp.flag
+        - wmq.dlp.requestqueue
+        matchMode: SUBSTRING
+        caseSensitive: true
+
+  # ---------------------------------------------------------------------------
+  # BANK-021: SQL Security
+  # ---------------------------------------------------------------------------
+  - id: "BANK-021"
+    name: "Enforce SQL DB Security Parameters"
+    description: "Flag insecure SQL Server URL usage. (Checklist Item 21) [Match: ALL files must comply]"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+        - src/main/resources/*.properties
+        tokens:
+        # Regex to find jdbc:sqlserver that does NOT contain the required encryption flags
+        - "jdbc:sqlserver(?!.*;encrypt=false;trustServerCertificate=false)"
+        matchMode: REGEX
+        caseSensitive: true
+
+  # ---------------------------------------------------------------------------
+  # BANK-018: Error Strings (Placeholder)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-018"
+    name: "Forbid Legacy Error Strings"
+    description: "Forbids specific legacy error strings. (Checklist Item 18) [REQUIRES CONFIGURATION]"
+    enabled: false
+    severity: LOW
+    checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+        - src/main/mule/error-handling.xml
+        tokens:
+        - "Old Error String 1"
+        - "Old Error String 2"
+        matchMode: SUBSTRING
+
+
+  # ---------------------------------------------------------------------------
+  # BANK-022: MQ Cipher Suite
+  # ---------------------------------------------------------------------------
+  - id: "BANK-022"
+    name: "Validate MQ Cipher Suite"
+    description: "Enforce TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 for IBM MQ. (Checklist Item 22)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions:
+        - .properties
+        environments: ['ALL']
+        properties:
+        - name: ibm.mq.cipherSuite
+          values:
+          - TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+
+  # ---------------------------------------------------------------------------
+  # BANK-032: Update ApiMethod
+  # ---------------------------------------------------------------------------
+  - id: "BANK-032"
+    name: "Update 'apimethod' Variable Logic"
+    description: "Verify apimethod uses encryptedRequestPath. (Checklist Item 32) [Match: Found in AT LEAST ONE file]"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        matchMode: ANY_FILE
+        xpathExpressions:
+        - xpath: //*[local-name()='set-variable' and @variableName='apimethod' and contains(@value, 'vars.encryptedRequestPath')]
+          failureMessage: "apimethod variable not updated to use encryptedRequestPath."
+
+  # ---------------------------------------------------------------------------
+  # BANK-036: AutoDiscovery
+  # ---------------------------------------------------------------------------
+  - id: "BANK-036"
+    name: "Ensure API Autodiscovery Enabled"
+    description: "Ensure autodiscovery element is present. (Checklist Item 36) [Match: Found in AT LEAST ONE file]"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        matchMode: ANY_FILE
+        xpathExpressions:
+        - xpath: //*[local-name()='autodiscovery']
+          failureMessage: "API Autodiscovery element not found (may be commented out)."
+
+
+  # ===========================================================================
+  # SECTION 2: EXTERNAL POLICY CHECKS
+  # (Flat Policy files in Config Projects)
+  # ===========================================================================
+
+  # ---------------------------------------------------------------------------
+  # BANK-006: Header Injection Policy Config
+  # ---------------------------------------------------------------------------
+  - id: "BANK-006"
+    name: "Header Injection Policy Level (WARN)"
+    description: "Ensures request-out and response-in headers are set to WARN. (Checklist Item 6)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions:
+        - .policy
+        environments: ['ALL']
+        properties:
+        - name: headerinjection.policy.inboundheadermap.x-tfc-request-out
+          values: ['WARN']
+        - name: headerinjection.policy.inboundheadermap.x-tfc-response-in
+          values: ['WARN']
+
+  # ---------------------------------------------------------------------------
+  # BANK-007: Proxy mTLS Check
+  # ---------------------------------------------------------------------------
+  - id: "BANK-007"
+    name: "Truist-mTLS-AuthZ Version 3.0.0 (Proxy Only)"
+    description: "Enforces mTLS-AuthZ version 3.0.0 for Proxy projects. (Checklist Item 7)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+        - type: PROJECT_CONTEXT
+          params:
+            nameContains: proxy
+            ignoreCase: true
+        onSuccess:
+        - type: MANDATORY_PROPERTY_VALUE_CHECK
+          params:
+            fileExtensions:
+            - .policy
+            environments: ['ALL']
+            properties:
+            - name: truist.mTLS-AuthZ.policy.version
+              values: ['3.0.0']
+
+  # ---------------------------------------------------------------------------
+  # BANK-009: Consolidated Policy Versions (Merged Items 9-14, 35, 37)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-009"
+    name: "Enforce Truist Policy Versions"
+    description: "Validates versions for CompositeAuthn (3.0.0), Authz (3.0.0), NoName (5.1.0), RateLimit (1.4.1), HeaderInjection (1.3.2), HeaderRemoval (1.1.2), WSSEncDec (3.0.0), JSONEncDec (3.0.0). (Checklist Items 9-14, 35, 37)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions:
+        - .policy
+        environments: ['ALL']
+        properties: 
+        # Item 9
+        - name: truist.compositeauthn.policy.version
+          values: ['3.0.0']
+        # Item 10
+        - name: truist.authz.policy.version
+          values: ['3.0.0']
+        # Item 11
+        - name: noname.policy.version
+          values: ['5.1.0']
+        # Item 12
+        - name: ratelimit.policy.version
+          values: ['1.4.1']
+        # Item 13
+        - name: headerinjection.policy.version
+          values: ['1.3.2']
+        # Item 14
+        - name: headerremoval.policy.version
+          values: ['1.1.2']
+        # Item 35
+        - name: truist.wssencdec.policy.version
+          values: ['3.0.0']
+        # Item 37
+        - name: truist.jsonencdec.policy.version
+          values: ['3.0.0']

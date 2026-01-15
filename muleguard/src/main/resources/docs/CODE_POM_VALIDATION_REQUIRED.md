@@ -1,6 +1,6 @@
 # POM_VALIDATION_REQUIRED
 
-**Rule Type:** `CODE` | **Applies To:** Maven POM files (`pom.xml`)
+**Rule Type:** `CODE` - **Applies To:** pom.xmlMaven POM files (`pom.xml`)
 
 ## Overview
 

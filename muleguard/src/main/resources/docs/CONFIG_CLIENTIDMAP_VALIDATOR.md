@@ -1,6 +1,6 @@
 # CLIENTIDMAP_VALIDATOR
 
-**Rule Type:** `CONFIG` | **Applies To:** Property files (.properties)
+**Rule Type:** `CONFIG` - **Trigger Engine** Property files (.properties)
 
 ## Overview
 

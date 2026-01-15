@@ -22,6 +22,7 @@ import org.slf4j.LoggerFactory;
 public class ReportGenerator {
     private static final Logger logger = LoggerFactory.getLogger(ReportGenerator.class);
     private static final String[] RULE_DOCS = {
+            "GLOBAL_CONFIGURATION.md",
             "CONFIG_GENERIC_PROPERTY_FILE_CHECK.md",
             "CONFIG_MANDATORY_PROPERTY_VALUE_CHECK.md",
             "CONFIG_MANDATORY_SUBSTRING_CHECK.md",
@@ -869,15 +870,18 @@ public class ReportGenerator {
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
                             .top-nav-button:hover { background-color: var(--raks-purple-light); }
-                            h1 { color: var(--raks-purple); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }  
-                            h2 { color: var(--raks-purple); margin-top: 30px; }
-                            h3 { color: var(--raks-purple-light); }
+                            h1 { color: var(--raks-purple) !important; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }  
+                            h2 { color: var(--raks-purple) !important; margin-top: 30px; }
+                            h3 { color: var(--raks-purple-light) !important; }
+                            h4 { color: var(--raks-purple-light) !important; font-size: 1.1em; margin-top: 20px; }
+                            .rule-content { color: #333 !important; line-height: 1.6; }
                             pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; border: 1px solid #ddd; }
-                            code { font-family: Consolas, monospace; color: #0078d4; }
-                            pre code { color: #333; }
-                            table { border-collapse: collapse; width: 100%%; margin: 20px 0; }
+                            code { font-family: Consolas, monospace; color: #0078d4 !important; }
+                            code.inline-token { color: #0078d4 !important; font-weight: bold; }
+                            pre code { color: #333 !important; } /* Code blocks should be black text */
+                            table { border-collapse: collapse; width: 100%%; margin: 20px 0; color: #333 !important; }
                             th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
-                            th { background: #f1f1f1; }
+                            th { background: #f1f1f1; color: #333 !important; }
                             blockquote { border-left: 4px solid var(--raks-purple); margin: 0; padding-left: 20px; color: #555; }
                             .search-highlight { background-color: #ffeb3b; color: black; font-weight: bold; border-radius: 2px; }
                             ::highlight(search-results) { background-color: #ffeb3b; color: black; }
@@ -1248,24 +1252,43 @@ public class ReportGenerator {
         }
     }
     private static String convertMdToHtml(String md) {
-        String html = md;
+        // 1. Extract code blocks to prevent processing them as markdown
+        java.util.List<String> codeBlocks = new java.util.ArrayList<>();
+        java.util.regex.Matcher codeBlockMatcher = java.util.regex.Pattern.compile("(?s)```(.*?)\\n([\\s\\S]*?)```").matcher(md);
+        StringBuffer sb = new StringBuffer();
+        while (codeBlockMatcher.find()) {
+            String language = codeBlockMatcher.group(1).trim();
+            String code = codeBlockMatcher.group(2);
+            // Escape HTML in code blocks
+            code = escape(code);
+            String placeholder = "___CODE_BLOCK_" + codeBlocks.size() + "___";
+            codeBlocks.add("<pre><code class='language-" + (language.isEmpty() ? "text" : language) + "'>" + code + "</code></pre>");
+            codeBlockMatcher.appendReplacement(sb, placeholder);
+        }
+        codeBlockMatcher.appendTail(sb);
+        String html = sb.toString();
 
+        // 2. Extract inline code
+        java.util.List<String> inlineCode = new java.util.ArrayList<>();
+        java.util.regex.Matcher inlineMatcher = java.util.regex.Pattern.compile("`([^`]+)`").matcher(html);
+        sb = new StringBuffer();
+        while (inlineMatcher.find()) {
+            String code = inlineMatcher.group(1);
+            code = escape(code);
+            String placeholder = "___INLINE_CODE_" + inlineCode.size() + "___";
+            inlineCode.add("<code class='inline-token'>" + code + "</code>");
+            inlineMatcher.appendReplacement(sb, placeholder);
+        }
+        inlineMatcher.appendTail(sb);
+        html = sb.toString();
+
+        // 3. Standard Markdown Processing
         html = html.replaceAll("(?i)(?m)^#{1,6}\\s*Version History[\\s\\S]*$", "");
-        
-
-
-
         html = html.replaceAll("\\[([^\\]]+)\\]\\((?:CODE_|CONFIG_)?([^)]+)\\.md\\)", "<a href=\"#\" onclick=\"showRule(event, '$2')\">$1</a>");
-        
-
         html = html.replaceAll("(?m)^# (.*)$", "<h1>$1</h1>");
         html = html.replaceAll("(?m)^## (.*)$", "<h2>$1</h2>");
         html = html.replaceAll("(?m)^### (.*)$", "<h3>$1</h3>");
         html = html.replaceAll("(?m)^#### (.*)$", "<h4>$1</h4>");
-        html = html.replaceAll("(?s)```yaml(.*?)```", "<pre><code class='language-yaml'>$1</code></pre>");
-        html = html.replaceAll("(?s)```xml(.*?)```", "<pre><code class='language-xml'>$1</code></pre>");
-        html = html.replaceAll("(?s)```(.*?)```", "<pre><code>$1</code></pre>");
-        html = html.replaceAll("`([^`]+)`", "<code>$1</code>");
         html = html.replaceAll("\\*\\*(.*?)\\*\\*", "<strong>$1</strong>");
         html = html.replaceAll("(?m)^- (.*)$", "<li>$1</li>");
         html = html.replaceAll("(?m)^\\|(.+)\\|$", "<tr><td>$1</td></tr>");
@@ -1274,6 +1297,15 @@ public class ReportGenerator {
         html = html.replaceAll("</td><td></td></tr>", "</td></tr>");
         html = html.replaceAll("(?m)^<tr><td>\\s*-+\\s*</td>.*</tr>$", "");
         html = html.replaceAll("(?m)^$", "<br>");
+
+        // 4. Restore placeholders
+        for (int i = 0; i < inlineCode.size(); i++) {
+            html = html.replace("___INLINE_CODE_" + i + "___", inlineCode.get(i));
+        }
+        for (int i = 0; i < codeBlocks.size(); i++) {
+            html = html.replace("___CODE_BLOCK_" + i + "___", codeBlocks.get(i));
+        }
+
         return html;
     }
     private static void generateConsolidatedExcel(List<ApiResult> results, Path outputDir) {

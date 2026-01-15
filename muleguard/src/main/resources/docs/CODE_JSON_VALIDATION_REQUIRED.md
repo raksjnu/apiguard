@@ -1,6 +1,6 @@
 # JSON_VALIDATION_REQUIRED
 
-**Rule Type:** `CODE` | **Applies To:** JSON configuration files (package.json, etc.)
+**Rule Type:** `CODE` - **Applies To:** JSON configuration files (package.json, etc.)
 
 ## Overview
 
