@@ -93,6 +93,7 @@ java -jar muleguard.jar -p <target-path> [--config <rules-path>]
 |-----------|---------|-------------|
 | `-p` | `--project` | **Required.** Path to the Mule project or directory of projects. |
 | `--config` | `-config`, `-c` | **Optional.** Path to a custom `rules.yaml` file. |
+| `--output` | `-output`, `-o` | **Optional.** Custom directory for generated reports. |
 
 #### Examples
 
@@ -109,6 +110,11 @@ java -jar target/muleguard-1.0.0-jar-with-raks.jar -p /path/to/projects --config
 **3. Using shorthand aliases and different order:**
 ```sh
 java -jar target/muleguard-1.0.0-jar-with-raks.jar -c C:\temp\rules.yaml -p C:\projects\api
+```
+
+**4. Specify custom output directory:**
+```sh
+java -jar target/muleguard-1.0.0-jar-with-raks.jar -p /path/to/projects -o /path/to/custom/reports
 ```
 
 > **IMPORTANT:** Ensure you are running with **Java 17**. If you see `UnsupportedClassVersionError`, your default `java` is likely older. Set your `JAVA_HOME` to JDK 17 before running:

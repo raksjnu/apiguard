@@ -20,6 +20,13 @@ public class PomValidationRequiredCheck extends AbstractCheck {
     public CheckResult execute(Path projectRoot, Check check) {
         String validationType = (String) check.getParams().getOrDefault("validationType", "COMBINED");
         String matchMode = (String) check.getParams().getOrDefault("matchMode", "ALL_FILES");
+        String comparisonModeStr = (String) check.getParams().getOrDefault("comparisonMode", "EXACT");
+        com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode;
+        try {
+            comparisonMode = com.raks.muleguard.util.ValueMatcher.MatchMode.valueOf(comparisonModeStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            comparisonMode = com.raks.muleguard.util.ValueMatcher.MatchMode.EXACT;
+        }
         
         List<String> allFailures = new ArrayList<>();
         List<Path> pomFiles = new ArrayList<>();
@@ -37,7 +44,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             }
             for (Path pomFile : pomFiles) {
                 List<String> pomFailures = new ArrayList<>();
-                validatePom(pomFile, check.getParams(), validationType, projectRoot, pomFailures);
+                validatePom(pomFile, check.getParams(), validationType, projectRoot, pomFailures, comparisonMode);
                 
                 if (pomFailures.isEmpty()) {
                     passedPoms++;
@@ -74,20 +81,20 @@ public class PomValidationRequiredCheck extends AbstractCheck {
     }
     
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,
-            Path projectRoot, List<String> failures) {
+            Path projectRoot, List<String> failures, com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode) {
         try {
             Document doc = parseXml(pomFile);
             if ("PARENT".equals(validationType) || "COMBINED".equals(validationType)) {
-                validateParent(doc, params, pomFile, projectRoot, failures);
+                validateParent(doc, params, pomFile, projectRoot, failures, comparisonMode);
             }
             if ("PROPERTIES".equals(validationType) || "COMBINED".equals(validationType)) {
-                validateProperties(doc, params, pomFile, projectRoot, failures);
+                validateProperties(doc, params, pomFile, projectRoot, failures, comparisonMode);
             }
             if ("DEPENDENCIES".equals(validationType) || "COMBINED".equals(validationType)) {
-                validateDependencies(doc, params, pomFile, projectRoot, failures);
+                validateDependencies(doc, params, pomFile, projectRoot, failures, comparisonMode);
             }
             if ("PLUGINS".equals(validationType) || "COMBINED".equals(validationType)) {
-                validatePlugins(doc, params, pomFile, projectRoot, failures);
+                validatePlugins(doc, params, pomFile, projectRoot, failures, comparisonMode);
             }
         } catch (Exception e) {
             failures.add("Error parsing POM file " + projectRoot.relativize(pomFile) + ": " + e.getMessage());
@@ -95,7 +102,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
     }
 
     private void validateParent(Document doc, Map<String, Object> params, Path pomFile,
-            Path projectRoot, List<String> failures) {
+            Path projectRoot, List<String> failures, com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode) {
         @SuppressWarnings("unchecked")
         Map<String, String> parent = (Map<String, String>) params.get("parent");
         if (parent == null)
@@ -115,15 +122,18 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             return;
         }
         String expectedVersion = parent.get("version");
-        if (expectedVersion != null && !expectedVersion.equals(version)) {
-            failures.add(String.format("Parent version mismatch in %s: expected %s:%s:%s, got version '%s'",
+        if (expectedVersion != null) {
+            boolean matches = com.raks.muleguard.util.ValueMatcher.matches(version, expectedVersion, comparisonMode, true);
+            if (!matches) {
+                 failures.add(String.format("Parent version mismatch in %s: expected %s:%s:%s, got version '%s'",
                     projectRoot.relativize(pomFile), parent.get("groupId"), parent.get("artifactId"), 
                     expectedVersion, version));
+            }
         }
     }
 
     private void validateProperties(Document doc, Map<String, Object> params, Path pomFile,
-            Path projectRoot, List<String> failures) {
+            Path projectRoot, List<String> failures, com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode) {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> properties = (List<Map<String, String>>) params.get("properties");
         if (properties == null)
@@ -140,15 +150,18 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             String actualValue = getElementText(propsElement, name);
             if (actualValue == null || actualValue.isEmpty()) {
                 failures.add(String.format("Property '%s' missing in %s", name, projectRoot.relativize(pomFile)));
-            } else if (expectedValue != null && !expectedValue.equals(actualValue)) {
-                failures.add(String.format("Property '%s' has wrong value in %s: expected '%s', got '%s'",
+            } else if (expectedValue != null) {
+                boolean matches = com.raks.muleguard.util.ValueMatcher.matches(actualValue, expectedValue, comparisonMode, true);
+                if (!matches) {
+                    failures.add(String.format("Property '%s' has wrong value in %s: expected '%s', got '%s'",
                         name, projectRoot.relativize(pomFile), expectedValue, actualValue));
+                }
             }
         }
     }
 
     private void validateDependencies(Document doc, Map<String, Object> params, Path pomFile,
-            Path projectRoot, List<String> failures) {
+            Path projectRoot, List<String> failures, com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode) {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> dependencies = (List<Map<String, String>>) params.get("dependencies");
         if (dependencies == null)
@@ -158,7 +171,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             boolean found = false;
             for (int i = 0; i < depNodes.getLength(); i++) {
                 Element depElement = (Element) depNodes.item(i);
-                if (matchesDependency(depElement, dep)) {
+                if (matchesDependency(depElement, dep, comparisonMode)) {
                     found = true;
                     break;
                 }
@@ -171,7 +184,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
     }
 
     private void validatePlugins(Document doc, Map<String, Object> params, Path pomFile,
-            Path projectRoot, List<String> failures) {
+            Path projectRoot, List<String> failures, com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode) {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> plugins = (List<Map<String, String>>) params.get("plugins");
         if (plugins == null)
@@ -181,7 +194,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             boolean found = false;
             for (int i = 0; i < pluginNodes.getLength(); i++) {
                 Element pluginElement = (Element) pluginNodes.item(i);
-                if (matchesPlugin(pluginElement, plugin)) {
+                if (matchesPlugin(pluginElement, plugin, comparisonMode)) {
                     found = true;
                     break;
                 }
@@ -193,7 +206,8 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         }
     }
 
-    private boolean matchesDependency(Element depElement, Map<String, String> expected) {
+    private boolean matchesDependency(Element depElement, Map<String, String> expected, 
+            com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode) {
         String groupId = getElementText(depElement, "groupId");
         String artifactId = getElementText(depElement, "artifactId");
         if (!expected.get("groupId").equals(groupId) || !expected.get("artifactId").equals(artifactId)) {
@@ -202,12 +216,13 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         String expectedVersion = expected.get("version");
         if (expectedVersion != null) {
             String actualVersion = getElementText(depElement, "version");
-            return expectedVersion.equals(actualVersion);
+            return com.raks.muleguard.util.ValueMatcher.matches(actualVersion, expectedVersion, comparisonMode, true);
         }
         return true;
     }
 
-    private boolean matchesPlugin(Element pluginElement, Map<String, String> expected) {
+    private boolean matchesPlugin(Element pluginElement, Map<String, String> expected,
+            com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode) {
         String groupId = getElementText(pluginElement, "groupId");
         String artifactId = getElementText(pluginElement, "artifactId");
         if (!expected.get("groupId").equals(groupId) || !expected.get("artifactId").equals(artifactId)) {
@@ -216,7 +231,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         String expectedVersion = expected.get("version");
         if (expectedVersion != null) {
             String actualVersion = getElementText(pluginElement, "version");
-            return expectedVersion.equals(actualVersion);
+            return com.raks.muleguard.util.ValueMatcher.matches(actualVersion, expectedVersion, comparisonMode, true);
         }
         return true;
     }

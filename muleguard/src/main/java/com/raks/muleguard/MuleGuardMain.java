@@ -28,6 +28,8 @@ public class MuleGuardMain {
         String configFilePath = null;
         String projectPathStr = null;
 
+        Path reportOutputDir = null;
+
         if (args.length > 0) {
             for (int i = 0; i < args.length; i++) {
                 String arg = args[i];
@@ -38,6 +40,13 @@ public class MuleGuardMain {
                 } else if ("--config".equals(arg) || "-config".equals(arg) || "-c".equals(arg)) {
                     if (i + 1 < args.length) {
                         configFilePath = args[++i];
+                    }
+                } else if ("--output".equals(arg) || "-output".equals(arg) || "-o".equals(arg)) {
+                    if (i + 1 < args.length) {
+                        String outputVal = args[++i];
+                        if (outputVal != null && !outputVal.trim().isEmpty()) {
+                            reportOutputDir = Paths.get(outputVal);
+                        }
                     }
                 }
             }
@@ -54,7 +63,7 @@ public class MuleGuardMain {
             }
         } else {
             logger.error("Error: Missing project path parameter -p <folder>");
-            logger.error("Usage: java -jar muleguard.jar -p <folder> [--config <rules.yaml>]");
+            logger.error("Usage: java -jar muleguard.jar -p <folder> [--config <rules.yaml>] [--output <reportDir>]");
             logger.error("       OR double-click to launch in GUI mode");
             return;
         }
@@ -90,7 +99,14 @@ public class MuleGuardMain {
         int configRuleEnd = configWrapper.getConfig().getRules().get("end");
         List<String> globalEnvironments = configWrapper.getConfig().getEnvironments();
         List<ApiResult> results = new ArrayList<>();
-        Path reportsRoot = parentFolder.resolve("muleguard-reports");
+        
+        Path reportsRoot;
+        if (reportOutputDir != null) {
+            reportsRoot = reportOutputDir;
+        } else {
+            reportsRoot = parentFolder.resolve("muleguard-reports");
+        }
+        
         try {
             Files.createDirectories(reportsRoot);
         } catch (IOException e) {

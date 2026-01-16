@@ -20,6 +20,15 @@ public class MandatoryPropertyValueCheck extends AbstractCheck {
         String delimiter = (String) check.getParams().getOrDefault("delimiter", "=");
         boolean caseSensitiveNames = (Boolean) check.getParams().getOrDefault("caseSensitiveNames", true);
         boolean caseSensitiveValues = (Boolean) check.getParams().getOrDefault("caseSensitiveValues", true);
+        
+        String comparisonModeStr = (String) check.getParams().getOrDefault("comparisonMode", "EXACT");
+        com.raks.muleguard.util.ValueMatcher.MatchMode tempComparisonMode;
+        try {
+            tempComparisonMode = com.raks.muleguard.util.ValueMatcher.MatchMode.valueOf(comparisonModeStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            tempComparisonMode = com.raks.muleguard.util.ValueMatcher.MatchMode.EXACT;
+        }
+        final com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode = tempComparisonMode;
         if (fileExtensions == null || fileExtensions.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Configuration error: 'fileExtensions' parameter is required");
@@ -42,7 +51,7 @@ public class MandatoryPropertyValueCheck extends AbstractCheck {
                     .forEach(file -> {
                         validatedFiles.add(projectRoot.relativize(file).toString()); 
                         validatePropertiesInFile(file, properties, delimiter,
-                                caseSensitiveNames, caseSensitiveValues, projectRoot, failures);
+                                caseSensitiveNames, caseSensitiveValues, comparisonMode, projectRoot, failures);
                     });
         } catch (IOException e) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
@@ -78,6 +87,7 @@ public class MandatoryPropertyValueCheck extends AbstractCheck {
     }
     private void validatePropertiesInFile(Path file, List<PropertyConfig> properties, String delimiter,
             boolean globalCaseSensitiveNames, boolean globalCaseSensitiveValues,
+            com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode,
             Path projectRoot, List<String> failures) {
         try {
             String content = Files.readString(file);
@@ -100,10 +110,12 @@ public class MandatoryPropertyValueCheck extends AbstractCheck {
                     if (delimiterIndex > 0) {
                         String propName = line.substring(0, delimiterIndex).trim();
                         String propValue = line.substring(delimiterIndex + 1).trim();
-                        if (matches(propName, propConfig.getName(), caseSensitiveName)) {
+                        // Property Name is ALWAYS EXACT match (or case-insensitive)
+                        // We do NOT use generic ValueMatcher for Key, only for Value.
+                        if (matchesKey(propName, propConfig.getName(), caseSensitiveName)) {
                             propertyFound = true;
                             for (String expectedValue : propConfig.getValues()) {
-                                if (matches(propValue, expectedValue, caseSensitiveValue)) {
+                                if (com.raks.muleguard.util.ValueMatcher.matches(propValue, expectedValue, comparisonMode, caseSensitiveValue)) {
                                     valueMatched = true;
                                     break;
                                 }
@@ -129,7 +141,7 @@ public class MandatoryPropertyValueCheck extends AbstractCheck {
                     projectRoot.relativize(file), e.getMessage()));
         }
     }
-    private boolean matches(String actual, String expected, boolean caseSensitive) {
+    private boolean matchesKey(String actual, String expected, boolean caseSensitive) {
         if (caseSensitive) {
             return actual.equals(expected);
         } else {

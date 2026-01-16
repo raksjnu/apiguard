@@ -28,6 +28,7 @@ Supports validation of:
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `validationType` | String | Type of validation: `PARENT`, `PROPERTIES`, `DEPENDENCIES`, `PLUGINS`, or `COMBINED` |
+| `comparisonMode` | String | **Optional**: Mode to use for value/version matching: `EXACT` (default), `SEMANTIC_VERSION`, `SUBSTRING`, `REGEX`. |
 
 ### Validation-Specific Parameters
 
@@ -69,6 +70,18 @@ Supports validation of:
 | `plugins[].version` | String | **No** | **Optional**: If specified, validates exact version |
 
 > **NEW**: Version validation is now optional! If `version` is specified, it will be validated. If omitted, any version is accepted.
+
+
+> **NEW**: Version validation is now optional! If `version` is specified, it will be validated. If omitted, any version is accepted.
+
+### comparisonMode
+You can specify `comparisonMode` at the top level of `params` to control how values (especially versions) are compared.
+
+- **EXACT** (Default): Values must match exactly.
+- **SEMANTIC_VERSION**: Parses values as versions supports operators like `>`, `>=`, `<`, `<=`.
+  - Example: `version: ">= 1.0.0"`
+- **SUBSTRING**: Checks if the actual value contains the expected string.
+- **REGEX**: Checks if the actual value matches the provided regular expression.
 
 ---
 
@@ -424,5 +437,8 @@ parent:
 
 ## Version History
 
+
+- **v1.2.0**: Added `comparisonMode` for flexible version/value validation (Semantic Versioning, Regex, Substring)
 - **v1.1.0**: Added optional version validation for dependencies and plugins
 - **v1.0.0**: Initial release with parent, properties, dependencies, and plugins validation
+

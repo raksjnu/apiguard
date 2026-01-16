@@ -40,6 +40,8 @@ Validates that **required property name-value pairs exist** in environment-speci
 | `caseSensitiveNames` | Boolean | `true` | Global case sensitivity for property names |
 | `caseSensitiveValues` | Boolean | `true` | Global case sensitivity for property values |
 
+| `comparisonMode` | String | `EXACT` | Mode to use for value matching: `EXACT`, `SEMANTIC_VERSION`, `SUBSTRING`, `REGEX`. |
+
 ## Configuration Examples
 
 ### Example 1: Validate Log Level
@@ -101,6 +103,27 @@ Validates that **required property name-value pairs exist** in environment-speci
             values: ["true", "false", "yes", "no"]
 ```
 
+### Example 4: Regex Validation
+
+Validate property values using regex.
+
+```yaml
+- id: "RULE-133"
+  name: "Naming Convention"
+  description: "App name must start with 'api-'"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["ALL"]
+        comparisonMode: "REGEX"
+        properties:
+          - name: "app.name"
+            values: ["^api-.*$"]
+```
+
 ## Error Messages
 
 ```
@@ -132,3 +155,9 @@ properties:
 
 - **[OPTIONAL_PROPERTY_VALUE_CHECK](OPTIONAL_PROPERTY_VALUE_CHECK.md)** - Validates optional properties
 - **[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)** - Simpler substring validation
+
+## Version History
+
+- **v1.1.0**: Added `comparisonMode` for flexible value matching
+- **v1.0.0**: Initial release
+

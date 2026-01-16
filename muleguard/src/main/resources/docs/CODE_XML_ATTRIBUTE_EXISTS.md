@@ -65,6 +65,7 @@ You must configure **at least one** of these modes:
 |-----------|------|---------|-------------|
 | `caseSensitive` | Boolean | `true` | Case sensitivity for value matching |
 | `propertyResolution` | Boolean | `false` | If `true`, allows `${property}` placeholders as valid matches |
+| `comparisonMode` | String | `EXACT` | Mode to use for value matching: `EXACT`, `SEMANTIC_VERSION`, `SUBSTRING`, `REGEX`. |
 
 ---
 
@@ -326,6 +327,52 @@ Perform case-insensitive value matching.
 
 ---
 
+#### Example 9a: Substring Matching
+
+Check if an attribute contains a specific value.
+
+```yaml
+- id: "RULE-038-SUB"
+  name: "Host Validation"
+  description: "Host must contain 'internal'"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        comparisonMode: "SUBSTRING"
+        elementAttributeSets:
+          - element: "http:request-connection"
+            attributes:
+              host: "internal"
+```
+
+---
+
+#### Example 9b: Semantic Version Matching
+
+Validate that a connector version meets a minimum requirement.
+
+```yaml
+- id: "RULE-038-VER"
+  name: "Connector Version Check"
+  description: "Ensure HTTP Connector is version 1.5.0 or higher"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["pom.xml"]
+        comparisonMode: "SEMANTIC_VERSION"
+        elementAttributeSets:
+          - element: "dependency"
+            attributes:
+              version: ">= 1.5.0"
+```
+
+---
+
 ### Combined Modes
 
 #### Example 10: Using Multiple Modes Together
@@ -492,4 +539,5 @@ Use `caseSensitive: false` when:
 
 ## Version History
 
+- **v1.1.0**: Added `comparisonMode` for flexible value matching
 - **v1.0.0**: Initial release with three validation modes and property resolution support

@@ -40,6 +40,14 @@ public class XmlAttributeExistsCheck extends AbstractCheck {
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> elementAttributeSets = (List<Map<String, Object>>) params.get("elementAttributeSets");
 
+        String comparisonModeStr = (String) check.getParams().getOrDefault("comparisonMode", "EXACT");
+        com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode;
+        try {
+            comparisonMode = com.raks.muleguard.util.ValueMatcher.MatchMode.valueOf(comparisonModeStr.toUpperCase());
+        } catch (IllegalArgumentException e) {
+            comparisonMode = com.raks.muleguard.util.ValueMatcher.MatchMode.EXACT;
+        }
+
 
         @SuppressWarnings("unchecked")
         List<String> simpleElements = (List<String>) params.get("elements");
@@ -62,7 +70,7 @@ public class XmlAttributeExistsCheck extends AbstractCheck {
 
             for (Path file : matchingFiles) {
                 if (elementAttributeSets != null && !elementAttributeSets.isEmpty()) {
-                    validateElementAttributeSets(file, elementAttributeSets, checkIfElementExists, propertyResolution, caseSensitive, failures, projectRoot);
+                    validateElementAttributeSets(file, elementAttributeSets, checkIfElementExists, propertyResolution, caseSensitive, comparisonMode, failures, projectRoot);
                 } else if (simpleElements != null && simpleAttributes != null) {
                     validateSimpleElements(file, simpleElements, simpleAttributes, checkIfElementExists, propertyResolution, caseSensitive, failures, projectRoot);
                 }
@@ -80,7 +88,9 @@ public class XmlAttributeExistsCheck extends AbstractCheck {
     }
 
     private void validateElementAttributeSets(Path file, List<Map<String, Object>> sets, boolean checkIfElementExists, 
-                                              boolean propertyResolution, boolean caseSensitive, List<String> failures, Path projectRoot) {
+                                              boolean propertyResolution, boolean caseSensitive, 
+                                              com.raks.muleguard.util.ValueMatcher.MatchMode comparisonMode,
+                                              List<String> failures, Path projectRoot) {
         try {
             Document doc = parseXml(file);
             for (Map<String, Object> set : sets) {
@@ -106,7 +116,8 @@ public class XmlAttributeExistsCheck extends AbstractCheck {
                             failures.add(String.format("Element '%s' missing attribute '%s' in file: %s", elementName, attrName, projectRoot.relativize(file)));
                         } else {
                             String actualValue = element.getAttribute(attrName);
-                            if (expectedValue != null && !matches(actualValue, expectedValue, caseSensitive)) {
+                            boolean matches = com.raks.muleguard.util.ValueMatcher.matches(actualValue, expectedValue, comparisonMode, caseSensitive);
+                            if (expectedValue != null && !matches) {
                                  failures.add(String.format("Attribute '%s' in element '%s' value mismatch. Expected pattern: '%s', Found: '%s' in file: %s", 
                                      attrName, elementName, expectedValue, actualValue, projectRoot.relativize(file)));
                             }
@@ -151,10 +162,5 @@ public class XmlAttributeExistsCheck extends AbstractCheck {
         return factory.newDocumentBuilder().parse(file.toFile());
     }
 
-    private boolean matches(String value, String expected, boolean caseSensitive) {
-        if (!caseSensitive) {
-            return value.matches("(?i)" + expected) || value.equalsIgnoreCase(expected);
-        }
-        return value.matches(expected) || value.equals(expected);
-    }
+
 }
