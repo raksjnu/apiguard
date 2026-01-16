@@ -15,12 +15,12 @@
         <!-- Logo & Header -->
         <div class="logo">
             <a href="./" id="homeLink" title="Back to Home">
-                <img src="logo.svg" alt="MuleGuard Logo">
+                <img src="logo.svg" alt="Aegis Logo">
             </a>
-            <h1>MuleGuard Settings</h1>
+            <h1>Aegis Settings</h1>
         </div>
 
-        <p class="subtitle">Configure global preferences for MuleGuard</p>
+        <p class="subtitle">Configure global preferences for Aegis</p>
 
         <form id="settingsForm">
             <!-- Git Configuration -->
@@ -120,30 +120,30 @@
     <script>
         const isWrapper = window.location.pathname.includes('/apiguard/');
         const CONFIG = {
-            baseUrl: isWrapper ? '/apiguard/muleguard' : '',
-            resourceBase: isWrapper ? '/apiguard/muleguard/web' : ''
+            baseUrl: isWrapper ? '/apiguard/aegis' : '',
+            resourceBase: isWrapper ? '/apiguard/aegis/web' : ''
         };
 
         document.addEventListener('DOMContentLoaded', function() {
             if (isWrapper) {
                 const homeLink = document.getElementById('homeLink');
-                if (homeLink) homeLink.href = '/apiguard/muleguard/';
+                if (homeLink) homeLink.href = '/apiguard/aegis/';
             }
 
             // Load settings
-            const provider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
+            const provider = localStorage.getItem('aegis_git_provider') || 'gitlab';
             document.querySelector(`input[name="gitProvider"][value="${provider}"]`).checked = true;
             
-            document.getElementById('gitlabToken').value = localStorage.getItem('muleguard_gitlab_token') || '';
-            document.getElementById('githubToken').value = localStorage.getItem('muleguard_github_token') || '';
-            document.getElementById('gitlabUrl').value = localStorage.getItem('muleguard_gitlab_url') || 'https://gitlab.com';
-            document.getElementById('githubUrl').value = localStorage.getItem('muleguard_github_url') || 'https://api.github.com';
-            document.getElementById('gitlabDefaultGroup').value = localStorage.getItem('muleguard_gitlab_group') || '';
-            document.getElementById('githubDefaultGroup').value = localStorage.getItem('muleguard_github_group') || '';
+            document.getElementById('gitlabToken').value = localStorage.getItem('aegis_gitlab_token') || '';
+            document.getElementById('githubToken').value = localStorage.getItem('aegis_github_token') || '';
+            document.getElementById('gitlabUrl').value = localStorage.getItem('aegis_gitlab_url') || 'https://gitlab.com';
+            document.getElementById('githubUrl').value = localStorage.getItem('aegis_github_url') || 'https://api.github.com';
+            document.getElementById('gitlabDefaultGroup').value = localStorage.getItem('aegis_gitlab_group') || '';
+            document.getElementById('githubDefaultGroup').value = localStorage.getItem('aegis_github_group') || '';
             
-            document.getElementById('otherUrl').value = localStorage.getItem('muleguard_other_url') || '';
-            document.getElementById('otherToken').value = localStorage.getItem('muleguard_other_token') || '';
-            document.getElementById('customRulesPath').value = localStorage.getItem('muleguard_custom_rules_path') || '';
+            document.getElementById('otherUrl').value = localStorage.getItem('aegis_other_url') || '';
+            document.getElementById('otherToken').value = localStorage.getItem('aegis_other_token') || '';
+            document.getElementById('customRulesPath').value = localStorage.getItem('aegis_custom_rules_path') || '';
             
             updateSettingsUI();
         });
@@ -210,52 +210,52 @@
 
         function saveSettings() {
             const provider = document.querySelector('input[name="gitProvider"]:checked').value;
-            localStorage.setItem('muleguard_git_provider', provider);
+            localStorage.setItem('aegis_git_provider', provider);
             
             const gitlabToken = document.getElementById('gitlabToken').value.trim();
-            localStorage.setItem('muleguard_gitlab_token', gitlabToken);
+            localStorage.setItem('aegis_gitlab_token', gitlabToken);
 
             const githubToken = document.getElementById('githubToken').value.trim();
-            localStorage.setItem('muleguard_github_token', githubToken);
+            localStorage.setItem('aegis_github_token', githubToken);
             
             const gitlabUrl = document.getElementById('gitlabUrl').value.trim();
-            localStorage.setItem('muleguard_gitlab_url', gitlabUrl);
+            localStorage.setItem('aegis_gitlab_url', gitlabUrl);
             const gitlabGroup = document.getElementById('gitlabDefaultGroup').value.trim();
-            localStorage.setItem('muleguard_gitlab_group', gitlabGroup);
+            localStorage.setItem('aegis_gitlab_group', gitlabGroup);
             
             const githubUrl = document.getElementById('githubUrl').value.trim();
-            localStorage.setItem('muleguard_github_url', githubUrl);
+            localStorage.setItem('aegis_github_url', githubUrl);
             const githubGroup = document.getElementById('githubDefaultGroup').value.trim();
-            localStorage.setItem('muleguard_github_group', githubGroup);
+            localStorage.setItem('aegis_github_group', githubGroup);
             
             const otherUrl = document.getElementById('otherUrl').value.trim();
-            localStorage.setItem('muleguard_other_url', otherUrl);
+            localStorage.setItem('aegis_other_url', otherUrl);
             const otherToken = document.getElementById('otherToken').value.trim();
-            localStorage.setItem('muleguard_other_token', otherToken);
+            localStorage.setItem('aegis_other_token', otherToken);
             
             const rulesPath = document.getElementById('customRulesPath').value.trim();
-            localStorage.setItem('muleguard_custom_rules_path', rulesPath);
+            localStorage.setItem('aegis_custom_rules_path', rulesPath);
             
             showStatus('Settings saved successfully!', 'green');
             
             // Legacy token handling
-            if(provider === 'gitlab') localStorage.setItem('muleguard_git_token', gitlabToken);
-            else if(provider === 'github') localStorage.setItem('muleguard_git_token', githubToken);
-            else localStorage.setItem('muleguard_git_token', otherToken);
+            if(provider === 'gitlab') localStorage.setItem('aegis_git_token', gitlabToken);
+            else if(provider === 'github') localStorage.setItem('aegis_git_token', githubToken);
+            else localStorage.setItem('aegis_git_token', otherToken);
         }
 
         function clearSettings() {
             if(confirm('Are you sure you want to clear all saved settings?')) {
-                localStorage.removeItem('muleguard_git_provider');
-                localStorage.removeItem('muleguard_gitlab_token');
-                localStorage.removeItem('muleguard_github_token');
-                localStorage.removeItem('muleguard_gitlab_url');
-                localStorage.removeItem('muleguard_gitlab_group');
-                localStorage.removeItem('muleguard_github_url');
-                localStorage.removeItem('muleguard_github_group');
-                localStorage.removeItem('muleguard_other_url');
-                localStorage.removeItem('muleguard_other_token');
-                localStorage.removeItem('muleguard_custom_rules_path');
+                localStorage.removeItem('aegis_git_provider');
+                localStorage.removeItem('aegis_gitlab_token');
+                localStorage.removeItem('aegis_github_token');
+                localStorage.removeItem('aegis_gitlab_url');
+                localStorage.removeItem('aegis_gitlab_group');
+                localStorage.removeItem('aegis_github_url');
+                localStorage.removeItem('aegis_github_group');
+                localStorage.removeItem('aegis_other_url');
+                localStorage.removeItem('aegis_other_token');
+                localStorage.removeItem('aegis_custom_rules_path');
                 
                 // Clear form
                 document.getElementById('settingsForm').reset();

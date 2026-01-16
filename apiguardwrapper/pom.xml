@@ -57,6 +57,10 @@
 							<groupId>com.raks</groupId>
 							<artifactId>filesync</artifactId>
 						</sharedLibrary>
+                        <sharedLibrary>
+                            <groupId>com.raks</groupId>
+                            <artifactId>aegis</artifactId>
+                        </sharedLibrary>
 					</sharedLibraries>
 				</configuration>
 			</plugin>
@@ -76,6 +80,13 @@
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
             <version>5.3.39</version>
+        </dependency>
+        <dependency>
+            <groupId>com.raks</groupId>
+            <artifactId>aegis</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/aegis-1.0.0.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
@@ -157,7 +168,14 @@
 			<artifactId>jsoup</artifactId>
 			<version>1.17.2</version>
 		</dependency>
-		<!-- Custom Tool JARs -->
+        <!-- Custom Tool JARs -->
+        <dependency>
+            <groupId>com.raks</groupId>
+            <artifactId>aegis</artifactId>
+            <version>1.0.0</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/aegis-1.0.0.jar</systemPath>
+        </dependency>
 		<dependency>
 			<groupId>com.raks</groupId>
 			<artifactId>raksanalyzer</artifactId>

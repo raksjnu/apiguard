@@ -142,3 +142,70 @@ forbiddenTokens: ["@Deprecated", "LegacyClass"]
 - **[GENERIC_TOKEN_SEARCH_REQUIRED](GENERIC_TOKEN_SEARCH_REQUIRED.md)** - Opposite: ensures tokens DO exist
 - **[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)** - More precise XML validation using XPath
 - **[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)** - Config-specific validation with searchMode: FORBIDDEN
+
+## 🧩 Solution Patterns & Technology Reference
+
+### 🐎 MuleSoft 4
+**Use Case:** Modernization
+**Best Practice:** Ensure no Mule Expression Language (MEL) or deprecated components are used.
+```yaml
+- id: "MULE-DEP-01"
+  name: "No MEL Allowed"
+  description: "Detects usage of #[... which might be legacy MEL or require migration"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["**/*.xml"]
+        tokens: ["message.payload", "message.inboundProperties"]
+```
+
+### ☕ Java / Spring Boot
+**Use Case:** Logging Standards
+**Best Practice:** Prevent usage of standard output for logging.
+```yaml
+- id: "JAVA-LOG-01"
+  name: "No System.out"
+  description: "Prevent System.out.println usage"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["**/*.java"]
+        tokens: ["System.out.println", "System.err.println"]
+```
+
+### ⚡ TIBCO BW 5.x
+**Use Case:** Hardcoding
+**Best Practice:** Prevent hardcoded IP addresses in process definitions.
+```yaml
+- id: "TIBCO-IP-01"
+  name: "No Hardcoded IPs"
+  description: "Block IPs in TIBCO BW files"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["*.process", "*.archive"]
+        tokens: ["\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"]
+        matchMode: REGEX
+```
+
+### 🐍 Python
+**Use Case:** Debugging
+**Best Practice:** Ensure no debugger breakpoints are left in code.
+```yaml
+- id: "PYTHON-DEBUG-01"
+  name: "No Debugger Breakpoints"
+  description: "Prevent pdb.set_trace() in production code"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["*.py"]
+        tokens: ["import pdb", "pdb.set_trace()"]
+```

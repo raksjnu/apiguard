@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Aegis - Help & Documentation</title>
+    <style>
+        :root {
+            --truist-purple: #663399;
+            --truist-purple-light: #7d4fb2;
+            --text-white: #FFFFFF;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .report-container {
+            border: 5px solid var(--truist-purple);
+            padding: 20px 40px;
+            margin: 20px;
+            border-radius: 8px;
+            background-color: white;
+            position: relative;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        h1 {
+            color: var(--truist-purple);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--truist-purple);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--truist-purple);
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        ul {
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .highlight-box {
+            background: #f5f5f5;
+            border-left: 4px solid var(--truist-purple);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .feature-card h4 {
+            color: var(--truist-purple);
+            margin-top: 0;
+        }
+
+        .top-nav-container {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .top-nav-button {
+            background-color: var(--truist-purple);
+            color: var(--text-white);
+            border: none;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .top-nav-button:hover {
+            background-color: var(--truist-purple-light);
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #c7254e;
+        }
+
+        .rule-count {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--truist-purple);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="report-container">
+        <!-- Buttons container to manage absolute positioning easily -->
+        <div class="top-nav-container">
+            <a href="./" class="top-nav-button" title="Back to Dashboard">🏠 Home</a>
+            <a href="checklist.html" target="_blank" class="top-nav-button">Checklist</a>
+            <a href="rule_guide.html" target="_blank" class="top-nav-button">Rule Guide</a>
+        </div>
+
+        <div class="logo-section">
+            <img src="logo.svg" alt="Aegis Logo">
+            <h1>Aegis Help & Documentation</h1>
+        </div>
+
+        <div class="highlight-box">
+            <strong>Aegis</strong> is a versatile and comprehensive static analysis solution designed specifically
+            for MuleSoft applications. It is highly flexible and capable of validating any component of your
+            integration,
+            including <code>flow.xml</code>, global configurations, <code>dataweave.dwl</code> files, and more.
+            Aegis can be easily configured to support countless rules, tailored to meet your organization's specific
+            needs for standard or customized code review and validation.
+        </div>
+
+        <h2>📋 What Aegis Validates</h2>
+        <p>Aegis provides thorough analysis across all core project components:</p>
+        <ul>
+            <li><strong>Universal Application Support:</strong> Validate ANY text-based project (TIBCO, Python, Java, JS, etc.)</li>
+            <li><strong>Maven configurations:</strong> pom.xml validation</li>
+            <li><strong>Mule runtime manifests:</strong> mule-artifact.json structure</li>
+            <li><strong>Mule flows & sub-flows:</strong> XML configuration files</li>
+            <li><strong>DataWeave scripts:</strong> .dwl files</li>
+            <li><strong>Environment-specific property files:</strong> .properties and .policy files</li>
+        </ul>
+
+        <h2>⚙️ Configuration File Structure Requirements</h2>
+        <div class="highlight-box">
+            <p><strong>Important:</strong> Aegis validates environment-specific configuration files based on a standardized structure. 
+            If your organization uses configuration files, they must follow this format:</p>
+        </div>
+        
+        <h3>Required Structure</h3>
+        <ul>
+            <li><strong>Folder Name:</strong> Configuration files must be in a folder containing <code>_config</code> in the name
+                <ul style="margin-top: 5px;">
+                    <li>Examples: <code>muleapp_config</code>, <code>api_config</code>, <code>myproject_config</code></li>
+                    <li>Pattern: Any folder name containing <code>_config</code></li>
+                </ul>
+            </li>
+            <li><strong>File Extensions:</strong> Supported extensions are:
+                <ul style="margin-top: 5px;">
+                    <li><code>.properties</code> - Standard property files</li>
+                    <li><code>.policy</code> - Policy configuration files</li>
+                    <li><code>.deployment</code> - Deployment configuration files</li>
+                </ul>
+            </li>
+            <li><strong>File Format:</strong> Properties must use the format: <code>propertyName=propertyValue</code>
+                <ul style="margin-top: 5px;">
+                    <li>Delimiter must be <code>=</code> (equals sign)</li>
+                    <li>Example: <code>database.host=localhost</code></li>
+                    <li>Example: <code>api.timeout=30000</code></li>
+                </ul>
+            </li>
+            <li><strong>Location:</strong> The config folder should be at the same level as your API project folders</li>
+        </ul>
+
+        <h3>Example Project Structure</h3>
+        <div class="highlight-box">
+            <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">
+your-mule-projects/
+├── api-project-1/
+├── api-project-2/
+└── muleapp_config/
+    ├── dev.properties
+    ├── qa.properties
+    ├── prod.properties
+    └── security.policy</pre>
+        </div>
+
+        <div class="highlight-box" style="background: #fff3cd; border-left-color: #ffc107;">
+            <p><strong>⚠️ Note:</strong> The folder name must contain <code>_config</code> somewhere in the name. 
+            If your organization uses a different pattern, you can modify the <code>namePattern</code> in <code>rules.yaml</code>:</p>
+            <ul style="margin-top: 5px;">
+                <li>Current pattern: <code>".*_config.*"</code> (matches any folder containing <code>_config</code>)</li>
+                <li>You can change this to match your naming convention</li>
+            </ul>
+            <p style="margin-top: 10px;">Configuration validation rules (RULE-100 through RULE-199) will only apply to files 
+            in folders matching this pattern.</p>
+        </div>
+
+        <h2>🎯 Key Features</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>📊 Comprehensive Checks</h4>
+                <p>Perform a wide variety of checks on code and configuration files. Validates one or more Mule project
+                    folders and their configurations with a single click.</p>
+            </div>
+            <div class="feature-card">
+                <h4>🚀 Multiple Input Modes</h4>
+                <p><strong>Standalone:</strong> Local folder, ZIP upload, or JAR upload<br>
+                   <strong>Wrapper:</strong> ZIP upload or JAR upload<br>
+                   <strong>Git Repository:</strong> Direct Clone & Scan (GitLab/GitHub/Other)</p>
+            </div>
+            <div class="feature-card">
+                <h4>📈 Enhanced Reporting</h4>
+                <p>Generates detailed HTML and Excel reports. View reports in-browser and download as ZIP. Email notifications available in wrapper mode.</p>
+            </div>
+            <div class="feature-card">
+                <h4>⚙️ Custom Rules Support</h4>
+                <p>Fully configurable via the GUI or <code>rules.yaml</code> to support custom rules and
+                    organization-specific needs.</p>
+            </div>
+        </div>
+
+        <h2>📚 Supported Validation Checks</h2>
+        <p>Aegis supports a wide range of validation types to ensure the integrity and quality of your applications.
+            Possible checks include:</p>
+
+        <ul>
+            <li><strong>Structure & configuration:</strong> Validate XML flows, <code>flow.xml</code>, global
+                configurations, and file structures.</li>
+            <li><strong>Dependencies:</strong> Verify Maven <code>pom.xml</code> configurations and dependencies.</li>
+            <li><strong>Code Content:</strong> Search for specific tokens, patterns, or forbidden content within
+                <code>.dwl</code> DataWeave scripts, Python Scripts, Java Code, and other source files.
+            </li>
+            <li><strong>XML Validation:</strong> Perform deep inspection using XPath, check for specific attributes, and
+                validate element content.</li>
+            <li><strong>Property Management:</strong> Validate environment-specific property files, check for mandatory
+                properties, and ensure secure property handling.</li>
+            <li><strong>Custom Logic:</strong> Define custom checks for JSON validation, generic token searches (Universal Text Scanning), and
+                more to cover any specific organizational requirement.</li>
+        </ul>
+        
+        <h2>🔗 Git Integration Guide</h2>
+        <div class="highlight-box">
+             <p><strong>New in v1.0:</strong> Aegis now supports direct integration with Git providers.</p>
+             <ul>
+                 <li><strong>Discovery Mode:</strong> Browse and select repositories from your GitLab Group or GitHub Organization/User.</li>
+                 <li><strong>Manual Mode:</strong> Paste any direct Git clone URL (HTTPS).</li>
+                 <li><strong>Public Access:</strong> You can now search public groups/users without needing a token!</li>
+             </ul>
+        </div>
+        
+        <h3>Configuration (Settings Page)</h3>
+        <ul>
+            <li><strong>Tokens:</strong> Add your Personal Access Tokens (PAT) in Settings. <br><em>Tip: After clicking "Validate", your settings are auto-saved!</em></li>
+            <li><strong>Default Group/Org:</strong> Set a default Group (GitLab) or Organization (GitHub) to auto-fill the search field on startup.</li>
+            <li><strong>Base URLs:</strong> Default to public clouds (gitlab.com, api.github.com) but can be configured for Enterprise instances.</li>
+        </ul>
+
+        <h2>📂 Input Modes</h2>
+        <p>Aegis supports multiple input methods to fit your workflow:</p>
+        
+        <h3>Standalone Java Application</h3>
+        <ul>
+            <li><strong>📁 Local Folder:</strong> Point to a folder containing your Mule projects</li>
+            <li><strong>📦 ZIP Upload:</strong> Upload a ZIP file containing your project(s)</li>
+            <li><strong>📚 JAR Upload:</strong> Upload a Mule application JAR file for validation</li>
+            <li><strong>🔗 Git Repository:</strong> Connect to GitLab or GitHub. Supports private repos (with token) and public repos (no token required).</li>
+        </ul>
+        
+        <h3>Mule Wrapper Deployment</h3>
+        <ul>
+            <li><strong>📦 ZIP Upload:</strong> Upload a ZIP file (default mode)</li>
+            <li><strong>📚 JAR Upload:</strong> Upload a Mule application JAR file</li>
+            <li><strong>📥 Download Reports:</strong> Download validation reports as ZIP file</li>
+            <li><strong>📧 Email Notifications:</strong> Receive reports via email (configured in Mule)</li>
+        </ul>
+
+        <h2>🚀 How to Use</h2>
+
+        <h3>Command Line (Local Folders Only)</h3>
+        <div class="highlight-box">
+            <code>java -jar aegis-1.0.0-jar-with-raks.jar -p /path/to/your/mule-projects</code>
+            <p style="margin-top: 10px;"><strong>Note:</strong> CLI mode only supports local folder paths. For ZIP/JAR uploads, use GUI mode.</p>
+        </div>
+
+        <h3>GUI Mode (All Input Modes)</h3>
+        <div class="highlight-box">
+            <p>Run <code>start-gui.bat</code> (Windows) or <code>start-gui.sh</code> (Mac/Linux)</p>
+            <p>Opens browser at <code>http://localhost:8080</code></p>
+            <p><strong>Supports:</strong> Local folder, ZIP upload, JAR upload</p>
+        </div>
+
+        <h2>📖 Documentation</h2>
+        <p>Detailed rule type documentation is available in the <a href="rule_guide.html"
+                style="color: var(--truist-purple); font-weight: bold;">Rule Guide</a>:</p>
+        <ul>
+            <li>Interactive guide with detailed documentation for all rule types</li>
+            <li>Includes parameter reference and configuration examples</li>
+            <li>Click "Rule Guide" in the dashboard to access it</li>
+        </ul>
+
+        <h2>⚙️ Configuration</h2>
+        <p>All rules are configured in <code>src/main/resources/rules/rules.yaml</code></p>
+        <ul>
+            <li><strong>Enable/Disable rules:</strong> Set <code>enabled: true/false</code></li>
+            <li><strong>Severity levels:</strong> CRITICAL, HIGH, MEDIUM, LOW</li>
+            <li><strong>Custom parameters:</strong> Each rule type supports specific parameters</li>
+            <li><strong>Environment filtering:</strong> Target specific environments (DEV, QA, PROD)</li>
+        </ul>
+
+        <h2>📊 Report Output</h2>
+        <ul>
+            <li><strong>CONSOLIDATED-REPORT.html:</strong> Dashboard for all scanned APIs</li>
+            <li><strong>Individual reports:</strong> Detailed results for each API</li>
+            <li><strong>checklist.html:</strong> Complete list of all validation rules</li>
+            <li><strong>Excel reports:</strong> .xlsx format for data analysis</li>
+        </ul>
+
+        <h2>💡 Tips</h2>
+        <ul>
+            <li>Start with the consolidated dashboard to get an overview</li>
+            <li>Click on individual API reports for detailed rule-by-rule results</li>
+            <li>Use the checklist to understand all available validation rules</li>
+            <li>Customize <code>rules.yaml</code> to match your organization's standards</li>
+            <li>Review the <strong>Rule Guide</strong> for detailed configuration examples</li>
+        </ul>
+
+        <h2>📧 Contact</h2>
+        <div class="highlight-box" style="margin-top: 15px;">
+            <p><strong>For further information, support, or questions:</strong></p>
+            <p style="margin-top: 10px;">
+                Reach out to <strong>Rakesh Kumar (Raks)</strong><br>
+                Email: <a href="mailto:rakesh.kumar@ibm.com"
+                    style="color: var(--truist-purple); font-weight: bold; text-decoration: none;">rakesh.kumar@ibm.com</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Simple session persistence for navigation links
+            var sessionId = new URLSearchParams(window.location.search).get('session');
+            if (sessionId) {
+                var links = document.querySelectorAll('.top-nav-button');
+                links.forEach(function(link) {
+                    var href = link.getAttribute('href');
+                    if (href && !href.startsWith('http') && !href.startsWith('#')) {
+                        var separator = href.includes('?') ? '&' : '?';
+                        link.setAttribute('href', href + separator + 'session=' + sessionId);
+                    }
+                });
+            }
+        });
+    </script>
+</body>

@@ -20,7 +20,8 @@
 8. [Testing Requirements](#testing-requirements)
 9. [Documentation Standards](#documentation-standards)
 10. [Security Best Practices](#security-best-practices)
-11. [Deployment Considerations](#deployment-considerations)
+11. [Comment Removal Standards](#comment-removal-standards)
+12. [Deployment Considerations](#deployment-considerations)
 
 ---
 
@@ -43,7 +44,14 @@ Use this checklist for every project cleanup:
 - [ ] Remove hardcoded contact emails
 - [ ] Update README to remove trial references
 
-### Phase 3: Logging Implementation
+### Phase 3: Comment Cleanup
+- [ ] Remove all block comments `/* ... */`
+- [ ] Remove all line comments `// ...` (except TODOs if approved)
+- [ ] Remove all Javadoc from internal methods
+- [ ] Remove commented-out code blocks
+- [ ] Clean config files of unused commented entries
+
+### Phase 4: Logging Implementation
 - [ ] Add SLF4J API dependency
 - [ ] Add Logback Classic dependency
 - [ ] Create `logback.xml` configuration
@@ -248,6 +256,10 @@ public class MyClass {
 
 ### Golden Rule
 **NEVER** commit credentials to source code or configuration files.
+
+> **Exception (Wrapper Projects)**: For `apiguardwrapper` or demo-ready wrapper applications, default configurations in `mule-app.properties` (including email/SMTP settings) are permitted to ensure out-of-the-box functionality. These should be treated as default/demo credentials.
+>
+> **CRITICAL**: Do **NOT** update or remove values from `apiguardwrapper`'s `mule-app.properties` during cleanup activities. The file must remain as-is to ensure the wrapper functions correctly.
 
 ### What NOT to Do (❌)
 ```java
@@ -807,6 +819,29 @@ sudo -u appuser java -jar myapp.jar
 - Restrict log file permissions: `chmod 640 logs/*.log`
 - Implement log rotation
 - Monitor logs for suspicious activity
+
+---
+
+## Comment Removal Standards
+
+### Policy
+To ensure a professional, secure, and maintainable enterprise release, all source code must be free of developer notes, commented-out code, and unnecessary internal documentation.
+
+### Checklist
+- [ ] **Remove Commented-Out Code**: Delete any blocks of code that have been commented out. Use Git history if retrieval is needed later.
+- [ ] **Remove Developer Notes**: Delete internal notes, reminders, or questions (e.g., `// TODO`, `// FIXME`, `// check this`).
+- [ ] **Remove Javadoc**: Remove Javadoc comments from internal classes/methods. Keep them only for public APIs if SDK generation is required.
+- [ ] **Remove Block Comments**: Delete `/* ... */` blocks unless they serve as required license headers.
+- [ ] **Remove Line Comments**: Delete `// ...` comments explaining implementation details. Code should be self-documenting.
+- [ ] **Clean Configuration Files**: Remove commented-out configuration lines in `.properties`, `.yaml`, or `.xml` files unless they serve as critical examples.
+- [ ] **Verify Header Comments**: Ensure only the standard enterprise license header remains at the top of files.
+
+### Verification
+```bash
+# Search for common comment patterns
+grep -r "//" --include="*.java" .
+grep -r "/\*" --include="*.java" .
+```
 
 ---
 

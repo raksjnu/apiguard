@@ -47,13 +47,13 @@
     <div class="container" style="position: relative;">
         <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
             <a id="linkChecklist" href="#" onclick="window.open(resolvePath('checklist.html'), '_blank'); return false;" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
-            <a id="linkRules" href="#" onclick="window.open(resolvePath('rule_guide.html'), '_blank'); return false;" class="nav-button" title="Guide to all MuleGuard validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
+            <a id="linkRules" href="#" onclick="window.open(resolvePath('rule_guide.html'), '_blank'); return false;" class="nav-button" title="Guide to all Aegis validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
             <a id="linkSettings" href="#" onclick="window.open(resolvePath('settings.html'), '_blank'); return false;" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
             <a id="linkHelp" href="#" onclick="window.open(resolvePath('help.html'), '_blank'); return false;" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
         </div>
 
         <div class="logo">
-            <img id="logoImg" src="logo.svg" alt="MuleGuard Logo" style="height: 60px; margin-bottom: 10px;">
+            <img id="logoImg" src="logo.svg" alt="Aegis Logo" style="height: 60px; margin-bottom: 10px;">
             <h1>Aegis</h1>
         </div>
 
@@ -220,7 +220,7 @@
                 </a>
             </label>
             <input type="file" id="customRules" accept=".yaml,.yml">
-            <small>If not provided, default rules from MuleGuard JAR will be used</small>
+            <small>If not provided, default rules from Aegis JAR will be used</small>
         </div>
 
         <!-- Email Notification Options -->
@@ -250,7 +250,7 @@
             </div>
         </div>
 
-        <button id="runBtn" onclick="runValidation()">&#128640; Run MuleGuard</button>
+        <button id="runBtn" onclick="runValidation()">&#128640; Run Aegis</button>
 
 
 
@@ -267,10 +267,10 @@
         
         // Configuration
         const CONFIG = {
-            baseUrl: isWrapper ? '/apiguard/muleguard' : '',
-            apiUrl: isWrapper ? '/apiguard/muleguard/validate' : '/api/validate',
-            resourceBase: isWrapper ? '/apiguard/muleguard/web' : '',
-            defaultMode: isWrapper ? 'zip' : 'local'
+            baseUrl: "/apiguard/aegis", // Base URL for the tool
+            apiUrl: "/apiguard/aegis/api/validate", // API base URL
+            statusCheckInterval: 2000,
+            reportRetentionDays: 7
         };
 
         // Initialize UI
@@ -345,7 +345,7 @@
                 handleModeChange(false);
             } catch (e) {
                 console.error('[DEBUG] Error restoring session prefs:', e);
-                alert('MuleGuard UI Error (Restore): ' + e.message);
+                alert('Aegis UI Error (Restore): ' + e.message);
             }
 
             // Initialize GitAnalyzer Bridge if in wrapper mode to ensure correct git config
@@ -367,35 +367,41 @@
                 toggleMode();
             } catch (e) {
                 console.error('[DEBUG] Error in handleModeChange:', e);
-                alert('MuleGuard UI Error (Mode Change): ' + e.message);
+                alert('Aegis UI Error (Mode Change): ' + e.message);
             }
         }
 
 
         // Use localStorage for Session Preferences (Non-sensitive)
         function loadSessionPrefs() {
-            const savedGroup = localStorage.getItem('muleguard_session_group');
-            const savedFilter = localStorage.getItem('muleguard_session_filter');
-            const savedUrl = localStorage.getItem('muleguard_session_url');
-            
-            // Logic to fallback to Defaults if session is empty for Group
-            if (savedGroup) {
-                document.getElementById('gitGroup').value = savedGroup;
-            } else {
-                 // Try default from settings based on current provider
-                 const provider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
-                 if (provider === 'gitlab') {
-                     const def = localStorage.getItem('muleguard_gitlab_group');
-                     if(def) document.getElementById('gitGroup').value = def;
-                 } else if (provider === 'github') {
-                     const def = localStorage.getItem('muleguard_github_group');
-                     if(def) document.getElementById('gitGroup').value = def;
-                 }
+                // Load input preference
+                const savedMode = localStorage.getItem('aegis_input_mode');
+                if (savedMode) {
+                    switchMode(savedMode);
+                }
+
+                // Load Project Path
+                const savedPath = localStorage.getItem('aegis_local_path');
+                if (savedPath) {
+                    $('#localPath').val(savedPath);
+                }
+
+                // Load Git Settings
+                const savedGitUrl = localStorage.getItem('aegis_git_url');
+                if (savedGitUrl) $('#gitUrl').val(savedGitUrl);
+                
+                const savedGitBranch = localStorage.getItem('aegis_git_branch');
+                if (savedGitBranch) $('#gitBranch').val(savedGitBranch);
+                
+                const savedGitToken = localStorage.getItem('aegis_git_token');
+                if (savedGitToken) $('#gitToken').val(savedGitToken);
+
+                // Load Toggle States
+                const restored = localStorage.getItem('aegis_settings_restore');
+                if (restored === 'true') {
+                     // logic to restore checkboxes
+                } 
             }
-            
-            if (savedFilter) document.getElementById('gitRepoFilter').value = savedFilter;
-            if (savedUrl) document.getElementById('gitUrl').value = savedUrl;
-        }
 
         function saveSessionPrefs() {
             // Auto-save session preferences (Sticky Session)
@@ -590,7 +596,7 @@
                 }
             } catch (e) {
                 console.error('[DEBUG] Error in toggleMode:', e);
-                alert('MuleGuard UI Error (Toggle): ' + e.message);
+                alert('Aegis UI Error (Toggle): ' + e.message);
             }
         }
 
@@ -1191,7 +1197,7 @@
     <!-- Message Modal (Reuses modal-content style) -->
     <div id="customModal" class="modal-overlay">
         <div class="modal-content">
-            <h3 style="color: #663399; margin-bottom: 15px;">MuleGuard Notification</h3>
+            <h3 style="color: #663399; margin-bottom: 15px;">Aegis Notification</h3>
             <div id="modalMessage" style="margin-bottom: 20px; color: #333;"></div>
             <button onclick="closeModal()" style="padding: 8px 20px; background: #663399; color: white; border: none; border-radius: 4px; cursor: pointer;">Close</button>
         </div>

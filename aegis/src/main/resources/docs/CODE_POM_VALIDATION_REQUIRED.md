@@ -414,6 +414,52 @@ parent:
 
 ---
 
+## Solution Patterns and Technology References
+
+The following table highlights key Maven/Java validation patterns to ensure build stability and compliance.
+
+| Technology | Best Practice Goal | Key Elements | Attributes Checked |
+| :--- | :--- | :--- | :--- |
+| **☕ Java/Maven** | Parent POM Usage | `parent` | `version` |
+| **☕ Java/Maven** | Plugin Versioning | `plugin` | `version` |
+| **🐎 MuleSoft** | Mule Plugin Check | `mule-maven-plugin` | `version` |
+
+### ☕ Java / Maven Patterns
+
+**Scenario**: To ensure reproducible builds, it is critical that the `parent` POM is strictly versioned and that major build plugins are explicitly defined.
+
+```yaml
+id: "MAVEN-PARENT-CHECK"
+name: "Parent POM Validation"
+description: "Ensure specific corporate parent POM is used"
+checks:
+  - type: POM_VALIDATION_REQUIRED
+    params:
+      parent:
+        groupId: "com.company"
+        artifactId: "corporate-parent"
+        version: "2.0.0"
+```
+
+### 🐎 MuleSoft Patterns
+
+**Scenario**: Mule applications must use the correct version of the Mule Maven Plugin to ensure compatibility with the runtime and deployment pipelines.
+
+```yaml
+id: "MULE-PLUGIN-CHECK"
+name: "Mule Maven Plugin Validation"
+description: "Ensure correct version of mule-maven-plugin"
+checks:
+  - type: POM_VALIDATION_REQUIRED
+    params:
+      plugins:
+        - groupId: "org.mule.tools.maven"
+          artifactId: "mule-maven-plugin"
+          version: "3.8.2"
+```
+
+---
+
 ## Related Rule Types
 
 - **[POM_VALIDATION_FORBIDDEN](POM_VALIDATION_FORBIDDEN.md)** - Opposite: ensures elements do NOT exist
@@ -422,7 +468,4 @@ parent:
 
 ---
 
-## Version History
 
-- **v1.1.0**: Added optional version validation for dependencies and plugins
-- **v1.0.0**: Initial release with parent, properties, dependencies, and plugins validation

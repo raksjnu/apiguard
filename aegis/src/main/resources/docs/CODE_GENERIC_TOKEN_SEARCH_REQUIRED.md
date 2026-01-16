@@ -144,3 +144,54 @@ isRegex: true
 - **[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)** - Opposite: ensures tokens do NOT exist
 - **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - More precise XML validation using XPath
 - **[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)** - Config-specific token validation with environment filtering
+
+## 🧩 Solution Patterns & Technology Reference
+
+### 🐎 MuleSoft 4
+**Use Case:** Best Practices
+**Best Practice:** Ensure DataWeave scripts specify strict typing or version.
+```yaml
+- id: "MULE-DW-01"
+  name: "DataWeave Version Required"
+  description: "Ensure specific DataWeave version is declared"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: ["**/*.dwl"]
+        tokens: ["%dw 2.0"]
+```
+
+### ☕ Java / Spring Boot
+**Use Case:** Security
+**Best Practice:** Ensure `@RestController` or specific security annotations are present in controller files.
+```yaml
+- id: "JAVA-SEC-01"
+  name: "Secure Controllers"
+  description: "Ensure Controllers have security precautions enabled"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: ["**/*Controller.java"]
+        tokens: ["@PreAuthorize", "@Secured"]
+        requireAll: false
+```
+
+### 🐍 Python
+**Use Case:** Environment Safety
+**Best Practice:** Ensure scripts use a specific interpreter via shebang.
+```yaml
+- id: "PYTHON-ENV-01"
+  name: "Shebang Required"
+  description: "Ensure python scripts specify python3"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: ["*.py"]
+        tokens: ["#!/usr/bin/env python3"]
+```

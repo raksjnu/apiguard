@@ -365,6 +365,50 @@ forbiddenDependencies:
 
 ---
 
+## Solution Patterns and Technology References
+
+The following table highlights key patterns for blocking unwanted dependencies and ensuring supply chain security.
+
+| Technology | Best Practice Goal | Forbidden Item | Reason |
+| :--- | :--- | :--- | :--- |
+| **☕ Java/Maven** | Security | `log4j` (1.x) | Vulnerabilities (Log4Shell) |
+| **☕ Java/Maven** | Stability | `SNAPSHOT` | Non-reproducible builds |
+| **🐎 MuleSoft** | Migration | `mule-core-ee` | Legacy artifact |
+
+### ☕ Java / Maven Patterns
+
+**Scenario**: Preventing the use of vulnerable libraries is a primary use case. For example, blocking Log4j 1.x variants ensures no developer accidentally introduces them.
+
+```yaml
+id: "BAN-LOG4J-1"
+name: "Ban Log4j 1.x"
+description: "Forbid usage of vulnerable Log4j 1.x libraries"
+checks:
+  - type: POM_VALIDATION_FORBIDDEN
+    params:
+      forbiddenDependencies:
+        - groupId: "log4j"
+          artifactId: "log4j"
+```
+
+### 🐎 MuleSoft Patterns
+
+**Scenario**: When migrating from Mule 3 to Mule 4, you can forbid Mule 3 specific artifacts to ensure developers are using the correct Mule 4 modules.
+
+```yaml
+id: "BAN-MULE3-ARTIFACTS"
+name: "Ban Mule 3 Core"
+description: "Ensure no Mule 3 core artifacts are used in Mule 4 projects"
+checks:
+  - type: POM_VALIDATION_FORBIDDEN
+    params:
+      forbiddenDependencies:
+        - groupId: "org.mule.modules"
+          artifactId: "mule-module-http" # Deprecated in Mule 4 (replaced by socket/http connectors)
+```
+
+---
+
 ## Related Rule Types
 
 - **[POM_VALIDATION_REQUIRED](POM_VALIDATION_REQUIRED.md)** - Opposite: ensures elements DO exist
@@ -373,7 +417,4 @@ forbiddenDependencies:
 
 ---
 
-## Version History
 
-- **v1.1.0**: Added optional version validation for dependencies and plugins
-- **v1.0.0**: Initial release with properties, dependencies, and plugins validation

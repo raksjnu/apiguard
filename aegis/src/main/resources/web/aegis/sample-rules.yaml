@@ -1,5 +1,5 @@
 # =============================================================================
-# MuleGuard Rules Configuration
+# Aegis Rules Configuration
 # Migration Scope: Mule 4.3.x/4.4.x/4.6.x → 4.9.0 + JDK 17 + Policy Modernization + RTF 4.3
 # Author: Rakesh Kumar (rakesh.kumar@ibm.com)
 # =============================================================================
@@ -64,6 +64,7 @@ config:
       - mule-artifact.json
     ignoredFolders:
       exactNames:
+      - Aegis-reports
       - muleguard-reports
       - target
       - bin
@@ -75,6 +76,7 @@ config:
       - __MACOSX
       prefixes:
       - .
+      - Aegis-reports
       - muleguard-reports
   rules:
     start: 100

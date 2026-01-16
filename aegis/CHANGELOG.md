@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [1.0.0] - 2025-01-26
+## [1.0.0] - 2026-01-16
 ### Added
 - Enterprise-grade logging using SLF4J and Logback.
 - `logback.xml` configuration for console and file logging.

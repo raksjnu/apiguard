@@ -138,7 +138,7 @@
         </div>
 
         <div class="logo-section">
-            <img src="logo.svg" alt="MuleGuard Logo">
+            <img src="logo.svg" alt="Aegis Logo">
             <h1>Aegis Help & Documentation</h1>
         </div>
 
@@ -147,24 +147,24 @@
             for MuleSoft applications. It is highly flexible and capable of validating any component of your
             integration,
             including <code>flow.xml</code>, global configurations, <code>dataweave.dwl</code> files, and more.
-            MuleGuard can be easily configured to support countless rules, tailored to meet your organization's specific
+            Aegis can be easily configured to support countless rules, tailored to meet your organization's specific
             needs for standard or customized code review and validation.
         </div>
 
-        <h2>📋 What MuleGuard Validates</h2>
-        <p>MuleGuard provides thorough analysis across all core project components:</p>
+        <h2>📋 What Aegis Validates</h2>
+        <p>Aegis provides thorough analysis across all core project components:</p>
         <ul>
+            <li><strong>Universal Application Support:</strong> Validate ANY text-based project (TIBCO, Python, Java, JS, etc.)</li>
             <li><strong>Maven configurations:</strong> pom.xml validation</li>
             <li><strong>Mule runtime manifests:</strong> mule-artifact.json structure</li>
             <li><strong>Mule flows & sub-flows:</strong> XML configuration files</li>
             <li><strong>DataWeave scripts:</strong> .dwl files</li>
-        <ul>
             <li><strong>Environment-specific property files:</strong> .properties and .policy files</li>
         </ul>
 
         <h2>⚙️ Configuration File Structure Requirements</h2>
         <div class="highlight-box">
-            <p><strong>Important:</strong> MuleGuard validates environment-specific configuration files based on a standardized structure. 
+            <p><strong>Important:</strong> Aegis validates environment-specific configuration files based on a standardized structure. 
             If your organization uses configuration files, they must follow this format:</p>
         </div>
         
@@ -228,7 +228,6 @@ your-mule-projects/
                 <h4>🚀 Multiple Input Modes</h4>
                 <p><strong>Standalone:</strong> Local folder, ZIP upload, or JAR upload<br>
                    <strong>Wrapper:</strong> ZIP upload or JAR upload<br>
-                   <strong>Wrapper:</strong> ZIP upload or JAR upload<br>
                    <strong>Git Repository:</strong> Direct Clone & Scan (GitLab/GitHub/Other)</p>
             </div>
             <div class="feature-card">
@@ -243,7 +242,7 @@ your-mule-projects/
         </div>
 
         <h2>📚 Supported Validation Checks</h2>
-        <p>MuleGuard supports a wide range of validation types to ensure the integrity and quality of your applications.
+        <p>Aegis supports a wide range of validation types to ensure the integrity and quality of your applications.
             Possible checks include:</p>
 
         <ul>
@@ -251,19 +250,19 @@ your-mule-projects/
                 configurations, and file structures.</li>
             <li><strong>Dependencies:</strong> Verify Maven <code>pom.xml</code> configurations and dependencies.</li>
             <li><strong>Code Content:</strong> Search for specific tokens, patterns, or forbidden content within
-                <code>.dwl</code> DataWeave scripts and other source files.
+                <code>.dwl</code> DataWeave scripts, Python Scripts, Java Code, and other source files.
             </li>
             <li><strong>XML Validation:</strong> Perform deep inspection using XPath, check for specific attributes, and
                 validate element content.</li>
             <li><strong>Property Management:</strong> Validate environment-specific property files, check for mandatory
                 properties, and ensure secure property handling.</li>
-            <li><strong>Custom Logic:</strong> Define custom checks for JSON validation, generic token searches, and
+            <li><strong>Custom Logic:</strong> Define custom checks for JSON validation, generic token searches (Universal Text Scanning), and
                 more to cover any specific organizational requirement.</li>
         </ul>
         
         <h2>🔗 Git Integration Guide</h2>
         <div class="highlight-box">
-             <p><strong>New in v1.0:</strong> MuleGuard now supports direct integration with Git providers.</p>
+             <p><strong>New in v1.0:</strong> Aegis now supports direct integration with Git providers.</p>
              <ul>
                  <li><strong>Discovery Mode:</strong> Browse and select repositories from your GitLab Group or GitHub Organization/User.</li>
                  <li><strong>Manual Mode:</strong> Paste any direct Git clone URL (HTTPS).</li>
@@ -279,7 +278,7 @@ your-mule-projects/
         </ul>
 
         <h2>📂 Input Modes</h2>
-        <p>MuleGuard supports multiple input methods to fit your workflow:</p>
+        <p>Aegis supports multiple input methods to fit your workflow:</p>
         
         <h3>Standalone Java Application</h3>
         <ul>
@@ -301,7 +300,7 @@ your-mule-projects/
 
         <h3>Command Line (Local Folders Only)</h3>
         <div class="highlight-box">
-            <code>java -jar muleguard-1.0.0-jar-with-raks.jar -p /path/to/your/mule-projects</code>
+            <code>java -jar aegis-1.0.0-jar-with-raks.jar -p /path/to/your/mule-projects</code>
             <p style="margin-top: 10px;"><strong>Note:</strong> CLI mode only supports local folder paths. For ZIP/JAR uploads, use GUI mode.</p>
         </div>
 
