@@ -36,7 +36,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-001"
     name: "Validate mule-artifact.json Structure"
-    description: "Enforces: Min Mule Version 4.9.7, Java 17, and Secure Properties. (Checklist Item 1)"
+    description: "RULE_TYPE=CODE; Enforces: Min Mule Version 4.9.7, Java 17, and Secure Properties. (Checklist Item 1)"
     enabled: true
     severity: HIGH
     checks:
@@ -56,7 +56,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-023"
     name: "Validate Parent POM Configuration"
-    description: "Enforce Parent POM 3.0.0. (Checklist Item 23)"
+    description: "RULE_TYPE=CODE; Enforce Parent POM 3.0.0. (Checklist Item 23)"
     enabled: true
     severity: HIGH
     checks:
@@ -73,7 +73,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-024"
     name: "Validate POM Properties"
-    description: "Enforce versions for maven-plugin (4.6.0), runtime (4.9.LTS), cicd (4.9.LTS), and munit (3.5.0). (Checklist Items 24, 25)"
+    description: "RULE_TYPE=CODE; Enforce versions for maven-plugin (4.6.0), runtime (4.9.LTS), cicd (4.9.LTS), and munit (3.5.0). (Checklist Items 24, 25)"
     enabled: true
     severity: HIGH
     checks:
@@ -97,7 +97,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-026"
     name: "Remove Forbidden Plugins"
-    description: "Remove explicit maven-clean, maven-compiler, munit-maven plugins. (Checklist Item 26)"
+    description: "RULE_TYPE=CODE; Remove explicit maven-clean, maven-compiler, munit-maven plugins. (Checklist Item 26)"
     enabled: true
     severity: HIGH
     checks:
@@ -117,7 +117,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-027"
     name: "Remove Forbidden Dependencies"
-    description: "Remove forbidden runtime deps (mule-core-ee, spring-config-ee) and shared libs (spring-security). (Checklist Items 27, 28)"
+    description: "RULE_TYPE=CODE; Remove forbidden runtime deps (mule-core-ee, spring-config-ee) and shared libs (spring-security). (Checklist Items 27, 28)"
     enabled: true
     severity: HIGH
     checks:
@@ -141,7 +141,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-029"
     name: "Require 'eapimuleutilities' Dependency"
-    description: "Ensure eapimuleutilities is present. (Checklist Item 29)"
+    description: "RULE_TYPE=CODE; Ensure eapimuleutilities is present. (Checklist Item 29)"
     enabled: true
     severity: HIGH
     checks:
@@ -157,7 +157,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-002"
     name: "Forbid Legacy Logger Attributes"
-    description: "Ensures 'toApplicationCode' and 'fromApplicationCode' attributes are removed from all Logger components. (Checklist Items 2, 3) [Match: ALL files must comply]"
+    description: "RULE_TYPE=CODE; Ensures 'toApplicationCode' and 'fromApplicationCode' attributes are removed from all Logger components. (Checklist Items 2, 3) [Match: ALL files must comply]"
     enabled: true
     severity: HIGH
     checks:
@@ -176,7 +176,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-004"
     name: "Enforce New Encryption Standards"
-    description: "Forbids 'jce-encrypt' token and legacy 'crypto:jce-encrypt-pbe' components. Requires usage of 'EncUtil::encryptJcePbe'. (Checklist Items 4, 31) [Match: New Logic must exist in AT LEAST ONE file]"
+    description: "RULE_TYPE=CODE; Forbids 'jce-encrypt' token and legacy 'crypto:jce-encrypt-pbe' components. Requires usage of 'EncUtil::encryptJcePbe'. (Checklist Items 4, 31) [Match: New Logic must exist in AT LEAST ONE file]"
     enabled: true
     severity: HIGH
     checks:
@@ -212,7 +212,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-005"
     name: "Validate SOAP Version"
-    description: "Ensures apikit-soap:config uses SOAP_11 or SOAP_12. (Checklist Item 5) [Match: ALL files must comply]"
+    description: "RULE_TYPE=CODE; Ensures apikit-soap:config uses SOAP_11 or SOAP_12. (Checklist Item 5) [Match: ALL files must comply]"
     enabled: true
     severity: HIGH
     checks:
@@ -233,28 +233,26 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-008"
     name: "Forbid Legacy Auth Policies"
-    description: "Forbids Truist-AAA-SOAP, Truist-AAA-HTTP, and TruistBasicAuthnPolicy. (Checklist Item 8) [Match: ALL files must comply]"
+    description: "RULE_TYPE=CONFIG; Forbids Truist-AAA-SOAP, Truist-AAA-HTTP, and TruistBasicAuthnPolicy in policy files. (Checklist Item 8)"
     enabled: true
     severity: HIGH
     checks:
-    - type: XML_XPATH_NOT_EXISTS
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
         filePatterns:
-        - src/main/mule/*.xml
-        xpathExpressions:
-        - xpath: //*[contains(local-name(), 'Truist-AAA-SOAP')]
-          failureMessage: "Found forbidden policy: Truist-AAA-SOAP"
-        - xpath: //*[contains(local-name(), 'Truist-AAA-HTTP')]
-          failureMessage: "Found forbidden policy: Truist-AAA-HTTP"
-        - xpath: //*[contains(local-name(), 'TruistBasicAuthnPolicy')]
-          failureMessage: "Found forbidden policy: TruistBasicAuthnPolicy"
+        - "**/*.policy"
+        tokens:
+        - "Truist-AAA-SOAP"
+        - "Truist-AAA-HTTP"
+        - "TruistBasicAuthnPolicy"
+        matchMode: SUBSTRING
 
   # ---------------------------------------------------------------------------
   # BANK-019: DLP Removal (Merged Items 19 & 20)
   # ---------------------------------------------------------------------------
   - id: "BANK-019"
     name: "Remove DLP Logic and Properties"
-    description: "Ensures DLP logic is removed from http-proxy.xml and DLP properties are removed from property files. (Checklist Items 19, 20) [Match: ALL files must comply]"
+    description: "RULE_TYPE=CODE; Ensures DLP logic is removed from http-proxy.xml and DLP properties are removed from property files. (Checklist Items 19, 20) [Match: ALL files must comply]"
     enabled: true
     severity: HIGH
     checks:
@@ -279,21 +277,40 @@ rules:
         caseSensitive: true
 
   # ---------------------------------------------------------------------------
-  # BANK-021: SQL Security
+  # BANK-021-Code: SQL Security (App Properties)
   # ---------------------------------------------------------------------------
-  - id: "BANK-021"
-    name: "Enforce SQL DB Security Parameters"
-    description: "Flag insecure SQL Server URL usage. (Checklist Item 21) [Match: ALL files must comply]"
+  - id: "BANK-021-Code"
+    name: "Enforce SQL DB Security Parameters (Code)"
+    description: "RULE_TYPE=CODE; Flag insecure SQL Server URL usage in application properties. (Checklist Item 21)"
     enabled: true
     severity: HIGH
     checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
         filePatterns:
-        - src/main/resources/*.properties
+        - src/main/resources/**/*.properties
         tokens:
-        # Regex to find jdbc:sqlserver that does NOT contain the required encryption flags
-        - "jdbc:sqlserver(?!.*;encrypt=false;trustServerCertificate=false)"
+        # Regex: Find jdbc:sqlserver where either flag is missing from the line
+        - "jdbc:sqlserver(?!(?=.*;encrypt=false)(?=.*;trustServerCertificate=false)).*"
+        matchMode: REGEX
+        caseSensitive: true
+
+  # ---------------------------------------------------------------------------
+  # BANK-021-Config: SQL Security (External Config)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-021-Config"
+    name: "Enforce SQL DB Security Parameters (Config)"
+    description: "RULE_TYPE=CONFIG; Flag insecure SQL Server URL usage in external configuration. (Checklist Item 21)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+        - "**/*_config/**/*.properties"
+        tokens:
+        # Regex: Find jdbc:sqlserver where either flag is missing from the line
+        - "jdbc:sqlserver(?!(?=.*;encrypt=false)(?=.*;trustServerCertificate=false)).*"
         matchMode: REGEX
         caseSensitive: true
 
@@ -302,7 +319,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-018"
     name: "Forbid Legacy Error Strings"
-    description: "Forbids specific legacy error strings. (Checklist Item 18) [REQUIRES CONFIGURATION]"
+    description: "RULE_TYPE=CODE; Forbids specific legacy error strings. (Checklist Item 18) [REQUIRES CONFIGURATION]"
     enabled: false
     severity: LOW
     checks:
@@ -315,17 +332,46 @@ rules:
         - "Old Error String 2"
         matchMode: SUBSTRING
 
-
   # ---------------------------------------------------------------------------
-  # BANK-022: MQ Cipher Suite
+  # BANK-022-Code: MQ Cipher Suite (App Properties)
   # ---------------------------------------------------------------------------
-  - id: "BANK-022"
-    name: "Validate MQ Cipher Suite"
-    description: "Enforce TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 for IBM MQ. (Checklist Item 22)"
+  - id: "BANK-022-Code"
+    name: "Validate MQ Cipher Suite (Code)"
+    description: "RULE_TYPE=CODE; Enforce TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 for IBM MQ in application code (Only if ibm-mq:config is present). (Checklist Item 22)"
     enabled: true
     severity: HIGH
     checks:
-    - type: MANDATORY_PROPERTY_VALUE_CHECK
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+        - type: GENERIC_TOKEN_SEARCH_REQUIRED
+          params:
+            filePatterns:
+            - src/main/mule/*.xml
+            tokens:
+            - "ibm-mq:config"
+            matchMode: SUBSTRING
+        onSuccess:
+        - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+          params:
+            filePatterns:
+            - src/main/resources/**/*.properties
+            tokens:
+            # Regex: Find ibm.mq.cipherSuite assigned to anything NOT the secure cipher
+            - "ibm\\.mq\\.cipherSuite\\s*=(?!\\s*TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384).*"
+            matchMode: REGEX
+            caseSensitive: true
+
+  # ---------------------------------------------------------------------------
+  # BANK-022-Config: MQ Cipher Suite (External Config)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-022-Config"
+    name: "Validate MQ Cipher Suite (Config)"
+    description: "RULE_TYPE=CONFIG; Enforce TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 for IBM MQ in external configuration (If property exists). (Checklist Item 22)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: OPTIONAL_PROPERTY_VALUE_CHECK
       params:
         fileExtensions:
         - .properties
@@ -340,7 +386,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-032"
     name: "Update 'apimethod' Variable Logic"
-    description: "Verify apimethod uses encryptedRequestPath. (Checklist Item 32) [Match: Found in AT LEAST ONE file]"
+    description: "RULE_TYPE=CODE; Verify apimethod uses encryptedRequestPath. (Checklist Item 32) [Match: Found in AT LEAST ONE file]"
     enabled: true
     severity: HIGH
     checks:
@@ -358,7 +404,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-036"
     name: "Ensure API Autodiscovery Enabled"
-    description: "Ensure autodiscovery element is present. (Checklist Item 36) [Match: Found in AT LEAST ONE file]"
+    description: "RULE_TYPE=CODE; Ensure autodiscovery element is present. (Checklist Item 36) [Match: Found in AT LEAST ONE file]"
     enabled: true
     severity: HIGH
     checks:
@@ -371,6 +417,131 @@ rules:
         - xpath: //*[local-name()='autodiscovery']
           failureMessage: "API Autodiscovery element not found (may be commented out)."
 
+  # ---------------------------------------------------------------------------
+  # BANK-038: Legacy Dependency Upgrade
+  # ---------------------------------------------------------------------------
+  - id: "BANK-038"
+    name: "Legacy Dependency Upgrade"
+    description: "RULE_TYPE=CODE; Detects and suggests upgrades for legacy dependencies. (Checklist Item 38)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      description: "Replace javax.mail:mail with com.sun.mail:jakarta.mail:2.0.2"
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+        - groupId: javax.mail
+          artifactId: mail
+    - type: POM_VALIDATION_FORBIDDEN
+      description: "Replace ojdbc8 with com.oracle.database.jdbc:ojdbc11"
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+        - groupId: com.oracle.database.jdbc
+          artifactId: ojdbc8
+    - type: POM_VALIDATION_FORBIDDEN
+      description: "Replace org.codehaus.groovy:groovy-all with org.apache.groovy:groovy-all:5.0.2"
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+        - groupId: org.codehaus.groovy
+          artifactId: groovy-all
+    - type: POM_VALIDATION_FORBIDDEN
+      description: "Replace GUID-based randomkeyaesencryptor with com.truist.eapi:randomkeyaesencryptor:3.0.0"
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+        - groupId: b831634b-275a-46bf-9a55-3a7b21e0047d
+          artifactId: randomkeyaesencryptor
+    - type: POM_VALIDATION_REQUIRED
+      description: "Update org.mule.connectors:mule-email-connector to version 1.8.0"
+      params:
+        validationType: DEPENDENCIES
+        dependencies:
+        - groupId: org.mule.connectors
+          artifactId: mule-email-connector
+          version: 1.8.0
+
+  # ---------------------------------------------------------------------------
+  # BANK-040: Java 17 Error Migration
+  # ---------------------------------------------------------------------------
+  - id: "BANK-040"
+    name: "Java 17 Error Migration"
+    description: "RULE_TYPE=CODE; Detects and suggests Java 17 structure for legacy Java 8 error fields. (Checklist Item 40)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy 'error.muleMessage*' found. Use 'error.errorMessage' or 'error.description'."
+      params:
+        filePatterns: ["src/main/**/*.xml", "src/main/**/*.dwl"]
+        tokens: ["error\\.muleMessage"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy 'asString' on ErrorType found. Use 'namespace ++ \":\" ++ identifier'."
+      params:
+        filePatterns: ["src/main/**/*.xml", "src/main/**/*.dwl"]
+        tokens: ["error\\.errorType(\\.parentErrorType)?\\.asString"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy 'error.exception.cause*' found. Use 'error.cause', 'error.detailedDescription', or 'error.description'."
+      params:
+        filePatterns: ["src/main/**/*.xml", "src/main/**/*.dwl"]
+        tokens: ["error\\.exception\\.cause(\\.detailMessage|\\.Message)?"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy 'error.errors' found. Use 'error.childErrors'."
+      params:
+        filePatterns: ["src/main/**/*.xml", "src/main/**/*.dwl"]
+        tokens: ["error\\.errors(?!\\.)"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy deep exception structure found. Use 'error.errorType' structure."
+      params:
+        filePatterns: ["src/main/**/*.xml", "src/main/**/*.dwl"]
+        tokens: ["error\\.exception\\.cause\\.cause\\.exceptionInfo"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy 'typedValue' on exception found. Use 'payload' structure."
+      params:
+        filePatterns: ["src/main/**/*.xml", "src/main/**/*.dwl"]
+        tokens: ["error\\.exception\\.errorMessage\\.typedValue"]
+        matchMode: REGEX
+
+  # ---------------------------------------------------------------------------
+  # BANK-015-Code: DB2 DVIPA Migration (App Code)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-015-Code"
+    name: "DB2 DVIPA Migration (Code)"
+    description: "RULE_TYPE=CODE; Flag legacy DB2 F5 VIP URLs in application code. (Checklist Item 15)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy Test VIP found. Use DVIPA: DB2E->dsndb0e:5029, DB2H->dsndb0h:5051, DB2M->dsndb0m:5037, DB2R->dsndb0r:5039, DB2U->dsndb0u:5031, DB2X->dsndb0x:5033"
+      params:
+        filePatterns: ["src/main/resources/**/*.properties", "src/main/mule/*.xml", "mule-app.properties", "src/main/resources/**/*.dwl"]
+        tokens: ["(?i)^[^#\n]*[:=].*wil-db2contstvip\\.bbtnet\\.com:50000.*"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy PP VIP found. Use DVIPA: DB2Q->dsndb0q.bbtnet.com:5043"
+      params:
+        filePatterns: ["src/main/resources/**/*.properties", "src/main/mule/*.xml", "mule-app.properties", "src/main/resources/**/*.dwl"]
+        tokens: ["(?i)^[^#\n]*[:=].*db2contppvip\\.truist-tst\\.com:50000.*"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy DH VIP found. Use DVIPA: DB2D->dsndb0d.bbtnet.com:5054"
+      params:
+        filePatterns: ["src/main/resources/**/*.properties", "src/main/mule/*.xml", "mule-app.properties", "src/main/resources/**/*.dwl"]
+        tokens: ["(?i)^[^#\n]*[:=].*db2contdhvip\\.truist-tst\\.com:50000.*"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy PROD VIP found. Use DVIPA: DB2P->dsndb0p.bbtnet.com:5043"
+      params:
+        filePatterns: ["src/main/resources/**/*.properties", "src/main/mule/*.xml", "mule-app.properties", "src/main/resources/**/*.dwl"]
+        tokens: ["(?i)^[^#\n]*[:=].*wil-db2econvip\\.bbtnet\\.com:50000.*"]
+        matchMode: REGEX
 
   # ===========================================================================
   # SECTION 2: EXTERNAL POLICY CHECKS
@@ -382,7 +553,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-006"
     name: "Header Injection Policy Level (WARN)"
-    description: "Ensures request-out and response-in headers are set to WARN. (Checklist Item 6)"
+    description: "RULE_TYPE=CONFIG; Ensures request-out and response-in headers are set to WARN. (Checklist Item 6)"
     enabled: true
     severity: HIGH
     checks:
@@ -402,7 +573,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-007"
     name: "Truist-mTLS-AuthZ Version 3.0.0 (Proxy Only)"
-    description: "Enforces mTLS-AuthZ version 3.0.0 for Proxy projects. (Checklist Item 7)"
+    description: "RULE_TYPE=CONFIG; Enforces mTLS-AuthZ version 3.0.0 for Proxy projects. (Checklist Item 7)"
     enabled: true
     severity: HIGH
     checks:
@@ -428,7 +599,7 @@ rules:
   # ---------------------------------------------------------------------------
   - id: "BANK-009"
     name: "Enforce Truist Policy Versions"
-    description: "Validates versions for CompositeAuthn (3.0.0), Authz (3.0.0), NoName (5.1.0), RateLimit (1.4.1), HeaderInjection (1.3.2), HeaderRemoval (1.1.2), WSSEncDec (3.0.0), JSONEncDec (3.0.0). (Checklist Items 9-14, 35, 37)"
+    description: "RULE_TYPE=CONFIG; Validates versions for CompositeAuthn (3.0.0), Authz (3.0.0), NoName (5.1.0), RateLimit (1.4.1), HeaderInjection (1.3.2), HeaderRemoval (1.1.2), WSSEncDec (3.0.0), JSONEncDec (3.0.0). (Checklist Items 9-14, 35, 37)"
     enabled: true
     severity: HIGH
     checks:
@@ -462,3 +633,37 @@ rules:
         # Item 37
         - name: truist.jsonencdec.policy.version
           values: ['3.0.0']
+
+  # ---------------------------------------------------------------------------
+  # BANK-015-Config: DB2 DVIPA Migration (External Config)
+  # ---------------------------------------------------------------------------
+  - id: "BANK-015-Config"
+    name: "DB2 DVIPA Migration (Config)"
+    description: "RULE_TYPE=CONFIG; Flag legacy DB2 F5 VIP URLs in external configuration. (Checklist Item 15)"
+    enabled: true
+    severity: HIGH
+    checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy Test VIP found. Use DVIPA: DB2E->dsndb0e:5029, DB2H->dsndb0h:5051, DB2M->dsndb0m:5037, DB2R->dsndb0r:5039, DB2U->dsndb0u:5031, DB2X->dsndb0x:5033"
+      params:
+        filePatterns: ["**/*.properties"]
+        tokens: ["(?i)^[^#\n]*[:=].*wil-db2contstvip\\.bbtnet\\.com:50000.*"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy PP VIP found. Use DVIPA: DB2Q->dsndb0q.bbtnet.com:5043"
+      params:
+        filePatterns: ["**/*.properties"]
+        tokens: ["(?i)^[^#\n]*[:=].*db2contppvip\\.truist-tst\\.com:50000.*"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy DH VIP found. Use DVIPA: DB2D->dsndb0d.bbtnet.com:5054"
+      params:
+        filePatterns: ["**/*.properties"]
+        tokens: ["(?i)^[^#\n]*[:=].*db2contdhvip\\.truist-tst\\.com:50000.*"]
+        matchMode: REGEX
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      description: "Legacy PROD VIP found. Use DVIPA: DB2P->dsndb0p.bbtnet.com:5043"
+      params:
+        filePatterns: ["**/*.properties"]
+        tokens: ["(?i)^[^#\n]*[:=].*wil-db2econvip\\.bbtnet\\.com:50000.*"]
+        matchMode: REGEX

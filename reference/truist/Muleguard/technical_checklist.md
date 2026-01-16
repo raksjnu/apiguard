@@ -150,11 +150,11 @@ This document translates the client's business checklist into specific MuleGuard
     </tr>
     <tr>
       <td><b>BANK-015</b></td>
-      <td>15. DB URLs to DVIPA</td>
-      <td><code>MANUAL_CHECK</code></td>
+      <td>15. DB2 DVIPA Migration</td>
+      <td><code>GENERIC_TOKEN_SEARCH_FORBIDDEN</code></td>
       <td><code>*.properties</code></td>
-      <td><i>Requires RegEx for DVIPA format if known, otherwise Manual.</i></td>
-      <td>LOW</td>
+      <td>Flags legacy F5 VIPs (wil-db2contstvip, db2contppvip, etc.) and suggests environment-specific DVIPA URLs (dsndb0e:5029, dsndb0h:5051, etc.).</td>
+      <td>HIGH</td>
     </tr>
     <tr>
       <td><b>BANK-016</b></td>
@@ -306,6 +306,22 @@ This document translates the client's business checklist into specific MuleGuard
       <td><code>MANDATORY_PROPERTY_VALUE_CHECK</code></td>
       <td><code>src/main/resources/policies/*.yaml</code></td>
       <td><code>properties</code>: [{name: "truist.jsonencdec.policy.version", values: ["3.0.0"]}]</td>
+      <td>HIGH</td>
+    </tr>
+    <tr>
+      <td><b>BANK-038</b></td>
+      <td>38. Legacy Dependency Upgrade</td>
+      <td><code>POM_VALIDATION_FORBIDDEN</code></td>
+      <td><code>pom.xml</code></td>
+      <td>Detects legacy dependencies and suggests upgrades (javax.mail, ojdbc8, org.codehaus, GUID groups).</td>
+      <td>HIGH</td>
+    </tr>
+    <tr>
+      <td><b>BANK-040</b></td>
+      <td>40. Java 17 Error Migration</td>
+      <td><code>GENERIC_TOKEN_SEARCH_FORBIDDEN</code></td>
+      <td><code>src/main/**/*.xml</code>, <code>src/main/**/*.dwl</code></td>
+      <td>Detects Java 8 style error fields (error.muleMessage, error.exception.cause, etc.) and suggests Java 17 structure.</td>
       <td>HIGH</td>
     </tr>
   </tbody>
