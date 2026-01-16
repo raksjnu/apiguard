@@ -140,10 +140,9 @@ output application/json
                     else 'application/octet-stream'
                 ]"/>
 
-                <!-- Use readUrl with classpath protocol for CloudHub/JAR compatibility. 
-                     Removed mimeType attribute as it does not support expressions. 
-                     Content-Type header is handled by the listener. -->
-                <set-payload value="#[readUrl('classpath://web/muleguard/' ++ vars.resourcePath)]"/>
+                <!-- Use readUrl with classpath protocol (single slash/no slash for relative to CP root) -->
+                <!-- Use 'classpath:web/muleguard/' structure. -->
+                <set-payload value="#[readUrl('classpath:web/muleguard/' ++ vars.resourcePath)]"/>
     </flow>
     
     <flow name="rule-guide-page-flow">
