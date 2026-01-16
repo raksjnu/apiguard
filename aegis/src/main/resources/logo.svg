@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <!-- Shield background -->
+  <path d="M 15 20 L 40 10 L 65 20 L 65 45 Q 65 60 40 75 Q 15 60 15 45 Z" fill="#663399" stroke="#663399" stroke-width="2"/>
+  
+  <!-- RAKS text inside shield -->
+  <text x="40" y="50" font-family="Arial, sans-serif" font-size="18" font-weight="bold" fill="white" text-anchor="middle">RAKS</text>
+</svg>

@@ -1,0 +1,29 @@
+ChecklistItem;ChecklistType;RuleId
+Validation of codebase for generic forbidden tokens or patterns.;Code;RULE-000
+Parent POM validation for correct Group, Artifact, and Version.;Code;RULE-001
+Validation of mandatory properties in pom.xml.;Code;RULE-002
+Validation of forbidden plugins in pom.xml.;Code;RULE-003
+Validation of forbidden dependencies in pom.xml.;Code;RULE-004
+Validation of IBM MQ Connector configuration for approved Cipher Suite.;Code;RULE-005
+Validation of required dependencies (e.g., apimuleutilities).;Code;RULE-006
+Validation of mule-artifact.json for minimum Mule version, Java version, and secure properties.;Code;RULE-007
+Validation that API Autodiscovery is enabled in the application.;Code;RULE-008
+Validation to ensure no unsupported error handling expressions are used.;Code;RULE-009
+Validation to ensure no legacy attributes (fromApplicationCode, toApplicationCode) are present.;Code;RULE-010
+Validation to ensure no DLP-related properties are present.;Code;RULE-011
+Validation to ensure no legacy JCE Encryption implementation is used.;Code;RULE-012
+Validation of Crypto JCE configuration for mandatory type attribute.;Code;RULE-013
+Validation to ensure the 'tobase64' function is not used.;Code;RULE-014
+Validation of HTTP Listener paths to ensure standard naming conventions (no /test, /temp).;Code;RULE-015
+Validation to ensure no hardcoded versions are used for connector dependencies in pom.xml.;Code;RULE-016
+Validation to ensure key configuration properties (Host, Port, User, Password) are externalized.;Code;RULE-017
+Validation to ensure connector timeouts (responseTimeout, etc.) are explicitly configured and externalized.;Code;RULE-018
+Generic Config validation for mandatory tokens in property files.;Config;RULE-100
+Validation of mandatory properties in environment configuration files.;Config;RULE-101
+Validation of mandatory policy properties in policy files.;Config;RULE-102
+Validation of policy versions to ensure they match required standards.;Config;RULE-103
+Validation of Secure Properties format in secure.properties.;Config;RULE-104
+Validation of Client ID mapping format in policy files.;Config;RULE-105
+Validation of forbidden keys or values (e.g., hardcoded passwords, TODOs) in configuration files.;Config;RULE-107
+Validation of forbidden keys in policy files.;Config;RULE-108
+Validation to ensure no IP addresses are hardcoded in property files.;Config;RULE-109
