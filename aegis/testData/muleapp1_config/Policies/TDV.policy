@@ -1,0 +1,8 @@
+rakspolicyproperty=test1
+rakspolicyproperty2.policypropname = test2
+api.id=1234
+truist.authz.policy.clientIDmap.GET:/getaccount/.*=abc123:raks;xyz321:kumar:987ext:town;
+wssencdec.policy.version=
+#host:localhost
+backendurl=19.2.5.78
+deprecated.policy.version=1.1.1
