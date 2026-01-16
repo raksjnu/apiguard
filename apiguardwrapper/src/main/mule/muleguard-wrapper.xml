@@ -705,14 +705,23 @@ output application/java
         </os:store>
         
         <!-- Generate ZIP for Download Button (Synchronous) -->
-        <set-variable variableName="reportsZipPath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
-        <!-- Only zip if not already zipped by email flow (though email is async, so better to just zip here ensures availability) -->
-        <java:invoke-static doc:name="Zip Reports Sync" class="com.raks.muleguard.util.ArchiveExtractor" method="zipDirectory(java.lang.String,java.lang.String)">
-            <java:args><![CDATA[#[{
-                arg0: vars.reportsFolderPath,
-                arg1: vars.reportsZipPath
-            }]]]></java:args>
-        </java:invoke-static>
+        <choice>
+            <when expression="#[vars.validationResults.status != 'ERROR']">
+                <set-variable variableName="reportsZipPath" value="#[vars.projectPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
+                <!-- Only zip if not already zipped by email flow (though email is async, so better to just zip here ensures availability) -->
+                <java:invoke-static doc:name="Zip Reports Sync" class="com.raks.muleguard.util.ArchiveExtractor" method="zipDirectory(java.lang.String,java.lang.String)">
+                    <java:args><![CDATA[#[{
+                        arg0: vars.reportsFolderPath,
+                        arg1: vars.reportsZipPath
+                    }]]]></java:args>
+                </java:invoke-static>
+            </when>
+            <otherwise>
+                <logger level="WARN" message="Validation failed with ERROR status. Skipping report zipping as reports might not be generated."/>
+                <!-- Set zip path to null or empty so we don't try to download it -->
+                <set-variable variableName="reportsZipPath" value="#[null]"/>
+            </otherwise>
+        </choice>
 
         <!-- Send email notification after validation (Moved after ZIP creation to ensure file exists and avoid race conditions) -->
         <async>
