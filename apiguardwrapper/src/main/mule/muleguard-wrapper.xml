@@ -355,6 +355,7 @@ output application/java
     zipFileContent: payload.parts.archive.content default null,
     zipFilename: payload.parts.archive.headers['Content-Disposition'].filename default "Uploaded Archive",
     customRulesContent: payload.parts.customRules.content default null,
+    customRulesPath: payload.parts.customRulesPath.content default null,
     attachReports: payload.parts.attachReports.content default null,
     attachInput: payload.parts.attachInput.content default null,
     attachProject: payload.parts.attachProject.content default null,
@@ -374,6 +375,7 @@ output application/java
                 <set-variable variableName="zipFileContent" value="#[payload.zipFileContent]"/>
                 <set-variable variableName="zipFilename" value="#[payload.zipFilename]"/>
                 <set-variable variableName="customRulesContent" value="#[payload.customRulesContent]"/>
+                <set-variable variableName="customRulesPathRequest" value="#[trim(payload.customRulesPath default '')]"/>
                 <set-variable variableName="gitUrl" value="#[trim(payload.gitUrl default '')]"/>
                 <set-variable variableName="gitUrls" value="#[trim(payload.gitUrls default '')]"/>
                 <set-variable variableName="gitBranch" value="#[trim(payload.gitBranch default '')]"/>
@@ -428,6 +430,10 @@ output application/java
             </otherwise>
         </choice>
         
+        <!-- Generate unique run ID for this specific request to prevent directory collisions -->
+        <set-variable variableName="runId" value="#[now() as String {format: 'yyyyMMddHHmmss'}]"/>
+        <set-variable variableName="validationSessionId" value="#[vars.userSessionId ++ '_' ++ vars.runId]"/>
+        
         <!-- Validate required fields are present -->
         <choice>
             <when expression="#[vars.userSessionId == null or vars.validationMode == null]">
@@ -452,7 +458,7 @@ output application/java
                     <when expression="#[vars.customRulesContent != null]">
                         <!-- Create temp workspace for custom rules -->
                         <set-variable variableName="tempWorkspaceDir" 
-                            value="#['${muleguard.workspace.dir}' ++ '/' ++ uuid()]"/>
+                            value="#['${muleguard.workspace.dir}' ++ '/' ++ vars.validationSessionId]"/>
                         <file:create-directory directoryPath="#[vars.tempWorkspaceDir]" config-ref="File_Config"/>
                         
                         <!-- Save custom rules -->
@@ -462,7 +468,7 @@ output application/java
                         <set-variable variableName="customRulesPath" value="#[vars.tempWorkspaceDir ++ '/rules.yaml']"/>
                     </when>
                     <otherwise>
-                        <set-variable variableName="customRulesPath" value="#[null]"/>
+                        <set-variable variableName="customRulesPath" value="#[if (!isEmpty(vars.customRulesPathRequest)) vars.customRulesPathRequest else null]"/>
                     </otherwise>
                 </choice>
             </when>
@@ -477,7 +483,7 @@ output application/java
                         
                         <!-- CloudHub-compatible working directory -->
                         <set-variable variableName="workingDir" 
-                            value="#[p('muleguard.work.dir') ++ '/' ++ vars.userSessionId]"/>
+                            value="#[p('muleguard.work.dir') ++ '/' ++ vars.validationSessionId]"/>
                         
                         <!-- Delete existing directory if present to allow re-runs -->
                         <try>
@@ -516,8 +522,8 @@ output application/java
                                                     method="extractZip(String, String, String)">
                                     <java:args>#[{
                                         arg0: vars.zipFilePath,
-                                        arg1: vars.userSessionId,
-                                        arg2: vars.utilsBaseTempDir
+                                        arg2: vars.utilsBaseTempDir,
+                                        arg1: vars.validationSessionId
                                     }]</java:args>
                                 </java:invoke-static>
                             </when>
@@ -527,8 +533,8 @@ output application/java
                                                     method="extractJar(String, String, String)">
                                     <java:args>#[{
                                         arg0: vars.zipFilePath,
-                                        arg1: vars.userSessionId,
-                                        arg2: vars.utilsBaseTempDir
+                                        arg2: vars.utilsBaseTempDir,
+                                        arg1: vars.validationSessionId
                                     }]</java:args>
                                 </java:invoke-static>
                             </otherwise>
@@ -555,7 +561,7 @@ output application/java
                                 <logger level="INFO" message="#['Custom rules saved to: ' ++ vars.customRulesPath]"/>
                             </when>
                             <otherwise>
-                                <set-variable variableName="customRulesPath" value="#[null]"/>
+                                <set-variable variableName="customRulesPath" value="#[if (!isEmpty(vars.customRulesPathRequest)) vars.customRulesPathRequest else null]"/>
                             </otherwise>
                         </choice>
                     </when>
@@ -568,9 +574,9 @@ output application/java
             
             <!-- Git Repository Mode -->
             <when expression="#[trim(vars.validationMode as String) == 'git']">
-                <!-- Use userSessionId for workspace -->
+                <!-- Use unique validationSessionId for workspace -->
                 <set-variable variableName="workingDir" 
-                    value="#[p('muleguard.work.dir') ++ '/' ++ vars.userSessionId]"/>
+                    value="#[p('muleguard.work.dir') ++ '/' ++ vars.validationSessionId]"/>
                 
                 <!-- Delete existing directory if present to allow re-runs -->
                 <try>
@@ -638,7 +644,7 @@ output application/java
                         <logger level="INFO" message="#['Custom rules saved to: ' ++ vars.customRulesPath]"/>
                     </when>
                     <otherwise>
-                        <set-variable variableName="customRulesPath" value="#[null]"/>
+                        <set-variable variableName="customRulesPath" value="#[if (!isEmpty(vars.customRulesPathRequest)) vars.customRulesPathRequest else null]"/>
                     </otherwise>
                 </choice>
             </when>
@@ -694,7 +700,7 @@ output application/java
         <logger level="INFO" message="#['DEBUG: Attachment Prefs - Report: ' ++ (vars.userWantsReportAttachment default 'null') ++ ', Input: ' ++ (vars.userWantsInputAttachment default 'null') ++ ', Project: ' ++ (vars.userWantsProjectAttachment default 'null')]"/>
 
         <!-- Store project path for report serving as concatenated string -->
-        <os:store key="#[vars.userSessionId]" objectStore="Report_Path_Store">
+        <os:store key="#[vars.validationSessionId]" objectStore="Report_Path_Store">
             <os:value>#[vars.projectPath ++ '||' ++ vars.reportDirName ++ '||' ++ (vars.reportBaseName default 'project')]</os:value>
         </os:store>
         

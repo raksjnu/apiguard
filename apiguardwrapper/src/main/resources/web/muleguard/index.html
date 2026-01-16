@@ -219,8 +219,12 @@
                     (Download Sample Rules)
                 </a>
             </label>
-            <input type="file" id="customRules" accept=".yaml,.yml">
-            <small>If not provided, default rules from MuleGuard JAR will be used</small>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <input type="file" id="customRules" accept=".yaml,.yml" style="flex:1;">
+                <button type="button" class="nav-button" onclick="document.getElementById('customRules').value=''" 
+                        style="width:auto; padding:5px 15px; background-color:#999; font-size:12px;">Clear</button>
+            </div>
+            <small id="customRulesStatus">If not provided, default rules from MuleGuard JAR will be used (or path from Settings).</small>
         </div>
 
         <!-- Email Notification Options -->
@@ -300,6 +304,13 @@
             // Load saved session preferences for Git (Group, Filter, URL only)
             loadSessionPrefs();
             
+            // Check for default rules path and update UI
+            const defaultRulesPath = localStorage.getItem('muleguard_custom_rules_path');
+            if (defaultRulesPath) {
+                const status = document.getElementById('customRulesStatus');
+                if (status) status.innerHTML = `Using path from Settings: <code>${defaultRulesPath}</code> (unless a file is selected above)`;
+            }
+        
             // Add listeners for exclusivity? No longer needed with View Switcher
             
 
