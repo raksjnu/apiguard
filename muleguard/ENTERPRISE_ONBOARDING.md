@@ -102,7 +102,7 @@ MuleGuard supports multiple input methods:
 | **Local Folder** | Standalone CLI/GUI | Scan projects from filesystem |
 | **ZIP Upload** | Standalone GUI, Wrapper | Upload and validate ZIP archives |
 | **JAR Upload** | Standalone GUI, Wrapper | Validate Mule application JAR files |
-| **Git Repository** | Coming Soon | Clone and validate from Git |
+| **Git Repository** | ✅ Available | Clone and validate from GitLab/GitHub repositories |
 
 ### 3.3 Configuration File Requirements
 
@@ -140,6 +140,14 @@ your-mule-projects/
 | **Rule Configuration** | Ensure custom XPath rules (in YAML) are reviewed to prevent inefficient queries (DoS). |
 | **File Access** | Tool requires read access to project directories. Run with appropriate OS permissions. |
 
+### 3.5 Workflow Isolation & CloudHub Compatibility
+
+MuleGuard implements **Workflow Isolation** to ensure safe operation in multi-user and cloud environments:
+
+- **Unique Run IDs**: Every validation run (Local, ZIP, JAR, Git) uses a unique `runId` based on a high-precision timestamp.
+- **Isolated Workspaces**: Working directories are nested under `${app.home}/temp` using a `sessionID_runId` structure. This prevents directory collisions on Windows and data leakage between concurrent user sessions.
+- **CloudHub Deployment**: Designed to run on MuleSoft CloudHub. Temporary artifacts are stored in the memory-backed `${app.home}/temp` directory, ensuring ephemeral data is cleared upon worker restart.
+
 ---
 
 ## 4. Packaging & Distribution
@@ -161,9 +169,15 @@ mvn clean package
 ## 5. Deployment Models
 
 ### 5.1 CLI Execution
-Run directly on developer workstations or build servers:
+Run directly on developer workstations or build servers. The CLI supports robust argument parsing and custom configurations:
+
 ```bash
-java -jar muleguard.jar -p /path/to/mule/project -r /path/to/rules.yaml
+# Basic usage
+java -jar muleguard.jar -p /path/to/mule/project
+
+# With custom rules (multiple flag aliases supported)
+java -jar muleguard.jar -p /path/to/project --config /path/to/custom-rules.yaml
+java -jar muleguard.jar -p /path/to/project -c /path/to/custom-rules.yaml
 ```
 
 ### 5.2 CI/CD Pipeline
@@ -195,4 +209,4 @@ MuleGuard enforces governance via `rules.yaml`. Categories include:
 ## 7. Support
 
 - **Issue Tracking**: Internal JIRA/GitHub Issues.
-- **Rule Updates**: Rules are externalized in YAML, allowing updates without recompiling the JAR.
+- **Rule Updates**: Rules are externalized in YAML. Users can provide custom rules via CLI (`--config`), UI file uploads, or persistent paths in **Settings**.
