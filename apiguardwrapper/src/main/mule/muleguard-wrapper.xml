@@ -140,9 +140,9 @@ output application/json
                     else 'application/octet-stream'
                 ]"/>
 
-                <!-- Use readUrl with classpath protocol (single slash/no slash for relative to CP root) -->
-                <!-- Use 'classpath:web/muleguard/' structure. -->
-                <set-payload value="#[readUrl('classpath:web/muleguard/' ++ vars.resourcePath)]"/>
+                <!-- Reverting to classpath:// protocol which is standard for readUrl.
+                     mimeType attribute remains removed. -->
+                <set-payload value="#[readUrl('classpath://web/muleguard/' ++ vars.resourcePath)]"/>
     </flow>
     
     <flow name="rule-guide-page-flow">
