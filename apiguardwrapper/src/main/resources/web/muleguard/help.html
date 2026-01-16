@@ -111,6 +111,12 @@
         .top-nav-button:hover {
             background-color: var(--truist-purple-light);
         }
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .top-nav-button:hover {
+            background-color: var(--truist-purple-light);
+        }
 
         code {
             background: #f4f4f4;
@@ -301,13 +307,14 @@ your-mule-projects/
 
         <h3>Command Line Interface (CLI)</h3>
         <div class="highlight-box">
-            <code>java -jar muleguard.jar -p /path/to/projects [--config /path/to/rules.yaml]</code>
+            <code>java -jar muleguard.jar -p /path/to/projects [-o /custom/output/dir] [--config /path/to/rules.yaml]</code>
             <p style="margin-top: 10px;"><strong>Parameters:</strong></p>
             <ul>
-                <li><code>-p</code> or <code>--project</code>: <strong>Required.</strong> Path to project(s)</li>
-                <li><code>--config</code>, <code>-config</code>, or <code>-c</code>: <strong>Optional.</strong> Path to rules file</li>
+                <li><code>-p</code> or <code>--project</code>: <strong>Required.</strong> Path to project(s) to scan</li>
+                <li><code>-o</code> or <code>--output</code>: <strong>Optional.</strong> Custom output directory for reports</li>
+                <li><code>--config</code>, <code>-config</code>, or <code>-c</code>: <strong>Optional.</strong> Path to custom rules file</li>
             </ul>
-            <p style="margin-top: 10px;"><strong>Example:</strong> <code>java -jar muleguard.jar -c C:\raks\my-rules.yaml -p C:\raks\projects</code></p>
+            <p style="margin-top: 10px;"><strong>Example:</strong> <code>java -jar muleguard.jar -c C:\raks\my-rules.yaml -p C:\raks\projects -o C:\raks\reports</code></p>
         </div>
 
         <h3>GUI Mode (All Input Modes)</h3>
