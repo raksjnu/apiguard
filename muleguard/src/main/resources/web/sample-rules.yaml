@@ -1014,3 +1014,22 @@ rules:
             filePatterns:
             - src/main/mule/*.xml
             matchMode: SUBSTRING
+
+  # ---------------------------------------------------------------------------
+  # CODE RULES: SEMANTIC VERSION CHECK EXAMPLE
+  # ---------------------------------------------------------------------------
+
+  - id: "RULE-023"
+    name: '[TEMPLATE] Semantic Version Check'
+    description: Ensures a dependency version is at least 1.0.0 using semantic versioning.
+    enabled: false
+    severity: MEDIUM
+    checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: DEPENDENCIES
+        dependencies:
+        - groupId: com.example
+          artifactId: my-artifact
+          version: ">= 1.0.0"
+          comparisonMode: SEMANTIC_VERSION

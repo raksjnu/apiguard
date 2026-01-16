@@ -204,7 +204,14 @@
 
         <h3>Command Line</h3>
         <div class="highlight-box">
-            <code>java -jar muleguard-1.0.0-jar-with-raks.jar -p /path/to/your/mule-projects [-o /custom/output/dir]</code>
+            <code>java -jar muleguard.jar -p /path/to/projects [-o /custom/output/dir] [--config /path/to/rules.yaml]</code>
+            <p style="margin-top: 10px;"><strong>Parameters:</strong></p>
+            <ul>
+                <li><code>-p</code> or <code>--project</code>: <strong>Required.</strong> Path to project(s) to scan</li>
+                <li><code>-o</code> or <code>--output</code>: <strong>Optional.</strong> Custom output directory for reports</li>
+                <li><code>--config</code>, <code>-config</code>, or <code>-c</code>: <strong>Optional.</strong> Path to custom rules file</li>
+            </ul>
+            <p style="margin-top: 10px;"><strong>Example:</strong> <code>java -jar muleguard.jar -c C:\raks\my-rules.yaml -p C:\raks\projects -o C:\raks\reports</code></p>
         </div>
 
         <h3>GUI Mode</h3>
@@ -265,7 +272,8 @@
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var path = window.location.pathname;
-            var isMuleStatic = path.includes('/apiguard/muleguard/web/');
+            // Fix: Check if we are in MuleGuard path but NOT in reports. This covers both /web/ and root usage in Wrapper.
+            var isMuleStatic = path.includes('/apiguard/muleguard/') && !path.includes('/reports/');
             var isMuleReport = path.includes('/apiguard/muleguard/reports/');
             var dashboardBtn = document.getElementById('dashboardBtn');
             var mainPageBtn = document.getElementById('mainPageBtn');
@@ -273,7 +281,7 @@
             console.log('[MuleGuard Help JAR] Path:', path);
             console.log('[MuleGuard Help JAR] isMuleStatic:', isMuleStatic, 'isMuleReport:', isMuleReport);
 
-            // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+            // Detect if we're in Mule wrapper (has /apiguard prefix)
             var isInMuleWrapper = path.includes('/apiguard/');
             var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
             console.log('[MuleGuard Help JAR] Environment:', isInMuleWrapper ? 'Mule Wrapper' : 'Standalone Java');
