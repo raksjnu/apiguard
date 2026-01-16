@@ -1,4 +1,5 @@
 package com.raks.muleguard.checks;
+
 import com.raks.muleguard.model.Check;
 import com.raks.muleguard.model.CheckResult;
 import javax.xml.parsers.DocumentBuilder;
@@ -13,12 +14,17 @@ import java.util.stream.Stream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
+
 public class PomValidationRequiredCheck extends AbstractCheck {
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
         String validationType = (String) check.getParams().getOrDefault("validationType", "COMBINED");
-        List<String> failures = new ArrayList<>();
+        String matchMode = (String) check.getParams().getOrDefault("matchMode", "ALL_FILES");
+        
+        List<String> allFailures = new ArrayList<>();
         List<Path> pomFiles = new ArrayList<>();
+        int passedPoms = 0;
+
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             pomFiles = paths
                     .filter(Files::isRegularFile)
@@ -30,24 +36,43 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                         "No pom.xml files found in project");
             }
             for (Path pomFile : pomFiles) {
-                validatePom(pomFile, check.getParams(), validationType, projectRoot, failures);
+                List<String> pomFailures = new ArrayList<>();
+                validatePom(pomFile, check.getParams(), validationType, projectRoot, pomFailures);
+                
+                if (pomFailures.isEmpty()) {
+                    passedPoms++;
+                } else {
+                    allFailures.addAll(pomFailures);
+                }
             }
         } catch (IOException e) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Error scanning files: " + e.getMessage());
         }
-        if (failures.isEmpty()) {
-            String fileList = pomFiles.stream()
-                    .map(projectRoot::relativize)
-                    .map(Path::toString)
-                    .collect(java.util.stream.Collectors.joining("; "));
-            return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                    "All required POM elements found\nFiles validated: " + fileList);
+
+        if ("ANY_FILE".equalsIgnoreCase(matchMode)) {
+            if (passedPoms > 0) {
+                return CheckResult.pass(check.getRuleId(), check.getDescription(),
+                        "At least one POM file passed validation (" + passedPoms + "/" + pomFiles.size() + " files passed)");
+            } else {
+                return CheckResult.fail(check.getRuleId(), check.getDescription(),
+                        "POM validation failures (Not found in ANY matching files):\n• " + String.join("\n• ", allFailures));
+            }
         } else {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "POM validation failures:\n• " + String.join("\n• ", failures));
+            if (passedPoms == pomFiles.size()) {
+                String fileList = pomFiles.stream()
+                        .map(projectRoot::relativize)
+                        .map(Path::toString)
+                        .collect(java.util.stream.Collectors.joining("; "));
+                return CheckResult.pass(check.getRuleId(), check.getDescription(),
+                        "All required POM elements found\nFiles validated: " + fileList);
+            } else {
+                return CheckResult.fail(check.getRuleId(), check.getDescription(),
+                        "POM validation failures:\n• " + String.join("\n• ", allFailures));
+            }
         }
     }
+    
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,
             Path projectRoot, List<String> failures) {
         try {
@@ -68,6 +93,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             failures.add("Error parsing POM file " + projectRoot.relativize(pomFile) + ": " + e.getMessage());
         }
     }
+
     private void validateParent(Document doc, Map<String, Object> params, Path pomFile,
             Path projectRoot, List<String> failures) {
         @SuppressWarnings("unchecked")
@@ -95,6 +121,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                     expectedVersion, version));
         }
     }
+
     private void validateProperties(Document doc, Map<String, Object> params, Path pomFile,
             Path projectRoot, List<String> failures) {
         @SuppressWarnings("unchecked")
@@ -119,6 +146,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             }
         }
     }
+
     private void validateDependencies(Document doc, Map<String, Object> params, Path pomFile,
             Path projectRoot, List<String> failures) {
         @SuppressWarnings("unchecked")
@@ -141,6 +169,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             }
         }
     }
+
     private void validatePlugins(Document doc, Map<String, Object> params, Path pomFile,
             Path projectRoot, List<String> failures) {
         @SuppressWarnings("unchecked")
@@ -163,6 +192,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             }
         }
     }
+
     private boolean matchesDependency(Element depElement, Map<String, String> expected) {
         String groupId = getElementText(depElement, "groupId");
         String artifactId = getElementText(depElement, "artifactId");
@@ -176,6 +206,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         }
         return true;
     }
+
     private boolean matchesPlugin(Element pluginElement, Map<String, String> expected) {
         String groupId = getElementText(pluginElement, "groupId");
         String artifactId = getElementText(pluginElement, "artifactId");
@@ -189,6 +220,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         }
         return true;
     }
+
     private String getElementText(Element parent, String tagName) {
         NodeList nodes = parent.getElementsByTagName(tagName);
         if (nodes.getLength() > 0) {
@@ -196,6 +228,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         }
         return null;
     }
+
     private Document parseXml(Path file) throws Exception {
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         factory.setNamespaceAware(true);

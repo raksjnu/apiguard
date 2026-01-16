@@ -1,4 +1,5 @@
 package com.raks.muleguard.checks;
+
 import com.raks.muleguard.model.Check;
 import com.raks.muleguard.model.CheckResult;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
 public class GenericTokenSearchRequiredCheck extends AbstractCheck {
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
@@ -18,9 +20,20 @@ public class GenericTokenSearchRequiredCheck extends AbstractCheck {
                 new ArrayList<>());
         @SuppressWarnings("unchecked")
         List<String> tokens = (List<String>) check.getParams().get("tokens");
+        
+        String matchMode = (String) check.getParams().getOrDefault("matchMode", "SUBSTRING");
         Boolean requireAll = (Boolean) check.getParams().getOrDefault("requireAll", true);
         Boolean caseSensitive = (Boolean) check.getParams().getOrDefault("caseSensitive", true);
-        String matchMode = (String) check.getParams().getOrDefault("matchMode", "SUBSTRING");
+
+        // Map ANY_FILE matchMode to requireAll: false for backward/cross compatibility
+        if ("ANY_FILE".equalsIgnoreCase(matchMode)) {
+            requireAll = false;
+            matchMode = "SUBSTRING"; // Default back to substring if only ANY_FILE was specified
+        } else if ("ALL_FILES".equalsIgnoreCase(matchMode)) {
+            requireAll = true;
+            matchMode = "SUBSTRING";
+        }
+
         if (filePatterns == null || filePatterns.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Configuration error: 'filePatterns' parameter is required");
@@ -109,5 +122,4 @@ public class GenericTokenSearchRequiredCheck extends AbstractCheck {
             return content.toLowerCase().contains(token.toLowerCase());
         }
     }
-
 }

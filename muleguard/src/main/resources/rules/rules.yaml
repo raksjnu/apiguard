@@ -23,6 +23,12 @@
 # 11. JSON_VALIDATION_REQUIRED           - Validates required JSON elements exist (mule-artifact.json)
 # 12. JSON_VALIDATION_FORBIDDEN          - Validates forbidden JSON elements do NOT exist
 #
+# GLOBAL PARAMETERS (Applicable to ALL Check Types)
+# -------------------------------------------------------------------------
+# 1. propertyResolution: true (default) - Automatically resolves ${prop} placeholders
+# 2. negativeMatch: true/false (false default) - Inverts the check result (PASS <-> FAIL)
+# 3. matchMode: ANY_FILE / ALL_FILES (Token/POM checks) - Changes multi-file validation strategy
+#
 # CONFIG RULE TYPES (5 Standard Types - Apply to Configuration Projects)
 # -------------------------------------------------------------------------
 # 1.  MANDATORY_SUBSTRING_CHECK          - Ensures required substrings exist in config files (.properties, .policy)
@@ -36,7 +42,7 @@
 # 1.  CONDITIONAL_CHECK       - Logic engine. Runs 'onSuccess' only if 'preconditions' are met.
 # 
 # COMMON TRIGGERS (Can be used in 'preconditions'):
-# - PROJECT_CONTEXT           - Trigger by Project Name patterns (e.g., contains '-exp-').
+# - PROJECT_CONTEXT           - Trigger by name pattern (nameContains, nameEquals, nameMatches).
 # - FILE_EXISTS               - Trigger by file presence (e.g., 'secure-properties.xml').
 # - XML_XPATH_EXISTS          - Trigger by XML content (e.g., check for DB/MQ connectors).
 # - MANDATORY_PROPERTY_VALUE_CHECK - Trigger by property existence or specific value.
@@ -97,7 +103,7 @@ rules:
         - src/main/mule/*.xml
         - src/main/resources/*.dwl
         tokens:
-        - SAMPLE_DONT_USE_TOKEN
+        - SAMPLE_DONT_USE_TOKEN123
         matchMode: SUBSTRING
         caseSensitive: true
 
@@ -163,7 +169,7 @@ rules:
 
   - id: "RULE-001"
     name: 'Update pom parent: MuleParentPom version:LATEST'
-    description: Parent pom must be com.raks.eapi:MuleParentPom:LATEST
+    description: Parent pom must be com.raks.eapi:MuleParentPom:LATEST123
     enabled: true
     severity: LOW
     checks:
@@ -410,6 +416,55 @@ rules:
         - element: some:element
           requiredTokens:
           - REQUIRED_CONTENT
+
+  - id: "RULE-020"
+    name: '[TEMPLATE] Negative Match (Inversion)'
+    description: Template for inverting a check result. Fails if the token IS found.
+    enabled: false
+    severity: MEDIUM
+    checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        tokens:
+        - FORBIDDEN_TOKEN_VIA_INVERSION
+        negativeMatch: true
+
+  - id: "RULE-021"
+    name: '[TEMPLATE] Any File Match Mode'
+    description: Template for ensuring at least one file contains a token.
+    enabled: false
+    severity: MEDIUM
+    checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+        - "*.properties"
+        tokens:
+        - "api-id"
+        matchMode: ANY_FILE
+
+  - id: "RULE-022"
+    name: '[TEMPLATE] Project Identity Match'
+    description: Template for matching project name exactly or via regex.
+    enabled: false
+    severity: MEDIUM
+    checks:
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+        - type: PROJECT_CONTEXT
+          params:
+            nameEquals: my-special-api
+            # nameMatches: ".*-exp-.*" 
+        onSuccess:
+        - type: GENERIC_TOKEN_SEARCH_REQUIRED
+          params:
+            filePatterns:
+            - pom.xml
+            tokens:
+            - "my-special-api"
 
   # ---------------------------------------------------------------------------
   # CODE RULES: JSON_VALIDATION_REQUIRED

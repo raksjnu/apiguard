@@ -241,10 +241,10 @@ public class MuleGuardGUI {
                         String customRulesPath = (String) params.get("customRulesPath");
                         
                         if (customRulesFile != null) {
-                            args.add("-r");
+                            args.add("--config");
                             args.add(customRulesFile.getAbsolutePath());
                         } else if (customRulesPath != null && !customRulesPath.isBlank()) {
-                             args.add("-r");
+                             args.add("--config");
                              args.add(customRulesPath);
                         }
                         

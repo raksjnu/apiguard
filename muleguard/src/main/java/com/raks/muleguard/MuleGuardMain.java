@@ -24,23 +24,43 @@ import javax.swing.JFileChooser;
 public class MuleGuardMain {
     private static final Logger logger = LoggerFactory.getLogger(MuleGuardMain.class);
     public static void main(String[] args) {
-        Path parentFolder;
+        Path parentFolder = null;
         String configFilePath = null;
-        if (args.length == 0 || args[0].isEmpty()) {
+        String projectPathStr = null;
+
+        if (args.length > 0) {
+            for (int i = 0; i < args.length; i++) {
+                String arg = args[i];
+                if ("-p".equals(arg) || "--project".equals(arg)) {
+                    if (i + 1 < args.length) {
+                        projectPathStr = args[++i];
+                    }
+                } else if ("--config".equals(arg) || "-config".equals(arg) || "-c".equals(arg)) {
+                    if (i + 1 < args.length) {
+                        configFilePath = args[++i];
+                    }
+                }
+            }
+        }
+
+        if (projectPathStr != null) {
+            parentFolder = Paths.get(projectPathStr);
+        } else if (args.length == 0 || (args.length == 1 && args[0].isEmpty())) {
+            // No arguments or empty first argument -> launch Swing UI
             parentFolder = showFolderDialog();
             if (parentFolder == null) {
                 logger.info("No folder selected. Exiting.");
                 return;
             }
-        } else if (args.length >= 2 && "-p".equals(args[0])) {
-            parentFolder = Paths.get(args[1]);
-            if (args.length >= 4 && "--config".equals(args[2])) {
-                configFilePath = args[3];
-                logger.info("Using custom config file: {}", configFilePath);
-            }
         } else {
-            logger.error("Usage: java -jar muleguard.jar -p <folder> [--config <rules.yaml>]   OR   double-click to select folder");
+            logger.error("Error: Missing project path parameter -p <folder>");
+            logger.error("Usage: java -jar muleguard.jar -p <folder> [--config <rules.yaml>]");
+            logger.error("       OR double-click to launch in GUI mode");
             return;
+        }
+
+        if (configFilePath != null) {
+            logger.info("Using custom config file: {}", configFilePath);
         }
         if (!Files.isDirectory(parentFolder)) {
             logger.error("Error: Not a valid folder: {}", parentFolder);
@@ -387,13 +407,14 @@ public class MuleGuardMain {
         if (configFilePath != null && !configFilePath.isEmpty()) {
             try {
                 input = Files.newInputStream(Paths.get(configFilePath));
-                logger.info("Loaded custom config from: {}", configFilePath);
+                logger.debug("Successfully opened custom config from: {}", configFilePath);
             } catch (IOException e) {
-                logger.error("Error loading custom config file: {}", configFilePath);
+                logger.error("Error loading custom config file: {}. Reason: {}", configFilePath, e.getMessage());
                 logger.warn("Falling back to embedded rules.yaml");
                 input = MuleGuardMain.class.getClassLoader().getResourceAsStream("rules/rules.yaml");
             }
         } else {
+            logger.info("No custom config provided. Using embedded rules.yaml");
             input = MuleGuardMain.class.getClassLoader().getResourceAsStream("rules/rules.yaml");
         }
         if (input == null) {

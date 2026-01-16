@@ -1,4 +1,5 @@
 package com.raks.muleguard.checks;
+
 import com.raks.muleguard.model.Check;
 import com.raks.muleguard.model.CheckResult;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
+
 public class GenericTokenSearchForbiddenCheck extends AbstractCheck {
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
@@ -18,8 +20,15 @@ public class GenericTokenSearchForbiddenCheck extends AbstractCheck {
                 new ArrayList<>());
         @SuppressWarnings("unchecked")
         List<String> tokens = (List<String>) check.getParams().get("tokens");
-        Boolean caseSensitive = (Boolean) check.getParams().getOrDefault("caseSensitive", true);
+        
         String matchMode = (String) check.getParams().getOrDefault("matchMode", "SUBSTRING");
+        Boolean caseSensitive = (Boolean) check.getParams().getOrDefault("caseSensitive", true);
+        
+        boolean anyFileMode = "ANY_FILE".equalsIgnoreCase(matchMode);
+        if (anyFileMode) {
+            matchMode = "SUBSTRING"; // Reset content match mode to default
+        }
+
         if (filePatterns == null || filePatterns.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Configuration error: 'filePatterns' parameter is required");
@@ -28,8 +37,11 @@ public class GenericTokenSearchForbiddenCheck extends AbstractCheck {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Configuration error: 'tokens' parameter is required");
         }
+        
         List<String> failures = new ArrayList<>();
         List<Path> matchingFiles = new ArrayList<>();
+        int passedFiles = 0;
+
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             matchingFiles = paths
                     .filter(Files::isRegularFile)
@@ -37,29 +49,51 @@ public class GenericTokenSearchForbiddenCheck extends AbstractCheck {
                     .filter(path -> !matchesAnyPattern(path, excludePatterns, projectRoot))
                     .filter(path -> !shouldIgnorePath(projectRoot, path)) 
                     .toList();
+                    
             if (matchingFiles.isEmpty()) {
                 return CheckResult.pass(check.getRuleId(), check.getDescription(),
                         "No files found matching patterns (nothing to validate)");
             }
+            
             for (Path file : matchingFiles) {
-                validateForbiddenTokens(file, tokens, matchMode, caseSensitive, projectRoot, failures);
+                List<String> fileFailures = new ArrayList<>();
+                validateForbiddenTokens(file, tokens, matchMode, caseSensitive, projectRoot, fileFailures);
+                
+                if (fileFailures.isEmpty()) {
+                    passedFiles++;
+                } else {
+                    failures.addAll(fileFailures);
+                }
             }
+            
         } catch (IOException e) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Error scanning files: " + e.getMessage());
         }
-        if (failures.isEmpty()) {
-            String fileList = matchingFiles.stream()
-                    .map(projectRoot::relativize)
-                    .map(Path::toString)
-                    .collect(java.util.stream.Collectors.joining("; "));
-            return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                    "No forbidden tokens found\nFiles validated: " + fileList);
+        
+        if (anyFileMode) {
+            if (passedFiles > 0) {
+                return CheckResult.pass(check.getRuleId(), check.getDescription(),
+                        "At least one file is free of forbidden tokens (" + passedFiles + "/" + matchingFiles.size() + " files passed)");
+            } else {
+                return CheckResult.fail(check.getRuleId(), check.getDescription(),
+                        "Forbidden tokens found in EVERY matching file (" + matchingFiles.size() + " files checked)");
+            }
         } else {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "Forbidden tokens found:\n• " + String.join("\n• ", failures));
+            if (failures.isEmpty()) {
+                String fileList = matchingFiles.stream()
+                        .map(projectRoot::relativize)
+                        .map(Path::toString)
+                        .collect(java.util.stream.Collectors.joining("; "));
+                return CheckResult.pass(check.getRuleId(), check.getDescription(),
+                        "No forbidden tokens found\nFiles validated: " + fileList);
+            } else {
+                return CheckResult.fail(check.getRuleId(), check.getDescription(),
+                        "Forbidden tokens found:\n• " + String.join("\n• ", failures));
+            }
         }
     }
+
     private void validateForbiddenTokens(Path file, List<String> tokens, String matchMode,
             boolean caseSensitive, Path projectRoot, List<String> failures) {
         try {
@@ -73,6 +107,7 @@ public class GenericTokenSearchForbiddenCheck extends AbstractCheck {
             failures.add("Error reading file " + projectRoot.relativize(file) + ": " + e.getMessage());
         }
     }
+
     private boolean containsToken(String content, String token, String matchMode, boolean caseSensitive) {
         if ("REGEX".equalsIgnoreCase(matchMode)) {
             try {
@@ -86,6 +121,7 @@ public class GenericTokenSearchForbiddenCheck extends AbstractCheck {
             return containsSubstring(content, token, caseSensitive);
         }
     }
+
     private boolean containsSubstring(String content, String token, boolean caseSensitive) {
         if (caseSensitive) {
             return content.contains(token);
@@ -93,5 +129,4 @@ public class GenericTokenSearchForbiddenCheck extends AbstractCheck {
             return content.toLowerCase().contains(token.toLowerCase());
         }
     }
-
 }

@@ -50,7 +50,7 @@ public class ReportGenerator {
             Files.createDirectories(outputDir);
             generateHtml(report, outputDir.resolve("report.html"));
             generateExcel(report, outputDir.resolve("report.xlsx"));
-            try (InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg")) {
+            try (InputStream logoStream = ReportGenerator.class.getResourceAsStream("/web/logo.svg")) {
                 if (logoStream != null) {
                     Path logoPath = outputDir.resolve("logo.svg");
                     Files.copy(logoStream, logoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
@@ -1400,7 +1400,7 @@ public class ReportGenerator {
                 helpStream.close();
                 logger.debug("Help file copied");
             }
-            InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg");
+            InputStream logoStream = ReportGenerator.class.getResourceAsStream("/web/logo.svg");
             if (logoStream == null) {
                 logger.warn("Logo not found in resources");
             } else {

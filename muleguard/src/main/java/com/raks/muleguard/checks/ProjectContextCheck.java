@@ -15,10 +15,21 @@ public class ProjectContextCheck extends AbstractCheck {
         String projectName = projectRoot.getFileName().toString();
         Map<String, Object> params = check.getParams();
 
+        String nameEquals = (String) params.get("nameEquals");
         String nameContains = (String) params.get("nameContains");
         String nameNotContains = (String) params.get("nameNotContains");
-        String nameRegex = (String) params.get("nameRegex");
-        boolean ignoreCase = (Boolean) params.getOrDefault("ignoreCase", true);
+        String nameRegex = (String) params.getOrDefault("nameMatches", params.get("nameRegex"));
+        boolean ignoreCase = (Boolean) params.getOrDefault("ignoreCase", params.getOrDefault("caseSensitive", true));
+
+        if (nameEquals != null) {
+            boolean matches = ignoreCase ? 
+                projectName.equalsIgnoreCase(nameEquals) : 
+                projectName.equals(nameEquals);
+            if (!matches) {
+                return CheckResult.fail(check.getRuleId(), check.getDescription(), 
+                    "Project name '" + projectName + "' does not equal '" + nameEquals + "'");
+            }
+        }
 
         if (nameContains != null) {
             boolean matches = ignoreCase ? 

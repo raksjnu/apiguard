@@ -20,6 +20,9 @@ public class ValidationEngine {
         if (!Files.exists(projectRoot)) {
             throw new IllegalArgumentException("Project root does not exist: " + projectRoot);
         }
+        
+        com.raks.muleguard.PropertyResolver globalResolver = new com.raks.muleguard.PropertyResolver(projectRoot);
+        
         ValidationReport report = new ValidationReport();
         report.projectPath = projectRoot.toString();
         for (Rule rule : rules) {
@@ -32,8 +35,25 @@ public class ValidationEngine {
             for (Check check : rule.getChecks()) {
                 try {
                     check.setRuleId(rule.getId());
+                    
+                    // Automatically resolve properties in all string parameters
+                    resolvePropertiesInCheck(check, globalResolver);
+                    
                     AbstractCheck validator = CheckFactory.create(check);
                     CheckResult result = validator.execute(projectRoot, check);
+                    
+                    // Support Global negativeMatch parameter
+                    boolean negativeMatch = Boolean.TRUE.equals(check.getParams().get("negativeMatch"));
+                    if (negativeMatch) {
+                        if (result.passed) {
+                            result = CheckResult.fail(result.ruleId, result.checkDescription, 
+                                "Negative Match: PASS inverted to FAIL as per configuration.");
+                        } else {
+                            result = CheckResult.pass(result.ruleId, result.checkDescription, 
+                                "Negative Match: FAIL inverted to PASS as per configuration.\nOriginal failure: " + result.message);
+                        }
+                    }
+                    
                     results.add(result);
                     if (!result.passed)
                         rulePassed = false;
@@ -53,6 +73,39 @@ public class ValidationEngine {
             }
         }
         return report;
+    }
+
+    @SuppressWarnings("unchecked")
+    private void resolvePropertiesInCheck(Check check, com.raks.muleguard.PropertyResolver resolver) {
+        if (check.getParams() == null) return;
+        
+        // Only resolve properties if propertyResolution is not explicitly false
+        Object propRes = check.getParams().get("propertyResolution");
+        if (propRes instanceof Boolean && !((Boolean)propRes)) {
+            return; 
+        }
+
+        for (java.util.Map.Entry<String, Object> entry : check.getParams().entrySet()) {
+            entry.setValue(resolveNested(entry.getValue(), resolver));
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Object resolveNested(Object value, com.raks.muleguard.PropertyResolver resolver) {
+        if (value instanceof String) {
+            return resolver.resolve((String) value);
+        } else if (value instanceof java.util.List) {
+            java.util.List<Object> list = (java.util.List<Object>) value;
+            for (int i = 0; i < list.size(); i++) {
+                list.set(i, resolveNested(list.get(i), resolver));
+            }
+        } else if (value instanceof java.util.Map) {
+            java.util.Map<String, Object> map = (java.util.Map<String, Object>) value;
+            for (java.util.Map.Entry<String, Object> entry : map.entrySet()) {
+                entry.setValue(resolveNested(entry.getValue(), resolver));
+            }
+        }
+        return value;
     }
 
     private String summarizeRule(Rule rule) {

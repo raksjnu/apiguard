@@ -77,19 +77,38 @@ To build and run MuleGuard, you will need the following installed:
 
     The resulting JAR file will be named `muleguard-1.0.0-jar-with-raks.jar`.
 
-## How to Use
+MuleGuard is a command-line tool that can also be run in GUI mode.
 
-MuleGuard is a command-line tool. You can run it by executing the JAR file you built in the previous step.
+### Command Line Interface (CLI)
 
-The tool can scan a single Mule project or a directory containing multiple projects.
+The tool can scan a single Mule project or a directory containing multiple projects. It supports flexible argument ordering and multiple aliases.
 
-### Scanning a Single Project
-
-Use the following command to scan a single MuleSoft API project. You need to provide the path to the project directory and specify an output directory for the reports.
+#### Usage Syntax
 
 ```sh
-# Usage: java -jar <jar-file> <path-to-mule-project> <output-directory>
-java -jar target/muleguard-1.0.0-jar-with-raks.jar -p /path/to/your/mule-api
+java -jar muleguard.jar -p <target-path> [--config <rules-path>]
+```
+
+| Parameter | Aliases | Description |
+|-----------|---------|-------------|
+| `-p` | `--project` | **Required.** Path to the Mule project or directory of projects. |
+| `--config` | `-config`, `-c` | **Optional.** Path to a custom `rules.yaml` file. |
+
+#### Examples
+
+**1. Scan projects using default rules:**
+```sh
+java -jar target/muleguard-1.0.0-jar-with-raks.jar -p /path/to/your/mule-projects
+```
+
+**2. Scan using a custom rules file:**
+```sh
+java -jar target/muleguard-1.0.0-jar-with-raks.jar -p /path/to/projects --config /path/to/my-rules.yaml
+```
+
+**3. Using shorthand aliases and different order:**
+```sh
+java -jar target/muleguard-1.0.0-jar-with-raks.jar -c C:\temp\rules.yaml -p C:\projects\api
 ```
 
 > **IMPORTANT:** Ensure you are running with **Java 17**. If you see `UnsupportedClassVersionError`, your default `java` is likely older. Set your `JAVA_HOME` to JDK 17 before running:
@@ -97,19 +116,18 @@ java -jar target/muleguard-1.0.0-jar-with-raks.jar -p /path/to/your/mule-api
 > **Mac/Linux:** `export JAVA_HOME=/path/to/jdk17`
 > Then run the start script.
 
-example: java -jar .\target\muleguard-1.0.0-jar-with-raks.jar -p C:\Users\raksj\Documents\raks\tmp\t2mtemp\MigrationOutput\Tibco2MuleCode
+### GUI Mode
 
-This will generate an individual report for the API in `report.html` and `report.xlsx` inside the specified output directory.
+To launch the graphical user interface (which supports folder selection, ZIP/JAR uploads, and Git integration):
 
-### Scanning Multiple Projects
+1. **Launch from command line:**
+   ```sh
+   java -jar target/muleguard-1.0.0-jar-with-raks.jar
+   ```
+   *(Running without parameters or `-p` will automatically trigger the GUI mode)*
 
-To scan multiple projects at once, provide the path to a directory that contains all the MuleSoft API project folders.
-
-```sh
-# Usage: java -jar <jar-file> <path-to-directory-of-mule-projects> <output-directory>
-java -jar target/muleguard-1.0.0-jar-with-raks.jar -p /path/to/your/apis 
-```
-example: java -jar .\target\muleguard-1.0.0-jar-with-raks.jar -p C:\Users\raksj\Documents\raks\tmp\t2mtemp\MigrationOutput\Tibco2MuleCode
+2. **Access via Browser:**
+   Once the server starts, navigate to `http://localhost:8080`.
 
 This will generate:
 1.  **A Consolidated Report**: `CONSOLIDATED-REPORT.html` and `CONSOLIDATED-REPORT.xlsx` in the root of the output directory. This report provides a summary of all scanned APIs.

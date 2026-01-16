@@ -27,3 +27,6 @@ Validation of Client ID mapping format in policy files.;Config;RULE-105
 Validation of forbidden keys or values (e.g., hardcoded passwords, TODOs) in configuration files.;Config;RULE-107
 Validation of forbidden keys in policy files.;Config;RULE-108
 Validation to ensure no IP addresses are hardcoded in property files.;Config;RULE-109
+Template: Negative Match (Inversion).;Code;RULE-020
+Template: Any File Match Mode.;Code;RULE-021
+Template: Project Identity Match.;Code;RULE-022
