@@ -127,17 +127,9 @@ output application/json
             </http:response>
         </http:listener>
         
-        <!-- Robust path resolution -->
-        <set-variable variableName="resourcePath" value="#[attributes.relativePath replace '/muleguard/' with '' replace 'web/' with '']"/>
-        
-        <choice>
-            <!-- Case 1: Directory path or empty -> Redirect to Home or Error to prevent download -->
-            <when expression="#[vars.resourcePath == '' or vars.resourcePath == '/']">
-                <logger level="INFO" message="Blocking directory read in static-resource-flow"/>
-                <set-payload value="Invalid Resource"/>
-            </when>
-            
-            <otherwise>
+                <!-- Robust path resolution: Extract filename only to avoid directory traversal or prefix issues -->
+                <set-variable variableName="resourcePath" value="#[(attributes.relativePath splitBy '/')[-1]]"/>
+
                 <!-- Determine MIME type based on extension -->
                 <set-variable variableName="mimeType" value="#[
                     if (vars.resourcePath endsWith '.css') 'text/css'
@@ -148,9 +140,8 @@ output application/json
                     else 'application/octet-stream'
                 ]"/>
 
-                <file:read path="#[p('app.home') ++ '/web/muleguard/' ++ vars.resourcePath]" config-ref="File_Config"/>
-            </otherwise>
-        </choice>
+                <!-- Use readUrl with classpath protocol for CloudHub/JAR compatibility -->
+                <set-payload value="#[readUrl('classpath://web/muleguard/' ++ vars.resourcePath)]" mimeType="#[vars.mimeType]"/>
     </flow>
     
     <flow name="rule-guide-page-flow">
