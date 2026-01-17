@@ -603,6 +603,7 @@ public class AegisGUI {
                 else if (name.endsWith(".js")) contentType = "application/javascript";
                 else if (name.endsWith(".png")) contentType = "image/png";
                 else if (name.endsWith(".svg")) contentType = "image/svg+xml";
+                else if (name.endsWith(".xlsx")) contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
                 
                 byte[] content = Files.readAllBytes(requestFile);
                 exchange.getResponseHeaders().set("Content-Type", contentType);
