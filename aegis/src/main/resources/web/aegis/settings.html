@@ -88,16 +88,7 @@
                 </div>
             </div>
 
-            <!-- General Preferences -->
-            <div class="optional-section" style="max-width: 800px; margin: 20px auto; text-align: left; padding: 25px;">
-                <h3 style="margin-top:0; color: #663399; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#9881; General Preferences</h3>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Custom Rules File Path (Local Mode Only):</label>
-                    <input type="text" id="customRulesPath" placeholder="C:\path\to\default-rules.yaml" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    <small style="color: #666;">Automatically load this rules file when running validations.</small>
-                </div>
-            </div>
+
 
             <div style="text-align: center; margin-top: 30px;">
                 <button type="button" class="nav-button" onclick="saveSettings()" style="width: auto; padding: 12px 40px; font-size: 16px; margin-right: 10px; background:#663399; color:white;">Save Settings</button>
@@ -143,7 +134,7 @@
             
             document.getElementById('otherUrl').value = localStorage.getItem('aegis_other_url') || '';
             document.getElementById('otherToken').value = localStorage.getItem('aegis_other_token') || '';
-            document.getElementById('customRulesPath').value = localStorage.getItem('aegis_custom_rules_path') || '';
+
             
             updateSettingsUI();
         });
@@ -236,8 +227,7 @@
             const otherToken = document.getElementById('otherToken').value.trim();
             localStorage.setItem('aegis_other_token', otherToken);
             
-            const rulesPath = document.getElementById('customRulesPath').value.trim();
-            localStorage.setItem('aegis_custom_rules_path', rulesPath);
+
             
             showStatus('Settings saved successfully!', 'green');
             
@@ -258,7 +248,7 @@
                 localStorage.removeItem('aegis_github_group');
                 localStorage.removeItem('aegis_other_url');
                 localStorage.removeItem('aegis_other_token');
-                localStorage.removeItem('aegis_custom_rules_path');
+
                 
                 // Clear form
                 document.getElementById('settingsForm').reset();

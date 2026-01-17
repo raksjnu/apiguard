@@ -702,12 +702,6 @@
             const customRules = document.getElementById('customRules').files[0];
             if (customRules) {
                 formData.append('customRules', customRules);
-            } else {
-                // If no file uploaded, check for default rules path in Settings
-                const defaultRulesPath = localStorage.getItem('aegis_custom_rules_path');
-                if (defaultRulesPath) {
-                    formData.append('customRulesPath', defaultRulesPath);
-                }
             }
 
             // Email options

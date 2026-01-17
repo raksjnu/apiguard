@@ -243,14 +243,10 @@ public class AegisGUI {
                         
                         // Handle Custom Rules
                         File customRulesFile = (File) params.get("customRules");
-                        String customRulesPath = (String) params.get("customRulesPath");
                         
                         if (customRulesFile != null) {
                             args.add("-c");
                             args.add(customRulesFile.getAbsolutePath());
-                        } else if (customRulesPath != null && !customRulesPath.isBlank()) {
-                             args.add("-c");
-                             args.add(customRulesPath);
                         }
                         
                         AegisMain.execute(args.toArray(new String[0]));
