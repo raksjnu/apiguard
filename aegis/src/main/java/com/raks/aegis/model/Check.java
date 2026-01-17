@@ -5,6 +5,8 @@ public class Check {
     private Map<String, Object> params;
     private String description;
     private transient String ruleId;
+    private transient Rule rule;  // NEW: Reference to parent rule
+    
     public String getType() {
         return type;
     }
@@ -28,5 +30,11 @@ public class Check {
     }
     public void setRuleId(String ruleId) {
         this.ruleId = ruleId;
+    }
+    public Rule getRule() {
+        return rule;
+    }
+    public void setRule(Rule rule) {
+        this.rule = rule;
     }
 }

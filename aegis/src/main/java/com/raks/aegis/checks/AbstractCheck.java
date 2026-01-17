@@ -25,6 +25,37 @@ public abstract class AbstractCheck {
         }
         return defaultMsg;
     }
+    
+    /**
+     * Format message template with placeholders.
+     * Supports {CORE_DETAILS} and {FAILURES} placeholders.
+     * If no placeholders found and coreDetails provided, appends at end.
+     * If template is null, returns coreDetails only (fallback).
+     */
+    protected String formatMessage(String template, String coreDetails, String failures) {
+        // Fallback: if no template, use core details only
+        if (template == null || template.isEmpty()) {
+            return coreDetails != null ? coreDetails : "";
+        }
+        
+        String result = template;
+        
+        // Replace placeholders
+        if (coreDetails != null) {
+            result = result.replace("{CORE_DETAILS}", coreDetails);
+        }
+        if (failures != null) {
+            result = result.replace("{FAILURES}", failures);
+        }
+        
+        // If no placeholders found and coreDetails exists, append at end
+        if (!template.contains("{") && coreDetails != null && !coreDetails.isEmpty()) {
+            result += "\n\n" + coreDetails;
+        }
+        
+        return result;
+    }
+    
     protected boolean shouldIgnorePath(Path projectRoot, Path path) {
         Path relativePath = projectRoot.relativize(path);
         String pathString = relativePath.toString().replace('\\', '/');

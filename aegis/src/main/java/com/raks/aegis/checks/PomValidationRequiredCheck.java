@@ -39,18 +39,35 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                     "Error scanning files: " + e.getMessage());
         }
         if (failures.isEmpty()) {
+            // Build core details
             String fileList = pomFiles.stream()
                     .map(projectRoot::relativize)
                     .map(Path::toString)
                     .collect(java.util.stream.Collectors.joining("; "));
-            String details = "All required POM elements found\nFiles validated: " + fileList;
+            
+            String coreDetails = "Files validated: " + fileList;
             if (!successes.isEmpty()) {
-                details += "\n\nActual Values Found:\n• " + String.join("\n• ", successes);
+                coreDetails += "\nActual Values Found:\n• " + String.join("\n• ", successes);
             }
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), details);
+            
+            // Get custom success message from rule (if defined)
+            String customMessage = check.getRule() != null ? check.getRule().getSuccessMessage() : null;
+            
+            // Format final message with fallback
+            String finalMessage = formatMessage(customMessage, coreDetails, null);
+            
+            return CheckResult.pass(check.getRuleId(), check.getDescription(), finalMessage);
         } else {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "POM validation failures:\n• " + String.join("\n• ", failures));
+            // Build failure details
+            String failureDetails = "• " + String.join("\n• ", failures);
+            
+            // Get custom error message from rule (if defined)
+            String customError = check.getRule() != null ? check.getRule().getErrorMessage() : null;
+            
+            // Format final message with fallback
+            String finalMessage = formatMessage(customError, null, failureDetails);
+            
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage);
         }
     }
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,

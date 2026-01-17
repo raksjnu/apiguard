@@ -105,14 +105,14 @@ public class ReportGenerator {
                     String configId = "config-" + r.id + "-" + java.util.UUID.randomUUID().toString().substring(0, 8);
                     configRow = "<div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'>" +
                             "<a href='javascript:void(0)' id='" + configId + "-link' class='config-toggle' onclick=\"toggleConfig('" + configId + "')\" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a>" +
-                            "<div id='" + configId + "' class='rule-config' style='display:none; margin-top:5px; padding:5px; background:#f9f9f9; border-radius:4px;'>" + 
-                            "<strong>Config:</strong> " + escape(r.ruleConfig) + 
+                            "<div id='" + configId + "' class='rule-config' style='display:none; margin-top:5px; padding:10px; background:#f5f5f5; border:1px solid #ddd; border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #333;'>" + 
+                            escape(r.ruleConfig) + 
                             "</div></div>";
                 }
                 if (r.passed) {
                     String message = r.checks.isEmpty() ? "All checks passed" : r.checks.get(0).message;
                     rows.append(String.format(
-                            "<tr style='background-color:#e8f5e9'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:green'>%s</strong></td><td><div style='word-wrap: break-word;'>%s</div>%s</td></tr>",
+                            "<tr style='background-color:#e8f5e9'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:green'>%s</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>%s</div>%s</td></tr>",
                             escape(r.displayId), escape(r.name), escape(r.severity), escape(passLabel), escape(message), configRow));
                 } else {
                     List<String> messages = r.checks.stream()
@@ -132,7 +132,7 @@ public class ReportGenerator {
                             .collect(Collectors.joining("<br>"));
 
                     rows.append(String.format(
-                            "<tr style='background-color:#ffebee'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:red'>%s</strong></td><td><div style='word-wrap: break-word;'>%s</div>%s</td></tr>",
+                            "<tr style='background-color:#ffebee'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:red'>%s</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>%s</div>%s</td></tr>",
                             escape(r.displayId), escape(r.name), escape(r.severity), escape(failLabel), details, configRow));
                 }
             } // End loop

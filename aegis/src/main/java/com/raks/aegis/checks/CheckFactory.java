@@ -6,7 +6,6 @@ import java.util.Map;
 
 public class CheckFactory {
     private static Map<String, Class<? extends AbstractCheck>> registry = new HashMap<>();
-    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(CheckFactory.class);
 
     static {
         // Universal Checks
