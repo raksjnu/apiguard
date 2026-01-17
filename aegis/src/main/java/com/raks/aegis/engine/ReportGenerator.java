@@ -110,13 +110,11 @@ public class ReportGenerator {
                             "<strong>Config:</strong> " + escape(r.ruleConfig) + 
                             "</div></div>";
                 }
-                String scope = r.scope != null ? r.scope : "GLOBAL";
-                
                 if (r.passed) {
                     String message = r.checks.isEmpty() ? "All checks passed" : r.checks.get(0).message;
                     rows.append(String.format(
-                            "<tr style='background-color:#e8f5e9'><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:green'>%s</strong></td><td><div>%s</div>%s</td></tr>",
-                            escape(r.displayId), escape(r.name), escape(r.severity), escape(scope), escape(passLabel), escape(message), configRow));
+                            "<tr style='background-color:#e8f5e9'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:green'>%s</strong></td><td><div style='word-wrap: break-word;'>%s</div>%s</td></tr>",
+                            escape(r.displayId), escape(r.name), escape(r.severity), escape(passLabel), escape(message), configRow));
                 } else {
                     List<String> messages = r.checks.stream()
                             .filter(c -> !c.passed)
@@ -133,9 +131,10 @@ public class ReportGenerator {
                             .entrySet().stream()
                             .map(entry -> "• " + entry.getKey() + entry.getValue())
                             .collect(Collectors.joining("<br>"));
+
                     rows.append(String.format(
-                            "<tr style='background-color:#ffebee'><td>%s</td><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:red'>%s</strong></td><td><div>%s</div>%s</td></tr>",
-                            escape(r.displayId), escape(r.name), escape(r.severity), escape(scope), escape(failLabel), details, configRow));
+                            "<tr style='background-color:#ffebee'><td>%s</td><td>%s</td><td>%s</td><td><strong style='color:red'>%s</strong></td><td><div style='word-wrap: break-word;'>%s</div>%s</td></tr>",
+                            escape(r.displayId), escape(r.name), escape(r.severity), escape(failLabel), details, configRow));
                 }
             } // End loop
 
@@ -157,8 +156,8 @@ public class ReportGenerator {
                             .summary {background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;}
                             .search-box { margin-bottom: 20px; width: 100%%; }
                             #searchInput { width: 100%%; padding: 12px; border: 2px solid var(--raks-purple); border-radius: 5px; font-size: 16px; box-sizing: border-box; }
-                            table {width: 100%%; border-collapse: collapse; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
-                            th, td {border: 1px solid #ddd; padding: 12px; text-align: left;}
+                            table {width: 100%%; border-collapse: collapse; box-shadow: 0 4px 12px rgba(0,0,0,0.1); table-layout: fixed; }
+                            th, td {border: 1px solid #ddd; padding: 12px; text-align: left; word-wrap: break-word; overflow-wrap: break-word; }
                             th {background-color: var(--raks-purple); color: var(--text-white); cursor: pointer; position: sticky; top: 0; z-index: 10; }
                             th:hover { background-color: var(--raks-purple-light); }
                             th::after { content: ' ↕'; font-size: 0.8em; }
@@ -191,18 +190,17 @@ public class ReportGenerator {
                             </div>
                             <div class="search-box" style="display:flex; gap:10px; align-items:center;">
                                 <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by name, status, or details..." style="flex-grow:1;">
-                                <button class="top-nav-button" onclick="toggleAllConfigs(true)" style="width:auto; font-size:12px;">Expand All Configs</button>
-                                <button class="top-nav-button" onclick="toggleAllConfigs(false)" style="width:auto; font-size:12px; background:#999;">Collapse All</button>
+                                <button class="top-nav-button" onclick="toggleAllConfigs(true)" style="width:150px; font-size:12px; white-space:nowrap;">Expand All Configs</button>
+                                <button class="top-nav-button" onclick="toggleAllConfigs(false)" style="width:120px; font-size:12px; background:#999; white-space:nowrap;">Collapse All</button>
                             </div>
                             <table id="resultsTable">
                                 <thead>
                                     <tr>
-                                        <th onclick="sortTable(0)">Rule #</th>
-                                        <th onclick="sortTable(1)">Name</th>
-                                        <th onclick="sortTable(2)">Severity</th>
-                                        <th onclick="sortTable(3)">Scope</th>
-                                        <th onclick="sortTable(4)">Status</th>
-                                        <th onclick="sortTable(5)">Details</th>
+                                        <th style="width: 7%;" onclick="sortTable(0)">Rule #</th>
+                                        <th style="width: 25%;" onclick="sortTable(1)">Name</th>
+                                        <th style="width: 10%;" onclick="sortTable(2)">Severity</th>
+                                        <th style="width: 8%;" onclick="sortTable(3)">Status</th>
+                                        <th style="width: 50%;" onclick="sortTable(4)">Details</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody">
@@ -304,7 +302,7 @@ public class ReportGenerator {
             failStyle.setFillForegroundColor(IndexedColors.CORAL.getIndex());
             failStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
             Row header = sheet.createRow(0);
-            String[] columns = { "Rule ID", "Name", "Severity", "Scope", "Status", "Details" };
+            String[] columns = { "Rule ID", "Name", "Severity", "Status", "Details" };
             for (int i = 0; i < columns.length; i++) {
                 Cell cell = header.createCell(i);
                 cell.setCellValue(columns[i]);
@@ -318,15 +316,13 @@ public class ReportGenerator {
             int rowNum = 1;
             for (RuleResult r : report.passed) {
                 String message = r.checks.isEmpty() ? "All checks passed" : r.checks.get(0).message;
-                String scope = r.scope != null ? r.scope : "GLOBAL";
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(r.id);
                 row.createCell(1).setCellValue(r.name);
                 row.createCell(2).setCellValue(r.severity);
-                row.createCell(3).setCellValue(scope);
-                row.createCell(4).setCellValue(passLabel);
-                row.createCell(5).setCellValue(message);
-                for (int i = 0; i < 6; i++)
+                row.createCell(3).setCellValue(passLabel);
+                row.createCell(4).setCellValue(message);
+                for (int i = 0; i < 5; i++)
                     row.getCell(i).setCellStyle(passStyle);
             }
             for (RuleResult r : report.failed) {
@@ -334,15 +330,13 @@ public class ReportGenerator {
                         .filter(c -> !c.passed)
                         .map(c -> "• " + c.message)
                         .collect(Collectors.joining("\n"));
-                String scope = r.scope != null ? r.scope : "GLOBAL";
                 Row row = sheet.createRow(rowNum++);
                 row.createCell(0).setCellValue(r.id);
                 row.createCell(1).setCellValue(r.name);
                 row.createCell(2).setCellValue(r.severity);
-                row.createCell(3).setCellValue(scope);
-                row.createCell(4).setCellValue(failLabel);
-                row.createCell(5).setCellValue(details.isEmpty() ? "Failed" : details);
-                for (int i = 0; i < 6; i++)
+                row.createCell(3).setCellValue(failLabel);
+                row.createCell(4).setCellValue(details.isEmpty() ? "Failed" : details);
+                for (int i = 0; i < 5; i++)
                     row.getCell(i).setCellStyle(failStyle);
             }
             for (int i = 0; i < columns.length; i++) {
@@ -584,7 +578,7 @@ public class ReportGenerator {
             Path htmlPath = outputPath.resolve("CONSOLIDATED-REPORT.html");
             Files.writeString(htmlPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
             logger.debug("Consolidated report generated: {}", htmlPath.toAbsolutePath());
-            copyHelpFile(outputPath); // Keeping help file for now if needed by consolidated report, but user asked to remove it from report folder? 
+            // copyHelpFile(outputPath); // Removed per user request
             // User asked: "rest the checklist, help and rule guide html files wil not be there."
             // So I should remove copyHelpFile and generateRuleGuide calls as well.
             generateConsolidatedExcel(results, outputPath);
