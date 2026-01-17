@@ -46,7 +46,6 @@
 <body>
     <div class="container" style="position: relative;">
         <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
-            <a id="linkChecklist" href="#" onclick="window.open(resolvePath('checklist.html'), '_blank'); return false;" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
             <a id="linkRules" href="#" onclick="window.open(resolvePath('rule_guide.html'), '_blank'); return false;" class="nav-button" title="Guide to all Aegis validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
             <a id="linkSettings" href="#" onclick="window.location.href = resolvePath('settings.html'); return false;" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
             <a id="linkHelp" href="#" onclick="window.open(resolvePath('help.html'), '_blank'); return false;" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
@@ -96,12 +95,7 @@
 
         <!-- ZIP File Input -->
         <div id="zipInput" class="optional-section hidden">
-            <label>Select ZIP File: 
-                <a href="#" class="sample-download" onclick="downloadSample('sample-project.zip')"
-                   style="margin-left: 10px; font-size: 0.9em; color: #663399; text-decoration: underline;">
-                    (Download Sample Project)
-                </a>
-            </label>
+            <label>Select ZIP File:</label>
             <input type="file" id="zipFile" accept=".zip">
             <small>ZIP should contain root folder with API and config folders</small>
         </div>
@@ -149,15 +143,15 @@
             </p>
 
             <!-- Discovery Panel -->
-            <div id="gitDiscoveryPanel">
+            <div id="gitDiscoveryPanel" style="display:none;">
                 <div style="display:flex; gap:10px; margin-bottom: 10px;">
                     <div style="flex:1;">
                         <label>Group / Org Name / User:</label>
-                        <input type="text" id="gitGroup" placeholder="e.g. raks-group">
+                        <input type="text" id="gitGroup" placeholder="e.g. raks-group" name="gitGroup" autocomplete="on">
                     </div>
                     <div style="flex:1;">
                         <label>Repository Name Filter (comma-separated):</label>
-                        <input type="text" id="gitRepoFilter" placeholder="e.g. api-v1, web-app">
+                        <input type="text" id="gitRepoFilter" placeholder="e.g. api-v1, web-app" name="gitRepoFilter" autocomplete="on">
                     </div>
                 </div>
                 <div style="text-align:right;">
@@ -182,10 +176,11 @@
             </div>
 
             <!-- Manual Panel -->
-            <div id="gitManualPanel" style="display:none; margin-top:10px;">
+            <!-- Manual Panel -->
+            <div id="gitManualPanel" style="margin-top:10px;">
                 <label>Git Repository URL:</label>
                 <div style="display:flex; gap:10px;">
-                    <input type="text" id="gitUrl" placeholder="https://gitlab.com/group/project.git">
+                    <input type="text" id="gitUrl" placeholder="https://gitlab.com/group/project.git" name="gitUrl" autocomplete="url">
                     <button type="button" class="nav-button" style="width:auto; white-space:nowrap; padding: 0 15px; background:#6f42c1;" id="fetchBranchesManualBtn" onclick="fetchGitBranches(true)">Fetch Branches</button>
                 </div>
             </div>
@@ -213,12 +208,7 @@
 
         <!-- Custom Rules Input -->
         <div class="optional-section">
-            <label>Optional: Custom Rules File 
-                <a href="#" class="sample-download" onclick="downloadSample('sample-rules.yaml')"
-                   style="margin-left: 10px; font-size: 0.9em; color: #663399; text-decoration: underline;">
-                    (Download Sample Rules)
-                </a>
-            </label>
+            <label>Optional: Custom Rules File</label>
             <input type="file" id="customRules" accept=".yaml,.yml">
             <small>If not provided, default rules from Aegis JAR will be used</small>
         </div>

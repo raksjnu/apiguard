@@ -47,7 +47,7 @@
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitLab Auth Token (Personal Access Token):</label>
                     <div style="display:flex; gap:10px; margin-bottom: 10px;">
-                        <input type="password" id="gitlabToken" placeholder="Enter your GitLab Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="password" id="gitlabToken" placeholder="Enter your GitLab Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" name="gitlabToken" autocomplete="current-password">
                         <button type="button" class="nav-button" onclick="validateToken('gitlab')" style="width:auto; padding:0 15px; background:#fc6d26; color:white; border:none;">Validate</button>
                     </div>
 
@@ -56,7 +56,7 @@
                     <small style="display:block; color: #666; margin-bottom: 10px;">Leave empty for public GitLab.com.</small>
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Group / User (Optional):</label>
-                    <input type="text" id="gitlabDefaultGroup" placeholder="e.g. raks-group" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                    <input type="text" id="gitlabDefaultGroup" placeholder="e.g. raks-group" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;" name="gitlabDefaultGroup" autocomplete="on">
                 </div>
                 
                 <div style="margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-left: 4px solid #333;" id="githubSection">
@@ -64,7 +64,7 @@
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitHub Auth Token (Personal Access Token):</label>
                     <div style="display:flex; gap:10px; margin-bottom: 10px;">
-                        <input type="password" id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="password" id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" name="githubToken" autocomplete="current-password">
                         <button type="button" class="nav-button" onclick="validateToken('github')" style="width:auto; padding:0 15px; background:#663399; color:white; border:none;">Validate</button>
                     </div>
 
@@ -73,17 +73,17 @@
                     <small style="display:block; color: #666; margin-bottom: 10px;">Leave empty for public GitHub.com.</small>
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Organization / User (Optional):</label>
-                    <input type="text" id="githubDefaultGroup" placeholder="e.g. RAKS" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                    <input type="text" id="githubDefaultGroup" placeholder="e.g. RAKS" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;" name="githubDefaultGroup" autocomplete="on">
                 </div>
 
 
 
                 <div style="margin-bottom: 15px;" id="otherSection">
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Other Git Provider Base URL:</label>
-                    <input type="text" id="otherUrl" placeholder="http://git.raks.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom:10px;">
+                    <input type="text" id="otherUrl" placeholder="http://git.raks.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom:10px;" name="otherUrl" autocomplete="url">
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Other Git Provider Token:</label>
-                    <input type="password" id="otherToken" placeholder="Enter Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="password" id="otherToken" placeholder="Enter Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" name="otherToken" autocomplete="current-password">
                     <small style="color: #666;">Generic token for cloning repositories from custom providers.</small>
                 </div>
             </div>
