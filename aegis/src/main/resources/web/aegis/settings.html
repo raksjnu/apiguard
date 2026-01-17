@@ -151,6 +151,9 @@
         function updateSettingsUI() {
             const provider = document.querySelector('input[name="gitProvider"]:checked').value;
             
+            // Auto-save provider selection immediately to sync with Home page
+            localStorage.setItem('aegis_git_provider', provider);
+            
             // Helper to toggle section
             const toggle = (id, enable) => {
                 const el = document.getElementById(id);
