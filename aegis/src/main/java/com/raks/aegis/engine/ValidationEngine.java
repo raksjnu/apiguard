@@ -57,19 +57,44 @@ public class ValidationEngine {
     }
 
     private String summarizeRule(Rule rule) {
-        if (rule.getChecks() == null || rule.getChecks().isEmpty()) return "N/A";
-        List<String> checkSummaries = new ArrayList<>();
-        for (Check check : rule.getChecks()) {
-            String summary = getCheckConfigString(check.getParams());
-            if (!summary.isEmpty()) {
-                checkSummaries.add(summary);
+        // Build the full rule map to match the YAML configuration structure requested by the user
+        java.util.Map<String, Object> ruleMap = new java.util.LinkedHashMap<>();
+        
+        ruleMap.put("id", rule.getId());
+        ruleMap.put("name", rule.getName());
+        ruleMap.put("description", rule.getDescription());
+        ruleMap.put("enabled", rule.isEnabled());
+        ruleMap.put("severity", rule.getSeverity());
+        
+        if (rule.getSuccessMessage() != null) ruleMap.put("successMessage", rule.getSuccessMessage());
+        if (rule.getErrorMessage() != null) ruleMap.put("errorMessage", rule.getErrorMessage());
+        
+        // Optional fields
+        if (rule.getUseCase() != null) ruleMap.put("useCase", rule.getUseCase());
+        if (rule.getRationale() != null) ruleMap.put("rationale", rule.getRationale());
+        
+        if (rule.getChecks() != null && !rule.getChecks().isEmpty()) {
+            java.util.List<java.util.Map<String, Object>> checksList = new java.util.ArrayList<>();
+            
+            for (Check check : rule.getChecks()) {
+                java.util.Map<String, Object> checkData = new java.util.LinkedHashMap<>();
+                checkData.put("type", check.getType());
+                
+                if (check.getParams() != null) {
+                    java.util.Map<String, Object> cleanParams = new java.util.LinkedHashMap<>(check.getParams());
+                    cleanParams.remove("environments"); // Remove per user request
+                    checkData.put("params", cleanParams);
+                }
+                
+                checksList.add(checkData);
             }
+            ruleMap.put("checks", checksList);
         }
-        return checkSummaries.isEmpty() ? "N/A" : String.join(" ; ", checkSummaries);
+        
+        return getYamlString(ruleMap);
     }
 
-    private String getCheckConfigString(java.util.Map<String, Object> params) {
-        if (params == null || params.isEmpty()) return "";
+    private String getYamlString(Object data) {
         try {
             org.yaml.snakeyaml.DumperOptions options = new org.yaml.snakeyaml.DumperOptions();
             options.setDefaultFlowStyle(org.yaml.snakeyaml.DumperOptions.FlowStyle.BLOCK);
@@ -78,7 +103,7 @@ public class ValidationEngine {
             options.setWidth(120); // Prevent early wrapping
             
             org.yaml.snakeyaml.Yaml yaml = new org.yaml.snakeyaml.Yaml(options);
-            return yaml.dump(params).trim();
+            return yaml.dump(data).trim();
         } catch (Exception e) {
             return "Error generating config view: " + e.getMessage();
         }
