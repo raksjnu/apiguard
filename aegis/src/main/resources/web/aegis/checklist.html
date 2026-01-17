@@ -172,48 +172,168 @@
         <!-- Best Practices Section -->
         <h2>✅ Industry Best Practices & Checklist</h2>
         <p>Comprehensive validation checklist for ensuring application quality, security, and maintainability.</p>
-        
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 40%;">Checklist Item / Best Practice</th>
-                    <th style="width: 30%;">Code / Configuration Target</th>
-                    <th style="width: 30%;">Suggested Rule Implementation</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td><strong>No Hardcoded Credentials</strong><br>Ensure no passwords, tokens, or keys are present in plain text within source code.</td>
-                    <td>Any source file (XML, Java, Properties)</td>
-                    <td><span class="badge badge-rule">GENERIC_TOKEN_SEARCH</span><br><small>Search for patterns like "password=", "token="</small></td>
-                </tr>
-                <tr>
-                    <td><strong>Secure Protocol Usage</strong><br>Enforce the use of secure protocols (HTTPS, TLS 1.2+) and weak ciphers are disabled.</td>
-                    <td>Connector Configs (HTTP, JMS, Database)</td>
-                    <td><span class="badge badge-rule">CODE_XML_ATTRIBUTE_VALUE</span><br><small>Validate 'enabledProtocols' or 'cipherSuites'</small></td>
-                </tr>
-                <tr>
-                    <td><strong>Standardized Naming Conventions</strong><br>Files and resources should follow a consistent naming pattern (e.g., kebab-case, snake_case).</td>
-                    <td>File Names, Flow Names</td>
-                    <td><span class="badge badge-rule">CODE_FILE_EXISTS</span><br><small>Regex match on filenames</small></td>
-                </tr>
-                <tr>
-                    <td><strong>Dependency Management</strong><br>Prohibit usage of deprecated or vulnerable libraries. Mandate approved versions.</td>
-                    <td>pom.xml, build.gradle, package.json</td>
-                    <td><span class="badge badge-rule">CODE_XML_DEPENDENCY_CHECK</span><br><small>Block generic artifacts or specific versions</small></td>
-                </tr>
-                 <tr>
-                    <td><strong>Logging Standards</strong><br>Ensure proper logging levels are used and sensitive data is not logged.</td>
-                    <td>log4j2.xml, application logic</td>
-                    <td><span class="badge badge-rule">CODE_XML_EXISTS</span><br><small>Check for async loggers or specific patterns</small></td>
-                </tr>
-                 <tr>
-                    <td><strong>Environment Property Externalization</strong><br>All environment-specific values must be externalized to property files.</td>
-                    <td>mule-artifact.json, properties files</td>
-                    <td><span class="badge badge-rule">PROPERTY_GENERIC_CHECK</span><br><small>Ensure mandatory properties exist</small></td>
-                </tr>
-            </tbody>
-        </table>
+            <br>
+            <p>Below is the complete catalog of validation rule types supported by Aegis. Use these types in your <code>rules.yaml</code> to define custom policies.</p>
+
+            <!-- 1. File & Project Context -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#128193; File & Project Context</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Rule Type</th>
+                        <th style="width: 40%;">Description</th>
+                        <th style="width: 35%;">Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">FILE_EXISTS</span></td>
+                        <td>Verifies that specific files ensure key configurations are present.</td>
+                        <td>Check for <code>security-config.xml</code>, <code>log4j2.xml</code>, or README files.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">PROJECT_CONTEXT</span></td>
+                        <td>Validates project structure and metadata.</td>
+                        <td>Enforce naming conventions on root folders or verify project types.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">POM_VALIDATION_REQUIRED</span></td>
+                        <td>Ensures specific dependencies or plugins exist in <code>pom.xml</code>.</td>
+                        <td>Require <code>mule-secure-configuration-property</code> module.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">POM_VALIDATION_FORBIDDEN</span></td>
+                        <td>Prohibits specific dependencies or plugins in <code>pom.xml</code>.</td>
+                        <td>Ban <code>log4j</code> 1.x or deprecated connectors.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 2. Code & Token Analysis -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#128269; Code & Token Analysis</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Rule Type</th>
+                        <th>Description</th>
+                        <th>Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">GENERIC_TOKEN_SEARCH</span></td>
+                        <td>Searches for presence of specific text patterns or tokens.</td>
+                        <td>Find "TODO" comments or specific function calls.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">GENERIC_TOKEN_SEARCH_FORBIDDEN</span></td>
+                        <td>Fails if specific forbidden tokens are found.</td>
+                        <td>Detect hardcoded passwords (<code>password=...</code>) or keys.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">GENERIC_TOKEN_SEARCH_REQUIRED</span></td>
+                        <td>Fails if specific required tokens are missing.</td>
+                        <td>Ensure copyright headers or specific annotations exist.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">MANDATORY_SUBSTRING_CHECK</span></td>
+                        <td>Ensures a exact substring exists within a file.</td>
+                        <td>Verify specific configuration strings.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">DLP_REFERENCE_CHECK</span></td>
+                        <td>Data Loss Prevention check for sensitive patterns.</td>
+                        <td>Scan for credit card numbers, SSNs, or API keys.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 3. XML Validation -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#128204; XML Configuration</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Rule Type</th>
+                        <th>Description</th>
+                        <th>Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">XML_XPATH_EXISTS</span></td>
+                        <td>Verifies that an XML element exists matching an XPath.</td>
+                        <td>Ensure <code>&lt;secure-properties:config&gt;</code> is defined.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">XML_ATTRIBUTE_EXISTS</span></td>
+                        <td>Checks if a specific attribute exists on an element.</td>
+                        <td>Verify <code>api-gateway:autodiscovery</code> has <code>flowRef</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">XML_XPATH_NOT_EXISTS</span></td>
+                        <td>Ensures an XML element matching an XPath does NOT exist.</td>
+                        <td>Prevent use of default HTTP ports (e.g., 8081).</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">XML_ATTRIBUTE_NOT_EXISTS</span></td>
+                        <td>Ensures a specific attribute is NOT present.</td>
+                        <td>Ensure `allowAnon` is not set to true.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 4. Properties & Configuration -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#9881; Properties & Configuration</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Rule Type</th>
+                        <th>Description</th>
+                        <th>Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">GENERIC_PROPERTY_FILE</span></td>
+                        <td>Checks for patterns within `.properties` or `.yaml` config files.</td>
+                        <td>Validate naming or value formats in property files.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">MANDATORY_PROPERTY_VALUE_CHECK</span></td>
+                        <td>Ensures a specific property key has a specific value.</td>
+                        <td>Enforce <code>env=prod</code> or specific versions.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">JSON_VALIDATION_REQUIRED</span></td>
+                        <td>Ensures specific JSON paths or values exist.</td>
+                        <td>Validate fields in <code>mule-artifact.json</code>.</td>
+                    </tr>
+                     <tr>
+                        <td><span class="badge-rule">JSON_VALIDATION_FORBIDDEN</span></td>
+                        <td>Ensures specific JSON paths do NOT exist.</td>
+                        <td>Prevent forbidden fields in configuration JSONs.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+             <!-- 5. Advanced Logic -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#129514; Advanced Logic</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Rule Type</th>
+                        <th>Description</th>
+                        <th>Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">CONDITIONAL_CHECK</span></td>
+                        <td>Executes a check only if a "If" condition (another rule) is met.</td>
+                        <td>"If `pom.xml` exists, then check for `mule-maven-plugin`."</td>
+                    </tr>
+                </tbody>
+            </table>
     </div>
 </body>
 </html>
