@@ -187,7 +187,7 @@ public class ReportGenerator {
                                 <strong>Generated:</strong> %s<br>
                                 <strong>Total Rules:</strong> %d | <strong style="color:green">%s:</strong> %d | <strong style="color:red">%s:</strong> %d
                             </div>
-                            </div>
+
                             <div class="search-box" style="display:flex; gap:10px; align-items:center;">
                                 <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by name, status, or details..." style="flex-grow:1;">
                                 <button class="top-nav-button" onclick="toggleAllConfigs(true)" style="width:150px; font-size:12px; white-space:nowrap;">Expand All Configs</button>
@@ -209,6 +209,34 @@ public class ReportGenerator {
                             </table>
                         </div>
                         <script>
+                            function toggleConfig(id) {
+                                var x = document.getElementById(id);
+                                var link = document.getElementById(id + '-link');
+                                if (x.style.display === "none") {
+                                    x.style.display = "block";
+                                    if(link) link.innerHTML = "[-] Hide Rule Config";
+                                } else {
+                                    x.style.display = "none";
+                                    if(link) link.innerHTML = "[+] Show Rule Config";
+                                }
+                            }
+                            
+                            function toggleAllConfigs(expand) {
+                                var configs = document.getElementsByClassName("rule-config");
+                                for (var i = 0; i < configs.length; i++) {
+                                    var div = configs[i];
+                                    var id = div.id;
+                                    var link = document.getElementById(id + '-link');
+                                    if (expand) {
+                                        div.style.display = "block";
+                                        if (link) link.innerHTML = "[-] Hide Rule Config";
+                                    } else {
+                                        div.style.display = "none";
+                                        if (link) link.innerHTML = "[+] Show Rule Config";
+                                    }
+                                }
+                            }
+
                             function filterTable() {
                                 var input, filter, table, tr, td, i, txtValue;
                                 input = document.getElementById("searchInput");
