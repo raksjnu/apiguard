@@ -64,13 +64,11 @@ public class CheckFactory {
 
 
         if (type.equals("XML_XPATH_EXISTS") || type.equals("XML_ATTRIBUTE_EXISTS") || type.equals("XML_XPATH_NOT_EXISTS") || type.equals("XML_ATTRIBUTE_NOT_EXISTS")) {
-            logger.info("DEBUG: XML Check {} Params: {}", check.getRuleId(), params.keySet());
             if (type.contains("NOT_EXISTS")) params.put("mode", "NOT_EXISTS");
             else params.put("mode", "EXISTS");
             
             
             if (!params.containsKey("xpath") && params.containsKey("xpathExpressions")) {
-                logger.info("DEBUG: Mapping xpathExpressions for {}", check.getRuleId());
                 Object exprsObj = params.get("xpathExpressions");
                 if (exprsObj instanceof java.util.List) {
                     java.util.List<?> list = (java.util.List<?>) exprsObj;
@@ -85,7 +83,6 @@ public class CheckFactory {
             }
             
             if (!params.containsKey("xpath") && params.containsKey("elements") && params.containsKey("forbiddenAttributes")) {
-                logger.info("DEBUG: Synthesizing XPath for {}", check.getRuleId());
                 @SuppressWarnings("unchecked")
                 java.util.List<String> elements = (java.util.List<String>) params.get("elements");
                 @SuppressWarnings("unchecked")
@@ -100,13 +97,11 @@ public class CheckFactory {
                         }
                     }
                     params.put("xpath", sb.toString());
-                    logger.info("DEBUG: Synth XPath: {}", sb.toString());
                 }
             }
             
             
             if (!params.containsKey("xpath") && params.containsKey("elementAttributeSets")) {
-                 logger.info("DEBUG: Synthesizing XPath for {} (elementAttributeSets)", check.getRuleId());
                  @SuppressWarnings("unchecked")
                  java.util.List<Map<String, Object>> sets = (java.util.List<Map<String, Object>>) params.get("elementAttributeSets");
                  if (sets != null && !sets.isEmpty()) {
@@ -124,7 +119,6 @@ public class CheckFactory {
                          }
                      }
                      params.put("xpath", sb.toString());
-                     logger.info("DEBUG: Synth XPath (sets): {}", sb.toString());
                  }
             }
             
