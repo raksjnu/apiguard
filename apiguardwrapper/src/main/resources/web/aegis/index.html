@@ -722,7 +722,7 @@
                 showProgress(false); // Hide progress
                 document.getElementById('runBtn').disabled = false;
                 
-                if (data.status === 'PASS' || data.status === 'FAIL' || data.status === 'success' || data.success === true) {
+                if (data.status === 'success' || data.success === true) {
                     handleSuccess(data, mode, sessionId);
                 } else {
                     showAlert('Error: ' + (data.message || 'Unknown error occurred'));

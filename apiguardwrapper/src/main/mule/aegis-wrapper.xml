@@ -132,6 +132,72 @@ http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/m
             </otherwise>
         </choice>
     </flow>
+
+    <!-- Flow 4.1: Dynamic Report Serving -->
+    <flow name="aegis-report-serving-flow">
+        <http:listener path="/aegis/reports/*" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response>
+                <http:headers>#[{
+                    "Content-Type": vars.mimeType default "text/html",
+                    "Cache-Control": "no-cache, no-store, must-revalidate"
+                }]</http:headers>
+            </http:response>
+        </http:listener>
+        
+        <!-- Robust Path Parsing using DataWeave -->
+        <ee:transform>
+            <ee:variables>
+                <ee:set-variable variableName="pathInfo"><![CDATA[%dw 2.0
+output application/java
+var parts = (attributes.relativePath default "") splitBy "/"
+var reportsIndex = (parts indexOf "reports") default -1
+---
+if (reportsIndex >= 0 and sizeOf(parts) > reportsIndex + 2) {
+    sessionId: parts[reportsIndex + 1],
+    reportDirName: parts[reportsIndex + 2],
+    fileName: parts[(reportsIndex + 3) to -1] joinBy "/"
+} else {
+    sessionId: "UNKNOWN",
+    reportDirName: "UNKNOWN",
+    fileName: "UNKNOWN"
+}
+]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+
+        <set-variable variableName="sessionId" value="#[vars.pathInfo.sessionId]"/>
+        <set-variable variableName="reportDirName" value="#[vars.pathInfo.reportDirName]"/>
+        <set-variable variableName="fileName" value="#[vars.pathInfo.fileName]"/>
+        
+        <!-- Extract timestamp from reportDirName (format: aegis-reports-yyyyMMdd_HHmmss) -->
+        <set-variable variableName="timestamp" value="#[vars.reportDirName replace 'aegis-reports-' with '']"/>
+        
+        <!-- Construct physical path -->
+        <set-variable variableName="filePath" 
+            value="#[p('aegis.work.dir') ++ '/' ++ vars.sessionId ++ '/' ++ vars.timestamp ++ '/' ++ vars.reportDirName ++ '/' ++ vars.fileName]"/>
+            
+        <logger level="INFO" message="#['Serving Report File: ' ++ vars.filePath ++ ' (Parsed from relativePath: ' ++ attributes.relativePath ++ ')']"/>
+        
+        <!-- Determine MIME type -->
+        <set-variable variableName="mimeType" value="#[
+            if (vars.fileName endsWith '.css') 'text/css'
+            else if (vars.fileName endsWith '.js') 'application/javascript'
+            else if (vars.fileName endsWith '.svg') 'image/svg+xml'
+            else if (vars.fileName endsWith '.png') 'image/png'
+            else if (vars.fileName endsWith '.html') 'text/html'
+            else 'application/octet-stream'
+        ]"/>
+
+        <file:read path="#[vars.filePath]" config-ref="File_Config"/>
+        
+        <error-handler>
+            <on-error-continue type="FILE:ILLEGAL_PATH, FILE:ACCESS_DENIED, FILE:FILE_ALREADY_EXISTS">
+                 <logger level="WARN" message="#['File access error for: ' ++ vars.filePath]"/>
+                 <set-payload value="File Not Found or Access Denied"/>
+                 <set-variable variableName="httpStatus" value="404"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
     
     <flow name="aegis-rule-guide-page-flow">
         <http:listener path="/aegis/rule_guide.html" config-ref="HTTP_Listener_config" allowedMethods="GET">
@@ -249,8 +315,9 @@ output application/json
     <flow name="aegis-git-discovery-repos-flow">
         <http:listener path="/aegis/api/git/repos" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
         <set-variable variableName="provider" value="#[attributes.queryParams.provider default 'gitlab']"/>
-        <set-variable variableName="token" value="#[attributes.queryParams.token default '']"/>
-        <set-variable variableName="query" value="#[attributes.queryParams.query default '']"/>
+        <set-variable variableName="token" value="#[attributes.headers['x-git-token'] default '']"/>
+        <set-variable variableName="query" value="#[attributes.queryParams.query default attributes.queryParams.group default '']"/>
+        <set-variable variableName="filter" value="#[attributes.queryParams.filter default '']"/>
         
         <ee:transform>
             <ee:message>
@@ -265,12 +332,14 @@ output application/java
         </ee:transform>
         
         <!-- Using Aegis wrapper package -->
-        <java:invoke-static class="com.raks.aegis.wrapper.GitDiscoveryHelper" method="listRepos(String, String, String, Map)">
+        <java:invoke-static class="com.raks.aegis.util.GitHelper" method="listRepositories(java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
             <java:args>#[{
                 arg0: vars.provider,
                 arg1: vars.token,
                 arg2: vars.query,
-                arg3: payload
+                arg3: vars.filter,
+                arg4: p('gitanalyzer.gitlab.url'),
+                arg5: p('gitanalyzer.github.url')
             }]</java:args>
         </java:invoke-static>
         
@@ -341,24 +410,44 @@ payload]]></ee:set-payload>
         <choice>
             <when expression="#[attributes.method == 'POST']">
                 <!-- Helper transform to extract multipart parts -->
+                <!-- Helper transform to extract multipart parts - ROBUST PATTERN -->
                 <ee:transform>
-                    <ee:message>
-                    </ee:message>
                     <ee:variables>
                         <ee:set-variable variableName="inputParts"><![CDATA[%dw 2.0
 output application/java
 ---
-payload.parts]]></ee:set-variable>
+{
+    mode: payload.parts.mode.content default null,
+    projectPath: payload.parts.projectPath.content default null,
+    gitUrls: payload.parts.gitUrls.content default null,
+    archive: payload.parts.archive.content default null,
+    sessionId: payload.parts.sessionId.content default null,
+    format: payload.parts.format.content default null,
+    rulesFile: payload.parts.customRules.content default null,
+    attachProject: payload.parts.attachProject.content default null,
+    gitBranch: payload.parts.gitBranch.content default null,
+    gitToken: payload.parts.gitToken.content default null
+}]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>
                 
-                <!-- Extract fields from multipart -->
-                <set-variable variableName="validationMode" value="#[vars.inputParts.mode.content default 'local']"/>
-                <set-variable variableName="projectPath" value="#[vars.inputParts.projectPath.content default '']"/>
-                <set-variable variableName="uploadFileContent" value="#[vars.inputParts.archive.content]"/>
-                <set-variable variableName="sessionId" value="#[vars.inputParts.sessionId.content default uuid()]"/>
-                <set-variable variableName="reportFormat" value="#[vars.inputParts.format.content default 'html']"/>
-                <set-variable variableName="userWantsProjectAttachment" value="#[vars.inputParts.attachProject.content default 'false']"/>
+                <!-- Extract fields from multipart map -->
+                <logger level="INFO" message="#['DEBUG - Input Parts Map Keys: ' ++ (namesOf(vars.inputParts) joinBy ', ')]"/>
+                
+                <set-variable variableName="validationMode" value="#[vars.inputParts.mode default 'local']"/>
+                
+                <!-- Smart Project Path Resolution: Check projectPath first, then gitUrls fallback -->
+                <set-variable variableName="rawProjectPath" value="#[vars.inputParts.projectPath default vars.inputParts.gitUrls default '']"/>
+                <logger level="INFO" message="#['DEBUG - Resolved Project Path: ' ++ vars.rawProjectPath]"/>
+                <set-variable variableName="projectPath" value="#[vars.rawProjectPath]"/>
+                
+                <set-variable variableName="uploadFileContent" value="#[vars.inputParts.archive]"/>
+                <set-variable variableName="sessionId" value="#[vars.inputParts.sessionId default uuid()]"/>
+                <set-variable variableName="reportFormat" value="#[vars.inputParts.format default 'html']"/>
+                <set-variable variableName="userWantsProjectAttachment" value="#[vars.inputParts.attachProject default 'false']"/>
+                
+                <!-- Re-inject other parts needed for specific branches -->
+                <!-- Note: The 'inputParts' var now holds the content map, not the raw parts. -->
             </when>
             <otherwise>
                 <!-- GET parameters -->
@@ -392,10 +481,10 @@ payload.parts]]></ee:set-variable>
         <!-- Copy custom rules if provided -->
         <set-variable variableName="customRulesPath" value="#[null]"/>
         <choice>
-            <when expression="#[vars.inputParts.rulesFile != null and vars.inputParts.rulesFile.content != null and sizeOf(vars.inputParts.rulesFile.content) > 0]">
+            <when expression="#[vars.inputParts.rulesFile != null and sizeOf(vars.inputParts.rulesFile) > 0]">
                 <set-variable variableName="customRulesPath" value="#[vars.workDir ++ '/custom-rules.yaml']"/>
                 <file:write path="#[vars.customRulesPath]" config-ref="File_Config">
-                    <file:content>#[vars.inputParts.rulesFile.content]</file:content>
+                    <file:content>#[vars.inputParts.rulesFile]</file:content>
                 </file:write>
                 <logger level="INFO" message="Custom rules file uploaded"/>
             </when>
@@ -423,7 +512,7 @@ payload.parts]]></ee:set-variable>
                         <java:invoke-static class="com.raks.aegis.util.ArchiveExtractor" method="extractZip(java.lang.String,java.lang.String,java.lang.String)">
                             <java:args>#[{
                                 arg0: vars.zipFilePath,
-                                arg1: vars.sessionId,
+                                arg1: vars.sessionId ++ '/' ++ vars.timestamp,
                                 arg2: p('aegis.work.dir')
                             }]</java:args>
                         </java:invoke-static>
@@ -433,7 +522,7 @@ payload.parts]]></ee:set-variable>
                         <java:invoke-static class="com.raks.aegis.util.ArchiveExtractor" method="extractJar(java.lang.String,java.lang.String,java.lang.String)">
                             <java:args>#[{
                                 arg0: vars.zipFilePath,
-                                arg1: vars.sessionId,
+                                arg1: vars.sessionId ++ '/' ++ vars.timestamp,
                                 arg2: p('aegis.work.dir')
                             }]</java:args>
                         </java:invoke-static>
@@ -446,52 +535,42 @@ payload.parts]]></ee:set-variable>
                 <logger level="INFO" message="#['DEBUG - After extraction. extractedPath: ' ++ vars.extractedPath]"/>
                 
                 <!-- Set targetPath to parent of extracted project so Aegis finds the project and creates reports at parent level -->
-                <set-variable variableName="targetPath" value="#[(vars.extractedPath splitBy '\\')[0 to -2] joinBy '\\']"/>
+                <set-variable variableName="targetPath" value="#[%dw 2.0
+output application/java
+---
+(vars.extractedPath splitBy (if (vars.extractedPath contains '\\') '\\' else '/'))[0 to -2] joinBy (if (vars.extractedPath contains '\\') '\\' else '/')]"/>
                 <logger level="INFO" message="#['DEBUG - targetPath (parent): ' ++ vars.targetPath]"/>
                 <set-variable variableName="displayPath" value="Uploaded Project"/>
             </when>
             
-            <when expression="#[vars.validationMode == 'git']">
-                 <set-variable variableName="gitUrl" value="#[vars.projectPath]"/>
-                 <set-variable variableName="gitBranch" value="#[vars.inputParts.branch.content default 'main']"/>
-                 <set-variable variableName="gitToken" value="#[vars.inputParts.token.content default '']"/>
-                 
-                 <!-- Use timestamp-suffixed folder to allow multiple clones -->
-                 <set-variable variableName="repoName" value="#[(vars.gitUrl splitBy '/')[-1] replace '.git' with '']"/>
-                 <set-variable variableName="cloneDir" value="#[vars.workDir ++ '/' ++ vars.repoName]"/>
-                 
-                 <logger level="INFO" message="#['Cloning Git Repo: ' ++ vars.gitUrl ++ ' (Branch: ' ++ vars.gitBranch ++ ')']"/>
-                 
-                 <!-- Using generic GitProvider via Java helper or just JGit logic if needed -->
-                 <!-- Assuming Aegis doesn't have dedicated git clone logic exposed in Main, 
-                      so likely need manual clone invocation or reuse common library logic.
-                      MuleGuard logic used JGit directly in flow or helper.
-                      Wait, muleguard-wrapper used java:invoke-static com.raks.muleguard.util.GitHelper.cloneRepo?
-                      No, Step 397 doesn't show clone invocation in flow Logic? Flow 5 logic was cut off in Step 397?
-                      Actually, step 397 shows Flow 5 (Validation Details) starting around line 932?
-                      No, that was email template.
-                      I missed the MAIN logic of Validation Trigger Flow in Step 397 because I only viewed 801+.
-                      I must rely on my inference that it mimics muleguard.
-                      muleguard-wrapper usually clones.
-                      I'll assume com.raks.aegis.util.GitHelper has cloneRepo if I refactored it.
-                      Checking Step 409: GitHelper IS in com.raks.aegis.util? No, List 409 shows `util` dir.
-                      The class likely exists.
-                  -->
-                  <!-- Wait, I didn't verify GitHelper has cloneRepo. But MuleGuard's GitHelper usually does. -->
+             <when expression="#[trim(vars.validationMode) == 'git']">
+                  <logger level="INFO" message="#['DEBUG - Raw Project Path: ' ++ (vars.projectPath default 'NULL')]"/>
+                  <set-variable variableName="gitUrlList" value="#[(vars.projectPath splitBy ',') map trim($) filter ($ != '')]"/>
+                  <set-variable variableName="gitBranch" value="#[vars.inputParts.gitBranch default 'main']"/>
+                  <set-variable variableName="gitToken" value="#[vars.inputParts.gitToken default '']"/>
                   
-                  <java:invoke-static class="com.raks.aegis.util.GitHelper" method="cloneRepo(String, String, String, String)">
-                      <java:args>#[{
-                          arg0: vars.gitUrl,
-                          arg1: vars.cloneDir,
-                          arg2: vars.gitBranch,
-                          arg3: vars.gitToken
-                      }]</java:args>
-                  </java:invoke-static>
-                 
-                 <set-variable variableName="targetPath" value="#[vars.cloneDir]"/>
-                 <set-variable variableName="displayPath" value="#[vars.gitUrl ++ ' (' ++ vars.gitBranch ++ ')']"/>
-                 <set-variable variableName="zipFilePath" value="#[null]"/> <!-- No input zip to attach for Git mode -->
-            </when>
+                  <foreach collection="#[vars.gitUrlList]">
+                      <set-variable variableName="currentRepoUrl" value="#[payload]"/>
+                      <!-- Safe repo name extraction -->
+                      <set-variable variableName="repoName" value="#[if (vars.currentRepoUrl contains '/') (vars.currentRepoUrl splitBy '/')[-1] replace '.git' with '' else 'repo_' ++ randomInt(1000)]"/>
+                      <set-variable variableName="cloneDir" value="#[vars.workDir ++ '/' ++ vars.repoName]"/>
+                      
+                      <logger level="INFO" message="#['Cloning Git Repo: ' ++ vars.currentRepoUrl ++ ' (Branch: ' ++ vars.gitBranch ++ ') into ' ++ vars.cloneDir]"/>
+                      
+                      <java:invoke-static class="com.raks.aegis.util.GitHelper" method="cloneRepository(java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
+                          <java:args>#[{
+                              arg0: vars.currentRepoUrl,
+                              arg1: vars.gitBranch,
+                              arg2: vars.gitToken,
+                              arg3: vars.cloneDir
+                          }]</java:args>
+                      </java:invoke-static>
+                  </foreach>
+                  
+                  <set-variable variableName="targetPath" value="#[vars.workDir]"/>
+                  <set-variable variableName="displayPath" value="#[vars.projectPath]"/>
+                  <set-variable variableName="zipFilePath" value="#[null]"/> 
+             </when>
             
             <otherwise>
                 <!-- Local Path -->
@@ -504,7 +583,7 @@ payload.parts]]></ee:set-variable>
         <!-- Execute Aegis Validation -->
         <logger level="INFO" message="#['Invoking Aegis on: ' ++ vars.targetPath]"/>
         
-        <set-variable variableName="reportDirName" value="#['aegis-reports-' ++ vars.timestamp]"/>
+        <set-variable variableName="reportDirName" value="#['Aegis-reports']"/>
         
         <!-- Invoke Wrapper Class -->
         <java:invoke-static class="com.raks.aegis.wrapper.AegisInvoker" method="validate(String, String, String, String)" target="validationResults">
@@ -519,6 +598,19 @@ payload.parts]]></ee:set-variable>
         <!-- Debug: Log paths before zipping -->
         <logger level="INFO" message="#['DEBUG - targetPath: ' ++ vars.targetPath ++ ', reportDirName: ' ++ vars.reportDirName]"/>
         
+        <!-- Copy Logo to Report Directory so it appears in ZIP and online view -->
+        <try>
+            <file:copy sourcePath="#[p('app.home') ++ '/web/aegis/logo.svg']" 
+                       targetPath="#[vars.targetPath ++ '/' ++ vars.reportDirName ++ '/logo.svg']" 
+                       config-ref="File_Config" overwrite="true"/>
+            <logger level="INFO" message="#['Copied logo.svg from ' ++ (p('app.home') ++ '/web/aegis/logo.svg') ++ ' to ' ++ (vars.targetPath ++ '/' ++ vars.reportDirName ++ '/logo.svg')]"/>
+            <error-handler>
+                <on-error-continue>
+                    <logger level="WARN" message="#['Failed to copy logo.svg to ' ++ (vars.targetPath ++ '/' ++ vars.reportDirName ++ '/logo.svg') ++ '. Error: ' ++ error.description]"/>
+                </on-error-continue>
+            </error-handler>
+        </try>
+        
         <!-- Create ZIP of the report directory (Required for email/download) -->
         <logger level="INFO" message="#['Zipping report directory: ' ++ vars.reportDirName]"/>
         <java:invoke-static doc:name="Zip Reports" class="com.raks.aegis.util.ArchiveExtractor" method="zipDirectory(java.lang.String,java.lang.String)">
@@ -528,9 +620,9 @@ payload.parts]]></ee:set-variable>
             }]]]></java:args>
         </java:invoke-static>
         
-        <!-- Persist Report Path for Session (Key: SessionId, Value: WorkDir || ReportDirName || BaseName) -->
+        <!-- Persist Report Path for Session (Key: SessionId, Value: targetPath || ReportDirName || BaseName) -->
         <os:store key="#[vars.sessionId]" objectStore="Report_Path_Store">
-            <os:value>#[vars.workDir ++ '||' ++ vars.reportDirName ++ '||' ++ (if (vars.validationMode == 'git') vars.repoName else 'project')]</os:value>
+            <os:value>#[vars.targetPath ++ '||' ++ vars.reportDirName ++ '||' ++ (if (vars.validationMode == 'git') vars.repoName else 'project')]</os:value>
         </os:store>
         
         <!-- Send usage notification (Async) -->
@@ -544,9 +636,12 @@ payload.parts]]></ee:set-variable>
 output application/json
 ---
 vars.validationResults ++ {
+    status: 'success',
     sessionId: vars.sessionId,
     reportUrl: '/apiguard/aegis/reports/' ++ vars.sessionId ++ '/' ++ vars.reportDirName ++ '/CONSOLIDATED-REPORT.html',
-    downloadUrl: '/apiguard/aegis/download?session=' ++ vars.sessionId
+    downloadUrl: '/apiguard/aegis/download?session=' ++ vars.sessionId,
+    relativeReportUrl: vars.reportDirName ++ '/CONSOLIDATED-REPORT.html',
+    reportZip: vars.reportDirName ++ '.zip'
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>
@@ -648,29 +743,6 @@ output text/plain
                 <logger level="WARN" message="Failed to send Aegis usage notification"/>
             </on-error-continue>
         </error-handler>
-    </flow>
-    
-    <!-- Flow 7: Serve Generated Reports -->
-    <flow name="aegis-report-serving-flow">
-        <http:listener path="/aegis/reports/{sessionId}/*" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
-        
-        <set-variable variableName="sessionId" value="#[attributes.uriParams.sessionId]"/>
-        <set-variable variableName="resourcePath" value="#[attributes.relativePath replace ('/aegis/reports/' ++ vars.sessionId ++ '/') with '']"/>
-        
-        <os:retrieve key="#[vars.sessionId]" objectStore="Report_Path_Store" target="storedPath">
-            <os:default-value>null</os:default-value>
-        </os:retrieve>
-        
-        <choice>
-            <when expression="#[vars.storedPath != null]">
-                <set-variable variableName="projectPath" value="#[(vars.storedPath splitBy '||')[0]]"/>
-                <file:read path="#[vars.projectPath ++ '/' ++ vars.resourcePath]" config-ref="File_Config"/>
-            </when>
-            <otherwise>
-                <set-payload value="Report Expired"/>
-                <set-variable variableName="httpStatus" value="404"/>
-            </otherwise>
-        </choice>
     </flow>
     
     <!-- Flow 8: Download ZIP -->
