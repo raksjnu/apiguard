@@ -196,11 +196,11 @@ public class ReportGenerator {
                             <table id="resultsTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 7%;" onclick="sortTable(0)">Rule #</th>
-                                        <th style="width: 25%;" onclick="sortTable(1)">Name</th>
-                                        <th style="width: 10%;" onclick="sortTable(2)">Severity</th>
-                                        <th style="width: 8%;" onclick="sortTable(3)">Status</th>
-                                        <th style="width: 50%;" onclick="sortTable(4)">Details</th>
+                                        <th style="width: 7%%;" onclick="sortTable(0)">Rule #</th>
+                                        <th style="width: 25%%;" onclick="sortTable(1)">Name</th>
+                                        <th style="width: 10%%;" onclick="sortTable(2)">Severity</th>
+                                        <th style="width: 8%%;" onclick="sortTable(3)">Status</th>
+                                        <th style="width: 50%%;" onclick="sortTable(4)">Details</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody">
@@ -581,6 +581,14 @@ public class ReportGenerator {
             // copyHelpFile(outputPath); // Removed per user request
             // User asked: "rest the checklist, help and rule guide html files wil not be there."
             // So I should remove copyHelpFile and generateRuleGuide calls as well.
+            try (java.io.InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg")) {
+                if (logoStream != null) {
+                    Path logoPath = outputPath.resolve("logo.svg");
+                    Files.copy(logoStream, logoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (Exception logoEx) {
+                logger.warn("Failed to copy logo to consolidated report: {}", logoEx.getMessage());
+            }
             generateConsolidatedExcel(results, outputPath);
         } catch (Throwable t) {
             logger.error("Failed to generate consolidated report");
