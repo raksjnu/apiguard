@@ -45,19 +45,18 @@ public class ReportGenerator {
     public static void generateIndividualReports(ValidationReport report, Path outputDir) {
         try {
             Files.createDirectories(outputDir);
-            generateHtml(report, outputDir.resolve("report.html"));
-            generateExcel(report, outputDir.resolve("report.xlsx"));
+            
+            // Copy logo to individual report directory for self-containment
             try (InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg")) {
                 if (logoStream != null) {
                     Path logoPath = outputDir.resolve("logo.svg");
                     Files.copy(logoStream, logoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-                    logger.info("Logo copied to {}", outputDir.getFileName());
-                } else {
-                    logger.warn("Logo not found in resources for {}", outputDir.getFileName());
                 }
-            } catch (Exception logoEx) {
-                logger.warn("Failed to copy logo to {}: {}", outputDir.getFileName(), logoEx.getMessage());
-            }
+            } catch (Exception ignored) {}
+
+            generateHtml(report, outputDir.resolve("report.html"));
+            generateExcel(report, outputDir.resolve("report.xlsx"));
+
         } catch (Exception e) {
             logger.error("Failed to generate individual reports: {}", e.getMessage());
         }
@@ -383,7 +382,18 @@ public class ReportGenerator {
                 logger.warn("No results to generate consolidated report");
                 return;
             }
-            Files.createDirectories(outputPath.getParent());
+            Files.createDirectories(outputPath); // Ensure report root exists
+
+            // Copy logo to reports root (for Consolidated Report and Individual Reports' parent)
+            try (InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg")) {
+                if (logoStream != null) {
+                    Path logoPath = outputPath.resolve("logo.svg");
+                    Files.copy(logoStream, logoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+                }
+            } catch (Exception ignored) {
+                // Ignore if logo copy fails
+            }
+
             StringBuilder tableRows = new StringBuilder();
             int totalApis = results.size();
             int totalPassed = 0;
@@ -407,8 +417,8 @@ public class ReportGenerator {
                 }
                 String relativeLink;
                 try {
-                    relativeLink = outputPath.relativize(target)
-                            .toString().replace("\\", "/");
+                    // Robust relative link: RepoDirName/report.html
+                     relativeLink = r.reportDir.getFileName().toString() + "/report.html";
                 } catch (Exception e) {
                     relativeLink = "report.html"; 
                 }

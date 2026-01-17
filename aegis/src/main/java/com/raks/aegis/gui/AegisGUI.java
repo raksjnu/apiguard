@@ -217,8 +217,8 @@ public class AegisGUI {
                                 throw new IllegalArgumentException("No Git URLs provided");
                             }
                             
-                            // Create a dedicated directory for this session, aligned with ReportHandler expectation
-                            Path sessionWorkDir = Paths.get(appTempDir, "Aegis-sessions", sessionId);
+                            // Create a dedicated directory for this session, aligned with ArchiveExtractor structure
+                            Path sessionWorkDir = Paths.get(appTempDir, sessionId);
                             Files.createDirectories(sessionWorkDir);
                             
                             for (String url : urlList) {
@@ -249,9 +249,12 @@ public class AegisGUI {
                             args.add(customRulesFile.getAbsolutePath());
                         }
                         
+                        // Explicitly set output directory to session/Aegis-reports to guarantee location
+                        Path reportDir = Paths.get(appTempDir, sessionId, "Aegis-reports");
+                        args.add("-o");
+                        args.add(reportDir.toAbsolutePath().toString());
+
                         AegisMain.execute(args.toArray(new String[0]));
-                        
-                        Path reportDir = Paths.get(projectPath, "Aegis-reports");
                         if (!Files.exists(reportDir)) reportDir = Paths.get("Aegis-reports");
                         
                         if (Files.exists(reportDir)) {
@@ -269,7 +272,7 @@ public class AegisGUI {
                             if (!"local".equals(mode)) {
 
 
-                                Path sessionBase = Paths.get(appTempDir, "Aegis-sessions", sessionId);
+                                Path sessionBase = Paths.get(appTempDir, sessionId, "Aegis-reports");
                                 try {
                                     Path relPath = sessionBase.relativize(consolidatedReport);
                                     relativeReportUrl = relPath.toString().replace("\\", "/");
@@ -311,8 +314,8 @@ public class AegisGUI {
                                     safeBaseName = safeBaseName.replaceAll("[^a-zA-Z0-9._-]", "_");
                                     
                                     String zipFileName = safeBaseName + "_validation-report.zip";
-                                    // Ensure zip is saved in the session root so DownloadHandler can find it
-                                    Path zipPath = sessionBase.resolve(zipFileName);
+                                    // Ensure zip is saved in the session root (parent of sessionBase) to avoid recursive zipping
+                                    Path zipPath = sessionBase.getParent().resolve(zipFileName);
                                     zipFolder(reportDir, zipPath);
 
                                     // Return ONLY the filename so frontend can request via /download?file=...&session=...
@@ -355,7 +358,8 @@ public class AegisGUI {
                         return !name.equalsIgnoreCase("help.html") && !name.equalsIgnoreCase("rule_guide.html");
                     })
                     .forEach(path -> {
-                        ZipEntry zipEntry = new ZipEntry(sourceFolderPath.relativize(path).toString().replace("\\", "/"));
+                        String zipEntryName = sourceFolderPath.relativize(path).toString().replace("\\", "/");
+                        ZipEntry zipEntry = new ZipEntry(zipEntryName);
                         try {
                             zos.putNextEntry(zipEntry);
                             Files.copy(path, zos);
@@ -587,7 +591,7 @@ public class AegisGUI {
             
 
             Path appTempDir = Paths.get("temp").toAbsolutePath();
-            Path sessionDir = appTempDir.resolve("Aegis-sessions").resolve(sessionId);
+            Path sessionDir = appTempDir.resolve(sessionId).resolve("Aegis-reports");
             
 
             Path requestFile = sessionDir.resolve(resourcePath);
@@ -709,7 +713,9 @@ public class AegisGUI {
              }
 
              Path appTempDir = Paths.get("temp").toAbsolutePath();
-             Path sessionDir = appTempDir.resolve("Aegis-sessions").resolve(sessionId);
+             Path sessionDir = appTempDir.resolve(sessionId); 
+             // ZIP is at session root, not inside Aegis-reports
+             // Zip created at projectPath.getParent().resolve(zipFileName) e.g. temp/sessionId/xxx.zip
              Path file = sessionDir.resolve(filename);
 
              if (Files.exists(file) && !Files.isDirectory(file)) {

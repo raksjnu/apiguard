@@ -211,7 +211,7 @@ public class ArchiveExtractor {
 
     /**
      * Create a session-based temporary directory.
-     * Pattern: ${baseTempDir}/Aegis-sessions/${sessionId}/
+     * Pattern: ${baseTempDir}/${sessionId}/
      * 
      * @param sessionId Unique session identifier
      * @param baseTempDir Base temporary directory
@@ -219,18 +219,13 @@ public class ArchiveExtractor {
      * @throws IOException if directory creation fails
      */
     private static Path createTempDirectory(String sessionId, String baseTempDir) throws IOException {
-        Path tempSessionsDir = Paths.get(baseTempDir, "Aegis-sessions");
-        if (!Files.exists(tempSessionsDir)) {
-             try {
-                 Files.createDirectories(tempSessionsDir);
-             } catch (FileAlreadyExistsException e) {
-
-             }
-        }
-        
-        Path sessionDir = tempSessionsDir.resolve(sessionId);
+        Path sessionDir = Paths.get(baseTempDir, sessionId);
         if (!Files.exists(sessionDir)) {
-            Files.createDirectories(sessionDir);
+             try {
+                 Files.createDirectories(sessionDir);
+             } catch (FileAlreadyExistsException e) {
+                 // Ignore if exists
+             }
         }
         
         logger.debug("Created temp directory: {}", sessionDir);
@@ -245,7 +240,7 @@ public class ArchiveExtractor {
      */
     public static void cleanupSession(String sessionId, String baseTempDir) {
         try {
-            Path sessionDir = Paths.get(baseTempDir, "Aegis-sessions", sessionId);
+            Path sessionDir = Paths.get(baseTempDir, sessionId);
             if (Files.exists(sessionDir)) {
                 deleteRecursively(sessionDir);
                 logger.info("Cleaned up session directory: {}", sessionId);
