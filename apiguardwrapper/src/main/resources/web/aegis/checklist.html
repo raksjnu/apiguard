@@ -1,9 +1,8 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="UTF-8">
-    <title>Aegis - Validation Checklist</title>
+    <title>Aegis - Validation Catalog & Resources</title>
     <style>
         :root {
             --truist-purple: #663399;
@@ -24,309 +23,317 @@
             border-radius: 8px;
             background-color: white;
             position: relative;
+            max-width: 1200px;
+            margin: 20px auto;
         }
 
         h1 {
             color: var(--truist-purple);
+            margin-bottom: 20px;
         }
 
+        h2 {
+            color: var(--truist-purple);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--truist-purple);
+            padding-bottom: 5px;
+        }
+
+        p {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        /* Downloads Section */
+        .download-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+            margin-bottom: 30px;
+        }
+
+        .download-card {
+            background: #f9f9f9;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.2s;
+        }
+
+        .download-card:hover {
+            border-color: var(--truist-purple);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .icon { font-size: 32px; }
+        
+        .dl-info h3 { 
+            margin: 0 0 5px 0; 
+            font-size: 16px; 
+            color: var(--truist-purple);
+        }
+        
+        .dl-info p { 
+            margin: 0; 
+            font-size: 13px; 
+            color: #666; 
+        }
+        
+        /* Checklist Table */
         table {
             width: 100%;
             border-collapse: collapse;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
         }
-
-        th,
-        td {
-            border: 1px solid #ddd;
+        
+        th {
+            background: var(--truist-purple);
+            color: white;
             padding: 12px;
             text-align: left;
-        }
-
-        th {
-            background-color: var(--truist-purple);
-            color: var(--text-white);
-        }
-
-        .contact-button {
-            background-color: var(--truist-purple);
-            color: var(--text-white);
-            border: none;
-            padding: 12px 24px;
-            text-align: center;
-            text-decoration: none;
-            display: inline-block;
-            font-size: 16px;
             font-weight: bold;
-            margin-top: 25px;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
         }
-
-        .contact-button:hover {
-            background-color: var(--truist-purple-light);
+        
+        td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            vertical-align: top;
         }
-
-        .top-nav-container {
-            position: absolute;
-            top: 20px;
-            right: 40px;
-            display: flex;
-            gap: 10px;
-        }
-
-        .top-nav-button {
-            background-color: var(--truist-purple);
-            color: var(--text-white);
-            border: none;
-            padding: 8px 16px;
-            text-align: center;
-            text-decoration: none;
+        
+        tr:hover td { background-color: #f8f9fa; }
+        
+        .badge {
             display: inline-block;
-            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
             font-weight: bold;
-            cursor: pointer;
-            border-radius: 5px;
-            transition: background-color 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            font-family: monospace;
         }
-
-        .top-nav-button:hover {
-            background-color: var(--truist-purple-light);
+        
+        /* Changed to Blue/Purple as requested */
+        .badge-rule { 
+            background: #e6f7ff; 
+            color: #0056b3; 
+            border: 1px solid #bae7ff; 
         }
+        
     </style>
+    <script>
+        function resolvePath(path) {
+            const isWrapper = window.location.pathname.includes('/apiguard/');
+            return isWrapper ? '/apiguard/aegis/web/' + path : path;
+        }
+        function downloadSample(filename) {
+            const isWrapper = window.location.pathname.includes('/apiguard/');
+            const baseUrl = isWrapper ? '/apiguard/aegis' : ''; 
+            window.location.href = baseUrl + '/api/download/sample?file=' + filename;
+        }
+    </script>
 </head>
-
 <body>
     <div class="report-container">
-        <!-- Buttons container to manage absolute positioning easily -->
-        <div class="top-nav-container">
-                <a href="./" class="top-nav-button" title="Back to Dashboard">🏠 Home</a>
+        
+        <div style="display:flex; align-items:center; gap:15px; margin-bottom: 20px;">
+            <img src="logo.svg" alt="Aegis Logo" style="height: 50px;">
+            <div>
+                <h1 style="margin: 0;">Aegis Resources</h1>
+                <small style="color:#666; font-size: 14px;">Validation Catalog & Best Practices</small>
+            </div>
         </div>
-        <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <img src="logo.svg" alt="Aegis Logo" style="height: 40px; margin-right: 15px;">
-            <h1 style="margin: 0;">Aegis - Universal Application Review & Validation</h1>
-        </div>
-        <p>This page lists all the individual checks performed by the Aegis tool.</p>
-        <table>
-            <tr>
-                <th>Sr.#</th>
-                <th>ChecklistItem</th>
-                <th>ChecklistType</th>
-                <th>RuleId</th>
-            </tr>
-            <tr>
-                <td>1</td>
-                <td>Generic Code Check which scans configured files for any configured tokens in code folder; Fails if
-                    tokens are found.</td>
-                <td> Code</td>
-                <td> RULE-000</td>
-            </tr>
-            <tr>
-                <td>2</td>
-                <td>The Parent POM details should be having groupId='com.raks.eapi'; artifactId ='MuleParentPom';
-                    version='LATEST'.</td>
-                <td>Code</td>
-                <td>RULE-001</td>
-            </tr>
-            <tr>
-                <td>3</td>
-                <td>The property 'mule.maven.plugin.version' should be set to '4.9.0' in pom.xml.</td>
-                <td>Code</td>
-                <td>RULE-002</td>
-            </tr>
-            <tr>
-                <td>4</td>
-                <td>The plugin 'maven-clean-plugin' should be removed from pom.xml.</td>
-                <td>Code</td>
-                <td>RULE-003</td>
-            </tr>
-            <tr>
-                <td>5</td>
-                <td>The plugin 'maven-surefire-plugin:2.22.0' should be removed from pom.xml.</td>
-                <td>Code</td>
-                <td>RULE-003</td>
-            </tr>
-            <tr>
-                <td>6</td>
-                <td>The dependency 'org.springframework.security:spring-security-ldap' should be removed from pom.xml.
-                </td>
-                <td>Code</td>
-                <td>RULE-004</td>
-            </tr>
-            <tr>
-                <td>7</td>
-                <td>The dependency 'org.springframework.security:spring-security-web' should be removed from pom.xml.
-                </td>
-                <td>Code</td>
-                <td>RULE-004</td>
-            </tr>
-            <tr>
-                <td>8</td>
-                <td>The dependency 'org.mule.modules:mule-module-spring-config' should be removed from pom.xml.</td>
-                <td>Code</td>
-                <td>RULE-004</td>
-            </tr>
-            <tr>
-                <td>9</td>
-                <td>The dependency 'com.ibm.db2:db2jcc_license_cu' should be removed from pom.xml.</td>
-                <td>Code</td>
-                <td>RULE-004</td>
-            </tr>
-            <tr>
-                <td>10</td>
-                <td>The dependency 'com.mulesoft.mule.core:mule-core-ee' should be removed from pom.xml.</td>
-                <td>Code</td>
-                <td>RULE-004</td>
-            </tr>
-            <tr>
-                <td>11</td>
-                <td>The dependency 'com.mulesoft.mule.runtime.modules:mule-module-spring-config-ee' should be removed
-                    from pom.xml.</td>
-                <td>Code</td>
-                <td>RULE-004</td>
-            </tr>
-            <tr>
-                <td>12</td>
-                <td>The IBM MQ connector's 'cipherSuite' attribute must be 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'.</td>
-                <td>Code</td>
-                <td>RULE-005</td>
-            </tr>
-            <tr>
-                <td>13</td>
-                <td>The dependency 'com.raks.eapi:apimuleutilities' should be added to pom.xml.</td>
-                <td>Code</td>
-                <td>RULE-006</td>
-            </tr>
-            <tr>
-                <td>14</td>
-                <td>The 'minMuleVersion' in mule-artifact.json must be at least '4.9.0'.</td>
-                <td>Code</td>
-                <td>RULE-007</td>
-            </tr>
-            <tr>
-                <td>15</td>
-                <td>The 'javaSpecificationVersions' in mule-artifact.json must be '17'.</td>
-                <td>Code</td>
-                <td>RULE-007</td>
-            </tr>
-            <tr>
-                <td>16</td>
-                <td>The 'secureProperties' element must be present in mule-artifact.json.</td>
-                <td>Code</td>
-                <td>RULE-007</td>
-            </tr>
-            <tr>
-                <td>17</td>
-                <td>The autodiscovery element should be enabled in a Mule configuration file.</td>
-                <td>Code</td>
-                <td>RULE-008</td>
-            </tr>
-            <tr>
-                <td>18</td>
-                <td>The unsupported error expressions
-                    (error.errorType;error.muleMessage;error.exception;error.errors;derivatives of any of these too)
-                    should be removed.</td>
-                <td>Code</td>
-                <td>RULE-009</td>
-            </tr>
-            <tr>
-                <td>19</td>
-                <td>The property fromApplicationCode or toApplicationCode in the module-loggingconnector:* should be
-                    removed.</td>
-                <td>Code</td>
-                <td>RULE-010</td>
-            </tr>
-            <tr>
-                <td>20</td>
-                <td>The DLP related property north.bound.dlp.flag or south.bound.dlp.flag from all the mule xml files
-                    and properties files should be removed.</td>
-                <td>Code</td>
-                <td>RULE-011</td>
-            </tr>
-            <tr>
-                <td>21</td>
-                <td>The DLP request queue property (wmq.dlp.requestqueue) from all the mule xml files and properties
-                    files should be removed.</td>
-                <td>Code</td>
-                <td>RULE-011</td>
-            </tr>
-            <tr>
-                <td>22</td>
-                <td>The module crypto:jce-encrypt-pbe (also having hard coded default value PBEWithHmacSHA256AndAES_256)
-                    implementation in logging flow should be removed.</td>
-                <td>Code</td>
-                <td>RULE-012</td>
-            </tr>
-            <tr>
-                <td>23</td>
-                <td>The module configuration crypto:jce-config should have &quot;type&quot; attribute defines as
-                    mandatory.</td>
-                <td>Code</td>
-                <td>RULE-013</td>
-            </tr>
-            <tr>
-                <td>24</td>
-                <td>The token tobase64 from set-variable node in any mule xml file should be removed.</td>
-                <td>Code</td>
-                <td>RULE-014</td>
-            </tr>
-            <tr>
-                <td>25</td>
-                <td>Generic Config Check which Scans configured files for configured tokens in config folder. Fails if
-                    tokens are found.</td>
-                <td> Config</td>
-                <td> RULE-100</td>
-            </tr>
-            <tr>
-                <td>26</td>
-                <td>The property 'LogJsonFormat' must be present in all environment .properties files.</td>
-                <td>Config</td>
-                <td>RULE-101</td>
-            </tr>
-            <tr>
-                <td>27</td>
-                <td>The policy property 'rakspolicyproperty2.policypropname' and 'rakspolicyproperty' must be present in
-                    all environment .policy files.</td>
-                <td>Config</td>
-                <td>RULE-102</td>
-            </tr>
-            <tr>
-                <td>28</td>
-                <td>The Secure encrypted properties must follow the pattern:
-                    secure::&lt;name&gt;=^{&lt;encrypted-value&gt;=}.</td>
-                <td>Config</td>
-                <td>RULE-104</td>
-            </tr>
-            <tr>
-                <td>29</td>
-                <td>The authorization policy client ID mappings must follow the pattern:
-                    truist.authz.policy.clientIDmap.&lt;METHOD&gt;:/&lt;path&gt;=&lt;id&gt;:&lt;name&gt;;&lt;id&gt;:&lt;name&gt;;...
-                </td>
-                <td>Config</td>
-                <td>RULE-104</td>
-            </tr>
-        </table>
-        <a href="help.html" target="_blank" class="contact-button" title="View help and documentation about Aegis">Help</a>
-    </div>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            // Simple session persistence for navigation links
-            var sessionId = new URLSearchParams(window.location.search).get('session');
-            if (sessionId) {
-                var links = document.querySelectorAll('.top-nav-button, .contact-button');
-                links.forEach(function(link) {
-                    var href = link.getAttribute('href');
-                    if (href && !href.startsWith('http') && !href.startsWith('#')) {
-                        var separator = href.includes('?') ? '&' : '?';
-                        link.setAttribute('href', href + separator + 'session=' + sessionId);
-                    }
-                });
-            }
-        });
-    </script>
-</body>
 
+        <!-- Downloads Section -->
+        <h2>📂 Download Resources</h2>
+        <p>Get started with sample projects and configuration templates.</p>
+        
+        <div class="download-grid">
+            <div class="download-card" style="cursor:pointer;" onclick="downloadSample('sample-project.zip')">
+                <span class="icon">📦</span>
+                <div class="dl-info">
+                    <h3>Sample Project</h3>
+                    <p>Reference project structure with valid/invalid examples.</p>
+                </div>
+            </div>
+            
+            <div class="download-card" style="cursor:pointer;" onclick="downloadSample('sample-rules.yaml')">
+                <span class="icon">📜</span>
+                <div class="dl-info">
+                    <h3>Sample Rules File</h3>
+                    <p>Default YAML configuration for defining custom rules.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Best Practices Section -->
+        <h2>✅ Industry Best Practices & Checklist</h2>
+        <p>Comprehensive validation checklist for ensuring application quality, security, and maintainability.</p>
+            <br>
+            <p>Below is the complete catalog of validation rule types supported by Aegis. Use these types in your <code>rules.yaml</code> to define custom policies.</p>
+
+            <!-- 1. File & Project Context -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#128193; File & Project Context</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th style="width: 25%;">Rule Type</th>
+                        <th style="width: 40%;">Description</th>
+                        <th style="width: 35%;">Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">FILE_EXISTS</span></td>
+                        <td>Verifies that specific files ensure key configurations are present.</td>
+                        <td>Check for <code>security-config.xml</code>, <code>log4j2.xml</code>, or README files.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">PROJECT_CONTEXT</span></td>
+                        <td>Validates project structure and metadata.</td>
+                        <td>Enforce naming conventions on root folders or verify project types.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">POM_VALIDATION_REQUIRED</span></td>
+                        <td>Ensures specific dependencies or plugins exist in <code>pom.xml</code>.</td>
+                        <td>Require <code>mule-secure-configuration-property</code> module.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">POM_VALIDATION_FORBIDDEN</span></td>
+                        <td>Prohibits specific dependencies or plugins in <code>pom.xml</code>.</td>
+                        <td>Ban <code>log4j</code> 1.x or deprecated connectors.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 2. Code & Token Analysis -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#128269; Code & Token Analysis</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Rule Type</th>
+                        <th>Description</th>
+                        <th>Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">GENERIC_TOKEN_SEARCH</span></td>
+                        <td>Searches for presence of specific text patterns or tokens.</td>
+                        <td>Find "TODO" comments or specific function calls.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">GENERIC_TOKEN_SEARCH_FORBIDDEN</span></td>
+                        <td>Fails if specific forbidden tokens are found.</td>
+                        <td>Detect hardcoded passwords (<code>password=...</code>) or keys.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">GENERIC_TOKEN_SEARCH_REQUIRED</span></td>
+                        <td>Fails if specific required tokens are missing.</td>
+                        <td>Ensure copyright headers or specific annotations exist.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">MANDATORY_SUBSTRING_CHECK</span></td>
+                        <td>Ensures a exact substring exists within a file.</td>
+                        <td>Verify specific configuration strings.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">DLP_REFERENCE_CHECK</span></td>
+                        <td>Data Loss Prevention check for sensitive patterns.</td>
+                        <td>Scan for credit card numbers, SSNs, or API keys.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 3. XML Validation -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#128204; XML Configuration</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Rule Type</th>
+                        <th>Description</th>
+                        <th>Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">XML_XPATH_EXISTS</span></td>
+                        <td>Verifies that an XML element exists matching an XPath.</td>
+                        <td>Ensure <code>&lt;secure-properties:config&gt;</code> is defined.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">XML_ATTRIBUTE_EXISTS</span></td>
+                        <td>Checks if a specific attribute exists on an element.</td>
+                        <td>Verify <code>api-gateway:autodiscovery</code> has <code>flowRef</code>.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">XML_XPATH_NOT_EXISTS</span></td>
+                        <td>Ensures an XML element matching an XPath does NOT exist.</td>
+                        <td>Prevent use of default HTTP ports (e.g., 8081).</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">XML_ATTRIBUTE_NOT_EXISTS</span></td>
+                        <td>Ensures a specific attribute is NOT present.</td>
+                        <td>Ensure `allowAnon` is not set to true.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- 4. Properties & Configuration -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#9881; Properties & Configuration</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Rule Type</th>
+                        <th>Description</th>
+                        <th>Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">GENERIC_PROPERTY_FILE</span></td>
+                        <td>Checks for patterns within `.properties` or `.yaml` config files.</td>
+                        <td>Validate naming or value formats in property files.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">MANDATORY_PROPERTY_VALUE_CHECK</span></td>
+                        <td>Ensures a specific property key has a specific value.</td>
+                        <td>Enforce <code>env=prod</code> or specific versions.</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge-rule">JSON_VALIDATION_REQUIRED</span></td>
+                        <td>Ensures specific JSON paths or values exist.</td>
+                        <td>Validate fields in <code>mule-artifact.json</code>.</td>
+                    </tr>
+                     <tr>
+                        <td><span class="badge-rule">JSON_VALIDATION_FORBIDDEN</span></td>
+                        <td>Ensures specific JSON paths do NOT exist.</td>
+                        <td>Prevent forbidden fields in configuration JSONs.</td>
+                    </tr>
+                </tbody>
+            </table>
+
+             <!-- 5. Advanced Logic -->
+            <h3 style="color: #663399; margin-top: 30px; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#129514; Advanced Logic</h3>
+            <table class="checklist-table">
+                <thead>
+                    <tr>
+                        <th>Rule Type</th>
+                        <th>Description</th>
+                        <th>Suggested Usage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="badge-rule">CONDITIONAL_CHECK</span></td>
+                        <td>Executes a check only if a "If" condition (another rule) is met.</td>
+                        <td>"If `pom.xml` exists, then check for `mule-maven-plugin`."</td>
+                    </tr>
+                </tbody>
+            </table>
+    </div>
+</body>
 </html>

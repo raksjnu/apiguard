@@ -8,7 +8,12 @@
         "attributes": {
             "exportedPackages": [
                 "javax.activation",
-                "com.raks.muleguard.wrapper"
+                "com.raks.muleguard.wrapper",
+                "com.raks.aegis.wrapper",
+                "com.raks.aegis.util",
+                "com.raks.aegis.engine",
+                "com.raks.aegis",
+                "com.raks.apiguardwrapper.util"
             ]
         }
     }

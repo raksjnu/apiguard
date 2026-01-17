@@ -46,9 +46,8 @@
 <body>
     <div class="container" style="position: relative;">
         <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
-            <a id="linkChecklist" href="#" onclick="window.open(resolvePath('checklist.html'), '_blank'); return false;" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
             <a id="linkRules" href="#" onclick="window.open(resolvePath('rule_guide.html'), '_blank'); return false;" class="nav-button" title="Guide to all Aegis validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
-            <a id="linkSettings" href="#" onclick="window.open(resolvePath('settings.html'), '_blank'); return false;" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
+            <a id="linkSettings" href="#" onclick="window.location.href = resolvePath('settings.html'); return false;" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
             <a id="linkHelp" href="#" onclick="window.open(resolvePath('help.html'), '_blank'); return false;" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
         </div>
 
@@ -57,7 +56,7 @@
             <h1>Aegis</h1>
         </div>
 
-        <p class="subtitle">Universal Static Analysis & Validation Tool</p>
+        <p class="subtitle">Universal Application Code Review & Validation Tool</p>
 
         <div class="mode-selector optional-section">
             <label>Choose Input Method:</label>
@@ -85,23 +84,13 @@
 
         <!-- Local Folder Input -->
         <div id="localInput" class="optional-section hidden">
-            <label>Mule Projects Folder: 
-                <a href="#" class="sample-download" onclick="downloadSample('muleapp1.zip')"
-                   style="margin-left: 10px; font-size: 0.9em; color: #663399; text-decoration: underline;">
-                    (Download Sample Project)
-                </a>
-            </label>
-            <input type="text" id="folderPath" placeholder="Enter folder path (e.g., C:\projects\muleapis)">
+            <label>Project Folder:</label>
+            <input type="text" id="folderPath" placeholder="Enter folder path (e.g., C:\projects\apis)">
         </div>
 
         <!-- ZIP File Input -->
         <div id="zipInput" class="optional-section hidden">
-            <label>Select ZIP File: 
-                <a href="#" class="sample-download" onclick="downloadSample('muleapp1.zip')"
-                   style="margin-left: 10px; font-size: 0.9em; color: #663399; text-decoration: underline;">
-                    (Download Sample Project)
-                </a>
-            </label>
+            <label>Select ZIP File:</label>
             <input type="file" id="zipFile" accept=".zip">
             <small>ZIP should contain root folder with API and config folders</small>
         </div>
@@ -110,7 +99,7 @@
         <div id="jarInput" class="optional-section hidden">
             <label>Select Archive File:</label>
             <input type="file" id="jarFile" accept=".jar">
-            <small>Supported formats: .jar (Mule App)</small>
+            <small>Supported formats: .jar (Java / Archive)</small>
         </div>
 
         <!-- Git Repo Input -->
@@ -149,15 +138,15 @@
             </p>
 
             <!-- Discovery Panel -->
-            <div id="gitDiscoveryPanel">
+            <div id="gitDiscoveryPanel" style="display:none;">
                 <div style="display:flex; gap:10px; margin-bottom: 10px;">
                     <div style="flex:1;">
                         <label>Group / Org Name / User:</label>
-                        <input type="text" id="gitGroup" placeholder="e.g. raks-group">
+                        <input type="text" id="gitGroup" placeholder="e.g. raks-group" name="gitGroup" autocomplete="on">
                     </div>
                     <div style="flex:1;">
                         <label>Repository Name Filter (comma-separated):</label>
-                        <input type="text" id="gitRepoFilter" placeholder="e.g. api-v1, mule-app">
+                        <input type="text" id="gitRepoFilter" placeholder="e.g. api-v1, web-app" name="gitRepoFilter" autocomplete="on">
                     </div>
                 </div>
                 <div style="text-align:right;">
@@ -182,10 +171,11 @@
             </div>
 
             <!-- Manual Panel -->
-            <div id="gitManualPanel" style="display:none; margin-top:10px;">
+            <!-- Manual Panel -->
+            <div id="gitManualPanel" style="margin-top:10px;">
                 <label>Git Repository URL:</label>
                 <div style="display:flex; gap:10px;">
-                    <input type="text" id="gitUrl" placeholder="https://gitlab.com/group/project.git">
+                    <input type="text" id="gitUrl" placeholder="https://gitlab.com/group/project.git" name="gitUrl" autocomplete="url">
                     <button type="button" class="nav-button" style="width:auto; white-space:nowrap; padding: 0 15px; background:#6f42c1;" id="fetchBranchesManualBtn" onclick="fetchGitBranches(true)">Fetch Branches</button>
                 </div>
             </div>
@@ -213,12 +203,7 @@
 
         <!-- Custom Rules Input -->
         <div class="optional-section">
-            <label>Optional: Custom Rules File 
-                <a href="#" class="sample-download" onclick="downloadSample('sample-rules.yaml')"
-                   style="margin-left: 10px; font-size: 0.9em; color: #663399; text-decoration: underline;">
-                    (Download Sample Rules)
-                </a>
-            </label>
+            <label>Optional: Custom Rules File</label>
             <input type="file" id="customRules" accept=".yaml,.yml">
             <small>If not provided, default rules from Aegis JAR will be used</small>
         </div>
@@ -267,8 +252,8 @@
         
         // Configuration
         const CONFIG = {
-            baseUrl: "/apiguard/aegis", // Base URL for the tool
-            apiUrl: "/apiguard/aegis/api/validate", // API base URL
+            baseUrl: isWrapper ? "/apiguard/aegis" : "", 
+            apiUrl: isWrapper ? "/apiguard/aegis/api/validate" : "/api/validate",
             statusCheckInterval: 2000,
             reportRetentionDays: 7
         };
@@ -717,12 +702,6 @@
             const customRules = document.getElementById('customRules').files[0];
             if (customRules) {
                 formData.append('customRules', customRules);
-            } else {
-                // If no file uploaded, check for default rules path in Settings
-                const defaultRulesPath = localStorage.getItem('aegis_custom_rules_path');
-                if (defaultRulesPath) {
-                    formData.append('customRulesPath', defaultRulesPath);
-                }
             }
 
             // Email options
@@ -743,7 +722,7 @@
                 showProgress(false); // Hide progress
                 document.getElementById('runBtn').disabled = false;
                 
-                if (data.status === 'success' || data.success === true) {
+                if (data.status === 'PASS' || data.status === 'FAIL' || data.status === 'success' || data.success === true) {
                     handleSuccess(data, mode, sessionId);
                 } else {
                     showAlert('Error: ' + (data.message || 'Unknown error occurred'));
@@ -839,7 +818,7 @@
 
          function handleProviderChange(clearInputs = true) {
               const provider = document.querySelector('input[name="gitProvider"]:checked').value;
-              localStorage.setItem('muleguard_git_provider', provider);
+              localStorage.setItem('aegis_git_provider', provider);
               
               if (clearInputs) {
                   // Contextual Input Clearing
@@ -849,19 +828,19 @@
                   document.getElementById('repoList').innerHTML = '';
                   document.getElementById('repoResultsSection').style.display = 'none';
                   // Also clear session prefs to avoid restoring confused state
-                  localStorage.removeItem('muleguard_session_group');
-                  localStorage.removeItem('muleguard_session_filter');
-                  localStorage.removeItem('muleguard_session_url');
+                  localStorage.removeItem('aegis_session_group');
+                  localStorage.removeItem('aegis_session_filter');
+                  localStorage.removeItem('aegis_session_url');
                   
                   // Auto-fill defaults from Settings
                   if (provider === 'gitlab') {
-                      const def = localStorage.getItem('muleguard_gitlab_group');
+                      const def = localStorage.getItem('aegis_gitlab_group');
                       if(def) {
                           document.getElementById('gitGroup').value = def;
                           saveSessionPrefs();
                       }
                   } else if (provider === 'github') {
-                      const def = localStorage.getItem('muleguard_github_group');
+                      const def = localStorage.getItem('aegis_github_group');
                       if(def) {
                           document.getElementById('gitGroup').value = def;
                           saveSessionPrefs();
@@ -939,20 +918,20 @@
             let token = '';
             // const provider already defined above
             if (provider === 'github') {
-                token = localStorage.getItem('muleguard_github_token') || '';
+                token = localStorage.getItem('aegis_github_token') || '';
             } else if (provider === 'gitlab') {
-                token = localStorage.getItem('muleguard_gitlab_token') || '';
+                token = localStorage.getItem('aegis_gitlab_token') || '';
             }
             
             // Fallback
             // Fallback
-            if (!token) token = localStorage.getItem('muleguard_git_token') || '';
+            if (!token) token = localStorage.getItem('aegis_git_token') || '';
             
             console.log(`[DEBUG] fetchGitRepos: Provider=${provider}, TokenLength=${token ? token.length : 0}`);
             if(token && token.length > 0) console.log(`[DEBUG] Token starts with: ${token.substring(0, 4)}...`);
             
-            const gitlabUrl = localStorage.getItem('muleguard_gitlab_url') || '';
-            const githubUrl = localStorage.getItem('muleguard_github_url') || '';
+            const gitlabUrl = localStorage.getItem('aegis_gitlab_url') || '';
+            const githubUrl = localStorage.getItem('aegis_github_url') || '';
             
             // Optional: Warn about missing token but don't block
             if (!token) {
@@ -965,12 +944,12 @@
             
             try {
                 // Adjust API base for discovery
-                // Adjust API base for discovery -> Use MuleGuard Wrapper endpoints
-                // Use new MuleGuard Recursive Discovery flow
-                const apiBase = isWrapper ? '/apiguard/muleguard' : CONFIG.baseUrl;
-                // GitAnalyzer uses /api/download/list, MuleGuard Standalone uses /api/git/repos
-                // WRAPPER NOW USES /api/git/discovery via MuleGuard-Wrapper Flow
-                const endpoint = isWrapper ? '/api/git/discovery' : '/api/git/repos';
+                // Adjust API base for discovery -> Use Aegis Wrapper endpoints
+                // Use new Aegis Recursive Discovery flow
+                const apiBase = isWrapper ? '/apiguard/aegis' : CONFIG.baseUrl;
+                // GitAnalyzer uses /api/download/list, Aegis Standalone uses /api/git/repos
+                // WRAPPER NOW USES /api/git/repos (Unified)
+                const endpoint = '/api/git/repos';
                 let url = apiBase + `${endpoint}?group=${encodeURIComponent(group)}&filter=${encodeURIComponent(filter)}&provider=${encodeURIComponent(provider)}`;
                 
                 if(gitlabUrl) url += `&gitlabUrl=${encodeURIComponent(gitlabUrl)}`;
@@ -1105,12 +1084,12 @@
             
             // Get credentials from Settings
             if (provider === 'github') {
-                token = localStorage.getItem('muleguard_github_token') || localStorage.getItem('muleguard_git_token') || '';
+                token = localStorage.getItem('aegis_github_token') || '';
             } else {
-                token = localStorage.getItem('muleguard_gitlab_token') || localStorage.getItem('muleguard_git_token') || '';
+                token = localStorage.getItem('aegis_gitlab_token') || '';
             }
-            const gitlabUrl = localStorage.getItem('muleguard_gitlab_url') || '';
-            const githubUrl = localStorage.getItem('muleguard_github_url') || '';
+            const gitlabUrl = localStorage.getItem('aegis_gitlab_url') || '';
+            const githubUrl = localStorage.getItem('aegis_github_url') || '';
 
             const btn = isManual ? document.getElementById('fetchBranchesManualBtn') : document.getElementById('fetchBranchesBtn');
             const status = document.getElementById('branchStatus');
@@ -1120,9 +1099,9 @@
             showProgress(true, "Discovering Branches", `Fetching branches for ${repoToFetch}...`);
             
             try {
-                const apiBase = isWrapper ? '/apiguard/muleguard' : CONFIG.baseUrl;
-                // GitAnalyzer uses /api/download/branches, MuleGuard Standalone uses /api/git/branches
-                // WRAPPER NOW USES /api/git/branches via MuleGuard-Wrapper Flow
+                const apiBase = isWrapper ? '/apiguard/aegis' : CONFIG.baseUrl;
+                // GitAnalyzer uses /api/download/branches, Aegis Standalone uses /api/git/branches
+                // WRAPPER NOW USES /api/git/branches via Aegis-Wrapper Flow
                 const endpoint = '/api/git/branches';
                 let url = apiBase + `${endpoint}?repo=${encodeURIComponent(repoToFetch)}`;
                 

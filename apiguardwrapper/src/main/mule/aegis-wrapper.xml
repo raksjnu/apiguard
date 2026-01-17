@@ -355,7 +355,7 @@ payload.parts]]></ee:set-variable>
                 <!-- Extract fields from multipart -->
                 <set-variable variableName="validationMode" value="#[vars.inputParts.mode.content default 'local']"/>
                 <set-variable variableName="projectPath" value="#[vars.inputParts.projectPath.content default '']"/>
-                <set-variable variableName="uploadFileContent" value="#[vars.inputParts.projectFile.content]"/>
+                <set-variable variableName="uploadFileContent" value="#[vars.inputParts.archive.content]"/>
                 <set-variable variableName="sessionId" value="#[vars.inputParts.sessionId.content default uuid()]"/>
                 <set-variable variableName="reportFormat" value="#[vars.inputParts.format.content default 'html']"/>
                 <set-variable variableName="userWantsProjectAttachment" value="#[vars.inputParts.attachProject.content default 'false']"/>
@@ -401,25 +401,53 @@ payload.parts]]></ee:set-variable>
             </when>
         </choice>
 
+        <!-- Debug: Log validation mode -->
+        <logger level="INFO" message="#['DEBUG - validationMode: [' ++ vars.validationMode ++ '] length: ' ++ sizeOf(vars.validationMode)]"/>
+
         <!-- Handle Input Source -->
         <choice>
-            <when expression="#[vars.validationMode == 'upload']">
-                <!-- Handle File Upload -->
+            <when expression="#[trim(vars.validationMode) == 'zip' or trim(vars.validationMode) == 'jar']">
+                <logger level="INFO" message="DEBUG - ENTERED ZIP/JAR BRANCH"/>
+                <!-- Handle File Upload (ZIP or JAR) -->
                 <set-variable variableName="zipFilePath" value="#[vars.workDir ++ '/input.zip']"/>
                 <file:write path="#[vars.zipFilePath]" config-ref="File_Config">
                     <file:content>#[vars.uploadFileContent]</file:content>
                 </file:write>
                 
-                <!-- Unzip -->
-                <set-variable variableName="extractDir" value="#[vars.workDir ++ '/extracted']"/>
-                <java:invoke-static class="com.raks.aegis.util.ArchiveExtractor" method="extract(String, String)">
-                    <java:args>#[{
-                        arg0: vars.zipFilePath,
-                        arg1: vars.extractDir
-                    }]</java:args>
-                </java:invoke-static>
+                <logger level="INFO" message="#['DEBUG - About to extract. zipFilePath: ' ++ vars.zipFilePath ++ ', sessionId: ' ++ vars.sessionId]"/>
                 
-                <set-variable variableName="targetPath" value="#[vars.extractDir]"/>
+                <!-- Extract ZIP/JAR -->
+                <choice>
+                    <when expression="#[trim(vars.validationMode) == 'zip']">
+                        <logger level="INFO" message="DEBUG - Extracting as ZIP"/>
+                        <java:invoke-static class="com.raks.aegis.util.ArchiveExtractor" method="extractZip(java.lang.String,java.lang.String,java.lang.String)">
+                            <java:args>#[{
+                                arg0: vars.zipFilePath,
+                                arg1: vars.sessionId,
+                                arg2: p('aegis.work.dir')
+                            }]</java:args>
+                        </java:invoke-static>
+                    </when>
+                    <otherwise>
+                        <!-- JAR mode -->
+                        <java:invoke-static class="com.raks.aegis.util.ArchiveExtractor" method="extractJar(java.lang.String,java.lang.String,java.lang.String)">
+                            <java:args>#[{
+                                arg0: vars.zipFilePath,
+                                arg1: vars.sessionId,
+                                arg2: p('aegis.work.dir')
+                            }]</java:args>
+                        </java:invoke-static>
+                    </otherwise>
+                </choice>
+                
+                <!-- Store extracted path as String to avoid serialization issues -->
+                <set-variable variableName="extractedPath" value="#[payload as String]"/>
+                
+                <logger level="INFO" message="#['DEBUG - After extraction. extractedPath: ' ++ vars.extractedPath]"/>
+                
+                <!-- Set targetPath to parent of extracted project so Aegis finds the project and creates reports at parent level -->
+                <set-variable variableName="targetPath" value="#[(vars.extractedPath splitBy '\\')[0 to -2] joinBy '\\']"/>
+                <logger level="INFO" message="#['DEBUG - targetPath (parent): ' ++ vars.targetPath]"/>
                 <set-variable variableName="displayPath" value="Uploaded Project"/>
             </when>
             
@@ -488,6 +516,18 @@ payload.parts]]></ee:set-variable>
             }]</java:args>
         </java:invoke-static>
         
+        <!-- Debug: Log paths before zipping -->
+        <logger level="INFO" message="#['DEBUG - targetPath: ' ++ vars.targetPath ++ ', reportDirName: ' ++ vars.reportDirName]"/>
+        
+        <!-- Create ZIP of the report directory (Required for email/download) -->
+        <logger level="INFO" message="#['Zipping report directory: ' ++ vars.reportDirName]"/>
+        <java:invoke-static doc:name="Zip Reports" class="com.raks.aegis.util.ArchiveExtractor" method="zipDirectory(java.lang.String,java.lang.String)">
+            <java:args><![CDATA[#[{
+                arg0: vars.targetPath ++ '/' ++ vars.reportDirName,
+                arg1: vars.targetPath ++ '/' ++ vars.reportDirName ++ '.zip'
+            }]]]></java:args>
+        </java:invoke-static>
+        
         <!-- Persist Report Path for Session (Key: SessionId, Value: WorkDir || ReportDirName || BaseName) -->
         <os:store key="#[vars.sessionId]" objectStore="Report_Path_Store">
             <os:value>#[vars.workDir ++ '||' ++ vars.reportDirName ++ '||' ++ (if (vars.validationMode == 'git') vars.repoName else 'project')]</os:value>
@@ -515,7 +555,17 @@ vars.validationResults ++ {
              <on-error-continue type="ANY">
                  <logger level="ERROR" message="#['Unexpected Error: ' ++ error.description]"/>
                  <set-variable variableName="httpStatus" value="500"/>
-                 <set-payload value='#[{"error": "Internal Server Error", "details": error.description}]'/>
+                 <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    "error": "Internal Server Error", 
+    "details": error.description
+}]]></ee:set-payload>
+                    </ee:message>
+                 </ee:transform>
              </on-error-continue>
         </error-handler>
     </flow>
@@ -532,7 +582,7 @@ vars.validationResults ++ {
          <set-variable variableName="totalAttachmentSize" value="#[0]"/>
         
         <!-- Logic to attach ZIPs similar to muleguard (simplified for brevity or copied logic) -->
-        <set-variable variableName="reportsZipPath" value="#[vars.workDir ++ '/' ++ vars.reportDirName ++ '.zip']"/>
+        <set-variable variableName="reportsZipPath" value="#[vars.targetPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
         
         <choice>
              <when expression="#[vars.shouldAttachReports]">

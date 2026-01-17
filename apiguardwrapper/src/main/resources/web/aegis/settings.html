@@ -47,7 +47,7 @@
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitLab Auth Token (Personal Access Token):</label>
                     <div style="display:flex; gap:10px; margin-bottom: 10px;">
-                        <input type="password" id="gitlabToken" placeholder="Enter your GitLab Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="password" id="gitlabToken" placeholder="Enter your GitLab Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" name="gitlabToken" autocomplete="current-password">
                         <button type="button" class="nav-button" onclick="validateToken('gitlab')" style="width:auto; padding:0 15px; background:#fc6d26; color:white; border:none;">Validate</button>
                     </div>
 
@@ -56,7 +56,7 @@
                     <small style="display:block; color: #666; margin-bottom: 10px;">Leave empty for public GitLab.com.</small>
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Group / User (Optional):</label>
-                    <input type="text" id="gitlabDefaultGroup" placeholder="e.g. raks-group" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                    <input type="text" id="gitlabDefaultGroup" placeholder="e.g. raks-group" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;" name="gitlabDefaultGroup" autocomplete="on">
                 </div>
                 
                 <div style="margin-bottom: 25px; padding: 15px; background: #f9f9f9; border-left: 4px solid #333;" id="githubSection">
@@ -64,7 +64,7 @@
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">GitHub Auth Token (Personal Access Token):</label>
                     <div style="display:flex; gap:10px; margin-bottom: 10px;">
-                        <input type="password" id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <input type="password" id="githubToken" placeholder="Enter your GitHub Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" name="githubToken" autocomplete="current-password">
                         <button type="button" class="nav-button" onclick="validateToken('github')" style="width:auto; padding:0 15px; background:#663399; color:white; border:none;">Validate</button>
                     </div>
 
@@ -73,31 +73,22 @@
                     <small style="display:block; color: #666; margin-bottom: 10px;">Leave empty for public GitHub.com.</small>
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Organization / User (Optional):</label>
-                    <input type="text" id="githubDefaultGroup" placeholder="e.g. RAKS" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;">
+                    <input type="text" id="githubDefaultGroup" placeholder="e.g. RAKS" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom: 10px;" name="githubDefaultGroup" autocomplete="on">
                 </div>
 
 
 
                 <div style="margin-bottom: 15px;" id="otherSection">
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Other Git Provider Base URL:</label>
-                    <input type="text" id="otherUrl" placeholder="http://git.raks.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom:10px;">
+                    <input type="text" id="otherUrl" placeholder="http://git.raks.com" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; margin-bottom:10px;" name="otherUrl" autocomplete="url">
                     
                     <label style="display:block; margin-bottom: 5px; font-weight:bold;">Other Git Provider Token:</label>
-                    <input type="password" id="otherToken" placeholder="Enter Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                    <input type="password" id="otherToken" placeholder="Enter Personal Access Token" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;" name="otherToken" autocomplete="current-password">
                     <small style="color: #666;">Generic token for cloning repositories from custom providers.</small>
                 </div>
             </div>
 
-            <!-- General Preferences -->
-            <div class="optional-section" style="max-width: 800px; margin: 20px auto; text-align: left; padding: 25px;">
-                <h3 style="margin-top:0; color: #663399; border-bottom: 2px solid #eee; padding-bottom: 10px;">&#9881; General Preferences</h3>
-                
-                <div style="margin-bottom: 15px;">
-                    <label style="display:block; margin-bottom: 5px; font-weight:bold;">Default Custom Rules File Path (Local Mode Only):</label>
-                    <input type="text" id="customRulesPath" placeholder="C:\path\to\default-rules.yaml" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px;">
-                    <small style="color: #666;">Automatically load this rules file when running validations.</small>
-                </div>
-            </div>
+
 
             <div style="text-align: center; margin-top: 30px;">
                 <button type="button" class="nav-button" onclick="saveSettings()" style="width: auto; padding: 12px 40px; font-size: 16px; margin-right: 10px; background:#663399; color:white;">Save Settings</button>
@@ -143,13 +134,16 @@
             
             document.getElementById('otherUrl').value = localStorage.getItem('aegis_other_url') || '';
             document.getElementById('otherToken').value = localStorage.getItem('aegis_other_token') || '';
-            document.getElementById('customRulesPath').value = localStorage.getItem('aegis_custom_rules_path') || '';
+
             
             updateSettingsUI();
         });
         
         function updateSettingsUI() {
             const provider = document.querySelector('input[name="gitProvider"]:checked').value;
+            
+            // Auto-save provider selection immediately to sync with Home page
+            localStorage.setItem('aegis_git_provider', provider);
             
             // Helper to toggle section
             const toggle = (id, enable) => {
@@ -233,8 +227,7 @@
             const otherToken = document.getElementById('otherToken').value.trim();
             localStorage.setItem('aegis_other_token', otherToken);
             
-            const rulesPath = document.getElementById('customRulesPath').value.trim();
-            localStorage.setItem('aegis_custom_rules_path', rulesPath);
+
             
             showStatus('Settings saved successfully!', 'green');
             
@@ -255,7 +248,7 @@
                 localStorage.removeItem('aegis_github_group');
                 localStorage.removeItem('aegis_other_url');
                 localStorage.removeItem('aegis_other_token');
-                localStorage.removeItem('aegis_custom_rules_path');
+
                 
                 // Clear form
                 document.getElementById('settingsForm').reset();
