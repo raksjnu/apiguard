@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Aegis - Validation Checklist</title>
+    <style>
+        :root {
+            --raks-purple: #663399;
+            --raks-purple-light: #7d4fb2;
+            --text-white: #FFFFFF;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .report-container {
+            border: 5px solid var(--raks-purple);
+            padding: 20px 40px;
+            margin: 20px;
+            border-radius: 8px;
+            background-color: white;
+            position: relative;
+        }
+
+        h1 {
+            color: var(--raks-purple);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--raks-purple);
+            color: var(--text-white);
+        }
+
+        .contact-button {
+            background-color: var(--raks-purple);
+            color: var(--text-white);
+            border: none;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 25px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .contact-button:hover {
+            background-color: var(--raks-purple-light);
+        }
+
+        .dashboard-button {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            background-color: var(--raks-purple);
+            color: var(--text-white);
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-button:hover {
+            background-color: var(--raks-purple-light);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="report-container">
+        <!-- Buttons container to manage absolute positioning easily -->
+        <div class="header-buttons">
+            <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button"
+                title="Return to main dashboard">← Dashboard</a>
+            <a href="/apiguard/aegis/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
+                style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <img src="logo.svg" alt="Aegis Logo" style="height: 40px; margin-right: 15px;">
+            <h1 style="margin: 0;">Aegis - Universal Code Compliance Checklist</h1>
+        </div>
+        <p>This page lists all the individual checks performed by the Aegis tool. Checks can be customized via <code>rules.yaml</code>.</p>
+        <table>
+            <tr>
+                <th>Sr.#</th>
+                <th>ChecklistItem</th>
+                <th>ChecklistType</th>
+                <th>RuleId</th>
+            </tr>
+            <tr>
+                <td>1</td>
+                <td>Generic Code Check which scans configured files for any configured tokens in code folder; Fails if
+                    tokens are found.</td>
+                <td> Code</td>
+                <td> RULE-000</td>
+            </tr>
+            <tr>
+                <td>2</td>
+                <td>The Parent POM details should be having groupId='com.raks.eapi'; artifactId ='MuleParentPom';
+                    version='LATEST'.</td>
+                <td>Code</td>
+                <td>RULE-001</td>
+            </tr>
+            <tr>
+                <td>3</td>
+                <td>The property 'mule.maven.plugin.version' should be set to '4.9.0' in pom.xml.</td>
+                <td>Code</td>
+                <td>RULE-002</td>
+            </tr>
+            <tr>
+                <td>4</td>
+                <td>The plugin 'maven-clean-plugin' should be removed from pom.xml.</td>
+                <td>Code</td>
+                <td>RULE-003</td>
+            </tr>
+            <tr>
+                <td>5</td>
+                <td>The plugin 'maven-surefire-plugin:2.22.0' should be removed from pom.xml.</td>
+                <td>Code</td>
+                <td>RULE-003</td>
+            </tr>
+            <tr>
+                <td>6</td>
+                <td>The dependency 'org.springframework.security:spring-security-ldap' should be removed from pom.xml.
+                </td>
+                <td>Code</td>
+                <td>RULE-004</td>
+            </tr>
+            <tr>
+                <td>7</td>
+                <td>The dependency 'org.springframework.security:spring-security-web' should be removed from pom.xml.
+                </td>
+                <td>Code</td>
+                <td>RULE-004</td>
+            </tr>
+            <tr>
+                <td>8</td>
+                <td>The dependency 'org.mule.modules:mule-module-spring-config' should be removed from pom.xml.</td>
+                <td>Code</td>
+                <td>RULE-004</td>
+            </tr>
+            <tr>
+                <td>9</td>
+                <td>The dependency 'com.ibm.db2:db2jcc_license_cu' should be removed from pom.xml.</td>
+                <td>Code</td>
+                <td>RULE-004</td>
+            </tr>
+            <tr>
+                <td>10</td>
+                <td>The dependency 'com.mulesoft.mule.core:mule-core-ee' should be removed from pom.xml.</td>
+                <td>Code</td>
+                <td>RULE-004</td>
+            </tr>
+            <tr>
+                <td>11</td>
+                <td>The dependency 'com.mulesoft.mule.runtime.modules:mule-module-spring-config-ee' should be removed
+                    from pom.xml.</td>
+                <td>Code</td>
+                <td>RULE-004</td>
+            </tr>
+            <tr>
+                <td>12</td>
+                <td>The IBM MQ connector's 'cipherSuite' attribute must be 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'.</td>
+                <td>Code</td>
+                <td>RULE-005</td>
+            </tr>
+            <tr>
+                <td>13</td>
+                <td>The dependency 'com.raks.eapi:apimuleutilities' should be added to pom.xml.</td>
+                <td>Code</td>
+                <td>RULE-006</td>
+            </tr>
+            <tr>
+                <td>14</td>
+                <td>The 'minMuleVersion' in mule-artifact.json must be at least '4.9.0'.</td>
+                <td>Code</td>
+                <td>RULE-007</td>
+            </tr>
+            <tr>
+                <td>15</td>
+                <td>The 'javaSpecificationVersions' in mule-artifact.json must be '17'.</td>
+                <td>Code</td>
+                <td>RULE-007</td>
+            </tr>
+            <tr>
+                <td>16</td>
+                <td>The 'secureProperties' element must be present in mule-artifact.json.</td>
+                <td>Code</td>
+                <td>RULE-007</td>
+            </tr>
+            <tr>
+                <td>17</td>
+                <td>The autodiscovery element should be enabled in a Mule configuration file.</td>
+                <td>Code</td>
+                <td>RULE-008</td>
+            </tr>
+            <tr>
+                <td>18</td>
+                <td>The unsupported error expressions
+                    (error.errorType;error.muleMessage;error.exception;error.errors;derivatives of any of these too)
+                    should be removed.</td>
+                <td>Code</td>
+                <td>RULE-009</td>
+            </tr>
+            <tr>
+                <td>19</td>
+                <td>The property fromApplicationCode or toApplicationCode in the module-loggingconnector:* should be
+                    removed.</td>
+                <td>Code</td>
+                <td>RULE-010</td>
+            </tr>
+            <tr>
+                <td>20</td>
+                <td>The DLP related property north.bound.dlp.flag or south.bound.dlp.flag from all the mule xml files
+                    and properties files should be removed.</td>
+                <td>Code</td>
+                <td>RULE-011</td>
+            </tr>
+            <tr>
+                <td>21</td>
+                <td>The DLP request queue property (wmq.dlp.requestqueue) from all the mule xml files and properties
+                    files should be removed.</td>
+                <td>Code</td>
+                <td>RULE-011</td>
+            </tr>
+            <tr>
+                <td>22</td>
+                <td>The module crypto:jce-encrypt-pbe (also having hard coded default value PBEWithHmacSHA256AndAES_256)
+                    implementation in logging flow should be removed.</td>
+                <td>Code</td>
+                <td>RULE-012</td>
+            </tr>
+            <tr>
+                <td>23</td>
+                <td>The module configuration crypto:jce-config should have &quot;type&quot; attribute defines as
+                    mandatory.</td>
+                <td>Code</td>
+                <td>RULE-013</td>
+            </tr>
+            <tr>
+                <td>24</td>
+                <td>The token tobase64 from set-variable node in any mule xml file should be removed.</td>
+                <td>Code</td>
+                <td>RULE-014</td>
+            </tr>
+            <tr>
+                <td>25</td>
+                <td>Generic Config Check which Scans configured files for configured tokens in config folder. Fails if
+                    tokens are found.</td>
+                <td> Config</td>
+                <td> RULE-100</td>
+            </tr>
+            <tr>
+                <td>26</td>
+                <td>The property 'LogJsonFormat' must be present in all environment .properties files.</td>
+                <td>Config</td>
+                <td>RULE-101</td>
+            </tr>
+            <tr>
+                <td>27</td>
+                <td>The policy property 'rakspolicyproperty2.policypropname' and 'rakspolicyproperty' must be present in
+                    all environment .policy files.</td>
+                <td>Config</td>
+                <td>RULE-102</td>
+            </tr>
+            <tr>
+                <td>28</td>
+                <td>The Secure encrypted properties must follow the pattern:
+                    secure::&lt;name&gt;=^{&lt;encrypted-value&gt;=}.</td>
+                <td>Config</td>
+                <td>RULE-104</td>
+            </tr>
+            <tr>
+                <td>29</td>
+                <td>The authorization policy client ID mappings must follow the pattern:
+                    raks.authz.policy.clientIDmap.&lt;METHOD&gt;:/&lt;path&gt;=&lt;id&gt;:&lt;name&gt;;&lt;id&gt;:&lt;name&gt;;...
+                </td>
+                <td>Config</td>
+                <td>RULE-104</td>
+            </tr>
+            <tr>
+                <td>30</td>
+                <td>Arch: JMS Dependency Alignment - If JMS is in POM, it must be configured in XML.</td>
+                <td>Code</td>
+                <td>RULE-C-104</td>
+            </tr>
+            <tr>
+                <td>31</td>
+                <td>Governance: Prod Secure Config - If env is PROD, secure-prod file must exist.</td>
+                <td>Config</td>
+                <td>RULE-C-105</td>
+            </tr>
+            <tr>
+                <td>32</td>
+                <td>Standard: APIKit Error Handling - If APIKit is used, an Error Handler must exist.</td>
+                <td>Code</td>
+                <td>RULE-C-106</td>
+            </tr>
+        </table>
+        <a href="help.html" class="contact-button" title="View help and documentation about Aegis">Help</a>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var path = window.location.pathname;
+            var isAegisStatic = path.includes('/apiguard/aegis/web/') || path.includes('/aegis/web/');
+            var isAegisReport = path.includes('/apiguard/aegis/reports/') || path.includes('/aegis/reports/');
+            var dashboardBtn = document.getElementById('dashboardBtn');
+            var mainPageBtn = document.getElementById('mainPageBtn');
+
+            // Detect if we're in Aegis wrapper (has /apiguard prefix) or standalone Java
+            var isInAegisWrapper = path.includes('/apiguard/');
+            var basePath = isInAegisWrapper ? '/apiguard/aegis' : '/aegis';
+
+            // Session Handling
+            var sessionId = new URLSearchParams(window.location.search).get('session');
+            // If in report path, extract sessionId from path
+            if (!sessionId && isAegisReport) {
+                var reportPath = basePath + '/reports/';
+                var parts = path.split(reportPath);
+                if (parts.length > 1) {
+                    var subparts = parts[1].split('/');
+                    if (subparts.length > 0) sessionId = subparts[0];
+                }
+            }
+
+            if (isAegisStatic || isAegisReport) {
+                // We are in Aegis Wrapper Environment
+                if (mainPageBtn) {
+                    mainPageBtn.style.display = 'inline-block';
+                    // Build Main Page URL with correct base path
+                    var mainPageUrl = basePath + '/main';
+                    if (sessionId) mainPageUrl += '?session=' + sessionId;
+                    mainPageBtn.href = mainPageUrl;
+
+                    if (isAegisStatic) {
+                        mainPageBtn.style.right = '40px';
+                        if (dashboardBtn) dashboardBtn.style.display = 'none'; // No dashboard in static view
+                    } else {
+                        // In Aegis Report
+                        mainPageBtn.style.right = '180px';
+                    }
+                }
+            } else {
+                // Standalone Java or Local File - Main Page button stays hidden
+                if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+            }
+        });
+    </script>
+</body>
+
+</html>

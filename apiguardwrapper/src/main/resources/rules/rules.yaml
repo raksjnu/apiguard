@@ -1,5 +1,5 @@
 # =============================================================================
-# Aegis Rules Configuration (Sample)
+# Aegis Rules Configuration
 # Scope: Universal Code Compliance (Java, Python, MuleSoft, TIBCO, DevOps)
 # Author: Rakesh Kumar (rakesh.kumar@ibm.com)
 # =============================================================================
@@ -29,6 +29,7 @@
 # 2.  MANDATORY_PROPERTY_VALUE_CHECK     - Validates required properties exist with correct values
 # 3.  OPTIONAL_PROPERTY_VALUE_CHECK      - Validates property values IF the property exists
 # 4.  GENERIC_TOKEN_SEARCH               - Advanced token search with REGEX support and environment filtering
+
 #
 # CONDITIONAL STANDARDS (Universal "If-Then" Engine)
 # -------------------------------------------------------------------------
@@ -161,8 +162,8 @@ rules:
   # ---------------------------------------------------------------------------
 
   - id: "RULE-001"
-    name: 'POM Parent: Minimum Version Check'
-    description: Parent pom must be com.raks.eapi:MuleParentPom with version >= 3.0.0
+    name: 'Update pom parent: MuleParentPom version:LATEST'
+    description: Parent pom must be com.raks.eapi:MuleParentPom:LATEST
     enabled: true
     severity: LOW
     checks:
@@ -172,11 +173,10 @@ rules:
         parent:
           groupId: com.raks.eapi
           artifactId: MuleParentPom
-          minVersion: 3.0.0  # NEW: Minimum version instead of exact match
+          version: LATEST
 
   - id: "RULE-002"
-    name: 'POM Properties: Minimum Version Checks'
-    description: Ensures mule.maven.plugin.version >= 4.5.0 and app.runtime >= 4.9.0
+    name: 'Update pom property: mule.maven.plugin.version to 4.9.0'
     enabled: true
     severity: LOW
     checks:
@@ -185,11 +185,9 @@ rules:
         validationType: PROPERTIES
         properties:
         - name: mule.maven.plugin.version
-          minVersion: 4.5.0  # NEW: Minimum version (supports 4.5.0, 4.6.1, etc.)
+          expectedValue: 4.5.0
         - name: app.runtime
-          minVersion: 4.9.0  # NEW: Works with 4.9.0, 4.9.LTS, 4.10.0, etc.
-        - name: cicd.mule.version
-          expectedValue: 4.9.LTS  # Exact match still supported
+          expectedValue: 4.9.0
 
   - id: "RULE-006"
     name: 'Add pom dependency: apimuleutilities for JCE Encrypt/Decrypt'
