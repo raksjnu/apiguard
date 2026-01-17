@@ -20,7 +20,7 @@
             // 2. Global resolution helper
             window.resolvePath = function(url) {
                 if (isWrapper && !url.startsWith('http') && !url.startsWith('/')) {
-                    return '/apiguard/muleguard/' + url;
+                    return '/apiguard/aegis/' + url;
                 }
                 return url;
             };
@@ -31,8 +31,8 @@
     <script>
        // Helper to check settings
        function checkSettings() {
-           const token = localStorage.getItem('muleguard_git_token');
-           const provider = localStorage.getItem('muleguard_git_provider');
+           const token = localStorage.getItem('aegis_git_token');
+           const provider = localStorage.getItem('aegis_git_provider');
            if (!token && document.querySelector('input[name="mode"]:checked').value === 'git') {
                if(confirm("Git Token is not configured. Go to Settings?")) {
                    window.location.href = resolvePath('settings.html');
@@ -306,7 +306,7 @@
             
             // Initialize view state
             // 1. Restore Git Provider
-            const savedProvider = localStorage.getItem('muleguard_git_provider') || 'gitlab';
+            const savedProvider = localStorage.getItem('aegis_git_provider') || 'gitlab';
             // Only update DOM if mismatch to prevent false change events
             const currentChecked = document.querySelector('input[name="gitProvider"]:checked');
             if (currentChecked && currentChecked.value !== savedProvider) {
@@ -326,7 +326,7 @@
 
             // Restore persisted mode validation mode
             try {
-                const savedMode = localStorage.getItem('muleguard_validation_mode');
+                const savedMode = localStorage.getItem('aegis_validation_mode');
                 console.log('[DEBUG] Restoring saved mode:', savedMode);
                 if (savedMode) {
                     const radio = document.querySelector(`input[name="mode"][value="${savedMode}"]`);
@@ -360,7 +360,7 @@
                 if (save) {
                     const checked = document.querySelector('input[name="mode"]:checked');
                     if (checked) {
-                        localStorage.setItem('muleguard_validation_mode', checked.value);
+                        localStorage.setItem('aegis_validation_mode', checked.value);
                         console.log('[DEBUG] Saved mode:', checked.value);
                     }
                 }
@@ -375,15 +375,9 @@
         // Use localStorage for Session Preferences (Non-sensitive)
         function loadSessionPrefs() {
                 // Load input preference
-                const savedMode = localStorage.getItem('aegis_input_mode');
+                const savedMode = localStorage.getItem('aegis_validation_mode');
                 if (savedMode) {
-                    switchMode(savedMode);
-                }
-
-                // Load Project Path
-                const savedPath = localStorage.getItem('aegis_local_path');
-                if (savedPath) {
-                    $('#localPath').val(savedPath);
+                    selectMode(savedMode);
                 }
 
                 // Load Git Settings
@@ -405,16 +399,16 @@
 
         function saveSessionPrefs() {
             // Auto-save session preferences (Sticky Session)
-            localStorage.setItem('muleguard_session_group', document.getElementById('gitGroup').value);
-            localStorage.setItem('muleguard_session_filter', document.getElementById('gitRepoFilter').value);
-            localStorage.setItem('muleguard_session_url', document.getElementById('gitUrl').value);
+            localStorage.setItem('aegis_session_group', document.getElementById('gitGroup').value);
+            localStorage.setItem('aegis_session_filter', document.getElementById('gitRepoFilter').value);
+            localStorage.setItem('aegis_session_url', document.getElementById('gitUrl').value);
         }
         
         function clearGitCreds() {
             // Clears session prefs
-            localStorage.removeItem('muleguard_session_group');
-            localStorage.removeItem('muleguard_session_filter');
-            localStorage.removeItem('muleguard_session_url');
+            localStorage.removeItem('aegis_session_group');
+            localStorage.removeItem('aegis_session_filter');
+            localStorage.removeItem('aegis_session_url');
             
             document.getElementById('gitGroup').value = '';
             document.getElementById('gitRepoFilter').value = '';
@@ -456,12 +450,12 @@
         
         function saveGitCreds() {
             if (document.getElementById('saveGitCreds').checked) {
-                localStorage.setItem('muleguard_git_group', document.getElementById('gitGroup').value);
-                localStorage.setItem('muleguard_git_filter', document.getElementById('gitRepoFilter').value);
-                localStorage.setItem('muleguard_git_token', document.getElementById('gitToken').value);
+                localStorage.setItem('aegis_git_group', document.getElementById('gitGroup').value);
+                localStorage.setItem('aegis_git_filter', document.getElementById('gitRepoFilter').value);
+                localStorage.setItem('aegis_git_token', document.getElementById('gitToken').value);
                 const providerRadio = document.querySelector('input[name="gitProvider"]:checked');
-                if (providerRadio) localStorage.setItem('muleguard_git_provider', providerRadio.value);
-                localStorage.setItem('muleguard_git_url', document.getElementById('gitUrl').value);
+                if (providerRadio) localStorage.setItem('aegis_git_provider', providerRadio.value);
+                localStorage.setItem('aegis_git_url', document.getElementById('gitUrl').value);
             }
             // Always save Custom Rules path if provided? Or only if checked?
             // User requested persistence, so let's save if checked or always. 
@@ -470,16 +464,16 @@
             // Let's save custom rules whenever saveGitCreds is called, which happens on Run.
              if (document.getElementById('saveGitCreds').checked) {
                 const customRulesPath = document.getElementById('customRules').value;
-                if (customRulesPath) localStorage.setItem('muleguard_custom_rules', customRulesPath);
+                if (customRulesPath) localStorage.setItem('aegis_custom_rules', customRulesPath);
              }
         }
         
         function clearGitCreds() {
-            localStorage.removeItem('muleguard_git_group');
-            localStorage.removeItem('muleguard_git_filter');
-            localStorage.removeItem('muleguard_git_token');
-            localStorage.removeItem('muleguard_git_provider');
-            localStorage.removeItem('muleguard_git_url');
+            localStorage.removeItem('aegis_git_group');
+            localStorage.removeItem('aegis_git_filter');
+            localStorage.removeItem('aegis_git_token');
+            localStorage.removeItem('aegis_git_provider');
+            localStorage.removeItem('aegis_git_url');
             
             document.getElementById('gitGroup').value = '';
             document.getElementById('gitRepoFilter').value = '';
@@ -695,16 +689,16 @@
                 // Get Token based on Provider
                 let token = "";
                 if (provider === 'github') {
-                    token = localStorage.getItem('muleguard_github_token') || "";
+                    token = localStorage.getItem('aegis_github_token') || "";
                 } else if (provider === 'gitlab') {
-                    token = localStorage.getItem('muleguard_gitlab_token') || "";
+                    token = localStorage.getItem('aegis_gitlab_token') || "";
                 } else {
                     // Other provider - user should have set 'Other' token if needed
-                    token = localStorage.getItem('muleguard_other_token') || "";
+                    token = localStorage.getItem('aegis_other_token') || "";
                 }
                 
                 // Fallback (Legacy)
-                if (!token) token = localStorage.getItem('muleguard_git_token') || "";
+                if (!token) token = localStorage.getItem('aegis_git_token') || "";
 
                 if(!token) {
                     console.warn(`No ${provider} token found. Creating public request.`);
@@ -725,7 +719,7 @@
                 formData.append('customRules', customRules);
             } else {
                 // If no file uploaded, check for default rules path in Settings
-                const defaultRulesPath = localStorage.getItem('muleguard_custom_rules_path');
+                const defaultRulesPath = localStorage.getItem('aegis_custom_rules_path');
                 if (defaultRulesPath) {
                     formData.append('customRulesPath', defaultRulesPath);
                 }

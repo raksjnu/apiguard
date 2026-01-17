@@ -76,6 +76,7 @@ public class AegisGUI {
             server.createContext("/api/git/repos", new GitDiscoveryReposHandler());
             server.createContext("/api/git/branches", new GitDiscoveryBranchesHandler());
             server.createContext("/download", new DownloadHandler());
+            server.createContext("/api/download/sample", new SampleDownloadHandler());
             
             server.setExecutor(null);
             server.start();
@@ -617,6 +618,70 @@ public class AegisGUI {
 
     /**
      * Handler for downloading files from session.
+     */
+    /**
+     * Handler for downloading sample files from resources.
+     */
+    static class SampleDownloadHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            try {
+                String query = exchange.getRequestURI().getQuery();
+                Map<String, String> params = new HashMap<>();
+                if (query != null) {
+                    for (String pair : query.split("&")) {
+                        int idx = pair.indexOf("=");
+                        if (idx > 0)
+                            params.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+                    }
+                }
+
+                String filename = params.get("file");
+                if (filename == null || filename.isEmpty() || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
+                    exchange.sendResponseHeaders(400, -1);
+                    return;
+                }
+
+                // Security whitelist
+                if (!filename.equals("sample-project.zip") && !filename.equals("sample-rules.yaml")) {
+                    exchange.sendResponseHeaders(404, -1);
+                    return;
+                }
+
+                InputStream is = AegisGUI.class.getResourceAsStream("/web/aegis/" + filename);
+                if (is != null) {
+                    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+                    int nRead;
+                    byte[] data = new byte[16384];
+                    while ((nRead = is.read(data, 0, data.length)) != -1) {
+                        buffer.write(data, 0, nRead);
+                    }
+                    buffer.flush();
+                    byte[] content = buffer.toByteArray();
+                    is.close();
+                    
+                    if (filename.endsWith(".zip")) {
+                         exchange.getResponseHeaders().set("Content-Type", "application/zip");
+                    } else if (filename.endsWith(".yaml")) {
+                         exchange.getResponseHeaders().set("Content-Type", "application/x-yaml");
+                    }
+                    
+                    exchange.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+                    exchange.sendResponseHeaders(200, content.length);
+                    try (OutputStream os = exchange.getResponseBody()) { os.write(content); }
+                } else {
+                    logger.error("Sample file not found in resources: /web/aegis/" + filename);
+                    exchange.sendResponseHeaders(404, -1);
+                }
+            } catch (Exception e) {
+                logger.error("Sample download failed", e);
+                exchange.sendResponseHeaders(500, -1);
+            }
+        }
+    }
+
+    /**
+     * Handler for downloading session reports.
      */
     static class DownloadHandler implements HttpHandler {
         @Override

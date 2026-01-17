@@ -4,17 +4,14 @@ import com.raks.aegis.model.ValidationReport.RuleResult;
 import com.raks.aegis.AegisMain.ApiResult;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import java.io.BufferedReader;
 import java.io.FileOutputStream;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -175,7 +172,6 @@ public class ReportGenerator {
                                 <div class="top-nav-container">
                                 <a href="../CONSOLIDATED-REPORT.html" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
                                 <a href="report.xlsx" class="top-nav-button" style="background-color: #217346;">Excel Report</a>
-                                <a href="../checklist.html" class="top-nav-button">Checklist</a>
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <img src="logo.svg" alt="Aegis Logo" style="height: 40px; margin-right: 15px;">
@@ -449,7 +445,6 @@ public class ReportGenerator {
                         <div class="report-container">
                                 <div class="top-nav-container">
                                 <a href="CONSOLIDATED-REPORT.xlsx" class="top-nav-button" style="background-color: #217346;">Excel Report</a>
-                                <a href="checklist.html" class="top-nav-button">Checklist</a>
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
                                 <img src="logo.svg" alt="Aegis Logo" style="height: 40px; margin-right: 15px;">
@@ -580,158 +575,17 @@ public class ReportGenerator {
             Path htmlPath = outputPath.resolve("CONSOLIDATED-REPORT.html");
             Files.writeString(htmlPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
             logger.debug("Consolidated report generated: {}", htmlPath.toAbsolutePath());
-            copyHelpFile(outputPath);
+            copyHelpFile(outputPath); // Keeping help file for now if needed by consolidated report, but user asked to remove it from report folder? 
+            // User asked: "rest the checklist, help and rule guide html files wil not be there."
+            // So I should remove copyHelpFile and generateRuleGuide calls as well.
             generateConsolidatedExcel(results, outputPath);
-            generateChecklistReport(outputPath); 
-            generateRuleGuide(outputPath); 
         } catch (Throwable t) {
             logger.error("Failed to generate consolidated report");
             logger.error("Error type: {}", t.getClass().getName());
             logger.error("Error message: {}", (t.getMessage() != null ? t.getMessage() : "null"), t); 
         }
     }
-    private static void generateChecklistReport(Path outputDir) {
-        try {
-            StringBuilder rows = new StringBuilder();
-            try (InputStream is = ReportGenerator.class.getResourceAsStream("/rulemapping.csv");
-                    BufferedReader reader = new BufferedReader(
-                            new InputStreamReader(Objects.requireNonNull(is, "Cannot find rulemapping.csv")))) {
-                reader.readLine();
-                int srNo = 1;
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    String[] parts = line.split(";", 3);
-                    if (parts.length == 3) {
-                        rows.append(String.format("<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>", srNo++,
-                                escape(parts[0]), escape(parts[1]), escape(parts[2])));
-                    }
-                }
-            }
-            String html = """
-                    <!DOCTYPE html>
-                    <html>
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Aegis - Validation Checklist</title>
-                        <style>
-                            :root {
-                                --raks-purple: #663399;
-                                --raks-purple-light: #7d4fb2;
-                                --text-white: #FFFFFF;
-                            }
-                            body {font-family: Arial, sans-serif; margin: 0; background-color: #f0f0f0;}
-                            .report-container { border: 5px solid var(--raks-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; position: relative; }
-                            h1 {color: var(--raks-purple);}
-                            table {width: 100%%; border-collapse: collapse; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
-                            th, td {border: 1px solid #ddd; padding: 12px; text-align: left;}
-                            th {background-color: var(--raks-purple); color: var(--text-white);}
-                            .contact-button {
-                                background-color: var(--raks-purple);
-                                color: var(--text-white);
-                                border: none;
-                                padding: 12px 24px;
-                                text-align: center;
-                                text-decoration: none;
-                                display: inline-block;
-                                font-size: 16px;
-                                font-weight: bold;
-                                margin-top: 25px;
-                                cursor: pointer;
-                                border-radius: 5px;
-                                transition: background-color 0.3s ease;
-                                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                            }
-                            .contact-button:hover { background-color: var(--raks-purple-light); }
-                            .top-nav-container {
-                                position: absolute;
-                                top: 20px;
-                                right: 40px;
-                                display: flex;
-                                gap: 10px;
-                            }
-                            .top-nav-button {
-                                background-color: var(--raks-purple);
-                                color: var(--text-white);
-                                border: none;
-                                padding: 8px 16px;
-                                text-align: center;
-                                text-decoration: none;
-                                display: inline-block;
-                                font-size: 14px;
-                                font-weight: bold;
-                                cursor: pointer;
-                                border-radius: 5px;
-                                transition: background-color 0.3s ease;
-                                box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-                            }
-                            .top-nav-button:hover { background-color: var(--raks-purple-light); }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="report-container">
-                                <div class="top-nav-container">
-                                <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
-                                <a href="/Aegis/main" id="mainPageBtn" class="top-nav-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
-                            </div>
-                            <div style="display: flex; align-items: center; margin-bottom: 20px;">
-                                <img src="logo.svg" alt="Aegis Logo" style="height: 40px; margin-right: 15px;">
-                                <h1 style="margin: 0;">Aegis Checklist</h1>
-                            </div>
-                            <p>This page lists all the individual checks performed by the Aegis tool.</p>
-                            <table>
-                                <tr><th>Sr.#</th><th>ChecklistItem</th><th>ChecklistType</th><th>RuleId</th></tr>
-                                %s
-                            </table>
-                        </div>
-                            <script>
-                                document.addEventListener('DOMContentLoaded', function() {
-                                    var path = window.location.pathname;
-                                    var isMuleStatic = path.includes('/apiguard/Aegis/web/') || path.includes('/Aegis/web/');
-                                    var isMuleReport = path.includes('/apiguard/Aegis/reports/') || path.includes('/Aegis/reports/');
-                                    var dashboardBtn = document.getElementById('dashboardBtn');
-                                    var mainPageBtn = document.getElementById('mainPageBtn');
-                                    
-
-                                    var isInMuleWrapper = path.includes('/apiguard/');
-                                    var basePath = isInMuleWrapper ? '/apiguard/Aegis' : '/Aegis';
-                                    
-                                    var sessionId = new URLSearchParams(window.location.search).get('session');
-                                    if (!sessionId && isMuleReport) {
-                                        var parts = path.split('/Aegis/reports/');
-                                        if (parts.length > 1) {
-                                            var subparts = parts[1].split('/');
-                                            if (subparts.length > 0) sessionId = subparts[0];
-                                        }
-                                    }
-                                    if (isMuleStatic || isMuleReport) {
-                                        if (mainPageBtn) {
-                                            mainPageBtn.style.display = 'inline-block';
-                                            var mainPageUrl = basePath + '/main';
-                                            if (sessionId) mainPageUrl += '?session=' + sessionId;
-                                            mainPageBtn.href = mainPageUrl;
-                                            if (isMuleStatic) {
-                                                mainPageBtn.style.right = '40px';
-                                                if (dashboardBtn) dashboardBtn.style.display = 'none'; 
-                                            } else {
-                                                mainPageBtn.style.right = '180px';
-                                            }
-                                        }
-                                    } else {
-                                        if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
-                                    }
-                                });
-                            </script>
-                    </body>
-                    </html>
-                    """;
-            String finalHtml = String.format(html, rows.toString());
-            Path checklistPath = outputDir.resolve("checklist.html");
-            Files.writeString(checklistPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
-            logger.debug("Checklist generated");
-        } catch (Exception e) {
-            logger.error("Failed to generate checklist report: {}", e.getMessage());
-        }
-    }
+    // generateChecklistReport method removed
     public static void generateRuleGuide(String outputDir) {
         generateRuleGuide(java.nio.file.Paths.get(outputDir));
     }
