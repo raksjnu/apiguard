@@ -433,13 +433,13 @@ output application/java
                 </ee:transform>
                 
                 <!-- Extract fields from multipart map -->
-                <logger level="INFO" message="#['DEBUG - Input Parts Map Keys: ' ++ (namesOf(vars.inputParts) joinBy ', ')]"/>
+
                 
                 <set-variable variableName="validationMode" value="#[vars.inputParts.mode default 'local']"/>
                 
                 <!-- Smart Project Path Resolution: Check projectPath first, then gitUrls fallback -->
                 <set-variable variableName="rawProjectPath" value="#[vars.inputParts.projectPath default vars.inputParts.gitUrls default '']"/>
-                <logger level="INFO" message="#['DEBUG - Resolved Project Path: ' ++ vars.rawProjectPath]"/>
+
                 <set-variable variableName="projectPath" value="#[vars.rawProjectPath]"/>
                 
                 <set-variable variableName="uploadFileContent" value="#[vars.inputParts.archive]"/>
@@ -460,7 +460,7 @@ output application/java
                 <set-variable variableName="userWantsProjectAttachment" value="#[attributes.queryParams.attachProject default 'false']"/>
             </otherwise>
         </choice>
-        
+
         <!-- Cleanup input path -->
         <set-variable variableName="projectPath" value="#[(vars.projectPath default '') replace '&quot;' with '']"/>
         
@@ -492,24 +492,24 @@ output application/java
         </choice>
 
         <!-- Debug: Log validation mode -->
-        <logger level="INFO" message="#['DEBUG - validationMode: [' ++ vars.validationMode ++ '] length: ' ++ sizeOf(vars.validationMode)]"/>
+
 
         <!-- Handle Input Source -->
         <choice>
             <when expression="#[trim(vars.validationMode) == 'zip' or trim(vars.validationMode) == 'jar']">
-                <logger level="INFO" message="DEBUG - ENTERED ZIP/JAR BRANCH"/>
+
                 <!-- Handle File Upload (ZIP or JAR) -->
                 <set-variable variableName="zipFilePath" value="#[vars.workDir ++ '/input.zip']"/>
                 <file:write path="#[vars.zipFilePath]" config-ref="File_Config">
                     <file:content>#[vars.uploadFileContent]</file:content>
                 </file:write>
                 
-                <logger level="INFO" message="#['DEBUG - About to extract. zipFilePath: ' ++ vars.zipFilePath ++ ', sessionId: ' ++ vars.sessionId]"/>
+
                 
                 <!-- Extract ZIP/JAR -->
                 <choice>
                     <when expression="#[trim(vars.validationMode) == 'zip']">
-                        <logger level="INFO" message="DEBUG - Extracting as ZIP"/>
+
                         <java:invoke-static class="com.raks.aegis.util.ArchiveExtractor" method="extractZip(java.lang.String,java.lang.String,java.lang.String)">
                             <java:args>#[{
                                 arg0: vars.zipFilePath,
@@ -533,16 +533,16 @@ output application/java
                 <!-- Store extracted path as String to avoid serialization issues -->
                 <set-variable variableName="extractedPath" value="#[payload as String]"/>
                 
-                <logger level="INFO" message="#['DEBUG - After extraction. extractedPath: ' ++ vars.extractedPath]"/>
+
                 
                 <!-- Set targetPath to parent of extracted project so Aegis finds the project and creates reports at parent level -->
                 <set-variable variableName="targetPath" value="#[vars.extractedPath]"/>
-                <logger level="INFO" message="#['DEBUG - targetPath (parent): ' ++ vars.targetPath]"/>
+
                 <set-variable variableName="displayPath" value="Uploaded Project"/>
             </when>
             
              <when expression="#[trim(vars.validationMode) == 'git']">
-                  <logger level="INFO" message="#['DEBUG - Raw Project Path: ' ++ (vars.projectPath default 'NULL')]"/>
+
                   <set-variable variableName="gitUrlList" value="#[(vars.projectPath splitBy ',') map trim($) filter ($ != '')]"/>
                   <set-variable variableName="gitBranch" value="#[vars.inputParts.gitBranch default 'main']"/>
                   <set-variable variableName="gitToken" value="#[vars.inputParts.gitToken default '']"/>
@@ -582,6 +582,8 @@ output application/java
         <logger level="INFO" message="#['Invoking Aegis on: ' ++ vars.targetPath]"/>
         
         <set-variable variableName="reportDirName" value="#['aegis-reports-' ++ vars.timestamp]"/>
+        <set-variable variableName="reportAbsPath" value="#[vars.workDir ++ '/' ++ vars.reportDirName]"/>
+
         
         <!-- Invoke Wrapper Class -->
         <java:invoke-static class="com.raks.aegis.wrapper.AegisInvoker" method="validate(String, String, String, String)" target="validationResults">
@@ -589,38 +591,38 @@ output application/java
                 arg0: vars.targetPath,
                 arg1: vars.customRulesPath,
                 arg2: vars.displayPath,
-                arg3: vars.reportDirName
+                arg3: vars.reportAbsPath
             }]</java:args>
         </java:invoke-static>
         
-        <!-- Debug: Log paths before zipping -->
-        <logger level="INFO" message="#['DEBUG - targetPath: ' ++ vars.targetPath ++ ', reportDirName: ' ++ vars.reportDirName]"/>
+
         
         <!-- Copy Logo to Report Directory so it appears in ZIP and online view -->
         <try>
             <file:copy sourcePath="#[p('app.home') ++ '/web/aegis/logo.svg']" 
-                       targetPath="#[vars.targetPath ++ '/' ++ vars.reportDirName ++ '/logo.svg']" 
+                       targetPath="#[vars.reportAbsPath ++ '/logo.svg']" 
                        config-ref="File_Config" overwrite="true"/>
             <logger level="INFO" message="#['Copied logo.svg from ' ++ (p('app.home') ++ '/web/aegis/logo.svg') ++ ' to ' ++ (vars.targetPath ++ '/' ++ vars.reportDirName ++ '/logo.svg')]"/>
             <error-handler>
                 <on-error-continue>
-                    <logger level="WARN" message="#['Failed to copy logo.svg to ' ++ (vars.targetPath ++ '/' ++ vars.reportDirName ++ '/logo.svg') ++ '. Error: ' ++ error.description]"/>
+                    <logger level="WARN" message="#['Failed to copy logo.svg to ' ++ (vars.reportAbsPath ++ '/logo.svg') ++ '. Error: ' ++ error.description]"/>
                 </on-error-continue>
             </error-handler>
         </try>
         
         <!-- Create ZIP of the report directory (Required for email/download) -->
         <logger level="INFO" message="#['Zipping report directory: ' ++ vars.reportDirName]"/>
+        <logger level="INFO" message="#['Zipping report directory: ' ++ vars.reportAbsPath]"/>
         <java:invoke-static doc:name="Zip Reports" class="com.raks.aegis.util.ArchiveExtractor" method="zipDirectory(java.lang.String,java.lang.String)">
             <java:args><![CDATA[#[{
-                arg0: vars.targetPath ++ '/' ++ vars.reportDirName,
-                arg1: vars.targetPath ++ '/' ++ vars.reportDirName ++ '.zip'
+                arg0: vars.reportAbsPath,
+                arg1: vars.reportAbsPath ++ '.zip'
             }]]]></java:args>
         </java:invoke-static>
         
         <!-- Persist Report Path for Session (Key: SessionId, Value: targetPath || ReportDirName || BaseName) -->
         <os:store key="#[vars.sessionId]" objectStore="Report_Path_Store">
-            <os:value>#[vars.targetPath ++ '||' ++ vars.reportDirName ++ '||' ++ (if (vars.validationMode == 'git') vars.repoName else 'project')]</os:value>
+            <os:value>#[vars.workDir ++ '||' ++ vars.reportDirName ++ '||' ++ (if (vars.validationMode == 'git') vars.repoName else 'project')]</os:value>
         </os:store>
         
         <!-- Send usage notification (Async) -->
@@ -646,7 +648,7 @@ vars.validationResults ++ {
         
         <error-handler>
              <on-error-continue type="ANY">
-                 <logger level="ERROR" message="#['Unexpected Error: ' ++ error.description]"/>
+                 <logger level="ERROR" message="#['CRITICAL ERROR in Aegis Wrapper: ' ++ error.description ++ '\nType: ' ++ error.errorType.identifier ++ '\nTrace: ' ++ error.detailedDescription]"/>
                  <set-variable variableName="httpStatus" value="500"/>
                  <ee:transform>
                     <ee:message>
@@ -675,7 +677,7 @@ output application/json
          <set-variable variableName="totalAttachmentSize" value="#[0]"/>
         
         <!-- Logic to attach ZIPs similar to muleguard (simplified for brevity or copied logic) -->
-        <set-variable variableName="reportsZipPath" value="#[vars.targetPath ++ '/' ++ vars.reportDirName ++ '.zip']"/>
+        <set-variable variableName="reportsZipPath" value="#[vars.workDir ++ '/' ++ vars.reportDirName ++ '.zip']"/>
         
         <choice>
              <when expression="#[vars.shouldAttachReports]">
