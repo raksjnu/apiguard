@@ -101,9 +101,15 @@ public class ReportGenerator {
             String failLabel = labels.getOrDefault("FAIL", "FAIL");
 
             for (RuleResult r : allResults) {
-                String configRow = (r.ruleConfig != null && !r.ruleConfig.isEmpty())
-                        ? "<div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><strong>Rule Config:</strong> " + escape(r.ruleConfig) + "</div>"
-                        : "";
+                String configRow = "";
+                if (r.ruleConfig != null && !r.ruleConfig.isEmpty()) {
+                    String configId = "config-" + r.id + "-" + java.util.UUID.randomUUID().toString().substring(0, 8);
+                    configRow = "<div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'>" +
+                            "<a href='javascript:void(0)' id='" + configId + "-link' class='config-toggle' onclick=\"toggleConfig('" + configId + "')\" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a>" +
+                            "<div id='" + configId + "' class='rule-config' style='display:none; margin-top:5px; padding:5px; background:#f9f9f9; border-radius:4px;'>" + 
+                            "<strong>Config:</strong> " + escape(r.ruleConfig) + 
+                            "</div></div>";
+                }
                 String scope = r.scope != null ? r.scope : "GLOBAL";
                 
                 if (r.passed) {
@@ -182,8 +188,11 @@ public class ReportGenerator {
                                 <strong>Generated:</strong> %s<br>
                                 <strong>Total Rules:</strong> %d | <strong style="color:green">%s:</strong> %d | <strong style="color:red">%s:</strong> %d
                             </div>
-                            <div class="search-box">
-                                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by name, status, or details...">
+                            </div>
+                            <div class="search-box" style="display:flex; gap:10px; align-items:center;">
+                                <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by name, status, or details..." style="flex-grow:1;">
+                                <button class="top-nav-button" onclick="toggleAllConfigs(true)" style="width:auto; font-size:12px;">Expand All Configs</button>
+                                <button class="top-nav-button" onclick="toggleAllConfigs(false)" style="width:auto; font-size:12px; background:#999;">Collapse All</button>
                             </div>
                             <table id="resultsTable">
                                 <thead>
