@@ -89,6 +89,8 @@ rules:
     description: Scans configured files for forbidden tokens. Fails if tokens are found.
     enabled: true
     severity: HIGH
+    errorMessage: "Found forbidden token defined in rule {RULE_ID}. Please remove these tokens."
+    successMessage: "No forbidden tokens found for rule {RULE_ID}."
     checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:

@@ -1122,7 +1122,7 @@ public class ReportGenerator {
                                     
 
                                     var isInMuleWrapper = path.includes('/apiguard/');
-                                    var basePath = isInMuleWrapper ? '/apiguard/Aegis' : '';
+                                    var basePath = isInMuleWrapper ? '/apiguard/aegis' : '';
                                     
                                     var sessionId = new URLSearchParams(window.location.search).get('session');
                                     if (!sessionId && isReport) {
@@ -1159,15 +1159,17 @@ public class ReportGenerator {
                     """;
             String finalHtml = String.format(html, sidebar.toString(), content.toString());
             Path ruleGuidePath = outputDir.resolve("rule_guide.html");
+            logger.info("DEBUG: Attempting to generate Rule Guide at: {}", ruleGuidePath.toAbsolutePath());
             java.util.Optional.ofNullable(ruleGuidePath.getParent()).ifPresent(p -> {
                 try {
                     java.nio.file.Files.createDirectories(p);
                 } catch (Exception e) {}
             });
             Files.writeString(ruleGuidePath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
+            logger.info("DEBUG: Rule Guide generated successfully.");
             logger.debug("Rule guide generated (dynamic)");
         } catch (Exception e) {
-            logger.error("Failed to generate rule guide: {}", e.getMessage(), e);
+            logger.error("DEBUG: Failed to generate rule guide: {}", e.getMessage(), e);
         }
     }
     private static String convertMdToHtml(String md) {
