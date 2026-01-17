@@ -196,11 +196,11 @@ public class ReportGenerator {
                             <table id="resultsTable">
                                 <thead>
                                     <tr>
-                                        <th style="width: 7%%;" onclick="sortTable(0)">Rule #</th>
+                                        <th style="width: 5%%;" onclick="sortTable(0)">Rule #</th>
                                         <th style="width: 25%%;" onclick="sortTable(1)">Name</th>
-                                        <th style="width: 10%%;" onclick="sortTable(2)">Severity</th>
-                                        <th style="width: 8%%;" onclick="sortTable(3)">Status</th>
-                                        <th style="width: 50%%;" onclick="sortTable(4)">Details</th>
+                                        <th style="width: 5%%;" onclick="sortTable(2)">Severity</th>
+                                        <th style="width: 5%%;" onclick="sortTable(3)">Status</th>
+                                        <th style="width: 60%%;" onclick="sortTable(4)">Details</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tableBody">
