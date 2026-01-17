@@ -243,8 +243,16 @@ public class AegisMain implements Callable<Integer> {
             String matchMode = (String) targetProjectConfig.getOrDefault("matchMode", "ANY");
             List<String> markerFiles = (List<String>) targetProjectConfig.get("markerFiles");
             String configFolderPattern = (String) configFolderConfig.get("namePattern");
-            List<String> exactIgnoredNames = (List<String>) ignoredFoldersConfig.get("exactNames");
-            List<String> ignoredPrefixes = (List<String>) ignoredFoldersConfig.get("prefixes");
+            List<String> exactIgnoredNames = new ArrayList<>();
+            List<String> ignoredPrefixes = new ArrayList<>();
+            if (ignoredFoldersConfig != null) {
+                if (ignoredFoldersConfig.get("exactNames") != null) {
+                    exactIgnoredNames = (List<String>) ignoredFoldersConfig.get("exactNames");
+                }
+                if (ignoredFoldersConfig.get("prefixes") != null) {
+                    ignoredPrefixes = (List<String>) ignoredFoldersConfig.get("prefixes");
+                }
+            }
             List<String> globalEnvironments = activeConfig.getConfig().getEnvironments();
 
             // Discover Projects
