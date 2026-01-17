@@ -3,6 +3,9 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>{{portal.page.title}}</title>
     <style>
         body {
@@ -162,8 +165,8 @@
                     // Check if custom message exists and is not an empty template placeholder
                     const hasCustomMsg = tool.disabledMsg && tool.disabledMsg.trim() && !tool.disabledMsg.startsWith('{{');
                     const message = hasCustomMsg
-                        ? '🚧 ' + tool.name + ' is not enabled.\\n\\n' + tool.disabledMsg
-                        : '🚧 ' + tool.name + ' is not enabled yet.\\n\\nThis tool is currently under development and will be available in a future release.';
+                        ? '🚧 ' + tool.name + ' is not enabled.\n\n' + tool.disabledMsg
+                        : '🚧 ' + tool.name + ' is not enabled yet.\n\nThis tool is currently under development and will be available in a future release.';
                     alert(message);
                     return false;
                 };
