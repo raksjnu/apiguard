@@ -185,6 +185,7 @@ if (reportsIndex >= 0 and sizeOf(parts) > reportsIndex + 2) {
             else if (vars.fileName endsWith '.svg') 'image/svg+xml'
             else if (vars.fileName endsWith '.png') 'image/png'
             else if (vars.fileName endsWith '.html') 'text/html'
+            else if (vars.fileName endsWith '.xlsx') 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             else 'application/octet-stream'
         ]"/>
 
@@ -535,10 +536,7 @@ output application/java
                 <logger level="INFO" message="#['DEBUG - After extraction. extractedPath: ' ++ vars.extractedPath]"/>
                 
                 <!-- Set targetPath to parent of extracted project so Aegis finds the project and creates reports at parent level -->
-                <set-variable variableName="targetPath" value="#[%dw 2.0
-output application/java
----
-(vars.extractedPath splitBy (if (vars.extractedPath contains '\\') '\\' else '/'))[0 to -2] joinBy (if (vars.extractedPath contains '\\') '\\' else '/')]"/>
+                <set-variable variableName="targetPath" value="#[vars.extractedPath]"/>
                 <logger level="INFO" message="#['DEBUG - targetPath (parent): ' ++ vars.targetPath]"/>
                 <set-variable variableName="displayPath" value="Uploaded Project"/>
             </when>
@@ -583,7 +581,7 @@ output application/java
         <!-- Execute Aegis Validation -->
         <logger level="INFO" message="#['Invoking Aegis on: ' ++ vars.targetPath]"/>
         
-        <set-variable variableName="reportDirName" value="#['Aegis-reports']"/>
+        <set-variable variableName="reportDirName" value="#['aegis-reports-' ++ vars.timestamp]"/>
         
         <!-- Invoke Wrapper Class -->
         <java:invoke-static class="com.raks.aegis.wrapper.AegisInvoker" method="validate(String, String, String, String)" target="validationResults">
