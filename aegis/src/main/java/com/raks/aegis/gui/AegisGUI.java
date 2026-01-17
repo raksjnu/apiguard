@@ -20,8 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
-import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import java.util.List;
@@ -67,7 +65,7 @@ public class AegisGUI {
             
 
             server.createContext("/rule_guide.html", new RuleGuidePageHandler());
-            server.createContext("/web/rule_guide.html", new RuleGuidePageHandler());
+            server.createContext("/web/aegis/rule_guide.html", new RuleGuidePageHandler());
 
 
             server.createContext("/reports/", new ReportHandler());
@@ -131,16 +129,15 @@ public class AegisGUI {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
-            if (path.equals("/")) path = "/web/index.html";
-            else if (!path.startsWith("/web/")) {
-                // Try /web prefix first, if it fails, the stream check below will handle direct resources
-                path = "/web/" + (path.startsWith("/") ? path.substring(1) : path);
+            if (path.equals("/")) path = "/web/aegis/index.html";
+            else if (!path.startsWith("/web/aegis/")) {
+                path = "/web/aegis/" + (path.startsWith("/") ? path.substring(1) : path);
             }
 
             InputStream is = getClass().getResourceAsStream(path);
             if (is == null) {
                 // Fallback for direct resources or legacy paths
-                String altPath = path.replace("/web/", "/");
+                String altPath = path.replace("/web/aegis/", "/");
                 is = getClass().getResourceAsStream(altPath);
             }
 
@@ -248,14 +245,14 @@ public class AegisGUI {
                         String customRulesPath = (String) params.get("customRulesPath");
                         
                         if (customRulesFile != null) {
-                            args.add("-r");
+                            args.add("-c");
                             args.add(customRulesFile.getAbsolutePath());
                         } else if (customRulesPath != null && !customRulesPath.isBlank()) {
-                             args.add("-r");
+                             args.add("-c");
                              args.add(customRulesPath);
                         }
                         
-                        AegisMain.main(args.toArray(new String[0]));
+                        AegisMain.execute(args.toArray(new String[0]));
                         
                         Path reportDir = Paths.get(projectPath, "Aegis-reports");
                         if (!Files.exists(reportDir)) reportDir = Paths.get("Aegis-reports");
@@ -431,11 +428,9 @@ public class AegisGUI {
 
     static class MultipartParser {
         private final InputStream input;
-        private final String boundary;
         private final byte[] boundaryBytes;
         public MultipartParser(InputStream input, String boundary) {
             this.input = input;
-            this.boundary = boundary;
             this.boundaryBytes = ("--" + boundary).getBytes(StandardCharsets.ISO_8859_1);
         }
         public Map<String, Object> parse() throws IOException {

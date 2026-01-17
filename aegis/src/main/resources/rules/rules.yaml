@@ -1,6 +1,6 @@
 # =============================================================================
 # Aegis Rules Configuration
-# Migration Scope: Mule 4.3.x/4.4.x/4.6.x → 4.9.0 + JDK 17 + Policy Modernization + RTF 4.3
+# Scope: Universal Code Compliance (Java, Python, MuleSoft, TIBCO, DevOps)
 # Author: Rakesh Kumar (rakesh.kumar@ibm.com)
 # =============================================================================
 
@@ -8,7 +8,7 @@
 # RULE TYPES QUICK REFERENCE
 # =============================================================================
 # 
-# CODE RULE TYPES (12 Standard Types - Apply to Mule API Projects)
+# UNIVERSAL RULE TYPES (Apply to ANY text-based project)
 # -------------------------------------------------------------------------
 # 1.  GENERIC_TOKEN_SEARCH_REQUIRED      - Ensures required tokens exist in files
 # 2.  GENERIC_TOKEN_SEARCH_FORBIDDEN     - Ensures forbidden tokens do NOT exist in files
@@ -20,16 +20,16 @@
 # 8.  XML_ELEMENT_CONTENT_FORBIDDEN      - Validates forbidden content does NOT exist within XML elements
 # 9.  POM_VALIDATION_REQUIRED            - Ensures required POM elements exist (parent, dependencies, plugins, properties)
 # 10. POM_VALIDATION_FORBIDDEN           - Ensures forbidden POM elements do NOT exist (dependencies, plugins)
-# 11. JSON_VALIDATION_REQUIRED           - Validates required JSON elements exist (mule-artifact.json)
+# 11. JSON_VALIDATION_REQUIRED           - Validates required JSON elements exist (e.g., mule-artifact.json, package.json)
 # 12. JSON_VALIDATION_FORBIDDEN          - Validates forbidden JSON elements do NOT exist
 #
-# CONFIG RULE TYPES (5 Standard Types - Apply to Configuration Projects)
+# CONFIG RULE TYPES (Standard Types - Apply to Configuration Projects)
 # -------------------------------------------------------------------------
 # 1.  MANDATORY_SUBSTRING_CHECK          - Ensures required substrings exist in config files (.properties, .policy)
 # 2.  MANDATORY_PROPERTY_VALUE_CHECK     - Validates required properties exist with correct values
 # 3.  OPTIONAL_PROPERTY_VALUE_CHECK      - Validates property values IF the property exists
 # 4.  GENERIC_TOKEN_SEARCH               - Advanced token search with REGEX support and environment filtering
-# 5.  CLIENTIDMAP_VALIDATOR              - Custom validator for secure properties and client ID mappings
+
 #
 # CONDITIONAL STANDARDS (Universal "If-Then" Engine)
 # -------------------------------------------------------------------------
@@ -57,7 +57,7 @@ config:
   projectIdentification:
     configFolder:
       namePattern: .*_config.*
-    muleApiProject:
+    targetProject:
       matchMode: ALL
       markerFiles:
       - pom.xml
@@ -65,7 +65,7 @@ config:
     ignoredFolders:
       exactNames:
       - Aegis-reports
-      - muleguard-reports
+      - rakesh
       - target
       - bin
       - build
@@ -77,10 +77,8 @@ config:
       prefixes:
       - .
       - Aegis-reports
-      - muleguard-reports
-  rules:
-    start: 100
-    end: 199
+
+
 rules:  
 
   # ---------------------------------------------------------------------------
@@ -697,9 +695,7 @@ rules:
         - ^(?![\s]*[#!]).*\blocalhost\b
         - ^(?![\s]*[#!]).*\b127\.0\.0\.1\b
 
-  # ---------------------------------------------------------------------------
-  # CONFIG RULES: CLIENTIDMAP_VALIDATOR (REMOVED)
-  # ---------------------------------------------------------------------------
+
 
   - id: RULE-B01
     name: 'Conditional: Batch API asset type'

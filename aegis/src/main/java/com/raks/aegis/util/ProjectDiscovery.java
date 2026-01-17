@@ -9,7 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 public class ProjectDiscovery {
     private static final Logger logger = LoggerFactory.getLogger(ProjectDiscovery.class);
-    public static List<Path> findMuleProjects(
+    public static List<Path> findProjects(
             Path searchPath,
             int maxDepth,
             List<String> markerFiles,
@@ -18,15 +18,15 @@ public class ProjectDiscovery {
             List<String> exactIgnoredNames,
             List<String> ignoredPrefixes) {
         List<Path> projects = new ArrayList<>();
-        logger.debug("Searching for Mule projects in: {}", searchPath.toAbsolutePath());
+        logger.debug("Searching for projects in: {}", searchPath.toAbsolutePath());
         logger.debug("Maximum search depth: {}", maxDepth);
         searchForProjects(searchPath, projects, 0, maxDepth,
                 markerFiles, matchMode, configFolderPattern,
                 exactIgnoredNames, ignoredPrefixes);
         if (projects.isEmpty()) {
-            logger.info("No Mule projects found in: {}", searchPath.toAbsolutePath());
+            logger.info("No projects found in: {}", searchPath.toAbsolutePath());
         } else {
-            logger.info("Found {} Mule project(s)", projects.size());
+            logger.info("Found {} project(s)", projects.size());
             for (int i = 0; i < projects.size(); i++) {
                 logger.debug("  {}. {}", (i + 1), projects.get(i).toAbsolutePath());
             }
@@ -47,7 +47,7 @@ public class ProjectDiscovery {
             return;
         }
         try {
-            if (isMuleProject(directory, markerFiles, matchMode, configFolderPattern)) {
+            if (isProject(directory, markerFiles, matchMode, configFolderPattern)) {
                 results.add(directory);
                 return;
             }
@@ -64,7 +64,7 @@ public class ProjectDiscovery {
             logger.error("Error searching directory: {} - {}", directory, e.getMessage());
         }
     }
-    private static boolean isMuleProject(
+    private static boolean isProject(
             Path dir,
             List<String> markerFiles,
             String matchMode,

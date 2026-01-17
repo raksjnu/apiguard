@@ -1,121 +1,140 @@
 # GLOBAL_CONFIGURATION
 
-**Rule Type:** `GLOBAL` - **Applies To:** All Rule Types
+**Rule Type:** `GLOBAL` | **Applies To:** All Rule Types
 
 ## Overview
 
-Aegis provides a powerful set of global configuration options that apply across various rule types. Understanding these operators, match modes, and scope controls allows you to create precise, efficient, and robust validation rules.
-
-This guide details the universal parameters available for fine-tuning your rules.
+Aegis provides a powerful set of global configuration options that apply across various rule types. Understanding these operators, match modes, and scope controls allows you to create precise, efficient, and robust validation rules across disparate technologies.
 
 ## Match Modes
 
-Match modes define *how* MuleGuard evaluates rule compliance across multiple files.
+Match modes define how Aegis evaluates rule compliance across multiple file sets.
 
-### <span style="color:#0078d4">ALL_FILES</span> (Default)
-**Behavior:** The rule passes ONLY if **EVERY** matching file satisfies the condition.
-- **Use Case:** Consistency checks (e.g., "Every Log component must have a specific category", "No file should contain hardcoded IPs").
-- **Failure:** Fails if *even one* file violates the rule.
+### ALL_FILES (Default)
 
-### <span style="color:#0078d4">ANY_FILE</span>
-**Behavior:** The rule passes if **AT LEAST ONE** matching file satisfies the condition.
-- **Use Case:** implementation checks (e.g., "The project must have an `ErrorHandler` defined *somewhere*", "Global Error Handler must exist").
-- **Failure:** Fails ONLY if *zero* files satisfy the condition.
+The rule passes ONLY if **EVERY** matching file satisfies the condition.
 
-### <span style="color:#0078d4">SUBSTRING</span>
-**Behavior:** Simple text matching. Checks if a token exists as a literal substring within the file content.
-- **Use Case:** Fast, simple checks for specific keywords or tokens.
+- **Use Case**: Consistency checks (e.g., "Every Java file must have a specific license header", "No configuration file should contain hardcoded IPs").
+- **Failure**: Fails if even one file violates the rule.
 
-### <span style="color:#0078d4">REGEX</span>
-**Behavior:** content matching using Regular Expressions.
-- **Use Case:** Complex pattern matching (e.g., credit card numbers, specific IP ranges, variable naming conventions).
+### ANY_FILE
 
-### <span style="color:#0078d4">EXACT (XPath)</span>
-**Behavior:** Strict matching for XPath values. The value in the XML must match the expected value character-for-character.
+The rule passes if **AT LEAST ONE** matching file satisfies the condition.
+
+- **Use Case**: Existence checks (e.g., "The project must have a `README.md` defined somewhere", "At least one security configuration file must exist").
+- **Failure**: Fails ONLY if zero files satisfy the condition.
+
+### SUBSTRING
+
+Simple text matching. Checks if a token exists as a literal substring within the file content.
+
+- **Use Case**: Fast, simple checks for specific keywords, property names, or clear-text strings.
+
+### REGEX
+
+Content matching using Regular Expressions.
+
+- **Use Case**: Complex pattern matching (e.g., credit card numbers, specific IP ranges, variable naming conventions with wildcards).
+
+### EXACT (XPath)
+
+Strict matching for XPath values. The value extracted from the XML must match the expected value character-for-character.
 
 ---
 
 ## Logic Operators
 
-Operators modify how the rule interprets the search results.
+Operators modify how the rule engine interprets the results of a search or evaluation.
 
-### <span style="color:#0078d4">failIfFound</span>
-**Type:** `Boolean` | **Default:** `false` (usually)
-- **true**: The rule **FAILS** if the specified pattern/token/XPath **IS FOUND**.
-    - *Example:* "Fail if `jce-encrypt` token is found."
-- **false**: The rule **FAILS** if the specified pattern/token/XPath IS **NOT FOUND**.
-    - *Example:* "Fail if `http:listener` is NOT found."
+### failIfFound
 
-### <span style="color:#0078d4">caseSensitive</span>
-**Type:** `Boolean` | **Default:** `true`
-- **true**: 'Error' and 'error' are treated as different strings.
-- **false**: Case is ignored during matching ('Error' == 'error').
+**Type**: `Boolean` | **Default**: `false`
 
-### <span style="color:#0078d4">negativeMatch</span>
-**Type:** `Boolean` | **Default:** `false`
-- Used in some token searches to invert the match logic locally.
+- **true**: The rule FAILS if the specified pattern, token, or XPath IS FOUND.
+  - *Example*: "Fail if a hardcoded secret is found."
+- **false**: The rule FAILS if the specified pattern, token, or XPath IS NOT FOUND.
+  - *Example*: "Fail if a required framework module is missing."
+
+### caseSensitive
+
+**Type**: `Boolean` | **Default**: `true`
+
+- **true**: "Error" and "error" are treated as different strings.
+- **false**: Case is ignored during matching ("Error" == "error").
+
+### negativeMatch
+
+**Type**: `Boolean` | **Default**: `false`
+
+- Used in some specialized token or attribute searches to invert the match logic locally within a check.
 
 ---
 
 ## Scope Control
 
-Control *where* and *when* the rule executes.
+Control exactly which files and environments a rule targets.
 
-### <span style="color:#0078d4">environments</span>
-**Type:** `List<String>`
-- Defines which environments the rule applies to.
-- **Values:**
-    - `["ALL"]`: Applies to all scans.
-    - `["DEV", "QA"]`: Applies only when scanning specific environment configurations.
-- **Best Practice:** Use this for environment-specific property checks (e.g., ensuring `mock.endpoints=true` only in DEV).
+### environments
 
-### <span style="color:#0078d4">filePatterns</span>
-**Type:** `List<String>`
-- Glob patterns to filter which files are scanned.
-- **Examples:**
-    - `src/main/mule/*.xml` (All Mule XMLs)
-    - `**/*-config.xml` (Recursive search for config XMLs)
-    - `pom.xml` (Project Object Model)
+**Type**: `List`
+
+Defines which environments the rule applies to.
+
+- **Values**:
+  - `["ALL"]`: Applies to all scans regardless of environment key.
+  - `["DEV", "QA"]`: Applies only when the scan is triggered for these specific environment keys.
+- **Best Practice**: Use this for environment-specific property checks (e.g., ensuring debug mode is only allowed in `DEV`).
+
+### filePatterns
+
+**Type**: `List`
+
+Glob patterns to filter which files are scanned by the rule engine.
+
+- **Examples**:
+  - `src/main/resources/*.properties` (Java / Spring)
+  - `src/main/mule/*.xml` (MuleSoft)
+  - `**/*.py` (Python)
+  - `package.json` (Node.js)
 
 ---
 
 ## Property Resolution
 
-MuleGuard supports dynamic property resolution in rule parameters.
+Aegis supports dynamic property resolution in rule parameters to make rules portable.
 
-### <span style="color:#0078d4">${property.name}</span>
-- **Usage:** You can use placeholders in rule values.
-- **Resolution:** MuleGuard attempts to resolve these against:
-    1.  `mule-artifact.json` properties
-    2.  `pom.xml` properties
-    3.  Scan-time environment variables
+### `${property.name}` Placeholders
+
+You can use placeholders in rule values which Aegis will attempt to resolve against:
+
+1. Project build descriptors (`pom.xml`, `package.json`, etc.).
+2. System environment variables.
+3. Custom scan-time variables provided via CLI or UI.
 
 ---
 
 ## Best Practices & Guidance
 
 ### 1. Efficient "Existence" Checks
-**Scenario:** You want to ensure your project has a `GlobalErrorHandler`.
-**Inefficient:** Checking every file and failing if it's missing (will fail on every file except the one that has it).
-**Efficient:** Use <span style="color:#0078d4">matchMode: ANY_FILE</span>.
+
+If you want to ensure your project has a specific component (like a global configuration file), don't check every file and fail if it's missing from any of them. Instead, use `matchMode: ANY_FILE`.
+
 ```yaml
-- type: XML_XPATH_EXISTS
+- type: CODE_FILE_EXISTS
   params:
-    filePatterns: ["src/main/mule/*.xml"]
-    matchMode: ANY_FILE  <-- Critical!
-    xpathExpressions:
-      - xpath: "//error-handler[@name='Global_Error_Handler']"
+    filePatterns: ["**/security-config.xml"]
+    matchMode: ANY_FILE  # Essential for existence checks!
 ```
 
 ### 2. Combining Validations
-**Scenario:** You need to check if a property exists AND has a specific value.
-**Guidance:** Use **MANDATORY_PROPERTY_VALUE_CHECK** which handles both implicitly.
 
-### 3. Performance
-- Prefer **SUBSTRING** over **REGEX** whenever possible. Regex is powerful but slower.
-- Scope your **filePatterns** narrowly. Don't scan `**/*.xml` if you only care about `pom.xml`.
+When checking both the presence of a key and its specific value in property files, prefer specialized rules like `MANDATORY_PROPERTY_VALUE_CHECK` which handle both logic paths more efficiently than standard substring searches.
 
-### 4. Zero-False-Positives
-- Use **XPath** for XML instead of Token Search.
-    - Token search for `<logger` might match a comment `<!-- <logger ... -->`.
-    - XPath `//logger` guarantees it is a real XML element.
+### 3. Performance Optimization
+
+- Prefer **SUBSTRING** over **REGEX** for static tokens. Regex engines are significantly more resource-intensive.
+- Scope your **filePatterns** as narrowly as possible. Avoid `**/*` if the rule only applies to a single configuration file.
+
+### 4. Precision with XPath
+
+For XML validation, always use **XPath** rules instead of **Token Search**. Token searches can be fooled by comments or complex formatting, whereas XPath understands the underlying document structure.

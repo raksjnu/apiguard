@@ -4,172 +4,115 @@
 
 ## Overview
 
-Validates that **forbidden tokens do NOT exist** in files matching specified patterns. This rule **fails** if any forbidden token **IS found**.
+Validates that **forbidden tokens or patterns do NOT exist** in files matching specified patterns. This rule **fails** if any of the specified forbidden tokens are **found** within the file content. It is a powerful tool for blocking deprecated functions, hardcoded credentials, and unsafe coding patterns.
 
 ## Use Cases
 
-- Prevent usage of deprecated APIs or functions
-- Block hardcoded credentials or sensitive data
-- Disallow specific libraries or imports
-- Enforce coding standards by blocking anti-patterns
+- Prevent usage of deprecated APIs, legacy functions, or insecure libraries.
+- Block hardcoded credentials (passwords, API keys, secrets) in source and config files.
+- Disallow specific imports or dependencies that violate architectural standards.
+- Enforce cleanup of debug code, temporary comments, or test-only artifacts in production.
 
 ## Parameters
 
 ### Required Parameters
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `filePatterns` | List<String> | Glob patterns to match files (e.g., `**/*.xml`, `src/main/mule/*.xml`) |
-| `tokens` | List<String> | List of tokens that must NOT be found |
+| :--- | :--- | :--- |
+| `filePatterns` | List | Glob patterns to match source or configuration files |
+| `tokens` | List | List of tokens that must NOT be found in the files |
 
 ### Optional Parameters
 
 | Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `excludePatterns` | List<String> | `[]` | Glob patterns to exclude files |
-| `matchMode` | String | `SUBSTRING` | `SUBSTRING` or `REGEX` - how to match tokens |
+| :--- | :--- | :--- | :--- |
+| `excludePatterns` | List | `[]` | Glob patterns to exclude specific files |
+| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
 
 ## Configuration Examples
 
-### Example 1: Block Deprecated Function
+### Example 1: Block Deprecated Global Functions
+Prevent the usage of a deprecated transformation function across all scripts.
 
 ```yaml
-- id: "RULE-010"
-  name: "No Deprecated toBase64 Function"
-  description: "Prevent usage of deprecated toBase64() function"
-  enabled: true
+- id: "RULE-DEPRECATED-TRANSFORM"
+  name: "No Legacy Transformations"
   severity: HIGH
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
-        filePatterns:
-          - "**/*.dwl"
-        tokens:
-          - "toBase64()"
+        filePatterns: ["**/*.dwl", "**/*.js"]
+        tokens: ["toBase64Legacy()", "oldEncrypt()"]
 ```
 
 ### Example 2: Block Hardcoded Credentials
+Identify potential hardcoded secrets in properties or XML configuration files.
 
 ```yaml
-- id: "RULE-011"
-  name: "No Hardcoded Passwords"
-  description: "Prevent hardcoded passwords in configuration files"
-  enabled: true
+- id: "RULE-NO-HARDCODED-SECRETS"
+  name: "No Hardcoded Credentials"
   severity: CRITICAL
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
-        filePatterns:
-          - "**/*.xml"
-          - "**/*.properties"
-        tokens:
-          - "password="
-          - "pwd="
-          - "secret="
+        filePatterns: ["**/*.xml", "**/*.properties", "**/*.yaml"]
+        tokens: ["password=", "pwd=", "aws_secret="]
         caseSensitive: false
 ```
 
-### Example 3: Block IP Addresses (Regex)
+### Example 3: Detect IP Addresses (Regex)
+Block hardcoded IP addresses in source code directory to enforce hostname usage.
 
 ```yaml
-- id: "RULE-012"
+- id: "RULE-HOSTNAME-ENFORCEMENT"
   name: "No Hardcoded IP Addresses"
-  description: "Prevent hardcoded IP addresses in code"
-  enabled: true
   severity: HIGH
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
-        filePatterns:
-          - "src/main/mule/**/*.xml"
-        excludePatterns:
-          - "**/test/**"
-        tokens:
-          - "\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"  # IP address pattern
+        filePatterns: ["src/**/*.java", "src/**/*.py"]
+        excludePatterns: ["**/test/**"]
+        tokens: ["\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"]
         matchMode: REGEX
-```
-
-### Example 4: Block Multiple Deprecated APIs
-
-```yaml
-- id: "RULE-013"
-  name: "No Deprecated Mule Components"
-  description: "Block usage of deprecated Mule 3 components"
-  enabled: true
-  severity: MEDIUM
-  checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        filePatterns:
-          - "**/*.xml"
-        tokens:
-          - "http://www.mulesoft.org/schema/mule/http-deprecated"
-          - "mule-transport-"
-          - "endpoint-ref"
 ```
 
 ## Error Messages
 
-When validation fails, you'll see messages like:
-
 ```
-config.xml has forbidden token: toBase64()
-application.properties has forbidden token: password=
-main.xml has forbidden token: 192.168.1.1
+AuthService.java: Forbidden token found: password=
+legacy-script.js: Forbidden token found: toBase64Legacy()
+DatabaseConfig.xml: Forbidden IP pattern found: 192.168.1.1
 ```
-
 
 ## Best Practices
 
-### When to Use This Rule
-- ✅ Blocking hardcoded credentials or secrets
-- ✅ Preventing usage of deprecated APIs
-- ✅ Detecting forbidden imports or dependencies
-- ✅ Finding and removing debug/test code
-
-### Security Patterns
-```yaml
-# Block hardcoded secrets
-forbiddenTokens: ["password=", "apiKey=", "secret="]
-
-# Prevent deprecated APIs
-forbiddenTokens: ["@Deprecated", "LegacyClass"]
-```
+- **Case Sensitivity**: Set `caseSensitive: false` when blocking configuration keys (like `PWD=`) to catch variants like `pwd=` or `Pwd=`.
+- **Targeted Exclusions**: Use `excludePatterns` for third-party libraries or internal test suites where forbidden patterns might be legitimate for testing purposes.
+- **Regex Guardrails**: When using REGEX, ensure patterns are specific to avoid false positives (e.g., use word boundaries `\\b`).
 
 ## Related Rule Types
 
-- **[GENERIC_TOKEN_SEARCH_REQUIRED](GENERIC_TOKEN_SEARCH_REQUIRED.md)** - Opposite: ensures tokens DO exist
-- **[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)** - More precise XML validation using XPath
-- **[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)** - Config-specific validation with searchMode: FORBIDDEN
+- **[GENERIC_TOKEN_SEARCH_REQUIRED](GENERIC_TOKEN_SEARCH_REQUIRED.md)** - Opposite: ensures tokens DO exist.
+- **[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)** - Precise blocking of XML structures.
 
-## 🧩 Solution Patterns & Technology Reference
+## Solution Patterns and Technology Reference
 
-### 🐎 MuleSoft 4
-**Use Case:** Modernization
-**Best Practice:** Ensure no Mule Expression Language (MEL) or deprecated components are used.
+Standard configurations for blocking anti-patterns.
+
+| Technology | Scenario | Mode | Target File |
+| :--- | :--- | :--- | :--- |
+| **☕ Java** | Block `System.out` | `FORBIDDEN` | `**/*.java` |
+| **🐍 Python** | Block Debugger | `FORBIDDEN` | `**/*.py` |
+| **📦 Node.js** | Block `eval()` | `FORBIDDEN` | `**/*.js` |
+| **🐎 MuleSoft** | Block legacy MEL | `FORBIDDEN` | `**/*.xml` |
+
+### ☕ Java / Spring Boot Patterns
+Prevent developers from using standard output streams for logging.
+
 ```yaml
-- id: "MULE-DEP-01"
-  name: "No MEL Allowed"
-  description: "Detects usage of #[... which might be legacy MEL or require migration"
-  enabled: true
-  severity: HIGH
-  checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        filePatterns: ["**/*.xml"]
-        tokens: ["message.payload", "message.inboundProperties"]
-```
-
-### ☕ Java / Spring Boot
-**Use Case:** Logging Standards
-**Best Practice:** Prevent usage of standard output for logging.
-```yaml
-- id: "JAVA-LOG-01"
+- id: "JAVA-LOGGING-STANDARDS"
   name: "No System.out"
-  description: "Prevent System.out.println usage"
-  enabled: true
-  severity: MEDIUM
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
@@ -177,35 +120,15 @@ forbiddenTokens: ["@Deprecated", "LegacyClass"]
         tokens: ["System.out.println", "System.err.println"]
 ```
 
-### ⚡ TIBCO BW 5.x
-**Use Case:** Hardcoding
-**Best Practice:** Prevent hardcoded IP addresses in process definitions.
-```yaml
-- id: "TIBCO-IP-01"
-  name: "No Hardcoded IPs"
-  description: "Block IPs in TIBCO BW files"
-  enabled: true
-  severity: CRITICAL
-  checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        filePatterns: ["*.process", "*.archive"]
-        tokens: ["\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"]
-        matchMode: REGEX
-```
+### 🐎 MuleSoft Patterns
+Block legacy Mule Expression Language (MEL) patterns in modern projects.
 
-### 🐍 Python
-**Use Case:** Debugging
-**Best Practice:** Ensure no debugger breakpoints are left in code.
 ```yaml
-- id: "PYTHON-DEBUG-01"
-  name: "No Debugger Breakpoints"
-  description: "Prevent pdb.set_trace() in production code"
-  enabled: true
-  severity: HIGH
+- id: "MULE-MODERNIZATION"
+  name: "No Legacy MEL"
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
-        filePatterns: ["*.py"]
-        tokens: ["import pdb", "pdb.set_trace()"]
+        filePatterns: ["**/*.xml"]
+        tokens: ["message.inboundProperties", "message.outboundProperties"]
 ```

@@ -4,14 +4,14 @@
 
 ## Overview
 
-Validates that **forbidden XPath expressions do NOT match** in XML files. This rule **fails** if any forbidden XPath expression **DOES** find matching nodes.
+Validates that **forbidden XPath expressions do NOT match** in XML files. This rule **fails** if any forbidden XPath expression **DOES** find matching nodes. It is used to block deprecated components, anti-patterns, or insecure configurations.
 
 ## Use Cases
 
-- Prevent usage of deprecated XML elements
-- Block specific configurations or patterns
-- Enforce architectural constraints
-- Disallow anti-patterns in Mule flows
+- Prevent usage of deprecated XML elements or custom tags.
+- Block specific insecure configurations (e.g., protocol="HTTP" instead of "HTTPS").
+- Enforce architectural constraints (e.g., "No direct database calls from the presentation layer").
+- Disallow anti-patterns or redundant configurations.
 
 ## Parameters
 
@@ -37,12 +37,13 @@ Validates that **forbidden XPath expressions do NOT match** in XML files. This r
 
 ## Configuration Examples
 
-### Example 1: Block Deprecated Component
+### Example 1: Block Deprecated Components
+Prevents usage of legacy connectors or custom XML tags that are no longer supported.
 
 ```yaml
-- id: "RULE-030"
-  name: "No Deprecated HTTP Transport"
-  description: "Prevent usage of deprecated HTTP transport"
+- id: "RULE-XML-XPATH-FORBIDDEN-01"
+  name: "No Legacy Transports"
+  description: "Prevent usage of deprecated transport elements"
   enabled: true
   severity: HIGH
   checks:
@@ -51,98 +52,63 @@ Validates that **forbidden XPath expressions do NOT match** in XML files. This r
         filePatterns:
           - "**/*.xml"
         xpathExpressions:
-          - xpath: "//*[local-name()='http-transport']"
-            failureMessage: "Deprecated HTTP transport found - use HTTP connector instead"
+          - xpath: "//*[local-name()='legacy-transport']"
+            failureMessage: "Deprecated 'legacy-transport' found - please migrate to the new standard"
 ```
 
-### Example 2: Prevent Hardcoded Values
+### Example 2: Prevent Hardcoded Environment Values
+Ensures that environment-specific settings (like hostnames) are property-driven and not hardcoded to `localhost`.
 
 ```yaml
-- id: "RULE-031"
-  name: "No Hardcoded Hosts"
-  description: "Prevent hardcoded host values in HTTP requests"
+- id: "RULE-XML-XPATH-FORBIDDEN-02"
+  name: "No Hardcoded Localhost"
+  description: "Prevent hardcoded localhost in service configurations"
   enabled: true
   severity: MEDIUM
   checks:
     - type: XML_XPATH_NOT_EXISTS
       params:
         filePatterns:
-          - "src/main/mule/**/*.xml"
+          - "src/main/resources/**/*.xml"
         xpathExpressions:
-          - xpath: "//http:request[@host='localhost']"
+          - xpath: "//service[@host='localhost']"
             failureMessage: "Hardcoded 'localhost' found - use property placeholders"
-          - xpath: "//http:request[contains(@host, '192.168')]"
-            failureMessage: "Hardcoded IP address found in host attribute"
 ```
 
-### Example 3: Enforce Architectural Rules
+### Example 3: Enforce Layered Architecture
+Prevents direct database access from high-level API or presentation layer configurations.
 
 ```yaml
-- id: "RULE-032"
-  name: "No Direct Database Calls in API Layer"
-  description: "API flows should not contain direct database operations"
+- id: "RULE-XML-XPATH-FORBIDDEN-ARCH"
+  name: "Layered Architecture Compliance"
+  description: "API layers cannot contain direct database listeners or operations"
   enabled: true
   severity: HIGH
   checks:
     - type: XML_XPATH_NOT_EXISTS
       params:
         filePatterns:
-          - "src/main/mule/api-*.xml"
+          - "**/api-*.xml"
         xpathExpressions:
           - xpath: "//db:select | //db:insert | //db:update | //db:delete"
-            failureMessage: "Direct database operations forbidden in API layer - use service layer"
-```
-
-### Example 4: Block Synchronous Processing
-
-```yaml
-- id: "RULE-033"
-  name: "No Synchronous VM Queues"
-  description: "Prevent synchronous VM queue usage"
-  enabled: true
-  severity: MEDIUM
-  checks:
-    - type: XML_XPATH_NOT_EXISTS
-      params:
-        filePatterns:
-          - "**/*.xml"
-        xpathExpressions:
-          - xpath: "//vm:publish[@sendCorrelationId='ALWAYS']"
-            failureMessage: "Synchronous VM publish detected - use asynchronous pattern"
+            failureMessage: "Direct database operations forbidden in API layer - use the persistence layer"
 ```
 
 ## Error Messages
 
-When validation fails, you'll see messages like:
-
 ```
-config.xml: Deprecated HTTP transport found - use HTTP connector instead (found 2 occurrence(s))
-api-main.xml: Direct database operations forbidden in API layer - use service layer (found 1 occurrence(s))
+config.xml: Deprecated 'legacy-transport' found - please migrate to the new standard (found 2 occurrence(s))
+api-main.xml: Direct database operations forbidden in API layer - use the persistence layer (found 1 occurrence(s))
 ```
-
 
 ## Best Practices
 
-### When to Use This Rule
-- ✅ Blocking deprecated XML structures
-- ✅ Preventing forbidden element combinations
-- ✅ Enforcing removal of legacy configurations
-- ✅ Complex forbidden pattern detection
-
-### Common Patterns
-```yaml
-# Block deprecated elements
-xpathExpressions:
-  - "//deprecated-connector"
-  - "//legacy:config"
-
-# Prevent insecure combinations
-xpathExpressions:
-  - "//http:listener[@protocol='HTTP']"
-```
+- **Use predicates for precise blocking**: Instead of blocking an entire element, use predicates like `//config[@secure='false']` to block only the insecure variants.
+- **Fail with clear instructions**: Always provide a `failureMessage` that explains the preferred alternative.
+- **Architecture over Code**: Use path-based `filePatterns` to enforce different restrictions on different project layers (e.g., `src/web/*.xml` vs `src/service/*.xml`).
 
 ## Related Rule Types
 
-- **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - Opposite: ensures XPath DOES match
-- **[XML_ATTRIBUTE_NOT_EXISTS](XML_ATTRIBUTE_NOT_EXISTS.md)** - Simpler attribute validation
-- **[XML_ELEMENT_CONTENT_FORBIDDEN](XML_ELEMENT_CONTENT_FORBIDDEN.md)** - Validate element content
+- **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - Opposite: ensures XPath DOES match.
+- **[XML_ATTRIBUTE_NOT_EXISTS](XML_ATTRIBUTE_NOT_EXISTS.md)** - Simpler attribute validation.
+- **[XML_ELEMENT_CONTENT_FORBIDDEN](XML_ELEMENT_CONTENT_FORBIDDEN.md)** - Validate forbidden text content inside an element.

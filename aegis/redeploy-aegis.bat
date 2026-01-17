@@ -31,22 +31,22 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo [1/3] Copying latest rules.yaml to wrapper resources...
-copy /Y "src\main\resources\rules\rules.yaml" "muleguardwrapper\src\main\resources\web\sample-rules.yaml"
+copy /Y "src\main\resources\rules\rules.yaml" "apiguardwrapper\src\main\resources\web\sample-rules.yaml"
 
-echo [2/3] Building MuleGuard Core...
+echo [2/3] Building Aegis Core...
 call mvn clean package -DskipTests -q
 if %ERRORLEVEL% NEQ 0 (
-    echo ERROR: muleguard build failed!
+    echo ERROR: Aegis build failed!
     pause
     exit /b %ERRORLEVEL%
 )
-echo muleguard JAR built successfully
+echo Aegis JAR built successfully
 
 echo [3/3] Copying JAR to wrapper and rebuilding...
-copy /Y "target\muleguard-1.0.0-jar-with-raks.jar" "muleguardwrapper\lib\muleguard-1.0.0-jar-with-raks.jar"
+copy /Y "target\aegis-1.0.0-jar-with-raks.jar" "apiguardwrapper\lib\aegis-1.0.0-jar-with-raks.jar"
 echo JAR copied to wrapper/lib
 
-cd muleguardwrapper
+cd apiguardwrapper
 call mvn clean package -DskipTests -q
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: wrapper build failed!

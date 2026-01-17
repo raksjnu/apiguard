@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>MuleGuard - Validation Checklist</title>
+    <title>Aegis - Validation Checklist</title>
     <style>
         :root {
             --raks-purple: #663399;
@@ -100,14 +100,14 @@
         <div class="header-buttons">
             <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button"
                 title="Return to main dashboard">← Dashboard</a>
-            <a href="/muleguard/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
+            <a href="/apiguard/aegis/main" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
                 style="display: none; background-color: #0078d4;">🏠 Main Page</a>
         </div>
         <div style="display: flex; align-items: center; margin-bottom: 20px;">
-            <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
-            <h1 style="margin: 0;">MuleGuard - Mulesoft Application Review & Validation</h1>
+            <img src="logo.svg" alt="Aegis Logo" style="height: 40px; margin-right: 15px;">
+            <h1 style="margin: 0;">Aegis - Universal Code Compliance Checklist</h1>
         </div>
-        <p>This page lists all the individual checks performed by the MuleGuard tool.</p>
+        <p>This page lists all the individual checks performed by the Aegis tool. Checks can be customized via <code>rules.yaml</code>.</p>
         <table>
             <tr>
                 <th>Sr.#</th>
@@ -325,24 +325,24 @@
                 <td>RULE-C-106</td>
             </tr>
         </table>
-        <a href="help.html" class="contact-button" title="View help and documentation about MuleGuard">Help</a>
+        <a href="help.html" class="contact-button" title="View help and documentation about Aegis">Help</a>
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             var path = window.location.pathname;
-            var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
-            var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
+            var isAegisStatic = path.includes('/apiguard/aegis/web/') || path.includes('/aegis/web/');
+            var isAegisReport = path.includes('/apiguard/aegis/reports/') || path.includes('/aegis/reports/');
             var dashboardBtn = document.getElementById('dashboardBtn');
             var mainPageBtn = document.getElementById('mainPageBtn');
 
-            // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
-            var isInMuleWrapper = path.includes('/apiguard/');
-            var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+            // Detect if we're in Aegis wrapper (has /apiguard prefix) or standalone Java
+            var isInAegisWrapper = path.includes('/apiguard/');
+            var basePath = isInAegisWrapper ? '/apiguard/aegis' : '/aegis';
 
             // Session Handling
             var sessionId = new URLSearchParams(window.location.search).get('session');
             // If in report path, extract sessionId from path
-            if (!sessionId && isMuleReport) {
+            if (!sessionId && isAegisReport) {
                 var reportPath = basePath + '/reports/';
                 var parts = path.split(reportPath);
                 if (parts.length > 1) {
@@ -351,8 +351,8 @@
                 }
             }
 
-            if (isMuleStatic || isMuleReport) {
-                // We are in Mule Wrapper Environment
+            if (isAegisStatic || isAegisReport) {
+                // We are in Aegis Wrapper Environment
                 if (mainPageBtn) {
                     mainPageBtn.style.display = 'inline-block';
                     // Build Main Page URL with correct base path
@@ -360,11 +360,11 @@
                     if (sessionId) mainPageUrl += '?session=' + sessionId;
                     mainPageBtn.href = mainPageUrl;
 
-                    if (isMuleStatic) {
+                    if (isAegisStatic) {
                         mainPageBtn.style.right = '40px';
                         if (dashboardBtn) dashboardBtn.style.display = 'none'; // No dashboard in static view
                     } else {
-                        // In Mule Report
+                        // In Aegis Report
                         mainPageBtn.style.right = '180px';
                     }
                 }

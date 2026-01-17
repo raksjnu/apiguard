@@ -4,14 +4,14 @@
 
 The **Universal "If-Then" Engine**. This is the most powerful check type in Aegis. It allows you to create complex, multi-step validation logic by combining any other check type as a trigger (`preconditions`) and an action (`onSuccess`).
 
-IT IS NOT LIMITED TO CODE! You can combine Configuration checks, XML checks, File checks, and Project Name checks in any combination.
+It is not limited to code analysis! You can combine configuration checks, XML/JSON checks, file existence checks, and project metadata checks in any combination.
 
 ## Use Cases
 
-*   **Context-Specific Rules**: "If this is an Experience API (`-exp-`), THEN it must have Autodiscovery."
-*   **Cross-File Dependencies**: "If `secure-prod.properties` exists, THEN all `CODE` `config.xml` must use `secure::`."
-*   **Technology Standards**: "If an `IBM MQ` connector is found (XML), THEN the project must have the `mule-ibm-mq-connector` dependency (POM)."
-*   **Environment Validation**: "If `env` property is `PROD` (Config), THEN `munit-maven-plugin` must be disabled (POM)."
+*   **Context-Specific Rules**: "If this is a frontend project (`-ui-`), THEN it must have a `LICENSE` file."
+*   **Cross-File Dependencies**: "If `package.json` contains `react`, THEN `src/App.tsx` must exist."
+*   **Technology Standards**: "If an `IBM MQ` connector is found (XML), THEN the project must have the corresponding client library dependency (POM)."
+*   **Environment Validation**: "If the `env` property is set to `PROD` (Config), THEN debug logging must be disabled (Log configuration)."
 
 ## How It Works
 
@@ -28,51 +28,51 @@ This check executes in two phases:
 
 *   **Project Identity**: `PROJECT_CONTEXT` (Name matching)
 *   **File Presence**: `FILE_EXISTS` (e.g., specific config files)
-*   **XML Content**: `XML_XPATH_EXISTS` (Detect connectors, specific configs)
-*   **Properties**: `MANDATORY_PROPERTY_VALUE_CHECK` (Check valid environmental configs)
-*   **Dependencies**: `POM_VALIDATION_REQUIRED` (Check for libraries)
+*   **XML/JSON Content**: `XML_XPATH_EXISTS` or `JSON_VALIDATION_REQUIRED`
+*   **Properties**: `MANDATORY_PROPERTY_VALUE_CHECK` (e.g., environment checks)
+*   **Dependencies**: `POM_VALIDATION_REQUIRED` (Check for Maven libraries)
 
 ## Parameters
 
 ### Required Parameters
 
 | Parameter | Type | Description |
-| :--- | :--- | :--- |
-| `preconditions` | `List<Check>` | A list of standard check definitions that define **WHEN** this rule applies. |
-| `onSuccess` | `List<Check>` | A list of standard check definitions that define **WHAT** must be validated if the preconditions are met. |
+|-----------|------|-------------|
+| `preconditions` | List<Map> | A list of standard check definitions that define **WHEN** this rule applies. |
+| `onSuccess` | List<Map> | A list of standard check definitions that define **WHAT** must be validated if the preconditions are met. |
 
 ## Configuration Examples
 
-### Example 1: The "Universal" Rule (Code + Config + File)
-**Scenario**: "If this is an Experience API (Name) AND it uses Salesforce (XML), THEN it must have a `secure.properties` file."
+### Example 1: Frontend Resource Security
+**Scenario**: "If this is a Web UI project (Name) AND it uses a private repository (JSON), THEN it must have a security policy file."
 
 ```yaml
-- id: "RULE-COMPLEX-001"
-  name: "Experience API Salesforce Security"
+- id: "RULE-COND-FE-01"
+  name: "Web UI Security Policy"
   checks:
     - type: CONDITIONAL_CHECK
       params:
         preconditions:
           - type: PROJECT_CONTEXT
             params:
-              nameContains: "-exp-"
-          - type: XML_XPATH_EXISTS
+              nameContains: "-ui-"
+          - type: JSON_VALIDATION_REQUIRED
             params:
-              filePatterns: ["src/main/mule/*.xml"]
-              xpathExpressions:
-                - xpath: "//*[local-name()='sfdc-config']"
+              filePattern: "package.json"
+              requiredElements:
+                - "publishConfig.registry"
         onSuccess:
           - type: FILE_EXISTS
             params:
-              filePatterns: ["src/main/resources/secure.properties"]
+              filePatterns: ["SECURITY.md"]
 ```
 
-### Example 2: Architecture Standard (POM + XML)
-**Scenario**: "If the JMS Connector dependency is in the POM, you MUST actually use it in the XML (prevent unused dependencies)."
+### Example 2: Unused Dependency Check (POM + XML)
+**Scenario**: "If the Messaging library is in the POM, you MUST actually use it in the XML (prevent bloat)."
 
 ```yaml
-- id: "RULE-ARCH-002"
-  name: "JMS Dependency Usage"
+- id: "RULE-UNUSED-DEP"
+  name: "Messaging Library Usage"
   checks:
     - type: CONDITIONAL_CHECK
       params:
@@ -81,23 +81,22 @@ This check executes in two phases:
             params:
               validationType: DEPENDENCIES
               dependencies:
-                - artifactId: mule-jms-connector
+                - artifactId: messaging-client
         onSuccess:
           - type: XML_XPATH_EXISTS
             params:
-              filePatterns: ["src/main/mule/*.xml"]
+              filePatterns: ["src/main/resources/*.xml"]
               xpathExpressions:
-                - xpath: "//*[local-name()='config' and contains(namespace-uri(), 'jms')]"
-              failureMessage: "JMS dependency found in POM but no JMS Config found in XML."
+                - xpath: "//*[local-name()='messaging-config']"
+              failureMessage: "Messaging dependency found in POM but no usage found in XML."
 ```
 
-### Example 3: File-Based Trigger
-
-Only require Production secure properties if the PROD environment is active.
+### Example 3: Environment-Specific Enforcement
+Only require production metadata if the `PROD` environment is active in the configuration.
 
 ```yaml
-- id: "RULE-PROD-SEC"
-  name: "Prod Secure Config Enforcement"
+- id: "RULE-ENV-PROD"
+  name: "Production Metadata Check"
   checks:
     - type: CONDITIONAL_CHECK
       params:
@@ -105,8 +104,10 @@ Only require Production secure properties if the PROD environment is active.
           - type: MANDATORY_PROPERTY_VALUE_CHECK
             params: { properties: [{ name: "env", values: ["PROD"] }] }
         onSuccess:
-          - type: FILE_EXISTS
-            params: { filePatterns: ["src/main/resources/secure-prod.properties"] }
+          - type: JSON_VALIDATION_REQUIRED
+            params:
+              filePattern: "metadata.json"
+              requiredElements: ["ops_contact", "sla_tier"]
 ```
 
 ## Related Check Types

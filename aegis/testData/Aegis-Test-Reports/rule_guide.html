@@ -1,0 +1,3049 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Aegis - Standard Rule Guide</title>
+    <style>
+        :root {
+            --raks-purple: #663399;
+            --raks-purple-light: #7d4fb2;
+            --text-white: #FFFFFF;
+            --sidebar-width: 300px;
+        }
+        html { height: 100%; margin: 0; padding: 0; }
+        body { font-family: Arial, sans-serif; margin: 0; background-color: #f0f0f0; display: flex; height: 100%; overflow: hidden; width: 100%; }
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            min-width: 200px;
+            max-width: 600px;
+            flex-shrink: 0;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background: var(--raks-purple);
+            color: white;
+        }
+        .sidebar-header h2 { margin: 0; font-size: 1.2rem; color: white; }
+        .sidebar-nav { list-style-type: none; padding: 0; overflow-y: auto; flex-grow: 1; }
+        .sidebar-nav li { border-bottom: 1px solid #eee; }
+        .sidebar-nav a { display: block; color: #333; padding: 15px 20px; text-decoration: none; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
+        .sidebar-nav a:hover { background-color: #f5f5f5; color: #000; }
+        .sidebar-nav a.active { background-color: var(--raks-purple); color: white; border-left: 4px solid #7d4fb2; }
+
+
+        .rule-header { display: flex; align-items: center; width: 100%; cursor: pointer; }
+        .rule-header:hover { background-color: #f5f5f5; }
+        .rule-header a { flex-grow: 1; padding: 15px 10px; border: none; }
+        .toggle-icon { padding: 15px 10px; color: #666; cursor: pointer; font-size: 10px; width: 20px; text-align: center; }
+        .toggle-icon:hover { color: #000; }
+        .sub-nav { list-style-type: none; padding: 0; display: none; background-color: #f9f9f9; border-top: 1px solid #eee; }
+        .sub-nav.expanded { display: block; }
+        .sub-nav li { border-bottom: 1px solid #eee; }
+        .sub-nav a { padding: 8px 10px 8px 45px; font-size: 13px; color: #555; }
+        .sub-nav a:hover { color: #000; background-color: #eee; }
+        .sub-nav a.active { background-color: var(--raks-purple); color: white; font-weight: bold; }
+
+        .main-content { flex: 1; padding: 40px; overflow-y: auto; background-color: white; position: relative; }
+        .report-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 1400px;
+            margin: 0 auto;
+            border: 5px solid var(--raks-purple);
+            position: relative;
+        }
+        .top-nav-container {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        .top-nav-button {
+            background-color: var(--raks-purple);
+            color: var(--text-white);
+            border: none;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .top-nav-button:hover { background-color: var(--raks-purple-light); }
+        h1 { color: var(--raks-purple) !important; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        h2 { color: var(--raks-purple) !important; margin-top: 30px; }
+        h3 { color: var(--raks-purple-light) !important; }
+        h4 { color: var(--raks-purple-light) !important; font-size: 1.1em; margin-top: 20px; }
+        .rule-content { color: #333 !important; line-height: 1.6; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; border: 1px solid #ddd; }
+        code { font-family: Consolas, monospace; color: #0078d4 !important; }
+        code.inline-token { color: #0078d4 !important; font-weight: bold; }
+        pre code { color: #333 !important; } /* Code blocks should be black text */
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; color: #333 !important; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f1f1f1; color: #333 !important; }
+        blockquote { border-left: 4px solid var(--raks-purple); margin: 0; padding-left: 20px; color: #555; }
+        .search-highlight { background-color: #ffeb3b; color: black; font-weight: bold; border-radius: 2px; }
+        ::highlight(search-results) { background-color: #ffeb3b; color: black; }
+        .match-count { background: #663399; color: white; border-radius: 10px; padding: 2px 8px; font-size: 0.8em; margin-left: 10px; font-weight: bold; white-space: nowrap; }
+        .resizer {
+            width: 5px;
+            background-color: #ddd;
+            cursor: col-resize;
+            transition: background-color 0.2s;
+            z-index: 10;
+        }
+        .resizer:hover, .resizer.resizing {
+            background-color: var(--raks-purple);
+        }
+    </style>
+    <script>
+        var currentFilter = "";
+        var searchTimeout = null;
+        var searchIndex = []; // { id: ruleId, content: upperCaseText }
+
+        function buildIndex() {
+            var rules = document.querySelectorAll('.rule-content');
+            rules.forEach(function(el) {
+                var id = el.id;
+                var text = (el.textContent || el.innerText).toUpperCase();
+
+                searchIndex.push({ id: id, content: text });
+            });
+            console.log("Search index built: " + searchIndex.length + " items.");
+        }
+
+        function showRule(event, ruleId, sectionId) {
+            if (event) event.preventDefault();
+            document.querySelectorAll('.rule-content').forEach(el => el.style.display = 'none');
+            var contentDiv = document.getElementById(ruleId);
+            if (contentDiv) {
+                contentDiv.style.display = 'block';
+
+
+                expandRuleTree(ruleId);
+
+
+                if (sectionId) {
+                    var section = document.getElementById(sectionId);
+                    if (section) section.scrollIntoView({block: 'start'});
+                } else {
+
+                    document.querySelector('.main-content').scrollTop = 0;
+                }
+
+                setTimeout(function(){
+                    applyHighlight(contentDiv, currentFilter, false);
+                }, 0);
+            }
+
+
+            document.querySelectorAll('.sidebar-nav a').forEach(el => {
+                el.classList.remove('active');
+                var onclick = el.getAttribute('onclick');
+
+                if (onclick && onclick.includes("'" + ruleId + "'")) {
+
+                    if (!sectionId || (sectionId && onclick.includes("'" + sectionId + "'"))) {
+                         el.classList.add('active');
+                    }
+                }
+            });
+        }
+
+        function toggleSubNav(event, ruleId) {
+            if(event) event.stopPropagation();
+            var subNav = document.getElementById('sub-' + ruleId);
+            var icon = event.target;
+            if (subNav) {
+                if (subNav.classList.contains('expanded')) {
+                    subNav.classList.remove('expanded');
+                    icon.innerHTML = '&#9654;'; // Right Arrow
+                } else {
+                    subNav.classList.add('expanded');
+                    icon.innerHTML = '&#9660;'; // Down Arrow
+                }
+            }
+        }
+
+        function expandRuleTree(ruleId) {
+            var subNav = document.getElementById('sub-' + ruleId);
+            if (subNav && !subNav.classList.contains('expanded')) {
+                subNav.classList.add('expanded');
+
+                var header = subNav.previousElementSibling;
+                if (header) {
+                    var icon = header.querySelector('.toggle-icon');
+                    if (icon) icon.innerHTML = '&#9660;';
+                }
+            }
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function applyHighlight(container, term, shouldScroll) {
+            if (!container) return;
+
+
+            if (window.CSS && CSS.highlights) {
+                CSS.highlights.clear();
+            }
+
+            if (!term || term.length < 2) return;
+
+            var ranges = [];
+            var termUpper = term.toUpperCase();
+            var walker = document.createTreeWalker(container, NodeFilter.SHOW_TEXT, null, false);
+            var node;
+            var matchCount = 0;
+            var maxMatches = 100;
+
+            while (node = walker.nextNode()) {
+                if (matchCount >= maxMatches) break;
+                var text = node.nodeValue;
+                var valUpper = text.toUpperCase();
+                var idx = valUpper.indexOf(termUpper);
+
+                while (idx >= 0 && matchCount < maxMatches) {
+                    var range = new Range();
+                    range.setStart(node, idx);
+                    range.setEnd(node, idx + term.length);
+                    ranges.push(range);
+                    matchCount++;
+                    idx = valUpper.indexOf(termUpper, idx + term.length);
+                }
+            }
+
+
+            if (window.CSS && CSS.highlights) {
+                var highlight = new Highlight(...ranges);
+                CSS.highlights.set("search-results", highlight);
+            }
+
+
+            if (shouldScroll && ranges.length > 0) {
+                var firstRange = ranges[0];
+                if (firstRange) {
+                    var startNode = firstRange.startContainer;
+                    var element = startNode.nodeType === 3 ? startNode.parentElement : startNode;
+                    if (element) {
+                        element.scrollIntoView({block: "center"});
+                    }
+                }
+            }
+        }
+
+        function onSearchInput() {
+            if (searchTimeout) clearTimeout(searchTimeout);
+
+            searchTimeout = setTimeout(filterSidebar, 300);
+        }
+
+        function filterSidebar() {
+            var input = document.getElementById("filterInput");
+            currentFilter = input.value.trim().toUpperCase();
+
+
+
+
+            var matchedIds = new Set();
+            var matchesMap = {}; // id -> count
+
+            if (currentFilter.length < 2) {
+
+                var lis = document.getElementById("sidebarNav").getElementsByTagName("li");
+                for (var i = 0; i < lis.length; i++) {
+                    lis[i].style.display = "";
+                    var a = lis[i].getElementsByTagName("a")[0];
+                    var oldBadge = a.querySelector('.match-count');
+                    if (oldBadge) oldBadge.remove();
+                }
+                return;
+            }
+
+
+            for (var i = 0; i < searchIndex.length; i++) {
+                var item = searchIndex[i];
+                var count = 0;
+
+
+                if (item.id.toUpperCase().indexOf(currentFilter) > -1) {
+                    count++;
+                }
+
+
+                var pos = item.content.indexOf(currentFilter);
+                while (pos !== -1 && count < 101) {
+                    count++;
+                    pos = item.content.indexOf(currentFilter, pos + currentFilter.length);
+                }
+
+                if (count > 0) {
+                    matchedIds.add(item.id);
+                    matchesMap[item.id] = count;
+                }
+            }
+
+
+            var ul = document.getElementById("sidebarNav");
+            var lis = ul.getElementsByTagName("li");
+
+            requestAnimationFrame(() => {
+                for (var i = 0; i < lis.length; i++) {
+                    var a = lis[i].getElementsByTagName("a")[0];
+
+
+
+
+                    var onclickStr = a.getAttribute("onclick");
+                    var ruleId = onclickStr.match(/'([^']+)'/)[1];
+
+                    var oldBadge = a.querySelector('.match-count');
+                    if (oldBadge) oldBadge.remove();
+
+                    if (matchedIds.has(ruleId) || currentFilter === "") {
+                        lis[i].style.display = "";
+                        var count = matchesMap[ruleId] || 0;
+                        if (count > 0) {
+                            var badge = document.createElement("span");
+                            badge.className = "match-count";
+                            badge.innerText = count > 100 ? "100+" : count;
+                            a.appendChild(badge);
+                        }
+                    } else {
+                        lis[i].style.display = "none";
+                    }
+                }
+
+
+                var visible = document.querySelector('.rule-content[style*="block"]');
+                if (visible) {
+                    applyHighlight(visible, currentFilter, false);
+                }
+            });
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+
+            setTimeout(buildIndex, 100);
+
+
+            var hash = window.location.hash;
+            if (hash && hash.length > 1) {
+                var ruleId = hash.substring(1); // Remove #
+
+                if (document.getElementById(ruleId)) {
+                    showRule(null, ruleId);
+                }
+            }
+
+            const sidebar = document.getElementById('sidebar');
+            const resizer = document.getElementById('resizer');
+            if (!sidebar || !resizer) return;
+            let isResizing = false;
+
+            resizer.addEventListener('mousedown', function(e) {
+                e.preventDefault(); // Critical: Prevents text selection during drag
+                isResizing = true;
+                resizer.classList.add('resizing');
+                document.body.style.cursor = 'col-resize';
+            });
+
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+                const newWidth = e.clientX;
+                if (newWidth > 200 && newWidth < 800) {
+                    sidebar.style.width = newWidth + 'px';
+                }
+            });
+
+            document.addEventListener('mouseup', function(e) {
+                if (isResizing) {
+                    isResizing = false;
+                    resizer.classList.remove('resizing');
+                    document.body.style.cursor = '';
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <img src="logo.svg" alt="Aegis" style="height: 30px; display: block;">
+            </div>
+            <h2>Aegis Rules</h2>
+            <input type="text" id="filterInput" onkeyup="onSearchInput()" placeholder="Search rules..."
+                   style="width: 100%; padding: 8px; margin-top: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px;">
+        </div>
+        <ul class="sidebar-nav" id="sidebarNav">
+            <li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'GLOBAL_CONFIGURATION')">&#9654;</span><a href="#" onclick="showRule(event, 'GLOBAL_CONFIGURATION')">GLOBAL_CONFIGURATION</a></div><ul class="sub-nav" id="sub-GLOBAL_CONFIGURATION"><li><a href="#" onclick="showRule(event, 'GLOBAL_CONFIGURATION', 'GLOBAL_CONFIGURATION_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'GLOBAL_CONFIGURATION', 'GLOBAL_CONFIGURATION_MatchModes')">Match Modes</a></li><li><a href="#" onclick="showRule(event, 'GLOBAL_CONFIGURATION', 'GLOBAL_CONFIGURATION_LogicOperators')">Logic Operators</a></li><li><a href="#" onclick="showRule(event, 'GLOBAL_CONFIGURATION', 'GLOBAL_CONFIGURATION_ScopeControl')">Scope Control</a></li><li><a href="#" onclick="showRule(event, 'GLOBAL_CONFIGURATION', 'GLOBAL_CONFIGURATION_PropertyResolution')">Property Resolution</a></li><li><a href="#" onclick="showRule(event, 'GLOBAL_CONFIGURATION', 'GLOBAL_CONFIGURATION_BestPracticesGuidance')">Best Practices & Guidance</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'PROJECT_IDENTIFICATION')">&#9654;</span><a href="#" onclick="showRule(event, 'PROJECT_IDENTIFICATION')">PROJECT_IDENTIFICATION</a></div><ul class="sub-nav" id="sub-PROJECT_IDENTIFICATION"><li><a href="#" onclick="showRule(event, 'PROJECT_IDENTIFICATION', 'PROJECT_IDENTIFICATION_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'PROJECT_IDENTIFICATION', 'PROJECT_IDENTIFICATION_Configuration')">Configuration</a></li><li><a href="#" onclick="showRule(event, 'PROJECT_IDENTIFICATION', 'PROJECT_IDENTIFICATION_ManagingMultipleTechnologies')">Managing Multiple Technologies</a></li><li><a href="#" onclick="showRule(event, 'PROJECT_IDENTIFICATION', 'PROJECT_IDENTIFICATION_BestPractices')">Best Practices</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'GENERIC_PROPERTY_FILE_CHECK')">&#9654;</span><a href="#" onclick="showRule(event, 'GENERIC_PROPERTY_FILE_CHECK')">GENERIC_PROPERTY_FILE_CHECK</a></div><ul class="sub-nav" id="sub-GENERIC_PROPERTY_FILE_CHECK"><li><a href="#" onclick="showRule(event, 'GENERIC_PROPERTY_FILE_CHECK', 'GENERIC_PROPERTY_FILE_CHECK_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_PROPERTY_FILE_CHECK', 'GENERIC_PROPERTY_FILE_CHECK_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_PROPERTY_FILE_CHECK', 'GENERIC_PROPERTY_FILE_CHECK_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_PROPERTY_FILE_CHECK', 'GENERIC_PROPERTY_FILE_CHECK_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_PROPERTY_FILE_CHECK', 'GENERIC_PROPERTY_FILE_CHECK_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_PROPERTY_FILE_CHECK', 'GENERIC_PROPERTY_FILE_CHECK_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_PROPERTY_FILE_CHECK', 'GENERIC_PROPERTY_FILE_CHECK_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'MANDATORY_PROPERTY_VALUE_CHECK')">&#9654;</span><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK')">MANDATORY_PROPERTY_VALUE_CHECK</a></div><ul class="sub-nav" id="sub-MANDATORY_PROPERTY_VALUE_CHECK"><li><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK', 'MANDATORY_PROPERTY_VALUE_CHECK_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK', 'MANDATORY_PROPERTY_VALUE_CHECK_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK', 'MANDATORY_PROPERTY_VALUE_CHECK_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK', 'MANDATORY_PROPERTY_VALUE_CHECK_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK', 'MANDATORY_PROPERTY_VALUE_CHECK_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK', 'MANDATORY_PROPERTY_VALUE_CHECK_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK', 'MANDATORY_PROPERTY_VALUE_CHECK_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'MANDATORY_SUBSTRING_CHECK')">&#9654;</span><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK')">MANDATORY_SUBSTRING_CHECK</a></div><ul class="sub-nav" id="sub-MANDATORY_SUBSTRING_CHECK"><li><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK', 'MANDATORY_SUBSTRING_CHECK_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK', 'MANDATORY_SUBSTRING_CHECK_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK', 'MANDATORY_SUBSTRING_CHECK_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK', 'MANDATORY_SUBSTRING_CHECK_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK', 'MANDATORY_SUBSTRING_CHECK_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK', 'MANDATORY_SUBSTRING_CHECK_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK', 'MANDATORY_SUBSTRING_CHECK_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'OPTIONAL_PROPERTY_VALUE_CHECK')">&#9654;</span><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK')">OPTIONAL_PROPERTY_VALUE_CHECK</a></div><ul class="sub-nav" id="sub-OPTIONAL_PROPERTY_VALUE_CHECK"><li><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK', 'OPTIONAL_PROPERTY_VALUE_CHECK_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK', 'OPTIONAL_PROPERTY_VALUE_CHECK_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK', 'OPTIONAL_PROPERTY_VALUE_CHECK_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK', 'OPTIONAL_PROPERTY_VALUE_CHECK_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK', 'OPTIONAL_PROPERTY_VALUE_CHECK_ValidationLogic')">Validation Logic</a></li><li><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK', 'OPTIONAL_PROPERTY_VALUE_CHECK_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK', 'OPTIONAL_PROPERTY_VALUE_CHECK_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK', 'OPTIONAL_PROPERTY_VALUE_CHECK_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'GENERIC_TOKEN_SEARCH')">&#9654;</span><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH')">GENERIC_TOKEN_SEARCH</a></div><ul class="sub-nav" id="sub-GENERIC_TOKEN_SEARCH"><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH', 'GENERIC_TOKEN_SEARCH_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH', 'GENERIC_TOKEN_SEARCH_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH', 'GENERIC_TOKEN_SEARCH_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH', 'GENERIC_TOKEN_SEARCH_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH', 'GENERIC_TOKEN_SEARCH_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH', 'GENERIC_TOKEN_SEARCH_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH', 'GENERIC_TOKEN_SEARCH_RelatedRuleTypes')">Related Rule Types</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH', 'GENERIC_TOKEN_SEARCH_SolutionPatternsandTechnologyReference')">Solution Patterns and Technology Reference</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN')">&#9654;</span><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN')">GENERIC_TOKEN_SEARCH_FORBIDDEN</a></div><ul class="sub-nav" id="sub-GENERIC_TOKEN_SEARCH_FORBIDDEN"><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN', 'GENERIC_TOKEN_SEARCH_FORBIDDEN_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN', 'GENERIC_TOKEN_SEARCH_FORBIDDEN_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN', 'GENERIC_TOKEN_SEARCH_FORBIDDEN_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN', 'GENERIC_TOKEN_SEARCH_FORBIDDEN_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN', 'GENERIC_TOKEN_SEARCH_FORBIDDEN_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN', 'GENERIC_TOKEN_SEARCH_FORBIDDEN_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN', 'GENERIC_TOKEN_SEARCH_FORBIDDEN_RelatedRuleTypes')">Related Rule Types</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN', 'GENERIC_TOKEN_SEARCH_FORBIDDEN_SolutionPatternsandTechnologyReference')">Solution Patterns and Technology Reference</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'GENERIC_TOKEN_SEARCH_REQUIRED')">&#9654;</span><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED')">GENERIC_TOKEN_SEARCH_REQUIRED</a></div><ul class="sub-nav" id="sub-GENERIC_TOKEN_SEARCH_REQUIRED"><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED', 'GENERIC_TOKEN_SEARCH_REQUIRED_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED', 'GENERIC_TOKEN_SEARCH_REQUIRED_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED', 'GENERIC_TOKEN_SEARCH_REQUIRED_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED', 'GENERIC_TOKEN_SEARCH_REQUIRED_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED', 'GENERIC_TOKEN_SEARCH_REQUIRED_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED', 'GENERIC_TOKEN_SEARCH_REQUIRED_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED', 'GENERIC_TOKEN_SEARCH_REQUIRED_RelatedRuleTypes')">Related Rule Types</a></li><li><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED', 'GENERIC_TOKEN_SEARCH_REQUIRED_SolutionPatternsandTechnologyReference')">Solution Patterns and Technology Reference</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'JSON_VALIDATION_FORBIDDEN')">&#9654;</span><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN')">JSON_VALIDATION_FORBIDDEN</a></div><ul class="sub-nav" id="sub-JSON_VALIDATION_FORBIDDEN"><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN', 'JSON_VALIDATION_FORBIDDEN_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN', 'JSON_VALIDATION_FORBIDDEN_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN', 'JSON_VALIDATION_FORBIDDEN_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN', 'JSON_VALIDATION_FORBIDDEN_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN', 'JSON_VALIDATION_FORBIDDEN_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN', 'JSON_VALIDATION_FORBIDDEN_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN', 'JSON_VALIDATION_FORBIDDEN_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'JSON_VALIDATION_REQUIRED')">&#9654;</span><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED')">JSON_VALIDATION_REQUIRED</a></div><ul class="sub-nav" id="sub-JSON_VALIDATION_REQUIRED"><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED', 'JSON_VALIDATION_REQUIRED_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED', 'JSON_VALIDATION_REQUIRED_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED', 'JSON_VALIDATION_REQUIRED_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED', 'JSON_VALIDATION_REQUIRED_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED', 'JSON_VALIDATION_REQUIRED_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED', 'JSON_VALIDATION_REQUIRED_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED', 'JSON_VALIDATION_REQUIRED_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'POM_VALIDATION_FORBIDDEN')">&#9654;</span><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN')">POM_VALIDATION_FORBIDDEN</a></div><ul class="sub-nav" id="sub-POM_VALIDATION_FORBIDDEN"><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN', 'POM_VALIDATION_FORBIDDEN_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN', 'POM_VALIDATION_FORBIDDEN_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN', 'POM_VALIDATION_FORBIDDEN_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN', 'POM_VALIDATION_FORBIDDEN_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN', 'POM_VALIDATION_FORBIDDEN_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN', 'POM_VALIDATION_FORBIDDEN_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN', 'POM_VALIDATION_FORBIDDEN_SolutionPatternsandTechnologyReferences')">Solution Patterns and Technology References</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN', 'POM_VALIDATION_FORBIDDEN_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'POM_VALIDATION_REQUIRED')">&#9654;</span><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED')">POM_VALIDATION_REQUIRED</a></div><ul class="sub-nav" id="sub-POM_VALIDATION_REQUIRED"><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED', 'POM_VALIDATION_REQUIRED_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED', 'POM_VALIDATION_REQUIRED_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED', 'POM_VALIDATION_REQUIRED_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED', 'POM_VALIDATION_REQUIRED_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED', 'POM_VALIDATION_REQUIRED_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED', 'POM_VALIDATION_REQUIRED_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED', 'POM_VALIDATION_REQUIRED_SolutionPatternsandTechnologyReferences')">Solution Patterns and Technology References</a></li><li><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED', 'POM_VALIDATION_REQUIRED_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'XML_ATTRIBUTE_EXISTS')">&#9654;</span><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS')">XML_ATTRIBUTE_EXISTS</a></div><ul class="sub-nav" id="sub-XML_ATTRIBUTE_EXISTS"><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_ValidationModes')">Validation Modes</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_SolutionPatternsandTechnologyReferences')">Solution Patterns and Technology References</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS', 'XML_ATTRIBUTE_EXISTS_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'XML_ATTRIBUTE_NOT_EXISTS')">&#9654;</span><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS')">XML_ATTRIBUTE_NOT_EXISTS</a></div><ul class="sub-nav" id="sub-XML_ATTRIBUTE_NOT_EXISTS"><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS', 'XML_ATTRIBUTE_NOT_EXISTS_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS', 'XML_ATTRIBUTE_NOT_EXISTS_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS', 'XML_ATTRIBUTE_NOT_EXISTS_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS', 'XML_ATTRIBUTE_NOT_EXISTS_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS', 'XML_ATTRIBUTE_NOT_EXISTS_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS', 'XML_ATTRIBUTE_NOT_EXISTS_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS', 'XML_ATTRIBUTE_NOT_EXISTS_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'XML_ELEMENT_CONTENT_FORBIDDEN')">&#9654;</span><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN')">XML_ELEMENT_CONTENT_FORBIDDEN</a></div><ul class="sub-nav" id="sub-XML_ELEMENT_CONTENT_FORBIDDEN"><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN', 'XML_ELEMENT_CONTENT_FORBIDDEN_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN', 'XML_ELEMENT_CONTENT_FORBIDDEN_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN', 'XML_ELEMENT_CONTENT_FORBIDDEN_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN', 'XML_ELEMENT_CONTENT_FORBIDDEN_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN', 'XML_ELEMENT_CONTENT_FORBIDDEN_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN', 'XML_ELEMENT_CONTENT_FORBIDDEN_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN', 'XML_ELEMENT_CONTENT_FORBIDDEN_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'XML_ELEMENT_CONTENT_REQUIRED')">&#9654;</span><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED')">XML_ELEMENT_CONTENT_REQUIRED</a></div><ul class="sub-nav" id="sub-XML_ELEMENT_CONTENT_REQUIRED"><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED', 'XML_ELEMENT_CONTENT_REQUIRED_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED', 'XML_ELEMENT_CONTENT_REQUIRED_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED', 'XML_ELEMENT_CONTENT_REQUIRED_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED', 'XML_ELEMENT_CONTENT_REQUIRED_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED', 'XML_ELEMENT_CONTENT_REQUIRED_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED', 'XML_ELEMENT_CONTENT_REQUIRED_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED', 'XML_ELEMENT_CONTENT_REQUIRED_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'XML_XPATH_EXISTS')">&#9654;</span><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS')">XML_XPATH_EXISTS</a></div><ul class="sub-nav" id="sub-XML_XPATH_EXISTS"><li><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS', 'XML_XPATH_EXISTS_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS', 'XML_XPATH_EXISTS_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS', 'XML_XPATH_EXISTS_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS', 'XML_XPATH_EXISTS_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS', 'XML_XPATH_EXISTS_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS', 'XML_XPATH_EXISTS_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS', 'XML_XPATH_EXISTS_RelatedRuleTypes')">Related Rule Types</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS', 'XML_XPATH_EXISTS_SolutionPatternsandTechnologyReferences')">Solution Patterns and Technology References</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'XML_XPATH_NOT_EXISTS')">&#9654;</span><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS')">XML_XPATH_NOT_EXISTS</a></div><ul class="sub-nav" id="sub-XML_XPATH_NOT_EXISTS"><li><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS', 'XML_XPATH_NOT_EXISTS_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS', 'XML_XPATH_NOT_EXISTS_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS', 'XML_XPATH_NOT_EXISTS_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS', 'XML_XPATH_NOT_EXISTS_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS', 'XML_XPATH_NOT_EXISTS_ErrorMessages')">Error Messages</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS', 'XML_XPATH_NOT_EXISTS_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS', 'XML_XPATH_NOT_EXISTS_RelatedRuleTypes')">Related Rule Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'CONDITIONAL_CHECK')">&#9654;</span><a href="#" onclick="showRule(event, 'CONDITIONAL_CHECK')">CONDITIONAL_CHECK</a></div><ul class="sub-nav" id="sub-CONDITIONAL_CHECK"><li><a href="#" onclick="showRule(event, 'CONDITIONAL_CHECK', 'CONDITIONAL_CHECK_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'CONDITIONAL_CHECK', 'CONDITIONAL_CHECK_UseCases')">Use Cases</a></li><li><a href="#" onclick="showRule(event, 'CONDITIONAL_CHECK', 'CONDITIONAL_CHECK_HowItWorks')">How It Works</a></li><li><a href="#" onclick="showRule(event, 'CONDITIONAL_CHECK', 'CONDITIONAL_CHECK_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'CONDITIONAL_CHECK', 'CONDITIONAL_CHECK_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'CONDITIONAL_CHECK', 'CONDITIONAL_CHECK_RelatedCheckTypes')">Related Check Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'PROJECT_CONTEXT')">&#9654;</span><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT')">PROJECT_CONTEXT</a></div><ul class="sub-nav" id="sub-PROJECT_CONTEXT"><li><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT', 'PROJECT_CONTEXT_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT', 'PROJECT_CONTEXT_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT', 'PROJECT_CONTEXT_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT', 'PROJECT_CONTEXT_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT', 'PROJECT_CONTEXT_RelatedCheckTypes')">Related Check Types</a></li></ul></li><li><div class="rule-header"><span class="toggle-icon" onclick="toggleSubNav(event, 'FILE_EXISTS')">&#9654;</span><a href="#" onclick="showRule(event, 'FILE_EXISTS')">FILE_EXISTS</a></div><ul class="sub-nav" id="sub-FILE_EXISTS"><li><a href="#" onclick="showRule(event, 'FILE_EXISTS', 'FILE_EXISTS_Overview')">Overview</a></li><li><a href="#" onclick="showRule(event, 'FILE_EXISTS', 'FILE_EXISTS_Parameters')">Parameters</a></li><li><a href="#" onclick="showRule(event, 'FILE_EXISTS', 'FILE_EXISTS_ConfigurationExamples')">Configuration Examples</a></li><li><a href="#" onclick="showRule(event, 'FILE_EXISTS', 'FILE_EXISTS_BestPractices')">Best Practices</a></li><li><a href="#" onclick="showRule(event, 'FILE_EXISTS', 'FILE_EXISTS_RelatedCheckTypes')">Related Check Types</a></li><li><a href="#" onclick="showRule(event, 'FILE_EXISTS', 'FILE_EXISTS_SolutionPatternsandTechnologyReferences')">Solution Patterns and Technology References</a></li></ul></li>
+        </ul>
+    </div>
+    <div class="resizer" id="resizer"></div>
+    <div class="main-content">
+        <div class="top-nav-container">
+            <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
+            <a href="#" id="mainPageBtn" class="top-nav-button" title="Go to Home" style="display: none; background-color: #0078d4;">🏠 Home</a>
+        </div>
+        <div class="report-container">
+            <div id="GLOBAL_CONFIGURATION" class="rule-content" style="display: block;"><h1>GLOBAL_CONFIGURATION</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>GLOBAL</code> </td><td> <strong>Applies To:</strong> All Rule Types
+<br>
+<h2 id="GLOBAL_CONFIGURATION_Overview">Overview</h2>
+<br>
+Aegis provides a powerful set of global configuration options that apply across various rule types. Understanding these operators, match modes, and scope controls allows you to create precise, efficient, and robust validation rules across disparate technologies.
+<br>
+<h2 id="GLOBAL_CONFIGURATION_MatchModes">Match Modes</h2>
+<br>
+Match modes define how Aegis evaluates rule compliance across multiple file sets.
+<br>
+<h3>ALL_FILES (Default)</h3>
+<br>
+The rule passes ONLY if <strong>EVERY</strong> matching file satisfies the condition.
+<br>
+<li><strong>Use Case</strong>: Consistency checks (e.g., "Every Java file must have a specific license header", "No configuration file should contain hardcoded IPs").</li>
+<li><strong>Failure</strong>: Fails if even one file violates the rule.</li>
+<br>
+<h3>ANY_FILE</h3>
+<br>
+The rule passes if <strong>AT LEAST ONE</strong> matching file satisfies the condition.
+<br>
+<li><strong>Use Case</strong>: Existence checks (e.g., "The project must have a <code class='inline-token'>README.md</code> defined somewhere", "At least one security configuration file must exist").</li>
+<li><strong>Failure</strong>: Fails ONLY if zero files satisfy the condition.</li>
+<br>
+<h3>SUBSTRING</h3>
+<br>
+Simple text matching. Checks if a token exists as a literal substring within the file content.
+<br>
+<li><strong>Use Case</strong>: Fast, simple checks for specific keywords, property names, or clear-text strings.</li>
+<br>
+<h3>REGEX</h3>
+<br>
+Content matching using Regular Expressions.
+<br>
+<li><strong>Use Case</strong>: Complex pattern matching (e.g., credit card numbers, specific IP ranges, variable naming conventions with wildcards).</li>
+<br>
+<h3>EXACT (XPath)</h3>
+<br>
+Strict matching for XPath values. The value extracted from the XML must match the expected value character-for-character.
+<br>
+---
+<br>
+<h2 id="GLOBAL_CONFIGURATION_LogicOperators">Logic Operators</h2>
+<br>
+Operators modify how the rule engine interprets the results of a search or evaluation.
+<br>
+<h3>failIfFound</h3>
+<br>
+<strong>Type</strong>: <code class='inline-token'>Boolean</code> </td><td> <strong>Default</strong>: <code class='inline-token'>false</code>
+<br>
+<li><strong>true</strong>: The rule FAILS if the specified pattern, token, or XPath IS FOUND.</li>
+  - *Example*: "Fail if a hardcoded secret is found."
+<li><strong>false</strong>: The rule FAILS if the specified pattern, token, or XPath IS NOT FOUND.</li>
+  - *Example*: "Fail if a required framework module is missing."
+<br>
+<h3>caseSensitive</h3>
+<br>
+<strong>Type</strong>: <code class='inline-token'>Boolean</code> </td><td> <strong>Default</strong>: <code class='inline-token'>true</code>
+<br>
+<li><strong>true</strong>: "Error" and "error" are treated as different strings.</li>
+<li><strong>false</strong>: Case is ignored during matching ("Error" == "error").</li>
+<br>
+<h3>negativeMatch</h3>
+<br>
+<strong>Type</strong>: <code class='inline-token'>Boolean</code> </td><td> <strong>Default</strong>: <code class='inline-token'>false</code>
+<br>
+<li>Used in some specialized token or attribute searches to invert the match logic locally within a check.</li>
+<br>
+---
+<br>
+<h2 id="GLOBAL_CONFIGURATION_ScopeControl">Scope Control</h2>
+<br>
+Control exactly which files and environments a rule targets.
+<br>
+<h3>environments</h3>
+<br>
+<strong>Type</strong>: <code class='inline-token'>List</code>
+<br>
+Defines which environments the rule applies to.
+<br>
+<li><strong>Values</strong>:</li>
+  - <code class='inline-token'>[&quot;ALL&quot;]</code>: Applies to all scans regardless of environment key.
+  - <code class='inline-token'>[&quot;DEV&quot;, &quot;QA&quot;]</code>: Applies only when the scan is triggered for these specific environment keys.
+<li><strong>Best Practice</strong>: Use this for environment-specific property checks (e.g., ensuring debug mode is only allowed in <code class='inline-token'>DEV</code>).</li>
+<br>
+<h3>filePatterns</h3>
+<br>
+<strong>Type</strong>: <code class='inline-token'>List</code>
+<br>
+Glob patterns to filter which files are scanned by the rule engine.
+<br>
+<li><strong>Examples</strong>:</li>
+  - <code class='inline-token'>src/main/resources/*.properties</code> (Java / Spring)
+  - <code class='inline-token'>src/main/mule/*.xml</code> (MuleSoft)
+  - <code class='inline-token'>**/*.py</code> (Python)
+  - <code class='inline-token'>package.json</code> (Node.js)
+<br>
+---
+<br>
+<h2 id="GLOBAL_CONFIGURATION_PropertyResolution">Property Resolution</h2>
+<br>
+Aegis supports dynamic property resolution in rule parameters to make rules portable.
+<br>
+<h3><code class='inline-token'>${property.name}</code> Placeholders</h3>
+<br>
+You can use placeholders in rule values which Aegis will attempt to resolve against:
+<br>
+1. Project build descriptors (<code class='inline-token'>pom.xml</code>, <code class='inline-token'>package.json</code>, etc.).
+2. System environment variables.
+3. Custom scan-time variables provided via CLI or UI.
+<br>
+---
+<br>
+<h2 id="GLOBAL_CONFIGURATION_BestPracticesGuidance">Best Practices & Guidance</h2>
+<br>
+<h3>1. Efficient "Existence" Checks</h3>
+<br>
+If you want to ensure your project has a specific component (like a global configuration file), don't check every file and fail if it's missing from any of them. Instead, use <code class='inline-token'>matchMode: ANY_FILE</code>.
+<br>
+<pre><code class='language-yaml'>- type: CODE_FILE_EXISTS
+  params:
+    filePatterns: [&quot;**/security-config.xml&quot;]
+    matchMode: ANY_FILE  # Essential for existence checks!
+</code></pre>
+<br>
+<h3>2. Combining Validations</h3>
+<br>
+When checking both the presence of a key and its specific value in property files, prefer specialized rules like <code class='inline-token'>MANDATORY_PROPERTY_VALUE_CHECK</code> which handle both logic paths more efficiently than standard substring searches.
+<br>
+<h3>3. Performance Optimization</h3>
+<br>
+<li>Prefer <strong>SUBSTRING</strong> over <strong>REGEX</strong> for static tokens. Regex engines are significantly more resource-intensive.</li>
+<li>Scope your <strong>filePatterns</strong> as narrowly as possible. Avoid <code class='inline-token'>**/*</code> if the rule only applies to a single configuration file.</li>
+<br>
+<h3>4. Precision with XPath</h3>
+<br>
+For XML validation, always use <strong>XPath</strong> rules instead of <strong>Token Search</strong>. Token searches can be fooled by comments or complex formatting, whereas XPath understands the underlying document structure.
+</div><div id="PROJECT_IDENTIFICATION" class="rule-content" style="display: none;"><h1>Project Identification</h1>
+<br>
+Aegis identifies projects to scan based on <strong>Marker Files</strong>. It does not semantically "auto-detect" technology types like Java or Python unless told what files signify the root of such a project.
+<br>
+<h2 id="PROJECT_IDENTIFICATION_Overview">Overview</h2>
+<br>
+When Aegis scans a directory, it looks for specific "markers" to decide if a folder should be treated as a project and subjected to the validation rules. This is controlled in the <code class='inline-token'>config</code> section of your <code class='inline-token'>rules.yaml</code>.
+<br>
+<h2 id="PROJECT_IDENTIFICATION_Configuration">Configuration</h2>
+<br>
+The <code class='inline-token'>projectIdentification</code> block in <code class='inline-token'>rules.yaml</code> defines these settings:
+<br>
+<pre><code class='language-yaml'>config:
+  projectIdentification:
+    targetProject:
+      matchMode: ANY      # ANY or ALL
+      markerFiles:        # Files that identify a project
+      - pom.xml           # Signifies a Maven/Java project
+      - package.json       # Signifies a Node.js project
+      - requirements.txt  # Signifies a Python project
+      - mule-artifact.json # Signifies a MuleSoft project
+    configFolder:
+      namePattern: .*_config.* # Pattern for identifying configuration projects
+</code></pre>
+<br>
+<h3>Match Modes</h3>
+<br>
+<li><strong>ANY</strong>: A folder is considered a project if <strong>AT LEAST ONE</strong> of the marker files exists.</li>
+<li><strong>ALL</strong>: A folder is considered a project ONLY if <strong>EVERY</strong> marker file in the list exists.</li>
+<br>
+<h2 id="PROJECT_IDENTIFICATION_ManagingMultipleTechnologies">Managing Multiple Technologies</h2>
+<br>
+Because Aegis is technology-agnostic, you can scan a mixed repository (e.g., containing both Java and Python services) by simply including markers for both:
+<br>
+1. <strong>Shared Scan</strong>: Add both <code class='inline-token'>pom.xml</code> and <code class='inline-token'>requirements.txt</code> to <code class='inline-token'>markerFiles</code>.
+2. <strong>Targeted Rules</strong>: Use <code class='inline-token'>filePatterns</code> in your rules to ensure Java rules only run on Java files (<code class='inline-token'>**/*.java</code>) and Python rules only on Python files (<code class='inline-token'>**/*.py</code>).
+<br>
+<h2 id="PROJECT_IDENTIFICATION_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Narrow the Markers</strong>: Only use files that truly represent the root of a project. Using a very common file like <code class='inline-token'>README.md</code> as a marker might cause Aegis to scan many folders that aren't actually code projects.</li>
+<li><strong>Excluded Folders</strong>: Use the <code class='inline-token'>ignoredFolders</code> configuration to skip directories like <code class='inline-token'>node_modules</code>, <code class='inline-token'>target</code>, or <code class='inline-token'>.git</code> to speed up the discovery process.</li>
+</div><div id="GENERIC_PROPERTY_FILE_CHECK" class="rule-content" style="display: none;"><h1>GENERIC_PROPERTY_FILE_CHECK</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CONFIG</code> </td><td> <strong>Config Engine</strong> </td><td> <code class='inline-token'>.properties</code>, <code class='inline-token'>.yaml</code>
+<br>
+<h2 id="GENERIC_PROPERTY_FILE_CHECK_Overview">Overview</h2>
+<br>
+A versatile engine for validating property-based configuration files across different environments. It allows for complex validation logic including mandatory keys, forbidden values, and pattern-based format enforcement.
+<br>
+<h2 id="GENERIC_PROPERTY_FILE_CHECK_UseCases">Use Cases</h2>
+<br>
+<li>Enforce standard property naming across microservices.</li>
+<li>Ensure all environments have matching configuration keys (prevent "forgot to update PROD").</li>
+<li>Block hardcoded secrets or environment-specific triggers in production.</li>
+<li>Validate the format of critical configuration values (e.g., ports, timeouts, URLs).</li>
+<br>
+<h2 id="GENERIC_PROPERTY_FILE_CHECK_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>fileExtensions</code> </td><td> List </td><td> File extensions to scan (e.g., <code class='inline-token'>.properties</code>, <code class='inline-token'>.yaml</code>) </td></tr>
+<tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> Environment keys to target (e.g., <code class='inline-token'>DEV</code>, <code class='inline-token'>QA</code>, <code class='inline-token'>PROD</code> or <code class='inline-token'>ALL</code>) </td></tr>
+<tr><td> <code class='inline-token'>validationRules</code> </td><td> List<Map> </td><td> A collection of validation logic blocks </td></tr>
+<br>
+<h3>Validation Rule Map</h3>
+<br>
+<tr><td> Field </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>type</code> </td><td> String </td><td> <code class='inline-token'>REQUIRED</code>, <code class='inline-token'>FORBIDDEN</code>, or <code class='inline-token'>FORMAT</code> </td></tr>
+<tr><td> <code class='inline-token'>pattern</code> </td><td> String </td><td> The key or regex pattern to evaluate </td></tr>
+<tr><td> <code class='inline-token'>message</code> </td><td> String </td><td> (Optional) Custom failure message </td></tr>
+<br>
+<h2 id="GENERIC_PROPERTY_FILE_CHECK_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Mandatory Boilerplate Properties</h3>
+Ensure that every property file contains the core application identification keys.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-CONFIG-BOILERPLATE&quot;
+  name: &quot;Require App Metadata&quot;
+  severity: MEDIUM
+  checks:
+    - type: GENERIC_PROPERTY_FILE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;]
+        environments: [&quot;ALL&quot;]
+        validationRules:
+          - type: &quot;REQUIRED&quot;
+            pattern: &quot;app.id&quot;
+          - type: &quot;REQUIRED&quot;
+            pattern: &quot;app.version&quot;
+</code></pre>
+<br>
+<h3>Example 2: Type and Format Enforcement</h3>
+Validate that technical configurations like ports and timeouts follow specific numeric or unit-based formats.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-CONFIG-TECHNICAL&quot;
+  name: &quot;Technical Format Validation&quot;
+  severity: HIGH
+  checks:
+    - type: GENERIC_PROPERTY_FILE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;, &quot;.yaml&quot;]
+        environments: [&quot;DEV&quot;, &quot;QA&quot;, &quot;PROD&quot;]
+        validationRules:
+          - type: &quot;FORMAT&quot;
+            pattern: &quot;http.port=\\d+&quot;
+            message: &quot;Http port must be a numeric integer&quot;
+          - type: &quot;FORMAT&quot;
+            pattern: &quot;db.timeout=\\d+[ms]&quot;
+            message: &quot;Database timeout must include 'ms' unit&quot;
+</code></pre>
+<br>
+<h3>Example 3: Production Security Guardrails</h3>
+Block the usage of insecure protocols or hardcoded local development strings in production.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-PROD-SECURITY-KEYS&quot;
+  name: &quot;Production Access Guard&quot;
+  severity: CRITICAL
+  checks:
+    - type: GENERIC_PROPERTY_FILE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;, &quot;.yaml&quot;]
+        environments: [&quot;PROD&quot;]
+        validationRules:
+          - type: &quot;FORBIDDEN&quot;
+            pattern: &quot;auth.mode=local&quot;
+            message: &quot;Production must use SSO or external auth&quot;
+          - type: &quot;FORBIDDEN&quot;
+            pattern: &quot;debug.enabled=true&quot;
+            message: &quot;Debug mode is strictly forbidden in production&quot;
+</code></pre>
+<br>
+<h2 id="GENERIC_PROPERTY_FILE_CHECK_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>prod-config.properties: Required property 'app.id' not found.
+dev.yaml: Http port must be a numeric integer (found value '8080-auto').
+qa-env.properties: Production must use SSO (found 'auth.mode=local').
+</code></pre>
+<br>
+<h2 id="GENERIC_PROPERTY_FILE_CHECK_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Atomic Rules</strong>: Keep <code class='inline-token'>validationRules</code> focused on specific areas (e.g., separate security rules from formatting rules) for cleaner error reporting.</li>
+<li><strong>Cross-Environment Consistency</strong>: Use <code class='inline-token'>environments: [&quot;ALL&quot;]</code> to ensure that if a property is added to <code class='inline-token'>DEV</code>, it is also present (even if empty/placeholder) in <code class='inline-token'>PROD</code>.</li>
+<li><strong>Regex Boundaries</strong>: Use anchors (<code class='inline-token'>^</code>, <code class='inline-token'>$</code>) in your patterns if you want to match the whole key or value exactly.</li>
+<br>
+<h2 id="GENERIC_PROPERTY_FILE_CHECK_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK')">MANDATORY_PROPERTY_VALUE_CHECK</a></strong> - Deep validation of property values.</li>
+<li><strong><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK')">MANDATORY_SUBSTRING_CHECK</a></strong> - Simpler substring checks for config files.</li>
+<li><strong><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH')">GENERIC_TOKEN_SEARCH</a></strong> - Advanced text-based search.</li>
+</div><div id="MANDATORY_PROPERTY_VALUE_CHECK" class="rule-content" style="display: none;"><h1>MANDATORY_PROPERTY_VALUE_CHECK</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CONFIG</code> </td><td> <strong>Config Engine</strong> </td><td> <code class='inline-token'>.properties</code>
+<br>
+<h2 id="MANDATORY_PROPERTY_VALUE_CHECK_Overview">Overview</h2>
+<br>
+Validates that <strong>required property name-value pairs exist</strong> in environment-specific configuration files. This rule ensures that critical configuration keys are not only present but also set to one of the approved values.
+<br>
+<h2 id="MANDATORY_PROPERTY_VALUE_CHECK_UseCases">Use Cases</h2>
+<br>
+<li>Enforce production-grade log levels (e.g., block <code class='inline-token'>DEBUG</code> in <code class='inline-token'>PROD</code>).</li>
+<li>Ensure security features like SSL or authentication are explicitly enabled.</li>
+<li>Validate environment-specific type tags (e.g., <code class='inline-token'>environment.type=PROD</code>).</li>
+<li>Standardize timeout values or retry counts across different services.</li>
+<br>
+<h2 id="MANDATORY_PROPERTY_VALUE_CHECK_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>fileExtensions</code> </td><td> List </td><td> File extensions to check (e.g., <code class='inline-token'>.properties</code>) </td></tr>
+<tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> Environment names to check (e.g., <code class='inline-token'>PROD</code>, <code class='inline-token'>ALL</code>) </td></tr>
+<tr><td> <code class='inline-token'>properties</code> </td><td> List<Map> </td><td> List of property configurations </td></tr>
+<br>
+<h3>Property Configuration Map</h3>
+<br>
+<tr><td> Field </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>name</code> </td><td> String </td><td> Exactly matching property key name </td></tr>
+<tr><td> <code class='inline-token'>values</code> </td><td> List </td><td> List of allowed values (OR logic) </td></tr>
+<tr><td> <code class='inline-token'>caseSensitiveName</code> </td><td> Boolean </td><td> Override global name case sensitivity </td></tr>
+<tr><td> <code class='inline-token'>caseSensitiveValue</code> </td><td> Boolean </td><td> Override global value case sensitivity </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>delimiter</code> </td><td> String </td><td> <code class='inline-token'>=</code> </td><td> The character separating key and value </td></tr>
+<tr><td> <code class='inline-token'>caseSensitiveNames</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Global case sensitivity for property names </td></tr>
+<tr><td> <code class='inline-token'>caseSensitiveValues</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Global case sensitivity for property values </td></tr>
+<br>
+<h2 id="MANDATORY_PROPERTY_VALUE_CHECK_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Enforce Production Log Level</h3>
+Ensure that logging is set to a sustainable level for production environments.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-PROD-LOG-LOCK&quot;
+  name: &quot;Production Log Level&quot;
+  severity: HIGH
+  checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;]
+        environments: [&quot;PROD&quot;]
+        properties:
+          - name: &quot;log.level&quot;
+            values: [&quot;INFO&quot;, &quot;WARN&quot;, &quot;ERROR&quot;]
+</code></pre>
+<br>
+<h3>Example 2: Infrastructure Compliance</h3>
+Verify that SSL is enabled and timeout values are within organizational limits.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-INFRA-STANDARDS&quot;
+  name: &quot;Required Infrastructure Settings&quot;
+  severity: HIGH
+  checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;]
+        environments: [&quot;DEV&quot;, &quot;QA&quot;, &quot;PROD&quot;]
+        properties:
+          - name: &quot;ssl.enabled&quot;
+            values: [&quot;true&quot;]
+          - name: &quot;connect.timeout&quot;
+            values: [&quot;30&quot;, &quot;60&quot;, &quot;120&quot;]
+</code></pre>
+<br>
+<h3>Example 3: Flexible Boolean Validation</h3>
+Allow various string representations of "true" or "false" in a case-insensitive manner.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-FLEX-BOOLEAN&quot;
+  name: &quot;Boolean Property Validation&quot;
+  severity: MEDIUM
+  checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;]
+        environments: [&quot;ALL&quot;]
+        caseSensitiveValues: false
+        properties:
+          - name: &quot;debug.mode&quot;
+            values: [&quot;true&quot;, &quot;false&quot;, &quot;on&quot;, &quot;off&quot;, &quot;yes&quot;, &quot;no&quot;]
+</code></pre>
+<br>
+<h2 id="MANDATORY_PROPERTY_VALUE_CHECK_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>PROD.properties: Property 'log.level' not found in file.
+QA.properties: Property 'ssl.enabled' found but value 'false' does not match allowed values [true].
+</code></pre>
+<br>
+<h2 id="MANDATORY_PROPERTY_VALUE_CHECK_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Explicit Failures</strong>: This rule fails if the property is missing OR if the value is incorrect. Use it when a configuration must be present and correctly set.</li>
+<li><strong>Service-Level Consistency</strong>: Apply these rules to ensure all components in a multi-service architecture use consistent timeout or retry logic.</li>
+<li><strong>Environment Targeting</strong>: Heavily use the <code class='inline-token'>environments</code> parameter to apply stricter value requirements to <code class='inline-token'>PROD</code> than to <code class='inline-token'>DEV</code>.</li>
+<br>
+<h2 id="MANDATORY_PROPERTY_VALUE_CHECK_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'OPTIONAL_PROPERTY_VALUE_CHECK')">OPTIONAL_PROPERTY_VALUE_CHECK</a></strong> - Logic for properties that might not exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK')">MANDATORY_SUBSTRING_CHECK</a></strong> - Validates substrings within property values.</li>
+</div><div id="MANDATORY_SUBSTRING_CHECK" class="rule-content" style="display: none;"><h1>MANDATORY_SUBSTRING_CHECK</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CONFIG</code> </td><td> <strong>Config Engine</strong> </td><td> <code class='inline-token'>.properties</code>, <code class='inline-token'>.yaml</code>
+<br>
+<h2 id="MANDATORY_SUBSTRING_CHECK_Overview">Overview</h2>
+<br>
+Validates that <strong>required or forbidden substrings exist</strong> in environment-specific configuration files. This rule is optimized for filtering configuration files by their environment name (e.g., <code class='inline-token'>DEV.properties</code>, <code class='inline-token'>PROD.yaml</code>), making it an essential tool for cross-environment compliance.
+<br>
+<h2 id="MANDATORY_SUBSTRING_CHECK_UseCases">Use Cases</h2>
+<br>
+<li>Ensure critical configuration keys (like <code class='inline-token'>api.key</code>) exist in all environment descriptors.</li>
+<li>Prevent unsafe settings (e.g., <code class='inline-token'>debug=true</code>) from reaching production configurations.</li>
+<li>Enforce mandatory protocol usage (e.g., <code class='inline-token'>https://</code> in callback URLs).</li>
+<li>Validate naming conventions or standard placeholders across different build stages.</li>
+<br>
+<h2 id="MANDATORY_SUBSTRING_CHECK_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>fileExtensions</code> </td><td> List </td><td> File extensions to scan (e.g., <code class='inline-token'>.properties</code>, <code class='inline-token'>.yaml</code>) </td></tr>
+<tr><td> <code class='inline-token'>tokens</code> </td><td> List </td><td> List of substrings to search for </td></tr>
+<tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> Environment keys (file basenames) to validate (e.g., <code class='inline-token'>PROD</code>, <code class='inline-token'>ALL</code>) </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>searchMode</code> </td><td> String </td><td> <code class='inline-token'>REQUIRED</code> </td><td> Choose <code class='inline-token'>REQUIRED</code> or <code class='inline-token'>FORBIDDEN</code> </td></tr>
+<tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether substring matching is case-sensitive </td></tr>
+<br>
+<h2 id="MANDATORY_SUBSTRING_CHECK_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Required Service Discovery Configuration</h3>
+Ensure that all environment property files contain the mandatory service ID and client identification.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-CONFIG-DISCOVERY&quot;
+  name: &quot;Required Service Identifiers&quot;
+  severity: HIGH
+  checks:
+    - type: MANDATORY_SUBSTRING_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;]
+        environments: [&quot;DEV&quot;, &quot;QA&quot;, &quot;PROD&quot;]
+        tokens: [&quot;service.id&quot;, &quot;service.owner&quot;]
+        searchMode: REQUIRED
+</code></pre>
+<br>
+<h3>Example 2: Block Insecure Production Flags</h3>
+Prevent "debug" or "verbose" flags from being enabled in production configuration files.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-PROD-NO-DEBUG&quot;
+  name: &quot;Disable Debug in Production&quot;
+  severity: CRITICAL
+  checks:
+    - type: MANDATORY_SUBSTRING_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;, &quot;.yaml&quot;]
+        environments: [&quot;PROD&quot;]
+        tokens: [&quot;debug=true&quot;, &quot;verbose.logging=on&quot;]
+        searchMode: FORBIDDEN
+</code></pre>
+<br>
+<h3>Example 3: Mandatory Protocol Enforcement</h3>
+Ensure that all environments reference security components using standard case-insensitive keywords.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-SECURE-KEYWORDS&quot;
+  name: &quot;Mandatory Security Keywords&quot;
+  severity: HIGH
+  checks:
+    - type: MANDATORY_SUBSTRING_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;, &quot;.yaml&quot;]
+        environments: [&quot;ALL&quot;]
+        tokens: [&quot;ssl&quot;, &quot;tls&quot;, &quot;https&quot;]
+        searchMode: REQUIRED
+        caseSensitive: false
+</code></pre>
+<br>
+<h2 id="MANDATORY_SUBSTRING_CHECK_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>dev.properties: Required token 'service.id' not found in file.
+prod.properties: Forbidden token 'debug=true' found in file.
+</code></pre>
+<br>
+<h2 id="MANDATORY_SUBSTRING_CHECK_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Environment Mapping</strong>: This rule relies on matching the <code class='inline-token'>environments</code> list against the filenames. Ensure your configuration files follow a consistent naming pattern (e.g., <code class='inline-token'>ENV_NAME.properties</code>).</li>
+<li><strong>Global Enforcement</strong>: Use <code class='inline-token'>environments: [&quot;ALL&quot;]</code> to apply a rule across every discovered environment file automatically.</li>
+<li><strong>Substrings vs. Full Values</strong>: Remember that this rule checks for *substrings*. If you need to validate that a property precisely equals a value, use <strong><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK')">MANDATORY_PROPERTY_VALUE_CHECK</a></strong>.</li>
+<br>
+<h2 id="MANDATORY_SUBSTRING_CHECK_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH')">GENERIC_TOKEN_SEARCH</a></strong> - Similar logic but without environment-specific file filtering.</li>
+<li><strong><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK')">MANDATORY_PROPERTY_VALUE_CHECK</a></strong> - Validates exact key-value pairs.</li>
+</div><div id="OPTIONAL_PROPERTY_VALUE_CHECK" class="rule-content" style="display: none;"><h1>OPTIONAL_PROPERTY_VALUE_CHECK</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CONFIG</code> </td><td> <strong>Config Engine</strong> </td><td> <code class='inline-token'>.properties</code>
+<br>
+<h2 id="OPTIONAL_PROPERTY_VALUE_CHECK_Overview">Overview</h2>
+<br>
+Validates <strong>optional property values</strong> in configuration files. This rule is designed for settings that are not required for the application to run, but if they are present, they must adhere to specific value constraints.
+<br>
+<h2 id="OPTIONAL_PROPERTY_VALUE_CHECK_UseCases">Use Cases</h2>
+<br>
+<li>Validate experimental or feature flags when enabled (e.g., <code class='inline-token'>feature.x=true/false</code>).</li>
+<li>Restrict cache provider types if the user chooses to configure caching.</li>
+<li>Enforce allowed TTL (Time-To-Live) values for non-mandatory session management.</li>
+<li>Validate optional monitoring levels or diagnostic flags.</li>
+<br>
+<h2 id="OPTIONAL_PROPERTY_VALUE_CHECK_Parameters">Parameters</h2>
+<br>
+Same as <strong><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK')">MANDATORY_PROPERTY_VALUE_CHECK</a></strong>, but with different validation logic.
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>fileExtensions</code> </td><td> List </td><td> File extensions to check (e.g., <code class='inline-token'>.properties</code>) </td></tr>
+<tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> Environment names to check (e.g., <code class='inline-token'>ALL</code>, <code class='inline-token'>PROD</code>) </td></tr>
+<tr><td> <code class='inline-token'>properties</code> </td><td> List </td><td> List of optional property configurations </td></tr>
+<br>
+<h2 id="OPTIONAL_PROPERTY_VALUE_CHECK_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Optional Feature Flags</h3>
+<br>
+Ensure that if a feature toggle is present, it uses valid boolean string values.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-OPTIONAL-TOGGLE&quot;
+  name: &quot;Validate Optional Toggles&quot;
+  severity: MEDIUM
+  checks:
+    - type: OPTIONAL_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;]
+        environments: [&quot;ALL&quot;]
+        properties:
+          - name: &quot;feature.beta.enabled&quot;
+            values: [&quot;true&quot;, &quot;false&quot;]
+</code></pre>
+<br>
+<h3>Example 2: Optional Cache Tuning</h3>
+<br>
+Restrict choices for cache providers and durations when developers choose to override defaults.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-OPTIONAL-CACHE&quot;
+  name: &quot;Optional Cache Settings&quot;
+  severity: LOW
+  checks:
+    - type: OPTIONAL_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;]
+        environments: [&quot;DEV&quot;, &quot;QA&quot;, &quot;PROD&quot;]
+        properties:
+          - name: &quot;cache.provider&quot;
+            values: [&quot;memory&quot;, &quot;redis&quot;, &quot;in-memory&quot;]
+          - name: &quot;cache.timeout&quot;
+            values: [&quot;300&quot;, &quot;600&quot;, &quot;3600&quot;]
+</code></pre>
+<br>
+<h2 id="OPTIONAL_PROPERTY_VALUE_CHECK_ValidationLogic">Validation Logic</h2>
+<br>
+<li><strong>✅ PASS</strong>: Property is NOT found in the configuration file (since it is optional).</li>
+<li><strong>✅ PASS</strong>: Property is found and its value matches one of the allowed <code class='inline-token'>values</code>.</li>
+<li><strong>❌ FAIL</strong>: Property is found but its value is NOT in the allowed list.</li>
+<br>
+<h2 id="OPTIONAL_PROPERTY_VALUE_CHECK_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>dev.properties: Optional property 'cache.provider' found but value 'custom-val' does not match allowed choices [memory, redis, in-memory].
+</code></pre>
+<br>
+<h2 id="OPTIONAL_PROPERTY_VALUE_CHECK_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Use for "Nice to Have" Rules</strong>: This is ideal for validating developer-facing flags or performance tuning parameters where a default exists in code if the property is missing.</li>
+<li><strong>Environment Variance</strong>: Even for optional properties, you can restrict <code class='inline-token'>PROD</code> to a subset of <code class='inline-token'>DEV</code> values (e.g., only allowing certain cache providers in a production cloud environment).</li>
+<li><strong>Documentation</strong>: Use the <code class='inline-token'>values</code> list to document allowed types for other team members.</li>
+<br>
+<h2 id="OPTIONAL_PROPERTY_VALUE_CHECK_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'MANDATORY_PROPERTY_VALUE_CHECK')">MANDATORY_PROPERTY_VALUE_CHECK</a></strong> - For properties that MUST be present.</li>
+<li><strong><a href="#" onclick="showRule(event, 'MANDATORY_SUBSTRING_CHECK')">MANDATORY_SUBSTRING_CHECK</a></strong> - For validating parts of property values.</li>
+</div><div id="GENERIC_TOKEN_SEARCH" class="rule-content" style="display: none;"><h1>GENERIC_TOKEN_SEARCH</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> Any text-based source files
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_Overview">Overview</h2>
+<br>
+Advanced token search with <strong>environment filtering</strong> and <strong>regex support</strong>. This rule acts as a versatile engine that can operate in both <code class='inline-token'>REQUIRED</code> and <code class='inline-token'>FORBIDDEN</code> modes, with additional awareness of target environments. It is the core engine behind more specialized substring and token checks.
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_UseCases">Use Cases</h2>
+<br>
+<li>Detect environment-specific anti-patterns (e.g., "localhost" in Production).</li>
+<li>Enforce mandatory headers or license blocks in source files.</li>
+<li>Validate configuration compliance across different build stages.</li>
+<li>Target specific XML element attributes or plain text strings.</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List </td><td> Glob patterns to match source or configuration files </td></tr>
+<tr><td> <code class='inline-token'>tokens</code> </td><td> List </td><td> List of tokens or patterns to search for </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> N/A </td><td> Filter files by environment keys (e.g., <code class='inline-token'>PROD</code>, <code class='inline-token'>QA</code>) </td></tr>
+<tr><td> <code class='inline-token'>searchMode</code> </td><td> String </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> Choose <code class='inline-token'>REQUIRED</code> or <code class='inline-token'>FORBIDDEN</code> </td></tr>
+<tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code>, <code class='inline-token'>REGEX</code>, or <code class='inline-token'>ELEMENT_ATTRIBUTE</code> </td></tr>
+<tr><td> <code class='inline-token'>elementName</code> </td><td> String </td><td> N/A </td><td> For XML element-specific attribute searches </td></tr>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Environment-Specific Policy</h3>
+<br>
+Ensure that production configurations do not contain references to local development servers.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-PROD-NO-LOCALHOST&quot;
+  name: &quot;No Localhost in Production&quot;
+  severity: CRITICAL
+  checks:
+    - type: GENERIC_TOKEN_SEARCH
+      params:
+        filePatterns: [&quot;*.properties&quot;, &quot;*.yaml&quot;]
+        environments: [&quot;PROD&quot;]
+        tokens: [&quot;localhost&quot;, &quot;127.0.0.1&quot;]
+        searchMode: FORBIDDEN
+</code></pre>
+<br>
+<h3>Example 2: Detect IP Addresses</h3>
+<br>
+Identify hardcoded IP addresses in configuration files for higher environments.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-NOMADIC-IP-CHECK&quot;
+  name: &quot;IP Address Detection&quot;
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH
+      params:
+        filePatterns: [&quot;config/*.yaml&quot;]
+        environments: [&quot;QA&quot;, &quot;PROD&quot;]
+        tokens: [&quot;\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b&quot;]
+        matchMode: REGEX
+        searchMode: FORBIDDEN
+</code></pre>
+<br>
+<h3>Example 3: Mandatory Cloud Metadata</h3>
+<br>
+Ensure all property files in any environment contain a specific metadata reference.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-MANDATORY-CLOUDFLARE&quot;
+  name: &quot;Cloud Providers Metadata&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH
+      params:
+        filePatterns: [&quot;**/*.properties&quot;]
+        environments: [&quot;ALL&quot;]
+        tokens: [&quot;${cloud.provider}&quot;, &quot;${region.id}&quot;]
+        searchMode: REQUIRED
+</code></pre>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>PROD-config.properties: Forbidden token 'localhost' found in file.
+QA-db.yaml: Required token(s) not found in files matching: config/*.yaml
+</code></pre>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Filter by Environment</strong>: Use the <code class='inline-token'>environments</code> parameter to avoid noise in development or test configurations while keeping production strictly compliant.</li>
+<li><strong>Regex for Complexity</strong>: Use <code class='inline-token'>matchMode: REGEX</code> to search for patterns rather than literal strings (e.g., version formats, ID patterns).</li>
+<li><strong>Mode Clarity</strong>: Clearly label whether a rule is for blocking (<code class='inline-token'>FORBIDDEN</code>) or enforcing (<code class='inline-token'>REQUIRED</code>) to make failure messages intuitive.</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED')">GENERIC_TOKEN_SEARCH_REQUIRED</a></strong> - Simplified mandatory token check.</li>
+<li><strong><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN')">GENERIC_TOKEN_SEARCH_FORBIDDEN</a></strong> - Simplified forbidden token check.</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_SolutionPatternsandTechnologyReference">Solution Patterns and Technology Reference</h2>
+<br>
+Standard configurations for validating multi-technology stacks.
+<br>
+<tr><td> Technology </td><td> Scenario </td><td> Search Mode </td><td> Target File </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <strong>☕ Java</strong> </td><td> Block <code class='inline-token'>System.out</code> </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>*.java</code> </td></tr>
+<tr><td> <strong>🐍 Python</strong> </td><td> Block <code class='inline-token'>print()</code> </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>*.py</code> </td></tr>
+<tr><td> <strong>📦 Node.js</strong> </td><td> Block <code class='inline-token'>console.log</code> </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>*.js</code> </td></tr>
+<tr><td> <strong>🐳 Docker</strong> </td><td> Require standard base image </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>Dockerfile</code> </td></tr>
+<tr><td> <strong>🐎 MuleSoft</strong> </td><td> Block non-persistent stores </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>*.xml</code> </td></tr>
+<br>
+<h3>☕ Java Patterns</h3>
+<br>
+Enterprise standards for logging and output management.
+<br>
+<pre><code class='language-yaml'>- id: &quot;JAVA-LOG-CLEAN&quot;
+  name: &quot;No System.out Usage&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH
+      params:
+        filePatterns: [&quot;src/**/*.java&quot;]
+        tokens: [&quot;System.out.print&quot;, &quot;System.err.print&quot;]
+        searchMode: FORBIDDEN
+</code></pre>
+<br>
+<h3>🐍 Python Patterns</h3>
+<br>
+Ensuring logging standards in production scripts.
+<br>
+<pre><code class='language-yaml'>- id: &quot;PY-LOG-ENFORCEMENT&quot;
+  name: &quot;No Print Statements&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH
+      params:
+        filePatterns: [&quot;*.py&quot;]
+        tokens: [&quot;print(&quot;]
+        searchMode: FORBIDDEN
+</code></pre>
+</div><div id="GENERIC_TOKEN_SEARCH_FORBIDDEN" class="rule-content" style="display: none;"><h1>GENERIC_TOKEN_SEARCH_FORBIDDEN</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> Any text-based source files
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_Overview">Overview</h2>
+<br>
+Validates that <strong>forbidden tokens or patterns do NOT exist</strong> in files matching specified patterns. This rule <strong>fails</strong> if any of the specified forbidden tokens are <strong>found</strong> within the file content. It is a powerful tool for blocking deprecated functions, hardcoded credentials, and unsafe coding patterns.
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_UseCases">Use Cases</h2>
+<br>
+<li>Prevent usage of deprecated APIs, legacy functions, or insecure libraries.</li>
+<li>Block hardcoded credentials (passwords, API keys, secrets) in source and config files.</li>
+<li>Disallow specific imports or dependencies that violate architectural standards.</li>
+<li>Enforce cleanup of debug code, temporary comments, or test-only artifacts in production.</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List </td><td> Glob patterns to match source or configuration files </td></tr>
+<tr><td> <code class='inline-token'>tokens</code> </td><td> List </td><td> List of tokens that must NOT be found in the files </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr>
+<tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code> </td></tr>
+<tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Block Deprecated Global Functions</h3>
+Prevent the usage of a deprecated transformation function across all scripts.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-DEPRECATED-TRANSFORM&quot;
+  name: &quot;No Legacy Transformations&quot;
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: [&quot;**/*.dwl&quot;, &quot;**/*.js&quot;]
+        tokens: [&quot;toBase64Legacy()&quot;, &quot;oldEncrypt()&quot;]
+</code></pre>
+<br>
+<h3>Example 2: Block Hardcoded Credentials</h3>
+Identify potential hardcoded secrets in properties or XML configuration files.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-NO-HARDCODED-SECRETS&quot;
+  name: &quot;No Hardcoded Credentials&quot;
+  severity: CRITICAL
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: [&quot;**/*.xml&quot;, &quot;**/*.properties&quot;, &quot;**/*.yaml&quot;]
+        tokens: [&quot;password=&quot;, &quot;pwd=&quot;, &quot;aws_secret=&quot;]
+        caseSensitive: false
+</code></pre>
+<br>
+<h3>Example 3: Detect IP Addresses (Regex)</h3>
+Block hardcoded IP addresses in source code directory to enforce hostname usage.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-HOSTNAME-ENFORCEMENT&quot;
+  name: &quot;No Hardcoded IP Addresses&quot;
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: [&quot;src/**/*.java&quot;, &quot;src/**/*.py&quot;]
+        excludePatterns: [&quot;**/test/**&quot;]
+        tokens: [&quot;\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b&quot;]
+        matchMode: REGEX
+</code></pre>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>AuthService.java: Forbidden token found: password=
+legacy-script.js: Forbidden token found: toBase64Legacy()
+DatabaseConfig.xml: Forbidden IP pattern found: 192.168.1.1
+</code></pre>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Case Sensitivity</strong>: Set <code class='inline-token'>caseSensitive: false</code> when blocking configuration keys (like <code class='inline-token'>PWD=</code>) to catch variants like <code class='inline-token'>pwd=</code> or <code class='inline-token'>Pwd=</code>.</li>
+<li><strong>Targeted Exclusions</strong>: Use <code class='inline-token'>excludePatterns</code> for third-party libraries or internal test suites where forbidden patterns might be legitimate for testing purposes.</li>
+<li><strong>Regex Guardrails</strong>: When using REGEX, ensure patterns are specific to avoid false positives (e.g., use word boundaries <code class='inline-token'>\\b</code>).</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED')">GENERIC_TOKEN_SEARCH_REQUIRED</a></strong> - Opposite: ensures tokens DO exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS')">XML_XPATH_NOT_EXISTS</a></strong> - Precise blocking of XML structures.</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_SolutionPatternsandTechnologyReference">Solution Patterns and Technology Reference</h2>
+<br>
+Standard configurations for blocking anti-patterns.
+<br>
+<tr><td> Technology </td><td> Scenario </td><td> Mode </td><td> Target File </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <strong>☕ Java</strong> </td><td> Block <code class='inline-token'>System.out</code> </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>**/*.java</code> </td></tr>
+<tr><td> <strong>🐍 Python</strong> </td><td> Block Debugger </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>**/*.py</code> </td></tr>
+<tr><td> <strong>📦 Node.js</strong> </td><td> Block <code class='inline-token'>eval()</code> </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>**/*.js</code> </td></tr>
+<tr><td> <strong>🐎 MuleSoft</strong> </td><td> Block legacy MEL </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>**/*.xml</code> </td></tr>
+<br>
+<h3>☕ Java / Spring Boot Patterns</h3>
+Prevent developers from using standard output streams for logging.
+<br>
+<pre><code class='language-yaml'>- id: &quot;JAVA-LOGGING-STANDARDS&quot;
+  name: &quot;No System.out&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: [&quot;**/*.java&quot;]
+        tokens: [&quot;System.out.println&quot;, &quot;System.err.println&quot;]
+</code></pre>
+<br>
+<h3>🐎 MuleSoft Patterns</h3>
+Block legacy Mule Expression Language (MEL) patterns in modern projects.
+<br>
+<pre><code class='language-yaml'>- id: &quot;MULE-MODERNIZATION&quot;
+  name: &quot;No Legacy MEL&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: [&quot;**/*.xml&quot;]
+        tokens: [&quot;message.inboundProperties&quot;, &quot;message.outboundProperties&quot;]
+</code></pre>
+</div><div id="GENERIC_TOKEN_SEARCH_REQUIRED" class="rule-content" style="display: none;"><h1>GENERIC_TOKEN_SEARCH_REQUIRED</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> Any text-based source files
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_Overview">Overview</h2>
+<br>
+Validates that <strong>required tokens or patterns exist</strong> in files matching specified patterns. This rule <strong>fails</strong> if any of the required tokens are <strong>NOT found</strong>. It is ideal for enforcing mandatory boilerplate, specific imports, or standard configuration keys across different frameworks.
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_UseCases">Use Cases</h2>
+<br>
+<li>Ensure specific imports or modules are present in source files.</li>
+<li>Verify that required configuration keys or property placeholders exist.</li>
+<li>Validate the presence of mandatory legal headers, author tags, or security annotations.</li>
+<li>Check for required framework-specific metadata files or structures.</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List </td><td> Glob patterns to match source or configuration files </td></tr>
+<tr><td> <code class='inline-token'>tokens</code> </td><td> List </td><td> List of tokens that must be found in the files </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr>
+<tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code> </td></tr>
+<tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr>
+<tr><td> <code class='inline-token'>requireAll</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> If <code class='inline-token'>true</code>, ALL tokens must be found. If <code class='inline-token'>false</code>, at least ONE </td></tr>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Required Framework Import</h3>
+Ensure that all implementation files in a project contain the necessary framework imports for logging.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-JAVA-REQD-LOGGER&quot;
+  name: &quot;Required Logger Import&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: [&quot;src/**/*.java&quot;]
+        tokens: [&quot;import org.slf4j.Logger&quot;, &quot;import org.slf4j.LoggerFactory&quot;]
+        requireAll: true
+</code></pre>
+<br>
+<h3>Example 2: Mandatory Error Handling Pattern</h3>
+Ensure that application configuration files contain mandatory error handling blocks (either "continue" or "propagate" strategies).
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-CONFIG-ERROR-POLICY&quot;
+  name: &quot;Required Error Handling&quot;
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: [&quot;src/main/resources/*.xml&quot;]
+        tokens: [&quot;on-error-continue&quot;, &quot;on-error-propagate&quot;]
+        requireAll: false  # At least one must exist
+</code></pre>
+<br>
+<h3>Example 3: Regex Format Validation</h3>
+Verify that a version string following semantic versioning exists in the project's build descriptor.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-VERSION-SEMVER&quot;
+  name: &quot;Required SemVer Descriptor&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: [&quot;**/pom.xml&quot;, &quot;**/package.json&quot;]
+        tokens: [&quot;\\d+\\.\\d+\\.\\d+&quot;]
+        matchMode: REGEX
+</code></pre>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>DatabaseConfig.java: Missing required token: import org.slf4j.Logger
+app-descriptor.xml: Missing at least one required token: [on-error-continue, on-error-propagate]
+</code></pre>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Broad File Patterns</strong>: Use this rule at a high level to ensure that *every* file of a certain type adheres to structural requirements (like license headers).</li>
+<li><strong>Combine with Exclusion</strong>: Use <code class='inline-token'>excludePatterns</code> to skip generated code, third-party libraries, or test files where these rules might not apply.</li>
+<li><strong>Fail on Composition</strong>: This rule is most effective when used to ensure that cross-cutting concerns (logging, security, error handling) are at least *present* in the codebase.</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN')">GENERIC_TOKEN_SEARCH_FORBIDDEN</a></strong> - Opposite: ensures tokens do NOT exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS')">XML_XPATH_EXISTS</a></strong> - More precise XML validation using structural paths.</li>
+<br>
+<h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_SolutionPatternsandTechnologyReference">Solution Patterns and Technology Reference</h2>
+<br>
+Standard configurations for enforcing mandatory components.
+<br>
+<tr><td> Technology </td><td> Requirement </td><td> Mode </td><td> Target File </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <strong>☕ Java</strong> </td><td> Security Annotations </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>*Controller.java</code> </td></tr>
+<tr><td> <strong>🐍 Python</strong> </td><td> Shebang Reference </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>*.py</code> </td></tr>
+<tr><td> <strong>📦 Node.js</strong> </td><td> Module Exports </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>*.js</code> </td></tr>
+<tr><td> <strong>🐎 MuleSoft</strong> </td><td> DataWeave Version </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>*.dwl</code> </td></tr>
+<br>
+<h3>☕ Java / Spring Boot Patterns</h3>
+Ensure controllers have standard security annotations.
+<br>
+<pre><code class='language-yaml'>- id: &quot;JAVA-SECURE-CONTROLLER&quot;
+  name: &quot;Secure Controllers&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: [&quot;**/*Controller.java&quot;]
+        tokens: [&quot;@PreAuthorize&quot;, &quot;@Secured&quot;]
+        requireAll: false
+</code></pre>
+<br>
+<h3>🐍 Python Patterns</h3>
+Ensure scripts specify the required python version via shebang.
+<br>
+<pre><code class='language-yaml'>- id: &quot;PY-MIN-VERSION&quot;
+  name: &quot;Python 3 Shebang&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: [&quot;*.py&quot;]
+        tokens: [&quot;#!/usr/bin/env python3&quot;]
+</code></pre>
+</div><div id="JSON_VALIDATION_FORBIDDEN" class="rule-content" style="display: none;"><h1>JSON_VALIDATION_FORBIDDEN</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> JSON configuration files (package.json, config.json, etc.)
+<br>
+<h2 id="JSON_VALIDATION_FORBIDDEN_Overview">Overview</h2>
+<br>
+Validates that <strong>forbidden JSON elements do NOT exist</strong> in JSON files. This rule <strong>fails</strong> if forbidden elements <strong>ARE found</strong>. It is useful for blocking deprecated fields, insecure settings, or unapproved metadata.
+<br>
+<h2 id="JSON_VALIDATION_FORBIDDEN_UseCases">Use Cases</h2>
+<br>
+<li>Prevent usage of deprecated configuration keys in project descriptors.</li>
+<li>Block sensitive data fields (e.g., <code class='inline-token'>password</code>, <code class='inline-token'>secret</code>) in configuration JSON.</li>
+<li>Disallow certain unapproved metadata or development-only flags in production JSON.</li>
+<li>Enforce strict JSON structure by restricting specific keys.</li>
+<br>
+<h2 id="JSON_VALIDATION_FORBIDDEN_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>filePattern</code> </td><td> String </td><td> Filename pattern to match (e.g., <code class='inline-token'>mule-artifact.json</code>, <code class='inline-token'>package.json</code>) </td></tr>
+<tr><td> <code class='inline-token'>forbiddenElements</code> </td><td> List<String> </td><td> List of forbidden JSON keys (top-level or simple nested paths) </td></tr>
+<br>
+<h2 id="JSON_VALIDATION_FORBIDDEN_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Block Deprecated Project Fields</h3>
+Prevents usage of legacy configuration fields in project descriptors.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-JSON-FORBIDDEN-01&quot;
+  name: &quot;No Deprecated Project Fields&quot;
+  description: &quot;Prevent usage of legacy fields in project descriptors&quot;
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: JSON_VALIDATION_FORBIDDEN
+      params:
+        filePattern: &quot;project-descriptor.json&quot;
+        forbiddenElements:
+          - &quot;legacyMode&quot;
+          - &quot;deprecatedConfig&quot;
+</code></pre>
+<br>
+<h3>Example 2: Block Sensitive Fields in Node.js</h3>
+Ensures <code class='inline-token'>package.json</code> does not contain sensitive or development-only keys.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-JSON-FORBIDDEN-NODE&quot;
+  name: &quot;Clean Package JSON&quot;
+  description: &quot;Prevent unapproved keys in package.json&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: JSON_VALIDATION_FORBIDDEN
+      params:
+        filePattern: &quot;package.json&quot;
+        forbiddenElements:
+          - &quot;privateRepositoryUrl&quot;
+          - &quot;internalScripts&quot;
+</code></pre>
+<br>
+<h2 id="JSON_VALIDATION_FORBIDDEN_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>project-descriptor.json has forbidden element: legacyMode
+package.json has forbidden element: privateRepositoryUrl
+</code></pre>
+<br>
+<h2 id="JSON_VALIDATION_FORBIDDEN_BestPractices">Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li><strong>Deprecation</strong>: Use it to enforce a "hard cut-over" when migrating from old config formats to new ones.</li>
+<li><strong>Security</strong>: Prevent hardcoded secrets or insecure flags (like <code class='inline-token'>allowInsecure: true</code>) from being committed.</li>
+<li><strong>Cleanliness</strong>: Keep project descriptors streamlined by blocking unapproved experimental fields.</li>
+<br>
+---
+<br>
+<h2 id="JSON_VALIDATION_FORBIDDEN_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED')">JSON_VALIDATION_REQUIRED</a></strong> - Opposite: ensures elements DO exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN')">GENERIC_TOKEN_SEARCH_FORBIDDEN</a></strong> - More flexible search for forbidden patterns across any file type.</li>
+</div><div id="JSON_VALIDATION_REQUIRED" class="rule-content" style="display: none;"><h1>JSON_VALIDATION_REQUIRED</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> JSON configuration files (package.json, etc.)
+<br>
+<h2 id="JSON_VALIDATION_REQUIRED_Overview">Overview</h2>
+<br>
+Validates that <strong>required JSON elements exist</strong> in JSON files. This rule is essential for validating project descriptors like <code class='inline-token'>mule-artifact.json</code>, <code class='inline-token'>package.json</code>, or custom configuration files. It supports <strong>version checking</strong>, <strong>specific field value validation</strong>, and <strong>field existence checks</strong>.
+<br>
+<h2 id="JSON_VALIDATION_REQUIRED_UseCases">Use Cases</h2>
+<br>
+<li>Validate <code class='inline-token'>mule-artifact.json</code> structure and runtime versions.</li>
+<li>Ensure <code class='inline-token'>package.json</code> contains required scripts or engines configuration.</li>
+<li>Ensure required configuration keys exist in custom JSON config files.</li>
+<li>Enforce specific values for critical JSON fields (e.g., <code class='inline-token'>javaSpecificationVersions</code>).</li>
+<br>
+<h2 id="JSON_VALIDATION_REQUIRED_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>filePattern</code> </td><td> String </td><td> Precise filename to match (e.g., <code class='inline-token'>mule-artifact.json</code>, <code class='inline-token'>package.json</code>) </td></tr>
+<br>
+<h3>Validation Parameters (Must configure at least one)</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>minVersions</code> </td><td> Map </td><td> Checks if a field's version string is >= specified version (e.g., "4.4.0") </td></tr>
+<tr><td> <code class='inline-token'>requiredFields</code> </td><td> Map </td><td> Checks if a field exists AND has a specifically required value </td></tr>
+<tr><td> <code class='inline-token'>requiredElements</code> </td><td> List </td><td> Checks if a field simply exists (value ignored) </td></tr>
+<br>
+<h2 id="JSON_VALIDATION_REQUIRED_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Project Descriptor Validation (MuleSoft)</h3>
+Validates minimum runtime version, required Java version, and presence of secure properties.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-JSON-MULE&quot;
+  name: &quot;Validate Mule Project Descriptor&quot;
+  description: &quot;Ensures mule-artifact.json meets minimum runtime requirements&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: JSON_VALIDATION_REQUIRED
+      params:
+        filePattern: &quot;mule-artifact.json&quot;
+        minVersions:
+          minMuleVersion: &quot;4.9.0&quot;
+        requiredFields:
+          javaSpecificationVersions: &quot;17&quot;
+        requiredElements:
+          - &quot;secureProperties&quot;
+</code></pre>
+<br>
+<h3>Example 2: Node.js / TypeScript Package Validation</h3>
+Ensures the project has a start script and requires a minimum Node engine.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-JSON-NODE&quot;
+  name: &quot;Validate Node.js Package&quot;
+  description: &quot;Ensures package.json has required scripts and engines&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: JSON_VALIDATION_REQUIRED
+      params:
+        filePattern: &quot;package.json&quot;
+        requiredFields:
+          scripts/start: &quot;node index.js&quot;
+        minVersions:
+          engines/node: &quot;18.0.0&quot;
+        requiredElements:
+          - &quot;dependencies&quot;
+          - &quot;license&quot;
+</code></pre>
+<br>
+<h2 id="JSON_VALIDATION_REQUIRED_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>Field 'minMuleVersion' version too low in mule-artifact.json: expected &gt;= 4.9.0, got 4.4.0
+Field 'engines/node' version too low in package.json: expected &gt;= 18.0.0, got 14.17.0
+Element 'secureProperties' missing in mule-artifact.json
+</code></pre>
+<br>
+<br>
+<h2 id="JSON_VALIDATION_REQUIRED_BestPractices">Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li> Validating project descriptors for runtime compatibility.</li>
+<li> Ensuring minimum platform/engine versions for security.</li>
+<li> Enforcing required configuration fields in application JSON.</li>
+<li> Standardizing JSON structure across multiple repositories.</li>
+<h2 id="JSON_VALIDATION_REQUIRED_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN')">JSON_VALIDATION_FORBIDDEN</a></strong> - Opposite: ensures elements do NOT exist</li>
+</div><div id="POM_VALIDATION_FORBIDDEN" class="rule-content" style="display: none;"><h1>POM_VALIDATION_FORBIDDEN</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> Maven POM files (<code class='inline-token'>pom.xml</code>)
+<br>
+<h2 id="POM_VALIDATION_FORBIDDEN_Overview">Overview</h2>
+<br>
+Validates that <strong>forbidden elements do NOT exist</strong> in Maven POM files (<code class='inline-token'>pom.xml</code>). This rule <strong>fails</strong> if forbidden POM elements <strong>ARE found</strong>. It is commonly used to block vulnerable libraries, deprecated plugins, or insecure configuration properties.
+<br>
+Supports validation of:
+<li><strong>Forbidden Properties</strong> (property names)</li>
+<li><strong>Forbidden Dependencies</strong> (groupId, artifactId, optional version)</li>
+<li><strong>Forbidden Plugins</strong> (groupId, artifactId, optional version)</li>
+<br>
+<h2 id="POM_VALIDATION_FORBIDDEN_UseCases">Use Cases</h2>
+<br>
+<li>Block deprecated or vulnerable dependencies (e.g., Log4j 1.x, old Struts).</li>
+<li>Prevent usage of forbidden or untrusted Maven plugins.</li>
+<li>Disallow specific internal properties from being hardcoded or overridden in production.</li>
+<li>Enforce dependency exclusion policies by banning restricted group/artifact IDs.</li>
+<li>Block specific vulnerable versions while allowing safe, patched versions.</li>
+<br>
+<h2 id="POM_VALIDATION_FORBIDDEN_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>validationType</code> </td><td> String </td><td> Type of validation: <code class='inline-token'>PROPERTIES</code>, <code class='inline-token'>DEPENDENCIES</code>, <code class='inline-token'>PLUGINS</code>, or <code class='inline-token'>COMBINED</code> </td></tr>
+<br>
+<h3>Validation-Specific Parameters</h3>
+<br>
+<h4>PROPERTIES Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>forbiddenProperties</code> </td><td> List<String> </td><td> Yes </td><td> List of property names that must NOT exist </td></tr>
+<br>
+<h4>DEPENDENCIES Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>forbiddenDependencies</code> </td><td> List<Map> </td><td> Yes </td><td> List of forbidden dependencies </td></tr>
+<tr><td> <code class='inline-token'>forbiddenDependencies[].groupId</code> </td><td> String </td><td> Yes </td><td> Dependency groupId </td></tr>
+<tr><td> <code class='inline-token'>forbiddenDependencies[].artifactId</code> </td><td> String </td><td> Yes </td><td> Dependency artifactId </td></tr>
+<tr><td> <code class='inline-token'>forbiddenDependencies[].version</code> </td><td> String </td><td> <strong>No</strong> </td><td> <strong>Optional</strong>: If specified, only that specific version is forbidden </td></tr>
+<br>
+<h4>PLUGINS Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>forbiddenPlugins</code> </td><td> List<Map> </td><td> Yes </td><td> List of forbidden plugins </td></tr>
+<tr><td> <code class='inline-token'>forbiddenPlugins[].groupId</code> </td><td> String </td><td> Yes </td><td> Plugin groupId </td></tr>
+<tr><td> <code class='inline-token'>forbiddenPlugins[].artifactId</code> </td><td> String </td><td> Yes </td><td> Plugin artifactId </td></tr>
+<tr><td> <code class='inline-token'>forbiddenPlugins[].version</code> </td><td> String </td><td> <strong>No</strong> </td><td> <strong>Optional</strong>: If specified, only that specific version is forbidden </td></tr>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_FORBIDDEN_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Forbidden Properties (Environment/Security)</h3>
+<br>
+Block properties that should only be handled via environment variables or CI/CD injection.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-POM-FORBIDDEN-PROP&quot;
+  name: &quot;No Hardcoded Credentials&quot;
+  description: &quot;Credentials must not be stored as POM properties&quot;
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: PROPERTIES
+        forbiddenProperties:
+          - &quot;db.password&quot;
+          - &quot;api.key&quot;
+          - &quot;secret.token&quot;
+</code></pre>
+<br>
+---
+<br>
+<h3>Example 2: Forbidden Dependency (Security Vulnerability)</h3>
+<br>
+Block a specific version of Log4j known for critical vulnerabilities.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-POM-FORBIDDEN-LOG4J&quot;
+  name: &quot;Block Vulnerable Log4j&quot;
+  description: &quot;Ensure vulnerable versions of log4j-core are not used&quot;
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+          - groupId: &quot;org.apache.logging.log4j&quot;
+            artifactId: &quot;log4j-core&quot;
+            version: &quot;2.14.1&quot;
+</code></pre>
+<br>
+---
+<br>
+<h3>Example 3: Forbidden Plugins (Standardization)</h3>
+<br>
+Prevent the use of problematic or redundant build plugins.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-POM-FORBIDDEN-PLUGIN&quot;
+  name: &quot;Plugin Restriction&quot;
+  description: &quot;Block forbidden or deprecated build plugins&quot;
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: PLUGINS
+        forbiddenPlugins:
+          - groupId: &quot;org.codehaus.mojo&quot;
+            artifactId: &quot;findbugs-maven-plugin&quot; # Replaced by SpotBugs
+</code></pre>
+<br>
+---
+<br>
+<h3>Example 4: Combined Validation (Policy Blocklist)</h3>
+<br>
+Block multiple forbidden elements in one cohesive policy.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-POM-BLOCKLIST&quot;
+  name: &quot;Corporate Policy Blocklist&quot;
+  description: &quot;Block all known deprecated and insecure elements&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: COMBINED
+        forbiddenProperties:
+          - &quot;legacy.mode.enabled&quot;
+        forbiddenDependencies:
+          - groupId: &quot;log4j&quot;
+            artifactId: &quot;log4j&quot; # 1.x version
+        forbiddenPlugins:
+          - groupId: &quot;org.apache.maven.plugins&quot;
+            artifactId: &quot;maven-antrun-plugin&quot;
+</code></pre>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_FORBIDDEN_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>Forbidden property 'db.password' found in pom.xml
+Forbidden dependency org.apache.logging.log4j:log4j-core:2.14.1 found in pom.xml
+Forbidden plugin org.codehaus.mojo:findbugs-maven-plugin found in pom.xml
+</code></pre>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_FORBIDDEN_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Block all versions for deprecation</strong>: If a library is completely replaced, don't specify a version so that ALL versions are forbidden.</li>
+<li><strong>Specific versions for security</strong>: If only one version is vulnerable, specify that exact version to allow projects to use safe, newer releases.</li>
+<li><strong>Exclusion Lists</strong>: Use combined rules for enterprise-wide policy enforcement (e.g., "Standard Blocklist 2024").</li>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_FORBIDDEN_SolutionPatternsandTechnologyReferences">Solution Patterns and Technology References</h2>
+<br>
+<tr><td> Technology </td><td> Best Practice Goal </td><td> Forbidden Item </td><td> Reason </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <strong>☕ Java/Maven</strong> </td><td> Security </td><td> <code class='inline-token'>log4j</code> (1.x) </td><td> Critical vulnerabilities </td></tr>
+<tr><td> <strong>☕ Java/Maven</strong> </td><td> Build Safety </td><td> <code class='inline-token'>maven-antrun-plugin</code> </td><td> Unstructured build logic </td></tr>
+<tr><td> <strong>🐎 MuleSoft</strong> </td><td> Migration Safety </td><td> <code class='inline-token'>mule-module-http</code> </td><td> Deprecated in Mule 4 </td></tr>
+<br>
+<h3>☕ Java / Maven Patterns</h3>
+<br>
+<strong>Scenario</strong>: Enterprise security teams often maintain a "banned library" list. Aegis enforces this automatically during the build or code review phase.
+<br>
+<pre><code class='language-yaml'>id: &quot;SECURITY-BANNED-LIBS&quot;
+name: &quot;Banned Security Libraries&quot;
+description: &quot;Block known insecure libraries&quot;
+checks:
+  - type: POM_VALIDATION_FORBIDDEN
+    params:
+      forbiddenDependencies:
+        - groupId: &quot;log4j&quot;
+          artifactId: &quot;log4j&quot;
+        - groupId: &quot;org.apache.struts&quot;
+          artifactId: &quot;struts2-core&quot;
+          version: &quot;2.3.20&quot;
+</code></pre>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_FORBIDDEN_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'POM_VALIDATION_REQUIRED')">POM_VALIDATION_REQUIRED</a></strong> - Opposite: ensures elements DO exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS')">XML_XPATH_NOT_EXISTS</a></strong> - For complex nested forbidden structures in POM/XML.</li>
+<li><strong><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN')">JSON_VALIDATION_FORBIDDEN</a></strong> - Similar validation for JSON-based projects.</li>
+<br>
+---
+<br>
+<br>
+</div><div id="POM_VALIDATION_REQUIRED" class="rule-content" style="display: none;"><h1>POM_VALIDATION_REQUIRED</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> Maven POM files (<code class='inline-token'>pom.xml</code>)
+<br>
+<h2 id="POM_VALIDATION_REQUIRED_Overview">Overview</h2>
+<br>
+Validates that <strong>required elements exist</strong> in Maven POM files (<code class='inline-token'>pom.xml</code>). This rule <strong>fails</strong> if required POM elements are <strong>NOT found</strong> or don't match expected values.
+<br>
+Supports validation of:
+<li><strong>Parent POM</strong> (groupId, artifactId, version)</li>
+<li><strong>Properties</strong> (name and value pairs)</li>
+<li><strong>Dependencies</strong> (groupId, artifactId, optional version)</li>
+<li><strong>Plugins</strong> (groupId, artifactId, optional version)</li>
+<br>
+<h2 id="POM_VALIDATION_REQUIRED_UseCases">Use Cases</h2>
+<br>
+<li>Ensure required dependencies (like logging or security libs) are declared.</li>
+<li>Validate Maven plugin configurations for build consistency.</li>
+<li>Enforce parent POM standards across a microservices architecture.</li>
+<li>Check for mandatory project metadata and versioning schemes.</li>
+<li>Validate specific dependency versions for security compliance (e.g., blocking known vulnerable versions).</li>
+<br>
+<h2 id="POM_VALIDATION_REQUIRED_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>validationType</code> </td><td> String </td><td> Type of validation: <code class='inline-token'>PARENT</code>, <code class='inline-token'>PROPERTIES</code>, <code class='inline-token'>DEPENDENCIES</code>, <code class='inline-token'>PLUGINS</code>, or <code class='inline-token'>COMBINED</code> </td></tr>
+<br>
+<h3>Validation-Specific Parameters</h3>
+<br>
+<h4>PARENT Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>parent</code> </td><td> Map </td><td> Yes </td><td> Parent POM configuration </td></tr>
+<tr><td> <code class='inline-token'>parent.groupId</code> </td><td> String </td><td> Yes </td><td> Expected parent groupId </td></tr>
+<tr><td> <code class='inline-token'>parent.artifactId</code> </td><td> String </td><td> Yes </td><td> Expected parent artifactId </td></tr>
+<tr><td> <code class='inline-token'>parent.version</code> </td><td> String </td><td> Yes </td><td> Expected parent version </td></tr>
+<br>
+<h4>PROPERTIES Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>properties</code> </td><td> List<Map> </td><td> Yes </td><td> List of required properties </td></tr>
+<tr><td> <code class='inline-token'>properties[].name</code> </td><td> String </td><td> Yes </td><td> Property name </td></tr>
+<tr><td> <code class='inline-token'>properties[].expectedValue</code> </td><td> String </td><td> No </td><td> Expected property value (if specified, value must match) </td></tr>
+<br>
+<h4>DEPENDENCIES Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>dependencies</code> </td><td> List<Map> </td><td> Yes </td><td> List of required dependencies </td></tr>
+<tr><td> <code class='inline-token'>dependencies[].groupId</code> </td><td> String </td><td> Yes </td><td> Dependency groupId </td></tr>
+<tr><td> <code class='inline-token'>dependencies[].artifactId</code> </td><td> String </td><td> Yes </td><td> Dependency artifactId </td></tr>
+<tr><td> <code class='inline-token'>dependencies[].version</code> </td><td> String </td><td> <strong>No</strong> </td><td> <strong>Optional</strong>: If specified, validates exact version </td></tr>
+<br>
+<h4>PLUGINS Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>plugins</code> </td><td> List<Map> </td><td> Yes </td><td> List of required plugins </td></tr>
+<tr><td> <code class='inline-token'>plugins[].groupId</code> </td><td> String </td><td> Yes </td><td> Plugin groupId </td></tr>
+<tr><td> <code class='inline-token'>plugins[].artifactId</code> </td><td> String </td><td> Yes </td><td> Plugin artifactId </td></tr>
+<tr><td> <code class='inline-token'>plugins[].version</code> </td><td> String </td><td> <strong>No</strong> </td><td> <strong>Optional</strong>: If specified, validates exact version </td></tr>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_REQUIRED_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Parent POM Validation (Corporate Standard)</h3>
+<br>
+Enforce a specific parent POM for all corporate Java projects.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-POM-PARENT&quot;
+  name: &quot;Enforce Standard Parent POM&quot;
+  description: &quot;All projects must use CorporateParent version 2.5.0&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PARENT
+        parent:
+          groupId: &quot;com.corporation.framework&quot;
+          artifactId: &quot;CorporateParent&quot;
+          version: &quot;2.5.0&quot;
+</code></pre>
+<br>
+---
+<br>
+<h3>Example 2: Properties Validation (Runtime/Compiler Version)</h3>
+<br>
+Validate compiler versions or runtime targets.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-POM-PROP&quot;
+  name: &quot;Java Version Check&quot;
+  description: &quot;Java source and target must be 17&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PROPERTIES
+        properties:
+          - name: &quot;maven.compiler.source&quot;
+            expectedValue: &quot;17&quot;
+          - name: &quot;maven.compiler.target&quot;
+            expectedValue: &quot;17&quot;
+</code></pre>
+<br>
+---
+<br>
+<h3>Example 3: Dependency Validation (Security Libs)</h3>
+<br>
+Require a specific security library version.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-POM-DEP&quot;
+  name: &quot;Security Library Requirement&quot;
+  description: &quot;Standard security core must be present&quot;
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: DEPENDENCIES
+        dependencies:
+          - groupId: &quot;com.corporation.security&quot;
+            artifactId: &quot;security-core&quot;
+            version: &quot;3.2.1&quot;
+</code></pre>
+<br>
+---
+<br>
+<h3>Example 4: Combined Validation (Aegis Comprehensive Check)</h3>
+<br>
+Validate multiple POM aspects in a single rule.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-POM-COMPREHENSIVE&quot;
+  name: &quot;Full POM Compliance&quot;
+  description: &quot;Comprehensive check for dependencies, plugins, and properties&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: COMBINED
+        properties:
+          - name: &quot;project.build.sourceEncoding&quot;
+            expectedValue: &quot;UTF-8&quot;
+        dependencies:
+          - groupId: &quot;org.slf4j&quot;
+            artifactId: &quot;slf4j-api&quot;
+        plugins:
+          - groupId: &quot;org.apache.maven.plugins&quot;
+            artifactId: &quot;maven-compiler-plugin&quot;
+            version: &quot;3.11.0&quot;
+</code></pre>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_REQUIRED_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>Parent version mismatch in pom.xml: expected com.corp:Parent:2.5.0, got version '1.0.0'
+Property 'maven.compiler.source' has wrong value in pom.xml: expected '17', got '11'
+Dependency com.corporation.security:security-core not found in pom.xml
+</code></pre>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_REQUIRED_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Use version validation for security</strong>: Lock critical security libraries to specific patched versions.</li>
+<li><strong>Flexible utilities</strong>: For standard utilities (e.g., <code class='inline-token'>commons-lang</code>), omit the <code class='inline-token'>version</code> parameter to allow project-specific updates unless a specific version is required for compatibility.</li>
+<li><strong>Combined Rules</strong>: Use <code class='inline-token'>validationType: COMBINED</code> to reduce the number of rules defined when multiple checks are related to the same "standard" (e.g., "Corporate Standard v2").</li>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_REQUIRED_SolutionPatternsandTechnologyReferences">Solution Patterns and Technology References</h2>
+<br>
+<tr><td> Technology </td><td> Best Practice Goal </td><td> Key Elements </td><td> Attributes Checked </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <strong>☕ Java/Maven</strong> </td><td> Parent POM Usage </td><td> <code class='inline-token'>parent</code> </td><td> <code class='inline-token'>version</code> </td></tr>
+<tr><td> <strong>☕ Java/Maven</strong> </td><td> Compiler Standard </td><td> <code class='inline-token'>properties</code> </td><td> <code class='inline-token'>maven.compiler.source</code> </td></tr>
+<tr><td> <strong>🐎 MuleSoft</strong> </td><td> Mule Plugin Check </td><td> <code class='inline-token'>mule-maven-plugin</code> </td><td> <code class='inline-token'>version</code> </td></tr>
+<br>
+<h3>☕ Java / Maven Patterns</h3>
+<br>
+<strong>Scenario</strong>: To ensure reproducible builds, it is critical that the <code class='inline-token'>parent</code> POM is strictly versioned and that major build plugins are explicitly defined with their respective versions.
+<br>
+<pre><code class='language-yaml'>id: &quot;MAVEN-PARENT-CHECK&quot;
+name: &quot;Parent POM Validation&quot;
+description: &quot;Ensure specific corporate parent POM is used&quot;
+checks:
+  - type: POM_VALIDATION_REQUIRED
+    params:
+      parent:
+        groupId: &quot;com.corporation.framework&quot;
+        artifactId: &quot;CorporateParent&quot;
+        version: &quot;2.5.0&quot;
+</code></pre>
+<br>
+---
+<br>
+<h2 id="POM_VALIDATION_REQUIRED_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'POM_VALIDATION_FORBIDDEN')">POM_VALIDATION_FORBIDDEN</a></strong> - Opposite: ensures elements do NOT exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS')">XML_XPATH_EXISTS</a></strong> - For more granular POM validation using raw XPath.</li>
+<li><strong><a href="#" onclick="showRule(event, 'JSON_VALIDATION_REQUIRED')">JSON_VALIDATION_REQUIRED</a></strong> - Similar validation for JSON-based projects (Node.js, Mule artifacts).</li>
+<br>
+---
+<br>
+<br>
+</div><div id="XML_ATTRIBUTE_EXISTS" class="rule-content" style="display: none;"><h1>XML_ATTRIBUTE_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> XML configuration files
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_Overview">Overview</h2>
+<br>
+Validates that <strong>required XML attributes exist</strong> on specified elements, optionally checking for specific values. This is a highly flexible rule supporting simple existence checks, specific value matching, and multi-attribute set validation.
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_UseCases">Use Cases</h2>
+<br>
+<li>Ensure configuration elements have required identifiers (name, ID).</li>
+<li>Validate security settings (cipher suites, protocols, encrypted="true").</li>
+<li>Enforce naming conventions for specific components.</li>
+<li>Validate infrastructure settings (hosts, ports, timeouts).</li>
+<li>Ensure required metadata or schema references are present.</li>
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_ValidationModes">Validation Modes</h2>
+<br>
+This rule supports <strong>three distinct modes</strong>:
+<br>
+1. <strong>Simple Attribute Existence</strong>: Check if attributes exist (any value).
+2. <strong>Attribute Value Pairs</strong>: Validate specific attribute values on elements.
+3. <strong>Element Attribute Sets</strong>: Validate multiple attributes on the same element instance.
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files (e.g., <code class='inline-token'>src/**/*.xml</code>) </td></tr>
+<br>
+<h3>Mode-Specific Parameters</h3>
+<br>
+You must configure <strong>at least one</strong> of these modes:
+<br>
+<h4>Mode 1: Simple Attribute Existence</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>elements</code> </td><td> List<String> </td><td> XML element names to check </td></tr>
+<tr><td> <code class='inline-token'>attributes</code> </td><td> List<String> </td><td> Attributes that MUST exist on those elements </td></tr>
+<br>
+<h4>Mode 2: Attribute Value Pairs</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>attributeValuePairs</code> </td><td> List<Map> </td><td> List of element-attribute-value triplets </td></tr>
+<br>
+<h4>Mode 3: Element Attribute Sets</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>elementAttributeSets</code> </td><td> List<Map> </td><td> List of element configurations with multiple required attributes </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Case sensitivity for value matching </td></tr>
+<tr><td> <code class='inline-token'>propertyResolution</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, allows <code class='inline-token'>${property}</code> placeholders as valid matches </td></tr>
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Simple Existence</h3>
+Check that a "connector" element has both a <code class='inline-token'>name</code> and a <code class='inline-token'>type</code> attribute (any values).
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-ATTR-01&quot;
+  name: &quot;Connector Metadata Required&quot;
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: [&quot;**/config/*.xml&quot;]
+        elements: [&quot;connector&quot;]
+        attributes: [&quot;name&quot;, &quot;type&quot;]
+</code></pre>
+<br>
+<h3>Example 2: Attribute Value Validation</h3>
+Ensure that any <code class='inline-token'>security-manager</code> element has the <code class='inline-token'>enabled</code> attribute set to <code class='inline-token'>true</code>.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-ATTR-VAL-01&quot;
+  name: &quot;Security Manager Integration&quot;
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: [&quot;src/main/resources/*.xml&quot;]
+        attributeValuePairs:
+          - element: &quot;security-manager&quot;
+            attribute: &quot;enabled&quot;
+            expectedValue: &quot;true&quot;
+</code></pre>
+<br>
+<h3>Example 3: Multi-Attribute Set (Security)</h3>
+Validate that a <code class='inline-token'>connection</code> element uses the correct port AND protocol.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-ATTR-SET-SEC&quot;
+  name: &quot;Secure Connection Standard&quot;
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: [&quot;**/*.xml&quot;]
+        elementAttributeSets:
+          - element: &quot;connection&quot;
+            attributes:
+              protocol: &quot;HTTPS&quot;
+              port: &quot;443&quot;
+              secure: &quot;true&quot;
+</code></pre>
+<br>
+<h3>Example 4: Property Resolution Support</h3>
+Allow property placeholders (e.g., <code class='inline-token'>${env.port}</code>) to count as a valid match for a required port.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-ATTR-PROP&quot;
+  name: &quot;Resolved Port Configuration&quot;
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: [&quot;**/*.xml&quot;]
+        propertyResolution: true
+        attributeValuePairs:
+          - element: &quot;server-config&quot;
+            attribute: &quot;port&quot;
+            expectedValue: &quot;8080&quot;
+</code></pre>
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>Element 'connector' missing attribute 'type' in file: config/main.xml
+Element 'security-manager' with attribute 'enabled'='true' not found in file: auth.xml
+</code></pre>
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Use Mode 3 for Dependencies</strong>: If an element's validity depends on multiple attributes (e.g., host + port), use <code class='inline-token'>elementAttributeSets</code> to ensure both are correct on the *same* element instance.</li>
+<li><strong>Enable propertyResolution for Environments</strong>: Most enterprise projects use property placeholders; enabling this prevents false negatives for required values.</li>
+<li><strong>Path Specificity</strong>: Use <code class='inline-token'>filePatterns</code> to target only the relevant configuration files to improve performance and reduce noise.</li>
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_SolutionPatternsandTechnologyReferences">Solution Patterns and Technology References</h2>
+<br>
+<tr><td> Technology </td><td> Best Practice Goal </td><td> Key Elements </td><td> Attributes Checked </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <strong>🐎 MuleSoft 4</strong> </td><td> Flow Identification </td><td> <code class='inline-token'>flow</code>, <code class='inline-token'>sub-flow</code> </td><td> <code class='inline-token'>name</code>, <code class='inline-token'>doc:id</code> </td></tr>
+<tr><td> <strong>⚡ TIBCO BW 6</strong> </td><td> Process Configuration </td><td> <code class='inline-token'>bpws:process</code> </td><td> <code class='inline-token'>name</code>, <code class='inline-token'>targetNamespace</code> </td></tr>
+<tr><td> <strong>⚡ TIBCO BW 5</strong> </td><td> Activity Naming </td><td> <code class='inline-token'>pd:startType</code> </td><td> <code class='inline-token'>name</code> </td></tr>
+<tr><td> <strong>☕ Java/Maven</strong> </td><td> Dependency Locking </td><td> <code class='inline-token'>dependency</code> </td><td> <code class='inline-token'>version</code> </td></tr>
+<br>
+<h3>🐎 MuleSoft 4 Patterns</h3>
+<br>
+<pre><code class='language-yaml'>id: &quot;MULE-FLOW-ATTRS&quot;
+name: &quot;Mule Flow Identification&quot;
+description: &quot;Flows must have name and doc:id attributes&quot;
+checks:
+  - type: XML_ATTRIBUTE_EXISTS
+    params:
+      filePatterns: [&quot;src/main/mule/**/*.xml&quot;]
+      elements: [&quot;flow&quot;, &quot;sub-flow&quot;, &quot;error-handler&quot;]
+      attributes: [&quot;name&quot;, &quot;doc:id&quot;]
+</code></pre>
+<br>
+<h3>☕ Java / Maven Patterns</h3>
+<br>
+<pre><code class='language-yaml'>id: &quot;JAVA-MAVEN-DEP-VERSION&quot;
+name: &quot;Maven Dependency Version Enforced&quot;
+description: &quot;Dependencies in this project must explicitly state versions&quot;
+checks:
+  - type: XML_ATTRIBUTE_EXISTS
+    params:
+      filePatterns: [&quot;pom.xml&quot;]
+      elements: [&quot;dependency&quot;]
+      attributes: [&quot;version&quot;]
+</code></pre>
+<br>
+<h2 id="XML_ATTRIBUTE_EXISTS_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS')">XML_ATTRIBUTE_NOT_EXISTS</a></strong> - Opposite: ensures attributes do NOT exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS')">XML_XPATH_EXISTS</a></strong> - For advanced structure or nested path validation.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED')">XML_ELEMENT_CONTENT_REQUIRED</a></strong> - Validates tag body text instead of attributes.</li>
+</div><div id="XML_ATTRIBUTE_NOT_EXISTS" class="rule-content" style="display: none;"><h1>XML_ATTRIBUTE_NOT_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> XML configuration files
+<br>
+<h2 id="XML_ATTRIBUTE_NOT_EXISTS_Overview">Overview</h2>
+<br>
+Validates that <strong>forbidden XML attributes do NOT exist</strong> on specified elements. This rule <strong>fails</strong> if any of the specified forbidden attributes are found on the target elements. It is commonly used for deprecation cleanup and blocking unsafe configuration flags.
+<br>
+<h2 id="XML_ATTRIBUTE_NOT_EXISTS_UseCases">Use Cases</h2>
+<br>
+<li>Detect and remove deprecated attributes (e.g., legacy tracking flags).</li>
+<li>Enforce cleanup of temporary or debug configurations (e.g., <code class='inline-token'>debug=&quot;true&quot;</code>).</li>
+<li>Prevent usage of insecure or prohibited attribute settings.</li>
+<li>Standardize components by blocking non-standard configuration keys.</li>
+<br>
+<h2 id="XML_ATTRIBUTE_NOT_EXISTS_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code class='inline-token'>elements</code> </td><td> List<String> </td><td> List of XML element names to scan </td></tr>
+<tr><td> <code class='inline-token'>forbiddenAttributes</code> </td><td> List<String> </td><td> List of attributes that must NOT be present </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>shouldIgnorePath</code> </td><td> Internal </td><td> N/A </td><td> Automatically ignores build directories like <code class='inline-token'>target/</code>, <code class='inline-token'>bin/</code>, etc. </td></tr>
+<br>
+<h2 id="XML_ATTRIBUTE_NOT_EXISTS_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Remove Legacy Tracking</h3>
+Ensure that no message processing elements contain legacy application tracking attributes.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-ATTR-FORBIDDEN-LEGACY&quot;
+  name: &quot;Remove Forbidden Legacy Attributes&quot;
+  checks:
+    - type: XML_ATTRIBUTE_NOT_EXISTS
+      params:
+        filePatterns: [&quot;src/**/*.xml&quot;]
+        elements:
+          - &quot;request-handler&quot;
+          - &quot;transform-component&quot;
+        forbiddenAttributes:
+          - &quot;fromApplicationCode&quot;
+          - &quot;toApplicationCode&quot;
+          - &quot;legacyFlag&quot;
+</code></pre>
+<br>
+<h3>Example 2: Block Debug/Test Modes</h3>
+Ensure that configuration elements do not have debug mode enabled in the committed code.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-ATTR-FORBIDDEN-DEBUG&quot;
+  name: &quot;No Debug Mode in XML&quot;
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_NOT_EXISTS
+      params:
+        filePatterns: [&quot;src/main/resources/*.xml&quot;]
+        elements: [&quot;app-config&quot;, &quot;connector-config&quot;]
+        forbiddenAttributes: [&quot;debug&quot;, &quot;test-mode&quot;, &quot;verbose-logging&quot;]
+</code></pre>
+<br>
+<h2 id="XML_ATTRIBUTE_NOT_EXISTS_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>Forbidden attribute 'fromApplicationCode' found on element 'request-handler' in file: src/main/resources/config.xml
+Forbidden attribute 'debug' found on element 'connector-config' in file: src/main/resources/connectors.xml
+</code></pre>
+<br>
+<h2 id="XML_ATTRIBUTE_NOT_EXISTS_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Layered Cleanup</strong>: Use this rule during platform migrations to systematically identify and remove old configuration keys that are no longer referenced.</li>
+<li><strong>Fail on Side-Loads</strong>: Block attributes that might bypass standard security controls (e.g., <code class='inline-token'>bypass-auth</code>, <code class='inline-token'>ignore-ssl</code>).</li>
+<li><strong>Combine with XPATH</strong>: For more complex conditions (e.g., "block attribute X only if element has parent Y"), use <strong><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS')">XML_XPATH_NOT_EXISTS</a></strong> instead.</li>
+<br>
+<h2 id="XML_ATTRIBUTE_NOT_EXISTS_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS')">XML_ATTRIBUTE_EXISTS</a></strong> - Opposite: ensures attributes DO exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS')">XML_XPATH_NOT_EXISTS</a></strong> - Block complex structures using XPath.</li>
+</div><div id="XML_ELEMENT_CONTENT_FORBIDDEN" class="rule-content" style="display: none;"><h1>XML_ELEMENT_CONTENT_FORBIDDEN</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> XML configuration files
+<br>
+<h2 id="XML_ELEMENT_CONTENT_FORBIDDEN_Overview">Overview</h2>
+<br>
+Validates that XML elements do <strong>NOT contain forbidden content or tokens</strong>. This rule <strong>fails</strong> if any of the specified forbidden tokens are <strong>found</strong> within the element's text content. It is primarily used to block hardcoded credentials, deprecated values, or insecure configurations.
+<br>
+<h2 id="XML_ELEMENT_CONTENT_FORBIDDEN_UseCases">Use Cases</h2>
+<br>
+<li>Prevent usage of deprecated values or legacy patterns.</li>
+<li>Block hardcoded credentials (passwords, secrets) in element bodies.</li>
+<li>Disallow specific configuration values (e.g., insecure protocols, debug levels).</li>
+<li>Enforce content restrictions for production-ready code.</li>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_FORBIDDEN_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code class='inline-token'>elementContentPairs</code> </td><td> List<Map> </td><td> Element names paired with their forbidden content tokens </td></tr>
+<br>
+<h4>Element Content Pair Map Structure</h4>
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>element</code> </td><td> String </td><td> Yes </td><td> XML element name </td></tr>
+<tr><td> <code class='inline-token'>forbiddenTokens</code> </td><td> List<String> </td><td> Yes </td><td> Tokens that must NOT be present in the element's body </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code> </td></tr>
+<tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Case sensitivity for content matching </td></tr>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_FORBIDDEN_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Block Hardcoded Secrets</h3>
+Ensure that password or secret-related elements do not contain common default or hardcoded values.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-FORBIDDEN-CREDS&quot;
+  name: &quot;No Hardcoded Credentials&quot;
+  severity: CRITICAL
+  checks:
+    - type: XML_ELEMENT_CONTENT_FORBIDDEN
+      params:
+        filePatterns: [&quot;**/*.xml&quot;]
+        elementContentPairs:
+          - element: &quot;password&quot;
+            forbiddenTokens: [&quot;admin&quot;, &quot;password123&quot;, &quot;default&quot;]
+          - element: &quot;secret-key&quot;
+            forbiddenTokens: [&quot;hardcoded&quot;, &quot;placeholder&quot;]
+</code></pre>
+<br>
+<h3>Example 2: Block Deprecated Log Levels</h3>
+Prevent usage of overly verbose or deprecated logging levels in production-bound configurations.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-LOG-POLICY&quot;
+  name: &quot;Forbidden Log Levels&quot;
+  severity: MEDIUM
+  checks:
+    - type: XML_ELEMENT_CONTENT_FORBIDDEN
+      params:
+        filePatterns: [&quot;src/main/resources/**/*.xml&quot;]
+        elementContentPairs:
+          - element: &quot;logger&quot;
+            forbiddenTokens: [&quot;TRACE&quot;, &quot;ALL&quot;, &quot;DEBUG&quot;]
+</code></pre>
+<br>
+<h3>Example 3: Block IP Addresses (Regex)</h3>
+Ensure that host configurations use domain names instead of hardcoded IP addresses.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-NO-IP-HOSTS&quot;
+  name: &quot;No Hardcoded IPs in Hosts&quot;
+  severity: HIGH
+  checks:
+    - type: XML_ELEMENT_CONTENT_FORBIDDEN
+      params:
+        filePatterns: [&quot;**/*.xml&quot;]
+        matchMode: REGEX
+        elementContentPairs:
+          - element: &quot;host-config&quot;
+            forbiddenTokens: [&quot;\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b&quot;]
+</code></pre>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_FORBIDDEN_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>config.xml: Element 'password' contains forbidden token: admin
+main-flow.xml: Element 'logger' contains forbidden token: TRACE
+host-config.xml: Element 'host-config' contains forbidden IP pattern
+</code></pre>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_FORBIDDEN_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Strict Mode for Credentials</strong>: Use <code class='inline-token'>caseSensitive: true</code> (default) when blocking passwords to avoid false positives on legitimate similar strings, but consider <code class='inline-token'>false</code> for logging levels.</li>
+<li><strong>REGEX for Complexity</strong>: Use REGEX mode to block entire classes of strings, such as IP addresses or specific ID formats.</li>
+<li><strong>Fail Early</strong>: Apply this rule to core configuration files to catch architectural violations before they reach higher environments.</li>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_FORBIDDEN_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED')">XML_ELEMENT_CONTENT_REQUIRED</a></strong> - Opposite: ensures tokens ARE present in the content.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS')">XML_XPATH_NOT_EXISTS</a></strong> - Block complex structures using XPath.</li>
+</div><div id="XML_ELEMENT_CONTENT_REQUIRED" class="rule-content" style="display: none;"><h1>XML_ELEMENT_CONTENT_REQUIRED</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> XML configuration files
+<br>
+<h2 id="XML_ELEMENT_CONTENT_REQUIRED_Overview">Overview</h2>
+<br>
+Validates that XML elements contain <strong>required content strings or tokens</strong>. This rule <strong>fails</strong> if the required tokens are <strong>NOT found</strong> within the element's text content. It is ideal for enforcing descriptive messages, documentation standards, or specific data formats inside XML tags.
+<br>
+<h2 id="XML_ELEMENT_CONTENT_REQUIRED_UseCases">Use Cases</h2>
+<br>
+<li>Ensure log messages or display names contain descriptive keywords.</li>
+<li>Validate documentation or comment tags for specific sections (e.g., "Author", "Version").</li>
+<li>Check that configuration values follow a specific format (e.g., semantic versioning).</li>
+<li>Enforce organizational content standards in shared XML descriptors.</li>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_REQUIRED_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code class='inline-token'>elementContentPairs</code> </td><td> List<Map> </td><td> Element names paired with their required content tokens </td></tr>
+<br>
+<h4>Element Content Pair Map Structure</h4>
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>element</code> </td><td> String </td><td> Yes </td><td> XML element name (can be local-name or prefixed) </td></tr>
+<tr><td> <code class='inline-token'>requiredTokens</code> </td><td> List<String> </td><td> Yes </td><td> Tokens that must be present in the element's body </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code> </td></tr>
+<tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Case sensitivity for content matching </td></tr>
+<tr><td> <code class='inline-token'>requireAll</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> If <code class='inline-token'>true</code>, ALL tokens must be found. If <code class='inline-token'>false</code>, at least ONE </td></tr>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_REQUIRED_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Validate Message Quality</h3>
+Ensure that elements used for logging or reporting are descriptive enough.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-CONTENT-REQ-01&quot;
+  name: &quot;Descriptive Logger Messages&quot;
+  checks:
+    - type: XML_ELEMENT_CONTENT_REQUIRED
+      params:
+        filePatterns: [&quot;**/*.xml&quot;]
+        elementContentPairs:
+          - element: &quot;logger&quot;
+            requiredTokens: [&quot;Flow&quot;, &quot;Request&quot;, &quot;Response&quot;, &quot;Status&quot;]
+        requireAll: false  # Pass if at least one of these is mentioned
+</code></pre>
+<br>
+<h3>Example 2: Enforce Documentation Standards</h3>
+Check that a "description" or "note" tag contains required metadata headers.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-DOC-POLICY&quot;
+  name: &quot;Documentation Header Policy&quot;
+  checks:
+    - type: XML_ELEMENT_CONTENT_REQUIRED
+      params:
+        filePatterns: [&quot;src/main/resources/*.xml&quot;]
+        elementContentPairs:
+          - element: &quot;note&quot;
+            requiredTokens: [&quot;Author:&quot;, &quot;Last-Updated:&quot;, &quot;Business-Unit:&quot;]
+        requireAll: true  # All headers must be present
+</code></pre>
+<br>
+<h3>Example 3: Regex Format Validation</h3>
+Verify that a version tag follows a specific semantic versioning pattern.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-VERSION-FORMAT&quot;
+  name: &quot;Version Pattern Validation&quot;
+  checks:
+    - type: XML_ELEMENT_CONTENT_REQUIRED
+      params:
+        filePatterns: [&quot;pom.xml&quot;, &quot;manifest.xml&quot;]
+        matchMode: REGEX
+        elementContentPairs:
+          - element: &quot;version&quot;
+            requiredTokens: [&quot;^\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?$&quot;]
+</code></pre>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_REQUIRED_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>config.xml: Element 'logger' is missing required tokens: Flow, Request, Response
+manifest.xml: Element 'version' content does not match pattern: ^\d+\.\d+\.\d+(-SNAPSHOT)?$
+</code></pre>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_REQUIRED_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Use caseSensitive: false for flexibility</strong>: For documentation or log messages, case sensitivity often leads to false negatives.</li>
+<li><strong>REGEX for Strict Formats</strong>: Use REGEX mode when the *order* or *format* matters (e.g., dates, versions, IDs).</li>
+<li><strong>Combine with existence</strong>: This rule only checks content *on elements it finds*. If the element is missing entirely, this rule won't trigger. Combine with <strong><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS')">XML_XPATH_EXISTS</a></strong> to ensure the element exists first if needed.</li>
+<br>
+<h2 id="XML_ELEMENT_CONTENT_REQUIRED_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN')">XML_ELEMENT_CONTENT_FORBIDDEN</a></strong> - Opposite: ensures tokens do NOT exist in the content.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS')">XML_XPATH_EXISTS</a></strong> - Check for existence and hierarchy using XPath.</li>
+</div><div id="XML_XPATH_EXISTS" class="rule-content" style="display: none;"><h1>XML_XPATH_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> XML configuration files
+<br>
+<h2 id="XML_XPATH_EXISTS_Overview">Overview</h2>
+<br>
+Validates that <strong>required XPath expressions match</strong> in XML files. This rule <strong>fails</strong> if any required XPath expression does <strong>NOT</strong> find matching nodes. It is the core tool for complex XML structure validation.
+<br>
+<h2 id="XML_XPATH_EXISTS_UseCases">Use Cases</h2>
+<br>
+<li>Verify specific XML elements or attributes exist within a hierarchy.</li>
+<li>Ensure required configuration is present in integration flows (MSoft, TIBCO, etc.).</li>
+<li>Validate XML structure beyond simple existence (e.g., "Parent must have Child").</li>
+<li>Check for mandatory namespaces, schemas, or specific attribute values.</li>
+<br>
+<h2 id="XML_XPATH_EXISTS_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code class='inline-token'>xpathExpressions</code> </td><td> List<Map> </td><td> List of XPath expressions with optional custom failure messages </td></tr>
+<br>
+<h4>XPath Expression Map Structure</h4>
+<br>
+Each item in <code class='inline-token'>xpathExpressions</code> can have:
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>xpath</code> </td><td> String </td><td> Yes </td><td> The XPath expression to evaluate </td></tr>
+<tr><td> <code class='inline-token'>failureMessage</code> </td><td> String </td><td> No </td><td> Custom message if XPath doesn't match </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>propertyResolution</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> Enable <code class='inline-token'>${property}</code> placeholder resolution </td></tr>
+<br>
+<h2 id="XML_XPATH_EXISTS_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Basic component existence</h3>
+Ensure that a specific component (e.g., a "logger" or custom plugin) is used in the configuration.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-XPATH-01&quot;
+  name: &quot;Logger Component Required&quot;
+  description: &quot;Ensure all flows have at least one logger&quot;
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+          - &quot;**/*.xml&quot;
+        xpathExpressions:
+          - xpath: &quot;//logger&quot;
+            failureMessage: &quot;Configuration must contain at least one logger&quot;
+</code></pre>
+<br>
+<h3>Example 2: Check for specific nested configuration</h3>
+Validates that a <code class='inline-token'>service</code> element has a defined <code class='inline-token'>endpoint</code> attribute.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-XPATH-02&quot;
+  name: &quot;Endpoint Config Required&quot;
+  description: &quot;All services must have a defined endpoint&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+          - &quot;**/*-config.xml&quot;
+        xpathExpressions:
+          - xpath: &quot;//service[@endpoint]&quot;
+            failureMessage: &quot;Service element missing required 'endpoint' attribute&quot;
+</code></pre>
+<br>
+<h3>Example 3: Namespace-Aware local-name validation</h3>
+Safely validate elements regardless of their specific prefix by using <code class='inline-token'>local-name()</code>.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-XPATH-NAMESPACE&quot;
+  name: &quot;Listener Configuration Check&quot;
+  description: &quot;Ensure specific listener configuration exists&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+          - &quot;**/global-*.xml&quot;
+        xpathExpressions:
+          - xpath: &quot;//*[local-name()='listener-config']&quot;
+            failureMessage: &quot;Missing required listener configuration&quot;
+</code></pre>
+<br>
+<h2 id="XML_XPATH_EXISTS_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>config.xml: Configuration must contain at least one logger (found 0 occurrence(s))
+main-flow.xml: Service element missing required 'endpoint' attribute (found 0 occurrence(s))
+</code></pre>
+<br>
+<h2 id="XML_XPATH_EXISTS_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Use local-name() for portability</strong>: When XML files use multiple namespaces/prefixes, <code class='inline-token'>//*[local-name()='elementName']</code> is often more robust than prefix-dependent paths.</li>
+<li><strong>Fail Early</strong>: Combine with <code class='inline-token'>FILE_EXISTS</code> or <code class='inline-token'>FILE_PATTERN</code> to ensure you are scanning the correct files.</li>
+<li><strong>Granular Paths</strong>: Avoid too many <code class='inline-token'>//</code> (deep descendants) if performance is a concern on massive XML files; use specific paths like <code class='inline-token'>/root/parent/child</code> when possible.</li>
+<br>
+<h2 id="XML_XPATH_EXISTS_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS')">XML_XPATH_NOT_EXISTS</a></strong> - Opposite: ensures nodes do NOT exist.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_EXISTS')">XML_ATTRIBUTE_EXISTS</a></strong> - Simpler check for high-level attributes.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_REQUIRED')">XML_ELEMENT_CONTENT_REQUIRED</a></strong> - Validate the text content inside an element.</li>
+<br>
+<h2 id="XML_XPATH_EXISTS_SolutionPatternsandTechnologyReferences">Solution Patterns and Technology References</h2>
+<br>
+<tr><td> Technology </td><td> Best Practice Goal </td><td> Key Elements </td><td> XPath Logic </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <strong>⚡ TIBCO BW 5</strong> </td><td> Process Validity </td><td> <code class='inline-token'>ProcessDefinition</code> </td><td> Check for start/end activities </td></tr>
+<tr><td> <strong>⚡ TIBCO BW 6</strong> </td><td> Namespace Binding </td><td> <code class='inline-token'>service</code> </td><td> Namespace-aware paths </td></tr>
+<tr><td> <strong>🐎 MuleSoft</strong> </td><td> Build Configuration </td><td> <code class='inline-token'>mule-maven-plugin</code> </td><td> Value-based predicate check </td></tr>
+<tr><td> <strong>🌐 Web Svcs</strong> </td><td> WSDL Compliance </td><td> <code class='inline-token'>definitions</code> </td><td> Structure validation </td></tr>
+<br>
+<h3>⚡ TIBCO BW 5.x Patterns</h3>
+<br>
+<pre><code class='language-yaml'>id: &quot;TIBCO-XPATH-PD&quot;
+name: &quot;Valid Process Definition&quot;
+description: &quot;Ensure pd:ProcessDefinition has start and end activities&quot;
+checks:
+  - type: XML_XPATH_EXISTS
+    params:
+      filePatterns: [&quot;*.process&quot;]
+      xpathExpressions:
+        - xpath: &quot;//*[local-name()='ProcessDefinition']/*[local-name()='startType']&quot;
+        - xpath: &quot;//*[local-name()='ProcessDefinition']/*[local-name()='endType']&quot;
+</code></pre>
+<br>
+<h3>🐎 MuleSoft / Java Patterns</h3>
+<br>
+<pre><code class='language-yaml'>id: &quot;MAVEN-MULE-PLUGIN&quot;
+name: &quot;Mule Maven Plugin Required&quot;
+description: &quot;Ensure correct plugin is present in pom.xml build section&quot;
+checks:
+  - type: XML_XPATH_EXISTS
+    params:
+      filePatterns: [&quot;pom.xml&quot;]
+      xpathExpressions:
+        - xpath: &quot;//*[local-name()='plugin']/*[local-name()='artifactId' and text()='mule-maven-plugin']&quot;
+</code></pre>
+</div><div id="XML_XPATH_NOT_EXISTS" class="rule-content" style="display: none;"><h1>XML_XPATH_NOT_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> XML configuration files
+<br>
+<h2 id="XML_XPATH_NOT_EXISTS_Overview">Overview</h2>
+<br>
+Validates that <strong>forbidden XPath expressions do NOT match</strong> in XML files. This rule <strong>fails</strong> if any forbidden XPath expression <strong>DOES</strong> find matching nodes. It is used to block deprecated components, anti-patterns, or insecure configurations.
+<br>
+<h2 id="XML_XPATH_NOT_EXISTS_UseCases">Use Cases</h2>
+<br>
+<li>Prevent usage of deprecated XML elements or custom tags.</li>
+<li>Block specific insecure configurations (e.g., protocol="HTTP" instead of "HTTPS").</li>
+<li>Enforce architectural constraints (e.g., "No direct database calls from the presentation layer").</li>
+<li>Disallow anti-patterns or redundant configurations.</li>
+<br>
+<h2 id="XML_XPATH_NOT_EXISTS_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code class='inline-token'>xpathExpressions</code> </td><td> List<Map> </td><td> List of XPath expressions that should NOT match </td></tr>
+<br>
+<h4>XPath Expression Map Structure</h4>
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>xpath</code> </td><td> String </td><td> Yes </td><td> The XPath expression to evaluate </td></tr>
+<tr><td> <code class='inline-token'>failureMessage</code> </td><td> String </td><td> No </td><td> Custom message if XPath matches (forbidden) </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>propertyResolution</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> Enable <code class='inline-token'>${property}</code> placeholder resolution </td></tr>
+<br>
+<h2 id="XML_XPATH_NOT_EXISTS_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Block Deprecated Components</h3>
+Prevents usage of legacy connectors or custom XML tags that are no longer supported.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-XPATH-FORBIDDEN-01&quot;
+  name: &quot;No Legacy Transports&quot;
+  description: &quot;Prevent usage of deprecated transport elements&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+          - &quot;**/*.xml&quot;
+        xpathExpressions:
+          - xpath: &quot;//*[local-name()='legacy-transport']&quot;
+            failureMessage: &quot;Deprecated 'legacy-transport' found - please migrate to the new standard&quot;
+</code></pre>
+<br>
+<h3>Example 2: Prevent Hardcoded Environment Values</h3>
+Ensures that environment-specific settings (like hostnames) are property-driven and not hardcoded to <code class='inline-token'>localhost</code>.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-XPATH-FORBIDDEN-02&quot;
+  name: &quot;No Hardcoded Localhost&quot;
+  description: &quot;Prevent hardcoded localhost in service configurations&quot;
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+          - &quot;src/main/resources/**/*.xml&quot;
+        xpathExpressions:
+          - xpath: &quot;//service[@host='localhost']&quot;
+            failureMessage: &quot;Hardcoded 'localhost' found - use property placeholders&quot;
+</code></pre>
+<br>
+<h3>Example 3: Enforce Layered Architecture</h3>
+Prevents direct database access from high-level API or presentation layer configurations.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-XML-XPATH-FORBIDDEN-ARCH&quot;
+  name: &quot;Layered Architecture Compliance&quot;
+  description: &quot;API layers cannot contain direct database listeners or operations&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+          - &quot;**/api-*.xml&quot;
+        xpathExpressions:
+          - xpath: &quot;//db:select | //db:insert | //db:update | //db:delete&quot;
+            failureMessage: &quot;Direct database operations forbidden in API layer - use the persistence layer&quot;
+</code></pre>
+<br>
+<h2 id="XML_XPATH_NOT_EXISTS_ErrorMessages">Error Messages</h2>
+<br>
+<pre><code class='language-text'>config.xml: Deprecated 'legacy-transport' found - please migrate to the new standard (found 2 occurrence(s))
+api-main.xml: Direct database operations forbidden in API layer - use the persistence layer (found 1 occurrence(s))
+</code></pre>
+<br>
+<h2 id="XML_XPATH_NOT_EXISTS_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Use predicates for precise blocking</strong>: Instead of blocking an entire element, use predicates like <code class='inline-token'>//config[@secure='false']</code> to block only the insecure variants.</li>
+<li><strong>Fail with clear instructions</strong>: Always provide a <code class='inline-token'>failureMessage</code> that explains the preferred alternative.</li>
+<li><strong>Architecture over Code</strong>: Use path-based <code class='inline-token'>filePatterns</code> to enforce different restrictions on different project layers (e.g., <code class='inline-token'>src/web/*.xml</code> vs <code class='inline-token'>src/service/*.xml</code>).</li>
+<br>
+<h2 id="XML_XPATH_NOT_EXISTS_RelatedRuleTypes">Related Rule Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_EXISTS')">XML_XPATH_EXISTS</a></strong> - Opposite: ensures XPath DOES match.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ATTRIBUTE_NOT_EXISTS')">XML_ATTRIBUTE_NOT_EXISTS</a></strong> - Simpler attribute validation.</li>
+<li><strong><a href="#" onclick="showRule(event, 'XML_ELEMENT_CONTENT_FORBIDDEN')">XML_ELEMENT_CONTENT_FORBIDDEN</a></strong> - Validate forbidden text content inside an element.</li>
+</div><div id="CONDITIONAL_CHECK" class="rule-content" style="display: none;"><h1>CONDITIONAL_CHECK</h1>
+<br>
+<h2 id="CONDITIONAL_CHECK_Overview">Overview</h2>
+<br>
+The <strong>Universal "If-Then" Engine</strong>. This is the most powerful check type in Aegis. It allows you to create complex, multi-step validation logic by combining any other check type as a trigger (<code class='inline-token'>preconditions</code>) and an action (<code class='inline-token'>onSuccess</code>).
+<br>
+It is not limited to code analysis! You can combine configuration checks, XML/JSON checks, file existence checks, and project metadata checks in any combination.
+<br>
+<h2 id="CONDITIONAL_CHECK_UseCases">Use Cases</h2>
+<br>
+*   <strong>Context-Specific Rules</strong>: "If this is a frontend project (<code class='inline-token'>-ui-</code>), THEN it must have a <code class='inline-token'>LICENSE</code> file."
+*   <strong>Cross-File Dependencies</strong>: "If <code class='inline-token'>package.json</code> contains <code class='inline-token'>react</code>, THEN <code class='inline-token'>src/App.tsx</code> must exist."
+*   <strong>Technology Standards</strong>: "If an <code class='inline-token'>IBM MQ</code> connector is found (XML), THEN the project must have the corresponding client library dependency (POM)."
+*   <strong>Environment Validation</strong>: "If the <code class='inline-token'>env</code> property is set to <code class='inline-token'>PROD</code> (Config), THEN debug logging must be disabled (Log configuration)."
+<br>
+<h2 id="CONDITIONAL_CHECK_HowItWorks">How It Works</h2>
+<br>
+This check executes in two phases:
+1.  <strong>Preconditions (IF)</strong>: The engine runs these checks first.
+    *   If ALL preconditions match (pass), the engine proceeds to step 2.
+    *   If ANY precondition fails (doesn't match), the rule is <strong>SKIPPED</strong> (it does not fail, it just implies this rule doesn't apply to this project).
+2.  <strong>OnSuccess (THEN)</strong>: The engine runs these checks ONLY if preconditions were met.
+    *   If these checks pass, the Rule PASSES.
+    *   If any of these checks fail, the Rule FAILS.
+<br>
+<h3>Supported Triggers & Actions</h3>
+<strong>ANY</strong> check type can be used in either <code class='inline-token'>preconditions</code> or <code class='inline-token'>onSuccess</code>. Common triggers include:
+<br>
+*   <strong>Project Identity</strong>: <code class='inline-token'>PROJECT_CONTEXT</code> (Name matching)
+*   <strong>File Presence</strong>: <code class='inline-token'>FILE_EXISTS</code> (e.g., specific config files)
+*   <strong>XML/JSON Content</strong>: <code class='inline-token'>XML_XPATH_EXISTS</code> or <code class='inline-token'>JSON_VALIDATION_REQUIRED</code>
+*   <strong>Properties</strong>: <code class='inline-token'>MANDATORY_PROPERTY_VALUE_CHECK</code> (e.g., environment checks)
+*   <strong>Dependencies</strong>: <code class='inline-token'>POM_VALIDATION_REQUIRED</code> (Check for Maven libraries)
+<br>
+<h2 id="CONDITIONAL_CHECK_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>preconditions</code> </td><td> List<Map> </td><td> A list of standard check definitions that define <strong>WHEN</strong> this rule applies. </td></tr>
+<tr><td> <code class='inline-token'>onSuccess</code> </td><td> List<Map> </td><td> A list of standard check definitions that define <strong>WHAT</strong> must be validated if the preconditions are met. </td></tr>
+<br>
+<h2 id="CONDITIONAL_CHECK_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Frontend Resource Security</h3>
+<strong>Scenario</strong>: "If this is a Web UI project (Name) AND it uses a private repository (JSON), THEN it must have a security policy file."
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-COND-FE-01&quot;
+  name: &quot;Web UI Security Policy&quot;
+  checks:
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+          - type: PROJECT_CONTEXT
+            params:
+              nameContains: &quot;-ui-&quot;
+          - type: JSON_VALIDATION_REQUIRED
+            params:
+              filePattern: &quot;package.json&quot;
+              requiredElements:
+                - &quot;publishConfig.registry&quot;
+        onSuccess:
+          - type: FILE_EXISTS
+            params:
+              filePatterns: [&quot;SECURITY.md&quot;]
+</code></pre>
+<br>
+<h3>Example 2: Unused Dependency Check (POM + XML)</h3>
+<strong>Scenario</strong>: "If the Messaging library is in the POM, you MUST actually use it in the XML (prevent bloat)."
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-UNUSED-DEP&quot;
+  name: &quot;Messaging Library Usage&quot;
+  checks:
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+          - type: POM_VALIDATION_REQUIRED
+            params:
+              validationType: DEPENDENCIES
+              dependencies:
+                - artifactId: messaging-client
+        onSuccess:
+          - type: XML_XPATH_EXISTS
+            params:
+              filePatterns: [&quot;src/main/resources/*.xml&quot;]
+              xpathExpressions:
+                - xpath: &quot;//*[local-name()='messaging-config']&quot;
+              failureMessage: &quot;Messaging dependency found in POM but no usage found in XML.&quot;
+</code></pre>
+<br>
+<h3>Example 3: Environment-Specific Enforcement</h3>
+Only require production metadata if the <code class='inline-token'>PROD</code> environment is active in the configuration.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-ENV-PROD&quot;
+  name: &quot;Production Metadata Check&quot;
+  checks:
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+          - type: MANDATORY_PROPERTY_VALUE_CHECK
+            params: { properties: [{ name: &quot;env&quot;, values: [&quot;PROD&quot;] }] }
+        onSuccess:
+          - type: JSON_VALIDATION_REQUIRED
+            params:
+              filePattern: &quot;metadata.json&quot;
+              requiredElements: [&quot;ops_contact&quot;, &quot;sla_tier&quot;]
+</code></pre>
+<br>
+<h2 id="CONDITIONAL_CHECK_RelatedCheckTypes">Related Check Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT')">PROJECT_CONTEXT</a></strong>: Trigger based on project metadata.</li>
+<li><strong><a href="#" onclick="showRule(event, 'FILE_EXISTS')">FILE_EXISTS</a></strong>: Trigger based on file presence.</li>
+<li>Any standard XML, POM, JSON, or Property check.</li>
+</div><div id="PROJECT_CONTEXT" class="rule-content" style="display: none;"><h1>PROJECT_CONTEXT</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> </td><td> <strong>Trigger Engine</strong>
+<br>
+<h2 id="PROJECT_CONTEXT_Overview">Overview</h2>
+<br>
+A contextual trigger that evaluates the properties of the project itself (primarily the project folder name). It is typically used within a <code class='inline-token'>CONDITIONAL_CHECK</code> to enable or disable rules based on project classification, technology tiers, or organizational layers.
+<br>
+<h2 id="PROJECT_CONTEXT_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+Choose at least one of the following to match the project name:
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>nameEquals</code> </td><td> String </td><td> Exact match of the project folder name </td></tr>
+<tr><td> <code class='inline-token'>nameContains</code> </td><td> String </td><td> Matches if the project name contains this substring </td></tr>
+<tr><td> <code class='inline-token'>nameMatches</code> </td><td> String </td><td> Regex pattern to match the project name </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code class='inline-token'>ignoreCase</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Perform case-insensitive matching </td></tr>
+<tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> Perform case-sensitive matching (overrides <code class='inline-token'>ignoreCase</code>) </td></tr>
+<br>
+<h2 id="PROJECT_CONTEXT_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Target Specific API Layers (MuleSoft/generic)</h3>
+<br>
+Triggers only for projects classified as "Experience" layers (containing <code class='inline-token'>-exp-</code> in their name).
+<br>
+<pre><code class='language-yaml'>preconditions:
+  - type: PROJECT_CONTEXT
+    params:
+      nameContains: &quot;-exp-&quot;
+      ignoreCase: true
+</code></pre>
+<br>
+<h3>Example 2: Target Microservices (Generic)</h3>
+<br>
+Triggers for projects following a specific organizational naming convention for microservices.
+<br>
+<pre><code class='language-yaml'>preconditions:
+  - type: PROJECT_CONTEXT
+    params:
+      nameMatches: &quot;^svc-[a-z0-9-]+$&quot;
+</code></pre>
+<br>
+<h3>Example 3: Tiered Validation (Frontend vs Backend)</h3>
+<br>
+Apply different security rules for frontend projects.
+<br>
+<pre><code class='language-yaml'>- id: &quot;FRONTEND-SECURITY-POLICY&quot;
+  checks:
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+          - type: PROJECT_CONTEXT
+            params: { nameContains: &quot;-ui&quot; }
+        onSuccess:
+          # Run frontend-specific checks here (e.g., package.json for unapproved libs)
+</code></pre>
+<br>
+<h2 id="PROJECT_CONTEXT_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Naming Conventions</strong>: Use <strong>PROJECT_CONTEXT</strong> to leverage established naming conventions (e.g., prefixing services with <code class='inline-token'>svc-</code>, or including environment tags like <code class='inline-token'>-prod-</code>).</li>
+<li><strong>Layered Security</strong>: Use it to differentiate security requirements between customer-facing layers (Experience/Frontend) and protected internal layers (System/Data).</li>
+<li><strong>Cleanup Migration</strong>: Identify legacy projects by name (e.g., <code class='inline-token'>v1-</code>) to apply "Sunset" rules that encourage migration.</li>
+<br>
+<h2 id="PROJECT_CONTEXT_RelatedCheckTypes">Related Check Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'CONDITIONAL_CHECK')">CONDITIONAL_CHECK</a></strong>: The parent engine that uses these context triggers.</li>
+<li><strong><a href="#" onclick="showRule(event, 'FILE_EXISTS')">FILE_EXISTS</a></strong>: Trigger based on physical file presence (e.g., existence of <code class='inline-token'>pom.xml</code> vs <code class='inline-token'>package.json</code>).</li>
+</div><div id="FILE_EXISTS" class="rule-content" style="display: none;"><h1>FILE_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code class='inline-token'>CODE</code> </td><td> <strong>Trigger Engine</strong>
+<br>
+<h2 id="FILE_EXISTS_Overview">Overview</h2>
+<br>
+A trigger that checks for the presence of one or more files in the project. It is typically used within a <code class='inline-token'>CONDITIONAL_CHECK</code> to ensure specific templates, security files, or configuration assets exist. This rule helps enforce project structure standards across different technologies.
+<br>
+<h2 id="FILE_EXISTS_Parameters">Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>filePatterns</code> </td><td> List </td><td> Glob patterns to search for files (e.g., <code class='inline-token'>src/resources/secure-*.properties</code>) </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <code class='inline-token'>failureMessage</code> </td><td> String </td><td> (Default) </td><td> Custom message if expected files are not found </td></tr>
+<br>
+<h2 id="FILE_EXISTS_ConfigurationExamples">Configuration Examples</h2>
+<br>
+<h3>Example 1: Mandatory Security Documentation</h3>
+<br>
+Ensures that any project must have a <code class='inline-token'>SECURITY.md</code> file in the root directory.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-FILE-SECURITY&quot;
+  name: &quot;Mandatory Security Documentation&quot;
+  description: &quot;Ensures every project contains a security policy file&quot;
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: FILE_EXISTS
+      params:
+        filePatterns: [&quot;SECURITY.md&quot;]
+        failureMessage: &quot;Project missing mandatory SECURITY.md file in root&quot;
+</code></pre>
+<br>
+<h3>Example 2: API Specification Trigger</h3>
+<br>
+Ensures that an API specification file (RAML, OAS, or Swagger) exists in the expected directory for projects tagged as APIs.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-API-SPEC-EXISTS&quot;
+  checks:
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+          - type: PROJECT_CONTEXT
+            params: { nameContains: &quot;-api-&quot; }
+        onSuccess:
+          - type: FILE_EXISTS
+            params:
+              filePatterns: 
+                - &quot;src/main/resources/api/*.raml&quot;
+                - &quot;src/main/resources/api/*.yaml&quot;
+                - &quot;src/main/resources/api/*.json&quot;
+              failureMessage: &quot;API project missing specification file in src/main/resources/api/&quot;
+</code></pre>
+<br>
+<h2 id="FILE_EXISTS_BestPractices">Best Practices</h2>
+<br>
+<li><strong>Use as a Precondition</strong>: detect "legacy" projects (e.g., presence of old framework files) to apply specific migration or compatibility rules.</li>
+<li><strong>Enforce Readme/Security</strong>: Use <strong>FILE_EXISTS</strong> as an <code class='inline-token'>onSuccess</code> check to ensure standard documentation is always present.</li>
+<li><strong>Technology Detection</strong>: Combine with <strong><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT')">PROJECT_CONTEXT</a></strong> to target specific file requirements for specific project types.</li>
+<br>
+<h2 id="FILE_EXISTS_RelatedCheckTypes">Related Check Types</h2>
+<br>
+<li><strong><a href="#" onclick="showRule(event, 'PROJECT_CONTEXT')">PROJECT_CONTEXT</a></strong>: Trigger based on project metadata or folder names.</li>
+<br>
+<h2 id="FILE_EXISTS_SolutionPatternsandTechnologyReferences">Solution Patterns and Technology References</h2>
+<br>
+The following table serves as a quick reference for enforcing file existence across various project types.
+<br>
+<tr><td> Technology </td><td> Best Practice Goal </td><td> Key Files Checked </td><td> Purpose </td></tr>
+<tr><td> :--- </td><td> :--- </td><td> :--- </td><td> :--- </td></tr>
+<tr><td> <strong>☕ Java/Maven</strong> </td><td> Build Consistency </td><td> <code class='inline-token'>pom.xml</code> </td><td> Dependency management </td></tr>
+<tr><td> <strong>📦 Node.js</strong> </td><td> Project Metadata </td><td> <code class='inline-token'>package.json</code> </td><td> Scripts and dependencies </td></tr>
+<tr><td> <strong>🐎 MuleSoft 4</strong> </td><td> Project Structure </td><td> <code class='inline-token'>mule-artifact.json</code> </td><td> Core runtime configuration </td></tr>
+<tr><td> <strong>🐍 Python</strong> </td><td> Environment Setup </td><td> <code class='inline-token'>requirements.txt</code> </td><td> Package dependencies </td></tr>
+<tr><td> <strong>⚡ TIBCO BW</strong> </td><td> Module Validity </td><td> <code class='inline-token'>*.module</code>, <code class='inline-token'>MANIFEST.MF</code> </td><td> OSGi/Module configuration </td></tr>
+<tr><td> <strong>🐳 Docker</strong> </td><td> Containerization </td><td> <code class='inline-token'>Dockerfile</code> </td><td> Image build definition </td></tr>
+<br>
+<h3>☕ Java / Spring Boot Patterns</h3>
+<br>
+Ensure that Maven or Gradle build files are present to guarantee the project can be built in CI/CD.
+<br>
+<pre><code class='language-yaml'>id: &quot;JAVA-BUILD-DESCRIPTOR&quot;
+name: &quot;Require Build Descriptor&quot;
+checks:
+  - type: FILE_EXISTS
+    params:
+      filePatterns: [&quot;pom.xml&quot;, &quot;build.gradle&quot;, &quot;build.gradle.kts&quot;]
+      failureMessage: &quot;Java projects must have a pom.xml or build.gradle file&quot;
+</code></pre>
+<br>
+<h3>📦 Node.js Patterns</h3>
+<br>
+The <code class='inline-token'>package.json</code> file is the heart of any Node.js application.
+<br>
+<pre><code class='language-yaml'>id: &quot;NODE-PACKAGE-JSON&quot;
+name: &quot;Require Package.json&quot;
+checks:
+  - type: FILE_EXISTS
+    params:
+      filePatterns: [&quot;package.json&quot;]
+      failureMessage: &quot;Node.js projects must contain a package.json file&quot;
+</code></pre>
+<br>
+<h3>🐳 DevOps / Docker Patterns</h3>
+<br>
+For projects intended for containerization, a <code class='inline-token'>Dockerfile</code> is essential.
+<br>
+<pre><code class='language-yaml'>id: &quot;DOCKER-FILE-REQUIRED&quot;
+name: &quot;Require Dockerfile&quot;
+checks:
+  - type: FILE_EXISTS
+    params:
+      filePatterns: [&quot;Dockerfile&quot;, &quot;docker-compose.yml&quot;]
+</code></pre>
+</div>
+        </div>
+    </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var path = window.location.pathname;
+                var isReport = path.includes('/reports/');
+                var isStandalone = path.endsWith('/rule_guide.html');
+                var dashboardBtn = document.getElementById('dashboardBtn');
+                var mainPageBtn = document.getElementById('mainPageBtn');
+
+
+                var isInMuleWrapper = path.includes('/apiguard/');
+                var basePath = isInMuleWrapper ? '/apiguard/Aegis' : '';
+
+                var sessionId = new URLSearchParams(window.location.search).get('session');
+                if (!sessionId && isReport) {
+                    var parts = path.split('/reports/');
+                    if (parts.length > 1) {
+                        var subparts = parts[1].split('/');
+                        if (subparts.length > 0) sessionId = subparts[0];
+                    }
+                }
+
+                if (dashboardBtn) {
+                    if (isStandalone) {
+                        dashboardBtn.innerText = "Home";
+                        dashboardBtn.href = basePath + "/";
+                        dashboardBtn.title = "Go to Main Page";
+                        dashboardBtn.style.display = 'inline-block';
+                        if (mainPageBtn) mainPageBtn.style.display = 'none';
+                    } else {
+                        dashboardBtn.style.display = 'inline-block';
+                    }
+                }
+
+                if (isReport && mainPageBtn) {
+                    mainPageBtn.style.display = 'inline-block';
+                    var mainPageUrl = basePath + '/';
+                    if (!isInMuleWrapper) mainPageUrl = '/';
+                    if (sessionId) mainPageUrl += '?session=' + sessionId;
+                    mainPageBtn.href = mainPageUrl;
+                }
+            });
+        </script>
+</body>
+</html>

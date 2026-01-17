@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 echo ============================================================
-echo      MuleGuard Security Compliance Report Generator
+echo      Aegis Security Compliance Report Generator
 echo ============================================================
 
 REM --- Java Version Check ---
@@ -51,9 +51,9 @@ powershell -Command ^
     "    if ($line -match 'snakeyaml:(.+):') { $rows += '| SnakeYAML | ' + $matches[1] + ' | SECURE | YAML parsing |' }" ^
     "    if ($line -match 'poi:(.+):') { $rows += '| Apache POI | ' + $matches[1] + ' | SECURE | Office document processing |' }" ^
     "}" ^
-    "$md = @('# MuleGuard Security Compliance Report', '', '**Generated:** ' + $date, '', '## Executive Summary', '', 'This report certifies that MuleGuard is compliant with enterprise security standards.', 'All third-party dependencies have been audited.', '', '## Dependency Audit (Dynamic)', '', '| Component | Version | Status | Notes |', '|-----------|---------|--------|-------|');" ^
+    "$md = @('# Aegis Security Compliance Report', '', '**Generated:** ' + $date, '', '## Executive Summary', '', 'This report certifies that Aegis is compliant with enterprise security standards.', 'All third-party dependencies have been audited.', '', '## Dependency Audit (Dynamic)', '', '| Component | Version | Status | Notes |', '|-----------|---------|--------|-------|');" ^
     "$md += $rows;" ^
-    "$md += @('', '## Vulnerability Scanning', '', '* **Last Scan**: ' + $date, '* **Scanner**: OWASP Dependency Check', '* **Critical Risks**: 0', '* **High Risks**: 0', '', '## Compliance Statement', '', 'MuleGuard v1.0.0 adheres to secure coding guidelines.');" ^
+    "$md += @('', '## Vulnerability Scanning', '', '* **Last Scan**: ' + $date, '* **Scanner**: OWASP Dependency Check', '* **Critical Risks**: 0', '* **High Risks**: 0', '', '## Compliance Statement', '', 'Aegis v1.0.0 adheres to secure coding guidelines.');" ^
     "$md | Out-File -FilePath '%REPORT_FILE%' -Encoding UTF8"
 
 if %ERRORLEVEL% NEQ 0 (

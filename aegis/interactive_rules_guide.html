@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MuleGuard Rules Guide</title>
+    <title>Aegis Rules Guide</title>
     <!-- Load Rules Data -->
     <script src="rules_data.js"></script>
     <style>
         :root {
-            --primary: #00A1DF; /* MuleSoft Blue-ish */
+            --primary: #663399; /* Aegis Purple */
             --dark: #1a1a1a;
             --light: #f4f6f8;
             --text: #333;
@@ -198,7 +198,7 @@
 
 <header>
     <div>
-        <h1>MuleGuard Rules Explorer</h1>
+        <h1>Aegis Rules Explorer</h1>
         <div class="subtitle">Interactive Documentation & Standards Guide</div>
     </div>
     <div style="font-size: 0.9rem;">v1.0.0</div>
@@ -208,7 +208,7 @@
     <div style="background: rgba(0, 161, 223, 0.05); border: 1px solid rgba(0, 161, 223, 0.2); padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem;">
         <h2 style="margin-top: 0; font-size: 1.1rem; color: var(--primary);">🚀 Power Feature: Universal Trigger Engine</h2>
         <p style="font-size: 0.95rem; margin-bottom: 0.5rem;">
-            MuleGuard now supports <strong>context-aware validation</strong>. Any check type (XML, POM, JSON, or Property) can be used as a 
+            Aegis now supports <strong>context-aware validation</strong>. Any check type (XML, POM, JSON, or Property) can be used as a 
             <em>precondition</em>. This allows you to enforce standards like "Only require JMS config if the JMS library is in the POM" or 
             "Enforce strict security only for Experience APIs."
         </p>
@@ -230,9 +230,11 @@
         </div>
         <div class="filter-group">
             <select id="typeFilter">
-                <option value="ALL">All Rule Types</option>
-                <option value="Code">Code Rules</option>
-                <option value="Config">Config Rules</option>
+                <option value="ALL">All Rule Engines</option>
+                <option value="Structural">Structural (XML/JSON/POM)</option>
+                <option value="Environmental">Environmental (Properties/YAML)</option>
+                <option value="Universal">Universal (Text/Token Search)</option>
+                <option value="Project">Project Structure (Files/Folders)</option>
             </select>
             <select id="severityFilter">
                 <option value="ALL">All Severities</option>
@@ -250,7 +252,7 @@
 
 <script>
     // Init
-    const rules = MULEGUARD_RULES_DATA.rules || [];
+    const rules = AEGIS_RULES_DATA.rules || [];
     const grid = document.getElementById('grid');
     const searchInput = document.getElementById('searchInput');
     const typeFilter = document.getElementById('typeFilter');
@@ -277,7 +279,7 @@
     headerControls.innerHTML = `
         <button id="selectAllBtn" class="btn-config">Select All</button>
         <button id="deselectAllBtn" class="btn-config">Deselect All</button>
-        <button id="generateConfigBtn" class="btn-primary" style="margin-left:auto;">Generate MuleGuard Config</button>
+        <button id="generateConfigBtn" class="btn-primary" style="margin-left:auto;">Generate Aegis Config</button>
     `;
     document.querySelector('.controls').after(headerControls);
     
@@ -316,7 +318,7 @@
         const enabled = Array.from(selectedRules);
         const disabled = rules.filter(r => !selectedRules.has(r.id)).map(r => r.id);
         
-        let output = `### MuleGuard Configuration\n# Generated on ${new Date().toLocaleDateString()}\n\n`;
+        let output = `### Aegis Configuration\n# Generated on ${new Date().toLocaleDateString()}\n\n`;
         output += `# Enabled Rules: ${enabled.length}\n`;
         output += `# Disabled Rules: ${disabled.length}\n\n`;
         
@@ -348,16 +350,26 @@
         document.body.appendChild(modal);
     });
 
+    function getRuleCategory(rule) {
+        if (!rule.checks || rule.checks.length === 0) return 'Universal';
+        const type = rule.checks[0].type;
+        if (type.startsWith('XML_') || type.startsWith('JSON_') || type.startsWith('POM_')) return 'Structural';
+        if (type.includes('PROPERTY') || type.includes('SUBSTRING') || type.includes('YAML')) return 'Environmental';
+        if (type.includes('TOKEN') || type.includes('TEXT') || type.includes('SEARCH')) return 'Universal';
+        if (type.includes('FILE_') || type.includes('PROJECT_')) return 'Project';
+        return 'Universal';
+    }
+
     // Determine current filtered set
     function getFilteredRules() {
         const term = searchInput.value.toLowerCase();
-        const type = typeFilter.value;
+        const category = typeFilter.value;
         const sev = severityFilter.value;
         return rules.filter(r => {
             const matchesSearch = r.id.toLowerCase().includes(term) || 
                                   r.name.toLowerCase().includes(term) || 
                                   r.description.toLowerCase().includes(term);
-            const matchesType = type === 'ALL' || r.type === type;
+            const matchesType = category === 'ALL' || getRuleCategory(r) === category;
             const matchesSev = sev === 'ALL' || r.severity === sev;
             return matchesSearch && matchesType && matchesSev;
         });
@@ -380,12 +392,11 @@
             
             const sevClass = rule.severity ? `sev-${rule.severity.toLowerCase()}` : '';
             
-            // Generate tags HTML
-            let tagsHtml = '';
+            // Generate tags HTML - Use descriptive categories
+            const category = getRuleCategory(rule);
+            let tagsHtml = `<span class="tag">${category}</span>`;
             if (rule.tags && rule.tags.length > 0) {
-                tagsHtml = rule.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
-            } else {
-                 tagsHtml = `<span class="tag">${rule.type || 'General'}</span>`;
+                tagsHtml += rule.tags.map(tag => `<span class="tag">${tag}</span>`).join('');
             }
 
             // Generate Content HTML
@@ -445,22 +456,7 @@
     }
 
     function filterRules() {
-        const query = searchInput.value.toLowerCase();
-        const type = typeFilter.value;
-        const severity = severityFilter.value;
-
-        const filtered = rules.filter(rule => {
-            const matchesSearch = 
-                (rule.name && rule.name.toLowerCase().includes(query)) ||
-                (rule.description && rule.description.toLowerCase().includes(query)) ||
-                (rule.id && rule.id.toLowerCase().includes(query));
-            
-            const matchesType = type === 'ALL' || rule.type === type;
-            const matchesSev = severity === 'ALL' || rule.severity === severity;
-
-            return matchesSearch && matchesType && matchesSev;
-        });
-
+        const filtered = getFilteredRules();
         renderRules(filtered);
     }
 

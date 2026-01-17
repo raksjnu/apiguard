@@ -1,17 +1,17 @@
 # JSON_VALIDATION_FORBIDDEN
 
-**Rule Type:** `CODE` - **Applies To:** JSON configuration files (package.json, etc.)
+**Rule Type:** `CODE` - **Applies To:** JSON configuration files (package.json, config.json, etc.)
 
 ## Overview
 
-Validates that **forbidden JSON elements do NOT exist** in JSON files. This rule **fails** if forbidden elements **ARE found**.
+Validates that **forbidden JSON elements do NOT exist** in JSON files. This rule **fails** if forbidden elements **ARE found**. It is useful for blocking deprecated fields, insecure settings, or unapproved metadata.
 
 ## Use Cases
 
-- Prevent deprecated configuration keys
-- Block specific JSON fields
-- Disallow certain metadata in JSON files
-- Enforce JSON structure restrictions
+- Prevent usage of deprecated configuration keys in project descriptors.
+- Block sensitive data fields (e.g., `password`, `secret`) in configuration JSON.
+- Disallow certain unapproved metadata or development-only flags in production JSON.
+- Enforce strict JSON structure by restricting specific keys.
 
 ## Parameters
 
@@ -19,69 +19,64 @@ Validates that **forbidden JSON elements do NOT exist** in JSON files. This rule
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `filePattern` | String | Filename pattern to match (e.g., `mule-artifact.json`) |
-| `forbiddenElements` | List<String> | List of forbidden JSON keys (top-level only) |
+| `filePattern` | String | Filename pattern to match (e.g., `mule-artifact.json`, `package.json`) |
+| `forbiddenElements` | List<String> | List of forbidden JSON keys (top-level or simple nested paths) |
 
 ## Configuration Examples
 
-### Example 1: Block Deprecated Fields
+### Example 1: Block Deprecated Project Fields
+Prevents usage of legacy configuration fields in project descriptors.
 
 ```yaml
-- id: "RULE-110"
-  name: "No Deprecated Mule Artifact Fields"
-  description: "Prevent usage of deprecated fields in mule-artifact.json"
+- id: "RULE-JSON-FORBIDDEN-01"
+  name: "No Deprecated Project Fields"
+  description: "Prevent usage of legacy fields in project descriptors"
   enabled: true
   severity: MEDIUM
   checks:
     - type: JSON_VALIDATION_FORBIDDEN
       params:
-        filePattern: "mule-artifact.json"
+        filePattern: "project-descriptor.json"
         forbiddenElements:
-          - "deprecatedField"
-          - "legacyConfig"
+          - "legacyMode"
+          - "deprecatedConfig"
 ```
 
-### Example 2: Block Sensitive Data
+### Example 2: Block Sensitive Fields in Node.js
+Ensures `package.json` does not contain sensitive or development-only keys.
 
 ```yaml
-- id: "RULE-111"
-  name: "No Credentials in Config JSON"
-  description: "Prevent hardcoded credentials in JSON configuration"
+- id: "RULE-JSON-FORBIDDEN-NODE"
+  name: "Clean Package JSON"
+  description: "Prevent unapproved keys in package.json"
   enabled: true
-  severity: CRITICAL
+  severity: HIGH
   checks:
     - type: JSON_VALIDATION_FORBIDDEN
       params:
-        filePattern: "config.json"
+        filePattern: "package.json"
         forbiddenElements:
-          - "password"
-          - "apiKey"
-          - "secret"
+          - "privateRepositoryUrl"
+          - "internalScripts"
 ```
 
 ## Error Messages
 
 ```
-mule-artifact.json has forbidden element: deprecatedField
-config.json has forbidden element: password
+project-descriptor.json has forbidden element: legacyMode
+package.json has forbidden element: privateRepositoryUrl
 ```
-
 
 ## Best Practices
 
 ### When to Use This Rule
--  Blocking deprecated configuration fields
--  Preventing insecure settings in JSON files
--  Enforcing migration away from legacy configurations
+- **Deprecation**: Use it to enforce a "hard cut-over" when migrating from old config formats to new ones.
+- **Security**: Prevent hardcoded secrets or insecure flags (like `allowInsecure: true`) from being committed.
+- **Cleanliness**: Keep project descriptors streamlined by blocking unapproved experimental fields.
 
-### Security Use Cases
-```yaml
-# Block insecure configurations
-forbiddenFields:
-  allowInsecureConnections: "true"
-  debugMode: "enabled"
-```
+---
+
 ## Related Rule Types
 
-- **[JSON_VALIDATION_REQUIRED](JSON_VALIDATION_REQUIRED.md)** - Opposite: ensures elements DO exist
-- **[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)** - More flexible JSON content validation
+- **[JSON_VALIDATION_REQUIRED](JSON_VALIDATION_REQUIRED.md)** - Opposite: ensures elements DO exist.
+- **[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)** - More flexible search for forbidden patterns across any file type.

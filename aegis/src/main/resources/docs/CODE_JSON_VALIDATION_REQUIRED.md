@@ -4,13 +4,14 @@
 
 ## Overview
 
-Validates that **required JSON elements exist** in JSON files. This rule is essential for validating `mule-artifact.json` and other configuration files. It supports **version checking**, **specific field value validation**, and **field existence checks**.
+Validates that **required JSON elements exist** in JSON files. This rule is essential for validating project descriptors like `mule-artifact.json`, `package.json`, or custom configuration files. It supports **version checking**, **specific field value validation**, and **field existence checks**.
 
 ## Use Cases
 
-- Validate `mule-artifact.json` structure and Mule runtime versions
-- Ensure required configuration keys exist in custom JSON config files
-- Enforce specific values for critical JSON fields (e.g., javaVersion)
+- Validate `mule-artifact.json` structure and runtime versions.
+- Ensure `package.json` contains required scripts or engines configuration.
+- Ensure required configuration keys exist in custom JSON config files.
+- Enforce specific values for critical JSON fields (e.g., `javaSpecificationVersions`).
 
 ## Parameters
 
@@ -18,7 +19,7 @@ Validates that **required JSON elements exist** in JSON files. This rule is esse
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `filePattern` | String | Precise filename to match (e.g., `mule-artifact.json`) |
+| `filePattern` | String | Precise filename to match (e.g., `mule-artifact.json`, `package.json`) |
 
 ### Validation Parameters (Must configure at least one)
 
@@ -30,54 +31,54 @@ Validates that **required JSON elements exist** in JSON files. This rule is esse
 
 ## Configuration Examples
 
-### Example 1: Full Mule Artifact Validation
-Validates minimum Mule version, required Java version, and presence of secure properties.
+### Example 1: Project Descriptor Validation (MuleSoft)
+Validates minimum runtime version, required Java version, and presence of secure properties.
 
 ```yaml
-- id: "RULE-007"
-  name: "Validate mule-artifact.json"
-  description: "Ensures mule-artifact.json meets minimum runtime and security requirements"
+- id: "RULE-JSON-MULE"
+  name: "Validate Mule Project Descriptor"
+  description: "Ensures mule-artifact.json meets minimum runtime requirements"
   enabled: true
   severity: HIGH
   checks:
     - type: JSON_VALIDATION_REQUIRED
       params:
         filePattern: "mule-artifact.json"
-        
-        # Check minimum version (Numeric comparison)
         minVersions:
           minMuleVersion: "4.9.0"
-          
-        # Check exact values
         requiredFields:
           javaSpecificationVersions: "17"
-          
-        # Check simple existence
         requiredElements:
           - "secureProperties"
-          - "classLoaderModelLoaderDescriptor"
 ```
 
-### Example 2: Simple Config Existence
+### Example 2: Node.js / TypeScript Package Validation
+Ensures the project has a start script and requires a minimum Node engine.
 
 ```yaml
-- id: "RULE-101"
-  name: "App Config Required Fields"
+- id: "RULE-JSON-NODE"
+  name: "Validate Node.js Package"
+  description: "Ensures package.json has required scripts and engines"
   enabled: true
+  severity: HIGH
   checks:
     - type: JSON_VALIDATION_REQUIRED
       params:
-        filePattern: "app-config.json"
+        filePattern: "package.json"
+        requiredFields:
+          scripts/start: "node index.js"
+        minVersions:
+          engines/node: "18.0.0"
         requiredElements:
-          - "appName"
-          - "environment"
+          - "dependencies"
+          - "license"
 ```
 
 ## Error Messages
 
 ```
 Field 'minMuleVersion' version too low in mule-artifact.json: expected >= 4.9.0, got 4.4.0
-Field 'javaSpecificationVersions' has wrong value in mule-artifact.json: expected '17', got '8'
+Field 'engines/node' version too low in package.json: expected >= 18.0.0, got 14.17.0
 Element 'secureProperties' missing in mule-artifact.json
 ```
 
@@ -85,21 +86,10 @@ Element 'secureProperties' missing in mule-artifact.json
 ## Best Practices
 
 ### When to Use This Rule
--  Validating mule-artifact.json for runtime compatibility
--  Ensuring minimum Mule/Java versions for security
--  Enforcing required configuration fields
--  Standardizing JSON configuration structure
-
-### Common Patterns
-```yaml
-# Enforce minimum Mule runtime version
-minVersions:
-  minMuleVersion: "4.9.0"
-
-# Require specific Java version
-requiredFields:
-  javaSpecificationVersions: "17"
-```
+-  Validating project descriptors for runtime compatibility.
+-  Ensuring minimum platform/engine versions for security.
+-  Enforcing required configuration fields in application JSON.
+-  Standardizing JSON structure across multiple repositories.
 ## Related Rule Types
 
 - **[JSON_VALIDATION_FORBIDDEN](JSON_VALIDATION_FORBIDDEN.md)** - Opposite: ensures elements do NOT exist

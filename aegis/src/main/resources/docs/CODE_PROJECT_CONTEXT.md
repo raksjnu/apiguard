@@ -4,7 +4,7 @@
 
 ## Overview
 
-A contextual trigger that evaluates the properties of the project itself (e.g., project name). It is typically used within a `CONDITIONAL_CHECK` to enable or disable rules based on project classification.
+A contextual trigger that evaluates the properties of the project itself (primarily the project folder name). It is typically used within a `CONDITIONAL_CHECK` to enable or disable rules based on project classification, technology tiers, or organizational layers.
 
 ## Parameters
 
@@ -27,9 +27,9 @@ Choose at least one of the following to match the project name:
 
 ## Configuration Examples
 
-### Example 1: Target Experience APIs
+### Example 1: Target Specific API Layers (MuleSoft/generic)
 
-Triggers only for projects containing `-exp-` in their name.
+Triggers only for projects classified as "Experience" layers (containing `-exp-` in their name).
 
 ```yaml
 preconditions:
@@ -39,23 +39,40 @@ preconditions:
       ignoreCase: true
 ```
 
-### Example 2: Regex Mapping
+### Example 2: Target Microservices (Generic)
 
-Triggers for projects following a specific organizational naming convention.
+Triggers for projects following a specific organizational naming convention for microservices.
 
 ```yaml
 preconditions:
   - type: PROJECT_CONTEXT
     params:
-      nameMatches: "^[a-z]{3}-[a-z]+-api$"
+      nameMatches: "^svc-[a-z0-9-]+$"
+```
+
+### Example 3: Tiered Validation (Frontend vs Backend)
+
+Apply different security rules for frontend projects.
+
+```yaml
+- id: "FRONTEND-SECURITY-POLICY"
+  checks:
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+          - type: PROJECT_CONTEXT
+            params: { nameContains: "-ui" }
+        onSuccess:
+          # Run frontend-specific checks here (e.g., package.json for unapproved libs)
 ```
 
 ## Best Practices
 
-- Use **PROJECT_CONTEXT** to differentiate between Experience (EAPI), Process (PAPI), and System (SAPI) layers if your naming convention supports it.
-- Combine with `POM_VALIDATION` to verify that the project structure matches its declared context.
+- **Naming Conventions**: Use **PROJECT_CONTEXT** to leverage established naming conventions (e.g., prefixing services with `svc-`, or including environment tags like `-prod-`).
+- **Layered Security**: Use it to differentiate security requirements between customer-facing layers (Experience/Frontend) and protected internal layers (System/Data).
+- **Cleanup Migration**: Identify legacy projects by name (e.g., `v1-`) to apply "Sunset" rules that encourage migration.
 
 ## Related Check Types
 
-- **[CONDITIONAL_CHECK](CODE_CONDITIONAL_CHECK.md)**: The parent engine that uses these context triggers.
-- **[FILE_EXISTS](CODE_FILE_EXISTS.md)**: Trigger based on physical file presence.
+- **[CONDITIONAL_CHECK](CONDITIONAL_CHECK.md)**: The parent engine that uses these context triggers.
+- **[FILE_EXISTS](CODE_FILE_EXISTS.md)**: Trigger based on physical file presence (e.g., existence of `pom.xml` vs `package.json`).

@@ -15,7 +15,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -147,14 +146,14 @@ public class RulesReorganizer {
 
             String headerMetadata = "# =============================================================================\n" +
                                    "# Aegis Rules Configuration\n" +
-                                   "# Migration Scope: Mule 4.3.x/4.4.x/4.6.x → 4.9.0 + JDK 17 + Policy Modernization + RTF 4.3\n" +
+                                   "# Scope: Universal Code Compliance (Java, Python, MuleSoft, TIBCO, DevOps)\n" +
                                    "# Author: Rakesh Kumar (rakesh.kumar@ibm.com)\n" +
                                    "# =============================================================================\n\n" +
                                    "# =============================================================================\n" +
                                    "# RULE TYPES QUICK REFERENCE\n" +
                                    "# =============================================================================\n" +
                                    "# \n" +
-                                   "# CODE RULE TYPES (12 Standard Types - Apply to Mule API Projects)\n" +
+                                   "# UNIVERSAL RULE TYPES (Apply to ANY text-based project)\n" +
                                    "# -------------------------------------------------------------------------\n" +
                                    "# 1.  GENERIC_TOKEN_SEARCH_REQUIRED      - Ensures required tokens exist in files\n" +
                                    "# 2.  GENERIC_TOKEN_SEARCH_FORBIDDEN     - Ensures forbidden tokens do NOT exist in files\n" +
@@ -169,13 +168,7 @@ public class RulesReorganizer {
                                    "# 11. JSON_VALIDATION_REQUIRED           - Validates required JSON elements exist (mule-artifact.json)\n" +
                                    "# 12. JSON_VALIDATION_FORBIDDEN          - Validates forbidden JSON elements do NOT exist\n" +
                                    "#\n" +
-                                   "# CONFIG RULE TYPES (5 Standard Types - Apply to Configuration Projects)\n" +
-                                   "# -------------------------------------------------------------------------\n" +
-                                   "# 1.  MANDATORY_SUBSTRING_CHECK          - Ensures required substrings exist in config files (.properties, .policy)\n" +
-                                   "# 2.  MANDATORY_PROPERTY_VALUE_CHECK     - Validates required properties exist with correct values\n" +
-                                   "# 3.  OPTIONAL_PROPERTY_VALUE_CHECK      - Validates property values IF the property exists\n" +
                                    "# 4.  GENERIC_TOKEN_SEARCH               - Advanced token search with REGEX support and environment filtering\n" +
-                                   "# 5.  CLIENTIDMAP_VALIDATOR              - Custom validator for secure properties and client ID mappings\n" +
                                     "#\n" +
                                    "# CONDITIONAL STANDARDS (Universal \"If-Then\" Engine)\n" +
                                    "# -------------------------------------------------------------------------\n" +

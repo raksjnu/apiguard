@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "=== MuleGuard Quick Deploy ==="
+echo "=== Aegis Quick Deploy ==="
 
 # Set JAVA_HOME (Adjust path if not running in Git Bash on Windows)
 # Optional: Uncomment and set JAVA_HOME if the system JAVA_HOME is missing or incorrect
@@ -17,23 +17,23 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-echo "[1/3]echo "Copying latest rules.yaml to wrapper resources..."
-cp "src/main/resources/rules/rules.yaml" "muleguardwrapper/src/main/resources/web/sample-rules.yaml"
+echo "[1/3] Copying latest rules.yaml to wrapper resources..."
+cp "src/main/resources/rules/rules.yaml" "apiguardwrapper/src/main/resources/web/sample-rules.yaml"
 
-echo "Building MuleGuard Core and Wrapper..."
+echo "Building Aegis Core and Wrapper..."
 mvn clean package -DskipTests -q
 if [ $? -ne 0 ]; then
-    echo "ERROR: muleguard build failed!"
+    echo "ERROR: Aegis build failed!"
     exit 1
 fi
-echo "muleguard JAR built successfully"
+echo "Aegis JAR built successfully"
 
 echo "[2/3] Copying JAR to wrapper..."
-cp -f "target/muleguard-1.0.0-jar-with-raks.jar" "muleguardwrapper/lib/muleguard-1.0.0-jar-with-raks.jar"
+cp -f "target/aegis-1.0.0-jar-with-raks.jar" "apiguardwrapper/lib/aegis-1.0.0-jar-with-raks.jar"
 echo "JAR copied to wrapper/lib"
 
 echo "[3/3] Rebuilding wrapper application..."
-cd muleguardwrapper
+cd apiguardwrapper
 mvn clean package -DskipTests -q
 if [ $? -ne 0 ]; then
     echo "ERROR: wrapper build failed!"

@@ -1,6 +1,6 @@
 # POM_VALIDATION_REQUIRED
 
-**Rule Type:** `CODE` - **Applies To:** pom.xmlMaven POM files (`pom.xml`)
+**Rule Type:** `CODE` - **Applies To:** Maven POM files (`pom.xml`)
 
 ## Overview
 
@@ -14,12 +14,11 @@ Supports validation of:
 
 ## Use Cases
 
-- Ensure required dependencies are declared
-- Validate Maven plugin configurations
-- Enforce parent POM standards
-- Check for mandatory project metadata
-- Enforce dependency management standards
-- Validate specific dependency versions (security compliance)
+- Ensure required dependencies (like logging or security libs) are declared.
+- Validate Maven plugin configurations for build consistency.
+- Enforce parent POM standards across a microservices architecture.
+- Check for mandatory project metadata and versioning schemes.
+- Validate specific dependency versions for security compliance (e.g., blocking known vulnerable versions).
 
 ## Parameters
 
@@ -57,8 +56,6 @@ Supports validation of:
 | `dependencies[].artifactId` | String | Yes | Dependency artifactId |
 | `dependencies[].version` | String | **No** | **Optional**: If specified, validates exact version |
 
-> **NEW**: Version validation is now optional! If `version` is specified, it will be validated. If omitted, any version is accepted.
-
 #### PLUGINS Validation
 
 | Parameter | Type | Required | Description |
@@ -68,20 +65,18 @@ Supports validation of:
 | `plugins[].artifactId` | String | Yes | Plugin artifactId |
 | `plugins[].version` | String | **No** | **Optional**: If specified, validates exact version |
 
-> **NEW**: Version validation is now optional! If `version` is specified, it will be validated. If omitted, any version is accepted.
-
 ---
 
 ## Configuration Examples
 
-### Example 1: Parent POM Validation (with Version)
+### Example 1: Parent POM Validation (Corporate Standard)
 
-Enforce a specific parent POM with exact version.
+Enforce a specific parent POM for all corporate Java projects.
 
 ```yaml
-- id: "RULE-001"
+- id: "RULE-POM-PARENT"
   name: "Enforce Standard Parent POM"
-  description: "All projects must use MuleParentPom version LATEST"
+  description: "All projects must use CorporateParent version 2.5.0"
   enabled: true
   severity: HIGH
   checks:
@@ -89,26 +84,21 @@ Enforce a specific parent POM with exact version.
       params:
         validationType: PARENT
         parent:
-          groupId: "com.raks.eapi"
-          artifactId: "MuleParentPom"
-          version: "LATEST"  # Exact version required
+          groupId: "com.corporation.framework"
+          artifactId: "CorporateParent"
+          version: "2.5.0"
 ```
-
-**Behavior**:
-- ✅ PASS if parent is `com.raks.eapi:MuleParentPom:LATEST`
-- ❌ FAIL if parent version is different (e.g., "1.0.0")
-- ❌ FAIL if parent is missing
 
 ---
 
-### Example 2: Properties Validation (Single Property)
+### Example 2: Properties Validation (Runtime/Compiler Version)
 
-Validate a single property with exact value.
+Validate compiler versions or runtime targets.
 
 ```yaml
-- id: "RULE-002"
-  name: "Mule Runtime Version Check"
-  description: "Mule runtime must be 4.9.0"
+- id: "RULE-POM-PROP"
+  name: "Java Version Check"
+  description: "Java source and target must be 17"
   enabled: true
   severity: HIGH
   checks:
@@ -116,104 +106,22 @@ Validate a single property with exact value.
       params:
         validationType: PROPERTIES
         properties:
-          - name: "app.runtime"
-            expectedValue: "4.9.0"
+          - name: "maven.compiler.source"
+            expectedValue: "17"
+          - name: "maven.compiler.target"
+            expectedValue: "17"
 ```
-
-**Behavior**:
-- ✅ PASS if `<app.runtime>4.9.0</app.runtime>` exists
-- ❌ FAIL if value is different (e.g., "4.8.0")
-- ❌ FAIL if property is missing
 
 ---
 
-### Example 3: Properties Validation (Multiple Properties)
+### Example 3: Dependency Validation (Security Libs)
 
-Validate multiple properties with different expected values.
-
-```yaml
-- id: "RULE-003"
-  name: "Project Configuration Standards"
-  description: "Validate multiple project properties"
-  enabled: true
-  severity: MEDIUM
-  checks:
-    - type: POM_VALIDATION_REQUIRED
-      params:
-        validationType: PROPERTIES
-        properties:
-          - name: "mule.maven.plugin.version"
-            expectedValue: "4.5.0"
-          - name: "app.runtime"
-            expectedValue: "4.9.0"
-          - name: "project.build.sourceEncoding"
-            expectedValue: "UTF-8"
-```
-
-**Behavior**: Each property is validated independently. Rule fails if ANY property is missing or has wrong value.
-
----
-
-### Example 4: Properties Validation (Existence Only)
-
-Check that properties exist without validating their values.
+Require a specific security library version.
 
 ```yaml
-- id: "RULE-004"
-  name: "Required Properties Exist"
-  description: "Ensure required properties are defined"
-  enabled: true
-  severity: LOW
-  checks:
-    - type: POM_VALIDATION_REQUIRED
-      params:
-        validationType: PROPERTIES
-        properties:
-          - name: "app.name"
-            # No expectedValue - just check existence
-          - name: "app.version"
-          - name: "app.description"
-```
-
-**Behavior**: Properties must exist but can have any value.
-
----
-
-### Example 5: Dependency Validation (WITHOUT Version)
-
-Require a dependency but allow any version.
-
-```yaml
-- id: "RULE-005"
-  name: "HTTP Connector Required"
-  description: "Mule HTTP connector must be present"
-  enabled: true
-  severity: HIGH
-  checks:
-    - type: POM_VALIDATION_REQUIRED
-      params:
-        validationType: DEPENDENCIES
-        dependencies:
-          - groupId: "org.mule.connectors"
-            artifactId: "mule-http-connector"
-            # No version specified - any version OK
-```
-
-**Behavior**:
-- ✅ PASS if `org.mule.connectors:mule-http-connector:1.10.5` exists
-- ✅ PASS if `org.mule.connectors:mule-http-connector:2.0.0` exists
-- ❌ FAIL if dependency is missing
-
----
-
-### Example 6: Dependency Validation (WITH Version)
-
-Require a specific dependency version for security compliance.
-
-```yaml
-- id: "RULE-006"
-  name: "Security Library Version"
-  description: "Security library must be version 3.0.0"
+- id: "RULE-POM-DEP"
+  name: "Security Library Requirement"
+  description: "Standard security core must be present"
   enabled: true
   severity: CRITICAL
   checks:
@@ -221,212 +129,70 @@ Require a specific dependency version for security compliance.
       params:
         validationType: DEPENDENCIES
         dependencies:
-          - groupId: "com.raks.security"
+          - groupId: "com.corporation.security"
             artifactId: "security-core"
-            version: "3.0.0"  # Exact version required
+            version: "3.2.1"
 ```
-
-**Behavior**:
-- ✅ PASS if `com.raks.security:security-core:3.0.0` exists
-- ❌ FAIL if version is different (e.g., "2.9.0")
-- ❌ FAIL if dependency is missing
 
 ---
 
-### Example 7: Multiple Dependencies (Mixed Version Validation)
-
-Validate multiple dependencies with different version requirements.
-
-```yaml
-- id: "RULE-007"
-  name: "Required Dependencies"
-  description: "Validate multiple required dependencies"
-  enabled: true
-  severity: HIGH
-  checks:
-    - type: POM_VALIDATION_REQUIRED
-      params:
-        validationType: DEPENDENCIES
-        dependencies:
-          # Require specific version for security library
-          - groupId: "com.raks.eapi"
-            artifactId: "security-framework"
-            version: "2.0.0"
-          
-          # Allow any version for utility library
-          - groupId: "com.raks.eapi"
-            artifactId: "common-utils"
-          
-          # Require specific version for compliance
-          - groupId: "org.mule.connectors"
-            artifactId: "mule-http-connector"
-            version: "1.10.5"
-```
-
-**Behavior**: Each dependency is validated according to its configuration.
-
----
-
-### Example 8: Plugin Validation (WITHOUT Version)
-
-Require a plugin but allow any version.
-
-```yaml
-- id: "RULE-008"
-  name: "Mule Maven Plugin Required"
-  description: "Mule Maven plugin must be present"
-  enabled: true
-  severity: HIGH
-  checks:
-    - type: POM_VALIDATION_REQUIRED
-      params:
-        validationType: PLUGINS
-        plugins:
-          - groupId: "org.mule.tools.maven"
-            artifactId: "mule-maven-plugin"
-            # No version - any version OK
-```
-
-**Behavior**: Plugin must exist with any version.
-
----
-
-### Example 9: Plugin Validation (WITH Version)
-
-Enforce a specific plugin version for build consistency.
-
-```yaml
-- id: "RULE-009"
-  name: "Mule Maven Plugin Version"
-  description: "Mule Maven plugin must be version 4.5.0"
-  enabled: true
-  severity: MEDIUM
-  checks:
-    - type: POM_VALIDATION_REQUIRED
-      params:
-        validationType: PLUGINS
-        plugins:
-          - groupId: "org.mule.tools.maven"
-            artifactId: "mule-maven-plugin"
-            version: "4.5.0"  # Exact version required
-```
-
-**Behavior**:
-- ✅ PASS if plugin exists with version 4.5.0
-- ❌ FAIL if version is different
-- ❌ FAIL if plugin is missing
-
----
-
-### Example 10: Combined Validation
+### Example 4: Combined Validation (Aegis Comprehensive Check)
 
 Validate multiple POM aspects in a single rule.
 
 ```yaml
-- id: "RULE-010"
-  name: "Complete POM Validation"
-  description: "Comprehensive POM validation"
+- id: "RULE-POM-COMPREHENSIVE"
+  name: "Full POM Compliance"
+  description: "Comprehensive check for dependencies, plugins, and properties"
   enabled: true
   severity: HIGH
   checks:
     - type: POM_VALIDATION_REQUIRED
       params:
         validationType: COMBINED
-        parent:
-          groupId: "com.raks.eapi"
-          artifactId: "MuleParentPom"
-          version: "LATEST"
         properties:
-          - name: "app.runtime"
-            expectedValue: "4.9.0"
-          - name: "mule.maven.plugin.version"
-            expectedValue: "4.5.0"
+          - name: "project.build.sourceEncoding"
+            expectedValue: "UTF-8"
         dependencies:
-          - groupId: "com.raks.eapi"
-            artifactId: "apimuleutilities"
+          - groupId: "org.slf4j"
+            artifactId: "slf4j-api"
         plugins:
-          - groupId: "org.mule.tools.maven"
-            artifactId: "mule-maven-plugin"
-            version: "4.5.0"
+          - groupId: "org.apache.maven.plugins"
+            artifactId: "maven-compiler-plugin"
+            version: "3.11.0"
 ```
-
-**Behavior**: All validations must pass for the rule to pass.
 
 ---
 
 ## Error Messages
 
-When validation fails, you'll see detailed messages:
-
 ```
-Parent version mismatch in pom.xml: expected com.raks.eapi:MuleParentPom:LATEST, got version '1.0.0'
-Property 'app.runtime' has wrong value in pom.xml: expected '4.9.0', got '4.8.0'
-Property 'mule.maven.plugin.version' missing in pom.xml
-Dependency com.raks.security:security-core not found in pom.xml
-Plugin org.mule.tools.maven:mule-maven-plugin not found in pom.xml
+Parent version mismatch in pom.xml: expected com.corp:Parent:2.5.0, got version '1.0.0'
+Property 'maven.compiler.source' has wrong value in pom.xml: expected '17', got '11'
+Dependency com.corporation.security:security-core not found in pom.xml
 ```
 
 ---
 
 ## Best Practices
 
-### When to Use Version Validation
-
-✅ **Use version validation when**:
-- Security compliance requires specific versions
-- Breaking changes exist between versions
-- Standardization across projects is critical
-- Vulnerable versions must be blocked
-
-❌ **Don't use version validation when**:
-- Version flexibility is desired
-- Automatic updates are preferred
-- Minor version differences are acceptable
-
-### Recommended Patterns
-
-#### Pattern 1: Critical Dependencies
-```yaml
-# Lock critical security libraries to specific versions
-dependencies:
-  - groupId: "com.raks.security"
-    artifactId: "authentication"
-    version: "2.0.0"
-```
-
-#### Pattern 2: Utility Libraries
-```yaml
-# Allow flexibility for utility libraries
-dependencies:
-  - groupId: "org.apache.commons"
-    artifactId: "commons-lang3"
-    # No version - any version acceptable
-```
-
-#### Pattern 3: Parent POM Standardization
-```yaml
-# Always validate parent POM with exact version
-parent:
-  groupId: "com.company"
-  artifactId: "corporate-parent"
-  version: "1.5.0"
-```
+- **Use version validation for security**: Lock critical security libraries to specific patched versions.
+- **Flexible utilities**: For standard utilities (e.g., `commons-lang`), omit the `version` parameter to allow project-specific updates unless a specific version is required for compatibility.
+- **Combined Rules**: Use `validationType: COMBINED` to reduce the number of rules defined when multiple checks are related to the same "standard" (e.g., "Corporate Standard v2").
 
 ---
 
 ## Solution Patterns and Technology References
 
-The following table highlights key Maven/Java validation patterns to ensure build stability and compliance.
-
 | Technology | Best Practice Goal | Key Elements | Attributes Checked |
 | :--- | :--- | :--- | :--- |
 | **☕ Java/Maven** | Parent POM Usage | `parent` | `version` |
-| **☕ Java/Maven** | Plugin Versioning | `plugin` | `version` |
+| **☕ Java/Maven** | Compiler Standard | `properties` | `maven.compiler.source` |
 | **🐎 MuleSoft** | Mule Plugin Check | `mule-maven-plugin` | `version` |
 
 ### ☕ Java / Maven Patterns
 
-**Scenario**: To ensure reproducible builds, it is critical that the `parent` POM is strictly versioned and that major build plugins are explicitly defined.
+**Scenario**: To ensure reproducible builds, it is critical that the `parent` POM is strictly versioned and that major build plugins are explicitly defined with their respective versions.
 
 ```yaml
 id: "MAVEN-PARENT-CHECK"
@@ -436,35 +202,18 @@ checks:
   - type: POM_VALIDATION_REQUIRED
     params:
       parent:
-        groupId: "com.company"
-        artifactId: "corporate-parent"
-        version: "2.0.0"
-```
-
-### 🐎 MuleSoft Patterns
-
-**Scenario**: Mule applications must use the correct version of the Mule Maven Plugin to ensure compatibility with the runtime and deployment pipelines.
-
-```yaml
-id: "MULE-PLUGIN-CHECK"
-name: "Mule Maven Plugin Validation"
-description: "Ensure correct version of mule-maven-plugin"
-checks:
-  - type: POM_VALIDATION_REQUIRED
-    params:
-      plugins:
-        - groupId: "org.mule.tools.maven"
-          artifactId: "mule-maven-plugin"
-          version: "3.8.2"
+        groupId: "com.corporation.framework"
+        artifactId: "CorporateParent"
+        version: "2.5.0"
 ```
 
 ---
 
 ## Related Rule Types
 
-- **[POM_VALIDATION_FORBIDDEN](POM_VALIDATION_FORBIDDEN.md)** - Opposite: ensures elements do NOT exist
-- **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - More complex XPath-based POM validation
-- **[JSON_VALIDATION_REQUIRED](JSON_VALIDATION_REQUIRED.md)** - Similar validation for JSON files
+- **[POM_VALIDATION_FORBIDDEN](POM_VALIDATION_FORBIDDEN.md)** - Opposite: ensures elements do NOT exist.
+- **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - For more granular POM validation using raw XPath.
+- **[JSON_VALIDATION_REQUIRED](JSON_VALIDATION_REQUIRED.md)** - Similar validation for JSON-based projects (Node.js, Mule artifacts).
 
 ---
 

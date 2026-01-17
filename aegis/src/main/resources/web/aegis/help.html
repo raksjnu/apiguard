@@ -143,85 +143,42 @@
         </div>
 
         <div class="highlight-box">
-            <strong>Aegis</strong> is a versatile and comprehensive static analysis solution designed specifically
-            for MuleSoft applications. It is highly flexible and capable of validating any component of your
-            integration,
-            including <code>flow.xml</code>, global configurations, <code>dataweave.dwl</code> files, and more.
-            Aegis can be easily configured to support countless rules, tailored to meet your organization's specific
-            needs for standard or customized code review and validation.
+            <strong>Aegis</strong> is a flexible, trigger-based static analysis engine designed for <strong>Universal Code Compliance</strong>.
+            Unlike traditional linters restricted to a single language, Aegis uses a powerful conditional engine to validate
+            any text-based project—including <strong>Java, Python, TypeScript, Docker, Terraform, TIBCO, and MuleSoft</strong>.
+            <br><br>
+            It allows you to define custom architecture rules, security policies, and best practices using a simple YAML configuration,
+            adapting dynamically to the specific technologies detected in your repository.
         </div>
 
         <h2>📋 What Aegis Validates</h2>
-        <p>Aegis provides thorough analysis across all core project components:</p>
+        <p>Aegis provides deep analysis across a wide spectrum of technologies:</p>
         <ul>
-            <li><strong>Universal Application Support:</strong> Validate ANY text-based project (TIBCO, Python, Java, JS, etc.)</li>
-            <li><strong>Maven configurations:</strong> pom.xml validation</li>
-            <li><strong>Mule runtime manifests:</strong> mule-artifact.json structure</li>
-            <li><strong>Mule flows & sub-flows:</strong> XML configuration files</li>
-            <li><strong>DataWeave scripts:</strong> .dwl files</li>
-            <li><strong>Environment-specific property files:</strong> .properties and .policy files</li>
+            <li><strong>Universal:</strong> Generic file existence, naming conventions, and regex text patterns.</li>
+            <li><strong>Java/Maven:</strong> <code>pom.xml</code> dependencies, folder structures, and checkstyle integration.</li>
+            <li><strong>Python:</strong> <code>requirements.txt</code> analysis and script content validation.</li>
+            <li><strong>Cloud/DevOps:</strong> Dockerfile best practices, Kubernetes manifests, and Terraform compliance.</li>
+            <li><strong>Integration (MuleSoft/TIBCO):</strong> Deep XML inspection, DataWeave scripts, and flow logic validation.</li>
+            <li><strong>Security:</strong> Secret scanning, token detection, and sensitive data exposure checks.</li>
         </ul>
 
-        <h2>⚙️ Configuration File Structure Requirements</h2>
-        <div class="highlight-box">
-            <p><strong>Important:</strong> Aegis validates environment-specific configuration files based on a standardized structure. 
-            If your organization uses configuration files, they must follow this format:</p>
-        </div>
-        
-        <h3>Required Structure</h3>
+        <h2>⚙️ Flexible Project Structure</h2>
+        <h3>How Aegis Works</h3>
         <ul>
-            <li><strong>Folder Name:</strong> Configuration files must be in a folder containing <code>_config</code> in the name
-                <ul style="margin-top: 5px;">
-                    <li>Examples: <code>muleapp_config</code>, <code>api_config</code>, <code>myproject_config</code></li>
-                    <li>Pattern: Any folder name containing <code>_config</code></li>
-                </ul>
-            </li>
-            <li><strong>File Extensions:</strong> Supported extensions are:
-                <ul style="margin-top: 5px;">
-                    <li><code>.properties</code> - Standard property files</li>
-                    <li><code>.policy</code> - Policy configuration files</li>
-                    <li><code>.deployment</code> - Deployment configuration files</li>
-                </ul>
-            </li>
-            <li><strong>File Format:</strong> Properties must use the format: <code>propertyName=propertyValue</code>
-                <ul style="margin-top: 5px;">
-                    <li>Delimiter must be <code>=</code> (equals sign)</li>
-                    <li>Example: <code>database.host=localhost</code></li>
-                    <li>Example: <code>api.timeout=30000</code></li>
-                </ul>
-            </li>
-            <li><strong>Location:</strong> The config folder should be at the same level as your API project folders</li>
+            <li><strong>Marker Detection:</strong> Aegis scans your files to determine project types based on key markers (e.g., `pom.xml`, `requirements.txt`, `package.json`).</li>
+            <li><strong>Configurable Patterns:</strong> Configuration folders (like `_config`) are just a default pattern. You can customize the `namePattern` in `rules.yaml` to match <strong>any</strong> naming convention your organization prefers (e.g., `config`, `settings`, or even root-level files).</li>
+            <li><strong>Rule Scoping:</strong> Validation rules are applied intelligently based on these configured markers, ensuring that specific rules only run on relevant project types.</li>
         </ul>
 
-        <h3>Example Project Structure</h3>
-        <div class="highlight-box">
-            <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px; overflow-x: auto;">
-your-mule-projects/
-├── api-project-1/
-├── api-project-2/
-└── muleapp_config/
-    ├── dev.properties
-    ├── qa.properties
-    ├── prod.properties
-    └── security.policy</pre>
-        </div>
-
-        <div class="highlight-box" style="background: #fff3cd; border-left-color: #ffc107;">
-            <p><strong>⚠️ Note:</strong> The folder name must contain <code>_config</code> somewhere in the name. 
-            If your organization uses a different pattern, you can modify the <code>namePattern</code> in <code>rules.yaml</code>:</p>
-            <ul style="margin-top: 5px;">
-                <li>Current pattern: <code>".*_config.*"</code> (matches any folder containing <code>_config</code>)</li>
-                <li>You can change this to match your naming convention</li>
-            </ul>
-            <p style="margin-top: 10px;">Configuration validation rules (RULE-100 through RULE-199) will only apply to files 
-            in folders matching this pattern.</p>
+        <div class="highlight-box" style="background: #e6fffa; border-left-color: #00bfa5;">
+            <p><strong>💡 Pro Tip:</strong> You define the project markers in <code>rules.yaml</code> using the `markerFiles` configuration. This gives you complete control over how Aegis identifies and validates your unique repository structures. See the <strong>Project Identification</strong> section in the Rule Guide.</p>
         </div>
 
         <h2>🎯 Key Features</h2>
         <div class="feature-grid">
             <div class="feature-card">
                 <h4>📊 Comprehensive Checks</h4>
-                <p>Perform a wide variety of checks on code and configuration files. Validates one or more Mule project
+                <p>Perform a wide variety of checks on code and configuration files. Validates one or more project
                     folders and their configurations with a single click.</p>
             </div>
             <div class="feature-card">
@@ -246,11 +203,11 @@ your-mule-projects/
             Possible checks include:</p>
 
         <ul>
-            <li><strong>Structure & configuration:</strong> Validate XML flows, <code>flow.xml</code>, global
+            <li><strong>Structure & configuration:</strong> Validate XML flows, configuration files, global
                 configurations, and file structures.</li>
-            <li><strong>Dependencies:</strong> Verify Maven <code>pom.xml</code> configurations and dependencies.</li>
+            <li><strong>Dependencies:</strong> Verify Maven <code>pom.xml</code>, Node.js <code>package.json</code>, and Python <code>requirements.txt</code>.</li>
             <li><strong>Code Content:</strong> Search for specific tokens, patterns, or forbidden content within
-                <code>.dwl</code> DataWeave scripts, Python Scripts, Java Code, and other source files.
+                DataWeave scripts, Python Scripts, Java Code, and other source files.
             </li>
             <li><strong>XML Validation:</strong> Perform deep inspection using XPath, check for specific attributes, and
                 validate element content.</li>
@@ -262,11 +219,11 @@ your-mule-projects/
         
         <h2>🔗 Git Integration Guide</h2>
         <div class="highlight-box">
-             <p><strong>New in v1.0:</strong> Aegis now supports direct integration with Git providers.</p>
+             <p>Aegis supports direct integration with Git providers for automated scanning:</p>
              <ul>
                  <li><strong>Discovery Mode:</strong> Browse and select repositories from your GitLab Group or GitHub Organization/User.</li>
                  <li><strong>Manual Mode:</strong> Paste any direct Git clone URL (HTTPS).</li>
-                 <li><strong>Public Access:</strong> You can now search public groups/users without needing a token!</li>
+                 <li><strong>Public Access:</strong> Search public groups/users without needing a token (ideal for open-source audits).</li>
              </ul>
         </div>
         
@@ -280,28 +237,37 @@ your-mule-projects/
         <h2>📂 Input Modes</h2>
         <p>Aegis supports multiple input methods to fit your workflow:</p>
         
-        <h3>Standalone Java Application</h3>
+        <h3>Standalone Desktop Application</h3>
         <ul>
-            <li><strong>📁 Local Folder:</strong> Point to a folder containing your Mule projects</li>
+            <li><strong>📁 Local Folder:</strong> Point to a folder containing your projects (Standalone only)</li>
             <li><strong>📦 ZIP Upload:</strong> Upload a ZIP file containing your project(s)</li>
-            <li><strong>📚 JAR Upload:</strong> Upload a Mule application JAR file for validation</li>
+            <li><strong>📚 JAR Upload:</strong> Upload a Java or Mule application JAR file for validation</li>
             <li><strong>🔗 Git Repository:</strong> Connect to GitLab or GitHub. Supports private repos (with token) and public repos (no token required).</li>
         </ul>
         
-        <h3>Mule Wrapper Deployment</h3>
+        <h3>Cloud Deployed Version (SaaS)</h3>
+        <p>Specifically for cloud environments where local file system access is restricted:</p>
         <ul>
             <li><strong>📦 ZIP Upload:</strong> Upload a ZIP file (default mode)</li>
-            <li><strong>📚 JAR Upload:</strong> Upload a Mule application JAR file</li>
+            <li><strong>📚 JAR Upload:</strong> Upload an application JAR file</li>
             <li><strong>📥 Download Reports:</strong> Download validation reports as ZIP file</li>
-            <li><strong>📧 Email Notifications:</strong> Receive reports via email (configured in Mule)</li>
+            <li><strong>📧 Email Notifications:</strong> Receive reports via email (if configured)</li>
         </ul>
 
         <h2>🚀 How to Use</h2>
-
-        <h3>Command Line (Local Folders Only)</h3>
-        <div class="highlight-box">
-            <code>java -jar aegis-1.0.0-jar-with-raks.jar -p /path/to/your/mule-projects</code>
-            <p style="margin-top: 10px;"><strong>Note:</strong> CLI mode only supports local folder paths. For ZIP/JAR uploads, use GUI mode.</p>
+        
+        <h3>Command Line</h3>
+        <div class="code-block">
+            <code>java -jar aegis-1.0.0-jar-with-raks.jar -p /path/to/projects [-c rules.yaml] [-o reports]</code>
+            <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+                <strong>Parameters:</strong><br>
+                <code>-p, --path</code>: (Required) Absolute path to the root folder containing projects to scan.<br>
+                <code>-c, --config</code>: (Optional) Path to a custom <code>rules.yaml</code> file. If omitted, built-in rules are used.<br>
+                <code>-o, --output</code>: (Optional) Name of the report directory (Default: Aegis-reports).<br>
+                <code>-h, --help</code>: Show the help message and exit.<br>
+                <code>-V, --version</code>: Print version information and exit.
+            </p>
+            <p><strong>Note:</strong> CLI mode currently supports local folder analysis only. For ZIP/JAR uploads, please use the GUI.</p>
         </div>
 
         <h3>GUI Mode (All Input Modes)</h3>
@@ -374,3 +340,4 @@ your-mule-projects/
         });
     </script>
 </body>
+</html>

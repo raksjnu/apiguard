@@ -4,14 +4,14 @@
 
 ## Overview
 
-Validates that XML elements contain **required content/tokens**. This rule **fails** if required content is **NOT found** in the element's text content.
+Validates that XML elements contain **required content strings or tokens**. This rule **fails** if the required tokens are **NOT found** within the element's text content. It is ideal for enforcing descriptive messages, documentation standards, or specific data formats inside XML tags.
 
 ## Use Cases
 
-- Ensure specific values or patterns exist in element content
-- Validate configuration values
-- Check for required documentation or comments
-- Enforce content standards
+- Ensure log messages or display names contain descriptive keywords.
+- Validate documentation or comment tags for specific sections (e.g., "Author", "Version").
+- Check that configuration values follow a specific format (e.g., semantic versioning).
+- Enforce organizational content standards in shared XML descriptors.
 
 ## Parameters
 
@@ -20,117 +20,87 @@ Validates that XML elements contain **required content/tokens**. This rule **fai
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `filePatterns` | List<String> | Glob patterns to match XML files |
-| `elementContentPairs` | List<Map> | Element names with their required content tokens |
+| `elementContentPairs` | List<Map> | Element names paired with their required content tokens |
 
 #### Element Content Pair Map Structure
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `element` | String | Yes | XML element name |
-| `requiredTokens` | List<String> | Yes | Tokens that must be present in element content |
+| `element` | String | Yes | XML element name (can be local-name or prefixed) |
+| `requiredTokens` | List<String> | Yes | Tokens that must be present in the element's body |
 
 ### Optional Parameters
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `matchMode` | String | `SUBSTRING` | `SUBSTRING` or `REGEX` |
+| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
 | `caseSensitive` | Boolean | `true` | Case sensitivity for content matching |
 | `requireAll` | Boolean | `true` | If `true`, ALL tokens must be found. If `false`, at least ONE |
 
 ## Configuration Examples
 
-### Example 1: Validate Logger Messages
+### Example 1: Validate Message Quality
+Ensure that elements used for logging or reporting are descriptive enough.
 
 ```yaml
-- id: "RULE-060"
-  name: "Logger Messages Must Be Descriptive"
-  description: "Logger messages must contain specific keywords"
-  enabled: true
-  severity: LOW
+- id: "RULE-XML-CONTENT-REQ-01"
+  name: "Descriptive Logger Messages"
   checks:
     - type: XML_ELEMENT_CONTENT_REQUIRED
       params:
-        filePatterns:
-          - "src/main/mule/**/*.xml"
+        filePatterns: ["**/*.xml"]
         elementContentPairs:
           - element: "logger"
-            requiredTokens: ["Flow", "Request", "Response"]
-        requireAll: false  # At least one keyword
+            requiredTokens: ["Flow", "Request", "Response", "Status"]
+        requireAll: false  # Pass if at least one of these is mentioned
 ```
 
-### Example 2: Validate Documentation
+### Example 2: Enforce Documentation Standards
+Check that a "description" or "note" tag contains required metadata headers.
 
 ```yaml
-- id: "RULE-061"
-  name: "Flow Documentation Required"
-  description: "Flow doc:description must contain specific information"
-  enabled: true
-  severity: MEDIUM
+- id: "RULE-XML-DOC-POLICY"
+  name: "Documentation Header Policy"
   checks:
     - type: XML_ELEMENT_CONTENT_REQUIRED
       params:
-        filePatterns:
-          - "**/*.xml"
+        filePatterns: ["src/main/resources/*.xml"]
         elementContentPairs:
-          - element: "doc:description"
-            requiredTokens: ["Purpose:", "Input:", "Output:"]
-        requireAll: true
+          - element: "note"
+            requiredTokens: ["Author:", "Last-Updated:", "Business-Unit:"]
+        requireAll: true  # All headers must be present
 ```
 
-### Example 3: Regex Pattern Matching
+### Example 3: Regex Format Validation
+Verify that a version tag follows a specific semantic versioning pattern.
 
 ```yaml
-- id: "RULE-062"
-  name: "Version Format in Description"
-  description: "Description must include version number"
-  enabled: true
-  severity: LOW
+- id: "RULE-XML-VERSION-FORMAT"
+  name: "Version Pattern Validation"
   checks:
     - type: XML_ELEMENT_CONTENT_REQUIRED
       params:
-        filePatterns:
-          - "**/pom.xml"
-        elementContentPairs:
-          - element: "description"
-            requiredTokens: ["v\\d+\\.\\d+"]  # Regex: vX.Y
+        filePatterns: ["pom.xml", "manifest.xml"]
         matchMode: REGEX
+        elementContentPairs:
+          - element: "version"
+            requiredTokens: ["^\\d+\\.\\d+\\.\\d+(-SNAPSHOT)?$"]
 ```
 
 ## Error Messages
 
 ```
-config.xml element 'logger' is missing required tokens: Flow, Request, Response
-main-flow.xml element 'doc:description' is missing required tokens: Purpose:, Input:, Output:
+config.xml: Element 'logger' is missing required tokens: Flow, Request, Response
+manifest.xml: Element 'version' content does not match pattern: ^\d+\.\d+\.\d+(-SNAPSHOT)?$
 ```
 
 ## Best Practices
 
-### When to Use This Rule
--  Validating XML element content for required keywords or patterns
--  Ensuring documentation elements contain specific information
--  Checking logger messages for descriptive content
--  Enforcing content standards in configuration files
-
-### Common Patterns
-```yaml
-# Validate logger messages contain flow information
-elementContentPairs:
-  - element: "logger"
-    requiredTokens: ["Flow", "Request", "Response"]
-    requireAll: false  # At least one
-
-# Ensure documentation completeness
-elementContentPairs:
-  - element: "doc:description"
-    requiredTokens: ["Purpose:", "Input:", "Output:"]
-    requireAll: true  # All required
-```
-
-### Match Mode Selection
-- **SUBSTRING**: Use for simple keyword matching (faster, most common)
-- **REGEX**: Use for pattern matching (version numbers, formats, complex patterns)
+- **Use caseSensitive: false for flexibility**: For documentation or log messages, case sensitivity often leads to false negatives.
+- **REGEX for Strict Formats**: Use REGEX mode when the *order* or *format* matters (e.g., dates, versions, IDs).
+- **Combine with existence**: This rule only checks content *on elements it finds*. If the element is missing entirely, this rule won't trigger. Combine with **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** to ensure the element exists first if needed.
 
 ## Related Rule Types
 
-- **[XML_ELEMENT_CONTENT_FORBIDDEN](XML_ELEMENT_CONTENT_FORBIDDEN.md)** - Opposite: ensures content does NOT exist
-- **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - More complex XPath-based validation
+- **[XML_ELEMENT_CONTENT_FORBIDDEN](XML_ELEMENT_CONTENT_FORBIDDEN.md)** - Opposite: ensures tokens do NOT exist in the content.
+- **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - Check for existence and hierarchy using XPath.

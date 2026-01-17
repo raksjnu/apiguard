@@ -4,14 +4,14 @@
 
 ## Overview
 
-Validates that **required XPath expressions match** in XML files. This rule **fails** if any required XPath expression does **NOT** find matching nodes.
+Validates that **required XPath expressions match** in XML files. This rule **fails** if any required XPath expression does **NOT** find matching nodes. It is the core tool for complex XML structure validation.
 
 ## Use Cases
 
-- Verify specific XML elements or attributes exist
-- Ensure required configuration is present in Mule flows
-- Validate XML structure and hierarchy
-- Check for mandatory namespaces or schemas
+- Verify specific XML elements or attributes exist within a hierarchy.
+- Ensure required configuration is present in integration flows (MSoft, TIBCO, etc.).
+- Validate XML structure beyond simple existence (e.g., "Parent must have Child").
+- Check for mandatory namespaces, schemas, or specific attribute values.
 
 ## Parameters
 
@@ -39,30 +39,32 @@ Each item in `xpathExpressions` can have:
 
 ## Configuration Examples
 
-### Example 1: Basic - Ensure Logger Exists
+### Example 1: Basic component existence
+Ensure that a specific component (e.g., a "logger" or custom plugin) is used in the configuration.
 
 ```yaml
-- id: "RULE-020"
+- id: "RULE-XML-XPATH-01"
   name: "Logger Component Required"
-  description: "Ensure all flows have a logger component"
+  description: "Ensure all flows have at least one logger"
   enabled: true
   severity: MEDIUM
   checks:
     - type: XML_XPATH_EXISTS
       params:
         filePatterns:
-          - "src/main/mule/**/*.xml"
+          - "**/*.xml"
         xpathExpressions:
           - xpath: "//logger"
-            failureMessage: "Flow must contain at least one logger component"
+            failureMessage: "Configuration must contain at least one logger"
 ```
 
-### Example 2: Check for Specific Attribute
+### Example 2: Check for specific nested configuration
+Validates that a `service` element has a defined `endpoint` attribute.
 
 ```yaml
-- id: "RULE-021"
-  name: "Flow Name Attribute Required"
-  description: "All flows must have a name attribute"
+- id: "RULE-XML-XPATH-02"
+  name: "Endpoint Config Required"
+  description: "All services must have a defined endpoint"
   enabled: true
   severity: HIGH
   checks:
@@ -71,89 +73,49 @@ Each item in `xpathExpressions` can have:
         filePatterns:
           - "**/*-config.xml"
         xpathExpressions:
-          - xpath: "//flow[@name]"
-            failureMessage: "Flow element missing required 'name' attribute"
+          - xpath: "//service[@endpoint]"
+            failureMessage: "Service element missing required 'endpoint' attribute"
 ```
 
-### Example 3: Multiple XPath Validations
+### Example 3: Namespace-Aware local-name validation
+Safely validate elements regardless of their specific prefix by using `local-name()`.
 
 ```yaml
-- id: "RULE-022"
-  name: "Required Error Handling Structure"
-  description: "Ensure proper error handling is configured"
+- id: "RULE-XML-XPATH-NAMESPACE"
+  name: "Listener Configuration Check"
+  description: "Ensure specific listener configuration exists"
   enabled: true
   severity: HIGH
   checks:
     - type: XML_XPATH_EXISTS
       params:
         filePatterns:
-          - "src/main/mule/**/*.xml"
-        xpathExpressions:
-          - xpath: "//error-handler"
-            failureMessage: "Missing error-handler element"
-          - xpath: "//on-error-continue | //on-error-propagate"
-            failureMessage: "Error handler must have on-error-continue or on-error-propagate"
-```
-
-### Example 4: Namespace-Aware XPath
-
-```yaml
-- id: "RULE-023"
-  name: "HTTP Listener Configuration"
-  description: "Ensure HTTP listener configuration exists"
-  enabled: true
-  severity: HIGH
-  checks:
-    - type: XML_XPATH_EXISTS
-      params:
-        filePatterns:
-          - "**/global-config.xml"
+          - "**/global-*.xml"
         xpathExpressions:
           - xpath: "//*[local-name()='listener-config']"
-            failureMessage: "Missing HTTP listener configuration"
+            failureMessage: "Missing required listener configuration"
 ```
 
 ## Error Messages
 
-When validation fails, you'll see messages like:
-
 ```
-config.xml: Flow must contain at least one logger component (found 0 occurrence(s))
-main-flow.xml: Missing error-handler element (found 0 occurrence(s))
+config.xml: Configuration must contain at least one logger (found 0 occurrence(s))
+main-flow.xml: Service element missing required 'endpoint' attribute (found 0 occurrence(s))
 ```
-
 
 ## Best Practices
 
-### When to Use This Rule
-- ✅ Complex XML structure validation requiring XPath expressions
-- ✅ Validating nested element relationships
-- ✅ Checking conditional element presence
-- ✅ Advanced attribute and element combinations
-
-### XPath Pattern Examples
-```yaml
-# Check nested elements
-xpathExpressions:
-  - "//flow[@name='main']/http:listener"
-  
-# Validate attribute combinations
-xpathExpressions:
-  - "//tls:context[@enabledProtocols='TLSv1.2']"
-```
-
-### When to Use XPath vs Other Rules
-- Use **XML_ATTRIBUTE_EXISTS** for simple attribute checks
-- Use **XML_XPATH_EXISTS** for complex nested validations
-- Use **XML_ELEMENT_CONTENT** for element text validation
+- **Use local-name() for portability**: When XML files use multiple namespaces/prefixes, `//*[local-name()='elementName']` is often more robust than prefix-dependent paths.
+- **Fail Early**: Combine with `FILE_EXISTS` or `FILE_PATTERN` to ensure you are scanning the correct files.
+- **Granular Paths**: Avoid too many `//` (deep descendants) if performance is a concern on massive XML files; use specific paths like `/root/parent/child` when possible.
 
 ## Related Rule Types
 
-- **[XML_ELEMENT_CONTENT_REQUIRED](XML_ELEMENT_CONTENT_REQUIRED.md)** - Validate element content
+- **[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)** - Opposite: ensures nodes do NOT exist.
+- **[XML_ATTRIBUTE_EXISTS](XML_ATTRIBUTE_EXISTS.md)** - Simpler check for high-level attributes.
+- **[XML_ELEMENT_CONTENT_REQUIRED](XML_ELEMENT_CONTENT_REQUIRED.md)** - Validate the text content inside an element.
 
 ## Solution Patterns and Technology References
-
-The following table serves as a quick reference for enforcing complex structure validation using XPath.
 
 | Technology | Best Practice Goal | Key Elements | XPath Logic |
 | :--- | :--- | :--- | :--- |
@@ -164,14 +126,10 @@ The following table serves as a quick reference for enforcing complex structure 
 
 ### ⚡ TIBCO BW 5.x Patterns
 
-**Scenario**: A valid TIBCO BusinessWorks 5.x process definition must always have a defined start and end activity.
-
 ```yaml
-id: "TIBCO-XPATH-01"
+id: "TIBCO-XPATH-PD"
 name: "Valid Process Definition"
 description: "Ensure pd:ProcessDefinition has start and end activities"
-enabled: true
-severity: HIGH
 checks:
   - type: XML_XPATH_EXISTS
     params:
@@ -181,56 +139,16 @@ checks:
         - xpath: "//*[local-name()='ProcessDefinition']/*[local-name()='endType']"
 ```
 
-### ⚡ TIBCO BW 6.x Patterns
-
-**Scenario**: In BW 6.x, validating that services are properly defined within the `TIBCO.xml` application descriptor ensures correct deployment bindings.
-
-```yaml
-id: "TIBCO-XPATH-02"
-name: "Module Namespace Check"
-description: "Ensure TIBCO.xml defines specific namespaces"
-enabled: true
-severity: MEDIUM
-checks:
-  - type: XML_XPATH_EXISTS
-    params:
-      filePatterns: ["TIBCO.xml"]
-      xpathExpressions:
-        - xpath: "/*[local-name()='application']/*[local-name()='service']"
-```
-
 ### 🐎 MuleSoft / Java Patterns
 
-**Scenario**: While simple attribute checks work for existence, XPath allows checking for specific values within nested elements, like verifying the `maven-mule-plugin` is not just present, but configured correctly.
-
 ```yaml
-id: "MAVEN-01"
+id: "MAVEN-MULE-PLUGIN"
 name: "Mule Maven Plugin Required"
-description: "Ensure mule-maven-plugin is present in build/plugins"
-enabled: true
-severity: HIGH
+description: "Ensure correct plugin is present in pom.xml build section"
 checks:
   - type: XML_XPATH_EXISTS
     params:
       filePatterns: ["pom.xml"]
       xpathExpressions:
         - xpath: "//*[local-name()='plugin']/*[local-name()='artifactId' and text()='mule-maven-plugin']"
-```
-
-### 🌐 General XML / Web Services Patterns
-
-**Scenario**: For SOAP-based integration projects, ensuring the WSDL strictly adheres to the schema (e.g., containing both definitions and services) prevents runtime faults.
-
-```yaml
-id: "WSDL-01"
-name: "Valid WSDL Structure"
-description: "Ensure wsdl:definitions contains wsdl:service"
-enabled: true
-severity: MEDIUM
-checks:
-  - type: XML_XPATH_EXISTS
-    params:
-      filePatterns: ["*.wsdl"]
-      xpathExpressions:
-        - xpath: "//*[local-name()='definitions']/*[local-name()='service']"
 ```

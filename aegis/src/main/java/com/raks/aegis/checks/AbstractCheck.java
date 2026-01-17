@@ -18,6 +18,13 @@ public abstract class AbstractCheck {
         List<String> environments = (List<String>) check.getParams().get("environments");
         return environments;
     }
+
+    protected String getCustomMessage(Check check, String defaultMsg) {
+        if (check.getParams() != null && check.getParams().containsKey("message")) {
+            return (String) check.getParams().get("message");
+        }
+        return defaultMsg;
+    }
     protected boolean shouldIgnorePath(Path projectRoot, Path path) {
         Path relativePath = projectRoot.relativize(path);
         String pathString = relativePath.toString().replace('\\', '/');

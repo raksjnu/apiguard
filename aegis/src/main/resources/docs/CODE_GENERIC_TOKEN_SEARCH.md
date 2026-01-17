@@ -1,219 +1,150 @@
 # GENERIC_TOKEN_SEARCH
 
-**Rule Type:** `CODE` - **Applies To:** Any text-based source files
+**Primary Capacity:** Universal Pattern & Token Engine | **Validation Target:** Any Text-Based File (Scripts, XML, Java, YAML)
 
 ## Overview
 
-Advanced token search with **environment filtering** and **regex support**. This is the config-specific version of GENERIC_TOKEN_SEARCH_REQUIRED/FORBIDDEN with additional environment awareness.
+Advanced token search with **environment filtering** and **regex support**. This rule acts as a versatile engine that can operate in both `REQUIRED` and `FORBIDDEN` modes, with additional awareness of target environments. It is the core engine behind more specialized substring and token checks.
 
 ## Use Cases
 
-- Complex token validation with environment filtering
-- Regex-based pattern matching in config files
-- Environment-specific validation rules
-- Advanced configuration compliance checks
+- Detect environment-specific anti-patterns (e.g., "localhost" in Production).
+- Enforce mandatory headers or license blocks in source files.
+- Validate configuration compliance across different build stages.
+- Target specific XML element attributes or plain text strings.
 
 ## Parameters
 
 ### Required Parameters
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `filePatterns` | List<String> | Glob patterns to match files |
-| `tokens` | List<String> | List of tokens to search for |
+| :--- | :--- | :--- |
+| `filePatterns` | List | Glob patterns to match source or configuration files |
+| `tokens` | List | List of tokens or patterns to search for |
 
 ### Optional Parameters
 
 | Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `environments` | List<String> | `null` | Filter files by environment names |
-| `searchMode` | String | `FORBIDDEN` | `REQUIRED` or `FORBIDDEN` |
-| `matchMode` | String | `SUBSTRING` | `SUBSTRING`, `REGEX`, or `ELEMENT_ATTRIBUTE` |
-| `elementName` | String | `null` | For XML element-specific searches |
+| :--- | :--- | :--- | :--- |
+| `environments` | List | N/A | Filter files by environment keys (e.g., `PROD`, `QA`) |
+| `searchMode` | String | `FORBIDDEN` | Choose `REQUIRED` or `FORBIDDEN` |
+| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING`, `REGEX`, or `ELEMENT_ATTRIBUTE` |
+| `message` | String | (Default) | Custom message to display on failure |
+| `elementName` | String | N/A | For XML element-specific attribute searches |
 
 ## Configuration Examples
 
-### Example 1: Environment-Specific Token Search
+### Example 1: Environment-Specific Policy
+
+Ensure that production configurations do not contain references to local development servers.
 
 ```yaml
-- id: "RULE-150"
-  name: "No Hardcoded Localhost in Production"
-  description: "Production configs must not contain localhost"
-  enabled: true
+- id: "RULE-PROD-NO-LOCALHOST"
+  name: "No Localhost in Production"
   severity: CRITICAL
   checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
-        filePatterns: ["*.properties"]
+        filePatterns: ["*.properties", "*.yaml"]
         environments: ["PROD"]
         tokens: ["localhost", "127.0.0.1"]
         searchMode: FORBIDDEN
 ```
 
-### Example 2: Regex Pattern with Environment Filter
+### Example 2: Detect IP Addresses
+
+Identify hardcoded IP addresses in configuration files for higher environments.
 
 ```yaml
-- id: "RULE-151"
-  name: "IP Address Detection in Config"
-  description: "Detect hardcoded IP addresses in QA and PROD configs"
-  enabled: true
+- id: "RULE-NOMADIC-IP-CHECK"
+  name: "IP Address Detection"
   severity: HIGH
   checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
-        filePatterns: ["*.yaml", "*.properties"]
+        filePatterns: ["config/*.yaml"]
         environments: ["QA", "PROD"]
         tokens: ["\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"]
         matchMode: REGEX
         searchMode: FORBIDDEN
 ```
 
-### Example 3: Required Token in All Environments
+### Example 3: Mandatory Cloud Metadata
+
+Ensure all property files in any environment contain a specific metadata reference.
 
 ```yaml
-- id: "RULE-152"
-  name: "API Key Configuration Required"
-  description: "All environment configs must reference API key property"
-  enabled: true
-  severity: HIGH
+- id: "RULE-MANDATORY-CLOUDFLARE"
+  name: "Cloud Providers Metadata"
   checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
-        filePatterns: ["*.properties"]
+        filePatterns: ["**/*.properties"]
         environments: ["ALL"]
-        tokens: ["${api.key}", "${secure::api.key}"]
+        tokens: ["${cloud.provider}", "${region.id}"]
         searchMode: REQUIRED
 ```
 
-## Error Messages
+## Error Configuration & Customization
 
-```
-PROD.properties: Forbidden token 'localhost' found in file
-QA.yaml: Required token(s) not found in files matching: *.yaml
-```
+By default, Aegis generates a technical description of the failure. You can override this by providing a custom `message` parameter in your rule configuration.
 
+```yaml
+      params:
+        tokens: ["localhost"]
+        searchMode: FORBIDDEN
+        message: "Critical violation: Hardcoded localhost reference found in production config!"
+```
 
 ## Best Practices
 
-### When to Use This Rule
-- ✅ Searching for specific keywords or patterns across all files
-- ✅ Validating presence of required code patterns
-- ✅ Ensuring specific imports or dependencies are used
-- ✅ Finding configuration references
+- **Filter by Environment**: Use the `environments` parameter to avoid noise in development or test configurations while keeping production strictly compliant.
+- **Regex for Complexity**: Use `matchMode: REGEX` to search for patterns rather than literal strings (e.g., version formats, ID patterns).
+- **Mode Clarity**: Clearly label whether a rule is for blocking (`FORBIDDEN`) or enforcing (`REQUIRED`) to make failure messages intuitive.
 
-### Search Pattern Tips
+## Related Rule Types
+
+- **[GENERIC_TOKEN_SEARCH_REQUIRED](GENERIC_TOKEN_SEARCH_REQUIRED.md)** - Simplified mandatory token check.
+- **[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)** - Simplified forbidden token check.
+
+## Solution Patterns and Technology Reference
+
+Standard configurations for validating multi-technology stacks.
+
+| Technology | Scenario | Search Mode | Target File |
+| :--- | :--- | :--- | :--- |
+| **☕ Java** | Block `System.out` | `FORBIDDEN` | `*.java` |
+| **🐍 Python** | Block `print()` | `FORBIDDEN` | `*.py` |
+| **📦 Node.js** | Block `console.log` | `FORBIDDEN` | `*.js` |
+| **🐳 Docker** | Require standard base image | `REQUIRED` | `Dockerfile` |
+| **🐎 MuleSoft** | Block non-persistent stores | `FORBIDDEN` | `*.xml` |
+
+### ☕ Java Patterns
+
+Enterprise standards for logging and output management.
+
 ```yaml
-# Case-insensitive search
-searchTokens: ["TODO", "FIXME"]
-
-# Regex patterns for complex searches
-searchTokens: ["import.*Logger"]
-```
-
-- **[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)** - Simpler config-specific validation
-
-## 📚 Application Implementation References
-
-This section provides standard examples for validating various technologies using `GENERIC_TOKEN_SEARCH`. Use these as a baseline for your organization's specific coding standards.
-
-### 🐎 MuleSoft 4: Object Store Persistence
-**Best Practice:** Persistent object stores should be preferred over in-memory for reliability.
-```yaml
-- id: "MULE-OS-01"
-  name: "Persistent Object Store"
-  description: "Ensure Object Stores are configured to be persistent"
-  enabled: true
-  severity: MEDIUM
+- id: "JAVA-LOG-CLEAN"
+  name: "No System.out Usage"
   checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
-        filePatterns: ["*.xml"]
-        tokens: ["persistent=\"false\""]
+        filePatterns: ["src/**/*.java"]
+        tokens: ["System.out.print", "System.err.print"]
         searchMode: FORBIDDEN
 ```
 
-### 🐍 Python: Logging vs. Print
-**Best Practice:** Use the `logging` module for production applications. `print()` statements are unbuffered, lack timestamps/severity levels, and can clutter standard output.
+### 🐍 Python Patterns
+
+Ensuring logging standards in production scripts.
 
 ```yaml
-- id: "PYTHON-001"
-  name: "No Print Statements (Use Logging)"
-  description: "Detects usage of print() which should be replaced by logging module"
-  enabled: true
-  severity: MEDIUM
+- id: "PY-LOG-ENFORCEMENT"
+  name: "No Print Statements"
   checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
         filePatterns: ["*.py"]
         tokens: ["print("]
-        searchMode: FORBIDDEN
-```
-
-### ☕ Java / Spring Boot: Standard Output
-**Best Practice:** Avoid `System.out` and `System.err` in enterprise applications. Use SLF4J or Log4j for proper log management and rotation.
-
-```yaml
-- id: "JAVA-001"
-  name: "No System.out Usage"
-  description: "Use SLF4J/Log4j instead of System.out"
-  enabled: true
-  severity: MEDIUM
-  checks:
-    - type: GENERIC_TOKEN_SEARCH
-      params:
-        filePatterns: ["*.java"]
-        tokens: ["System.out.print", "System.err.print"]
-        searchMode: FORBIDDEN
-```
-
-### ⚡ TIBCO BW 6.x: Module Configuration
-**Best Practice:** Ensure critical module properties for AppNodes are defined. Naming conventions often use suffixes like `_Min` or `_Max`.
-
-```yaml
-- id: "TIBCO-BW6-001"
-  name: "TIBCO Module Property Check"
-  description: "Ensure specific AppNode property exists in manifest or module file"
-  enabled: true
-  severity: HIGH
-  checks:
-    - type: GENERIC_TOKEN_SEARCH
-      params:
-        filePatterns: ["META-INF/default.substvar", "*.module"]
-        tokens: ["BW.APPNODE.NAME"]
-        searchMode: REQUIRED
-```
-
-### 🔷 TIBCO BW 5.x: Hardcoding Checks
-**Best Practice:** Avoid hardcoded IP addresses in process definitions (`.process`) or archives (`.archive`). Use Global Variables (GVs) which can be overridden at deployment.
-
-```yaml
-- id: "TIBCO-BW5-001"
-  name: "No Hardcoded IPs in BW5"
-  description: "Detect IPs in TIBCO BW 5.x process files"
-  enabled: true
-  severity: CRITICAL
-  checks:
-    - type: GENERIC_TOKEN_SEARCH
-      params:
-        filePatterns: ["*.archive", "*.process"]
-        tokens: ["\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"]
-        matchMode: REGEX
-        searchMode: FORBIDDEN
-```
-
-### ⚛️ JavaScript / TypeScript: Console Usage
-**Best Practice:** Remove `console.log` from production code to prevent performance issues and leaking sensitive information in the browser console.
-
-```yaml
-- id: "WEB-001"
-  name: "No Console Logs"
-  description: "Ensure no console.log debugging is left in production code"
-  enabled: true
-  severity: LOW
-  checks:
-    - type: GENERIC_TOKEN_SEARCH
-      params:
-        filePatterns: ["*.js", "*.ts", "*.jsx", "*.tsx"]
-        tokens: ["console.log("]
         searchMode: FORBIDDEN
 ```

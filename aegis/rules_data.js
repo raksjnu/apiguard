@@ -1,4 +1,4 @@
-const MULEGUARD_RULES_DATA = {
+const AEGIS_RULES_DATA = {
   "config" : {
     "environments" : [ "SBX", "ATDV", "TDV1", "TDV", "IBF", "MNE", "MNE1", "MNE2", "ITE", "PITE", "PREP", "DRL", "TRN", "PROD", "DR" ],
     "folderPattern" : null,
@@ -6,18 +6,14 @@ const MULEGUARD_RULES_DATA = {
       "configFolder" : {
         "namePattern" : ".*_config.*"
       },
-      "muleApiProject" : {
+      "targetProject" : {
         "matchMode" : "ALL",
         "markerFiles" : [ "pom.xml", "mule-artifact.json" ]
       },
       "ignoredFolders" : {
-        "exactNames" : [ "muleguard-reports", "target", "bin", "build", ".git", ".idea", ".vscode", "node_modules", "__MACOSX" ],
-        "prefixes" : [ ".", "muleguard-reports" ]
+        "exactNames" : [ "target", "bin", "build", ".git", ".idea", ".vscode", "node_modules", "__MACOSX" ],
+        "prefixes" : [ "." ]
       }
-    },
-    "rules" : {
-      "start" : 100,
-      "end" : 199
     }
   },
   "rules" : [ {
@@ -570,29 +566,7 @@ const MULEGUARD_RULES_DATA = {
         "tokens" : [ "^(?![\\s]*[#!]).*\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b", "^(?![\\s]*[#!]).*\\blocalhost\\b", "^(?![\\s]*[#!]).*\\b127\\.0\\.0\\.1\\b" ]
       }
     } ]
-  }, {
-    "id" : "RULE-104",
-    "name" : "Validate properties files for correct property details",
-    "description" : "Validates that .properties files contain required configuration properties using custom validators",
-    "enabled" : true,
-    "severity" : "MEDIUM",
-    "checks" : [ {
-      "type" : "CLIENTIDMAP_VALIDATOR",
-      "description" : "Validate secure encrypted properties",
-      "params" : {
-        "validationType" : "SECURE",
-        "fileExtensions" : [ ".properties" ],
-        "environments" : [ "ALL" ]
-      }
-    }, {
-      "type" : "CLIENTIDMAP_VALIDATOR",
-      "description" : "Validate authorization policy client ID mappings",
-      "params" : {
-        "validationType" : "CLIENTIDMAP",
-        "fileExtensions" : [ ".policy" ],
-        "environments" : [ "ALL" ]
-      }
-    } ]
+
   }, {
     "id" : "RULE-B01",
     "name" : "Conditional: Batch API asset type",

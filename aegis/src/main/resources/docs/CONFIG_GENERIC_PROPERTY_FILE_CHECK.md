@@ -1,45 +1,45 @@
 # GENERIC_PROPERTY_FILE_CHECK
 
-**Rule Type:** `CONFIG` - **Trigger Engine** Property files (.properties)
+**Primary Capacity:** Structural XML Analysis | **Validation Target:** XML, POM, Config Archive
 
 ## Overview
 
-Generic property file validation with flexible configuration options. Provides comprehensive validation for property files across environments.
+A versatile engine for validating property-based configuration files across different environments. It allows for complex validation logic including mandatory keys, forbidden values, and pattern-based format enforcement.
 
 ## Use Cases
 
-- General property file validation
-- Multi-environment configuration checks
-- Property format validation
-- Configuration completeness verification
+- Enforce standard property naming across microservices.
+- Ensure all environments have matching configuration keys (prevent "forgot to update PROD").
+- Block hardcoded secrets or environment-specific triggers in production.
+- Validate the format of critical configuration values (e.g., ports, timeouts, URLs).
 
 ## Parameters
 
 ### Required Parameters
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `fileExtensions` | List<String> | File extensions to check |
-| `environments` | List<String> | Environment names to validate |
-| `validationRules` | List<Map> | Custom validation rules |
+| :--- | :--- | :--- |
+| `fileExtensions` | List | File extensions to scan (e.g., `.properties`, `.yaml`) |
+| `environments` | List | Environment keys to target (e.g., `DEV`, `QA`, `PROD` or `ALL`) |
+| `validationRules` | List<Map> | A collection of validation logic blocks |
 
-#### Validation Rule Map
+### Validation Rule Map
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `type` | String | Yes | Validation type: `REQUIRED`, `FORBIDDEN`, `FORMAT` |
-| `pattern` | String | Yes | Pattern to match or validate |
-| `message` | String | No | Custom error message |
+| Field | Type | Description |
+| :--- | :--- | :--- |
+| `type` | String | `REQUIRED`, `FORBIDDEN`, or `FORMAT` |
+| `pattern` | String | The key or regex pattern to evaluate |
+| `message` | String | Custom message to display on failure |
 
 ## Configuration Examples
 
-### Example 1: Basic Property Validation
+### Example 1: Mandatory Boilerplate Properties
+
+Ensure that every property file contains the core application identification keys.
 
 ```yaml
-- id: "RULE-170"
-  name: "Property File Format Validation"
-  description: "Validate property file format and required keys"
-  enabled: true
+- id: "RULE-CONFIG-BOILERPLATE"
+  name: "Require App Metadata"
   severity: MEDIUM
   checks:
     - type: GENERIC_PROPERTY_FILE_CHECK
@@ -48,41 +48,40 @@ Generic property file validation with flexible configuration options. Provides c
         environments: ["ALL"]
         validationRules:
           - type: "REQUIRED"
-            pattern: "app.name"
+            pattern: "app.id"
           - type: "REQUIRED"
             pattern: "app.version"
 ```
 
-### Example 2: Format Validation
+### Example 2: Type and Format Enforcement
+
+Validate that technical configurations like ports and timeouts follow specific numeric or unit-based formats.
 
 ```yaml
-- id: "RULE-171"
-  name: "Property Value Format"
-  description: "Ensure property values follow expected formats"
-  enabled: true
-  severity: LOW
+- id: "RULE-CONFIG-TECHNICAL"
+  name: "Technical Format Validation"
+  severity: HIGH
   checks:
     - type: GENERIC_PROPERTY_FILE_CHECK
       params:
-        fileExtensions: [".properties"]
+        fileExtensions: [".properties", ".yaml"]
         environments: ["DEV", "QA", "PROD"]
         validationRules:
           - type: "FORMAT"
-            pattern: "port=\\d+"
-            message: "Port must be numeric"
+            pattern: "http.port=\\d+"
+            message: "Http port must be a numeric integer"
           - type: "FORMAT"
-            pattern: "timeout=\\d+[smh]"
-            message: "Timeout must include unit (s/m/h)"
+            pattern: "db.timeout=\\d+[ms]"
+            message: "Database timeout must include 'ms' unit"
 ```
 
-### Example 3: Forbidden Patterns
+### Example 3: Production Security Guardrails
+Block the usage of insecure protocols or hardcoded local development strings in production.
 
 ```yaml
-- id: "RULE-172"
-  name: "No Hardcoded Values"
-  description: "Prevent hardcoded values in property files"
-  enabled: true
-  severity: HIGH
+- id: "RULE-PROD-SECURITY-KEYS"
+  name: "Production Access Guard"
+  severity: CRITICAL
   checks:
     - type: GENERIC_PROPERTY_FILE_CHECK
       params:
@@ -90,39 +89,34 @@ Generic property file validation with flexible configuration options. Provides c
         environments: ["PROD"]
         validationRules:
           - type: "FORBIDDEN"
-            pattern: "password=.*"
-            message: "Passwords must use secure properties"
+            pattern: "auth.mode=local"
+            message: "Production must use SSO or external auth"
           - type: "FORBIDDEN"
-            pattern: "localhost"
-            message: "No hardcoded localhost in production"
+            pattern: "debug.enabled=true"
+            message: "Debug mode is strictly forbidden in production"
 ```
 
-## Error Messages
+## Error Configuration & Customization
 
-```
-PROD.properties: Required property 'app.name' not found
-DEV.properties: Port must be numeric (validation failed for 'port=abc')
-QA.properties: No hardcoded localhost in production
+By default, Aegis generates a technical description of the failure. You can override this by providing a custom `message` parameter in your rule configuration.
+
+```yaml
+      params:
+        property: "api.key"
+        mode: EXISTS
+        message: "Security violation: Missing mandatory API Key in property file!"
 ```
 
+qa-env.properties: Production must use SSO (found 'auth.mode=local').
 
 ## Best Practices
 
-### When to Use This Rule
-- ✅ Validating property file structure and format
-- ✅ Ensuring required properties exist across environments
-- ✅ Checking for environment-specific configurations
-- ✅ Enforcing property naming conventions
-
-### Environment Validation
-```yaml
-# Validate all environments have required properties
-environments: ["DEV", "QA", "PROD"]
-requiredProperties: ["app.name", "app.version", "environment"]
-```
+- **Atomic Rules**: Keep `validationRules` focused on specific areas (e.g., separate security rules from formatting rules) for cleaner error reporting.
+- **Cross-Environment Consistency**: Use `environments: ["ALL"]` to ensure that if a property is added to `DEV`, it is also present (even if empty/placeholder) in `PROD`.
+- **Regex Boundaries**: Use anchors (`^`, `$`) in your patterns if you want to match the whole key or value exactly.
 
 ## Related Rule Types
 
-- **[MANDATORY_PROPERTY_VALUE_CHECK](MANDATORY_PROPERTY_VALUE_CHECK.md)** - Specific property-value validation
-- **[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)** - Token-based validation
-- **[GENERIC_TOKEN_SEARCH](GENERIC_TOKEN_SEARCH.md)** - Advanced token search
+- **[MANDATORY_PROPERTY_VALUE_CHECK](CONFIG_MANDATORY_PROPERTY_VALUE_CHECK.md)** - Deep validation of property values.
+- **[MANDATORY_SUBSTRING_CHECK](CONFIG_MANDATORY_SUBSTRING_CHECK.md)** - Simpler substring checks for config files.
+- **[GENERIC_TOKEN_SEARCH](CODE_GENERIC_TOKEN_SEARCH.md)** - Advanced text-based search.

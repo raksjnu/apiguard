@@ -29,7 +29,7 @@ pkill -f "java" || echo "No java processes found"
 echo "Waiting 2 seconds..."
 sleep 2
 
-echo "Building MuleGuard..."
+echo "Building Aegis..."
 mvn clean package -DskipTests
 
 if [ $? -eq 0 ]; then
@@ -38,7 +38,7 @@ if [ $? -eq 0 ]; then
     echo "  BUILD SUCCESSFUL!"
     echo "============================================================"
     echo ""
-    echo "You can now run: ./start-muleguard-gui.sh"
+    echo "You can now run: ./start-aegis-gui.sh"
 else
     echo ""
     echo "============================================================"

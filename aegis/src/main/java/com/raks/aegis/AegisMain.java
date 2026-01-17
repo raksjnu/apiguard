@@ -1,4 +1,5 @@
 package com.raks.aegis;
+
 import com.raks.aegis.engine.ReportGenerator;
 import com.raks.aegis.engine.ValidationEngine;
 import com.raks.aegis.model.Rule;
@@ -6,7 +7,6 @@ import com.raks.aegis.model.ValidationReport;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.introspector.PropertyUtils;
 import org.yaml.snakeyaml.TypeDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,52 +21,71 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.stream.Collectors;
 import javax.swing.JFileChooser;
-public class AegisMain {
+import picocli.CommandLine;
+import picocli.CommandLine.Command;
+import picocli.CommandLine.Option;
+import java.util.concurrent.Callable;
+
+@Command(name = "aegis", mixinStandardHelpOptions = true, version = "Aegis 1.0.0",
+        description = "Aegis - Universal Code Compliance & Security Engine")
+public class AegisMain implements Callable<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(AegisMain.class);
+
+    @Option(names = {"-p", "--path"}, description = "Root folder to scan for projects", required = false)
+    private Path parentFolder;
+
+    @Option(names = {"-c", "--config"}, description = "Path to custom rules.yaml configuration", required = false)
+    private String configFilePath;
+
+    @Option(names = {"-o", "--output"}, description = "Report output directory name (default: Aegis-reports)", defaultValue = "Aegis-reports")
+    private String reportDirName;
+
     public static void main(String[] args) {
-        Path parentFolder;
-        String configFilePath = null;
-        if (args.length == 0 || args[0].isEmpty()) {
+        System.exit(execute(args));
+    }
+
+    public static int execute(String[] args) {
+        return new CommandLine(new AegisMain()).execute(args);
+    }
+
+    @Override
+    public Integer call() throws Exception {
+        if (parentFolder == null) {
             parentFolder = showFolderDialog();
             if (parentFolder == null) {
                 logger.info("No folder selected. Exiting.");
-                return;
+                return 0;
             }
-        } else if (args.length >= 2 && "-p".equals(args[0])) {
-            parentFolder = Paths.get(args[1]);
-            if (args.length >= 4 && "--config".equals(args[2])) {
-                configFilePath = args[3];
-                logger.info("Using custom config file: {}", configFilePath);
-            }
-        } else {
-            logger.error("Usage: java -jar Aegis.jar -p <folder> [--config <rules.yaml>]   OR   double-click to select folder");
-            return;
         }
+
         if (!Files.isDirectory(parentFolder)) {
             logger.error("Error: Not a valid folder: {}", parentFolder);
-            return;
+            return 1;
         }
+
         logger.info("Aegis started for project: {}", parentFolder);
-        logger.debug("Scanning for Mule API projects...");
+        logger.debug("Scanning for projects...");
+        
         RootWrapper configWrapper = loadConfig(configFilePath);
         List<Rule> allRules = configWrapper.getRules();
         Map<String, Object> projectIdConfig = configWrapper.getConfig().getProjectIdentification();
         int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
+        
         @SuppressWarnings("unchecked")
         Map<String, Object> configFolderConfig = (Map<String, Object>) projectIdConfig.get("configFolder");
         String configFolderPattern = null;
         if (configFolderConfig != null) {
             configFolderPattern = (String) configFolderConfig.get("namePattern");
         } else {
-             // Default or ignore
-             configFolderPattern = ".*_config"; // reasonable default?
+             configFolderPattern = ".*_config"; 
         }
         
         @SuppressWarnings("unchecked")
-        Map<String, Object> muleApiConfig = (Map<String, Object>) projectIdConfig.get("muleApiProject");
-        String matchMode = (String) muleApiConfig.getOrDefault("matchMode", "ANY");
+        Map<String, Object> targetProjectConfig = (Map<String, Object>) projectIdConfig.get("targetProject");
+        String matchMode = (String) targetProjectConfig.getOrDefault("matchMode", "ANY");
         @SuppressWarnings("unchecked")
-        List<String> markerFiles = (List<String>) muleApiConfig.get("markerFiles");
+        List<String> markerFiles = (List<String>) targetProjectConfig.get("markerFiles");
+        
         @SuppressWarnings("unchecked")
         Map<String, Object> ignoredFoldersConfig = (Map<String, Object>) projectIdConfig.get("ignoredFolders");
         List<String> exactIgnoredNames = new ArrayList<>();
@@ -81,6 +100,7 @@ public class AegisMain {
             List<String> prefixes = (List<String>) ignoredFoldersConfig.get("prefixes");
             if (prefixes != null) ignoredPrefixes.addAll(prefixes);
         }
+
         int tempStart = 0;
         int tempEnd = Integer.MAX_VALUE;
         if (configWrapper.getConfig().getRules() != null) {
@@ -91,14 +111,16 @@ public class AegisMain {
         final int configRuleEnd = tempEnd;
         List<String> globalEnvironments = configWrapper.getConfig().getEnvironments();
         List<ApiResult> results = new ArrayList<>();
-        Path reportsRoot = parentFolder.resolve("Aegis-reports");
+        
+        Path reportsRoot = parentFolder.resolve(reportDirName);
         try {
             Files.createDirectories(reportsRoot);
         } catch (IOException e) {
             logger.error("Failed to create reports directory: {}", e.getMessage());
-            System.exit(1);
+            return 1;
         }
-        List<Path> discoveredProjects = com.raks.aegis.util.ProjectDiscovery.findMuleProjects(
+
+        List<Path> discoveredProjects = com.raks.aegis.util.ProjectDiscovery.findProjects(
                 parentFolder,
                 maxSearchDepth,
                 markerFiles,
@@ -106,22 +128,20 @@ public class AegisMain {
                 configFolderPattern,
                 exactIgnoredNames,
                 ignoredPrefixes);
+
         logger.info("");
         for (Path apiDir : discoveredProjects) {
             String apiName = apiDir.getFileName().toString();
             boolean isConfigProject = apiName.matches(configFolderPattern);
             logger.info("Validating {}: {}", isConfigProject ? "Config" : "API", apiName);
+            
             List<Rule> applicableRules = allRules.stream()
                     .filter(Rule::isEnabled)
                     .filter(rule -> {
-
                         String idDigits = rule.getId().replaceAll("[^0-9]", "");
                         int ruleIdNum = idDigits.isEmpty() ? -1 : Integer.parseInt(idDigits);
                         
                         boolean isConfigRule = (ruleIdNum >= configRuleStart && ruleIdNum <= configRuleEnd);
-                        
-                        // If ranges are defaults (0 to MAX), disable strict separation
-                        // This fixes the issue where standard APIs got 0 rules because everything was deemed "Config Rule"
                         boolean defaultRanges = (configRuleStart == 0 && configRuleEnd == Integer.MAX_VALUE);
                         
                         if (globalEnvironments != null && !globalEnvironments.isEmpty()) {
@@ -132,35 +152,33 @@ public class AegisMain {
                                     }
                                     @SuppressWarnings("unchecked")
                                     List<String> envs = (List<String>) check.getParams().get("environments");
-                                    if (envs != null && envs.size() == 1
-                                            && "ALL".equalsIgnoreCase(envs.get(0))) {
-                                        check.getParams().put("environments",
-                                                new ArrayList<>(globalEnvironments));
+                                    if (envs != null && envs.size() == 1 && "ALL".equalsIgnoreCase(envs.get(0))) {
+                                        check.getParams().put("environments", new ArrayList<>(globalEnvironments));
                                     } else if (envs == null || envs.isEmpty()) {
                                         if (isConfigRule) {
-                                            check.getParams().put("environments",
-                                                new ArrayList<>(globalEnvironments));
+                                            check.getParams().put("environments", new ArrayList<>(globalEnvironments));
                                         }
                                     }
                                 });
                             }
                         }
                         
-                        if (defaultRanges) {
-                            return true; // Apply all rules to all projects if no range is defined
-                        }
+                        if (defaultRanges) return true;
                         return isConfigProject == isConfigRule;
                     }).collect(Collectors.toList());
+
             ValidationEngine engine = new ValidationEngine(applicableRules, apiDir);
             ValidationReport report = engine.validate();
             report.projectPath = apiName + " (" + apiDir.toString() + ")";
             Path apiReportDir = reportsRoot.resolve(apiName);
+            
             try {
                 Files.createDirectories(apiReportDir);
             } catch (IOException e) {
                 logger.error("Failed to create report dir for {}: {}", apiName, e.getMessage());
                 continue; 
             }
+
             ReportGenerator.generateIndividualReports(report, apiReportDir);
             int passed = report.passed.size();
             int failed = report.failed.size();
@@ -172,21 +190,19 @@ public class AegisMain {
             logger.info("   {} | Files Scanned: {} | Passed: {} | Failed: {}", 
                     (failed == 0 ? "PASS" : "FAIL"), (passed + failed + skipped), passed, failed);
         }
+
         try {
             ReportGenerator.generateConsolidatedReport(results, reportsRoot);
         } catch (Throwable t) {
-            logger.error("FAILED TO GENERATE CONSOLIDATED REPORT!");
-            logger.error("Exception: {}", t.getClass().getSimpleName());
-            String msg = t.getMessage();
-            if (msg != null) {
-                logger.error("Message: {}", msg);
-            }
-            logger.error("Stack trace:", t);
+            logger.error("FAILED TO GENERATE CONSOLIDATED REPORT!", t);
         }
+
         int totalPassed = results.stream().mapToInt(r -> r.passed).sum();
         int totalFailed = results.stream().mapToInt(r -> r.failed).sum();
         logger.info("Aegis Validation Complete | Total APIs: {} | Passed: {} | Failed: {}", results.size(), totalPassed, totalFailed);
         logger.info("Consolidated report: {}", reportsRoot.resolve("CONSOLIDATED-REPORT.html"));
+        
+        return 0;
     }
     public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath) {
         return validateAndReturnResults(projectPath, customRulesPath, null);
@@ -195,6 +211,7 @@ public class AegisMain {
             String displayName) {
         return validateAndReturnResults(projectPath, customRulesPath, displayName, "Aegis-reports");
     }
+    @SuppressWarnings("unchecked")
     public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath,
             String displayName, String reportDirName) {
         Map<String, Object> result = new HashMap<>();
@@ -218,20 +235,20 @@ public class AegisMain {
             
             // Extract Configuration
             Map<String, Object> projectIdConfig = activeConfig.getConfig().getProjectIdentification();
-            Map<String, Object> muleApiConfig = (Map<String, Object>) projectIdConfig.get("muleApiProject");
+        Map<String, Object> targetProjectConfig = (Map<String, Object>) projectIdConfig.get("targetProject");
             Map<String, Object> configFolderConfig = (Map<String, Object>) projectIdConfig.get("configFolder");
             Map<String, Object> ignoredFoldersConfig = (Map<String, Object>) projectIdConfig.get("ignoredFolders");
             
             int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
-            String matchMode = (String) muleApiConfig.getOrDefault("matchMode", "ANY");
-            List<String> markerFiles = (List<String>) muleApiConfig.get("markerFiles");
+            String matchMode = (String) targetProjectConfig.getOrDefault("matchMode", "ANY");
+            List<String> markerFiles = (List<String>) targetProjectConfig.get("markerFiles");
             String configFolderPattern = (String) configFolderConfig.get("namePattern");
             List<String> exactIgnoredNames = (List<String>) ignoredFoldersConfig.get("exactNames");
             List<String> ignoredPrefixes = (List<String>) ignoredFoldersConfig.get("prefixes");
             List<String> globalEnvironments = activeConfig.getConfig().getEnvironments();
 
             // Discover Projects
-            List<Path> discoveredProjects = com.raks.aegis.util.ProjectDiscovery.findMuleProjects(
+            List<Path> discoveredProjects = com.raks.aegis.util.ProjectDiscovery.findProjects(
                     parentFolder,
                     maxSearchDepth,
                     markerFiles,

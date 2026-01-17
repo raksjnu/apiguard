@@ -4,174 +4,113 @@
 
 ## Overview
 
-Validates that **required tokens exist** in files matching specified patterns. This rule **fails** if any required token is **NOT found**.
+Validates that **required tokens or patterns exist** in files matching specified patterns. This rule **fails** if any of the required tokens are **NOT found**. It is ideal for enforcing mandatory boilerplate, specific imports, or standard configuration keys across different frameworks.
 
 ## Use Cases
 
-- Ensure specific imports are present in code files
-- Verify required configuration keys exist
-- Validate presence of mandatory comments or annotations
-- Check for required DataWeave functions or variables
+- Ensure specific imports or modules are present in source files.
+- Verify that required configuration keys or property placeholders exist.
+- Validate the presence of mandatory legal headers, author tags, or security annotations.
+- Check for required framework-specific metadata files or structures.
 
 ## Parameters
 
 ### Required Parameters
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `filePatterns` | List<String> | Glob patterns to match files (e.g., `**/*.xml`, `src/main/mule/*.xml`) |
-| `tokens` | List<String> | List of tokens that must be found |
+| :--- | :--- | :--- |
+| `filePatterns` | List | Glob patterns to match source or configuration files |
+| `tokens` | List | List of tokens that must be found in the files |
 
 ### Optional Parameters
 
 | Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `excludePatterns` | List<String> | `[]` | Glob patterns to exclude files |
-| `matchMode` | String | `SUBSTRING` | `SUBSTRING` or `REGEX` - how to match tokens |
+| :--- | :--- | :--- | :--- |
+| `excludePatterns` | List | `[]` | Glob patterns to exclude specific files |
+| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
-| `requireAll` | Boolean | `true` | If `true`, ALL tokens must be found. If `false`, at least ONE token must be found |
+| `requireAll` | Boolean | `true` | If `true`, ALL tokens must be found. If `false`, at least ONE |
 
 ## Configuration Examples
 
-### Example 1: Basic - Ensure Required Import Exists
+### Example 1: Required Framework Import
+Ensure that all implementation files in a project contain the necessary framework imports for logging.
 
 ```yaml
-- id: "RULE-001"
+- id: "RULE-JAVA-REQD-LOGGER"
   name: "Required Logger Import"
-  description: "Ensure all XML files import the logger component"
-  enabled: true
-  severity: MEDIUM
   checks:
     - type: GENERIC_TOKEN_SEARCH_REQUIRED
       params:
-        filePatterns:
-          - "**/*.xml"
-        tokens:
-          - "http://www.mulesoft.org/schema/mule/logger"
-        caseSensitive: true
+        filePatterns: ["src/**/*.java"]
+        tokens: ["import org.slf4j.Logger", "import org.slf4j.LoggerFactory"]
+        requireAll: true
 ```
 
-### Example 2: Advanced - Regex Pattern with OR Logic
+### Example 2: Mandatory Error Handling Pattern
+Ensure that application configuration files contain mandatory error handling blocks (either "continue" or "propagate" strategies).
 
 ```yaml
-- id: "RULE-002"
+- id: "RULE-CONFIG-ERROR-POLICY"
   name: "Required Error Handling"
-  description: "Ensure error handling is present (on-error-continue OR on-error-propagate)"
-  enabled: true
   severity: HIGH
   checks:
     - type: GENERIC_TOKEN_SEARCH_REQUIRED
       params:
-        filePatterns:
-          - "src/main/mule/**/*.xml"
-        excludePatterns:
-          - "**/test/**"
-        tokens:
-          - "on-error-continue"
-          - "on-error-propagate"
-        matchMode: SUBSTRING
-        requireAll: false  # At least ONE must exist
+        filePatterns: ["src/main/resources/*.xml"]
+        tokens: ["on-error-continue", "on-error-propagate"]
+        requireAll: false  # At least one must exist
 ```
 
-### Example 3: Case-Insensitive Search
+### Example 3: Regex Format Validation
+Verify that a version string following semantic versioning exists in the project's build descriptor.
 
 ```yaml
-- id: "RULE-003"
-  name: "Required API Documentation"
-  description: "Ensure API documentation keywords are present"
-  enabled: true
-  severity: LOW
+- id: "RULE-VERSION-SEMVER"
+  name: "Required SemVer Descriptor"
   checks:
     - type: GENERIC_TOKEN_SEARCH_REQUIRED
       params:
-        filePatterns:
-          - "**/*.dwl"
-        tokens:
-          - "description"
-          - "summary"
-        caseSensitive: false
-        requireAll: false
-```
-
-### Example 4: Regex Pattern Matching
-
-```yaml
-- id: "RULE-004"
-  name: "Required Version Pattern"
-  description: "Ensure version number follows semantic versioning"
-  enabled: true
-  severity: MEDIUM
-  checks:
-    - type: GENERIC_TOKEN_SEARCH_REQUIRED
-      params:
-        filePatterns:
-          - "**/pom.xml"
-        tokens:
-          - "\\d+\\.\\d+\\.\\d+"  # Regex: X.Y.Z format
+        filePatterns: ["**/pom.xml", "**/package.json"]
+        tokens: ["\\d+\\.\\d+\\.\\d+"]
         matchMode: REGEX
 ```
 
 ## Error Messages
 
-When validation fails, you'll see messages like:
-
 ```
-config.xml is missing required token: http://www.mulesoft.org/schema/mule/logger
-main.dwl is missing required token: description
+DatabaseConfig.java: Missing required token: import org.slf4j.Logger
+app-descriptor.xml: Missing at least one required token: [on-error-continue, on-error-propagate]
 ```
-
 
 ## Best Practices
 
-### When to Use This Rule
-- ✅ Ensuring required imports are present
-- ✅ Validating presence of security annotations
-- ✅ Checking for required code patterns
-- ✅ Enforcing coding standards
-
-### Common Patterns
-```yaml
-# Require security annotations
-requiredTokens: ["@Secured", "@PreAuthorize"]
-
-# Ensure logging framework
-requiredTokens: ["import.*slf4j"]
-isRegex: true
-```
+- **Broad File Patterns**: Use this rule at a high level to ensure that *every* file of a certain type adheres to structural requirements (like license headers).
+- **Combine with Exclusion**: Use `excludePatterns` to skip generated code, third-party libraries, or test files where these rules might not apply.
+- **Fail on Composition**: This rule is most effective when used to ensure that cross-cutting concerns (logging, security, error handling) are at least *present* in the codebase.
 
 ## Related Rule Types
 
-- **[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)** - Opposite: ensures tokens do NOT exist
-- **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - More precise XML validation using XPath
-- **[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)** - Config-specific token validation with environment filtering
+- **[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)** - Opposite: ensures tokens do NOT exist.
+- **[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)** - More precise XML validation using structural paths.
 
-## 🧩 Solution Patterns & Technology Reference
+## Solution Patterns and Technology Reference
 
-### 🐎 MuleSoft 4
-**Use Case:** Best Practices
-**Best Practice:** Ensure DataWeave scripts specify strict typing or version.
+Standard configurations for enforcing mandatory components.
+
+| Technology | Requirement | Mode | Target File |
+| :--- | :--- | :--- | :--- |
+| **☕ Java** | Security Annotations | `REQUIRED` | `*Controller.java` |
+| **🐍 Python** | Shebang Reference | `REQUIRED` | `*.py` |
+| **📦 Node.js** | Module Exports | `REQUIRED` | `*.js` |
+| **🐎 MuleSoft** | DataWeave Version | `REQUIRED` | `*.dwl` |
+
+### ☕ Java / Spring Boot Patterns
+Ensure controllers have standard security annotations.
+
 ```yaml
-- id: "MULE-DW-01"
-  name: "DataWeave Version Required"
-  description: "Ensure specific DataWeave version is declared"
-  enabled: true
-  severity: MEDIUM
-  checks:
-    - type: GENERIC_TOKEN_SEARCH_REQUIRED
-      params:
-        filePatterns: ["**/*.dwl"]
-        tokens: ["%dw 2.0"]
-```
-
-### ☕ Java / Spring Boot
-**Use Case:** Security
-**Best Practice:** Ensure `@RestController` or specific security annotations are present in controller files.
-```yaml
-- id: "JAVA-SEC-01"
+- id: "JAVA-SECURE-CONTROLLER"
   name: "Secure Controllers"
-  description: "Ensure Controllers have security precautions enabled"
-  enabled: true
-  severity: HIGH
   checks:
     - type: GENERIC_TOKEN_SEARCH_REQUIRED
       params:
@@ -180,15 +119,12 @@ isRegex: true
         requireAll: false
 ```
 
-### 🐍 Python
-**Use Case:** Environment Safety
-**Best Practice:** Ensure scripts use a specific interpreter via shebang.
+### 🐍 Python Patterns
+Ensure scripts specify the required python version via shebang.
+
 ```yaml
-- id: "PYTHON-ENV-01"
-  name: "Shebang Required"
-  description: "Ensure python scripts specify python3"
-  enabled: true
-  severity: LOW
+- id: "PY-MIN-VERSION"
+  name: "Python 3 Shebang"
   checks:
     - type: GENERIC_TOKEN_SEARCH_REQUIRED
       params:

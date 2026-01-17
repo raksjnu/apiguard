@@ -1,7 +1,7 @@
 #!/bin/bash
 
 echo "============================================================"
-echo "     MuleGuard Security Compliance Report Generator"
+echo "     Aegis Security Compliance Report Generator"
 echo "============================================================"
 
 # Optional: Uncomment and set JAVA_HOME if the system JAVA_HOME is missing or incorrect
@@ -35,13 +35,13 @@ echo "[2/2] Parsing dependencies and generating report..."
 
 # Header
 cat <<EOF > "$REPORT_FILE"
-# MuleGuard Security Compliance Report
+# Aegis Security Compliance Report
 
 **Generated:** $DATE
 
 ## Executive Summary
 
-This report certifies that MuleGuard is compliant with enterprise security standards.
+This report certifies that Aegis is compliant with enterprise security standards.
 All third-party dependencies have been audited and updated to secure versions.
 
 ## Dependency Audit (Dynamic)
@@ -69,7 +69,7 @@ cat <<EOF >> "$REPORT_FILE"
 
 ## Compliance Statement
 
-MuleGuard v1.0.0 adheres to the organization's secure coding guidelines.
+Aegis v1.0.0 adheres to the organization's secure coding guidelines.
 All cryptographic operations use approved algorithms (AES-256-GCM) where applicable.
 EOF
 

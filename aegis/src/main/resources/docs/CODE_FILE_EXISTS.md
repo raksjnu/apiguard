@@ -4,108 +4,93 @@
 
 ## Overview
 
-A trigger that checks for the presence of one or more files in the project. It is typically used within a `CONDITIONAL_CHECK` to ensure specific templates, security files, or configuration assets exist.
+A trigger that checks for the presence of one or more files in the project. It is typically used within a `CONDITIONAL_CHECK` to ensure specific templates, security files, or configuration assets exist. This rule helps enforce project structure standards across different technologies.
 
 ## Parameters
 
 ### Required Parameters
 
 | Parameter | Type | Description |
-|-----------|------|-------------|
-| `filePatterns` | List<String> | Glob patterns to search for files (e.g., `src/main/resources/secure-*.properties`) |
+| :--- | :--- | :--- |
+| `filePatterns` | List | Glob patterns to search for files (e.g., `src/resources/secure-*.properties`) |
 
 ### Optional Parameters
 
 | Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
+| :--- | :--- | :--- | :--- |
 | `failureMessage` | String | (Default) | Custom message if expected files are not found |
 
 ## Configuration Examples
 
-### Example 1: Mandatory Secure Properties
+### Example 1: Mandatory Security Documentation
 
-Ensures that any project must have a secure properties file if triggered.
+Ensures that any project must have a `SECURITY.md` file in the root directory.
 
 ```yaml
-- id: "SECURE-PROP-CHECK"
-  name: "Mandatory Secure Properties"
-  description: "Ensures that any project has a secure properties file"
+- id: "RULE-FILE-SECURITY"
+  name: "Mandatory Security Documentation"
+  description: "Ensures every project contains a security policy file"
   enabled: true
   severity: HIGH
   checks:
     - type: FILE_EXISTS
       params:
-        filePatterns: ["src/main/resources/secure-*.properties"]
-        failureMessage: "Project missing mandatory secure properties file in src/main/resources"
+        filePatterns: ["SECURITY.md"]
+        failureMessage: "Project missing mandatory SECURITY.md file in root"
 ```
 
 ### Example 2: API Specification Trigger
 
-Ensure `api.raml` exists for Experience APIs.
+Ensures that an API specification file (RAML, OAS, or Swagger) exists in the expected directory for projects tagged as APIs.
 
 ```yaml
-- id: "RULE-SPEC-01"
+- id: "RULE-API-SPEC-EXISTS"
   checks:
     - type: CONDITIONAL_CHECK
       params:
         preconditions:
           - type: PROJECT_CONTEXT
-            params: { nameContains: "-exp-" }
+            params: { nameContains: "-api-" }
         onSuccess:
           - type: FILE_EXISTS
             params:
-              filePatterns: ["src/main/resources/api/*.raml"]
+              filePatterns: 
+                - "src/main/resources/api/*.raml"
+                - "src/main/resources/api/*.yaml"
+                - "src/main/resources/api/*.json"
+              failureMessage: "API project missing specification file in src/main/resources/api/"
 ```
 
 ## Best Practices
 
-- Use **FILE_EXISTS** as an `onSuccess` check to enforce documentation or security file presence.
-- Use it as a `precondition` to detect "legacy" projects (e.g., presence of `mule-project.xml`) and apply migration rules.
+- **Use as a Precondition**: detect "legacy" projects (e.g., presence of old framework files) to apply specific migration or compatibility rules.
+- **Enforce Readme/Security**: Use **FILE_EXISTS** as an `onSuccess` check to ensure standard documentation is always present.
+- **Technology Detection**: Combine with **[PROJECT_CONTEXT](CODE_PROJECT_CONTEXT.md)** to target specific file requirements for specific project types.
 
 ## Related Check Types
 
-- **[PROJECT_CONTEXT](CODE_PROJECT_CONTEXT.md)**: Trigger based on project metadata.
+- **[PROJECT_CONTEXT](CODE_PROJECT_CONTEXT.md)**: Trigger based on project metadata or folder names.
 
 ## Solution Patterns and Technology References
 
 The following table serves as a quick reference for enforcing file existence across various project types.
 
-| Technology | Best Practice Goal | Key Files Checked | Reason |
+| Technology | Best Practice Goal | Key Files Checked | Purpose |
 | :--- | :--- | :--- | :--- |
-| **🐎 MuleSoft 4** | Project Structure | `mule-artifact.json` | Core runtime configuration |
-| **☕ Java/Spring** | Build Consistency | `pom.xml` / `build.gradle` | Dependency management |
-| **🐍 Python** | Environment Setup | `requirements.txt` | Package dependencies |
+| **☕ Java/Maven** | Build Consistency | `pom.xml` | Dependency management |
 | **📦 Node.js** | Project Metadata | `package.json` | Scripts and dependencies |
-| **⚡ TIBCO BW** | Module Validity | `.module`, `MANIFEST.MF` | OSGi/Module configuration |
+| **🐎 MuleSoft 4** | Project Structure | `mule-artifact.json` | Core runtime configuration |
+| **🐍 Python** | Environment Setup | `requirements.txt` | Package dependencies |
+| **⚡ TIBCO BW** | Module Validity | `*.module`, `MANIFEST.MF` | OSGi/Module configuration |
 | **🐳 Docker** | Containerization | `Dockerfile` | Image build definition |
-
-### 🐎 MuleSoft 4 Patterns
-
-**Scenario**: A valid Mule 4 project must contain the `mule-artifact.json` descriptor and at least one Mule configuration file to be deployable.
-
-```yaml
-id: "MULE-STRUCT-01"
-name: "Require Mule Artifact"
-description: "Ensure valid Mule 4 project structure"
-enabled: true
-severity: CRITICAL
-checks:
-  - type: FILE_EXISTS
-    params:
-      filePatterns: ["mule-artifact.json", "src/main/mule/*.xml"]
-      failureMessage: "Project missing core Mule 4 configuration files"
-```
 
 ### ☕ Java / Spring Boot Patterns
 
-**Scenario**: To guarantee that a Java project can be built by the CI/CD pipeline, a standard build descriptor must be present at the root.
+Ensure that Maven or Gradle build files are present to guarantee the project can be built in CI/CD.
 
 ```yaml
-id: "JAVA-STRUCT-01"
+id: "JAVA-BUILD-DESCRIPTOR"
 name: "Require Build Descriptor"
-description: "Ensure Maven or Gradle build file exists"
-enabled: true
-severity: CRITICAL
 checks:
   - type: FILE_EXISTS
     params:
@@ -113,64 +98,27 @@ checks:
       failureMessage: "Java projects must have a pom.xml or build.gradle file"
 ```
 
-### 🐍 Python Patterns
+### 📦 Node.js Patterns
 
-**Scenario**: Python projects typically require a `requirements.txt` for pip or `pyproject.toml` for modern packaging tools like Poetry.
-
-```yaml
-id: "PYTHON-STRUCT-01"
-name: "Require Dependency Definition"
-description: "Ensure requirements.txt or pyproject.toml exists"
-enabled: true
-severity: HIGH
-checks:
-  - type: FILE_EXISTS
-    params:
-      filePatterns: ["requirements.txt", "pyproject.toml"]
-```
-
-### 📦 Node.js / TypeScript Patterns
-
-**Scenario**: The `package.json` file is the heart of any Node.js application, defining everything from start scripts to dependencies.
+The `package.json` file is the heart of any Node.js application.
 
 ```yaml
-id: "NODE-STRUCT-01"
+id: "NODE-PACKAGE-JSON"
 name: "Require Package.json"
-description: "Ensure package.json exists globally"
-enabled: true
-severity: CRITICAL
 checks:
   - type: FILE_EXISTS
     params:
       filePatterns: ["package.json"]
-```
-
-### ⚡ TIBCO BW 6.x Patterns
-
-**Scenario**: TIBCO BusinessWorks 6 modules are OSGi-based and must contain specific metadata files to be recognized by the runtime.
-
-```yaml
-id: "TIBCO-STRUCT-01"
-name: "Require TIBCO Module Descriptor"
-description: "Ensure .module file exists in the project root or meta-inf"
-enabled: true
-severity: HIGH
-checks:
-  - type: FILE_EXISTS
-    params:
-      filePatterns: ["META-INF/MANIFEST.MF", "*.module"]
+      failureMessage: "Node.js projects must contain a package.json file"
 ```
 
 ### 🐳 DevOps / Docker Patterns
 
-**Scenario**: For projects intended to run in containers, the presence of a `Dockerfile` is non-negotiable.
+For projects intended for containerization, a `Dockerfile` is essential.
 
 ```yaml
-id: "DOCKER-01"
+id: "DOCKER-FILE-REQUIRED"
 name: "Require Dockerfile"
-description: "Ensure Dockerfile exists for container builds"
-enabled: true
-severity: MEDIUM
 checks:
   - type: FILE_EXISTS
     params:

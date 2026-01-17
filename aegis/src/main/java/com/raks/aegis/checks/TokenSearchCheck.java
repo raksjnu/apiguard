@@ -246,9 +246,9 @@ public class TokenSearchCheck extends AbstractCheck {
             return CheckResult.pass(check.getRuleId(), check.getDescription(), 
                 String.format("Passed %s check in %d/%d files (Mode: %s)", mode, passedFileCount, totalFiles, matchMode));
         } else {
-             return CheckResult.fail(check.getRuleId(), check.getDescription(), 
-                String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d). Details:\n• %s", 
-                    mode, matchMode, passedFileCount, totalFiles, String.join("\n• ", failureDetails)));
+             String technicalMsg = String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d). Details:\n• %s", 
+                    mode, matchMode, passedFileCount, totalFiles, String.join("\n• ", failureDetails));
+             return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg));
         }
     }
 }

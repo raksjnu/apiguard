@@ -10,7 +10,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -24,6 +23,7 @@ public class ReportGenerator {
     private static final Logger logger = LoggerFactory.getLogger(ReportGenerator.class);
     private static final String[] RULE_DOCS = {
             "GLOBAL_CONFIGURATION.md",
+            "PROJECT_IDENTIFICATION.md",
             "CONFIG_GENERIC_PROPERTY_FILE_CHECK.md",
             "CONFIG_MANDATORY_PROPERTY_VALUE_CHECK.md",
             "CONFIG_MANDATORY_SUBSTRING_CHECK.md",
@@ -43,8 +43,7 @@ public class ReportGenerator {
             "CODE_XML_XPATH_NOT_EXISTS.md",
             "CONDITIONAL_CHECK.md",
             "CODE_PROJECT_CONTEXT.md",
-            "CODE_FILE_EXISTS.md",
-            "CONFIG_CLIENTIDMAP_VALIDATOR.md"
+            "CODE_FILE_EXISTS.md"
     };
     public static void generateIndividualReports(ValidationReport report, Path outputDir) {
         try {
@@ -86,8 +85,6 @@ public class ReportGenerator {
             });
             
 
-            int codeSeq = 1;
-            int configSeq = 100; // Reset config start if we want separate blocks, or just sequence 1..N.
 
 
             int seq = 1;
@@ -177,6 +174,7 @@ public class ReportGenerator {
                         <div class="report-container">
                                 <div class="top-nav-container">
                                 <a href="../CONSOLIDATED-REPORT.html" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
+                                <a href="report.xlsx" class="top-nav-button" style="background-color: #217346;">Excel Report</a>
                                 <a href="../checklist.html" class="top-nav-button">Checklist</a>
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
@@ -450,6 +448,7 @@ public class ReportGenerator {
                     <body>
                         <div class="report-container">
                                 <div class="top-nav-container">
+                                <a href="CONSOLIDATED-REPORT.xlsx" class="top-nav-button" style="background-color: #217346;">Excel Report</a>
                                 <a href="checklist.html" class="top-nav-button">Checklist</a>
                             </div>
                             <div style="display: flex; align-items: center; margin-bottom: 20px;">
@@ -788,12 +787,7 @@ public class ReportGenerator {
 
                 String htmlContent = convertMdToHtml(mdContent);
                 
-                if ("CLIENTIDMAP_VALIDATOR".equals(ruleName)) {
-                    htmlContent = "<div style=\"background-color: #e3f2fd; border-left: 4px solid #2196F3; padding: 15px; margin-bottom: 20px; border-radius: 4px;\">" +
-                            "<strong style=\"color: #0d47a1;\">ℹ️ Custom Coded Rule</strong><br>" +
-                            "This validation is implemented as a custom Java rule and cannot be configured via standard YAML parameters." +
-                            "</div>" + htmlContent;
-                }
+
 
                 content.append(String.format("<div id=\"%s\" class=\"rule-content\" style=\"display: %s;\">%s</div>", 
                         ruleName, (index == 0 ? "block" : "none"), htmlContent));
@@ -1311,7 +1305,13 @@ public class ReportGenerator {
         html = html.replaceAll("\\|", "</td><td>");
         html = html.replaceAll("<tr><td></td><td>", "<tr><td>");
         html = html.replaceAll("</td><td></td></tr>", "</td></tr>");
-        html = html.replaceAll("(?m)^<tr><td>\\s*-+\\s*</td>.*</tr>$", "");
+        // Improved separator line removal (handles colons :---)
+        html = html.replaceAll("(?m)^<tr><td>[\\s\\-:]+</td>(?:<td>[\\s\\-:]+</td>)*</tr>$", "");
+        
+        // Wrap consecutive <tr> blocks in <table> tags
+        html = html.replaceAll("(?s)(<tr>.*?</tr>)", "<table>$1</table>");
+        html = html.replaceAll("</table>\\s*<table>", "");
+
         html = html.replaceAll("(?m)^$", "<br>");
 
         // 4. Restore placeholders
