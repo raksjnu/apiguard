@@ -48,7 +48,7 @@
         <div style="position: absolute; top: 20px; right: 20px; display: flex; gap: 10px;">
             <a id="linkChecklist" href="#" onclick="window.open(resolvePath('checklist.html'), '_blank'); return false;" class="nav-button" title="View all validation checklist items" style="padding: 8px 12px; font-size: 12px;">Checklist</a>
             <a id="linkRules" href="#" onclick="window.open(resolvePath('rule_guide.html'), '_blank'); return false;" class="nav-button" title="Guide to all Aegis validation rules" style="padding: 8px 12px; font-size: 12px;">Rule Guide</a>
-            <a id="linkSettings" href="#" onclick="window.open(resolvePath('settings.html'), '_blank'); return false;" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
+            <a id="linkSettings" href="#" onclick="window.location.href = resolvePath('settings.html'); return false;" class="nav-button" title="Configure global settings" style="padding: 8px 12px; font-size: 12px;">Settings</a>
             <a id="linkHelp" href="#" onclick="window.open(resolvePath('help.html'), '_blank'); return false;" class="nav-button" title="View help and documentation" style="padding: 8px 12px; font-size: 12px;">Help</a>
         </div>
 
@@ -267,8 +267,8 @@
         
         // Configuration
         const CONFIG = {
-            baseUrl: "/apiguard/aegis", // Base URL for the tool
-            apiUrl: "/apiguard/aegis/api/validate", // API base URL
+            baseUrl: isWrapper ? "/apiguard/aegis" : "", 
+            apiUrl: isWrapper ? "/apiguard/aegis/api/validate" : "/api/validate",
             statusCheckInterval: 2000,
             reportRetentionDays: 7
         };
@@ -969,8 +969,8 @@
                 // Use new Aegis Recursive Discovery flow
                 const apiBase = isWrapper ? '/apiguard/aegis' : CONFIG.baseUrl;
                 // GitAnalyzer uses /api/download/list, Aegis Standalone uses /api/git/repos
-                // WRAPPER NOW USES /api/git/discovery via Aegis-Wrapper Flow
-                const endpoint = isWrapper ? '/api/git/discovery' : '/api/git/repos';
+                // WRAPPER NOW USES /api/git/repos (Unified)
+                const endpoint = '/api/git/repos';
                 let url = apiBase + `${endpoint}?group=${encodeURIComponent(group)}&filter=${encodeURIComponent(filter)}&provider=${encodeURIComponent(provider)}`;
                 
                 if(gitlabUrl) url += `&gitlabUrl=${encodeURIComponent(gitlabUrl)}`;
