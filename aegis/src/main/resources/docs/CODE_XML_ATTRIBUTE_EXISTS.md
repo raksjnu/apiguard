@@ -144,12 +144,12 @@ Element 'security-manager' with attribute 'enabled'='true' not found in file: au
 
 | Technology | Best Practice Goal | Key Elements | Attributes Checked |
 | :--- | :--- | :--- | :--- |
-| **🐎 MuleSoft 4** | Flow Identification | `flow`, `sub-flow` | `name`, `doc:id` |
-| **⚡ TIBCO BW 6** | Process Configuration | `bpws:process` | `name`, `targetNamespace` |
-| **⚡ TIBCO BW 5** | Activity Naming | `pd:startType` | `name` |
+| **🐎 MuleSoft 4.X** | Flow Identification | `flow`, `sub-flow` | `name`, `doc:id` |
+| **⚡ TIBCO BW 6.X** | Process Configuration | `bpws:process` | `name`, `targetNamespace` |
+| **⚡ TIBCO BW 5.X** | Activity Naming | `pd:startType` | `name` |
 | **☕ Java/Maven** | Dependency Locking | `dependency` | `version` |
 
-### 🐎 MuleSoft 4 Patterns
+### 🐎 MuleSoft 4.X Patterns
 
 ```yaml
 id: "MULE-FLOW-ATTRS"
