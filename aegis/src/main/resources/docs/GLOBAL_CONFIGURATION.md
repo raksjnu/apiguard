@@ -138,3 +138,69 @@ When checking both the presence of a key and its specific value in property file
 ### 4. Precision with XPath
 
 For XML validation, always use **XPath** rules instead of **Token Search**. Token searches can be fooled by comments or complex formatting, whereas XPath understands the underlying document structure.
+
+---
+
+## Message Customization
+
+Aegis allows you to customize the success and error messages for each rule using placeholders. This allows you to provide context-specific feedback while still retaining the technical details of the check.
+
+### Supported Tokens
+
+You can use the following tokens in your `successMessage` and `errorMessage` fields:
+
+| Token | Description |
+| :--- | :--- |
+| `{RULE_ID}` | The ID of the rule being executed (e.g., `RULE-001`). |
+| `{CORE_DETAILS}` | The technical details of the check result (e.g., "Found 3 issues in pom.xml"). |
+| `{DEFAULT_MESSAGE}` | **Alias for `{CORE_DETAILS}`**. Recommended for clarity. |
+| `{FAILURES}` | A list of specific failure details (if applicable). |
+
+### Newline Formatting
+
+You can use `\n` in your messages to create line breaks. This is useful for separating your custom message from the technical details.
+
+**Example:**
+
+```yaml
+successMessage: "Validation passed!\n{DEFAULT_MESSAGE}"
+errorMessage: "Validation failed.\n{DEFAULT_MESSAGE}"
+```
+
+### Token Examples
+
+You can use either `{DEFAULT_MESSAGE}` or `{CORE_DETAILS}`. They result in the exact same output.
+
+**Using `{DEFAULT_MESSAGE}` (Recommended):**
+```yaml
+errorMessage: "Validation failed.\n{DEFAULT_MESSAGE}"
+```
+
+**Using `{CORE_DETAILS}`:**
+```yaml
+errorMessage: "Validation failed.\n{CORE_DETAILS}"
+```
+
+---
+
+## Project Identification
+
+Aegis uses specific rules to identify which folders contain valid projects to scan. This is configured in the `projectIdentification` section of your main configuration file.
+
+### configFolder
+Defines patterns to identify configuration projects (e.g., "global-config", "common-library"). These are scanned differently than standard Mule applications.
+
+- **namePattern**: Regex to match folder names (e.g., `.*_config.*`).
+
+### targetProject
+Defines rules for identifying standard Mule applications.
+
+- **matchMode**:
+  - `ALL`: All specified marker files must exist.
+  - `ANY`: At least one marker file must exist.
+- **markerFiles**: List of files that signify a project root (e.g., `pom.xml`, `mule-artifact.json`).
+
+### ignoredFolders
+Defines folders that are strictly excluded from scanning to improve performance and avoid false positives.
+
+- **exactNames**: List of folder names to ignore (e.g., `target`, `.git`, `node_modules`).

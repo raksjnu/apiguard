@@ -41,6 +41,13 @@
 # - MANDATORY_PROPERTY_VALUE_CHECK - Trigger by property existence or specific value.
 # 
 # NOTE: *ANY* check type above can be used as a trigger for the conditional engine!
+#
+# =============================================================================
+# MESSAGE TOKENS
+# =============================================================================
+# You can use the following tokens in successMessage and errorMessage:
+# - {RULE_ID}         : The ID of the rule being executed.
+# - {DEFAULT_MESSAGE} : The technical details of the check result (e.g. valid/invalid values).
 # =============================================================================
 
 config:
@@ -53,16 +60,22 @@ config:
   - PROD
   - DR
   folderPattern: null
+  # Identifies valid projects and configuration locations
   projectIdentification:
+    # Locates the folder containing environment-specific property files
     configFolder:
-      namePattern: .*_config.*
+      namePattern: .*_config.*  # Regex to match config folder name
+    
+    # Defines criteria to identify a valid project root for scanning
     targetProject:
-      matchMode: ALL
-      markerFiles:
+      matchMode: ALL  # ALL: Must contain all markers (if multiple logic applies), usually behaves as 'contains at least one of' for list
+      markerFiles:    # Existence of ANY of these files marks the folder as a project
       - pom.xml
       - mule-artifact.json
+
+    # Directories to exclude from scanning to improve performance and reduce noise
     ignoredFolders:
-      exactNames:
+      exactNames:     # Exact folder names to skip
       - Aegis-reports
       - rakesh
       - target
@@ -73,7 +86,7 @@ config:
       - .vscode
       - node_modules
       - __MACOSX
-      prefixes:
+      prefixes:       # Folder names starting with these prefixes to skip
       - .
       - Aegis-reports
 
@@ -89,8 +102,8 @@ rules:
     description: Scans configured files for forbidden tokens. Fails if tokens are found.
     enabled: true
     severity: HIGH
-    errorMessage: "Found forbidden token defined in rule {RULE_ID}. Please remove these tokens."
-    successMessage: "No forbidden tokens found for rule {RULE_ID}."
+    errorMessage: "Found forbidden token defined in rule {RULE_ID}. Please remove these tokens.\n{DEFAULT_MESSAGE}"
+    successMessage: "No forbidden tokens found for rule {RULE_ID}.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:

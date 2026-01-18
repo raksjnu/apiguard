@@ -248,6 +248,10 @@ public class ReportGenerator {
                                 filter = input.value.toUpperCase();
                                 table = document.getElementById("resultsTable");
                                 tr = table.getElementsByTagName("tr");
+                                
+                                // Remove existing highlights first
+                                removeHighlights();
+
                                 for (i = 1; i < tr.length; i++) {
                                     var found = false;
                                     var tds = tr[i].getElementsByTagName("td");
@@ -261,6 +265,52 @@ public class ReportGenerator {
                                         }
                                     }
                                     tr[i].style.display = found ? "" : "none";
+                                }
+                                
+                                // Apply highlighting if there is a filter
+                                if (filter.length > 0) {
+                                    highlightSearch(input.value);
+                                }
+                            }
+
+                            function removeHighlights() {
+                                var highlighted = document.querySelectorAll('span.search-highlight');
+                                highlighted.forEach(function(span) {
+                                    var parent = span.parentNode;
+                                    parent.replaceChild(document.createTextNode(span.textContent), span);
+                                    parent.normalize();
+                                });
+                            }
+
+                            function highlightSearch(term) {
+                                if (!term) return;
+                                // Escape regex special characters in the term
+                                // We use a simplified character set to avoid Java escaping hell
+                                // [-.[]{}()...] -> escaped with double backslash for Java string literal
+                                var escapedTerm = term.replace(/[-[\\]{}()*+?.,\\\\^$|#\\s]/g, '\\\\$&');
+                                var regex;
+                                try {
+                                    regex = new RegExp("(" + escapedTerm + ")", "gi");
+                                } catch (e) {
+                                    return; 
+                                }
+                                var body = document.getElementById("tableBody");
+                                recursiveHighlight(body, regex);
+                            }
+
+                            function recursiveHighlight(node, regex) {
+                                if (node.nodeType === 3) { // Text node
+                                     if (node.nodeValue.trim().length > 0 && regex.test(node.nodeValue)) {
+                                         var span = document.createElement("span");
+                                         span.innerHTML = node.nodeValue.replace(regex, "<span class='search-highlight' style='background-color: #ffeb3b; color: black; font-weight: bold; padding: 2px 4px; border-radius: 2px;'>$1</span>");
+                                         node.parentNode.replaceChild(span, node);
+                                     }
+                                } else if (node.nodeType === 1 && node.nodeName !== "SCRIPT" && node.nodeName !== "STYLE" && !node.classList.contains("search-highlight")) {
+                                     // Clone children to avoid iteration issues if we modify DOM
+                                     var children = Array.from(node.childNodes);
+                                     for (var i = 0; i < children.length; i++) {
+                                         recursiveHighlight(children[i], regex);
+                                     }
                                 }
                             }
 
@@ -686,11 +736,11 @@ public class ReportGenerator {
                 if (hasSubNav) {
                     sidebar.append("<div class=\"rule-header\">");
                     sidebar.append(String.format("<span class=\"toggle-icon\" onclick=\"toggleSubNav(event, '%s')\">&#9654;</span>", ruleName));
-                    sidebar.append(String.format("<a href=\"#\" onclick=\"showRule(event, '%s')\">%s</a>", ruleName, ruleName));
+                    sidebar.append(String.format("<a href=\"#\" onclick=\"showRule(event, '%s')\" data-rule-id=\"%s\">%s</a>", ruleName, ruleName, ruleName));
                     sidebar.append("</div>");
                     sidebar.append(subNav.toString());
                 } else {
-                     sidebar.append(String.format("<a href=\"#\" onclick=\"showRule(event, '%s')\">%s</a>", ruleName, ruleName));
+                     sidebar.append(String.format("<a href=\"#\" onclick=\"showRule(event, '%s')\" data-rule-id=\"%s\">%s</a>", ruleName, ruleName, ruleName));
                 }
                 sidebar.append("</li>");
 
@@ -1016,8 +1066,9 @@ public class ReportGenerator {
 
 
 
-                                        var onclickStr = a.getAttribute("onclick"); 
-                                        var ruleId = onclickStr.match(/'([^']+)'/)[1]; 
+                                        // Use data-rule-id for robustness
+                                        var ruleId = a.getAttribute("data-rule-id");
+                                        if (!ruleId) continue; 
 
                                         var oldBadge = a.querySelector('.match-count');
                                         if (oldBadge) oldBadge.remove();
@@ -1166,7 +1217,19 @@ public class ReportGenerator {
                 } catch (Exception e) {}
             });
             Files.writeString(ruleGuidePath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
-            logger.info("DEBUG: Rule Guide generated successfully.");
+            logger.info("DEBUG: Rule Guide generated successfully at: {}", ruleGuidePath.toAbsolutePath());
+            
+            // Also write to src/main/resources/web/aegis for packaging
+            try {
+                Path resourcesPath = java.nio.file.Paths.get("src/main/resources/web/aegis/rule_guide.html");
+                if (java.nio.file.Files.exists(resourcesPath.getParent())) {
+                    Files.writeString(resourcesPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
+                    logger.info("DEBUG: Rule Guide also written to resources: {}", resourcesPath.toAbsolutePath());
+                }
+            } catch (Exception e) {
+                logger.warn("Could not write rule_guide.html to resources folder: {}", e.getMessage());
+            }
+            
             logger.debug("Rule guide generated (dynamic)");
         } catch (Exception e) {
             logger.error("DEBUG: Failed to generate rule guide: {}", e.getMessage(), e);

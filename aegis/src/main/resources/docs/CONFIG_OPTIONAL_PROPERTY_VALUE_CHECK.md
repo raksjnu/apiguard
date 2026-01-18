@@ -35,6 +35,7 @@ Ensure that if a feature toggle is present, it uses valid boolean string values.
 - id: "RULE-OPTIONAL-TOGGLE"
   name: "Validate Optional Toggles"
   severity: MEDIUM
+  errorMessage: "Optional toggle validation failed.\n{DEFAULT_MESSAGE}"
   checks:
     - type: OPTIONAL_PROPERTY_VALUE_CHECK
       params:

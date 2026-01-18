@@ -98,6 +98,7 @@ Validate that a `connection` element uses the correct port AND protocol.
 ```yaml
 - id: "RULE-XML-ATTR-SET-SEC"
   name: "Secure Connection Standard"
+  errorMessage: "Insecure connection access point found.\n{DEFAULT_MESSAGE}"
   checks:
     - type: XML_ATTRIBUTE_EXISTS
       params:

@@ -42,6 +42,13 @@
 # - MANDATORY_PROPERTY_VALUE_CHECK - Trigger by property existence or specific value.
 # 
 # NOTE: *ANY* check type above can be used as a trigger for the conditional engine!
+#
+# =============================================================================
+# MESSAGE TOKENS
+# =============================================================================
+# You can use the following tokens in successMessage and errorMessage:
+# - {RULE_ID}         : The ID of the rule being executed.
+# - {DEFAULT_MESSAGE} : The technical details of the check result (e.g. valid/invalid values).
 # =============================================================================
 
 config:
@@ -54,16 +61,22 @@ config:
   - PROD
   - DR
   folderPattern: null
+  # Identifies valid projects and configuration locations
   projectIdentification:
+    # Locates the folder containing environment-specific property files
     configFolder:
-      namePattern: .*_config.*
+      namePattern: .*_config.*  # Regex to match config folder name
+    
+    # Defines criteria to identify a valid project root for scanning
     targetProject:
-      matchMode: ALL
-      markerFiles:
+      matchMode: ALL  # ALL: Must contain all markers (if multiple logic applies), usually behaves as 'contains at least one of' for list
+      markerFiles:    # Existence of ANY of these files marks the folder as a project
       - pom.xml
       - mule-artifact.json
+
+    # Directories to exclude from scanning to improve performance and reduce noise
     ignoredFolders:
-      exactNames:
+      exactNames:     # Exact folder names to skip
       - Aegis-reports
       - rakesh
       - target
@@ -74,7 +87,7 @@ config:
       - .vscode
       - node_modules
       - __MACOSX
-      prefixes:
+      prefixes:       # Folder names starting with these prefixes to skip
       - .
       - Aegis-reports
 
@@ -90,6 +103,8 @@ rules:
     description: Scans configured files for forbidden tokens. Fails if tokens are found.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
@@ -106,6 +121,8 @@ rules:
     description: Scans for legacy error expressions like error.errorType, error.muleMessage, etc., which are not supported in modern Mule 4 error handling.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
@@ -125,6 +142,8 @@ rules:
     description: Scans for specific DLP-related property references in configuration and property files.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
@@ -147,6 +166,8 @@ rules:
     description: Template for ensuring required tokens exist in files. Enable and configure as needed.
     enabled: false
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH_REQUIRED
       params:
@@ -166,6 +187,8 @@ rules:
     description: Parent pom must be com.raks.eapi:MuleParentPom:LATEST
     enabled: true
     severity: LOW
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: POM_VALIDATION_REQUIRED
       params:
@@ -179,6 +202,8 @@ rules:
     name: 'Update pom property: mule.maven.plugin.version to 4.9.0'
     enabled: true
     severity: LOW
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: POM_VALIDATION_REQUIRED
       params:
@@ -193,6 +218,8 @@ rules:
     name: 'Add pom dependency: apimuleutilities for JCE Encrypt/Decrypt'
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: POM_VALIDATION_REQUIRED
       params:
@@ -209,6 +236,8 @@ rules:
     name: 'Remove pom plugin: maven-clean-plugin'
     enabled: true
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: POM_VALIDATION_FORBIDDEN
       params:
@@ -223,6 +252,8 @@ rules:
     name: 'Remove pom dependency: spring-security-ldap, spring-security-web, mule-module-spring-config, and db2jcc_license_cu'
     enabled: true
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: POM_VALIDATION_FORBIDDEN
       params:
@@ -250,6 +281,8 @@ rules:
     description: The IBM MQ connector configuration must use the approved cipher suite.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_ATTRIBUTE_EXISTS
       params:
@@ -267,6 +300,8 @@ rules:
     description: Ensures that any crypto:jce-config element has the 'type' attribute defined.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_ATTRIBUTE_EXISTS
       params:
@@ -282,6 +317,8 @@ rules:
     description: The HTTP listener configuration must use the approved path.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_ATTRIBUTE_EXISTS
       params:
@@ -303,6 +340,8 @@ rules:
     description: Scans for fromApplicationCode or toApplicationCode attributes in logging connector elements.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_ATTRIBUTE_NOT_EXISTS
       params:
@@ -326,6 +365,8 @@ rules:
     description: Verifies that the api-gateway:autodiscovery element is present in a Mule configuration file.
     enabled: true
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_XPATH_EXISTS
       params:
@@ -344,6 +385,8 @@ rules:
     description: Template for ensuring forbidden XPath expressions do NOT exist. Enable and configure as needed.
     enabled: false
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_XPATH_NOT_EXISTS
       params:
@@ -362,6 +405,8 @@ rules:
     description: Scans for the usage of PBEWithHmacSHA256AndAES_256 in crypto:jce-encrypt-pbe elements.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_ELEMENT_CONTENT_FORBIDDEN
       params:
@@ -379,6 +424,8 @@ rules:
     description: Scans for the use of the 'toBase64' token within a 'set-variable' element.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_ELEMENT_CONTENT_FORBIDDEN
       params:
@@ -399,6 +446,8 @@ rules:
     description: Template for ensuring required content exists within XML elements. Enable and configure as needed.
     enabled: false
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: XML_ELEMENT_CONTENT_REQUIRED
       params:
@@ -420,6 +469,8 @@ rules:
     description: Ensures mule-artifact.json meets minimum runtime and security requirements
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: JSON_VALIDATION_REQUIRED
       params:
@@ -440,6 +491,8 @@ rules:
     description: Template for ensuring forbidden JSON elements do NOT exist. Enable and configure as needed.
     enabled: false
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: JSON_VALIDATION_FORBIDDEN
       params:
@@ -456,6 +509,8 @@ rules:
     description: Scans .properties files for required tokens (exact substring match)
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_SUBSTRING_CHECK
       params:
@@ -472,6 +527,8 @@ rules:
     description: Scans .policy files for required tokens (exact substring match)
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_SUBSTRING_CHECK
       params:
@@ -489,6 +546,8 @@ rules:
     description: Fails if forbidden tokens are found in .properties files
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_SUBSTRING_CHECK
       params:
@@ -508,6 +567,8 @@ rules:
     description: Fails if forbidden tokens are found in .policy files
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_SUBSTRING_CHECK
       params:
@@ -530,6 +591,8 @@ rules:
     description: Ensures required properties exist with correct values in .properties files
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_PROPERTY_VALUE_CHECK
       params:
@@ -554,6 +617,8 @@ rules:
     description: Ensures required policy properties exist with correct values
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_PROPERTY_VALUE_CHECK
       params:
@@ -607,6 +672,8 @@ rules:
     description: If property exists in .properties files, validates its value
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: OPTIONAL_PROPERTY_VALUE_CHECK
       params:
@@ -632,6 +699,8 @@ rules:
     description: If property exists in .policy files, validates its value
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: OPTIONAL_PROPERTY_VALUE_CHECK
       params:
@@ -661,6 +730,8 @@ rules:
     description: Fails if forbidden regex patterns are found in .properties files
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
@@ -680,6 +751,8 @@ rules:
     description: Fails if forbidden regex patterns are found in .policy files
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
@@ -702,6 +775,8 @@ rules:
     description: If API name contains 'batch', the property asset.type must be 'batch'.
     enabled: true
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Ensures large volume APIs are tagged correctly for infrastructure scaling.
     rationale: Automated provisioning depends on correct asset type metadata.
     exampleGood: 'Project: user-batch-api, asset.type=batch'
@@ -730,6 +805,8 @@ rules:
     description: Projects using both MQ and DB must define a 'commontimeout' property.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Cross-system timeout synchronization.
     rationale: Prevents partial transaction failures where one system times out much later than the other.
     checks:
@@ -765,6 +842,8 @@ rules:
     description: Ensures HTTP Request configurations use externalized properties for timeouts.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Prevents environment-specific hardcoding.
     rationale: Hardcoded timeouts lead to different behaviors across Dev/UAT/Prod without proper control.
     exampleGood: <http:request-config responseTimeout='${http.timeout}' ...>
@@ -793,6 +872,8 @@ rules:
     description: If Salesforce connector is used, a reconnection strategy must be defined.
     enabled: true
     severity: MEDIUM
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Handling temporary SaaS connectivity issues.
     rationale: Standard reconnection prevents Mule from locking up if Salesforce is briefly unavailable.
     checks:
@@ -818,6 +899,8 @@ rules:
     description: If JMS connector is in POM, it must be used/configured in code.
     enabled: true
     severity: LOW
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Resource optimization and library cleanliness.
     rationale: Unused dependencies bloat the JAR and increase security surface area.
     checks:
@@ -841,6 +924,8 @@ rules:
     description: If environment is PROD, the secure-prod file must exist.
     enabled: true
     severity: CRITICAL
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Environment-specific security enforcement.
     rationale: Ensures Production credentials are never mixed with lower environments.
     checks:
@@ -867,6 +952,8 @@ rules:
     description: If APIKit is detected, a Global Error Handler must be present.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Consistent error responses for all experience APIs.
     rationale: Standardized error handling is critical for API consumer experience.
     checks:
@@ -892,6 +979,8 @@ rules:
     description: Experience APIs (-exp-) must have Autodiscovery configured.
     enabled: true
     severity: HIGH
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Compliance with API Governance.
     rationale: Experience APIs are public-facing and MUST be managed by the gateway.
     checks:
@@ -915,6 +1004,8 @@ rules:
     description: If secure properties file exists, 'secure::' syntax must be used in Mule XML.
     enabled: true
     severity: CRITICAL
+    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
     useCase: Encryption enforcement.
     rationale: Prevents plain-text property resolution when vault-encrypted files are present.
     exampleGood: value='${secure::db.password}'

@@ -200,6 +200,9 @@ if (reportsIndex >= 0 and sizeOf(parts) > reportsIndex + 2) {
         </error-handler>
     </flow>
     
+    <!-- Flow 4.2: Dynamic Rule Guide Serving (DISABLED) -->
+    <!-- DISABLED to serve static file from web/aegis which is verified correct -->
+    <!-- 
     <flow name="aegis-rule-guide-page-flow">
         <http:listener path="/aegis/rule_guide.html" config-ref="HTTP_Listener_config" allowedMethods="GET">
             <http:response>
@@ -209,17 +212,15 @@ if (reportsIndex >= 0 and sizeOf(parts) > reportsIndex + 2) {
         
         <logger level="INFO" message="Serving dynamic Rule Guide..."/>
         
-        <!-- Call generator to create rule_guide.html in temp location -->
-        <!-- Note: Using Aegis package -->
         <java:invoke-static class="com.raks.aegis.engine.ReportGenerator" method="generateRuleGuide(String)">
             <java:args>#[{
                 arg0: p('aegis.work.dir')
             }]</java:args>
         </java:invoke-static>
         
-        <!-- Read the generated file -->
         <file:read path="#[p('aegis.work.dir') ++ '/rule_guide.html']" config-ref="File_Config"/>
-    </flow>
+    </flow> 
+    -->
 
     <!-- NEW FLOW: Recursive Git Discovery for Wrapper -->
     <flow name="aegis-git-discovery-flow">

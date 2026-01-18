@@ -69,10 +69,10 @@ Validate that technical configurations like ports and timeouts follow specific n
         validationRules:
           - type: "FORMAT"
             pattern: "http.port=\\d+"
-            message: "Http port must be a numeric integer"
+            message: "Http port must be a numeric integer.\n{DEFAULT_MESSAGE}"
           - type: "FORMAT"
             pattern: "db.timeout=\\d+[ms]"
-            message: "Database timeout must include 'ms' unit"
+            message: "Database timeout must include 'ms' unit.\n{DEFAULT_MESSAGE}"
 ```
 
 ### Example 3: Production Security Guardrails
@@ -82,6 +82,7 @@ Block the usage of insecure protocols or hardcoded local development strings in 
 - id: "RULE-PROD-SECURITY-KEYS"
   name: "Production Access Guard"
   severity: CRITICAL
+  errorMessage: "Production security violation found.\n{DEFAULT_MESSAGE}"
   checks:
     - type: GENERIC_PROPERTY_FILE_CHECK
       params:
@@ -90,21 +91,28 @@ Block the usage of insecure protocols or hardcoded local development strings in 
         validationRules:
           - type: "FORBIDDEN"
             pattern: "auth.mode=local"
-            message: "Production must use SSO or external auth"
+            # Overrides the generic error message
+            message: "Production must use SSO or external auth.\n{DEFAULT_MESSAGE}"
           - type: "FORBIDDEN"
             pattern: "debug.enabled=true"
-            message: "Debug mode is strictly forbidden in production"
 ```
 
 ## Error Configuration & Customization
 
-By default, Aegis generates a technical description of the failure. You can override this by providing a custom `message` parameter in your rule configuration.
+You can customize error messages at two levels:
+
+1.  **Rule Level (Recommended)**: Use `errorMessage` at the top level for a consistent message across all failures.
+2.  **Check/Rule Level**: Use `message` inside `validationRules` to provide specific instructions for a single failure type.
+
+**Both support tokens:**
+- `{DEFAULT_MESSAGE}`: Detailed technical reason for the failure.
+- `{CORE_DETAILS}`: Alias for default message.
 
 ```yaml
       params:
         property: "api.key"
         mode: EXISTS
-        message: "Security violation: Missing mandatory API Key in property file!"
+        message: "Security violation: Missing mandatory API Key!\n{DEFAULT_MESSAGE}"
 ```
 
 qa-env.properties: Production must use SSO (found 'auth.mode=local').

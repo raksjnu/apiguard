@@ -61,6 +61,7 @@ Ensures the project has a start script and requires a minimum Node engine.
   description: "Ensures package.json has required scripts and engines"
   enabled: true
   severity: HIGH
+  errorMessage: "Package validation failed.\n{DEFAULT_MESSAGE}"
   checks:
     - type: JSON_VALIDATION_REQUIRED
       params:

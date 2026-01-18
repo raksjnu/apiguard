@@ -53,6 +53,7 @@ Identify potential hardcoded secrets in properties or XML configuration files.
 - id: "RULE-NO-HARDCODED-SECRETS"
   name: "No Hardcoded Credentials"
   severity: CRITICAL
+  errorMessage: "Security Violation: Hardcoded credentials found.\n{DEFAULT_MESSAGE}"
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:

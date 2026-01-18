@@ -49,6 +49,7 @@ Ensure that logging is set to a sustainable level for production environments.
 - id: "RULE-PROD-LOG-LOCK"
   name: "Production Log Level"
   severity: HIGH
+  errorMessage: "Production Log Level violation.\n{DEFAULT_MESSAGE}"
   checks:
     - type: MANDATORY_PROPERTY_VALUE_CHECK
       params:
