@@ -96,6 +96,52 @@ http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/m
         </error-handler>
     </flow>
 
+
+    <!-- Flow 3.5: Sample File Download (Classpath) - MUST BE BEFORE CATCH-ALL /aegis/* -->
+    <flow name="aegis-sample-download-flow">
+        <http:listener path="/aegis/api/download/sample" config-ref="HTTP_Listener_config" allowedMethods="GET">
+            <http:response>
+                <http:headers>#[{
+                    "Content-Type": vars.mimeType default "application/octet-stream",
+                    "Content-Disposition": 'attachment; filename="' ++ vars.filename ++ '"',
+                    "Cache-Control": "no-cache, no-store, must-revalidate"
+                }]</http:headers>
+            </http:response>
+        </http:listener>
+        
+        <!-- Extract filename from query parameter -->
+        <set-variable variableName="filename" value="#[attributes.queryParams.file default '']"/>
+        
+        <choice>
+            <!-- Security: Only allow specific sample files -->
+            <when expression="#[vars.filename == 'sample-project.zip' or vars.filename == 'sample-rules.yaml']">
+                <!-- Determine MIME type -->
+                <set-variable variableName="mimeType" value="#[
+                    if (vars.filename endsWith '.zip') 'application/zip'
+                    else if (vars.filename endsWith '.yaml') 'application/x-yaml'
+                    else 'application/octet-stream'
+                ]"/>
+                
+                <!-- Read from classpath (works in deployed JAR) -->
+                <set-payload value="#[readUrl('classpath://web/aegis/' ++ vars.filename, 'application/octet-stream')]"/>
+                <logger level="INFO" message="#['Serving sample file from classpath: ' ++ vars.filename]"/>
+            </when>
+            <otherwise>
+                <logger level="WARN" message="#['Invalid sample file requested: ' ++ vars.filename]"/>
+                <set-payload value="Invalid file requested"/>
+                <set-variable variableName="httpStatus" value="404"/>
+            </otherwise>
+        </choice>
+        
+        <error-handler>
+            <on-error-continue type="ANY">
+                <logger level="ERROR" message="#['Failed to serve sample file: ' ++ vars.filename ++ '. Error: ' ++ error.description]"/>
+                <set-payload value="File not found"/>
+                <set-variable variableName="httpStatus" value="404"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+
     <!-- Flow 4: Static Resource Serving (Flat Context) -->
     <flow name="aegis-static-resource-flow">
         <http:listener path="/aegis/*" config-ref="HTTP_Listener_config" allowedMethods="GET">

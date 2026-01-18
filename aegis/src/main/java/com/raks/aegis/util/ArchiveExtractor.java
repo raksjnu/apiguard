@@ -35,9 +35,10 @@ public class ArchiveExtractor {
             }
         }
 
-        Path projectRoot = findProjectRoot(tempDir);
-        logger.info("ZIP extracted successfully. Project root: {}", projectRoot);
-        return projectRoot.toString();
+        // Return the extraction directory - let ProjectDiscovery find all projects within it
+        logger.info("ZIP extracted successfully to: {}", tempDir);
+        logger.info("ProjectDiscovery will scan for all projects in this directory");
+        return tempDir.toString();
     }
 
     public static String extractZip(String zipPath, String sessionId, String baseTempDir) throws IOException {
@@ -101,9 +102,10 @@ public class ArchiveExtractor {
             throw new IOException("Invalid Mule JAR file: No source code found in META-INF/mule-src/");
         }
 
-        Path projectRoot = findProjectRoot(tempDir);
-        logger.info("JAR extracted successfully. Project root: {}", projectRoot);
-        return projectRoot.toString();
+        // Return the extraction directory - let ProjectDiscovery find all projects within it
+        logger.info("JAR extracted successfully to: {}", tempDir);
+        logger.info("ProjectDiscovery will scan for all projects in this directory");
+        return tempDir.toString();
     }
 
     public static String extractJar(String jarPath, String sessionId, String baseTempDir) throws IOException {
