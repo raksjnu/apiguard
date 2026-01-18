@@ -7,6 +7,17 @@ import java.util.Map;
 
 public abstract class AbstractCheck {
     public abstract CheckResult execute(Path projectRoot, Check check);
+    protected Map<String, Object> effectiveParams;
+
+    public void init(Map<String, Object> params) {
+        this.effectiveParams = params;
+    }
+
+    protected Map<String, Object> getEffectiveParams(Check check) {
+        if (effectiveParams != null) return effectiveParams;
+        return check.getParams() != null ? check.getParams() : java.util.Collections.emptyMap();
+    }
+
     protected CheckResult pass(String message) {
         return new CheckResult("", "", true, message);
     }
@@ -14,33 +25,59 @@ public abstract class AbstractCheck {
         return new CheckResult("", "", false, message);
     }
     protected List<String> resolveEnvironments(Check check) {
+        Map<String, Object> params = getEffectiveParams(check);
         @SuppressWarnings("unchecked")
-        List<String> environments = (List<String>) check.getParams().get("environments");
+        List<String> environments = (List<String>) params.get("environments");
         return environments;
     }
 
     protected String getCustomMessage(Check check, String defaultMsg) {
+        return getCustomMessage(check, defaultMsg, null);
+    }
+
+    protected String getCustomMessage(Check check, String defaultMsg, String checkedFiles) {
+        return getCustomMessage(check, defaultMsg, checkedFiles, null);
+    }
+
+    protected String getCustomMessage(Check check, String defaultMsg, String checkedFiles, String foundItems) {
         // 1. Check params "message" (legacy override)
-        if (check.getParams() != null && check.getParams().containsKey("message")) {
-            return (String) check.getParams().get("message");
+        Map<String, Object> params = getEffectiveParams(check);
+        if (params.containsKey("message")) {
+            return (String) params.get("message");
         }
         
         // 2. Check Rule-level errorMessage
         if (check.getRule() != null && check.getRule().getErrorMessage() != null && !check.getRule().getErrorMessage().isEmpty()) {
-            // Treat the defaultMsg (technical details) as "Core Details" for token replacement
-            return formatMessage(check.getRule().getErrorMessage(), defaultMsg, null);
+            return formatMessage(check.getRule().getErrorMessage(), defaultMsg, null, checkedFiles, foundItems);
         }
         
+        return defaultMsg;
+    }
+
+    protected String getCustomSuccessMessage(Check check, String defaultMsg) {
+        return getCustomSuccessMessage(check, defaultMsg, null);
+    }
+
+    protected String getCustomSuccessMessage(Check check, String defaultMsg, String checkedFiles) {
+        if (check.getRule() != null && check.getRule().getSuccessMessage() != null && !check.getRule().getSuccessMessage().isEmpty()) {
+            return formatMessage(check.getRule().getSuccessMessage(), defaultMsg, null, checkedFiles, null);
+        }
         return defaultMsg;
     }
     
     /**
      * Format message template with placeholders.
-     * Supports {CORE_DETAILS} and {FAILURES} placeholders.
-     * If no placeholders found and coreDetails provided, appends at end.
-     * If template is null, returns coreDetails only (fallback).
+     * Supports {CORE_DETAILS}, {FAILURES}, {CHECKED_FILES}, and {FOUND_ITEMS}.
      */
     protected String formatMessage(String template, String coreDetails, String failures) {
+        return formatMessage(template, coreDetails, failures, null, null);
+    }
+
+    protected String formatMessage(String template, String coreDetails, String failures, String checkedFiles) {
+        return formatMessage(template, coreDetails, failures, checkedFiles, null);
+    }
+
+    protected String formatMessage(String template, String coreDetails, String failures, String checkedFiles, String foundItems) {
         // Fallback: if no template, use core details only
         if (template == null || template.isEmpty()) {
             return coreDetails != null ? coreDetails : "";
@@ -49,7 +86,6 @@ public abstract class AbstractCheck {
         String result = template;
         
         // Determine effective details for DEFAULT_MESSAGE replacement
-        // If coreDetails is missing but we have failures, use failures as the "Core Detail" of the error.
         String effectiveDetails = coreDetails;
         if (effectiveDetails == null && failures != null) {
             effectiveDetails = failures;
@@ -62,6 +98,21 @@ public abstract class AbstractCheck {
         }
         if (failures != null) {
             result = result.replace("{FAILURES}", failures);
+        }
+        if (checkedFiles != null) {
+            result = result.replace("{CHECKED_FILES}", checkedFiles);
+            // Also support {SCANNED_FILES} alias
+            result = result.replace("{SCANNED_FILES}", checkedFiles);
+        } else {
+             // If token exists but no files passed, replace with empty or "None"
+             result = result.replace("{CHECKED_FILES}", "None");
+             result = result.replace("{SCANNED_FILES}", "None");
+        }
+        
+        if (foundItems != null) {
+            result = result.replace("{FOUND_ITEMS}", foundItems);
+        } else {
+            result = result.replace("{FOUND_ITEMS}", "");
         }
         
         // If no placeholders found and coreDetails exists, append at end

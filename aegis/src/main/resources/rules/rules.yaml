@@ -49,6 +49,8 @@
 # You can use the following tokens in successMessage and errorMessage:
 # - {RULE_ID}         : The ID of the rule being executed.
 # - {DEFAULT_MESSAGE} : The technical details of the check result (e.g. valid/invalid values).
+# - {CHECKED_FILES}   : The list of files processed by the check.
+# - {FOUND_ITEMS}     : The specific forbidden items found (e.g. 'toApplicationCode', forbidden keys).
 # =============================================================================
 
 config:

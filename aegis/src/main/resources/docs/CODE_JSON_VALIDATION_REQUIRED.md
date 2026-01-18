@@ -25,8 +25,8 @@ Validates that **required JSON elements exist** in JSON files. This rule is esse
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `minVersions` | Map | Checks if a field's version string is >= specified version (e.g., "4.4.0") |
-| `requiredFields` | Map | Checks if a field exists AND has a specifically required value |
+| `minVersions` | Map | Checks if a field's value meets a minimum version (Supports Arrays). Logic: `Actual >= Min`. If array: Pass if *any* element >= Min. |
+| `requiredFields` | Map | Checks if a field matches an expected value (Supports Arrays). Logic: `Actual == Expected`. If array: Pass if *any* element matches (String equality or SemVer). |
 | `requiredElements` | List | Checks if a field simply exists (value ignored) |
 
 ## Configuration Examples

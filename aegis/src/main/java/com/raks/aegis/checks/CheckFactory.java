@@ -23,163 +23,166 @@ public class CheckFactory {
 
     public static AbstractCheck create(Check check) {
         String type = check.getType();
-        Map<String, Object> params = check.getParams();
-        if (params == null) params = new HashMap<>(); // Safety
+        // Create a copy of params to modify (effective configuration)
+        Map<String, Object> effectiveParams = check.getParams() != null ? new HashMap<>(check.getParams()) : new HashMap<>();
         
+        // ---------------------------------------------------------
+        // Universal Normalization (File Patterns)
+        // ---------------------------------------------------------
 
-        if (params.containsKey("filePattern")) {
-            params.put("filePatterns", java.util.Collections.singletonList(params.get("filePattern")));
+        if (effectiveParams.containsKey("filePattern")) {
+            effectiveParams.put("filePatterns", java.util.Collections.singletonList(effectiveParams.get("filePattern")));
         }
-        if (params.containsKey("targetFiles")) {
-            params.put("filePatterns", params.get("targetFiles"));
+        if (effectiveParams.containsKey("targetFiles")) {
+            effectiveParams.put("filePatterns", effectiveParams.get("targetFiles"));
         }
         
-        if (params.containsKey("fileExtensions")) {
-             Object extObj = params.get("fileExtensions");
+        if (effectiveParams.containsKey("fileExtensions")) {
+             Object extObj = effectiveParams.get("fileExtensions");
              if (extObj instanceof java.util.List) {
                  java.util.List<?> exts = (java.util.List<?>) extObj;
                  java.util.List<String> patterns = new java.util.ArrayList<>();
                  for (Object o : exts) {
                      patterns.add("**/*." + o.toString());
                  }
-                 params.put("filePatterns", patterns);
+                 effectiveParams.put("filePatterns", patterns);
              }
         }
 
-        if (!params.containsKey("filePatterns") && params.containsKey("directory")) {
+        // ---------------------------------------------------------
+        // Type-Specific Logic Injection
+        // ---------------------------------------------------------
 
-        }
+        AbstractCheck instance = null;
 
         if (type.equals("GENERIC_TOKEN_SEARCH") || type.equals("GENERIC_TOKEN_SEARCH_FORBIDDEN") || type.equals("GENERIC_TOKEN_SEARCH_REQUIRED") || type.equals("MANDATORY_SUBSTRING_CHECK") || type.equals("GENERIC_CODE_CHECK") || type.equals("GENERIC_CODE_TOKEN_CHECK") || type.equals("SUBSTRING_TOKEN_CHECK") || type.equals("DLP_REFERENCE_CHECK")  || type.equals("FORBIDDEN_TOKEN_IN_ELEMENT") || type.equals("GENERIC_CONFIG_TOKEN_CHECK")) {
             
             if (type.contains("REQUIRED") || type.contains("MANDATORY")) {
-                params.put("mode", "REQUIRED");
+                effectiveParams.put("mode", "REQUIRED");
             } else {
-                params.put("mode", "FORBIDDEN");
+                effectiveParams.put("mode", "FORBIDDEN");
             }
-            check.setParams(params);
-            return new TokenSearchCheck();
+            instance = new TokenSearchCheck();
         }
 
-
-        if (type.equals("XML_XPATH_EXISTS") || type.equals("XML_ATTRIBUTE_EXISTS") || type.equals("XML_XPATH_NOT_EXISTS") || type.equals("XML_ATTRIBUTE_NOT_EXISTS")) {
-            if (type.contains("NOT_EXISTS")) params.put("mode", "NOT_EXISTS");
-            else params.put("mode", "EXISTS");
+        else if (type.equals("XML_XPATH_EXISTS") || type.equals("XML_ATTRIBUTE_EXISTS") || type.equals("XML_XPATH_NOT_EXISTS") || type.equals("XML_ATTRIBUTE_NOT_EXISTS")) {
+            if (type.contains("NOT_EXISTS")) effectiveParams.put("mode", "NOT_EXISTS");
+            else effectiveParams.put("mode", "EXISTS");
             
-            
-            if (!params.containsKey("xpath") && params.containsKey("xpathExpressions")) {
-                Object exprsObj = params.get("xpathExpressions");
+            // Logic injection for high-level params -> specific xpath
+            if (!effectiveParams.containsKey("xpath") && effectiveParams.containsKey("xpathExpressions")) {
+                Object exprsObj = effectiveParams.get("xpathExpressions");
                 if (exprsObj instanceof java.util.List) {
                     java.util.List<?> list = (java.util.List<?>) exprsObj;
                     if (!list.isEmpty()) {
                         Object first = list.get(0);
                         if (first instanceof Map) {
                             String validXpath = (String) ((Map<?, ?>) first).get("xpath");
-                            params.put("xpath", validXpath);
+                            effectiveParams.put("xpath", validXpath);
                         }
                     }
                 }
             }
             
-            if (!params.containsKey("xpath") && params.containsKey("elements") && params.containsKey("forbiddenAttributes")) {
+            if (!effectiveParams.containsKey("xpath") && effectiveParams.containsKey("elements") && effectiveParams.containsKey("forbiddenAttributes")) {
                 @SuppressWarnings("unchecked")
-                java.util.List<String> elements = (java.util.List<String>) params.get("elements");
+                java.util.List<String> elements = (java.util.List<String>) effectiveParams.get("elements");
                 @SuppressWarnings("unchecked")
-                java.util.List<String> attrs = (java.util.List<String>) params.get("forbiddenAttributes");
+                java.util.List<String> attrs = (java.util.List<String>) effectiveParams.get("forbiddenAttributes");
                 if (elements != null && !elements.isEmpty() && attrs != null && !attrs.isEmpty()) {
-                    // Construct: //element[@attr1] | //element[@attr2]
                     StringBuilder sb = new StringBuilder();
                     for (String el : elements) {
                         for (String at : attrs) {
                             if (sb.length() > 0) sb.append(" | ");
-                            sb.append("//").append(el).append("[@").append(at).append("]");
+                            sb.append("//*[local-name()='").append(el).append("' and @").append(at).append("]");
                         }
                     }
-                    params.put("xpath", sb.toString());
-                }
+                     effectiveParams.put("xpath", sb.toString());
+                 }
             }
             
-            
-            if (!params.containsKey("xpath") && params.containsKey("elementAttributeSets")) {
+            if (!effectiveParams.containsKey("xpath") && effectiveParams.containsKey("elementAttributeSets")) {
                  @SuppressWarnings("unchecked")
-                 java.util.List<Map<String, Object>> sets = (java.util.List<Map<String, Object>>) params.get("elementAttributeSets");
+                 java.util.List<Map<String, Object>> sets = (java.util.List<Map<String, Object>>) effectiveParams.get("elementAttributeSets");
                  if (sets != null && !sets.isEmpty()) {
                      StringBuilder sb = new StringBuilder();
                      for (Map<String, Object> set : sets) {
                          String el = (String) set.get("element");
+                         // Handle namespaced elements (e.g. apikit-soap:config -> config)
+                         String localName = (el != null && el.contains(":")) ? el.substring(el.lastIndexOf(":") + 1) : el;
+                         
                          @SuppressWarnings("unchecked")
                          Map<String, String> attrs = (Map<String, String>) set.get("attributes");
                          if (el != null && attrs != null && !attrs.isEmpty()) {
                              for (Map.Entry<String, String> entry : attrs.entrySet()) {
                                  if (sb.length() > 0) sb.append(" | ");
-                                 // //element[@attr='val']
-                                 sb.append("//").append(el).append("[@").append(entry.getKey()).append("='").append(entry.getValue()).append("']");
+                                 sb.append("//*[local-name()='").append(localName).append("' and @").append(entry.getKey()).append("='").append(entry.getValue()).append("']");
                              }
                          }
                      }
-                     params.put("xpath", sb.toString());
+                     effectiveParams.put("xpath", sb.toString());
                  }
             }
             
-            check.setParams(params);
-            return new XmlGenericCheck();
+            instance = new XmlGenericCheck();
         }
-        if (type.equals("GENERIC_XML_VALIDATION")) {
-             return new XmlGenericCheck();
+        else if (type.equals("GENERIC_XML_VALIDATION")) {
+             instance = new XmlGenericCheck();
         }
 
-
-        if (type.equals("JSON_VALIDATION_REQUIRED")) {
-
-            if (!params.containsKey("jsonPath")) {
-                params.put("jsonPath", "$");
+        else if (type.equals("JSON_VALIDATION_REQUIRED")) {
+            if (!effectiveParams.containsKey("jsonPath")) {
+                effectiveParams.put("jsonPath", "$");
             }
-            params.put("mode", "EXISTS"); 
-            if (params.containsKey("expectedValue")) params.put("mode", "VALUE_MATCH");
-            check.setParams(params);
-            return new JsonGenericCheck();
+            effectiveParams.put("mode", "EXISTS"); 
+            if (effectiveParams.containsKey("expectedValue")) effectiveParams.put("mode", "VALUE_MATCH");
+            instance = new JsonGenericCheck();
         }
-        if (type.equals("JSON_VALIDATION_FORBIDDEN")) {
-            params.put("mode", "NOT_EXISTS");
+        else if (type.equals("JSON_VALIDATION_FORBIDDEN")) {
+            effectiveParams.put("mode", "NOT_EXISTS");
 
-            if (!params.containsKey("jsonPath") && params.containsKey("forbiddenElements")) {
+            if (!effectiveParams.containsKey("jsonPath") && effectiveParams.containsKey("forbiddenElements")) {
                 @SuppressWarnings("unchecked")
-                java.util.List<String> forbidden = (java.util.List<String>) params.get("forbiddenElements");
+                java.util.List<String> forbidden = (java.util.List<String>) effectiveParams.get("forbiddenElements");
                 if (forbidden != null && !forbidden.isEmpty()) {
                      StringBuilder sb = new StringBuilder("$['");
                      sb.append(String.join("','", forbidden));
                      sb.append("']");
-                     params.put("jsonPath", sb.toString());
+                     effectiveParams.put("jsonPath", sb.toString());
                 }
             }
-            check.setParams(params);
-            return new JsonGenericCheck();
+            instance = new JsonGenericCheck();
         }
 
-
-        if (type.equals("GENERIC_PROPERTY_FILE") || type.equals("CONFIG_PROPERTY_EXISTS") || type.equals("CONFIG_POLICY_EXISTS")) {
-            params.put("mode", "EXISTS");
-            check.setParams(params);
-            return new PropertyGenericCheck();
+        else if (type.equals("GENERIC_PROPERTY_FILE") || type.equals("CONFIG_PROPERTY_EXISTS") || type.equals("CONFIG_POLICY_EXISTS")) {
+            effectiveParams.put("mode", "EXISTS");
+            instance = new PropertyGenericCheck();
         }
-        if (type.equals("MANDATORY_PROPERTY_VALUE_CHECK")) {
-            params.put("mode", "VALUE_MATCH");
-            check.setParams(params);
-            return new PropertyGenericCheck();
+        else if (type.equals("MANDATORY_PROPERTY_VALUE_CHECK")) {
+            effectiveParams.put("mode", "VALUE_MATCH");
+            instance = new PropertyGenericCheck();
         }
-        if (type.equals("OPTIONAL_PROPERTY_VALUE_CHECK")) {
-            params.put("mode", "OPTIONAL_MATCH");
-            check.setParams(params);
-            return new PropertyGenericCheck();
+        else if (type.equals("OPTIONAL_PROPERTY_VALUE_CHECK")) {
+            effectiveParams.put("mode", "OPTIONAL_MATCH");
+            instance = new PropertyGenericCheck();
         }
-
-        try {
-            Class<? extends AbstractCheck> clazz = registry.get(type);
-            if (clazz == null)
-                throw new IllegalArgumentException("Unknown check type: " + type);
-            return clazz.getDeclaredConstructor().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to create check: " + check.getType(), e);
+        else {
+             // Fallback for direct mapping or custom checks
+             try {
+                Class<? extends AbstractCheck> clazz = registry.get(type);
+                if (clazz == null)
+                    throw new IllegalArgumentException("Unknown check type: " + type);
+                instance = clazz.getDeclaredConstructor().newInstance();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to create check: " + check.getType(), e);
+            }
         }
+        
+        // Inject the effective configuration into the instance
+        if (instance != null) {
+            instance.init(effectiveParams);
+        }
+        
+        return instance;
     }
 }

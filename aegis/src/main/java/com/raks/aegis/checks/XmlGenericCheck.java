@@ -36,7 +36,7 @@ public class XmlGenericCheck extends AbstractCheck {
             return CheckResult.pass(check.getRuleId(), check.getDescription(), "Pre-conditions not met.");
         }
 
-        Map<String, Object> params = check.getParams();
+        Map<String, Object> params = getEffectiveParams(check);
         
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) params.get("filePatterns");
@@ -54,6 +54,10 @@ public class XmlGenericCheck extends AbstractCheck {
         int passedFileCount = 0;
         int totalFiles = 0;
         List<String> details = new ArrayList<>();
+
+        @SuppressWarnings("unchecked")
+        List<String> forbiddenAttrs = (List<String>) params.get("forbiddenAttributes");
+        java.util.Set<String> allFoundItems = new java.util.HashSet<>();
 
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             List<Path> matchingFiles = paths
@@ -75,20 +79,82 @@ public class XmlGenericCheck extends AbstractCheck {
                     NodeList nodes = (NodeList) xpath.evaluate(xpathExpr, doc, XPathConstants.NODESET);
                     
                     int foundCount = nodes.getLength();
+                    java.util.Set<String> fileFoundItems = new java.util.HashSet<>();
                     
                     if (attributeMatch != null && foundCount > 0) {
                         // Refine count based on attribute value match?
-                    if (attributeMatch != null && foundCount > 0) {
-                         // Attribute check logic
-                    }
                     }
 
                     if ("EXISTS".equalsIgnoreCase(mode)) {
-                        if (foundCount > 0) filePassed = true;
-                        else details.add(projectRoot.relativize(file) + " [XPath not found]");
+                        if (foundCount > 0) {
+                            filePassed = true;
+                        } else {
+                            // FALLBACK: Property Resolution Logic
+                            // If strict match failed, check if it was due to unresolved property placeholders.
+                            try {
+                                String[] subPaths = xpathExpr.split(" \\| ");
+                                boolean propertyMatchFound = false;
+                                for (String subPath : subPaths) {
+                                    // Pattern matches CheckFactory format: //*[local-name()='ELEMENT' and @ATTR='VALUE']
+                                    java.util.regex.Matcher m = java.util.regex.Pattern.compile("local-name\\(\\)\\s*=\\s*'([^']+)'\\s+and\\s+@([^=]+)='([^']+)'").matcher(subPath);
+                                    while (m.find()) {
+                                        String elem = m.group(1);
+                                        String attr = m.group(2);
+                                        String expected = m.group(3);
+                                        
+                                        String relaxedXpath = "//*[local-name()='" + elem + "' and @" + attr + "]";
+                                        NodeList relaxedNodes = (NodeList) xpath.evaluate(relaxedXpath, doc, XPathConstants.NODESET);
+                                        
+                                        for (int i = 0; i < relaxedNodes.getLength(); i++) {
+                                            org.w3c.dom.Node n = relaxedNodes.item(i);
+                                            if (n.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+                                                org.w3c.dom.Element e = (org.w3c.dom.Element) n;
+                                                String rawVal = e.getAttribute(attr);
+                                                String resolved = com.raks.aegis.util.PropertyResolver.resolve(rawVal, projectRoot);
+                                                if (expected.equals(resolved)) {
+                                                    propertyMatchFound = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        if (propertyMatchFound) break;
+                                    }
+                                    if (propertyMatchFound) break;
+                                }
+                                
+                                if (propertyMatchFound) {
+                                    filePassed = true;
+                                    passedFileCount++; // Increment here as we are bypassing the loop content? No, passedFileCount is incremented at end of file processing.
+                                    // Just set filePassed=true.
+                                } else {
+                                    details.add(projectRoot.relativize(file) + " [XPath not found]");
+                                }
+                            } catch (Exception ex) {
+                                details.add(projectRoot.relativize(file) + " [XPath not found]");
+                            }
+                        }
                     } else { // NOT_EXISTS
-                        if (foundCount == 0) filePassed = true;
-                        else details.add(projectRoot.relativize(file) + " [XPath found (" + foundCount + " matches)]");
+                        if (foundCount == 0) {
+                            filePassed = true;
+                        } else {
+                            // Identify what was found
+                            if (forbiddenAttrs != null && !forbiddenAttrs.isEmpty()) {
+                                for (int i = 0; i < nodes.getLength(); i++) {
+                                    org.w3c.dom.Node n = nodes.item(i);
+                                    if (n.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+                                        org.w3c.dom.Element e = (org.w3c.dom.Element) n;
+                                        for (String fa : forbiddenAttrs) {
+                                            if (e.hasAttribute(fa)) {
+                                                fileFoundItems.add(fa);
+                                                allFoundItems.add(fa);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            String foundStr = fileFoundItems.isEmpty() ? String.valueOf(foundCount) + " matches" : "Found: " + String.join(", ", fileFoundItems);
+                            details.add(projectRoot.relativize(file) + " [XPath found (" + foundStr + ")]");
+                        }
                     }
                     
                 } catch (Exception e) {
@@ -98,20 +164,26 @@ public class XmlGenericCheck extends AbstractCheck {
                 if (filePassed) passedFileCount++;
             }
 
+            boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
+            
+            String checkedFilesStr = matchingFiles.stream()
+                    .map(p -> projectRoot.relativize(p).toString())
+                    .collect(java.util.stream.Collectors.joining(", "));
+            
+            String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
+
+            if (uniqueCondition) {
+                String defaultSuccess = String.format("XML Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
+            } else {
+                String technicalMsg = String.format("XML Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
+                                mode, matchMode, passedFileCount, totalFiles, 
+                                details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
+                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr));
+            }
+
         } catch (Exception e) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Scan Error: " + e.getMessage());
-        }
-
-        boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
-        
-        if (uniqueCondition) {
-            return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                    String.format("XML Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles));
-        } else {
-            String technicalMsg = String.format("XML Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
-                            mode, matchMode, passedFileCount, totalFiles, 
-                            details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg));
         }
     }
     

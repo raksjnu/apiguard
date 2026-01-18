@@ -155,6 +155,8 @@ You can use the following tokens in your `successMessage` and `errorMessage` fie
 | `{CORE_DETAILS}` | The technical details of the check result (e.g., "Found 3 issues in pom.xml"). |
 | `{DEFAULT_MESSAGE}` | **Alias for `{CORE_DETAILS}`**. Recommended for clarity. |
 | `{FAILURES}` | A list of specific failure details (if applicable). |
+| `{CHECKED_FILES}` | A comma-separated list of files that were scanned or passed the check. Useful for listing specific files in the report. |
+| `{FOUND_ITEMS}` | A comma-separated list of forbidden items (tokens, keys, attributes) that were found, causing the rule to fail. Supports `XmlGenericCheck`, `JsonGenericCheck`, and `TokenSearchCheck`. |
 
 ### Newline Formatting
 
@@ -172,11 +174,13 @@ errorMessage: "Validation failed.\n{DEFAULT_MESSAGE}"
 You can use either `{DEFAULT_MESSAGE}` or `{CORE_DETAILS}`. They result in the exact same output.
 
 **Using `{DEFAULT_MESSAGE}` (Recommended):**
+
 ```yaml
 errorMessage: "Validation failed.\n{DEFAULT_MESSAGE}"
 ```
 
 **Using `{CORE_DETAILS}`:**
+
 ```yaml
 errorMessage: "Validation failed.\n{CORE_DETAILS}"
 ```
@@ -188,11 +192,13 @@ errorMessage: "Validation failed.\n{CORE_DETAILS}"
 Aegis uses specific rules to identify which folders contain valid projects to scan. This is configured in the `projectIdentification` section of your main configuration file.
 
 ### configFolder
+
 Defines patterns to identify configuration projects (e.g., "global-config", "common-library"). These are scanned differently than standard Mule applications.
 
 - **namePattern**: Regex to match folder names (e.g., `.*_config.*`).
 
 ### targetProject
+
 Defines rules for identifying standard Mule applications.
 
 - **matchMode**:
@@ -201,6 +207,7 @@ Defines rules for identifying standard Mule applications.
 - **markerFiles**: List of files that signify a project root (e.g., `pom.xml`, `mule-artifact.json`).
 
 ### ignoredFolders
+
 Defines folders that are strictly excluded from scanning to improve performance and avoid false positives.
 
 - **exactNames**: List of folder names to ignore (e.g., `target`, `.git`, `node_modules`).

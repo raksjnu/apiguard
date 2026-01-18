@@ -31,7 +31,7 @@ public class PropertyGenericCheck extends AbstractCheck {
             return CheckResult.pass(check.getRuleId(), check.getDescription(), "Pre-conditions not met.");
         }
 
-        Map<String, Object> params = check.getParams();
+        Map<String, Object> params = getEffectiveParams(check);
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) params.get("filePatterns");
         
@@ -158,20 +158,26 @@ public class PropertyGenericCheck extends AbstractCheck {
                 else details.add(projectRoot.relativize(file) + " [\n" + String.join("\n", fileErrors) + "\n]");
             }
 
+
+
+            boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
+            
+            String checkedFilesStr = matchingFiles.stream()
+                    .map(p -> projectRoot.relativize(p).toString())
+                    .collect(java.util.stream.Collectors.joining(", "));
+            
+            if (uniqueCondition) {
+                String defaultSuccess = String.format("Property Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
+            } else {
+                String technicalMsg = String.format("Property Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
+                                mode, matchMode, passedFileCount, totalFiles, 
+                                details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
+                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr));
+            }
+
         } catch (Exception e) {
              return CheckResult.fail(check.getRuleId(), check.getDescription(), "Scan Error: " + e.getMessage());
-        }
-
-        boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
-        
-        if (uniqueCondition) {
-            return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                    String.format("Property Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles));
-        } else {
-            String technicalMsg = String.format("Property Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
-                            mode, matchMode, passedFileCount, totalFiles, 
-                            details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg));
         }
     }
     

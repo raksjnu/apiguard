@@ -30,7 +30,7 @@ public class TokenSearchCheck extends AbstractCheck {
             return CheckResult.pass(check.getRuleId(), check.getDescription(), "Rule skipped: Pre-conditions not met.");
         }
 
-        Map<String, Object> params = check.getParams();
+        Map<String, Object> params = getEffectiveParams(check);
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) params.get("filePatterns");
         @SuppressWarnings("unchecked")
@@ -148,6 +148,7 @@ public class TokenSearchCheck extends AbstractCheck {
         List<String> failureDetails = new ArrayList<>();
         int passedFileCount = 0;
         int totalFiles = 0;
+        java.util.Set<String> allFoundItems = new java.util.HashSet<>();
         
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             List<Path> matchingFiles = paths
@@ -166,7 +167,7 @@ public class TokenSearchCheck extends AbstractCheck {
             }
 
         @SuppressWarnings("unchecked")
-        Map<String, Object> params = check.getParams();
+        Map<String, Object> params = getEffectiveParams(check);
         String logic = (String) params.getOrDefault("logic", "AND");
 
         // ... existing setup ...
@@ -214,12 +215,14 @@ public class TokenSearchCheck extends AbstractCheck {
                             if (found.size() == tokens.size()) {
                                 filePassed = false;
                                 failureReason = "Found all forbidden: " + found;
+                                allFoundItems.addAll(found);
                             }
                         } else {
                             // OR (Default for forbidden): Fail if ANY is present
                             if (!found.isEmpty()) {
                                 filePassed = false;
                                 failureReason = "Found: " + found;
+                                allFoundItems.addAll(found);
                             }
                         }
                     }
@@ -236,19 +239,29 @@ public class TokenSearchCheck extends AbstractCheck {
                 }
             }
             
+
+        
+            // Collect list of passed files relative path
+            // Collect list of passed files relative path
+            String checkedFilesStr = matchingFiles.stream()
+                .map(p -> projectRoot.relativize(p).toString())
+                .collect(java.util.stream.Collectors.joining(", "));
+            
+            String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
+
+            boolean overallPass = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
+
+            if (overallPass) {
+                String defaultSuccess = String.format("Passed %s check in %d/%d files (Mode: %s)", mode, passedFileCount, totalFiles, matchMode);
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
+            } else {
+                 String technicalMsg = String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d). Details:\n• %s", 
+                        mode, matchMode, passedFileCount, totalFiles, String.join("\n• ", failureDetails));
+                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr));
+            }
+            
         } catch (Exception e) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Scan Error: " + e.getMessage());
-        }
-        
-        boolean overallPass = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
-        
-        if (overallPass) {
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), 
-                String.format("Passed %s check in %d/%d files (Mode: %s)", mode, passedFileCount, totalFiles, matchMode));
-        } else {
-             String technicalMsg = String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d). Details:\n• %s", 
-                    mode, matchMode, passedFileCount, totalFiles, String.join("\n• ", failureDetails));
-             return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg));
         }
     }
 }

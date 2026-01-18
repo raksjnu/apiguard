@@ -47,6 +47,8 @@
 # You can use the following tokens in successMessage and errorMessage:
 # - {RULE_ID}         : The ID of the rule being executed.
 # - {DEFAULT_MESSAGE} : The technical details of the check result (e.g. valid/invalid values).
+# - {CHECKED_FILES}   : The list of files processed by the check.
+# - {FOUND_ITEMS}     : The specific forbidden items found (e.g. 'toApplicationCode', forbidden keys).
 # =============================================================================
 
 config:
@@ -97,8 +99,8 @@ rules:
     description: "Enforces minMuleVersion 4.9.7, Java 17, and secureProperties."
     enabled: true
     severity: HIGH
-    successMessage: "✓ mule-artifact.json is valid (Version: 4.9.7+, Java: 17) {DEFAULT_MESSAGE}"
-    errorMessage: "✗ mule-artifact.json failed validation. Check minMuleVersion (4.9.7+), javaSpecificationVersions (17), or secureProperties. {DEFAULT_MESSAGE}"
+    successMessage: "✓ mule-artifact.json is valid (Version: 4.9.7+, Java: 17) {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
+    errorMessage: "✗ mule-artifact.json failed validation. Check minMuleVersion (4.9.7+), javaSpecificationVersions (17), or secureProperties. {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
     checks:
     - type: JSON_VALIDATION_REQUIRED
       params:
@@ -133,8 +135,8 @@ rules:
     description: "Ensures critical properties satisfy minimum versions."
     enabled: true
     severity: HIGH
-    successMessage: "✓ Critical POM properties (runtime, plugin, cicd) are valid {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Critical POM properties check failed. Ensure mule.maven.plugin.version>=4.6.0, app.runtime>=4.9.LTS {DEFAULT_MESSAGE}"
+    successMessage: "✓ Critical POM properties (runtime, plugin, cicd,munit) are valid {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Critical POM properties check failed. Ensure mule.maven.plugin.version>=4.6.0, app.runtime>=4.9.LTS, cicd.mule.version>=4.9.LTS, munit.version>=3.5.0 {DEFAULT_MESSAGE}"
     checks:
     - type: POM_VALIDATION_REQUIRED
       params:
@@ -143,24 +145,11 @@ rules:
         - name: mule.maven.plugin.version
           minVersion: 4.6.0
         - name: app.runtime
-          expectedValue: "4.9.LTS"
+          minVersion: "4.9.LTS"
         - name: cicd.mule.version
-          expectedValue: "4.9.LTS"
-
-  # BANK-025: MUnit Version
-  - id: "BANK-025"
-    name: "Validate MUnit Version"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ MUnit version is correct (3.5.0) {DEFAULT_MESSAGE}"
-    errorMessage: "✗ MUnit version check failed. Expected: 3.5.0 {DEFAULT_MESSAGE}"
-    checks:
-    - type: POM_VALIDATION_REQUIRED
-      params:
-        validationType: PROPERTIES
-        properties:
+          minVersion: "4.9.LTS"
         - name: munit.version
-          expectedValue: "3.5.0"
+          minVersion: "3.5.0"
 
   # ===========================================================================
   # SECTION 2: CODE QUALITY & SECURITY (XML/JAVA)
@@ -172,13 +161,13 @@ rules:
     description: "Ensures toApplicationCode and fromApplicationCode are NOT used."
     enabled: true
     severity: HIGH
-    successMessage: "✓ No legacy logger attributes found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Forbidden attribute found in Logger: toApplicationCode or fromApplicationCode {DEFAULT_MESSAGE}"
+    successMessage: "✓ No legacy logger attributes found {DEFAULT_MESSAGE}; items checked - {FOUND_ITEMS} ; Checked Files: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden attribute found in Logger: {FOUND_ITEMS}; {DEFAULT_MESSAGE} ; Checked Files: {CHECKED_FILES}"
     checks:
     - type: XML_ATTRIBUTE_NOT_EXISTS
       params:
         filePatterns: ["src/main/mule/*.xml"]
-        elements: ["logger"]
+        elements: ["set-payload"]
         forbiddenAttributes: ["toApplicationCode", "fromApplicationCode"]
 
   # BANK-004: jce-encrypt

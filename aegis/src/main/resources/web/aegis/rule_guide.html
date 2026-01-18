@@ -555,7 +555,7 @@ Aegis allows you to customize the success and error messages for each rule using
 <br>
 You can use the following tokens in your <code class='inline-token'>successMessage</code> and <code class='inline-token'>errorMessage</code> fields:
 <br>
-<table><tr><td> Token </td><td> Description </td></tr><tr><td> <code class='inline-token'>{RULE_ID}</code> </td><td> The ID of the rule being executed (e.g., <code class='inline-token'>RULE-001</code>). </td></tr><tr><td> <code class='inline-token'>{CORE_DETAILS}</code> </td><td> The technical details of the check result (e.g., "Found 3 issues in pom.xml"). </td></tr><tr><td> <code class='inline-token'>{DEFAULT_MESSAGE}</code> </td><td> <strong>Alias for <code class='inline-token'>{CORE_DETAILS}</code></strong>. Recommended for clarity. </td></tr><tr><td> <code class='inline-token'>{FAILURES}</code> </td><td> A list of specific failure details (if applicable). </td></tr></table>
+<table><tr><td> Token </td><td> Description </td></tr><tr><td> <code class='inline-token'>{RULE_ID}</code> </td><td> The ID of the rule being executed (e.g., <code class='inline-token'>RULE-001</code>). </td></tr><tr><td> <code class='inline-token'>{CORE_DETAILS}</code> </td><td> The technical details of the check result (e.g., "Found 3 issues in pom.xml"). </td></tr><tr><td> <code class='inline-token'>{DEFAULT_MESSAGE}</code> </td><td> <strong>Alias for <code class='inline-token'>{CORE_DETAILS}</code></strong>. Recommended for clarity. </td></tr><tr><td> <code class='inline-token'>{FAILURES}</code> </td><td> A list of specific failure details (if applicable). </td></tr><tr><td> <code class='inline-token'>{CHECKED_FILES}</code> </td><td> A comma-separated list of files that were scanned or passed the check. Useful for listing specific files in the report. </td></tr></table>
 <br>
 <h3>Newline Formatting</h3>
 <br>
@@ -572,10 +572,12 @@ errorMessage: &quot;Validation failed.\n{DEFAULT_MESSAGE}&quot;
 You can use either <code class='inline-token'>{DEFAULT_MESSAGE}</code> or <code class='inline-token'>{CORE_DETAILS}</code>. They result in the exact same output.
 <br>
 <strong>Using <code class='inline-token'>{DEFAULT_MESSAGE}</code> (Recommended):</strong>
+<br>
 <pre><code class='language-yaml'>errorMessage: &quot;Validation failed.\n{DEFAULT_MESSAGE}&quot;
 </code></pre>
 <br>
 <strong>Using <code class='inline-token'>{CORE_DETAILS}</code>:</strong>
+<br>
 <pre><code class='language-yaml'>errorMessage: &quot;Validation failed.\n{CORE_DETAILS}&quot;
 </code></pre>
 <br>
@@ -586,11 +588,13 @@ You can use either <code class='inline-token'>{DEFAULT_MESSAGE}</code> or <code 
 Aegis uses specific rules to identify which folders contain valid projects to scan. This is configured in the <code class='inline-token'>projectIdentification</code> section of your main configuration file.
 <br>
 <h3>configFolder</h3>
+<br>
 Defines patterns to identify configuration projects (e.g., "global-config", "common-library"). These are scanned differently than standard Mule applications.
 <br>
 <li><strong>namePattern</strong>: Regex to match folder names (e.g., <code class='inline-token'>.*_config.*</code>).</li>
 <br>
 <h3>targetProject</h3>
+<br>
 Defines rules for identifying standard Mule applications.
 <br>
 <li><strong>matchMode</strong>:</li>
@@ -599,6 +603,7 @@ Defines rules for identifying standard Mule applications.
 <li><strong>markerFiles</strong>: List of files that signify a project root (e.g., <code class='inline-token'>pom.xml</code>, <code class='inline-token'>mule-artifact.json</code>).</li>
 <br>
 <h3>ignoredFolders</h3>
+<br>
 Defines folders that are strictly excluded from scanning to improve performance and avoid false positives.
 <br>
 <li><strong>exactNames</strong>: List of folder names to ignore (e.g., <code class='inline-token'>target</code>, <code class='inline-token'>.git</code>, <code class='inline-token'>node_modules</code>).</li>
@@ -1495,7 +1500,7 @@ Validates that <strong>required JSON elements exist</strong> in JSON files. This
 <br>
 <h3>Validation Parameters (Must configure at least one)</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>minVersions</code> </td><td> Map </td><td> Checks if a field's version string is >= specified version (e.g., "4.4.0") </td></tr><tr><td> <code class='inline-token'>requiredFields</code> </td><td> Map </td><td> Checks if a field exists AND has a specifically required value </td></tr><tr><td> <code class='inline-token'>requiredElements</code> </td><td> List </td><td> Checks if a field simply exists (value ignored) </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>minVersions</code> </td><td> Map </td><td> Checks if a field's value meets a minimum version (Supports Arrays). Logic: <code class='inline-token'>Actual &gt;= Min</code>. If array: Pass if *any* element >= Min. </td></tr><tr><td> <code class='inline-token'>requiredFields</code> </td><td> Map </td><td> Checks if a field matches an expected value (Supports Arrays). Logic: <code class='inline-token'>Actual == Expected</code>. If array: Pass if *any* element matches (String equality or SemVer). </td></tr><tr><td> <code class='inline-token'>requiredElements</code> </td><td> List </td><td> Checks if a field simply exists (value ignored) </td></tr></table>
 <br>
 <h2 id="JSON_VALIDATION_REQUIRED_ConfigurationExamples">Configuration Examples</h2>
 <br>
