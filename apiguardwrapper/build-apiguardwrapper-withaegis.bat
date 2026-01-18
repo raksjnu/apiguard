@@ -81,6 +81,18 @@ if exist "%SCRIPT_DIR%..\aegis" (
     cd /d "%SCRIPT_DIR%"
     call "%SCRIPT_DIR%copyResourcesOfAegis.bat"
 
+    REM Copy rules.yaml
+    echo.
+    echo [INFO] Copying rules.yaml to wrapper resources...
+    if exist "%SCRIPT_DIR%..\aegis\src\main\resources\rules\rules.yaml" (
+        echo [INFO] Found rules.yaml at ..\aegis\src\main\resources\rules\rules.yaml
+        if not exist "%SCRIPT_DIR%src\main\resources\rules" mkdir "%SCRIPT_DIR%src\main\resources\rules"
+        xcopy /Y /Q "%SCRIPT_DIR%..\aegis\src\main\resources\rules\rules.yaml" "%SCRIPT_DIR%src\main\resources\rules\" >nul 2>&1
+        echo [INFO] rules.yaml copied successfully.
+    ) else (
+        echo [WARN] rules.yaml not found in aegis source!
+    )
+
 
 ) else (
     echo [ERROR] Aegis project not found at ..\aegis

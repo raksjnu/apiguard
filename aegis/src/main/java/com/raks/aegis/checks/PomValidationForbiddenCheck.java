@@ -36,16 +36,20 @@ public class PomValidationForbiddenCheck extends AbstractCheck {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Error scanning files: " + e.getMessage());
         }
+        // Generate file list for reporting (used in both pass and fail scenarios)
+        String fileList = pomFiles.stream()
+                .map(projectRoot::relativize)
+                .map(Path::toString)
+                .collect(java.util.stream.Collectors.joining("; "));
+
         if (failures.isEmpty()) {
-            String fileList = pomFiles.stream()
-                    .map(projectRoot::relativize)
-                    .map(Path::toString)
-                    .collect(java.util.stream.Collectors.joining("; "));
             return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                    "No forbidden POM elements found\nFiles validated: " + fileList);
+                    "No forbidden POM elements found\nFiles validated: " + fileList, fileList);
         } else {
             String technicalMsg = "Forbidden POM elements found:\n• " + String.join("\n• ", failures);
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg));
+            // Pass 'fileList' as checkedFiles to populate {CHECKED_FILES} token
+            String finalMessage = getCustomMessage(check, technicalMsg, fileList);
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage, fileList);
         }
     }
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,

@@ -64,6 +64,18 @@ if [ -d "$SCRIPT_DIR/../aegis" ]; then
         echo "[INFO] Web resources copied."
     fi
 
+
+    # Copy rules.yaml
+    echo
+    echo "[INFO] Copying rules.yaml to wrapper resources..."
+    if [ -f "$SCRIPT_DIR/../aegis/src/main/resources/rules/rules.yaml" ]; then
+        mkdir -p "$SCRIPT_DIR/src/main/resources/rules"
+        cp -f "$SCRIPT_DIR/../aegis/src/main/resources/rules/rules.yaml" "$SCRIPT_DIR/src/main/resources/rules/"
+        echo "[INFO] rules.yaml copied successfully."
+    else
+        echo "[WARN] rules.yaml not found in aegis source!"
+    fi
+
 else
     echo "[ERROR] Aegis project not found at ../aegis"
     exit 1

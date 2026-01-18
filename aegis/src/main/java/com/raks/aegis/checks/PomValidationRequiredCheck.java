@@ -38,12 +38,13 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
                     "Error scanning files: " + e.getMessage());
         }
-        if (failures.isEmpty()) {
+        // Generate file list for reporting (used in both pass and fail scenarios)
+        String fileList = pomFiles.stream()
+                .map(projectRoot::relativize)
+                .map(Path::toString)
+                .collect(java.util.stream.Collectors.joining("; "));
 
-            String fileList = pomFiles.stream()
-                    .map(projectRoot::relativize)
-                    .map(Path::toString)
-                    .collect(java.util.stream.Collectors.joining("; "));
+        if (failures.isEmpty()) {
 
             String coreDetails = "Files validated: " + fileList;
             if (!successes.isEmpty()) {
@@ -52,18 +53,19 @@ public class PomValidationRequiredCheck extends AbstractCheck {
 
             String customMessage = check.getRule() != null ? check.getRule().getSuccessMessage() : null;
 
-            String finalMessage = formatMessage(customMessage, coreDetails, null);
+            String finalMessage = formatMessage(customMessage, coreDetails, null, fileList);
 
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), finalMessage);
+            return CheckResult.pass(check.getRuleId(), check.getDescription(), finalMessage, fileList);
         } else {
 
             String failureDetails = "• " + String.join("\n• ", failures);
 
             String customError = check.getRule() != null ? check.getRule().getErrorMessage() : null;
 
-            String finalMessage = formatMessage(customError, null, failureDetails);
+            // Pass 'fileList' as checkedFiles to populate {CHECKED_FILES} token
+            String finalMessage = formatMessage(customError, null, failureDetails, fileList);
 
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage);
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage, fileList);
         }
     }
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,
