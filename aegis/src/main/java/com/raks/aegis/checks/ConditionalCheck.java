@@ -81,7 +81,7 @@ public class ConditionalCheck extends AbstractCheck {
             }
         } else {
 
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), "Skipped: Preconditions not met for this project.");
+            return CheckResult.pass(check.getRuleId(), check.getDescription(), "⊘ Skipped: Preconditions not met for this project.");
         }
     }
 

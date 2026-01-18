@@ -50,7 +50,7 @@ public class TokenSearchCheck extends AbstractCheck {
 
             if (matchingFiles.isEmpty()) {
                 if ("REQUIRED".equalsIgnoreCase(mode) && ("ALL_FILES".equalsIgnoreCase(matchMode) || "AT_LEAST_N".equalsIgnoreCase(matchMode))) {
-                    return CheckResult.fail(check.getRuleId(), check.getDescription(), "No matching files found for pattern: " + filePatterns);
+                    return CheckResult.fail(check.getRuleId(), check.getDescription(), "✗ No matching files found for pattern: " + filePatterns);
                 }
 
             }
