@@ -46,6 +46,12 @@ public class ProjectDiscovery {
         if (currentDepth > maxDepth) {
             return;
         }
+        
+        // Check if this directory should be ignored BEFORE checking if it's a project
+        if (isIgnoredDirectory(directory, exactIgnoredNames, ignoredPrefixes)) {
+            return;
+        }
+        
         try {
             if (isProject(directory, markerFiles, matchMode, configFolderPattern)) {
                 results.add(directory);
