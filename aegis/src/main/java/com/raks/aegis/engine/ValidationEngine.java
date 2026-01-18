@@ -2,31 +2,60 @@ package com.raks.aegis.engine;
 import com.raks.aegis.checks.AbstractCheck;
 import com.raks.aegis.checks.CheckFactory;
 import com.raks.aegis.model.*;
+import com.raks.aegis.util.ProjectTypeClassifier;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 public class ValidationEngine {
     private final List<Rule> rules;
     private final Path projectRoot;
+    private final ProjectTypeClassifier projectTypeClassifier;
 
     public ValidationEngine(List<Rule> rules, Path projectRoot) {
+        this(rules, projectRoot, null);
+    }
+
+    public ValidationEngine(List<Rule> rules, Path projectRoot, ProjectTypeClassifier projectTypeClassifier) {
         this.rules = rules;
         this.projectRoot = projectRoot;
+        this.projectTypeClassifier = projectTypeClassifier;
     }
 
     public ValidationReport validate() {
         if (!Files.exists(projectRoot)) {
             throw new IllegalArgumentException("Project root does not exist: " + projectRoot);
         }
+        
+        // Classify this project (if classifier is available)
+        Set<String> projectTypes = null;
+        if (projectTypeClassifier != null) {
+            projectTypes = projectTypeClassifier.classifyProject(projectRoot);
+        }
+        
         ValidationReport report = new ValidationReport();
         report.projectPath = projectRoot.toString();
+        
         for (Rule rule : rules) {
             if (!rule.isEnabled()) {
                 report.addSkipped(rule.getId(), rule.getName());
                 continue;
             }
+            
+            // Check if rule applies to this project type
+            if (projectTypes != null && rule.getAppliesTo() != null && !rule.getAppliesTo().isEmpty()) {
+                boolean applicable = rule.getAppliesTo().stream()
+                    .anyMatch(projectTypes::contains);
+                
+                if (!applicable) {
+                    // Rule doesn't apply to this project type - skip it
+                    report.addNotApplicable(rule.getId(), rule.getName(), rule.getSeverity());
+                    continue;
+                }
+            }
+            
             List<CheckResult> results = new ArrayList<>();
             boolean rulePassed = true;
             for (Check check : rule.getChecks()) {

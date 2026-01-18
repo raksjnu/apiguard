@@ -18,6 +18,7 @@ public class Rule {
     private String successMessage;
     private String errorMessage;
     private String docLink;
+    private List<String> appliesTo;  // NEW: Project types this rule applies to (e.g., ["CODE", "CONFIG"])
 
     public String getScope() { return scope; }
     public void setScope(String scope) { this.scope = scope; }
@@ -60,4 +61,7 @@ public class Rule {
 
     public String getDocLink() { return docLink; }
     public void setDocLink(String docLink) { this.docLink = docLink; }
+
+    public List<String> getAppliesTo() { return appliesTo; }
+    public void setAppliesTo(List<String> appliesTo) { this.appliesTo = appliesTo; }
 }

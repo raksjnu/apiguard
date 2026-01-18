@@ -2,6 +2,7 @@ package com.raks.aegis;
 
 import com.raks.aegis.engine.ReportGenerator;
 import com.raks.aegis.engine.ValidationEngine;
+import com.raks.aegis.model.ProjectTypeDefinition;
 import com.raks.aegis.model.Rule;
 import com.raks.aegis.model.ValidationReport;
 import org.yaml.snakeyaml.Yaml;
@@ -129,6 +130,15 @@ public class AegisMain implements Callable<Integer> {
                 exactIgnoredNames,
                 ignoredPrefixes);
 
+        // Initialize ProjectTypeClassifier if projectTypes are defined
+        com.raks.aegis.util.ProjectTypeClassifier projectTypeClassifier = null;
+        Map<String, ProjectTypeDefinition> projectTypes = configWrapper.getConfig().getProjectTypes();
+        if (projectTypes != null && !projectTypes.isEmpty()) {
+            projectTypeClassifier = new com.raks.aegis.util.ProjectTypeClassifier(projectTypes);
+            logger.info("Project type filtering enabled with {} type(s): {}", 
+                projectTypes.size(), String.join(", ", projectTypes.keySet()));
+        }
+
         logger.info("");
         for (Path apiDir : discoveredProjects) {
             String apiName = apiDir.getFileName().toString();
@@ -167,7 +177,7 @@ public class AegisMain implements Callable<Integer> {
                         return isConfigProject == isConfigRule;
                     }).collect(Collectors.toList());
 
-            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir);
+            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier);
             ValidationReport report = engine.validate();
             report.projectPath = apiName + " (" + apiDir.toString() + ")";
             Path apiReportDir = reportsRoot.resolve(apiName);
@@ -253,6 +263,13 @@ public class AegisMain implements Callable<Integer> {
             }
             List<String> globalEnvironments = activeConfig.getConfig().getEnvironments();
 
+            // Initialize ProjectTypeClassifier if projectTypes are defined
+            com.raks.aegis.util.ProjectTypeClassifier projectTypeClassifier = null;
+            Map<String, ProjectTypeDefinition> projectTypes = activeConfig.getConfig().getProjectTypes();
+            if (projectTypes != null && !projectTypes.isEmpty()) {
+                projectTypeClassifier = new com.raks.aegis.util.ProjectTypeClassifier(projectTypes);
+            }
+
             List<Path> discoveredProjects = com.raks.aegis.util.ProjectDiscovery.findProjects(
                     parentFolder,
                     maxSearchDepth,
@@ -305,7 +322,7 @@ public class AegisMain implements Callable<Integer> {
                         })
                         .collect(Collectors.toList());
 
-                ValidationEngine engine = new ValidationEngine(applicableRules, apiDir);
+                ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier);
                 ValidationReport report = engine.validate();
                 if (report == null) {
                     logger.error("Validation failed for {}", apiName);
@@ -470,6 +487,7 @@ public class AegisMain implements Callable<Integer> {
     }
     public static class ConfigSection {
         private Map<String, Object> projectIdentification;
+        private Map<String, ProjectTypeDefinition> projectTypes;  // NEW: Centralized project type definitions
         private Map<String, Integer> rules;
         private List<String> environments;
         private String folderPattern;
@@ -480,6 +498,12 @@ public class AegisMain implements Callable<Integer> {
         }
         public void setProjectIdentification(Map<String, Object> projectIdentification) {
             this.projectIdentification = projectIdentification;
+        }
+        public Map<String, ProjectTypeDefinition> getProjectTypes() {
+            return projectTypes;
+        }
+        public void setProjectTypes(Map<String, ProjectTypeDefinition> projectTypes) {
+            this.projectTypes = projectTypes;
         }
         public Map<String, Integer> getRules() {
             return rules;
