@@ -49,6 +49,33 @@
 # - {DEFAULT_MESSAGE} : The technical details of the check result (e.g. valid/invalid values).
 # - {CHECKED_FILES}   : The list of files processed by the check.
 # - {FOUND_ITEMS}     : The specific forbidden items found (e.g. 'toApplicationCode', forbidden keys).
+# - {MATCHING_FILES}  : The list of files that *passed* the check condition (Success Messages).
+# =============================================================================
+
+# =============================================================================
+# PROPERTY RESOLUTION
+# =============================================================================
+# Aegis can resolve property placeholders in XML attributes, XML element content,
+# and JSON values before validation. This allows rules to work seamlessly with
+# externalized configurations across multiple technologies.
+#
+# SUPPORTED RULE TYPES:
+# - XML_ATTRIBUTE_EXISTS (Attributes)
+# - XML_ELEMENT_CONTENT_REQUIRED / FORBIDDEN (Text Content)
+# - JSON_VALIDATION_REQUIRED / FORBIDDEN (Values)
+#
+# SUPPORTED TECHNOLOGIES:
+# - Mule:        ${property} or p('property')
+# - Spring Boot: ${property}
+# - TIBCO:       %%property%% or $_property
+# - Python:      ${VAR}
+# - Node.js:     process.env.VAR
+# - Kubernetes:  $(VAR)
+#
+# EXAMPLE:
+# XML: <version>${app.version}</version>
+# Property File: app.version=1.0.0
+# Result: Aegis resolves ${app.version} → 1.0.0 before checking
 # =============================================================================
 
 config:
@@ -86,31 +113,14 @@ config:
       prefixes:       # Folder names starting with these prefixes to skip
       - .
       - Aegis-reports
+      - aegis-report
+      - aegis-report-config
       
 rules:
 
-  # ===========================================================================
-  # SECTION 1: PROJECT STRUCTURE & METADATA
-  # ===========================================================================
-
-  # BANK-001: mule-artifact.json validation
-  - id: "BANK-001"
-    name: "Validate mule-artifact.json"
-    description: "Enforces minMuleVersion 4.9.7, Java 17, and secureProperties."
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ mule-artifact.json is valid (Version: 4.9.7+, Java: 17) {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
-    errorMessage: "✗ mule-artifact.json failed validation. Check minMuleVersion (4.9.7+), javaSpecificationVersions (17), or secureProperties. {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
-    checks:
-    - type: JSON_VALIDATION_REQUIRED
-      params:
-        filePattern: mule-artifact.json
-        minVersions:
-          minMuleVersion: 4.9.7
-        requiredFields:
-          javaSpecificationVersions: "17"
-        requiredElements:
-        - secureProperties
+  # ---------------------------------------------------------------------------
+  # POM.XML VALIDATION
+  # ---------------------------------------------------------------------------
 
   # BANK-023: Parent POM
   - id: "BANK-023"
@@ -121,6 +131,9 @@ rules:
     successMessage: "✓ Parent POM version is valid (3.0.0+) {DEFAULT_MESSAGE} \n {CORE_DETAILS}"
     errorMessage: "✗ Parent POM version is invalid. Must be com.truist.eapi:MuleParentPom >= 3.0.0 {DEFAULT_MESSAGE} \n {CORE_DETAILS}"
     checks:
+    # CONFIGURATION NOTE:
+    # 'POM_VALIDATION_REQUIRED' with 'validationType: PARENT' allows you to enforce
+    # specific parent POM coordinates and strict minimum versions.
     - type: POM_VALIDATION_REQUIRED
       params:
         validationType: PARENT
@@ -138,6 +151,9 @@ rules:
     successMessage: "✓ Critical POM properties (runtime, plugin, cicd,munit) are valid {DEFAULT_MESSAGE}"
     errorMessage: "✗ Critical POM properties check failed. Ensure mule.maven.plugin.version>=4.6.0, app.runtime>=4.9.LTS, cicd.mule.version>=4.9.LTS, munit.version>=3.5.0 {DEFAULT_MESSAGE}"
     checks:
+    # CONFIGURATION NOTE:
+    # 'POM_VALIDATION_REQUIRED' with 'validationType: PROPERTIES' enforces Maven properties.
+    # - 'minVersion': Handles semantic versioning logic (e.g. "4.9.LTS" parsing).
     - type: POM_VALIDATION_REQUIRED
       params:
         validationType: PROPERTIES
@@ -151,214 +167,17 @@ rules:
         - name: munit.version
           minVersion: "3.5.0"
 
-  # ===========================================================================
-  # SECTION 2: CODE QUALITY & SECURITY (XML/JAVA)
-  # ===========================================================================
-
-  # BANK-002 & BANK-003: Logger Attributes
-  - id: "BANK-002"
-    name: "Forbid Legacy Logger Attributes"
-    description: "Ensures toApplicationCode and fromApplicationCode are NOT used."
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ No legacy logger attributes found {DEFAULT_MESSAGE}; items checked - {FOUND_ITEMS} ; Checked Files: {CHECKED_FILES}"
-    errorMessage: "✗ Forbidden attribute found in Logger: {FOUND_ITEMS}; {DEFAULT_MESSAGE} ; Checked Files: {CHECKED_FILES}"
-    checks:
-    - type: XML_ATTRIBUTE_NOT_EXISTS
-      params:
-        filePatterns: ["src/main/mule/*.xml"]
-        elements: ["set-payload"]
-        forbiddenAttributes: ["toApplicationCode", "fromApplicationCode"]
-
-  # BANK-004: jce-encrypt
-  - id: "BANK-004"
-    name: "Forbid jce-encrypt Token"
-    description: "Detects usage of legacy jce-encrypt."
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ No jce-encrypt tokens found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Found forbidden token 'jce-encrypt'. Use EncUtil. {DEFAULT_MESSAGE}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        filePatterns: ["src/main/mule/*.xml"]
-        tokens: ["jce-encrypt"]
-        matchMode: SUBSTRING
-
-  # BANK-005: SOAP Version
-  - id: "BANK-005"
-    name: "Validate SOAP Version"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ SOAP configuration uses valid version (1.1 or 1.2) {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Invalid SOAP version detected. Must be SOAP_11 or SOAP_12. {DEFAULT_MESSAGE}"
-    checks:
-    - type: XML_ATTRIBUTE_EXISTS
-      params:
-        filePatterns: ["src/main/mule/*-config.xml"]
-        elementAttributeSets:
-        - element: apikit-soap:config
-          attributes: {soapVersion: "SOAP_11"}
-        - element: apikit-soap:config
-          attributes: {soapVersion: "SOAP_12"}
-
-  # BANK-008: Legacy Auth
-  - id: "BANK-008"
-    name: "Forbid Legacy Auth Policies"
-    description: "Detects old AAA or Basic Auth policies."
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ No legacy Auth policies found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Legacy Auth policy detected (Truist-AAA or BasicAuth). Upgrade to CompositeAuth. {DEFAULT_MESSAGE}"
-    checks:
-    - type: XML_XPATH_NOT_EXISTS
-      params:
-        filePatterns: ["src/main/mule/*.xml"]
-        xpathExpressions:
-        - xpath: "//*[contains(local-name(), 'Truist-AAA-SOAP')]"
-          failureMessage: "Truist-AAA-SOAP found"
-        - xpath: "//*[contains(local-name(), 'Truist-AAA-HTTP')]"
-          failureMessage: "Truist-AAA-HTTP found"
-        - xpath: "//*[contains(local-name(), 'TruistBasicAuthnPolicy')]"
-          failureMessage: "TruistBasicAuthnPolicy found"
-
-  # BANK-015: DB2 DVIPA
-  - id: "BANK-015"
-    name: "DB2 DVIPA Migration Check"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ No legacy DB2 VIPs found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Legacy DB2 VIP detected. Migrate to DVIPA (dsndb0e/h). {DEFAULT_MESSAGE}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        filePatterns: ["**/*.properties"]
-        tokens: 
-        - "wil-db2contstvip\\.bbtnet\\.com:50000"
-        - "db2contppvip\\.truist-tst\\.com:50000"
-        matchMode: REGEX
-
-  # BANK-019 & 020: DLP Removal
-  - id: "BANK-019"
-    name: "Forbid DLP Logic"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ No DLP logic found\n{DEFAULT_MESSAGE}"
-    errorMessage: "✗ DLP logic detected in HTTP Proxy.\n{DEFAULT_MESSAGE}"
-    checks:
-    - type: XML_XPATH_NOT_EXISTS
-      params:
-        filePatterns: ["src/main/mule/http-proxy.xml"]
-        xpathExpressions:
-        - xpath: "//choice/when[contains(@expression, 'north.bound.dlp.flag')]"
-          failureMessage: "DLP flag choice found"
-
-  - id: "BANK-020"
-    name: "Forbid DLP Properties"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ No DLP properties found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ DLP property detected (dlp.flag or requestqueue). {DEFAULT_MESSAGE}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        filePatterns: ["src/main/resources/*.properties"]
-        tokens: ["north.bound.dlp.flag", "south.bound.dlp.flag", "wmq.dlp.requestqueue"]
-
-  # BANK-021: SQL Security
-  - id: "BANK-021"
-    name: "Enforce SQL Security"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ SQL Server connections are non-encrypted {DEFAULT_MESSAGE}"
-    errorMessage: "✗ SQL Server URL missing ';encrypt=false;trustServerCertificate=false' {DEFAULT_MESSAGE}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        filePatterns: ["**/*.properties"]
-        tokens: ["jdbc:sqlserver(?!.*encrypt=false)(?!.*trustServerCertificate=false).*"]
-        matchMode: REGEX
-
-  # BANK-031: EncUtil Replacement
-  - id: "BANK-031"
-    name: "Enforce EncUtil Logic"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ EncUtil logic is present and legacy crypto is gone {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Failed EncUtil check: Either legacy 'jce-encrypt-pbe' found or new 'EncUtil::encryptJcePbe' missing. {DEFAULT_MESSAGE}"
-    checks:
-    - type: XML_XPATH_NOT_EXISTS
-      params:
-        filePatterns: ["src/main/mule/*.xml"]
-        xpathExpressions:
-        - xpath: "//*[contains(local-name(), 'jce-encrypt-pbe')]"
-          failureMessage: "Legacy jce-encrypt-pbe found"
-    - type: XML_XPATH_EXISTS
-      params:
-        filePatterns: ["src/main/mule/*.xml"]
-        matchMode: ANY_FILE
-        xpathExpressions:
-        - xpath: "//*[local-name()='set-variable' and contains(@value, 'EncUtil::encryptJcePbe')]"
-          failureMessage: "EncUtil::encryptJcePbe usage missing"
-
-  # BANK-032: ApiMethod
-  - id: "BANK-032"
-    name: "Verify API Method Logic"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ apimethod variable logic is correct {DEFAULT_MESSAGE}"
-    errorMessage: "✗ apimethod variable logic missing encryptedRequestPath. {DEFAULT_MESSAGE}"
-    checks:
-    - type: XML_XPATH_EXISTS
-      params:
-        filePatterns: ["src/main/mule/*.xml"]
-        matchMode: ANY_FILE
-        xpathExpressions:
-        - xpath: "//set-variable[@variableName='apimethod' and contains(@value, 'vars.encryptedRequestPath')]"
-
-  # BANK-036: Autodiscovery
-  - id: "BANK-036"
-    name: "Require API Autodiscovery"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Autodiscovery element found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ API Autodiscovery element missing in global-config. {DEFAULT_MESSAGE}"
-    checks:
-    - type: XML_XPATH_EXISTS
-      params:
-        filePatterns: ["src/main/mule/*.xml"]
-        matchMode: ANY_FILE
-        xpathExpressions:
-        - xpath: "//*[local-name()='autodiscovery']"
-
-  # BANK-040: Java 17 Errors
-  - id: "BANK-040"
-    name: "Java 17 Error Migration"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ No legacy error syntax found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Legacy Java 8 error syntax detected (error.muleMessage, etc.). {DEFAULT_MESSAGE}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        filePatterns: ["src/main/**/*.xml", "src/main/**/*.dwl"]
-        tokens: 
-        - "error\\.muleMessage"
-        - "error\\.exception\\.cause(\\.detailMessage|\\.Message)?"
-        matchMode: REGEX
-
-  # ===========================================================================
-  # SECTION 3: DEPENDENCIES & PLUGINS
-  # ===========================================================================
-
   # BANK-026: Forbidden Plugins
   - id: "BANK-026"
     name: "Forbid Restricted Plugins"
     enabled: true
     severity: HIGH
-    successMessage: "✓ No restricted plugins found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Forbidden plugin found (maven-clean, maven-compiler, or munit-maven). {DEFAULT_MESSAGE}"
+    successMessage: "✓ No restricted plugins found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden plugin found (maven-clean, maven-compiler, or munit-maven). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
+    # CONFIGURATION NOTE:
+    # 'POM_VALIDATION_FORBIDDEN' ensures specific plugins are NOT present.
+    # Checks 'plugins' section of pom.xml.
     - type: POM_VALIDATION_FORBIDDEN
       params:
         validationType: PLUGINS
@@ -375,9 +194,12 @@ rules:
     name: "Forbid Runtime Dependencies"
     enabled: true
     severity: HIGH
-    successMessage: "✓ No runtime dependencies found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Forbidden dependency found (mule-core-ee or spring-config-ee). {DEFAULT_MESSAGE}"
+    successMessage: "✓ No runtime dependencies found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden dependency found (mule-core-ee or spring-config-ee). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
+    # CONFIGURATION NOTE:
+    # 'POM_VALIDATION_FORBIDDEN' ensures specific dependencies are NOT present.
+    # Checks 'dependencies' section of pom.xml.
     - type: POM_VALIDATION_FORBIDDEN
       params:
         validationType: DEPENDENCIES
@@ -392,36 +214,43 @@ rules:
     name: "Require eapimuleutilities"
     enabled: true
     severity: HIGH
-    successMessage: "✓ eapimuleutilities dependency found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Missing required dependency: eapimuleutilities. {DEFAULT_MESSAGE}"
+    successMessage: "✓ eapimuleutilities dependency found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Missing required dependency: eapimuleutilities. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
+    # CONFIGURATION NOTE:
+    # Enforces the presence of a mandatory dependency (eapimuleutilities).
     - type: POM_VALIDATION_REQUIRED
       params:
         validationType: DEPENDENCIES
         dependencies:
-        - groupId: com.truist.eapi.crypto
+        - groupId: com.truist.eapi
           artifactId: eapimuleutilities
 
-  # BANK-028 & 038: Shared Libs & Legacy Deps
+  # BANK-028: Shared Libs
   - id: "BANK-028"
     name: "Forbid Shared Libraries"
     enabled: true
     severity: HIGH
-    successMessage: "✓ No shared libraries found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Forbidden shared library found (spring-security). {DEFAULT_MESSAGE}"
+    successMessage: "✓ No shared libraries found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden shared library found (spring-security). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
+    # CONFIGURATION NOTE:
+    # Scans 'pom.xml' as a text file for forbidden tokens (Shared Libraries).
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
         filePatterns: ["pom.xml"]
         tokens: ["spring-security-ldap", "spring-security-web"]
 
+  # BANK-038: Legacy Deps
   - id: "BANK-038"
     name: "Legacy Dependency Upgrade"
     enabled: true
     severity: HIGH
-    successMessage: "✓ No legacy dependencies (javax.mail, ojdbc8) found {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Legacy dependency detected. Upgrade required. {DEFAULT_MESSAGE}"
+    successMessage: "✓ No legacy dependencies (javax.mail, ojdbc8) found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Legacy dependency detected. Upgrade required. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
+    # CONFIGURATION NOTE:
+    # Explicitly forbids known legacy dependencies (javax.mail, old oracle drivers).
     - type: POM_VALIDATION_FORBIDDEN
       params:
         validationType: DEPENDENCIES
@@ -431,21 +260,382 @@ rules:
         - groupId: com.oracle.database.jdbc
           artifactId: ojdbc8
 
-  # ===========================================================================
-  # SECTION 4: POLICY CONFIGURATION (YAML)
-  # ===========================================================================
+  # ---------------------------------------------------------------------------
+  # MULE ARTIFACT VALIDATION
+  # ---------------------------------------------------------------------------
+
+  # BANK-001: mule-artifact.json validation
+  - id: "BANK-001"
+    name: "Validate mule-artifact.json"
+    description: "Enforces minMuleVersion 4.9.7, Java 17, and secureProperties."
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ mule-artifact.json is valid (Version: 4.9.7+, Java: 17) {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
+    errorMessage: "✗ mule-artifact.json failed validation. Check minMuleVersion (4.9.7+), javaSpecificationVersions (17), or secureProperties. {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # 'JSON_VALIDATION_REQUIRED' enforces structure and values in JSON files.
+    # - 'minVersions': Checks semantic versions (e.g. 4.9.7 >= 4.9.0).
+    # - 'requiredFields': Checks strict equality for values (e.g. javaVersion == "17").
+    # - 'requiredElements': Checks only for existence of a key.
+    - type: JSON_VALIDATION_REQUIRED
+      params:
+        filePattern: mule-artifact.json
+        minVersions:
+          minMuleVersion: 4.9.7
+        requiredFields:
+          javaSpecificationVersions: "17"
+        requiredElements:
+        - secureProperties
+
+
+  # ---------------------------------------------------------------------------
+  # CODE & IMPLEMENTATION VALIDATION (XML, Java, Config)
+  # ---------------------------------------------------------------------------
+
+  # BANK-002: Logger Attributes
+  - id: "BANK-002"
+    name: "Forbid Legacy Logger Attributes"
+    description: "Ensures toApplicationCode and fromApplicationCode are NOT used."
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ No legacy logger attributes found {DEFAULT_MESSAGE}; Checked Files: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden attribute found in Logger: {FOUND_ITEMS}; {DEFAULT_MESSAGE} ; Checked Files: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # This rule uses 'XML_ATTRIBUTE_NOT_EXISTS' for identifying forbidden attributes on specific elements.
+    # - Advantages: cleaner configuration than raw XPath.
+    # - Alternative: You could use 'XML_XPATH_NOT_EXISTS' with "//set-payload[@toApplicationCode]" but that requires more XML knowledge.
+    - type: XML_ATTRIBUTE_NOT_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        elements: ["set-payload"]
+        forbiddenAttributes: ["toApplicationCode", "fromApplicationCode"]
+
+  # BANK-004: jce-encrypt
+  - id: "BANK-004"
+    name: "Forbid jce-encrypt Token"
+    description: "Detects usage of legacy jce-encrypt."
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ No jce-encrypt tokens found {DEFAULT_MESSAGE}; Checked Files: {CHECKED_FILES}"
+    errorMessage: "✗ Found forbidden token: {FOUND_ITEMS}. Use EncUtil. {DEFAULT_MESSAGE} ; Checked Files: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # This rule uses 'matchMode: REGEX' with word boundaries (\b) to ensure we match the EXACT word 'jce-encrypt'.
+    # - If you want to allow partial matches (e.g. 'my-jce-encrypt'), use 'matchMode: SUBSTRING' and remove \b.
+    # - REGEX provides the most precision for text token searches.
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        tokens: ["\\bjce-encrypt\\b"]
+        matchMode: REGEX
+
+  # BANK-005: SOAP Version
+  - id: "BANK-005"
+    name: "Validate SOAP Version"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ SOAP configuration uses valid version (1.1 or 1.2) {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Invalid SOAP version detected. Must be SOAP_11 or SOAP_12. {DEFAULT_MESSAGE}"
+    checks:
+    # CONFIGURATION NOTE:
+    # 'XML_ATTRIBUTE_EXISTS' validates that specific attributes/values exist on an element.
+    # - 'elementAttributeSets': Defines the element and the REQUIRED attribute values.
+    # - Useful for enforcing configuration standards like 'soapVersion="SOAP_12"'.
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*-config.xml"]
+        elementAttributeSets:
+        - element: apikit-soap:config
+          attributes: {soapVersion: "SOAP_11"}
+        - element: apikit-soap:config
+          attributes: {soapVersion: "SOAP_12"}
+
+  # BANK-031: EncUtil Replacement
+  - id: "BANK-031"
+    name: "Enforce EncUtil Logic"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ EncUtil logic is present and legacy crypto is gone. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Failed EncUtil check: Either legacy 'jce-encrypt-pbe' found or new 'EncUtil::encryptJcePbe' missing. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # Migration Check Strategy (CONDITIONAL):
+    # - Only runs on XML projects (Precondition: found 'mule' token in XML).
+    # - Fails if Legacy 'jce-encrypt-pbe' is found.
+    # - Fails if New 'EncUtil::encryptJcePbe' is NOT found.
+      - type: "CONDITIONAL_CHECK"
+        params:
+          preconditions:
+            - type: "GENERIC_TOKEN_SEARCH_REQUIRED"
+              params:
+                filePatterns: ["src/main/mule/*.xml"]
+                # Just check if any XML file exists (by looking for common XML or Mule tag)
+                tokens: ["mule"] 
+                matchMode: ANY_FILE
+          onSuccess:
+            - type: XML_XPATH_NOT_EXISTS
+              params:
+                filePatterns: ["src/main/mule/*.xml"]
+                xpathExpressions:
+                - xpath: "//*[contains(local-name(), 'jce-encrypt-pbe')]"
+                  failureMessage: "Legacy jce-encrypt-pbe found"
+            - type: XML_XPATH_EXISTS
+              params:
+                filePatterns: ["src/main/mule/*.xml"]
+                matchMode: ANY_FILE
+                xpathExpressions:
+                - xpath: "//*[local-name()='set-variable' and contains(@value, 'EncUtil::encryptJcePbe')]"
+                  failureMessage: "EncUtil::encryptJcePbe usage missing"
+
+  # BANK-033: ApiMethod
+  - id: "BANK-033"
+    name: "Verify apimethod variable has encryptedRequestPath"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ apimethod variable logic is correct. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
+    errorMessage: "✗ apimethod variable logic missing encryptedRequestPath. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # Verifies that a specific 'set-variable' logic exists.
+    # - Checks if variableName='apimethod' AND its value contains 'vars.encryptedRequestPath'.
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        matchMode: ANY_FILE
+        xpathExpressions:
+        - xpath: "//*[local-name()='set-variable' and @variableName='apimethod' and contains(@value, 'vars.encryptedRequestPath')]"
+  
+  # BANK-036: Autodiscovery
+  - id: "BANK-036"
+    name: "Require API Autodiscovery"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ Autodiscovery is enabled. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Autodiscovery is not enabled; {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # Simple XML check to ensure the 'autodiscovery' element is present in the configuration.
+    # Essential for API Manager integration.
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        matchMode: ANY_FILE
+        xpathExpressions:
+        - xpath: "//*[local-name()='autodiscovery']"
+
+  # BANK-040: Java 17 Errors
+  - id: "BANK-040"
+    name: "Java 8 to 17 Error Class Fields Migration Check"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ No legacy error field usages (Java 8/Mule 3X) found. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Legacy Java 8 error field usages detected. These fields are removed in Mule 4/Java 17. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # Uses REGEX to detect Java 8/Mule 3 error handling patterns forbidden in Java 17/Mule 4.
+    # Ref: Migration Guide - Error Object Structure
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["src/main/**/*.xml", "src/main/**/*.dwl", "src/main/**/*.java" ]
+        tokens: 
+        # Mule Message Wrapper (Removed)
+        - "error\\.muleMessage"
+        - "error\\.muleMessage\\.typedValue"
+        - "error\\.muleMessage\\.payload"
+        - "error\\.muleMessage\\.attributes\\.StatusCode"
+        
+        # Error Type String Conversions (Changed)
+        - "error\\.errorType\\.asString"
+        - "error\\.errorType\\.parentErrorType\\.asString"
+        
+        # Exception/Cause (Reorganized)
+        - "error\\.exception\\.cause"
+        - "error\\.exception\\.cause\\.detailMessage"
+        - "error\\.exception\\.cause\\.Message"
+        - "error\\.exception\\.errorMessage\\.typedValue"
+        
+        # Other
+        - "error\\.errors"
+        
+        # CONFIG_NOTE: 
+        # isRegex: true -> Enables regex pattern matching for tokens.
+        # matchMode: ALL_FILES -> Ensures ALL scanned files must pass the check (i.e., contain NO forbidden tokens).
+        # (Do not use matchMode: REGEX, it is invalid and defaults to ALL_FILES).
+        matchMode: ALL_FILES
+        isRegex: true
+
+  # BANK-019: DLP XML
+  - id: "BANK-019"
+    name: "Forbid DLP Code Logic"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ No DLP logic found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ DLP logic detected in HTTP Proxy. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # 'GENERIC_TOKEN_SEARCH_FORBIDDEN' detects forbidden DLP tokens.
+    # - 'resolveProperties: true': Resolves values like ${prot.dlp} before searching.
+    # - 'wholeWord: true': Ensures "north.bound.dlp.flag" doesn't match "1north.bound.dlp.flag".
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        resolveProperties: true
+        wholeWord: true # Set to 'true' to match exact words (prevents '1north...' from matching 'north...'). Set to 'false' for substring mode.
+        failureMessage: "DLP flag choice found"
+        filePatterns:
+        - "**/http-proxy.xml"
+        - "**/*.xml"
+        tokens:
+        - "north.bound.dlp.flag"
+        - "raks.dlp.queue"
+
+  # BANK-020: DLP Properties
+  - id: "BANK-020"
+    name: "Forbid DLP Properties"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ No DLP properties found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ DLP property detected (dlp.flag or dlp.requestqueue). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # Same strategy as BANK-019 but targeting .properties files.
+    # - 'wholeWord: true': Prevents false positives.
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        wholeWord: true # Set to 'true' to match exact words. Set to 'false' for substring mode.
+        filePatterns: ["**/*.properties"]
+        tokens: ["north.bound.dlp.flag", "south.bound.dlp.flag", "wmq.dlp.requestqueue"]
+
+  # BANK-021: SQL Security
+  - id: "BANK-021"
+    name: "Enforce SQL Server DB connection String Security"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ SQL Server DB Connection Strings are securely configured (or none found). {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ SQL Server DB Connection String missing ';encrypt=false;trustServerCertificate=false'. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # Refactored to 'CONDITIONAL_CHECK' to strictly enforce SQL security when SQL is used.
+    # 1. Trigger: If 'jdbc:sqlserver' is used in ANY file (Precondition).
+    # 2. Check: Then NO file may contain an INSECURE connection string (OnSuccess -> Forbidden).
+    #    - Regex Negative Lookahead (?!...) ensures we strictly catch lines MISSING validation.
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+        - type: GENERIC_TOKEN_SEARCH_REQUIRED
+          params:
+            filePatterns: ["**/*.properties"]
+            tokens: ["jdbc:sqlserver"]
+            matchMode: ANY_FILE # Trigger if at least one file uses SQL Server
+        onSuccess:
+        - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+          params:
+            filePatterns: ["**/*.properties"]
+            # Regex: Match jdbc:sqlserver line that DOES NOT contain 'encrypt=false'
+            # Split into two tokens so it fails if EITHER is missing.
+            tokens: 
+              - "jdbc:sqlserver(?!.*encrypt=false).*"
+              - "jdbc:sqlserver(?!.*trustServerCertificate=false).*"
+            matchMode: REGEX
+            isRegex: true
+            failureMessage: "Found SQL Server DB Connection String (missing 'encrypt=false' and/or 'trustServerCertificate=false')"
+
+  # BANK-032: DB2 AppId
+  - id: "BANK-032"
+    name: "Enforce DB2 Connection URL ApplicationId"
+    enabled: true
+    severity: MEDIUM
+    successMessage: "✓ DB2 Connection URL ApplicationId is present {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ DB2 Connection URL ApplicationId is missing. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # 'CONDITIONAL_CHECK' with Negative Logic (FORBIDDEN).
+    # 1. Trigger: If 'jdbc:db2' exists.
+    # 2. Check: Fail if any line contains 'jdbc:db2' BUT missing 'ApplicationId=' (using Negative Lookahead).
+      - type: "CONDITIONAL_CHECK"
+        params:
+          preconditions:
+            - type: "GENERIC_TOKEN_SEARCH_REQUIRED"
+              params:
+                filePatterns: ["**/*.properties", "**/*.yaml", "**/*.xml"]
+                tokens: ["jdbc:db2"]
+                wholeWord: false
+          onSuccess:
+            - type: "GENERIC_TOKEN_SEARCH_FORBIDDEN"
+              params:
+                filePatterns: ["**/*.properties", "**/*.yaml", "**/*.xml"]
+                # Regex: Match jdbc:db2 line that DOES NOT contain 'ApplicationId=' (Case Insensitive)
+                tokens: ["jdbc:db2(?!.*(?i)ApplicationId=).*"]
+                matchMode: REGEX
+                isRegex: true
+                failureMessage: "Found DB2 Connection URL missing 'ApplicationId'"
+
+  # BANK-009: Legacy DB2 VIPs
+  - id: "BANK-009"
+    name: "Forbid Legacy DB2 VIPs"
+    description: "Detects usage of deprecated DB2 connection hostnames."
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ No legacy DB2 VIPs found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Legacy DB2 VIP connection detected. Migrate to DVIPA (dsndb0e/h). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # Detects hardcoded legacy connection strings in property files.
+    # Blocking these ensures teams migrate to the new DVIPA standard.
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["**/*.properties"]
+        tokens: ["db2contppvip.truist-tst.com:50000", "db2contstvip.truist-tst.com:50000", "wil-db2contstvip.bbtnet.com:50000"]
+
+  # BANK-022: MQ Cipher Suite (Conditional)
+  - id: "BANK-022"
+    name: "Validate MQ Cipher Suite"
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ MQ Cipher Suite is correct (or not applicable) {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ MQ Cipher Suite is incorrect. Must be TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    checks:
+    # CONFIGURATION NOTE:
+    # 'CONDITIONAL_CHECK' runs nested rules ('onSuccess') ONLY if 'preconditions' match.
+    # - Usage: "If IBM MQ is used (precondition from xml), THEN enforce Cipher Suite property (onSuccess)."
+    # - Precondition checks XML for 'ibm-mq:config'.
+    # - OnSuccess uses Regex Negative Lookahead to forbidden improper ciphers in .properties.
+    - type: CONDITIONAL_CHECK
+      params:
+        preconditions:
+        - type: GENERIC_TOKEN_SEARCH_REQUIRED
+          params:
+            filePatterns: ["src/main/mule/*.xml"]
+            tokens: ["ibm-mq:config"]
+            matchMode: SUBSTRING
+        onSuccess:
+        - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+          params:
+            filePatterns: ["src/main/resources/**/*.properties"]
+            # FAIL if we find 'ibm.mq.cipherSuite=' followed by ANYTHING other than our safe cipher.
+            tokens: ["ibm\\.mq\\.cipherSuite\\s*=(?!\\s*TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384).*"]
+            matchMode: REGEX
+            isRegex: true
+
+  # ---------------------------------------------------------------------------
+  # POLICY & ENVIRONMENT VALIDATION (Config Files)
+  # ---------------------------------------------------------------------------
 
   # BANK-006: Header Injection
   - id: "BANK-006"
-    name: "Header Injection Policy (WARN)"
+    name: "Header Injection Policy (WARN mode logging)"
     enabled: true
     severity: HIGH
-    successMessage: "✓ Header Injection policy configured correctly (WARN) {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Header Injection policy values must be 'WARN'. {DEFAULT_MESSAGE}"
+    successMessage: "✓ Header Injection policy configured correctly (WARN mode logging) {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Header Injection policy values must be 'WARN mode logging'. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
+    # CONFIGURATION NOTE:
+    # 'MANDATORY_PROPERTY_VALUE_CHECK' validates configuration values across ALL environments.
+    # - Ensures 'x-tfc-request-out' is set to 'WARN'.
     - type: MANDATORY_PROPERTY_VALUE_CHECK
       params:
-        fileExtensions: [.policy, .yaml]
+        filePatterns: ["**/Policies/**/*.policy"]
         environments: ['ALL']
         properties:
         - name: headerinjection.policy.inboundheadermap.x-tfc-request-out
@@ -453,18 +643,37 @@ rules:
         - name: headerinjection.policy.inboundheadermap.x-tfc-response-in
           values: ['WARN']
 
+  # BANK-008: Legacy Auth
+  - id: "BANK-008"
+    name: "Forbid Legacy Auth Policies"
+    description: "Detects old AAA or Basic Auth policies."
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ No legacy Auth policies found {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Legacy Auth policy detected (Truist-AAA or TruistBasicAuthnPolicy). Upgrade to CompositeAuth. {DEFAULT_MESSAGE}"
+    checks:
+    # CONFIGURATION NOTE:
+    # Uses simple token search to find deprecated policy names in XML/Policy files.
+    # 'matchMode' defaults to 'SUBSTRING', finding any instance of these strings.
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["**/Policies/**/*.policy"]
+        tokens: ["Truist-AAA-SOAP", "Truist-AAA-HTTP", "TruistBasicAuthnPolicy"]
+
   # BANK-109: Policy Versions
   - id: "BANK-109"
     name: "Enforce Policy Versions"
     description: "Validates all Truist policy versions."
     enabled: true
     severity: HIGH
-    successMessage: "✓ All policy versions are correct {DEFAULT_MESSAGE}"
-    errorMessage: "✗ Policy version mismatch found (Check report for details). {DEFAULT_MESSAGE}"
+    successMessage: "✓ All policy versions are correct {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Policy version mismatch found (Check report for details). {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
+    # CONFIGURATION NOTE:
+    # Validates exact version numbers for internal policies in config files.
     - type: MANDATORY_PROPERTY_VALUE_CHECK
       params:
-        fileExtensions: [.policy, .yaml]
+        filePatterns: ["**/Policies/**/*.policy"]
         environments: ['ALL']
         properties:
         - name: truist.compositeauthn.policy.version
@@ -483,26 +692,3 @@ rules:
           values: ['3.0.0']
         - name: truist.jsonencdec.policy.version
           values: ['3.0.0']
-
-  # BANK-022: MQ Cipher Suite (Conditional)
-  - id: "BANK-022"
-    name: "Validate MQ Cipher Suite"
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ MQ Cipher Suite is correct (or not applicable) {DEFAULT_MESSAGE}"
-    errorMessage: "✗ MQ Cipher Suite is incorrect. Must be TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384. {DEFAULT_MESSAGE}"
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: GENERIC_TOKEN_SEARCH_REQUIRED
-          params:
-            filePatterns: ["src/main/mule/*.xml"]
-            tokens: ["ibm-mq:config"]
-            matchMode: SUBSTRING
-        onSuccess:
-        - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-          params:
-            filePatterns: ["src/main/resources/**/*.properties"]
-            tokens: ["ibm\\.mq\\.cipherSuite\\s*=(?!\\s*TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384).*"]
-            matchMode: REGEX

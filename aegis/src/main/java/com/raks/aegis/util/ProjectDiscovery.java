@@ -92,11 +92,16 @@ public class ProjectDiscovery {
             List<String> exactNames,
             List<String> prefixes) {
         String name = path.getFileName().toString();
-        if (exactNames.contains(name)) {
+        String nameLower = name.toLowerCase();
+        
+        // Case-insensitive exact name matching
+        if (exactNames.stream().anyMatch(exactName -> exactName.equalsIgnoreCase(name))) {
             return true;
         }
+        
+        // Case-insensitive prefix matching
         for (String prefix : prefixes) {
-            if (name.startsWith(prefix)) {
+            if (nameLower.startsWith(prefix.toLowerCase())) {
                 return true;
             }
         }
