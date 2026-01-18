@@ -29,6 +29,7 @@ Validates that **forbidden tokens or patterns do NOT exist** in files matching s
 | `excludePatterns` | List | `[]` | Glob patterns to exclude specific files |
 | `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
+| `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `isRegex: true`. |
 
 ## Configuration Examples
 
@@ -60,6 +61,20 @@ Identify potential hardcoded secrets in properties or XML configuration files.
         filePatterns: ["**/*.xml", "**/*.properties", "**/*.yaml"]
         tokens: ["password=", "pwd=", "aws_secret="]
         caseSensitive: false
+
+### Example 3: Exact Word Match (Whole Word)
+Prevent false positives by ensuring only exact words are matched (e.g., match "admin" but not "administrator").
+
+```yaml
+- id: "RULE-EXACT-WORD"
+  name: "Forbid 'admin' User"
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["**/*.properties"]
+        tokens: ["admin"]
+        wholeWord: true  # Matters 'admin' but not 'administrator'
+```
 ```
 
 ### Example 3: Detect IP Addresses (Regex)
@@ -90,6 +105,7 @@ DatabaseConfig.xml: Forbidden IP pattern found: 192.168.1.1
 
 - **Case Sensitivity**: Set `caseSensitive: false` when blocking configuration keys (like `PWD=`) to catch variants like `pwd=` or `Pwd=`.
 - **Targeted Exclusions**: Use `excludePatterns` for third-party libraries or internal test suites where forbidden patterns might be legitimate for testing purposes.
+- **Whole Word Matching**: Use `wholeWord: true` instead of complex Regex `\b` patterns for simple exact word matching.
 - **Regex Guardrails**: When using REGEX, ensure patterns are specific to avoid false positives (e.g., use word boundaries `\\b`).
 
 ## Related Rule Types

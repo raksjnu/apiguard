@@ -51,17 +51,38 @@ public class ConditionalCheck extends AbstractCheck {
 
             StringBuilder details = new StringBuilder("Conditions met. Executing nested checks:\n");
             boolean allPassed = true;
+            java.util.Set<String> aggregatedFiles = new java.util.HashSet<>();
+            java.util.Set<String> aggregatedItems = new java.util.LinkedHashSet<>();
+
             for (Check nested : onSuccess) {
                 CheckResult res = evaluateAtomic(projectRoot, nested);
                 details.append("- ").append(res.ruleId != null ? res.ruleId : "Check").append(": ").append(res.message).append("\n");
+                
+                if (res.checkedFiles != null && !res.checkedFiles.isEmpty()) {
+                    for (String f : res.checkedFiles.split(", ")) {
+                        if (!f.trim().isEmpty()) aggregatedFiles.add(f.trim());
+                    }
+                }
+                
+                if (res.foundItems != null && !res.foundItems.isEmpty()) {
+                    for (String item : res.foundItems.split(", ")) {
+                         if (!item.trim().isEmpty()) aggregatedItems.add(item.trim());
+                    }
+                }
+
                 if (!res.passed) {
                     allPassed = false;
                 }
             }
             
-            return allPassed ? 
-                CheckResult.pass(check.getRuleId(), check.getDescription(), details.toString()) :
-                CheckResult.fail(check.getRuleId(), check.getDescription(), details.toString());
+            String checkedFilesStr = String.join(", ", aggregatedFiles);
+            String foundItemsStr = String.join(", ", aggregatedItems);
+
+            if (allPassed) {
+                 return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, details.toString(), checkedFilesStr), checkedFilesStr);
+            } else {
+                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, details.toString(), checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
+            }
         } else {
 
             return CheckResult.pass(check.getRuleId(), check.getDescription(), "Skipped: Preconditions not met for this project.");

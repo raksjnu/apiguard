@@ -1,175 +1,212 @@
 # QUICK REFERENCE
 
-**Comprehensive Feature Matrix & Configuration Guide**
+## 1. Global Parameters
 
-This section provides tabular references for all Aegis features, tokens, operators, and technology-specific configurations.
+These apply to almost ALL rule types and control file selection and logic.
 
----
+| Parameter      | Default      | Description                                          |
+|----------------|--------------|------------------------------------------------------|
+| `filePatterns` | (Required)   | List of glob patterns for target files (e.g. `["**/*.xml"]`). |
+| `matchMode`    | `ALL_FILES`  | Controls file-level quantifier (see table below).    |
+| `logic`        | `AND`        | Combining logic for multiple checks or tokens.      |
+| `environments` | `[]`         | List of environments where this rule applies.        |
 
-## Message Tokens
+#### File Match Quantifiers (`matchMode`)
 
-Tokens that can be used in `successMessage` and `errorMessage` fields to customize rule output.
+| Value           | Description                                                        |
+|-----------------|--------------------------------------------------------------------|
+| `ALL_FILES`     | (Default) Every file must pass for the rule to pass.              |
+| `ANY_FILE`      | Rule passes if at least one file passes.                          |
+| `NONE_OF_FILES` | Rule passes only if zero files match/pass (useful for forbidden). |
+| `AT_LEAST_N`    | Rule passes if N or more files pass.                              |
 
-| Token | Description | Supported Rule Types | Example Usage |
-|-------|-------------|---------------------|---------------|
-| `{RULE_ID}` | The ID of the current rule | ALL | `"Rule {RULE_ID} passed"` |
-| `{DEFAULT_MESSAGE}` | Technical details of check result (recommended) | ALL | `"✓ Success! {DEFAULT_MESSAGE}"` |
-| `{CORE_DETAILS}` | Alias for `{DEFAULT_MESSAGE}` | ALL | `"Details: {CORE_DETAILS}"` |
-| `{CHECKED_FILES}` | Comma-separated list of files scanned | XML_*, JSON_*, TOKEN_SEARCH_*, POM_* | `"Checked: {CHECKED_FILES}"` |
-| `{FOUND_ITEMS}` | Specific forbidden items found | XML_ATTRIBUTE_NOT_EXISTS, JSON_VALIDATION_FORBIDDEN, GENERIC_TOKEN_SEARCH_FORBIDDEN | `"Found: {FOUND_ITEMS}"` |
-| `{PROPERTY_RESOLVED}` | Properties that were resolved (NEW) | XML_ATTRIBUTE_EXISTS, JSON_VALIDATION_REQUIRED | `"{PROPERTY_RESOLVED}"` |
-| `{FAILURES}` | List of specific failure details | XML_*, JSON_*, POM_* | `"Failures:\n{FAILURES}"` |
-
-**Best Practice**: Always use `{DEFAULT_MESSAGE}` to include technical details. Use `{FOUND_ITEMS}` for forbidden checks and `{PROPERTY_RESOLVED}` to show property resolution transparency.
-
----
-
-## Validation Operators & Parameters
-
-### Version Comparison Operators
-
-| Operator | Type | Description | Supported Rule Types | Example |
-|----------|------|-------------|---------------------|---------|
-| `minVersion` | String/Number | Minimum required version (inclusive) | POM_VALIDATION_REQUIRED, JSON_VALIDATION_REQUIRED | `minVersion: "4.9.0"` |
-| `maxVersion` | String/Number | Maximum allowed version (inclusive) | POM_VALIDATION_REQUIRED, JSON_VALIDATION_REQUIRED | `maxVersion: "5.0.0"` |
-| `exactVersion` | String/Number | Exact version match required | POM_VALIDATION_REQUIRED | `exactVersion: "4.9.7"` |
-
-**Version Comparison Logic**:
-- Supports semantic versioning (e.g., `4.9.7` > `4.9.0`)
-- Handles special suffixes: `4.9.LTS`, `1.0.0-SNAPSHOT`
-- Numeric comparison for simple versions
-
-### Match Modes
-
-| Mode | Description | Use Case | Supported Rule Types |
-|------|-------------|----------|---------------------|
-| `ALL_FILES` | Rule passes ONLY if EVERY file satisfies condition | Consistency checks | XML_*, JSON_*, TOKEN_SEARCH_* |
-| `ANY_FILE` | Rule passes if AT LEAST ONE file satisfies condition | Existence checks | XML_*, JSON_*, TOKEN_SEARCH_*, FILE_EXISTS |
-| `NONE_OF_FILES` | Rule passes ONLY if NO files satisfy condition | Forbidden pattern checks | TOKEN_SEARCH_FORBIDDEN |
-| `SUBSTRING` | Simple text matching (fast) | Literal token search | GENERIC_TOKEN_SEARCH_* |
-| `REGEX` | Regular expression matching (powerful) | Pattern matching, exact word boundaries | GENERIC_TOKEN_SEARCH_*, MANDATORY_PROPERTY_VALUE_CHECK |
-
-### Logic Operators
-
-| Operator | Type | Default | Description | Example |
-|----------|------|---------|-------------|---------|
-| `failIfFound` | Boolean | `false` | Inverts match logic (fail if pattern IS found) | `failIfFound: true` |
-| `caseSensitive` | Boolean | `true` | Enable/disable case-sensitive matching | `caseSensitive: false` |
-| `negativeMatch` | Boolean | `false` | Inverts match result locally | `negativeMatch: true` |
-
-### Property Resolution (NEW)
-
-| Parameter | Type | Description | Example |
-|-----------|------|-------------|---------|
-| `resolveProperties` | Boolean | Enable property placeholder resolution | `resolveProperties: true` |
-| `propertySyntax` | List<String> | Regex patterns for property placeholders | See table below |
+| `AT_LEAST_N`    | Rule passes if N or more files pass.                              |
 
 ---
 
-## Property Resolution Patterns by Technology
+## 2. Logic Patterns (Positive vs. Negative)
 
-Configure property resolution syntax in `config.propertyResolution.syntaxPatterns`:
+Understanding when to use Positive Logic ("Ensure Good Exists") versus Negative Logic ("Ensure Bad Does Not Exist") is crucial for creating accurate rules.
 
-| Technology | Syntax Pattern | Regex Pattern | Property Files | Example |
-|------------|----------------|---------------|----------------|---------|
-| **Mule** | `${property}` | `\$\{([^}]+)\}` | `*.properties`, `*.yaml` | `${mule.env}` |
-| **Mule DataWeave** | `p('property')` | `p\(['"]([^'"]+)['"]\)` | `*.properties` | `p('api.key')` |
-| **Spring Boot** | `${property}` | `\$\{([^}]+)\}` | `application.yml`, `*.properties` | `${server.port}` |
-| **Spring** | `@Value` | `@Value\("([^"]+)"\)` | `*.properties` | `@Value("${db.url}")` |
-| **TIBCO** | `%%property%%` | `%%([^%]+)%%` | `*.substvar`, `*.properties` | `%%ENV_NAME%%` |
-| **TIBCO BW** | `$_property` | `\$_([A-Za-z0-9_]+)` | `*.substvar` | `$_DATABASE_URL` |
-| **Python** | `${VAR}` | `\$\{([^}]+)\}` | `.env` | `${DATABASE_URL}` |
-| **Node.js** | `process.env.VAR` | `process\.env\.([A-Za-z0-9_]+)` | `.env` | `process.env.PORT` |
-| **Kubernetes** | `$(VAR)` | `\$\(([^)]+)\)` | ConfigMaps, Secrets | `$(DATABASE_HOST)` |
+### Positive Logic (REQUIRED)
+*   **Concept**: "Does at least ONE valid instance exist?"
+*   **Use Case**: Verifying that a mandatory component is present (e.g., "App MUST have a Global Exception Handler").
+*   **Behavior**: If the scanner finds **one** compliant item, the file PASSES.
+*   **⚠️ Pitfall**: If a file has one "Good" item and ten "Bad" items, it will still PASS.
+    *   *Example*: `tokens: ["secure=true"]`. File contains `secure=true` AND `secure=false`. Result: PASS (because valid token was found).
 
-**Configuration Example**:
+### Negative Logic (FORBIDDEN)
+*   **Concept**: "Does ANY invalid instance exist?"
+*   **Use Case**: Security audit, finding deprecated code, ensuring specific configurations are NOT used.
+*   **Behavior**: If the scanner finds **one** non-compliant item, the file FAILS.
+*   **✅ Best Practice**: For enforcing strict configurations (like "All connections must be encrypted"), usage of **Negative Logic** is safer.
 
+### Case Study: Detailed Configuration Checks
+**Goal**: Enforce `ApplicationId` in DB2 URLs (`jdbc:db2://...;ApplicationId=MyApp`).
+
+#### ❌ Approach A: Positive Logic (Weak)
+*   **Rule Type**: `GENERIC_TOKEN_SEARCH_REQUIRED`
+*   **Token**: `jdbc:db2.*ApplicationId=`
+*   **Scenario**: File contains:
+    1.  `db.bad=jdbc:db2://...` (Missing ID)
+    2.  `db.good=jdbc:db2://...;ApplicationId=MyApp` (Matches!)
+*   **Result**: **PASS** (False Negative). The rule found the "Good" line and was satisfied, ignoring the "Bad" line.
+
+#### ✅ Approach B: Negative Logic + Regex (Strong)
+*   **Rule Type**: `GENERIC_TOKEN_SEARCH_FORBIDDEN`
+*   **Token**: `jdbc:db2(?!.*ApplicationId=).*` (Regex Negative Lookahead)
+    *   *Meaning*: "Find any DB2 string that does **NOT** contain ApplicationId".
+*   **Scenario**: Same file.
+*   **Result**: **FAIL** (Correct). The rule explicitly searches for the broken line. The "Good" line does not match the "Bad" regex, but the "Bad" line does.
+
+---
+
+## 2. Message Tokens
+
+You can use the following tokens in `successMessage` and `errorMessage` to provide dynamic feedback in reports:
+
+| Token | Description | Availability | Example Output |
+|-------|-------------|--------------|----------------|
+| `{RULE_ID}` | The ID of the current rule. | Always | `BANK-021` |
+| `{DEFAULT_MESSAGE}` | Technical details of the check result (e.g., valid/invalid values). | Always | `Validation failed for...` |
+| `{CHECKED_FILES}` | List of files that were actually processed/scanned. | Always (Defaults to "None") | `src/main/mule/api.xml` |
+| `{MATCHING_FILES}`| List of files that *passed* the check condition. | Success Messages | `src/main/mule/valid.xml` |
+| `{FOUND_ITEMS}` | Specific forbidden items found (e.g., tokens, attributes). | `*_FORBIDDEN`, `*_NOT_EXISTS` | `jce-encrypt, toApplicationCode` |
+| `{CORE_DETAILS}` | Core validation failure info (a cleaner subset of Default). | Always | `Missing 'encrypt=false'` |
+| `{FAILURES}` | Specific failure reasons if multiple checks failed. | Compound Checks | `XPath not found...` |
+| `{PROPERTY_RESOLVED}`| Details of any property placeholders resolved. | Validated Properties | `Resolved ${port} -> 8081` |
+
+**Example Usage**:
 ```yaml
-config:
-  propertyResolution:
-    enabled: true
-    syntaxPatterns:
-      - '\$\{([^}]+)\}'           # Mule/Spring: ${prop}
-      - 'p\([''"]([^''"]+)[''"]\)' # Mule DataWeave: p('prop')
-      - '%%([^%]+)%%'              # TIBCO: %%prop%%
-    propertyFiles:
-      patterns:
-        - "src/main/resources/**/*.properties"
-        - "src/main/resources/**/*.yaml"
-        - "**/*.substvar"  # TIBCO
+errorMessage: "✗ Security Violation in {RULE_ID}: Found forbidden tokens {FOUND_ITEMS}. \n Checked: {CHECKED_FILES}"
 ```
 
-**When Property Resolution Applies**:
-- ✅ `XML_ATTRIBUTE_EXISTS` - Resolves attribute values before comparison
-- ✅ `XML_ELEMENT_CONTENT_REQUIRED` - Resolves text content
-- ✅ `JSON_VALIDATION_REQUIRED` - Resolves JSON values
-- ❌ `GENERIC_TOKEN_SEARCH_FORBIDDEN` - Searches for literal tokens (no resolution)
-- ❌ `XML_XPATH_NOT_EXISTS` - Structural checks (no value resolution)
+---
+
+## Logical Operators (`logic`)
+
+The `logic` parameter determines how multiple tokens or checks within a single rule are combined. This is critical for rules with multiple search items.
+
+### logic: OR (Default for Forbidden)
+- **Concept**: "Fail if ANY of these match."
+- **Behavior**: If you have `tokens: ["A", "B"]`, the rule triggers a failure if **EITHER** `A` is found **OR** `B` is found.
+- **Hyphen Handling**: Useful for tokens like `RAKS-AAA-SOAP`. If you want to detect *any* version of RAKS AAA policies (SOAP or HTTP), `logic: OR` ensures that finding just the SOAP one is enough to fail the check.
+
+### logic: AND (Default for Required)
+- **Concept**: "Fail ONLY if ALL of these match."
+- **Behavior**: If you have `tokens: ["A", "B"]`, the rule triggers a failure **ONLY IF BOTH** `A` and `B` are present in the same file.
+- **Example**: If you want to forbid a specific *combination* of security headers, use `AND`.
+
+> [!IMPORTANT]
+> **Issue Case (Hyphens)**:
+> Earlier, a check used `logic: AND`. This caused it to "Pass" (incorrectly) because it was waiting for *all* forbidden tokens to appear in a single file. By switching to `OR`, it now correctly flags a file as soon as it sees `RAKS-AAA-SOAP`.
 
 ---
 
-## Rule Type Compatibility Matrix
+## 2. Rule-Specific Parameters
+Each rule type has its own required parameters. Using the wrong parameter name will result in the rule being ignored or failing silently.
 
-### Feature Support by Rule Type
+#### **TOKEN_SEARCH** (Global Token Search)
+Used for scanning text files for literal strings or regex patterns. Use `GENERIC_TOKEN_SEARCH_REQUIRED` or `GENERIC_TOKEN_SEARCH_FORBIDDEN`.
 
-| Feature | XML_ATTRIBUTE_EXISTS | XML_XPATH_EXISTS | JSON_VALIDATION_REQUIRED | TOKEN_SEARCH_* | POM_VALIDATION_* |
-|---------|---------------------|------------------|-------------------------|----------------|------------------|
-| `{CHECKED_FILES}` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `{FOUND_ITEMS}` | ✅ (NOT_EXISTS) | ❌ | ✅ (FORBIDDEN) | ✅ (FORBIDDEN) | ❌ |
-| `minVersion` | ❌ | ❌ | ✅ | ❌ | ✅ |
-| `matchMode` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `resolveProperties` | ✅ | ❌ | ✅ | ❌ | ❌ |
-| `filePatterns` | ✅ | ✅ | ✅ | ✅ | ✅ |
-| `environments` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `tokens` | List | (Required) | List of strings or regex patterns to search for. |
+| `isRegex` | Boolean | `false` | Set to `true` if `tokens` are regular expressions. |
+| `caseSensitive`| Boolean | `true` | Enable/disable case sensitivity. |
+| `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). |
+| `logic` | String | `AND` (Req) / `OR` (Forb) | Use `OR` to fail if ANY token is found in FORBIDDEN mode. |
 
-### Parameter Reference by Rule Type
+> [!IMPORTANT]
+> **Token Matching vs. File Matching**:
+> For token search, `isRegex` controls how tokens are matched. `matchMode` controls how MANY files must satisfy the condition.
+> **DO NOT** set `matchMode: SUBSTRING` - it will fall back to `ALL_FILES`.
 
-#### XML_ATTRIBUTE_EXISTS / XML_ATTRIBUTE_NOT_EXISTS
+**Example (Regex for exact word match)**:
+```yaml
+- type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+  params:
+    filePatterns: ["**/*.xml"]
+    tokens: ["\\bRAKS-AAA-SOAP\\b"] # \b ensures exact word match
+    isRegex: true
+```
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `filePatterns` | List<String> | ✅ | Glob patterns for XML files |
-| `elements` | List<String> | ✅ | Element names to check |
-| `forbiddenAttributes` | List<String> | ✅ (NOT_EXISTS) | Attributes that must NOT exist |
-| `elementAttributeSets` | List<Map> | ✅ (EXISTS) | Element-attribute-value combinations |
-| `matchMode` | String | ❌ | `ALL_FILES`, `ANY_FILE` (default: `ALL_FILES`) |
-| `resolveProperties` | Boolean | ❌ | Enable property resolution (default: `false`) |
-
-#### GENERIC_TOKEN_SEARCH_REQUIRED / FORBIDDEN
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `filePatterns` | List<String> | ✅ | Glob patterns for files to search |
-| `tokens` | List<String> | ✅ | Tokens/patterns to search for |
-| `matchMode` | String | ❌ | `SUBSTRING` (default), `REGEX` |
-| `caseSensitive` | Boolean | ❌ | Case-sensitive search (default: `true`) |
-
-#### JSON_VALIDATION_REQUIRED / FORBIDDEN
+#### **XML_ATTRIBUTE_EXISTS** / **NOT_EXISTS**
+Used for validating specific element attributes in XML files.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `filePattern` | String | ✅ | Single file to validate (e.g., `mule-artifact.json`) |
-| `minVersions` | Map<String, String> | ❌ | Min version requirements (semantic versioning) |
-| `requiredFields` | Map<String, String> | ❌ | Required key-value pairs (exact match) |
-| `requiredElements` | List<String> | ❌ | Required keys (existence only) |
-| `forbiddenElements` | List<String> | ❌ (FORBIDDEN) | Keys that must NOT exist |
-| `resolveProperties` | Boolean | ❌ | Enable property resolution (default: `false`) |
+| `elements` | List | (Required) | Element names to check. |
+| `elementAttributeSets` | List<Map>| ✅ (EXISTS) | Pairs of `{element: "...", attributes: {key: "val"}}`. |
+| `forbiddenAttributes`| List | ✅ (NOT_EXISTS) | List of attributes that must not exist on the element. |
+| `resolveProperties` | Boolean | `false` | **Property Resolution**: Resolves `${...}` before checking. |
 
-#### POM_VALIDATION_REQUIRED / FORBIDDEN
+#### **XML_ELEMENT_CONTENT_REQUIRED** / **FORBIDDEN**
+Used for validating the text content of XML elements.
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
-| `validationType` | String | ✅ | `PARENT`, `DEPENDENCIES`, `PLUGINS`, `PROPERTIES` |
-| `parent` | Map | ✅ (PARENT) | Parent POM configuration |
-| `dependencies` | List<Map> | ✅ (DEPENDENCIES) | Required/forbidden dependencies |
-| `plugins` | List<Map> | ✅ (PLUGINS) | Required/forbidden plugins |
-| `properties` | List<Map> | ✅ (PROPERTIES) | Required properties with min/max versions |
+| `element` | String | (Required) | The XML element to check (e.g. `version`). |
+| `expectedValue`| String | ✅ (REQUIRED) | The text content the element must have. |
+| `forbiddenValue`| String | ✅ (FORBIDDEN)| Content that must not exist in any matching element. |
+| `resolveProperties` | Boolean | `false` | **Property Resolution**: Resolves placeholders in content. |
+
+#### **JSON_VALIDATION_REQUIRED** / **FORBIDDEN**
+Used for validating JSON structure and values.
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `filePattern` | String | ✅ | Single file to validate (e.g. `mule-artifact.json`). |
+| `requiredFields` | Map | ❌ | Key-Value pairs that must match exactly. |
+| `minVersions` | Map | ❌ | Semantic version comparison (e.g. `mule: "4.9.0"`). |
+| `forbiddenElements` | List | ✅ (FORB) | Keys that must not exist in the JSON. |
+| `resolveProperties` | Boolean | `false` | **Property Resolution**: Resolves placeholders in JSON values. |
+
+---
+
+## Validation Operators & Comparison Matrix
+
+### Operator Support by Technology
+
+| Operator | Type | Description | Supported Rules |
+|----------|------|-------------|-----------------|
+| `GTE` / `minVersion` | SEMVER | Greater than or equal (4.9.7 >= 4.9.0) | JSON, POM |
+| `LTE` / `maxVersion` | SEMVER | Less than or equal | JSON, POM |
+| `EQ` | STRING | Exact string match | ALL Value Checks |
+| `CONTAINS` | STRING | Substring exists within target | XML_XPATH, TOKEN |
+
+### Parameter Support Matrix
+
+| Parameter | XML_ATTR | XML_XPATH | JSON_VAL | TOKEN_SEARCH | POM_VAL |
+|-----------|----------|-----------|----------|--------------|---------|
+| `required` / `forbidden` | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `resolveProperties` | ✅ | ✅ | ✅ | ❌ | ❌ |
+| `isRegex` | ❌ | ❌ | ❌ | ✅ | ❌ |
+| `logic (AND/OR)`| ✅ | ✅ | ✅ | ✅ | ✅ |
+| `valueType (SEMVER)` | ✅ | ❌ | ✅ | ❌ | ✅ |
+| `elementContent` | ✅ | ❌ | ❌ | ❌ | ❌ |
+
+---
+
+## Property Resolution Guide (Flagship Feature)
+
+### Supported Resolutions
+
+| Rule Type | Resolves What? | Example |
+|-----------|---------------|---------|
+| `XML_ATTRIBUTE_EXISTS` | Attribute Values | `soapVersion="${soapversion}"` |
+| `XML_ELEMENT_CONTENT_REQUIRED` | Text Content | `<version>${pom.version}</version>` |
+| `JSON_VALIDATION_REQUIRED` | JSON Values | `{"muleEnv": "${env}"}` |
+
+> [!TIP]
+> **Transparency**: Always add `{PROPERTY_RESOLVED}` to your messages to see resolution details in reports.
+
 
 ---
 
 ## Configuration Examples
 
-### Example 1: Property Resolution for Mule
+### Example 1: Property Resolution (XML Attributes)
 
 ```yaml
 rules:
@@ -180,11 +217,11 @@ rules:
       params:
         filePatterns: ["src/main/mule/*-config.xml"]
         elementAttributeSets:
-        - element: apikit-soap:config
+        - element: "apikit-soap:config"
           attributes: {soapVersion: "SOAP_11"}
-        - element: apikit-soap:config
+        - element: "apikit-soap:config"
           attributes: {soapVersion: "SOAP_12"}
-        resolveProperties: true  # Resolves ${soapVersion} from properties files
+        resolveProperties: true  # Resolves ${soapVersion} from properties
 ```
 
 **XML File**:
@@ -198,6 +235,31 @@ soapVersion=SOAP_11
 ```
 
 **Result**: ✅ PASS (resolved `${soapVersion}` → `SOAP_11`)
+
+### Example 2: Property Resolution (XML Content)
+
+```yaml
+rules:
+  - id: "APP-VERSION-CHECK"
+    name: "Validate App Version in XML"
+    successMessage: "✓ Version validated: {PROPERTY_RESOLVED}"
+    checks:
+    - type: XML_ELEMENT_CONTENT_REQUIRED
+      params:
+        filePatterns: ["**/version-info.xml"]
+        element: "version"
+        expectedValue: "1.2.3"
+        resolveProperties: true
+```
+
+**XML File**:
+```xml
+<version>${app.version}</version>
+```
+
+**Property File**: `app.version=1.2.3`
+
+**Result**: ✅ PASS (resolved `${app.version}` → `1.2.3`)
 
 ### Example 2: Using {FOUND_ITEMS} Token
 
@@ -279,8 +341,9 @@ errorMessage: "Error"  # Too vague, no technical details
 | Scenario | Recommendation |
 |----------|----------------|
 | Simple keyword search | Use `matchMode: SUBSTRING` (faster) |
+| Exact Word Match | Use `wholeWord: true` (Simple & Fast) |
 | Pattern matching | Use `matchMode: REGEX` (more powerful) |
-| Exact word match | Use `REGEX` with `\b` boundaries |
+| Complex Boundaries | Use `REGEX` with `\b` or other regex markers |
 | Large file sets | Narrow `filePatterns` as much as possible |
 
 ---

@@ -40,6 +40,7 @@ public class TokenSearchCheck extends AbstractCheck {
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
         boolean isRegex = (Boolean) params.getOrDefault("isRegex", false);
         boolean caseSensitive = (Boolean) params.getOrDefault("caseSensitive", true);
+        boolean wholeWord = (Boolean) params.getOrDefault("wholeWord", false);
 
         if (filePatterns == null || filePatterns.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Configuration error: 'filePatterns' is required");
@@ -73,12 +74,30 @@ public class TokenSearchCheck extends AbstractCheck {
                 for (String t : tokens) {
                     patterns.add(Pattern.compile(t, flags));
                 }
+            } else if (wholeWord) {
+                int flags = caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
+                for (String t : tokens) {
+                    patterns.add(Pattern.compile("\\b" + Pattern.quote(t) + "\\b", flags));
+                }
             }
 
             // Scan files
             for (Path file : matchingFiles) {
                 String content = Files.readString(file);
-                if (!caseSensitive && !isRegex) {
+                
+
+                
+                // Allow property resolution before search
+                Object debugProp = params.getOrDefault("resolveProperties", "false");
+                boolean resolveProperties = Boolean.parseBoolean(String.valueOf(debugProp));
+                if (resolveProperties) {
+
+
+                    content = com.raks.aegis.util.PropertyResolver.resolve(content, projectRoot);
+
+                }
+
+                if (!caseSensitive && !isRegex && !wholeWord) {
                     content = content.toLowerCase();
                 }
 
@@ -89,7 +108,7 @@ public class TokenSearchCheck extends AbstractCheck {
                     String tokenStr = tokens.get(i);
                     boolean match = false;
                     
-                    if (isRegex) {
+                    if (isRegex || wholeWord) {
                         match = patterns.get(i).matcher(content).find();
                     } else {
                         String target = caseSensitive ? tokenStr : tokenStr.toLowerCase();
@@ -131,9 +150,7 @@ public class TokenSearchCheck extends AbstractCheck {
             // To use evaluateMatchMode, we need count of "Passing Files".
             // filePassed = !failures.contains(file related error) ?
             
-            // Let's re-calculate pass count.
-            int passedFilesCount = matchingFiles.size(); // Start with all passing
-            // But we didn't track failures per file cleanly above, just added strings.
+            // failures list is populated in the loop below
             // Let's refine the loop below.
             
         } catch (Exception e) {
@@ -158,17 +175,24 @@ public class TokenSearchCheck extends AbstractCheck {
                     .toList();
             
             totalFiles = matchingFiles.size();
+            Map<String, Object> params = getEffectiveParams(check);
+            boolean wholeWord = (Boolean) params.getOrDefault("wholeWord", false);
+
             List<Pattern> patterns = new ArrayList<>();
             if (isRegex) {
                 int flags = caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
                 for (String t : tokens) {
                     patterns.add(Pattern.compile(t, flags));
                 }
+            } else if (wholeWord) {
+                int flags = caseSensitive ? 0 : Pattern.CASE_INSENSITIVE;
+                for (String t : tokens) {
+                     patterns.add(Pattern.compile("\\b" + Pattern.quote(t) + "\\b", flags));
+                }
             }
 
-        @SuppressWarnings("unchecked")
-        Map<String, Object> params = getEffectiveParams(check);
-        String logic = (String) params.getOrDefault("logic", "AND");
+        String defaultLogic = "FORBIDDEN".equalsIgnoreCase(mode) ? "OR" : "AND";
+        String logic = (String) params.getOrDefault("logic", defaultLogic);
 
         // ... existing setup ...
 
@@ -178,18 +202,39 @@ public class TokenSearchCheck extends AbstractCheck {
                 
                 try {
                     String content = Files.readString(file);
-                    if (!caseSensitive && !isRegex) content = content.toLowerCase();
+                    
+                    // Allow property resolution before search
+                    Object debugProp = params.getOrDefault("resolveProperties", "false");
+                    boolean resolveProperties = Boolean.parseBoolean(String.valueOf(debugProp));
+                    if (resolveProperties) {
+                        content = com.raks.aegis.util.PropertyResolver.resolve(content, projectRoot);
+                    }
+                    
+                    if (!caseSensitive && !isRegex && !wholeWord) content = content.toLowerCase();
                     
                     List<String> found = new ArrayList<>();
                     for (int i=0; i<tokens.size(); i++) {
+                        String tokenToAdd = tokens.get(i);
                         boolean match = false;
-                        if (isRegex) {
-                             match = patterns.get(i).matcher(content).find();
+                        
+                        if (isRegex || wholeWord) {
+                             java.util.regex.Matcher m = patterns.get(i).matcher(content);
+                             if (m.find()) {
+                                 match = true;
+                                 tokenToAdd = m.group(); // Capture the ACTUAL text found
+                             }
                         } else {
                             String t = caseSensitive ? tokens.get(i) : tokens.get(i).toLowerCase();
-                            match = content.contains(t);
+                            if (content.contains(t)) {
+                                match = true;
+                                // For simple contains, the token itself is what was found
+                                tokenToAdd = tokens.get(i); 
+                            }
                         }
-                        if (match) found.add(tokens.get(i));
+                        
+                        if (match) {
+                            found.add(tokenToAdd);
+                        }
                     }
                     
                     if ("REQUIRED".equalsIgnoreCase(mode)) {
@@ -253,11 +298,11 @@ public class TokenSearchCheck extends AbstractCheck {
 
             if (overallPass) {
                 String defaultSuccess = String.format("Passed %s check in %d/%d files (Mode: %s)", mode, passedFileCount, totalFiles, matchMode);
-                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr), checkedFilesStr);
             } else {
                  String technicalMsg = String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d). Details:\n• %s", 
                         mode, matchMode, passedFileCount, totalFiles, String.join("\n• ", failureDetails));
-                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr));
+                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
             }
             
         } catch (Exception e) {

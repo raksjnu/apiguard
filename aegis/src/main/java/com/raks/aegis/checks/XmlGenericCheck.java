@@ -42,6 +42,9 @@ public class XmlGenericCheck extends AbstractCheck {
         List<String> filePatterns = (List<String>) params.get("filePatterns");
         String xpathExpr = (String) params.get("xpath");
         String attributeMatch = (String) params.get("attribute");
+        String expectedValue = (String) params.get("expectedValue");
+        String forbiddenValue = (String) params.get("forbiddenValue");
+        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "false")));
         String mode = (String) params.getOrDefault("mode", "EXISTS");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
 
@@ -70,6 +73,7 @@ public class XmlGenericCheck extends AbstractCheck {
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
             
+            List<String> passedFilesList = new ArrayList<>();
             for (Path file : matchingFiles) {
                 boolean filePassed = false;
                 try {
@@ -87,69 +91,88 @@ public class XmlGenericCheck extends AbstractCheck {
 
                     if ("EXISTS".equalsIgnoreCase(mode)) {
                         if (foundCount > 0) {
-                            filePassed = true;
+                            if (expectedValue != null) {
+                                boolean valMatched = false;
+                                for (int i = 0; i < nodes.getLength(); i++) {
+                                    String actual = nodes.item(i).getTextContent();
+                                    if (resolveProperties) {
+                                        String resolved = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                        if (expectedValue.equals(resolved)) {
+                                            valMatched = true;
+                                            addPropertyResolution(actual, resolved);
+                                            break;
+                                        }
+                                    } else {
+                                        if (expectedValue.equals(actual)) {
+                                            valMatched = true;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if (valMatched) filePassed = true;
+                                else details.add(projectRoot.relativize(file) + " [Value mismatch]");
+                            } else {
+                                filePassed = true;
+                            }
                         } else {
-                            // FALLBACK: Property Resolution Logic
-                            // If strict match failed, check if it was due to unresolved property placeholders.
+                            // Property resolution fallback for Attribute checks (Backward Compatibility)
                             logger.debug("Attempting property resolution fallback for XPath: {}", xpathExpr);
                             try {
                                 String[] subPaths = xpathExpr.split(" \\| ");
                                 boolean propertyMatchFound = false;
                                 for (String subPath : subPaths) {
-                                    // Pattern matches CheckFactory format: //*[local-name()='ELEMENT' and @ATTR='VALUE']
                                     java.util.regex.Matcher m = java.util.regex.Pattern.compile("local-name\\(\\)\\s*=\\s*'([^']+)'\\s+and\\s+@([^=]+)='([^']+)'").matcher(subPath);
                                     while (m.find()) {
-                                        String elem = m.group(1);
-                                        String attr = m.group(2);
-                                        String expected = m.group(3);
-                                        
-                                        logger.debug("Checking property resolution: element={}, attribute={}, expected={}", elem, attr, expected);
-                                        
-                                        String relaxedXpath = "//*[local-name()='" + elem + "' and @" + attr + "]";
+                                        String elemToken = m.group(1);
+                                        String attrToken = m.group(2);
+                                        String expectedToken = m.group(3);
+                                        String relaxedXpath = "//*[local-name()='" + elemToken + "' and @" + attrToken + "]";
                                         NodeList relaxedNodes = (NodeList) xpath.evaluate(relaxedXpath, doc, XPathConstants.NODESET);
-                                        
-                                        logger.debug("Found {} nodes with relaxed XPath", relaxedNodes.getLength());
-                                        
                                         for (int i = 0; i < relaxedNodes.getLength(); i++) {
-                                            org.w3c.dom.Node n = relaxedNodes.item(i);
-                                            if (n.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
-                                                org.w3c.dom.Element e = (org.w3c.dom.Element) n;
-                                                String rawVal = e.getAttribute(attr);
-                                                String resolved = com.raks.aegis.util.PropertyResolver.resolve(rawVal, projectRoot);
-                                                logger.debug("Property resolution: raw='{}', resolved='{}', expected='{}'", rawVal, resolved, expected);
-                                                if (expected.equals(resolved)) {
-                                                    propertyMatchFound = true;
-                                                    logger.info("Property resolution SUCCESS: {} -> {}", rawVal, resolved);
-                                                    addPropertyResolution(rawVal, resolved);  // Track for {PROPERTY_RESOLVED} token
-                                                    break;
-                                                }
+                                            org.w3c.dom.Element e = (org.w3c.dom.Element) relaxedNodes.item(i);
+                                            String rawVal = e.getAttribute(attrToken);
+                                            String resolved = com.raks.aegis.util.PropertyResolver.resolve(rawVal, projectRoot);
+                                            if (expectedToken.equals(resolved)) {
+                                                propertyMatchFound = true;
+                                                addPropertyResolution(rawVal, resolved);
+                                                break;
                                             }
                                         }
                                         if (propertyMatchFound) break;
                                     }
                                     if (propertyMatchFound) break;
                                 }
-                                
-                                if (propertyMatchFound) {
-                                    filePassed = true;
-                                } else {
-                                    details.add(projectRoot.relativize(file) + " [XPath not found]");
-                                }
+                                if (propertyMatchFound) filePassed = true;
+                                else details.add(projectRoot.relativize(file) + " [XPath not found]");
                             } catch (Exception ex) {
-                                logger.error("Property resolution fallback failed", ex);
                                 details.add(projectRoot.relativize(file) + " [XPath not found]");
                             }
                         }
-                    } else { // NOT_EXISTS
+                    } else { // NOT_EXISTS / FORBIDDEN
                         if (foundCount == 0) {
                             filePassed = true;
                         } else {
-                            // Identify what was found
-                            if (forbiddenAttrs != null && !forbiddenAttrs.isEmpty()) {
+                            if (forbiddenValue != null) {
+                                boolean forbiddenFound = false;
                                 for (int i = 0; i < nodes.getLength(); i++) {
-                                    org.w3c.dom.Node n = nodes.item(i);
-                                    if (n.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
-                                        org.w3c.dom.Element e = (org.w3c.dom.Element) n;
+                                    String actual = nodes.item(i).getTextContent();
+                                    String comparisonValue = actual;
+                                    if (resolveProperties) {
+                                        comparisonValue = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                        addPropertyResolution(actual, comparisonValue);
+                                    }
+                                    if (forbiddenValue.equals(comparisonValue)) {
+                                        forbiddenFound = true;
+                                        break;
+                                    }
+                                }
+                                if (!forbiddenFound) filePassed = true;
+                                else details.add(projectRoot.relativize(file) + " [Forbidden value found]");
+                            } else {
+                                // Default forbidden logic (based on elements or attributes existence)
+                                if (forbiddenAttrs != null && !forbiddenAttrs.isEmpty()) {
+                                    for (int i = 0; i < nodes.getLength(); i++) {
+                                        org.w3c.dom.Element e = (org.w3c.dom.Element) nodes.item(i);
                                         for (String fa : forbiddenAttrs) {
                                             if (e.hasAttribute(fa)) {
                                                 fileFoundItems.add(fa);
@@ -158,9 +181,9 @@ public class XmlGenericCheck extends AbstractCheck {
                                         }
                                     }
                                 }
+                                String foundStr = fileFoundItems.isEmpty() ? String.valueOf(foundCount) + " matches" : "Found: " + String.join(", ", fileFoundItems);
+                                details.add(projectRoot.relativize(file) + " [XPath found (" + foundStr + ")]");
                             }
-                            String foundStr = fileFoundItems.isEmpty() ? String.valueOf(foundCount) + " matches" : "Found: " + String.join(", ", fileFoundItems);
-                            details.add(projectRoot.relativize(file) + " [XPath found (" + foundStr + ")]");
                         }
                     }
                     
@@ -168,7 +191,10 @@ public class XmlGenericCheck extends AbstractCheck {
                     details.add(projectRoot.relativize(file) + " [Parse Error: " + e.getMessage() + "]");
                 }
                 
-                if (filePassed) passedFileCount++;
+                if (filePassed) {
+                    passedFileCount++;
+                    passedFilesList.add(projectRoot.relativize(file).toString());
+                }
             }
 
             boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
@@ -177,16 +203,18 @@ public class XmlGenericCheck extends AbstractCheck {
                     .map(p -> projectRoot.relativize(p).toString())
                     .collect(java.util.stream.Collectors.joining(", "));
             
+            String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
+            
             String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
 
             if (uniqueCondition) {
                 String defaultSuccess = String.format("XML Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
-                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr));
             } else {
                 String technicalMsg = String.format("XML Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
                                 mode, matchMode, passedFileCount, totalFiles, 
                                 details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr));
+                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
             }
 
         } catch (Exception e) {

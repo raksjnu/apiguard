@@ -61,6 +61,7 @@ public class PropertyResolver {
         } catch (IOException e) {
             logger.error("Error walking project for properties: {}", e.getMessage());
         }
+        // System.out.println("DEBUG: Loaded " + props.size() + " properties for " + projectRoot);
         projectPropertiesCache.put(projectRoot, props);
     }
 
@@ -69,7 +70,9 @@ public class PropertyResolver {
         
         loadProperties(projectRoot);
         Map<String, String> props = projectPropertiesCache.get(projectRoot);
-        if (props == null || props.isEmpty()) return val;
+        if (props == null || props.isEmpty()) {
+            return val;
+        }
 
         String currentVal = val;
         boolean modified = true;

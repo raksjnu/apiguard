@@ -65,8 +65,8 @@ public class CheckFactory {
             instance = new TokenSearchCheck();
         }
 
-        else if (type.equals("XML_XPATH_EXISTS") || type.equals("XML_ATTRIBUTE_EXISTS") || type.equals("XML_XPATH_NOT_EXISTS") || type.equals("XML_ATTRIBUTE_NOT_EXISTS")) {
-            if (type.contains("NOT_EXISTS")) effectiveParams.put("mode", "NOT_EXISTS");
+        else if (type.equals("XML_XPATH_EXISTS") || type.equals("XML_ATTRIBUTE_EXISTS") || type.equals("XML_XPATH_NOT_EXISTS") || type.equals("XML_ATTRIBUTE_NOT_EXISTS") || type.equals("XML_ELEMENT_CONTENT_REQUIRED") || type.equals("XML_ELEMENT_CONTENT_FORBIDDEN")) {
+            if (type.contains("NOT_EXISTS") || type.contains("FORBIDDEN")) effectiveParams.put("mode", "NOT_EXISTS");
             else effectiveParams.put("mode", "EXISTS");
             
             // Logic injection for high-level params -> specific xpath
@@ -123,7 +123,12 @@ public class CheckFactory {
                      effectiveParams.put("xpath", sb.toString());
                  }
             }
-            
+             if (!effectiveParams.containsKey("xpath") && effectiveParams.containsKey("element")) {
+                  String el = (String) effectiveParams.get("element");
+                  String localName = (el != null && el.contains(":")) ? el.substring(el.lastIndexOf(":") + 1) : el;
+                  effectiveParams.put("xpath", "//*[local-name()='" + localName + "']");
+             }
+
             instance = new XmlGenericCheck();
         }
         else if (type.equals("GENERIC_XML_VALIDATION")) {

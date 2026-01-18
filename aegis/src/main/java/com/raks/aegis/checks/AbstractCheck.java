@@ -43,10 +43,19 @@ public abstract class AbstractCheck {
     }
 
     protected CheckResult pass(String message) {
-        return new CheckResult("", "", true, message);
+        return new CheckResult("", "", true, message, null);
+    }
+    protected CheckResult pass(String message, String checkedFiles) {
+        return new CheckResult("", "", true, message, checkedFiles);
     }
     protected CheckResult fail(String message) {
-        return new CheckResult("", "", false, message);
+        return new CheckResult("", "", false, message, null);
+    }
+    protected CheckResult fail(String message, String checkedFiles) {
+        return new CheckResult("", "", false, message, checkedFiles);
+    }
+    protected CheckResult fail(String message, String checkedFiles, String foundItems) {
+        return new CheckResult("", "", false, message, checkedFiles, foundItems);
     }
     protected List<String> resolveEnvironments(Check check) {
         Map<String, Object> params = getEffectiveParams(check);
@@ -83,25 +92,33 @@ public abstract class AbstractCheck {
     }
 
     protected String getCustomSuccessMessage(Check check, String defaultMsg, String checkedFiles) {
+        return getCustomSuccessMessage(check, defaultMsg, checkedFiles, null);
+    }
+
+    protected String getCustomSuccessMessage(Check check, String defaultMsg, String checkedFiles, String matchingFiles) {
         if (check.getRule() != null && check.getRule().getSuccessMessage() != null && !check.getRule().getSuccessMessage().isEmpty()) {
-            return formatMessage(check.getRule().getSuccessMessage(), defaultMsg, null, checkedFiles, null);
+            return formatMessage(check.getRule().getSuccessMessage(), defaultMsg, null, checkedFiles, null, matchingFiles);
         }
         return defaultMsg;
     }
     
     /**
      * Format message template with placeholders.
-     * Supports {CORE_DETAILS}, {FAILURES}, {CHECKED_FILES}, and {FOUND_ITEMS}.
+     * Supports {CORE_DETAILS}, {FAILURES}, {CHECKED_FILES}, {FOUND_ITEMS}, and {MATCHING_FILES}.
      */
     protected String formatMessage(String template, String coreDetails, String failures) {
-        return formatMessage(template, coreDetails, failures, null, null);
+        return formatMessage(template, coreDetails, failures, null, null, null);
     }
 
     protected String formatMessage(String template, String coreDetails, String failures, String checkedFiles) {
-        return formatMessage(template, coreDetails, failures, checkedFiles, null);
+        return formatMessage(template, coreDetails, failures, checkedFiles, null, null);
     }
 
     protected String formatMessage(String template, String coreDetails, String failures, String checkedFiles, String foundItems) {
+        return formatMessage(template, coreDetails, failures, checkedFiles, foundItems, null);
+    }
+
+    protected String formatMessage(String template, String coreDetails, String failures, String checkedFiles, String foundItems, String matchingFiles) {
         // Fallback: if no template, use core details only
         if (template == null || template.isEmpty()) {
             return coreDetails != null ? coreDetails : "";
@@ -119,11 +136,17 @@ public abstract class AbstractCheck {
         if (effectiveDetails != null) {
             result = result.replace("{CORE_DETAILS}", effectiveDetails);
             result = result.replace("{DEFAULT_MESSAGE}", effectiveDetails);
+        } else {
+            result = result.replace("{CORE_DETAILS}", "");
+            result = result.replace("{DEFAULT_MESSAGE}", "");
         }
+
         if (failures != null) {
             result = result.replace("{FAILURES}", failures);
+        } else {
+            result = result.replace("{FAILURES}", "");
         }
-        if (checkedFiles != null) {
+        if (checkedFiles != null && !checkedFiles.trim().isEmpty()) {
             result = result.replace("{CHECKED_FILES}", checkedFiles);
             // Also support {SCANNED_FILES} alias
             result = result.replace("{SCANNED_FILES}", checkedFiles);
@@ -137,6 +160,12 @@ public abstract class AbstractCheck {
             result = result.replace("{FOUND_ITEMS}", foundItems);
         } else {
             result = result.replace("{FOUND_ITEMS}", "");
+        }
+
+        if (matchingFiles != null) {
+            result = result.replace("{MATCHING_FILES}", matchingFiles);
+        } else {
+            result = result.replace("{MATCHING_FILES}", "None");
         }
         
         // NEW: Property Resolution Token
@@ -187,18 +216,26 @@ public abstract class AbstractCheck {
     }
 
     protected boolean matchesPattern(String path, String pattern, boolean caseSensitive) {
-        String regex = pattern
-                .replace(".", "\\.")
-                .replace("**/", ".*")
-                .replace("**", ".*")
-                .replace("*", "[^/]*")
-                .replace("?", ".");
+        // Normalize path to use forward slashes for matching, regardless of OS
+        String normalizedPath = path.replace('\\', '/');
+        
+        // Handle glob to regex conversion carefully to avoid nested replacements
+        String regex = pattern.replace(".", "\\.");
+        regex = regex.replace("?", ".");
+        
+        // Use placeholders to avoid replacing '*' in already generated regex parts (like '.*')
+        regex = regex.replace("**/", "___DS_SLASH___");
+        regex = regex.replace("**", "___DS___");
+        regex = regex.replace("*", "[^/]*");
+        
+        regex = regex.replace("___DS_SLASH___", ".*");
+        regex = regex.replace("___DS___", ".*");
         
         java.util.regex.Pattern p = caseSensitive ? 
             java.util.regex.Pattern.compile(regex) : 
             java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE);
             
-        return p.matcher(path).matches();
+        return p.matcher(normalizedPath).matches();
     }
     
     /**

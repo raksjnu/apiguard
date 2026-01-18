@@ -29,6 +29,7 @@ Validates that **required tokens or patterns exist** in files matching specified
 | `excludePatterns` | List | `[]` | Glob patterns to exclude specific files |
 | `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
+| `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `matchMode: REGEX`. |
 | `requireAll` | Boolean | `true` | If `true`, ALL tokens must be found. If `false`, at least ONE |
 
 ## Configuration Examples

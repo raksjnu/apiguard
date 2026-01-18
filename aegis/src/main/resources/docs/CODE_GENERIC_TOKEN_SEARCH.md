@@ -29,6 +29,8 @@ Advanced token search with **environment filtering** and **regex support**. This
 | `environments` | List | N/A | Filter files by environment keys (e.g., `PROD`, `QA`) |
 | `searchMode` | String | `FORBIDDEN` | Choose `REQUIRED` or `FORBIDDEN` |
 | `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING`, `REGEX`, or `ELEMENT_ATTRIBUTE` |
+| `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
+| `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `matchMode: REGEX`. |
 | `message` | String | (Default) | Custom message to display on failure |
 | `elementName` | String | N/A | For XML element-specific attribute searches |
 

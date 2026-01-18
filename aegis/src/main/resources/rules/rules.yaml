@@ -55,6 +55,24 @@
 # =============================================================================
 
 # =============================================================================
+# LOGICAL OPERATORS (AND vs OR)
+# =============================================================================
+# The 'logic' parameter controls how multiple tokens or checks are combined.
+#
+# FORBIDDEN Rules:
+# - OR (Default): Rule fails if ANY token is found. (e.g., find A OR B).
+# - AND         : Rule fails ONLY if ALL tokens are found in the same file.
+#
+# REQUIRED Rules:
+# - AND (Default): Rule passes ONLY if ALL tokens are found.
+# - OR          : Rule passes if ANY token is found.
+#
+# SPECIAL CHARACTERS (e.g., Hyphens "-"):
+# Tokens like "RAKS-AAA-SOAP" are treated as a single string unit.
+# If using logic: OR, the detection triggers as soon as this single unit is matched.
+# =============================================================================
+
+# =============================================================================
 # PROPERTY RESOLUTION - UNIQUE FEATURE
 # =============================================================================
 # Aegis automatically resolves property placeholders in XML attributes and JSON values

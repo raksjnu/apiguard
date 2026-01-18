@@ -4,16 +4,44 @@ public class CheckResult {
     public final String checkDescription;
     public final boolean passed;
     public final String message;
-    public CheckResult(String ruleId, String checkDescription, boolean passed, String message) {
+    public final String checkedFiles; // Comma-separated list of files involved
+    public final String foundItems;   // Comma-separated list of items found
+
+    public CheckResult(String ruleId, String checkDescription, boolean passed, String message, String checkedFiles, String foundItems) {
         this.ruleId = ruleId;
         this.checkDescription = checkDescription;
         this.passed = passed;
         this.message = message;
+        this.checkedFiles = checkedFiles != null ? checkedFiles : "";
+        this.foundItems = foundItems != null ? foundItems : "";
     }
+
+    // Overload for backward compatibility (internal)
+    public CheckResult(String ruleId, String checkDescription, boolean passed, String message, String checkedFiles) {
+        this(ruleId, checkDescription, passed, message, checkedFiles, null);
+    }
+
+    public CheckResult(String ruleId, String checkDescription, boolean passed, String message) {
+        this(ruleId, checkDescription, passed, message, null, null);
+    }
+
     public static CheckResult pass(String ruleId, String description, String message) {
-        return new CheckResult(ruleId, description, true, message);
+        return new CheckResult(ruleId, description, true, message, null, null);
     }
+
+    public static CheckResult pass(String ruleId, String description, String message, String checkedFiles) {
+        return new CheckResult(ruleId, description, true, message, checkedFiles, null);
+    }
+
     public static CheckResult fail(String ruleId, String description, String message) {
-        return new CheckResult(ruleId, description, false, message);
+        return new CheckResult(ruleId, description, false, message, null, null);
+    }
+
+    public static CheckResult fail(String ruleId, String description, String message, String checkedFiles) {
+        return new CheckResult(ruleId, description, false, message, checkedFiles, null);
+    }
+
+    public static CheckResult fail(String ruleId, String description, String message, String checkedFiles, String foundItems) {
+        return new CheckResult(ruleId, description, false, message, checkedFiles, foundItems);
     }
 }

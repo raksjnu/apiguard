@@ -206,16 +206,23 @@
             <li><strong>Structure & configuration:</strong> Validate XML flows, configuration files, global
                 configurations, and file structures.</li>
             <li><strong>Dependencies:</strong> Verify Maven <code>pom.xml</code>, Node.js <code>package.json</code>, and Python <code>requirements.txt</code>.</li>
-            <li><strong>Code Content:</strong> Search for specific tokens, patterns, or forbidden content within
-                DataWeave scripts, Python Scripts, Java Code, and other source files.
+            <li><strong>Code Content:</strong> Search for specific tokens, patterns, or forbidden content within Source Source Source source files.
             </li>
             <li><strong>XML Validation:</strong> Perform deep inspection using XPath, check for specific attributes, and
                 validate element content.</li>
-            <li><strong>Property Management:</strong> Validate environment-specific property files, check for mandatory
-                properties, and ensure secure property handling.</li>
+            <li><strong>Property Management & Resolution:</strong> 
+                <ul>
+                    <li><strong>Validation:</strong> Check for mandatory properties and secure handling.</li>
+                    <li><strong>Resolution:</strong> 🚀 **Flagship Feature**: Aegis can resolve <code>${property}</code> placeholders in XML and JSON files using values from your <code>.properties</code> or <code>.yaml</code> config files before validating them.</li>
+                </ul>
+            </li>
             <li><strong>Custom Logic:</strong> Define custom checks for JSON validation, generic token searches (Universal Text Scanning), and
                 more to cover any specific organizational requirement.</li>
         </ul>
+
+        <div class="highlight-box" style="background: #fff5f5; border-left-color: #e53e3e;">
+            <p><strong>⚠️ Configuration Tip:</strong> Always verify rule-specific parameters in the <strong>Rule Guide</strong>. For example, <code>GENERIC_TOKEN_SEARCH</code> uses <code>isRegex</code> for pattern matching, whereas <code>matchMode</code> is a global parameter used ONLY for file-level quantifiers (e.g., <code>ALL_FILES</code> vs <code>ANY_FILE</code>).</p>
+        </div>
         
         <h2>🔗 Git Integration Guide</h2>
         <div class="highlight-box">
