@@ -45,7 +45,7 @@
 # MESSAGE TOKENS
 # =============================================================================
 # You can use the following tokens in successMessage and errorMessage:
-# - {RULE_ID}         : The ID of the rule being executed.
+# -         : The ID of the rule being executed.
 # - {DEFAULT_MESSAGE} : The technical details of the check result (e.g. valid/invalid values).
 # - {CHECKED_FILES}   : The list of files processed by the check.
 # - {FOUND_ITEMS}     : The specific forbidden items found (e.g. 'toApplicationCode', forbidden keys).
@@ -753,8 +753,8 @@ rules:
     description: Scans .properties files for required tokens (exact substring match)
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_SUBSTRING_CHECK
       params:
@@ -771,8 +771,8 @@ rules:
     description: Scans .policy files for required tokens (exact substring match)
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_SUBSTRING_CHECK
       params:
@@ -790,8 +790,8 @@ rules:
     description: Fails if forbidden tokens are found in .properties files
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_SUBSTRING_CHECK
       params:
@@ -811,8 +811,8 @@ rules:
     description: Fails if forbidden tokens are found in .policy files
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_SUBSTRING_CHECK
       params:
@@ -835,8 +835,8 @@ rules:
     description: Ensures required properties exist with correct values in .properties files
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_PROPERTY_VALUE_CHECK
       params:
@@ -861,8 +861,8 @@ rules:
     description: Ensures required policy properties exist with correct values
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: MANDATORY_PROPERTY_VALUE_CHECK
       params:
@@ -916,8 +916,8 @@ rules:
     description: If property exists in .properties files, validates its value
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: OPTIONAL_PROPERTY_VALUE_CHECK
       params:
@@ -943,8 +943,8 @@ rules:
     description: If property exists in .policy files, validates its value
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: OPTIONAL_PROPERTY_VALUE_CHECK
       params:
@@ -974,8 +974,8 @@ rules:
     description: Fails if forbidden regex patterns are found in .properties files
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
@@ -995,8 +995,8 @@ rules:
     description: Fails if forbidden regex patterns are found in .policy files
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     checks:
     - type: GENERIC_TOKEN_SEARCH
       params:
@@ -1019,8 +1019,8 @@ rules:
     description: If API name contains 'batch', the property asset.type must be 'batch'.
     enabled: true
     severity: MEDIUM
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Ensures large volume APIs are tagged correctly for infrastructure scaling.
     rationale: Automated provisioning depends on correct asset type metadata.
     exampleGood: 'Project: user-batch-api, asset.type=batch'
@@ -1049,8 +1049,8 @@ rules:
     description: Projects using both MQ and DB must define a 'commontimeout' property.
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Cross-system timeout synchronization.
     rationale: Prevents partial transaction failures where one system times out much later than the other.
     checks:
@@ -1086,8 +1086,8 @@ rules:
     description: Ensures HTTP Request configurations use externalized properties for timeouts.
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Prevents environment-specific hardcoding.
     rationale: Hardcoded timeouts lead to different behaviors across Dev/UAT/Prod without proper control.
     exampleGood: <http:request-config responseTimeout='${http.timeout}' ...>
@@ -1116,8 +1116,8 @@ rules:
     description: If Salesforce connector is used, a reconnection strategy must be defined.
     enabled: true
     severity: MEDIUM
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Handling temporary SaaS connectivity issues.
     rationale: Standard reconnection prevents Mule from locking up if Salesforce is briefly unavailable.
     checks:
@@ -1143,8 +1143,8 @@ rules:
     description: If JMS connector is in POM, it must be used/configured in code.
     enabled: true
     severity: LOW
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Resource optimization and library cleanliness.
     rationale: Unused dependencies bloat the JAR and increase security surface area.
     checks:
@@ -1168,8 +1168,8 @@ rules:
     description: If environment is PROD, the secure-prod file must exist.
     enabled: true
     severity: CRITICAL
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Environment-specific security enforcement.
     rationale: Ensures Production credentials are never mixed with lower environments.
     checks:
@@ -1196,8 +1196,8 @@ rules:
     description: If APIKit is detected, a Global Error Handler must be present.
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Consistent error responses for all experience APIs.
     rationale: Standardized error handling is critical for API consumer experience.
     checks:
@@ -1223,8 +1223,8 @@ rules:
     description: Experience APIs (-exp-) must have Autodiscovery configured.
     enabled: true
     severity: HIGH
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Compliance with API Governance.
     rationale: Experience APIs are public-facing and MUST be managed by the gateway.
     checks:
@@ -1248,8 +1248,8 @@ rules:
     description: If secure properties file exists, 'secure::' syntax must be used in Mule XML.
     enabled: true
     severity: CRITICAL
-    successMessage: "Rule {RULE_ID} passed.\n{DEFAULT_MESSAGE}"
-    errorMessage: "Rule {RULE_ID} failed.\n{DEFAULT_MESSAGE}"
+    successMessage: "✓ Rule passed.\n{DEFAULT_MESSAGE}"
+    errorMessage: "✗ Rule failed.\n{DEFAULT_MESSAGE}"
     useCase: Encryption enforcement.
     rationale: Prevents plain-text property resolution when vault-encrypted files are present.
     exampleGood: value='${secure::db.password}'
