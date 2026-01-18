@@ -103,7 +103,7 @@
 # EXAMPLE:
 # XML: <version>${app.version}</version>
 # Property File: app.version=1.0.0
-# Result: Aegis resolves ${app.version} â†’ 1.0.0 before checking
+# Result: Aegis resolves ${app.version} †’ 1.0.0 before checking
 # =============================================================================
 
 config:
@@ -170,8 +170,8 @@ rules:
     description: "Ensures Parent POM is com.Raks.eapi:MuleParentPom >= 3.0.0"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ Parent POM version is valid (3.0.0+) {DEFAULT_MESSAGE} \n {CORE_DETAILS}"
-    errorMessage: "âœ— Parent POM version is invalid. Must be com.Raks.eapi:MuleParentPom >= 3.0.0 {DEFAULT_MESSAGE} \n {CORE_DETAILS}"
+    successMessage: "✓ Parent POM version is valid (3.0.0+) {DEFAULT_MESSAGE} \n {CORE_DETAILS}"
+    errorMessage: "✗ Parent POM version is invalid. Must be com.Raks.eapi:MuleParentPom >= 3.0.0 {DEFAULT_MESSAGE} \n {CORE_DETAILS}"
     checks:
     # CONFIGURATION NOTE:
     # 'POM_VALIDATION_REQUIRED' with 'validationType: PARENT' allows you to enforce
@@ -191,8 +191,8 @@ rules:
     appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ Critical POM properties (runtime, plugin, cicd,munit) are valid {DEFAULT_MESSAGE}"
-    errorMessage: "âœ— Critical POM properties check failed. Ensure mule.maven.plugin.version>=4.6.0, app.runtime>=4.9.LTS, cicd.mule.version>=4.9.LTS, munit.version>=3.5.0 {DEFAULT_MESSAGE}"
+    successMessage: "✓ Critical POM properties (runtime, plugin, cicd,munit) are valid {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Critical POM properties check failed. Ensure mule.maven.plugin.version>=4.6.0, app.runtime>=4.9.LTS, cicd.mule.version>=4.9.LTS, munit.version>=3.5.0 {DEFAULT_MESSAGE}"
     checks:
     # CONFIGURATION NOTE:
     # 'POM_VALIDATION_REQUIRED' with 'validationType: PROPERTIES' enforces Maven properties.
@@ -216,8 +216,8 @@ rules:
     appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No restricted plugins found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— Forbidden plugin found (maven-clean, maven-compiler, or munit-maven). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ No restricted plugins found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden plugin found (maven-clean, maven-compiler, or munit-maven). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # 'POM_VALIDATION_FORBIDDEN' ensures specific plugins are NOT present.
@@ -239,8 +239,8 @@ rules:
     appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No runtime dependencies found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— Forbidden dependency found (mule-core-ee or spring-config-ee). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ No runtime dependencies found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden dependency found (mule-core-ee or spring-config-ee). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # 'POM_VALIDATION_FORBIDDEN' ensures specific dependencies are NOT present.
@@ -260,8 +260,8 @@ rules:
     appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ eapimuleutilities dependency found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
-    errorMessage: "âœ— Missing required dependency: eapimuleutilities. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ eapimuleutilities dependency found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Missing required dependency: eapimuleutilities. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Enforces the presence of a mandatory dependency (eapimuleutilities).
@@ -278,8 +278,8 @@ rules:
     appliesTo: ["CODE", "CONFIG"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No shared libraries found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— Forbidden shared library found (spring-security). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ No shared libraries found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden shared library found (spring-security). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Scans 'pom.xml' as a text file for forbidden tokens (Shared Libraries).
@@ -294,8 +294,8 @@ rules:
     appliesTo: ["CODE", "CONFIG"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No legacy dependencies (javax.mail, ojdbc8) found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— Legacy dependency detected. Upgrade required. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ No legacy dependencies (javax.mail, ojdbc8) found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Legacy dependency detected. Upgrade required. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Explicitly forbids known legacy dependencies (javax.mail, old oracle drivers).
@@ -319,8 +319,8 @@ rules:
     appliesTo: ["CODE", "CONFIG"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ mule-artifact.json is valid (Version: 4.9.7+, Java: 17) {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
-    errorMessage: "âœ— mule-artifact.json failed validation. Check minMuleVersion (4.9.7+), javaSpecificationVersions (17), or secureProperties. {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
+    successMessage: "✓ mule-artifact.json is valid (Version: 4.9.7+, Java: 17) {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
+    errorMessage: "✗ mule-artifact.json failed validation. Check minMuleVersion (4.9.7+), javaSpecificationVersions (17), or secureProperties. {DEFAULT_MESSAGE} \n {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # 'JSON_VALIDATION_REQUIRED' enforces structure and values in JSON files.
@@ -349,8 +349,8 @@ rules:
     appliesTo: ["CODE", "CONFIG"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No legacy logger attributes found {DEFAULT_MESSAGE}; Checked Files: {CHECKED_FILES}"
-    errorMessage: "âœ— Forbidden attribute found in Logger: {FOUND_ITEMS}; {DEFAULT_MESSAGE} ; Checked Files: {CHECKED_FILES}"
+    successMessage: "✓ No legacy logger attributes found {DEFAULT_MESSAGE}; Checked Files: {CHECKED_FILES}"
+    errorMessage: "✗ Forbidden attribute found in Logger: {FOUND_ITEMS}; {DEFAULT_MESSAGE} ; Checked Files: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # This rule uses 'XML_ATTRIBUTE_NOT_EXISTS' for identifying forbidden attributes on specific elements.
@@ -369,8 +369,8 @@ rules:
     appliesTo: ["CONFIG"]
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No jce-encrypt tokens found {DEFAULT_MESSAGE}; Checked Files: {CHECKED_FILES}"
-    errorMessage: "âœ— Found forbidden token: {FOUND_ITEMS}. Use EncUtil. {DEFAULT_MESSAGE} ; Checked Files: {CHECKED_FILES}"
+    successMessage: "✓ No jce-encrypt tokens found {DEFAULT_MESSAGE}; Checked Files: {CHECKED_FILES}"
+    errorMessage: "✗ Found forbidden token: {FOUND_ITEMS}. Use EncUtil. {DEFAULT_MESSAGE} ; Checked Files: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # This rule uses 'matchMode: REGEX' with word boundaries (\b) to ensure we match the EXACT word 'jce-encrypt'.
@@ -387,8 +387,8 @@ rules:
     name: "Validate SOAP Version"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ SOAP configuration uses valid version (1.1 or 1.2) {DEFAULT_MESSAGE}"
-    errorMessage: "âœ— Invalid SOAP version detected. Must be SOAP_11 or SOAP_12. {DEFAULT_MESSAGE}"
+    successMessage: "✓ SOAP configuration uses valid version (1.1 or 1.2) {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Invalid SOAP version detected. Must be SOAP_11 or SOAP_12. {DEFAULT_MESSAGE}"
     checks:
     # CONFIGURATION NOTE:
     # 'XML_ATTRIBUTE_EXISTS' validates that specific attributes/values exist on an element.
@@ -408,8 +408,8 @@ rules:
     name: "Enforce EncUtil Logic"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ EncUtil logic is present and legacy crypto is gone. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
-    errorMessage: "âœ— Failed EncUtil check: Either legacy 'jce-encrypt-pbe' found or new 'EncUtil::encryptJcePbe' missing. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ EncUtil logic is present and legacy crypto is gone. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Failed EncUtil check: Either legacy 'jce-encrypt-pbe' found or new 'EncUtil::encryptJcePbe' missing. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Migration Check Strategy (CONDITIONAL):
@@ -445,8 +445,8 @@ rules:
     name: "Verify apimethod variable has encryptedRequestPath"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ apimethod variable logic is correct. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
-    errorMessage: "âœ— apimethod variable logic missing encryptedRequestPath. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ apimethod variable logic is correct. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
+    errorMessage: "✗ apimethod variable logic missing encryptedRequestPath. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Verifies that a specific 'set-variable' logic exists.
@@ -463,8 +463,8 @@ rules:
     name: "Require API Autodiscovery"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ Autodiscovery is enabled. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
-    errorMessage: "âœ— Autodiscovery is not enabled; {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ Autodiscovery is enabled. Found in: {MATCHING_FILES} \n {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Autodiscovery is not enabled; {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Simple XML check to ensure the 'autodiscovery' element is present in the configuration.
@@ -481,8 +481,8 @@ rules:
     name: "Java 8 to 17 Error Class Fields Migration Check"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No legacy error field usages (Java 8/Mule 3X) found. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— Legacy Java 8 error field usages detected. These fields are removed in Mule 4/Java 17. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ No legacy error field usages (Java 8/Mule 3X) found. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Legacy Java 8 error field usages detected. These fields are removed in Mule 4/Java 17. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Uses REGEX to detect Java 8/Mule 3 error handling patterns forbidden in Java 17/Mule 4.
@@ -522,8 +522,8 @@ rules:
     name: "Forbid DLP Code Logic"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No DLP logic found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— DLP logic detected in HTTP Proxy. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ No DLP logic found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ DLP logic detected in HTTP Proxy. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # 'GENERIC_TOKEN_SEARCH_FORBIDDEN' detects forbidden DLP tokens.
@@ -546,8 +546,8 @@ rules:
     name: "Forbid DLP Properties"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No DLP properties found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— DLP property detected (dlp.flag or dlp.requestqueue). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ No DLP properties found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ DLP property detected (dlp.flag or dlp.requestqueue). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Same strategy as RULE-019 but targeting .properties files.
@@ -563,8 +563,8 @@ rules:
     name: "Enforce SQL Server DB connection String Security"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ SQL Server DB Connection Strings are securely configured (or none found). {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— SQL Server DB Connection String missing ';encrypt=false;trustServerCertificate=false'. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ SQL Server DB Connection Strings are securely configured (or none found). {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ SQL Server DB Connection String missing ';encrypt=false;trustServerCertificate=false'. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Refactored to 'CONDITIONAL_CHECK' to strictly enforce SQL security when SQL is used.
@@ -597,8 +597,8 @@ rules:
     name: "Enforce DB2 Connection URL ApplicationId"
     enabled: true
     severity: MEDIUM
-    successMessage: "âœ“ DB2 Connection URL ApplicationId is present {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— DB2 Connection URL ApplicationId is missing. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ DB2 Connection URL ApplicationId is present {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ DB2 Connection URL ApplicationId is missing. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # 'CONDITIONAL_CHECK' with Negative Logic (FORBIDDEN).
@@ -628,8 +628,8 @@ rules:
     description: "Detects usage of deprecated DB2 connection hostnames."
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No legacy DB2 VIPs found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— Legacy DB2 VIP connection detected. Migrate to DVIPA (dsndb0e/h). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ No legacy DB2 VIPs found {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Legacy DB2 VIP connection detected. Migrate to DVIPA (dsndb0e/h). Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Detects hardcoded legacy connection strings in property files.
@@ -644,8 +644,8 @@ rules:
     name: "Validate MQ Cipher Suite"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ MQ Cipher Suite is correct (or not applicable) {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— MQ Cipher Suite is incorrect. Must be TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ MQ Cipher Suite is correct (or not applicable) {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ MQ Cipher Suite is incorrect. Must be TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384. Found: {FOUND_ITEMS} \n {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # 'CONDITIONAL_CHECK' runs nested rules ('onSuccess') ONLY if 'preconditions' match.
@@ -678,8 +678,8 @@ rules:
     name: "Header Injection Policy (WARN mode logging)"
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ Header Injection policy configured correctly (WARN mode logging) {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— Header Injection policy values must be 'WARN mode logging'. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ Header Injection policy configured correctly (WARN mode logging) {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Header Injection policy values must be 'WARN mode logging'. {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # 'MANDATORY_PROPERTY_VALUE_CHECK' validates configuration values across ALL environments.
@@ -700,8 +700,8 @@ rules:
     description: "Detects old AAA or Basic Auth policies."
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ No legacy Auth policies found {DEFAULT_MESSAGE}"
-    errorMessage: "âœ— Legacy Auth policy detected (Raks-AAA or RaksBasicAuthnPolicy). Upgrade to CompositeAuth. {DEFAULT_MESSAGE}"
+    successMessage: "✓ No legacy Auth policies found {DEFAULT_MESSAGE}"
+    errorMessage: "✗ Legacy Auth policy detected (Raks-AAA or RaksBasicAuthnPolicy). Upgrade to CompositeAuth. {DEFAULT_MESSAGE}"
     checks:
     # CONFIGURATION NOTE:
     # Uses simple token search to find deprecated policy names in XML/Policy files.
@@ -717,8 +717,8 @@ rules:
     description: "Validates all Raks policy versions."
     enabled: true
     severity: HIGH
-    successMessage: "âœ“ All policy versions are correct {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
-    errorMessage: "âœ— Policy version mismatch found (Check report for details). {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    successMessage: "✓ All policy versions are correct {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
+    errorMessage: "✗ Policy version mismatch found (Check report for details). {DEFAULT_MESSAGE} \n Files Checked: {CHECKED_FILES}"
     checks:
     # CONFIGURATION NOTE:
     # Validates exact version numbers for internal policies in config files.
