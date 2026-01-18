@@ -1102,9 +1102,11 @@ public class ReportGenerator {
                     <body>
                         <div class="sidebar" id="sidebar">
                             <div class="sidebar-header">
-                                <h1 style="margin: 0 0 15px 0; font-size: 2rem; color: white; font-weight: bold; text-align: center; letter-spacing: 1px;">AEGIS</h1>
-                                <div style="background: white; padding: 10px; border-radius: 8px; display: inline-block; margin-bottom: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-                                    <img src="logo.svg" alt="Aegis" style="height: 30px; display: block;">
+                                <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                                    <div style="background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                                        <img src="logo.svg" alt="Aegis" style="height: 35px; display: block;">
+                                    </div>
+                                    <h1 style="margin: 0; font-size: 2rem; color: white !important; font-weight: bold; letter-spacing: 2px; border-bottom: none !important; padding-bottom: 0 !important;">AEGIS</h1>
                                 </div>
                                 <h2>Aegis Rules</h2>
                                 <input type="text" id="filterInput" onkeyup="onSearchInput()" placeholder="Search rules..." 
