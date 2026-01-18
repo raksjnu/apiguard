@@ -53,6 +53,34 @@
 # =============================================================================
 
 # =============================================================================
+# PROJECT TYPE FILTERING (NEW FEATURE)
+# =============================================================================
+# Eliminate report noise by only running applicable rules on each project type.
+#
+# 1. Define project types in config.projectTypes:
+#    CODE:
+#      description: "Mule applications"
+#      detectionCriteria:
+#        markerFiles: ["pom.xml"]
+#        excludePatterns: [".*_config.*"]
+#    CONFIG:
+#      description: "Configuration projects"
+#      detectionCriteria:
+#        namePattern: ".*_config.*"
+#
+# 2. Reference types in rules using appliesTo:
+#    - id: "RULE-001"
+#      appliesTo: ["CODE"]  # Only runs on CODE projects
+#
+# 3. Rules without appliesTo apply to ALL projects (backward compatible)
+#
+# Benefits:
+# - Cleaner reports (only relevant rules shown)
+# - No false positives (CONFIG projects won't fail CODE rules)
+# - Zero performance impact (classification cached)
+# =============================================================================
+
+# =============================================================================
 # PROPERTY RESOLUTION
 # =============================================================================
 # Aegis can resolve property placeholders in XML attributes, XML element content,

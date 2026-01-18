@@ -14,7 +14,7 @@ These apply to almost ALL rule types and control file selection and logic.
 #### File Match Quantifiers (`matchMode`)
 
 | Value           | Description                                                        |
-|-----------------|--------------------------------------------------------------------|
+|-----------------|-------------------------------------------------------------------|
 | `ALL_FILES`     | (Default) Every file must pass for the rule to pass.              |
 | `ANY_FILE`      | Rule passes if at least one file passes.                          |
 | `NONE_OF_FILES` | Rule passes only if zero files match/pass (useful for forbidden). |
@@ -24,7 +24,137 @@ These apply to almost ALL rule types and control file selection and logic.
 
 ---
 
-## 2. Logic Patterns (Positive vs. Negative)
+## 2. Project Type Filtering
+
+**NEW FEATURE**: Eliminate report noise by only running applicable rules on each project type.
+
+### Overview
+
+Instead of running ALL rules on ALL projects, you can:
+1. Define project types (CODE, CONFIG, API, etc.) ONCE in the `config` section
+2. Rules specify which types they apply to using `appliesTo`
+3. Non-applicable rules are automatically skipped
+
+### Configuration
+
+#### Step 1: Define Project Types
+
+Add `projectTypes` to your `config` section:
+
+```yaml
+config:
+  environments: [SBX, ITE, PREP, PROD]
+  
+  projectTypes:
+    CODE:
+      description: "Mule application projects with source code"
+      detectionCriteria:
+        markerFiles: ["pom.xml", "mule-artifact.json"]
+        excludePatterns: [".*_config.*"]
+    
+    CONFIG:
+      description: "Configuration projects with properties and policies"
+      detectionCriteria:
+        namePattern: ".*_config.*"
+    
+    API:
+      description: "API layer projects"
+      detectionCriteria:
+        nameContains: "-api-"
+        markerFiles: ["pom.xml"]
+```
+
+#### Step 2: Reference Types in Rules
+
+```yaml
+rules:
+  # CODE-only rule
+  - id: "RULE-001"
+    name: "Validate Parent POM"
+    appliesTo: ["CODE"]  # Only runs on CODE projects
+    checks:
+      - type: POM_VALIDATION_REQUIRED
+        # ...
+  
+  # CONFIG-only rule
+  - id: "RULE-006"
+    name: "Header Injection Policy"
+    appliesTo: ["CONFIG"]  # Only runs on CONFIG projects
+    checks:
+      - type: MANDATORY_PROPERTY_VALUE_CHECK
+        # ...
+  
+  # Multi-type rule
+  - id: "RULE-040"
+    name: "Java 17 Migration"
+    appliesTo: ["CODE", "API"]  # Runs on both CODE and API projects
+    checks:
+      - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+        # ...
+  
+  # Universal rule (no appliesTo)
+  - id: "RULE-100"
+    name: "Mandatory Substring Check"
+    # No appliesTo = applies to ALL projects
+    checks:
+      - type: GENERIC_TOKEN_SEARCH_REQUIRED
+        # ...
+```
+
+### Detection Criteria Options
+
+| Criterion | Type | Description | Example |
+|-----------|------|-------------|---------|
+| `markerFiles` | List | Files that must exist (supports glob patterns) | `["pom.xml", "**/*.policy"]` |
+| `namePattern` | String | Regex pattern for project folder name | `".*_config.*"` |
+| `nameContains` | String/List | Substring(s) the project name must contain | `"-api-"` or `["-api-", "-svc-"]` |
+| `excludePatterns` | List | Regex patterns to exclude projects | `[".*_config.*", ".*-test-.*"]` |
+| `logic` | String | AND/OR logic for criteria (default: OR) | `"AND"` |
+
+### Examples for Different Technologies
+
+**Spring Boot Projects:**
+```yaml
+SPRING_BOOT:
+  description: "Spring Boot applications"
+  detectionCriteria:
+    markerFiles: ["pom.xml", "src/main/resources/application.properties"]
+    logic: AND
+```
+
+**TIBCO Projects:**
+```yaml
+TIBCO:
+  description: "TIBCO BusinessWorks projects"
+  detectionCriteria:
+    markerFiles: ["**/*.bwp", "**/*.process"]
+```
+
+**Python Projects:**
+```yaml
+PYTHON:
+  description: "Python applications"
+  detectionCriteria:
+    markerFiles: ["requirements.txt", "setup.py"]
+```
+
+### Benefits
+
+✅ **Cleaner Reports**: Only show relevant rules for each project
+✅ **No False Positives**: CONFIG projects won't fail on CODE-specific rules
+✅ **Better Focus**: Teams see only rules that matter to their project type
+✅ **Zero Performance Impact**: Classification cached (~1ms per project)
+✅ **Backward Compatible**: No `projectTypes` = all rules apply to all projects
+
+### Backward Compatibility
+
+- **No `projectTypes` in config**: All rules apply to all projects (current behavior)
+- **No `appliesTo` in rule**: Rule applies to all projects
+- **Empty `appliesTo: []`**: Rule applies to NO projects (effectively disabled)
+
+---
+
+## 3. Logic Patterns (Positive vs. Negative)
 
 Understanding when to use Positive Logic ("Ensure Good Exists") versus Negative Logic ("Ensure Bad Does Not Exist") is crucial for creating accurate rules.
 
