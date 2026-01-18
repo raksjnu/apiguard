@@ -56,7 +56,14 @@ public class PropertyGenericCheck extends AbstractCheck {
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
 
         if (filePatterns == null || filePatterns.isEmpty()) return failConfig(check, "filePatterns required");
-        if (properties.isEmpty()) return failConfig(check, "property or properties required");
+        
+        // Support for 'validationRules' (list of rules with custom messages)
+        @SuppressWarnings("unchecked")
+        List<Map<String, String>> validationRules = (List<Map<String, String>>) params.get("validationRules");
+
+        if (properties.isEmpty() && (validationRules == null || validationRules.isEmpty())) {
+             return failConfig(check, "property, properties, or validationRules required");
+        }
 
         int passedFileCount = 0;
         int totalFiles = 0;
@@ -74,60 +81,81 @@ public class PropertyGenericCheck extends AbstractCheck {
             for (Path file : matchingFiles) {
                 boolean filePassed = true;
                 List<String> fileErrors = new ArrayList<>();
-                
                 try (InputStream is = Files.newInputStream(file)) {
                     Properties props = new Properties();
-                    if (file.toString().endsWith(".xml")) {
-                        props.loadFromXML(is);
-                    } else {
-                        props.load(is);
-                    }
-                    
-                    for (String propertyKey : properties) {
-                        String actualValue = props.getProperty(propertyKey);
-                        
-                        if ("EXISTS".equalsIgnoreCase(mode)) {
-                            if (actualValue == null) {
-                                filePassed = false;
-                                fileErrors.add("Missing Key: " + propertyKey);
-                            }
-                        } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
-                            if (actualValue != null) {
-                                filePassed = false;
-                                fileErrors.add("Forbidden Key found: " + propertyKey);
-                            }
-                        } else if ("VALUE_MATCH".equalsIgnoreCase(mode)) {
-                            if (actualValue == null) {
-                                filePassed = false;
-                                fileErrors.add("Missing Key: " + propertyKey);
-                            } else {
-                                if (!compareValues(actualValue, expectedValueRegex, operator, valueType)) {
-                                    filePassed = false;
-                                    fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
-                                        propertyKey, actualValue, expectedValueRegex, operator));
-                                }
-                            }
-                        } else if ("OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
-                            if (actualValue != null) {
-                                if (!compareValues(actualValue, expectedValueRegex, operator, valueType)) {
-                                    filePassed = false;
-                                    fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
-                                        propertyKey, actualValue, expectedValueRegex, operator));
+                    if (file.toString().endsWith(".xml")) props.loadFromXML(is);
+                    else props.load(is);
+
+                    if (validationRules != null && !validationRules.isEmpty()) {
+                         // Validation Rules Mode
+                        for (Map<String, String> rule : validationRules) {
+                            String type = rule.getOrDefault("type", "REQUIRED");
+                            String pattern = rule.get("pattern");
+                            String customMsg = rule.get("message");
+                            
+                            if ("REQUIRED".equalsIgnoreCase(type)) {
+                                 if (!props.containsKey(pattern)) {
+                                     filePassed = false;
+                                     fileErrors.add(formatCustomRuleMessage(customMsg, "Missing required info: " + pattern));
+                                 }
+                            } else if ("FORMAT".equalsIgnoreCase(type)) {
+                                String[] parts = pattern.split("=", 2);
+                                if (parts.length == 2) {
+                                    String key = parts[0].trim();
+                                    String regex = parts[1].trim();
+                                    String val = props.getProperty(key);
+                                    if (val != null && !val.matches(regex)) {
+                                        filePassed = false;
+                                         fileErrors.add(formatCustomRuleMessage(customMsg, "Format mismatch for " + key));
+                                    }
                                 }
                             }
                         }
-                    }
-                    
+                    } else {
+                        // Existing Single/Multi Property Mode
+                        for (String propertyKey : properties) {
+                            String actualValue = props.getProperty(propertyKey);
+                            
+                            if ("EXISTS".equalsIgnoreCase(mode)) {
+                                if (actualValue == null) {
+                                    filePassed = false;
+                                    fileErrors.add("Missing Key: " + propertyKey);
+                                }
+                            } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
+                                if (actualValue != null) {
+                                    filePassed = false;
+                                    fileErrors.add("Forbidden Key found: " + propertyKey);
+                                }
+                            } else if ("VALUE_MATCH".equalsIgnoreCase(mode)) {
+                                if (actualValue == null) {
+                                    filePassed = false;
+                                    fileErrors.add("Missing Key: " + propertyKey);
+                                } else {
+                                    if (!compareValues(actualValue, expectedValueRegex, operator, valueType)) {
+                                        filePassed = false;
+                                        fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
+                                            propertyKey, actualValue, expectedValueRegex, operator));
+                                    }
+                                }
+                            } else if ("OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
+                                if (actualValue != null) {
+                                    if (!compareValues(actualValue, expectedValueRegex, operator, valueType)) {
+                                        filePassed = false;
+                                        fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
+                                            propertyKey, actualValue, expectedValueRegex, operator));
+                                    }
+                                }
+                            }
+                        }
+                    } // end legacy mode
+
                 } catch (Exception e) {
-                   filePassed = false;
-                   fileErrors.add("Read Error: " + e.getMessage());
+                     filePassed = false;
+                     fileErrors.add("Read Error: " + e.getMessage());
                 }
                 
-                if (filePassed) {
-                    passedFileCount++;
-                } else {
-                    details.add(projectRoot.relativize(file) + " [" + String.join(", ", fileErrors) + "]");
-                }
+                if (filePassed) passedFileCount++;
+                else details.add(projectRoot.relativize(file) + " [\n" + String.join("\n", fileErrors) + "\n]");
             }
 
         } catch (Exception e) {
@@ -145,6 +173,12 @@ public class PropertyGenericCheck extends AbstractCheck {
                             details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
             return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg));
         }
+    }
+    
+    private String formatCustomRuleMessage(String customMsg, String defaultDetails) {
+        if (customMsg == null || customMsg.isEmpty()) return defaultDetails;
+        // Basic token replacement for inner rules
+        return customMsg.replace("{DEFAULT_MESSAGE}", defaultDetails).replace("{CORE_DETAILS}", defaultDetails);
     }
     
     private CheckResult failConfig(Check check, String msg) {

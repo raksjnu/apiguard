@@ -44,8 +44,8 @@ public class PomValidationForbiddenCheck extends AbstractCheck {
             return CheckResult.pass(check.getRuleId(), check.getDescription(),
                     "No forbidden POM elements found\nFiles validated: " + fileList);
         } else {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "Forbidden POM elements found:\n• " + String.join("\n• ", failures));
+            String technicalMsg = "Forbidden POM elements found:\n• " + String.join("\n• ", failures);
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg));
         }
     }
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,

@@ -13,13 +13,15 @@ echo ============================================================
 echo.
 
 REM Check if JAR exists
-if not exist "aegis.jar" (
-    echo ERROR: JAR file not found: aegis.jar
-    echo Please run: build-aegis.bat
+if not exist "target\aegis-1.0.0-jar-with-raks.jar" (
+    echo ERROR: JAR file not found: target\aegis-1.0.0-jar-with-raks.jar
+    echo Please run: mvn clean install -DskipTests
     echo.
     pause
     exit /b 1
 )
+
+set "JAR_FILE=target\aegis-1.0.0-jar-with-raks.jar"
 
 REM Set default port if not specified
 if "%AEGIS_PORT%"=="" set AEGIS_PORT=8080
@@ -54,7 +56,7 @@ echo.
 echo Press Ctrl+C to stop the server
 echo.
 
-"%JAVA_CMD%" -cp aegis.jar com.raks.aegis.gui.AegisGUI %AEGIS_PORT%
+"%JAVA_CMD%" -cp "%JAR_FILE%" com.raks.aegis.gui.AegisGUI %AEGIS_PORT%
 
 REM Keep window open if there was an error
 if errorlevel 1 (

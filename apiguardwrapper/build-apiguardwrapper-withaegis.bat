@@ -48,6 +48,16 @@ if exist "%SCRIPT_DIR%..\aegis" (
         exit /b 1
     )
     
+    REM Generate rule_guide.html
+    echo.
+    echo [INFO] Generating rule_guide.html...
+    cd /d "%SCRIPT_DIR%..\aegis"
+    call generate-rule-guide.bat
+    if errorlevel 1 (
+        echo [WARN] Rule guide generation had issues, but continuing...
+    )
+    cd /d "%SCRIPT_DIR%..\aegis"
+    
     REM Copy aegis JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying aegis FAT JAR to lib folder...
@@ -66,13 +76,11 @@ if exist "%SCRIPT_DIR%..\aegis" (
         )
     )
 
-    REM Copy Web Resources
+    REM Copy Web Resources (delegated to script)
     echo.
-    echo [INFO] Copying Aegis web resources...
-    if exist "%SCRIPT_DIR%..\aegis\src\main\resources\web\aegis" (
-        xcopy /E /Y /I /Q "%SCRIPT_DIR%..\aegis\src\main\resources\web\aegis" "%SCRIPT_DIR%src\main\resources\web\aegis" >nul 2>&1
-        echo [INFO] Web resources copied.
-    )
+    cd /d "%SCRIPT_DIR%"
+    call "%SCRIPT_DIR%copyResourcesOfAegis.bat"
+
 
 ) else (
     echo [ERROR] Aegis project not found at ..\aegis

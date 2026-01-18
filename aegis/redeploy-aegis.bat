@@ -31,7 +31,7 @@ if %ERRORLEVEL% NEQ 0 (
 )
 
 echo [1/3] Copying latest rules.yaml to wrapper resources...
-copy /Y "src\main\resources\rules\rules.yaml" "apiguardwrapper\src\main\resources\web\sample-rules.yaml"
+copy /Y "src\main\resources\rules\rules.yaml" "..\apiguardwrapper\src\main\resources\web\aegis\sample-rules.yaml"
 
 echo [2/3] Building Aegis Core...
 call mvn clean package -DskipTests -q
@@ -43,18 +43,18 @@ if %ERRORLEVEL% NEQ 0 (
 echo Aegis JAR built successfully
 
 echo [3/3] Copying JAR to wrapper and rebuilding...
-copy /Y "target\aegis-1.0.0-jar-with-raks.jar" "apiguardwrapper\lib\aegis-1.0.0-jar-with-raks.jar"
-echo JAR copied to wrapper/lib
+copy /Y "target\aegis-1.0.0-jar-with-raks.jar" "..\apiguardwrapper\lib\aegis-1.0.0.jar"
+echo JAR copied to wrapper/lib as aegis-1.0.0.jar
 
-cd apiguardwrapper
+cd ..\apiguardwrapper
 call mvn clean package -DskipTests -q
 if %ERRORLEVEL% NEQ 0 (
     echo ERROR: wrapper build failed!
-    cd ..
+    cd ..\aegis
     pause
     exit /b %ERRORLEVEL%
 )
-cd ..
+cd ..\aegis
 echo Wrapper built successfully
 
 echo === DEPLOYMENT COMPLETE ===

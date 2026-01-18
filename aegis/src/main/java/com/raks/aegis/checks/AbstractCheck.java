@@ -20,9 +20,17 @@ public abstract class AbstractCheck {
     }
 
     protected String getCustomMessage(Check check, String defaultMsg) {
+        // 1. Check params "message" (legacy override)
         if (check.getParams() != null && check.getParams().containsKey("message")) {
             return (String) check.getParams().get("message");
         }
+        
+        // 2. Check Rule-level errorMessage
+        if (check.getRule() != null && check.getRule().getErrorMessage() != null && !check.getRule().getErrorMessage().isEmpty()) {
+            // Treat the defaultMsg (technical details) as "Core Details" for token replacement
+            return formatMessage(check.getRule().getErrorMessage(), defaultMsg, null);
+        }
+        
         return defaultMsg;
     }
     
@@ -40,9 +48,17 @@ public abstract class AbstractCheck {
         
         String result = template;
         
+        // Determine effective details for DEFAULT_MESSAGE replacement
+        // If coreDetails is missing but we have failures, use failures as the "Core Detail" of the error.
+        String effectiveDetails = coreDetails;
+        if (effectiveDetails == null && failures != null) {
+            effectiveDetails = failures;
+        }
+
         // Replace placeholders
-        if (coreDetails != null) {
-            result = result.replace("{CORE_DETAILS}", coreDetails);
+        if (effectiveDetails != null) {
+            result = result.replace("{CORE_DETAILS}", effectiveDetails);
+            result = result.replace("{DEFAULT_MESSAGE}", effectiveDetails);
         }
         if (failures != null) {
             result = result.replace("{FAILURES}", failures);
