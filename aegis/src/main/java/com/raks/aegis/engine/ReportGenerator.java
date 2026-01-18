@@ -19,6 +19,7 @@ import org.slf4j.LoggerFactory;
 public class ReportGenerator {
     private static final Logger logger = LoggerFactory.getLogger(ReportGenerator.class);
     private static final String[] RULE_DOCS = {
+            "QUICK_REFERENCE.md",
             "GLOBAL_CONFIGURATION.md",
             "PROJECT_IDENTIFICATION.md",
             "CONFIG_GENERIC_PROPERTY_FILE_CHECK.md",
