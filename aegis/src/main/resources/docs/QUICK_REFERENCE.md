@@ -198,8 +198,10 @@ Used for validating JSON structure and values.
 | `XML_ELEMENT_CONTENT_REQUIRED` | Text Content | `<version>${pom.version}</version>` |
 | `JSON_VALIDATION_REQUIRED` | JSON Values | `{"muleEnv": "${env}"}` |
 
-> [!TIP]
-> **Transparency**: Always add `{PROPERTY_RESOLVED}` to your messages to see resolution details in reports.
+
+201: > [!TIP]
+202: > **Transparency**: Always add `{PROPERTY_RESOLVED}` to your messages to see resolution details in reports.
+
 
 
 ---
