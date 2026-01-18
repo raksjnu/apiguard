@@ -14,6 +14,16 @@ import java.util.stream.Stream;
 
 public class PropertyGenericCheck extends AbstractCheck {
 
+    private static class PropertyConstraint {
+        String name;
+        List<String> allowedValues;
+
+        PropertyConstraint(String name, List<String> allowedValues) {
+            this.name = name;
+            this.allowedValues = allowedValues;
+        }
+    }
+
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
         if (!isRuleApplicable(projectRoot, check)) {
@@ -24,16 +34,28 @@ public class PropertyGenericCheck extends AbstractCheck {
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) params.get("filePatterns");
 
-        List<String> properties = new ArrayList<>();
+        List<PropertyConstraint> propertyConstraints = new ArrayList<>();
+
         if (params.containsKey("property")) {
-            properties.add((String) params.get("property"));
+            propertyConstraints.add(new PropertyConstraint((String) params.get("property"), null));
         }
+
         if (params.containsKey("properties")) {
             Object propsObj = params.get("properties");
             if (propsObj instanceof List) {
-                @SuppressWarnings("unchecked")
-                List<String> pList = (List<String>) propsObj;
-                properties.addAll(pList);
+                List<?> list = (List<?>) propsObj;
+                for (Object item : list) {
+                    if (item instanceof String) {
+                        propertyConstraints.add(new PropertyConstraint((String) item, null));
+                    } else if (item instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> map = (Map<String, Object>) item;
+                        String name = (String) map.get("name");
+                        @SuppressWarnings("unchecked")
+                        List<String> values = (List<String>) map.get("values");
+                        propertyConstraints.add(new PropertyConstraint(name, values));
+                    }
+                }
             }
         }
 
@@ -48,7 +70,7 @@ public class PropertyGenericCheck extends AbstractCheck {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> validationRules = (List<Map<String, String>>) params.get("validationRules");
 
-        if (properties.isEmpty() && (validationRules == null || validationRules.isEmpty())) {
+        if (propertyConstraints.isEmpty() && (validationRules == null || validationRules.isEmpty())) {
              return failConfig(check, "property, properties, or validationRules required");
         }
 
@@ -74,7 +96,6 @@ public class PropertyGenericCheck extends AbstractCheck {
                     else props.load(is);
 
                     if (validationRules != null && !validationRules.isEmpty()) {
-
                         for (Map<String, String> rule : validationRules) {
                             String type = rule.getOrDefault("type", "REQUIRED");
                             String pattern = rule.get("pattern");
@@ -99,8 +120,8 @@ public class PropertyGenericCheck extends AbstractCheck {
                             }
                         }
                     } else {
-
-                        for (String propertyKey : properties) {
+                        for (PropertyConstraint constraint : propertyConstraints) {
+                            String propertyKey = constraint.name;
                             String actualValue = props.getProperty(propertyKey);
 
                             if ("EXISTS".equalsIgnoreCase(mode)) {
@@ -118,10 +139,28 @@ public class PropertyGenericCheck extends AbstractCheck {
                                     filePassed = false;
                                     fileErrors.add("Missing Key: " + propertyKey);
                                 } else {
-                                    if (!compareValues(actualValue, expectedValueRegex, operator, valueType)) {
-                                        filePassed = false;
-                                        fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
-                                            propertyKey, actualValue, expectedValueRegex, operator));
+
+                                    boolean valueMatch = false;
+
+                                    if (constraint.allowedValues != null && !constraint.allowedValues.isEmpty()) {
+
+                                        for (String allowed : constraint.allowedValues) {
+                                            if (compareValues(actualValue, allowed, operator, valueType)) {
+                                                valueMatch = true;
+                                                break;
+                                            }
+                                        }
+                                        if (!valueMatch) {
+                                            filePassed = false;
+                                            fileErrors.add(String.format("Value mismatch for %s: '%s' not in %s", propertyKey, actualValue, constraint.allowedValues));
+                                        }
+                                    } else {
+
+                                        if (!compareValues(actualValue, expectedValueRegex, operator, valueType)) {
+                                            filePassed = false;
+                                            fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
+                                                propertyKey, actualValue, expectedValueRegex, operator));
+                                        }
                                     }
                                 }
                             } else if ("OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
