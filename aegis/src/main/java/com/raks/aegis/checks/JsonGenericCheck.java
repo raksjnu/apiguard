@@ -10,6 +10,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 
 /**
  * Universal JSON Validation Check.
@@ -22,6 +25,7 @@ import java.util.stream.Stream;
  *  - matchMode (String): ALL_FILES, ANY_FILE, NONE_OF_FILES.
  */
 public class JsonGenericCheck extends AbstractCheck {
+    private static final Logger logger = LoggerFactory.getLogger(JsonGenericCheck.class);
 
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
@@ -113,9 +117,20 @@ public class JsonGenericCheck extends AbstractCheck {
                                      fileReasons.add("JSONPath not found: " + jsonPath);
                                  } else {
                                      String actualStr = result.toString();
-                                     if (!compareValues(actualStr, expectedValue, operator, valueType)) {
+                                     
+                                     // Property resolution for JSON values
+                                     String resolvedActual = actualStr;
+                                     if (actualStr.contains("${") || actualStr.contains("p('") || actualStr.contains("p(\"")) {
+                                         resolvedActual = com.raks.aegis.util.PropertyResolver.resolve(actualStr, projectRoot);
+                                         if (!actualStr.equals(resolvedActual)) {
+                                             addPropertyResolution(actualStr, resolvedActual);
+                                             logger.debug("JSON property resolution: '{}' -> '{}'", actualStr, resolvedActual);
+                                         }
+                                     }
+                                     
+                                     if (!compareValues(resolvedActual, expectedValue, operator, valueType)) {
                                          filePassed = false;
-                                         fileReasons.add(String.format("Value mismatch at '%s': Actual='%s', Expected='%s'", jsonPath, actualStr, expectedValue));
+                                         fileReasons.add(String.format("Value mismatch at '%s': Actual='%s', Expected='%s'", jsonPath, resolvedActual, expectedValue));
                                      }
                                  }
                              }
@@ -192,15 +207,25 @@ public class JsonGenericCheck extends AbstractCheck {
                                      if (!jsonMap.containsKey(key)) {
                                          filePassed = false;
                                          fileReasons.add("Missing required field: " + key);
-                                     } else {
-                                         Object val = jsonMap.get(key);
-                                         String actual = val != null ? val.toString() : "null";
-                                         
-                                         // Enhanced Logic: Handle Arrays and Loose Equality
-                                         boolean match = false;
-                                         
-                                         // 1. Strict String Equality
-                                         if (actual.equals(expected)) match = true;
+                                      } else {
+                                          Object val = jsonMap.get(key);
+                                          String actual = val != null ? val.toString() : "null";
+                                          
+                                          // Property resolution for JSON field values
+                                          String resolvedActual = actual;
+                                          if (actual.contains("${") || actual.contains("p('") || actual.contains("p(\"")) {
+                                              resolvedActual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                              if (!actual.equals(resolvedActual)) {
+                                                  addPropertyResolution(actual, resolvedActual);
+                                                  logger.debug("JSON field property resolution: '{}' -> '{}'", actual, resolvedActual);
+                                              }
+                                          }
+                                          
+                                          // Enhanced Logic: Handle Arrays and Loose Equality
+                                          boolean match = false;
+                                          
+                                          // 1. Strict String Equality
+                                          if (resolvedActual.equals(expected)) match = true;
                                          
                                          // 2. Array Containment (if value is List)
                                          if (!match && val instanceof List) {
@@ -224,15 +249,15 @@ public class JsonGenericCheck extends AbstractCheck {
                                          }
                                          
                                          // 3. Scalar SemVer Match fallback (e.g. "17.0" == "17")
-                                         if (!match && compareValues(actual, expected, "EQ", "SEMVER")) {
-                                             match = true;
-                                         }
+                                          if (!match && compareValues(resolvedActual, expected, "EQ", "SEMVER")) {
+                                              match = true;
+                                          }
 
-                                         if (!match) {
-                                             filePassed = false;
-                                             fileReasons.add(String.format("Field mismatch '%s': Actual='%s', Expected='%s'", key, actual, expected));
-                                         }
-                                     }
+                                          if (!match) {
+                                              filePassed = false;
+                                              fileReasons.add(String.format("Field mismatch '%s': Actual='%s', Expected='%s'", key, resolvedActual, expected));
+                                          }
+                                      }
                                  }
                              } else {
                                  filePassed = false;
