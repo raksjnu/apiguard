@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Security Audit Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f6f9; color: #333; margin: 0; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; padding: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 8px; }
+        h1 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { color: #34495e; margin-top: 30px; border-left: 5px solid #3498db; padding-left: 10px; }
+        h3 { color: #7f8c8d; margin-top: 20px; margin-bottom: 10px; }
+        .timestamp { color: #7f8c8d; font-size: 0.9em; float: right; }
+        .audit-item { background: #fff; border: 1px solid #e9ecef; padding: 20px; margin-bottom: 30px; border-radius: 5px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .path { font-family: monospace; color: #666; margin-bottom: 15px; font-size: 0.9em; }
+        
+        /* Tables */
+        table { border-collapse: collapse; width: 100%; font-size: 0.9em; margin-bottom: 15px; }
+        th { background-color: #f8f9fa; text-align: left; padding: 10px; border-bottom: 2px solid #ddd; color: #444; }
+        td { padding: 8px 10px; border-bottom: 1px solid #eee; }
+        tr:hover { background-color: #f1f1f1; }
+        
+        /* Status Tags */
+        .tag { padding: 3px 8px; border-radius: 12px; font-size: 0.8em; font-weight: bold; display: inline-block; }
+        .tag-pass { background-color: #e6ffed; color: #2ea44f; }
+        .tag-fail { background-color: #ffeef0; color: #cb2431; }
+        .tag-warn { background-color: #fff8c5; color: #b08800; }
+        
+        .section-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        iframe { border: 1px solid #eee; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <span class="timestamp">Generated: 2026-01-18 17:41:38</span>
+    <h1>Security Audit & License Compliance Report</h1>    <div class="summary">
+        <p><strong>Project:</strong> filesync</p>
+        <p><strong>Path:</strong> <code>C:\raks\apiguard\filesync</code></p>
+    </div>
+    <div class="audit-item"><h3>Dependency Tree</h3><div style='max-height: 300px; overflow-y: auto; background: #fafafa; border: 1px solid #ddd; padding: 10px; font-family: monospace; white-space: pre;'>com.raks:filesync:jar:1.0.0
++- com.opencsv:opencsv:jar:5.9:compile
+|  +- org.apache.commons:commons-lang3:jar:3.13.0:compile
+|  +- org.apache.commons:commons-text:jar:1.11.0:compile
+|  +- commons-beanutils:commons-beanutils:jar:1.9.4:compile
+|  |  +- commons-logging:commons-logging:jar:1.2:compile
+|  |  \- commons-collections:commons-collections:jar:3.2.2:compile
+|  \- org.apache.commons:commons-collections4:jar:4.4:compile
++- com.google.code.gson:gson:jar:2.10.1:compile
++- commons-cli:commons-cli:jar:1.6.0:compile
++- org.slf4j:slf4j-simple:jar:2.0.9:compile
+|  \- org.slf4j:slf4j-api:jar:2.0.9:compile
+\- junit:junit:jar:4.13.2:test
+   \- org.hamcrest:hamcrest-core:jar:1.3:test
+</div><h3>SBOM</h3><p>Generated CycloneDX SBOM: <a href='bom.xml' target='_blank'>bom.xml</a></p><h3>License Compliance</h3><table><thead><tr><th>License</th><th>Library</th><th>Enterprise Status</th></tr></thead><tbody><tr><td><strong>Apache-2.0</strong></td><td>Gson<br><small>com.google.code.gson:gson:2.10.1 - https://github.com/google/gson/gson</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache 2</strong></td><td>opencsv<br><small>com.opencsv:opencsv:5.9 - http://opencsv.sf.net</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Apache Commons BeanUtils<br><small>commons-beanutils:commons-beanutils:1.9.4 - https://commons.apache.org/proper/commons-beanutils/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache-2.0</strong></td><td>Apache Commons CLI<br><small>commons-cli:commons-cli:1.6.0 - https://commons.apache.org/proper/commons-cli/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Apache Commons Collections<br><small>commons-collections:commons-collections:3.2.2 - http://commons.apache.org/collections/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>The Apache Software License, Version 2.0</strong></td><td>Apache Commons Logging<br><small>commons-logging:commons-logging:1.2 - http://commons.apache.org/proper/commons-logging/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Eclipse Public License 1.0</strong></td><td>JUnit<br><small>junit:junit:4.13.2 - http://junit.org</small></td><td><span class='tag tag-warn' title=''>Unknown</span></td></tr><tr><td><strong>Apache License, Version 2.0</strong></td><td>Apache Commons Collections<br><small>org.apache.commons:commons-collections4:4.4 - https://commons.apache.org/proper/commons-collections/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache-2.0</strong></td><td>Apache Commons Lang<br><small>org.apache.commons:commons-lang3:3.13.0 - https://commons.apache.org/proper/commons-lang/</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>Apache-2.0</strong></td><td>Apache Commons Text<br><small>org.apache.commons:commons-text:1.11.0 - https://commons.apache.org/proper/commons-text</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>New BSD License</strong></td><td>Hamcrest Core<br><small>org.hamcrest:hamcrest-core:1.3 - https://github.com/hamcrest/JavaHamcrest/hamcrest-core</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>MIT License</strong></td><td>SLF4J API Module<br><small>org.slf4j:slf4j-api:2.0.9 - http://www.slf4j.org</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr><tr><td><strong>MIT License</strong></td><td>SLF4J Simple Provider<br><small>org.slf4j:slf4j-simple:2.0.9 - http://www.slf4j.org</small></td><td><span class='tag tag-pass' title='Allows commercial use, modification, and distribution.'>Permissive (Safe)</span></td></tr></tbody></table>        <h3>Vulnerabilities (OWASP)</h3>
+        <p><a href="dependency-check-report.html" target="_blank">Open Full OWASP Report</a></p>
+        <iframe src="dependency-check-report.html" width="100%" height="600"></iframe>    </div>
+</div>
+</body>
+</html>
