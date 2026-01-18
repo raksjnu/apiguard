@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+	xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+	
+    <!-- A separate file to test if rules scan ALL xml files or just specific ones -->
+    <flow name="api-flow" doc:id="api-flow-id">
+        <logger level="INFO" doc:name="API Log" message="API Flow"/>
+    </flow>
+</mule>

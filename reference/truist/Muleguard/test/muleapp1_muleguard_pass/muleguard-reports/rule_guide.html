@@ -1,0 +1,3343 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MuleGuard - Rule Guide</title>
+    <style>
+        :root {
+            --truist-purple: #663399;
+            --truist-purple-light: #7d4fb2;
+            --text-white: #FFFFFF;
+            --sidebar-width: 300px;
+        }
+        body {font-family: Arial, sans-serif; margin: 0; background-color: #f0f0f0; display: flex; height: 100vh; overflow: hidden;}
+        .sidebar {
+            width: var(--sidebar-width);
+            background: white;
+            border-right: 1px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: auto;
+            min-width: 200px;
+            max-width: 600px;
+            flex-shrink: 0;
+        }
+        .sidebar-header {
+            padding: 20px;
+            background: var(--truist-purple);
+            color: white;
+        }
+        .sidebar-header h2 { margin: 0; font-size: 1.2rem; color: white; }
+        .sidebar-nav {
+            flex: 1;
+            overflow-y: auto;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        .sidebar-nav li a {
+            display: block;
+            padding: 15px 20px;
+            color: #333;
+            text-decoration: none;
+            border-bottom: 1px solid #eee;
+            transition: background 0.2s;
+        }
+        .sidebar-nav li a:hover { background: #f5f5f5; }
+        .sidebar-nav li a.active {
+            background: var(--truist-purple-light);
+            color: white;
+        }
+        .resizer {
+            width: 5px;
+            background-color: #ddd;
+            cursor: col-resize;
+            height: 100%;
+            flex-shrink: 0;
+            transition: background-color 0.2s;
+        }
+        .resizer:hover, .resizer.resizing {
+            background-color: var(--truist-purple);
+        }
+        .main-content {
+            flex: 1;
+            padding: 40px;
+            overflow-y: auto;
+            background: #f9f9f9;
+            position: relative;
+        }
+        .report-container {
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 1400px;
+            margin: 0 auto;
+            border: 5px solid var(--truist-purple);
+            position: relative;
+        }
+        .top-nav-container {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+        .top-nav-button {
+            background-color: var(--truist-purple);
+            color: var(--text-white);
+            border: none;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .top-nav-button:hover { background-color: var(--truist-purple-light); }
+        h1 { color: var(--truist-purple); border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        h2 { color: #444; margin-top: 30px; }
+        h3 { color: #666; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; border: 1px solid #ddd; }
+        code { font-family: Consolas, monospace; color: #d63384; }
+        pre code { color: #333; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
+        th { background: #f1f1f1; }
+        blockquote { border-left: 4px solid var(--truist-purple); margin: 0; padding-left: 20px; color: #555; }
+    </style>
+    <script>
+        function showRule(event, ruleId) {
+            event.preventDefault();
+            document.querySelectorAll('.rule-content').forEach(el => el.style.display = 'none');
+            document.getElementById(ruleId).style.display = 'block';
+            document.querySelectorAll('.sidebar-nav a').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebar = document.getElementById('sidebar');
+            const resizer = document.getElementById('resizer');
+            if (!sidebar || !resizer) return;
+            let isResizing = false;
+            resizer.addEventListener('mousedown', function(e) {
+                isResizing = true;
+                resizer.classList.add('resizing');
+                document.body.style.cursor = 'col-resize';
+                document.body.style.userSelect = 'none';
+            });
+            document.addEventListener('mousemove', function(e) {
+                if (!isResizing) return;
+                const newWidth = e.clientX;
+                if (newWidth > 200 && newWidth < 600) {
+                    sidebar.style.width = newWidth + 'px';
+                }
+            });
+            document.addEventListener('mouseup', function(e) {
+                if (isResizing) {
+                    isResizing = false;
+                    resizer.classList.remove('resizing');
+                    document.body.style.cursor = '';
+                    document.body.style.userSelect = '';
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h2>MuleGuard Rules</h2>
+        </div>
+        <ul class="sidebar-nav">
+            <li><a href='#' class='active' onclick="showRule(event, 'CONFIG_CLIENTIDMAP_VALIDATOR')">CONFIG_CLIENTIDMAP_VALIDATOR</a></li><li><a href='#' class='' onclick="showRule(event, 'CONFIG_GENERIC_PROPERTY_FILE_CHECK')">CONFIG_GENERIC_PROPERTY_FILE_CHECK</a></li><li><a href='#' class='' onclick="showRule(event, 'CONFIG_MANDATORY_PROPERTY_VALUE_CHECK')">CONFIG_MANDATORY_PROPERTY_VALUE_CHECK</a></li><li><a href='#' class='' onclick="showRule(event, 'CONFIG_MANDATORY_SUBSTRING_CHECK')">CONFIG_MANDATORY_SUBSTRING_CHECK</a></li><li><a href='#' class='' onclick="showRule(event, 'CONFIG_OPTIONAL_PROPERTY_VALUE_CHECK')">CONFIG_OPTIONAL_PROPERTY_VALUE_CHECK</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_GENERIC_TOKEN_SEARCH')">CODE_GENERIC_TOKEN_SEARCH</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN')">CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_GENERIC_TOKEN_SEARCH_REQUIRED')">CODE_GENERIC_TOKEN_SEARCH_REQUIRED</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_JSON_VALIDATION_FORBIDDEN')">CODE_JSON_VALIDATION_FORBIDDEN</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_JSON_VALIDATION_REQUIRED')">CODE_JSON_VALIDATION_REQUIRED</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_POM_VALIDATION_FORBIDDEN')">CODE_POM_VALIDATION_FORBIDDEN</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_POM_VALIDATION_REQUIRED')">CODE_POM_VALIDATION_REQUIRED</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_XML_ATTRIBUTE_EXISTS')">CODE_XML_ATTRIBUTE_EXISTS</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_XML_ATTRIBUTE_NOT_EXISTS')">CODE_XML_ATTRIBUTE_NOT_EXISTS</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_XML_ELEMENT_CONTENT_FORBIDDEN')">CODE_XML_ELEMENT_CONTENT_FORBIDDEN</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_XML_ELEMENT_CONTENT_REQUIRED')">CODE_XML_ELEMENT_CONTENT_REQUIRED</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_XML_XPATH_EXISTS')">CODE_XML_XPATH_EXISTS</a></li><li><a href='#' class='' onclick="showRule(event, 'CODE_XML_XPATH_NOT_EXISTS')">CODE_XML_XPATH_NOT_EXISTS</a></li>
+        </ul>
+    </div>
+    <div class="resizer" id="resizer"></div>
+    <div class="main-content">
+        <div class="top-nav-container">
+            <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
+            <a href="/muleguard/main" id="mainPageBtn" class="top-nav-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+        </div>
+        <div class="report-container">
+            <div id='CONFIG_CLIENTIDMAP_VALIDATOR' class='rule-content' style='display: block;'><h1>CLIENTIDMAP_VALIDATOR</h1>
+<br>
+<strong>Rule Type:</strong> <code>CONFIG</code> </td><td> <strong>Applies To:</strong> Property files (.properties)
+<br>
+<h2>Overview</h2>
+<br>
+Specialized validator for <strong>client ID mapping</strong> and <strong>secure property</strong> validation. Ensures client ID mappings follow specific patterns and secure properties are properly configured.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Validate client ID mapping format</li>
+<li>Ensure secure property references</li>
+<li>Check API key configurations</li>
+<li>Enforce security standards for credentials</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>fileExtensions</code> </td><td> List<String> </td><td> File extensions to check (typically <code>.properties</code>) </td></tr>
+<tr><td> <code>environments</code> </td><td> List<String> </td><td> Environment names to validate </td></tr>
+<br>
+<h2>Built-in Validations</h2>
+<br>
+This rule performs the following checks automatically:
+<br>
+1. <strong>Client ID Format</strong>: Validates <code>clientId</code> properties match expected patterns
+2. <strong>Secure Properties</strong>: Ensures sensitive properties use <code>${secure::...}</code> syntax
+3. <strong>API Key Format</strong>: Validates API key references follow standards
+4. <strong>Credential Patterns</strong>: Checks for proper credential configuration
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Basic Client ID Validation</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-160"</li>
+  name: "Client ID Mapping Validation"
+  description: "Validate client ID mappings in all environments"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: CLIENTIDMAP_VALIDATOR
+      params:
+        fileExtensions: [".properties"]
+        environments: ["DEV", "QA", "PROD"]
+</code></pre>
+<br>
+<h3>Example 2: Production-Only Validation</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-161"</li>
+  name: "Production Client ID Security"
+  description: "Strict client ID validation for production"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: CLIENTIDMAP_VALIDATOR
+      params:
+        fileExtensions: [".properties"]
+        environments: ["PROD"]
+</code></pre>
+<br>
+<h2>Validation Rules</h2>
+<br>
+The validator checks for:
+<br>
+<li>✅ Proper <code>clientId</code> format (alphanumeric with hyphens/underscores)</li>
+<li>✅ Secure property syntax: <code>${secure::propertyName}</code></li>
+<li>✅ No hardcoded credentials</li>
+<li>✅ Valid API key references</li>
+<li>❌ Plain text passwords or secrets</li>
+<li>❌ Invalid client ID patterns</li>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+PROD.properties: Invalid client ID format detected
+DEV.properties: Secure property must use ${secure::...} syntax
+QA.properties: Hardcoded credential detected - use secure properties
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li> Validating client ID format across environments</li>
+<li> Ensuring secure property usage for credentials</li>
+<li> Preventing hardcoded API keys/secrets</li>
+<li> Enforcing security standards for authentication</li>
+<br>
+<h3>Security Patterns</h3>
+<li>Always use ${secure::...}` for sensitive properties</li>
+<li>Validate client ID format consistency</li>
+<li>Ensure no plain text credentials in property files</li>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[MANDATORY_PROPERTY_VALUE_CHECK](MANDATORY_PROPERTY_VALUE_CHECK.md)</strong> - General property validation</li>
+<li><strong>[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)</strong> - Token-based validation</li></div><div id='CONFIG_GENERIC_PROPERTY_FILE_CHECK' class='rule-content' style='display: none;'><h1>GENERIC_PROPERTY_FILE_CHECK</h1>
+<br>
+<strong>Rule Type:</strong> <code>CONFIG</code> </td><td> <strong>Applies To:</strong> Property files (.properties)
+<br>
+<h2>Overview</h2>
+<br>
+Generic property file validation with flexible configuration options. Provides comprehensive validation for property files across environments.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>General property file validation</li>
+<li>Multi-environment configuration checks</li>
+<li>Property format validation</li>
+<li>Configuration completeness verification</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>fileExtensions</code> </td><td> List<String> </td><td> File extensions to check </td></tr>
+<tr><td> <code>environments</code> </td><td> List<String> </td><td> Environment names to validate </td></tr>
+<tr><td> <code>validationRules</code> </td><td> List<Map> </td><td> Custom validation rules </td></tr>
+<br>
+<h4>Validation Rule Map</h4>
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>type</code> </td><td> String </td><td> Yes </td><td> Validation type: <code>REQUIRED</code>, <code>FORBIDDEN</code>, <code>FORMAT</code> </td></tr>
+<tr><td> <code>pattern</code> </td><td> String </td><td> Yes </td><td> Pattern to match or validate </td></tr>
+<tr><td> <code>message</code> </td><td> String </td><td> No </td><td> Custom error message </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Basic Property Validation</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-170"</li>
+  name: "Property File Format Validation"
+  description: "Validate property file format and required keys"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: GENERIC_PROPERTY_FILE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["ALL"]
+        validationRules:
+          - type: "REQUIRED"
+            pattern: "app.name"
+          - type: "REQUIRED"
+            pattern: "app.version"
+</code></pre>
+<br>
+<h3>Example 2: Format Validation</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-171"</li>
+  name: "Property Value Format"
+  description: "Ensure property values follow expected formats"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: GENERIC_PROPERTY_FILE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["DEV", "QA", "PROD"]
+        validationRules:
+          - type: "FORMAT"
+            pattern: "port=\\d+"
+            message: "Port must be numeric"
+          - type: "FORMAT"
+            pattern: "timeout=\\d+[smh]"
+            message: "Timeout must include unit (s/m/h)"
+</code></pre>
+<br>
+<h3>Example 3: Forbidden Patterns</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-172"</li>
+  name: "No Hardcoded Values"
+  description: "Prevent hardcoded values in property files"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_PROPERTY_FILE_CHECK
+      params:
+        fileExtensions: [".properties", ".yaml"]
+        environments: ["PROD"]
+        validationRules:
+          - type: "FORBIDDEN"
+            pattern: "password=.*"
+            message: "Passwords must use secure properties"
+          - type: "FORBIDDEN"
+            pattern: "localhost"
+            message: "No hardcoded localhost in production"
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+PROD.properties: Required property 'app.name' not found
+DEV.properties: Port must be numeric (validation failed for 'port=abc')
+QA.properties: No hardcoded localhost in production
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Validating property file structure and format</li>
+<li>✅ Ensuring required properties exist across environments</li>
+<li>✅ Checking for environment-specific configurations</li>
+<li>✅ Enforcing property naming conventions</li>
+<br>
+<h3>Environment Validation</h3>
+<pre><code class='language-yaml'>
+<h1>Validate all environments have required properties</h1>
+environments: ["DEV", "QA", "PROD"]
+requiredProperties: ["app.name", "app.version", "environment"]
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[MANDATORY_PROPERTY_VALUE_CHECK](MANDATORY_PROPERTY_VALUE_CHECK.md)</strong> - Specific property-value validation</li>
+<li><strong>[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)</strong> - Token-based validation</li>
+<li><strong>[GENERIC_TOKEN_SEARCH](GENERIC_TOKEN_SEARCH.md)</strong> - Advanced token search</li></div><div id='CONFIG_MANDATORY_PROPERTY_VALUE_CHECK' class='rule-content' style='display: none;'><h1>MANDATORY_PROPERTY_VALUE_CHECK</h1>
+<br>
+<strong>Rule Type:</strong> <code>CONFIG</code> </td><td> <strong>Applies To:</strong> Property files (.properties)
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>required property name-value pairs exist</strong> in environment-specific configuration files. Ensures properties have correct values.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Validate property values match expected values</li>
+<li>Ensure configuration correctness across environments</li>
+<li>Check for required property settings</li>
+<li>Enforce configuration standards</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>fileExtensions</code> </td><td> List<String> </td><td> File extensions to check (e.g., <code>.properties</code>) </td></tr>
+<tr><td> <code>environments</code> </td><td> List<String> </td><td> Environment names to check </td></tr>
+<tr><td> <code>properties</code> </td><td> List<Map> </td><td> List of property configurations </td></tr>
+<br>
+<h4>Property Configuration Map</h4>
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>name</code> </td><td> String </td><td> Yes </td><td> Property name </td></tr>
+<tr><td> <code>values</code> </td><td> List<String> </td><td> Yes </td><td> Allowed values (OR logic) </td></tr>
+<tr><td> <code>caseSensitiveName</code> </td><td> Boolean </td><td> No </td><td> Override global name case sensitivity </td></tr>
+<tr><td> <code>caseSensitiveValue</code> </td><td> Boolean </td><td> No </td><td> Override global value case sensitivity </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>delimiter</code> </td><td> String </td><td> <code>=</code> </td><td> Property delimiter </td></tr>
+<tr><td> <code>caseSensitiveNames</code> </td><td> Boolean </td><td> <code>true</code> </td><td> Global case sensitivity for property names </td></tr>
+<tr><td> <code>caseSensitiveValues</code> </td><td> Boolean </td><td> <code>true</code> </td><td> Global case sensitivity for property values </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Validate Log Level</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-130"</li>
+  name: "Production Log Level"
+  description: "Production must use INFO or WARN log level"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["PROD"]
+        properties:
+          - name: "log.level"
+            values: ["INFO", "WARN"]
+</code></pre>
+<br>
+<h3>Example 2: Multiple Properties</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-131"</li>
+  name: "Required Environment Configuration"
+  description: "Validate required environment properties"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["DEV", "QA", "PROD"]
+        properties:
+          - name: "environment.type"
+            values: ["DEV", "QA", "PROD"]
+          - name: "ssl.enabled"
+            values: ["true"]
+          - name: "timeout.seconds"
+            values: ["30", "60", "120"]
+</code></pre>
+<br>
+<h3>Example 3: Case-Insensitive Values</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-132"</li>
+  name: "Boolean Property Validation"
+  description: "Validate boolean properties accept various formats"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["ALL"]
+        caseSensitiveValues: false
+        properties:
+          - name: "debug.enabled"
+            values: ["true", "false", "yes", "no"]
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+PROD.properties: Property 'log.level' not found in file
+DEV.properties: Property 'ssl.enabled' found but value does not match expected values [true]
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Enforcing specific property values per environment</li>
+<li>✅ Validating security settings (SSL, encryption)</li>
+<li>✅ Ensuring correct log levels for production</li>
+<li>✅ Standardizing configuration values</li>
+<br>
+<h3>Production Safety</h3>
+<pre><code class='language-yaml'>
+<h1>Enforce production log levels</h1>
+environments: ["PROD"]
+properties:
+  - name: "log.level"
+    values: ["INFO", "WARN", "ERROR"]
+  - name: "ssl.enabled"
+    values: ["true"]
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[OPTIONAL_PROPERTY_VALUE_CHECK](OPTIONAL_PROPERTY_VALUE_CHECK.md)</strong> - Validates optional properties</li>
+<li><strong>[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)</strong> - Simpler substring validation</li></div><div id='CONFIG_MANDATORY_SUBSTRING_CHECK' class='rule-content' style='display: none;'><h1>MANDATORY_SUBSTRING_CHECK</h1>
+<br>
+<strong>Rule Type:</strong> <code>CONFIG</code> </td><td> <strong>Applies To:</strong> Property files (.properties)
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>required or forbidden tokens exist</strong> in environment-specific configuration files. This is a config-specific rule that filters files by environment name.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Ensure required configuration keys exist in environment files</li>
+<li>Prevent forbidden values in specific environments</li>
+<li>Validate environment-specific property files</li>
+<li>Enforce configuration standards across environments</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>fileExtensions</code> </td><td> List<String> </td><td> File extensions to check (e.g., <code>.properties</code>, <code>.yaml</code>) </td></tr>
+<tr><td> <code>tokens</code> </td><td> List<String> </td><td> List of tokens to search for </td></tr>
+<tr><td> <code>environments</code> </td><td> List<String> </td><td> Environment names (file basenames) to check </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>searchMode</code> </td><td> String </td><td> <code>REQUIRED</code> </td><td> <code>REQUIRED</code> (tokens must exist) or <code>FORBIDDEN</code> (tokens must NOT exist) </td></tr>
+<tr><td> <code>caseSensitive</code> </td><td> Boolean </td><td> <code>true</code> </td><td> Whether token matching is case-sensitive </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Ensure Required Properties</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-120"</li>
+  name: "Required API Configuration"
+  description: "All environment property files must have apiId"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: MANDATORY_SUBSTRING_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["DEV", "QA", "PROD"]
+        tokens: ["apiId", "clientId"]
+        searchMode: REQUIRED
+</code></pre>
+<br>
+<h3>Example 2: Block Forbidden Values</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-121"</li>
+  name: "No Debug Mode in Production"
+  description: "Production properties must not have debug=true"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: MANDATORY_SUBSTRING_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["PROD"]
+        tokens: ["debug=true", "verbose=true"]
+        searchMode: FORBIDDEN
+</code></pre>
+<br>
+<h3>Example 3: Case-Insensitive Search</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-122"</li>
+  name: "SSL Configuration Required"
+  description: "All environments must have SSL configuration"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: MANDATORY_SUBSTRING_CHECK
+      params:
+        fileExtensions: [".properties", ".yaml"]
+        environments: ["ALL"]  # Will be expanded to global environments list
+        tokens: ["ssl", "tls", "https"]
+        searchMode: REQUIRED
+        caseSensitive: false
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+DEV.properties: Required token 'apiId' not found in file
+PROD.properties: Forbidden token 'debug=true' found in file
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Validating property values contain required substrings</li>
+<li>✅ Checking URL formats and patterns</li>
+<li>✅ Ensuring property values follow naming conventions</li>
+<li>✅ Validating configuration patterns</li>
+<br>
+<h3>Pattern Validation</h3>
+<pre><code class='language-yaml'>
+<h1>Ensure URLs use HTTPS</h1>
+properties:
+  - name: "api.url"
+    requiredSubstrings: ["https://"]
+    
+<h1>Validate naming conventions</h1>
+properties:
+  - name: "app.name"
+    requiredSubstrings: ["api-", "-service"]
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[GENERIC_TOKEN_SEARCH_REQUIRED](GENERIC_TOKEN_SEARCH_REQUIRED.md)</strong> - More flexible token search without environment filtering</li>
+<li><strong>[MANDATORY_PROPERTY_VALUE_CHECK](MANDATORY_PROPERTY_VALUE_CHECK.md)</strong> - Validates property name-value pairs</li></div><div id='CONFIG_OPTIONAL_PROPERTY_VALUE_CHECK' class='rule-content' style='display: none;'><h1>OPTIONAL_PROPERTY_VALUE_CHECK</h1>
+<br>
+<strong>Rule Type:</strong> <code>CONFIG</code> </td><td> <strong>Applies To:</strong> Property files (.properties)
+<br>
+<h2>Overview</h2>
+<br>
+Validates <strong>optional property values</strong> in configuration files. If property does NOT exist → PASS. If property exists → value must match allowed values.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Validate optional configuration when present</li>
+<li>Ensure correct values for optional properties</li>
+<li>Allow flexibility while enforcing correctness</li>
+<li>Check conditional configuration</li>
+<br>
+<h2>Parameters</h2>
+<br>
+Same as [MANDATORY_PROPERTY_VALUE_CHECK](MANDATORY_PROPERTY_VALUE_CHECK.md), but with different validation logic.
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>fileExtensions</code> </td><td> List<String> </td><td> File extensions to check </td></tr>
+<tr><td> <code>environments</code> </td><td> List<String> </td><td> Environment names to check </td></tr>
+<tr><td> <code>properties</code> </td><td> List<Map> </td><td> List of optional property configurations </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Optional Debug Configuration</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-140"</li>
+  name: "Optional Debug Configuration"
+  description: "If debug property exists, it must be true or false"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: OPTIONAL_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["ALL"]
+        properties:
+          - name: "debug.enabled"
+            values: ["true", "false"]
+</code></pre>
+<br>
+<h3>Example 2: Optional Cache Settings</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-141"</li>
+  name: "Optional Cache Configuration"
+  description: "If cache.type exists, validate allowed values"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: OPTIONAL_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["DEV", "QA", "PROD"]
+        properties:
+          - name: "cache.type"
+            values: ["memory", "redis", "none"]
+          - name: "cache.ttl"
+            values: ["300", "600", "1800", "3600"]
+</code></pre>
+<br>
+<h2>Validation Logic</h2>
+<br>
+<li><strong>Property NOT found</strong> → ✅ PASS (optional, so absence is OK)</li>
+<li><strong>Property found with valid value</strong> → ✅ PASS</li>
+<li><strong>Property found with invalid value</strong> → ❌ FAIL</li>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+DEV.properties: Optional property 'debug.enabled' found but value does not match expected values [true, false]
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Validating optional properties when they exist</li>
+<li>✅ Ensuring correct values for non-mandatory configs</li>
+<li>✅ Checking optional feature flags</li>
+<li>✅ Validating conditional configurations</li>
+<br>
+<h3>Optional Feature Validation</h3>
+<pre><code class='language-yaml'>
+<h1>Validate optional feature flags if present</h1>
+properties:
+  - name: "feature.experimental"
+    values: ["true", "false"]
+  - name: "cache.enabled"
+    values: ["true", "false"]
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[MANDATORY_PROPERTY_VALUE_CHECK](MANDATORY_PROPERTY_VALUE_CHECK.md)</strong> - For required properties</li>
+<li><strong>[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)</strong> - Simpler substring validation</li></div><div id='CODE_GENERIC_TOKEN_SEARCH' class='rule-content' style='display: none;'><h1>GENERIC_TOKEN_SEARCH</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> All source code files
+<br>
+<h2>Overview</h2>
+<br>
+Advanced token search with <strong>environment filtering</strong> and <strong>regex support</strong>. This is the config-specific version of GENERIC_TOKEN_SEARCH_REQUIRED/FORBIDDEN with additional environment awareness.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Complex token validation with environment filtering</li>
+<li>Regex-based pattern matching in config files</li>
+<li>Environment-specific validation rules</li>
+<li>Advanced configuration compliance checks</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match files </td></tr>
+<tr><td> <code>tokens</code> </td><td> List<String> </td><td> List of tokens to search for </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>environments</code> </td><td> List<String> </td><td> <code>null</code> </td><td> Filter files by environment names </td></tr>
+<tr><td> <code>searchMode</code> </td><td> String </td><td> <code>FORBIDDEN</code> </td><td> <code>REQUIRED</code> or <code>FORBIDDEN</code> </td></tr>
+<tr><td> <code>matchMode</code> </td><td> String </td><td> <code>SUBSTRING</code> </td><td> <code>SUBSTRING</code>, <code>REGEX</code>, or <code>ELEMENT_ATTRIBUTE</code> </td></tr>
+<tr><td> <code>elementName</code> </td><td> String </td><td> <code>null</code> </td><td> For XML element-specific searches </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Environment-Specific Token Search</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-150"</li>
+  name: "No Hardcoded Localhost in Production"
+  description: "Production configs must not contain localhost"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: GENERIC_TOKEN_SEARCH
+      params:
+        filePatterns: ["*.properties"]
+        environments: ["PROD"]
+        tokens: ["localhost", "127.0.0.1"]
+        searchMode: FORBIDDEN
+</code></pre>
+<br>
+<h3>Example 2: Regex Pattern with Environment Filter</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-151"</li>
+  name: "IP Address Detection in Config"
+  description: "Detect hardcoded IP addresses in QA and PROD configs"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH
+      params:
+        filePatterns: ["*.yaml", "*.properties"]
+        environments: ["QA", "PROD"]
+        tokens: ["\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"]
+        matchMode: REGEX
+        searchMode: FORBIDDEN
+</code></pre>
+<br>
+<h3>Example 3: Required Token in All Environments</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-152"</li>
+  name: "API Key Configuration Required"
+  description: "All environment configs must reference API key property"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH
+      params:
+        filePatterns: ["*.properties"]
+        environments: ["ALL"]
+        tokens: ["${api.key}", "${secure::api.key}"]
+        searchMode: REQUIRED
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+PROD.properties: Forbidden token 'localhost' found in file
+QA.yaml: Required token(s) not found in files matching: *.yaml
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Searching for specific keywords or patterns across all files</li>
+<li>✅ Validating presence of required code patterns</li>
+<li>✅ Ensuring specific imports or dependencies are used</li>
+<li>✅ Finding configuration references</li>
+<br>
+<h3>Search Pattern Tips</h3>
+<pre><code class='language-yaml'>
+<h1>Case-insensitive search</h1>
+searchTokens: ["TODO", "FIXME"]
+caseSensitive: false
+<br>
+<h1>Regex patterns for complex searches</h1>
+searchTokens: ["import.*Logger"]
+isRegex: true
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[GENERIC_TOKEN_SEARCH_REQUIRED](GENERIC_TOKEN_SEARCH_REQUIRED.md)</strong> - Code-specific version</li>
+<li><strong>[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)</strong> - Code-specific version</li>
+<li><strong>[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)</strong> - Simpler config-specific validation</li></div><div id='CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN' class='rule-content' style='display: none;'><h1>GENERIC_TOKEN_SEARCH_FORBIDDEN</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> All source code files
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>forbidden tokens do NOT exist</strong> in files matching specified patterns. This rule <strong>fails</strong> if any forbidden token <strong>IS found</strong>.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Prevent usage of deprecated APIs or functions</li>
+<li>Block hardcoded credentials or sensitive data</li>
+<li>Disallow specific libraries or imports</li>
+<li>Enforce coding standards by blocking anti-patterns</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match files (e.g., <code>**/*.xml</code>, <code>src/main/mule/*.xml</code>) </td></tr>
+<tr><td> <code>tokens</code> </td><td> List<String> </td><td> List of tokens that must NOT be found </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>excludePatterns</code> </td><td> List<String> </td><td> <code>[]</code> </td><td> Glob patterns to exclude files </td></tr>
+<tr><td> <code>matchMode</code> </td><td> String </td><td> <code>SUBSTRING</code> </td><td> <code>SUBSTRING</code> or <code>REGEX</code> - how to match tokens </td></tr>
+<tr><td> <code>caseSensitive</code> </td><td> Boolean </td><td> <code>true</code> </td><td> Whether token matching is case-sensitive </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Block Deprecated Function</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-010"</li>
+  name: "No Deprecated toBase64 Function"
+  description: "Prevent usage of deprecated toBase64() function"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+          - "**/*.dwl"
+        tokens:
+          - "toBase64()"
+</code></pre>
+<br>
+<h3>Example 2: Block Hardcoded Credentials</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-011"</li>
+  name: "No Hardcoded Passwords"
+  description: "Prevent hardcoded passwords in configuration files"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+          - "**/*.xml"
+          - "**/*.properties"
+        tokens:
+          - "password="
+          - "pwd="
+          - "secret="
+        caseSensitive: false
+</code></pre>
+<br>
+<h3>Example 3: Block IP Addresses (Regex)</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-012"</li>
+  name: "No Hardcoded IP Addresses"
+  description: "Prevent hardcoded IP addresses in code"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+          - "src/main/mule/**/*.xml"
+        excludePatterns:
+          - "<strong>/test/</strong>"
+        tokens:
+          - "\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"  # IP address pattern
+        matchMode: REGEX
+</code></pre>
+<br>
+<h3>Example 4: Block Multiple Deprecated APIs</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-013"</li>
+  name: "No Deprecated Mule Components"
+  description: "Block usage of deprecated Mule 3 components"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+          - "**/*.xml"
+        tokens:
+          - "http://www.mulesoft.org/schema/mule/http-deprecated"
+          - "mule-transport-"
+          - "endpoint-ref"
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+When validation fails, you'll see messages like:
+<br>
+<pre><code>
+config.xml has forbidden token: toBase64()
+application.properties has forbidden token: password=
+main.xml has forbidden token: 192.168.1.1
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Blocking hardcoded credentials or secrets</li>
+<li>✅ Preventing usage of deprecated APIs</li>
+<li>✅ Detecting forbidden imports or dependencies</li>
+<li>✅ Finding and removing debug/test code</li>
+<br>
+<h3>Security Patterns</h3>
+<pre><code class='language-yaml'>
+<h1>Block hardcoded secrets</h1>
+forbiddenTokens: ["password=", "apiKey=", "secret="]
+<br>
+<h1>Prevent deprecated APIs</h1>
+forbiddenTokens: ["@Deprecated", "LegacyClass"]
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[GENERIC_TOKEN_SEARCH_REQUIRED](GENERIC_TOKEN_SEARCH_REQUIRED.md)</strong> - Opposite: ensures tokens DO exist</li>
+<li><strong>[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)</strong> - More precise XML validation using XPath</li>
+<li><strong>[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)</strong> - Config-specific validation with searchMode: FORBIDDEN</li></div><div id='CODE_GENERIC_TOKEN_SEARCH_REQUIRED' class='rule-content' style='display: none;'><h1>GENERIC_TOKEN_SEARCH_REQUIRED</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> All source code files
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>required tokens exist</strong> in files matching specified patterns. This rule <strong>fails</strong> if any required token is <strong>NOT found</strong>.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Ensure specific imports are present in code files</li>
+<li>Verify required configuration keys exist</li>
+<li>Validate presence of mandatory comments or annotations</li>
+<li>Check for required DataWeave functions or variables</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match files (e.g., <code>**/*.xml</code>, <code>src/main/mule/*.xml</code>) </td></tr>
+<tr><td> <code>tokens</code> </td><td> List<String> </td><td> List of tokens that must be found </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>excludePatterns</code> </td><td> List<String> </td><td> <code>[]</code> </td><td> Glob patterns to exclude files </td></tr>
+<tr><td> <code>matchMode</code> </td><td> String </td><td> <code>SUBSTRING</code> </td><td> <code>SUBSTRING</code> or <code>REGEX</code> - how to match tokens </td></tr>
+<tr><td> <code>caseSensitive</code> </td><td> Boolean </td><td> <code>true</code> </td><td> Whether token matching is case-sensitive </td></tr>
+<tr><td> <code>requireAll</code> </td><td> Boolean </td><td> <code>true</code> </td><td> If <code>true</code>, ALL tokens must be found. If <code>false</code>, at least ONE token must be found </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Basic - Ensure Required Import Exists</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-001"</li>
+  name: "Required Logger Import"
+  description: "Ensure all XML files import the logger component"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+          - "**/*.xml"
+        tokens:
+          - "http://www.mulesoft.org/schema/mule/logger"
+        caseSensitive: true
+</code></pre>
+<br>
+<h3>Example 2: Advanced - Regex Pattern with OR Logic</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-002"</li>
+  name: "Required Error Handling"
+  description: "Ensure error handling is present (on-error-continue OR on-error-propagate)"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+          - "src/main/mule/**/*.xml"
+        excludePatterns:
+          - "<strong>/test/</strong>"
+        tokens:
+          - "on-error-continue"
+          - "on-error-propagate"
+        matchMode: SUBSTRING
+        requireAll: false  # At least ONE must exist
+</code></pre>
+<br>
+<h3>Example 3: Case-Insensitive Search</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-003"</li>
+  name: "Required API Documentation"
+  description: "Ensure API documentation keywords are present"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+          - "**/*.dwl"
+        tokens:
+          - "description"
+          - "summary"
+        caseSensitive: false
+        requireAll: false
+</code></pre>
+<br>
+<h3>Example 4: Regex Pattern Matching</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-004"</li>
+  name: "Required Version Pattern"
+  description: "Ensure version number follows semantic versioning"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+          - "**/pom.xml"
+        tokens:
+          - "\\d+\\.\\d+\\.\\d+"  # Regex: X.Y.Z format
+        matchMode: REGEX
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+When validation fails, you'll see messages like:
+<br>
+<pre><code>
+config.xml is missing required token: http://www.mulesoft.org/schema/mule/logger
+main.dwl is missing required token: description
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Ensuring required imports are present</li>
+<li>✅ Validating presence of security annotations</li>
+<li>✅ Checking for required code patterns</li>
+<li>✅ Enforcing coding standards</li>
+<br>
+<h3>Common Patterns</h3>
+<pre><code class='language-yaml'>
+<h1>Require security annotations</h1>
+requiredTokens: ["@Secured", "@PreAuthorize"]
+<br>
+<h1>Ensure logging framework</h1>
+requiredTokens: ["import.*slf4j"]
+isRegex: true
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)</strong> - Opposite: ensures tokens do NOT exist</li>
+<li><strong>[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)</strong> - More precise XML validation using XPath</li>
+<li><strong>[MANDATORY_SUBSTRING_CHECK](MANDATORY_SUBSTRING_CHECK.md)</strong> - Config-specific token validation with environment filtering</li></div><div id='CODE_JSON_VALIDATION_FORBIDDEN' class='rule-content' style='display: none;'><h1>JSON_VALIDATION_FORBIDDEN</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> JSON configuration files (package.json, etc.)
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>forbidden JSON elements do NOT exist</strong> in JSON files. This rule <strong>fails</strong> if forbidden elements <strong>ARE found</strong>.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Prevent deprecated configuration keys</li>
+<li>Block specific JSON fields</li>
+<li>Disallow certain metadata in JSON files</li>
+<li>Enforce JSON structure restrictions</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePattern</code> </td><td> String </td><td> Filename pattern to match (e.g., <code>mule-artifact.json</code>) </td></tr>
+<tr><td> <code>forbiddenElements</code> </td><td> List<String> </td><td> List of forbidden JSON keys (top-level only) </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Block Deprecated Fields</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-110"</li>
+  name: "No Deprecated Mule Artifact Fields"
+  description: "Prevent usage of deprecated fields in mule-artifact.json"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: JSON_VALIDATION_FORBIDDEN
+      params:
+        filePattern: "mule-artifact.json"
+        forbiddenElements:
+          - "deprecatedField"
+          - "legacyConfig"
+</code></pre>
+<br>
+<h3>Example 2: Block Sensitive Data</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-111"</li>
+  name: "No Credentials in Config JSON"
+  description: "Prevent hardcoded credentials in JSON configuration"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: JSON_VALIDATION_FORBIDDEN
+      params:
+        filePattern: "config.json"
+        forbiddenElements:
+          - "password"
+          - "apiKey"
+          - "secret"
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+mule-artifact.json has forbidden element: deprecatedField
+config.json has forbidden element: password
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li> Blocking deprecated configuration fields</li>
+<li> Preventing insecure settings in JSON files</li>
+<li> Enforcing migration away from legacy configurations</li>
+<br>
+<h3>Security Use Cases</h3>
+<pre><code class='language-yaml'>
+<h1>Block insecure configurations</h1>
+forbiddenFields:
+  allowInsecureConnections: "true"
+  debugMode: "enabled"
+</code></pre>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[JSON_VALIDATION_REQUIRED](JSON_VALIDATION_REQUIRED.md)</strong> - Opposite: ensures elements DO exist</li>
+<li><strong>[GENERIC_TOKEN_SEARCH_FORBIDDEN](GENERIC_TOKEN_SEARCH_FORBIDDEN.md)</strong> - More flexible JSON content validation</li></div><div id='CODE_JSON_VALIDATION_REQUIRED' class='rule-content' style='display: none;'><h1>JSON_VALIDATION_REQUIRED</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> JSON configuration files (package.json, etc.)
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>required JSON elements exist</strong> in JSON files. This rule is essential for validating <code>mule-artifact.json</code> and other configuration files. It supports <strong>version checking</strong>, <strong>specific field value validation</strong>, and <strong>field existence checks</strong>.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Validate <code>mule-artifact.json</code> structure and Mule runtime versions</li>
+<li>Ensure required configuration keys exist in custom JSON config files</li>
+<li>Enforce specific values for critical JSON fields (e.g., javaVersion)</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePattern</code> </td><td> String </td><td> Precise filename to match (e.g., <code>mule-artifact.json</code>) </td></tr>
+<br>
+<h3>Validation Parameters (Must configure at least one)</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>minVersions</code> </td><td> Map </td><td> Checks if a field's version string is >= specified version (e.g., "4.4.0") </td></tr>
+<tr><td> <code>requiredFields</code> </td><td> Map </td><td> Checks if a field exists AND has a specifically required value </td></tr>
+<tr><td> <code>requiredElements</code> </td><td> List </td><td> Checks if a field simply exists (value ignored) </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Full Mule Artifact Validation</h3>
+Validates minimum Mule version, required Java version, and presence of secure properties.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-007"</li>
+  name: "Validate mule-artifact.json"
+  description: "Ensures mule-artifact.json meets minimum runtime and security requirements"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: JSON_VALIDATION_REQUIRED
+      params:
+        filePattern: "mule-artifact.json"
+        
+        # Check minimum version (Numeric comparison)
+        minVersions:
+          minMuleVersion: "4.9.0"
+          
+        # Check exact values
+        requiredFields:
+          javaSpecificationVersions: "17"
+          
+        # Check simple existence
+        requiredElements:
+          - "secureProperties"
+          - "classLoaderModelLoaderDescriptor"
+</code></pre>
+<br>
+<h3>Example 2: Simple Config Existence</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-101"</li>
+  name: "App Config Required Fields"
+  enabled: true
+  checks:
+    - type: JSON_VALIDATION_REQUIRED
+      params:
+        filePattern: "app-config.json"
+        requiredElements:
+          - "appName"
+          - "environment"
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+Field 'minMuleVersion' version too low in mule-artifact.json: expected >= 4.9.0, got 4.4.0
+Field 'javaSpecificationVersions' has wrong value in mule-artifact.json: expected '17', got '8'
+Element 'secureProperties' missing in mule-artifact.json
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li> Validating mule-artifact.json for runtime compatibility</li>
+<li> Ensuring minimum Mule/Java versions for security</li>
+<li> Enforcing required configuration fields</li>
+<li> Standardizing JSON configuration structure</li>
+<br>
+<h3>Common Patterns</h3>
+<pre><code class='language-yaml'>
+<h1>Enforce minimum Mule runtime version</h1>
+minVersions:
+  minMuleVersion: "4.9.0"
+<br>
+<h1>Require specific Java version</h1>
+requiredFields:
+  javaSpecificationVersions: "17"
+</code></pre>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[JSON_VALIDATION_FORBIDDEN](JSON_VALIDATION_FORBIDDEN.md)</strong> - Opposite: ensures elements do NOT exist</li></div><div id='CODE_POM_VALIDATION_FORBIDDEN' class='rule-content' style='display: none;'><h1>POM_VALIDATION_FORBIDDEN</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> Maven POM files (<code>pom.xml</code>)
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>forbidden elements do NOT exist</strong> in Maven POM files (<code>pom.xml</code>). This rule <strong>fails</strong> if forbidden POM elements <strong>ARE found</strong>.
+<br>
+Supports validation of:
+<li><strong>Forbidden Properties</strong> (property names)</li>
+<li><strong>Forbidden Dependencies</strong> (groupId, artifactId, optional version)</li>
+<li><strong>Forbidden Plugins</strong> (groupId, artifactId, optional version)</li>
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Block deprecated or vulnerable dependencies</li>
+<li>Prevent usage of forbidden Maven plugins</li>
+<li>Disallow specific properties in production</li>
+<li>Enforce dependency exclusion policies</li>
+<li>Block specific versions of libraries (security vulnerabilities)</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>validationType</code> </td><td> String </td><td> Type of validation: <code>PROPERTIES</code>, <code>DEPENDENCIES</code>, <code>PLUGINS</code>, or <code>COMBINED</code> </td></tr>
+<br>
+<h3>Validation-Specific Parameters</h3>
+<br>
+<h4>PROPERTIES Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>forbiddenProperties</code> </td><td> List<String> </td><td> Yes </td><td> List of property names that must NOT exist </td></tr>
+<br>
+<h4>DEPENDENCIES Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>forbiddenDependencies</code> </td><td> List<Map> </td><td> Yes </td><td> List of forbidden dependencies </td></tr>
+<tr><td> <code>forbiddenDependencies[].groupId</code> </td><td> String </td><td> Yes </td><td> Dependency groupId </td></tr>
+<tr><td> <code>forbiddenDependencies[].artifactId</code> </td><td> String </td><td> Yes </td><td> Dependency artifactId </td></tr>
+<tr><td> <code>forbiddenDependencies[].version</code> </td><td> String </td><td> <strong>No</strong> </td><td> <strong>Optional</strong>: If specified, only that specific version is forbidden </td></tr>
+<br>
+> <strong>NEW</strong>: Version validation is now optional! If <code>version</code> is specified, only that exact version is forbidden. If omitted, ALL versions are forbidden.
+<br>
+<h4>PLUGINS Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>forbiddenPlugins</code> </td><td> List<Map> </td><td> Yes </td><td> List of forbidden plugins </td></tr>
+<tr><td> <code>forbiddenPlugins[].groupId</code> </td><td> String </td><td> Yes </td><td> Plugin groupId </td></tr>
+<tr><td> <code>forbiddenPlugins[].artifactId</code> </td><td> String </td><td> Yes </td><td> Plugin artifactId </td></tr>
+<tr><td> <code>forbiddenPlugins[].version</code> </td><td> String </td><td> <strong>No</strong> </td><td> <strong>Optional</strong>: If specified, only that specific version is forbidden </td></tr>
+<br>
+> <strong>NEW</strong>: Version validation is now optional! If <code>version</code> is specified, only that exact version is forbidden. If omitted, ALL versions are forbidden.
+<br>
+---
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Forbidden Properties (Single Property)</h3>
+<br>
+Block a single forbidden property.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-020"</li>
+  name: "No Debug Mode in Production"
+  description: "Debug mode property must not exist"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: PROPERTIES
+        forbiddenProperties:
+          - "debug.enabled"
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code><debug.enabled></code> does NOT exist</li>
+<li>❌ FAIL if <code><debug.enabled></code> exists (regardless of value)</li>
+<br>
+---
+<br>
+<h3>Example 2: Forbidden Properties (Multiple Properties)</h3>
+<br>
+Block multiple forbidden properties.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-021"</li>
+  name: "No Deprecated Properties"
+  description: "Block usage of deprecated property names"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: PROPERTIES
+        forbiddenProperties:
+          - "old.api.version"
+          - "deprecated.config"
+          - "legacy.mode"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Rule fails if ANY forbidden property exists.
+<br>
+---
+<br>
+<h3>Example 3: Forbidden Dependency (ALL Versions)</h3>
+<br>
+Block a dependency completely (all versions).
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-022"</li>
+  name: "No Spring Security LDAP"
+  description: "Spring Security LDAP is deprecated"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+          - groupId: "org.springframework.security"
+            artifactId: "spring-security-ldap"
+            # No version - ALL versions forbidden
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>❌ FAIL if <code>org.springframework.security:spring-security-ldap:1.8.0</code> exists</li>
+<li>❌ FAIL if <code>org.springframework.security:spring-security-ldap:2.0.0</code> exists</li>
+<li>❌ FAIL if ANY version of this dependency exists</li>
+<li>✅ PASS if dependency is not present</li>
+<br>
+---
+<br>
+<h3>Example 4: Forbidden Dependency (Specific Version Only)</h3>
+<br>
+Block only a specific vulnerable version.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-023"</li>
+  name: "Block Vulnerable Log4j Version"
+  description: "Log4j 2.14.1 has critical vulnerability"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+          - groupId: "org.apache.logging.log4j"
+            artifactId: "log4j-core"
+            version: "2.14.1"  # Only this specific version is forbidden
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>❌ FAIL if <code>org.apache.logging.log4j:log4j-core:2.14.1</code> exists (vulnerable)</li>
+<li>✅ PASS if <code>org.apache.logging.log4j:log4j-core:2.17.0</code> exists (safe version)</li>
+<li>✅ PASS if dependency is not present</li>
+<br>
+---
+<br>
+<h3>Example 5: Multiple Forbidden Dependencies (Mixed)</h3>
+<br>
+Block multiple dependencies with different version restrictions.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-024"</li>
+  name: "Dependency Blocklist"
+  description: "Block deprecated and vulnerable dependencies"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: DEPENDENCIES
+        forbiddenDependencies:
+          # Block ALL versions of deprecated library
+          - groupId: "org.springframework.security"
+            artifactId: "spring-security-ldap"
+          
+          # Block specific vulnerable version
+          - groupId: "org.apache.struts"
+            artifactId: "struts2-core"
+            version: "2.3.20"
+          
+          # Block ALL versions of another deprecated library
+          - groupId: "com.ibm.db2"
+            artifactId: "db2jcc_license_cu"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Each dependency is validated according to its configuration.
+<br>
+---
+<br>
+<h3>Example 6: Forbidden Plugin (ALL Versions)</h3>
+<br>
+Block a plugin completely.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-025"</li>
+  name: "No Maven Surefire Plugin"
+  description: "Maven Surefire plugin is not allowed"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: PLUGINS
+        forbiddenPlugins:
+          - groupId: "org.apache.maven.plugins"
+            artifactId: "maven-surefire-plugin"
+            # No version - ALL versions forbidden
+</code></pre>
+<br>
+<strong>Behavior</strong>: Any version of the plugin will cause failure.
+<br>
+---
+<br>
+<h3>Example 7: Forbidden Plugin (Specific Version Only)</h3>
+<br>
+Block only a specific version of a plugin.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-026"</li>
+  name: "Block Old Compiler Plugin"
+  description: "Maven compiler plugin 3.8.0 has known issues"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: PLUGINS
+        forbiddenPlugins:
+          - groupId: "org.apache.maven.plugins"
+            artifactId: "maven-compiler-plugin"
+            version: "3.8.0"  # Only this version is forbidden
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>❌ FAIL if plugin version is 3.8.0</li>
+<li>✅ PASS if plugin version is 3.11.0 (newer version OK)</li>
+<li>✅ PASS if plugin is not present</li>
+<br>
+---
+<br>
+<h3>Example 8: Multiple Forbidden Plugins</h3>
+<br>
+Block multiple plugins.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-027"</li>
+  name: "Plugin Blocklist"
+  description: "Block deprecated and problematic plugins"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: PLUGINS
+        forbiddenPlugins:
+          - groupId: "org.apache.maven.plugins"
+            artifactId: "maven-clean-plugin"
+          - groupId: "org.apache.maven.plugins"
+            artifactId: "maven-surefire-plugin"
+          - groupId: "org.codehaus.mojo"
+            artifactId: "findbugs-maven-plugin"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Rule fails if ANY forbidden plugin exists.
+<br>
+---
+<br>
+<h3>Example 9: Combined Validation</h3>
+<br>
+Validate multiple POM aspects in a single rule.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-028"</li>
+  name: "Complete Forbidden Elements Check"
+  description: "Block all deprecated and vulnerable elements"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_FORBIDDEN
+      params:
+        validationType: COMBINED
+        forbiddenProperties:
+          - "debug.enabled"
+          - "legacy.mode"
+        forbiddenDependencies:
+          - groupId: "org.springframework.security"
+            artifactId: "spring-security-ldap"
+          - groupId: "org.apache.struts"
+            artifactId: "struts2-core"
+            version: "2.3.20"
+        forbiddenPlugins:
+          - groupId: "org.apache.maven.plugins"
+            artifactId: "maven-clean-plugin"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Rule fails if ANY forbidden element exists.
+<br>
+---
+<br>
+<h2>Error Messages</h2>
+<br>
+When validation fails, you'll see detailed messages:
+<br>
+<pre><code>
+Forbidden property 'debug.enabled' found in pom.xml
+Forbidden dependency org.springframework.security:spring-security-ldap found in pom.xml
+Forbidden plugin org.apache.maven.plugins:maven-clean-plugin found in pom.xml
+</code></pre>
+<br>
+---
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use Version-Specific Blocking</h3>
+<br>
+✅ <strong>Block specific versions when</strong>:
+<li>A particular version has a known vulnerability</li>
+<li>A specific version has bugs or compatibility issues</li>
+<li>You want to allow newer versions but block old ones</li>
+<br>
+✅ <strong>Block all versions when</strong>:
+<li>The entire library/plugin is deprecated</li>
+<li>The dependency should never be used in any version</li>
+<li>You're migrating away from a technology</li>
+<br>
+<h3>Security Use Cases</h3>
+<br>
+<h4>Pattern 1: Block Vulnerable Versions</h4>
+<pre><code class='language-yaml'>
+<h1>Block specific vulnerable versions while allowing safe ones</h1>
+forbiddenDependencies:
+  - groupId: "org.apache.logging.log4j"
+    artifactId: "log4j-core"
+    version: "2.14.1"  # CVE-2021-44228
+</code></pre>
+<br>
+<h4>Pattern 2: Block Deprecated Libraries</h4>
+<pre><code class='language-yaml'>
+<h1>Block entire deprecated library (all versions)</h1>
+forbiddenDependencies:
+  - groupId: "org.springframework.security"
+    artifactId: "spring-security-ldap"
+    # No version - completely forbidden
+</code></pre>
+<br>
+<h4>Pattern 3: Migration Enforcement</h4>
+<pre><code class='language-yaml'>
+<h1>Block old libraries during migration</h1>
+forbiddenDependencies:
+  - groupId: "com.mulesoft.mule.core"
+    artifactId: "mule-core-ee"  # Mule 3 artifact
+  - groupId: "org.mule.modules"
+    artifactId: "mule-module-spring-config"  # Deprecated
+</code></pre>
+<br>
+---
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[POM_VALIDATION_REQUIRED](POM_VALIDATION_REQUIRED.md)</strong> - Opposite: ensures elements DO exist</li>
+<li><strong>[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)</strong> - More complex XPath-based POM validation</li>
+<li><strong>[JSON_VALIDATION_FORBIDDEN](JSON_VALIDATION_FORBIDDEN.md)</strong> - Similar validation for JSON files</li>
+<br>
+---
+<br>
+<h2>Version History</h2>
+<br>
+<li><strong>v1.1.0</strong>: Added optional version validation for dependencies and plugins</li>
+<li><strong>v1.0.0</strong>: Initial release with properties, dependencies, and plugins validation</li></div><div id='CODE_POM_VALIDATION_REQUIRED' class='rule-content' style='display: none;'><h1>POM_VALIDATION_REQUIRED</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> Maven POM files (<code>pom.xml</code>)
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>required elements exist</strong> in Maven POM files (<code>pom.xml</code>). This rule <strong>fails</strong> if required POM elements are <strong>NOT found</strong> or don't match expected values.
+<br>
+Supports validation of:
+<li><strong>Parent POM</strong> (groupId, artifactId, version)</li>
+<li><strong>Properties</strong> (name and value pairs)</li>
+<li><strong>Dependencies</strong> (groupId, artifactId, optional version)</li>
+<li><strong>Plugins</strong> (groupId, artifactId, optional version)</li>
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Ensure required dependencies are declared</li>
+<li>Validate Maven plugin configurations</li>
+<li>Enforce parent POM standards</li>
+<li>Check for mandatory project metadata</li>
+<li>Enforce dependency management standards</li>
+<li>Validate specific dependency versions (security compliance)</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>validationType</code> </td><td> String </td><td> Type of validation: <code>PARENT</code>, <code>PROPERTIES</code>, <code>DEPENDENCIES</code>, <code>PLUGINS</code>, or <code>COMBINED</code> </td></tr>
+<br>
+<h3>Validation-Specific Parameters</h3>
+<br>
+<h4>PARENT Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>parent</code> </td><td> Map </td><td> Yes </td><td> Parent POM configuration </td></tr>
+<tr><td> <code>parent.groupId</code> </td><td> String </td><td> Yes </td><td> Expected parent groupId </td></tr>
+<tr><td> <code>parent.artifactId</code> </td><td> String </td><td> Yes </td><td> Expected parent artifactId </td></tr>
+<tr><td> <code>parent.version</code> </td><td> String </td><td> Yes </td><td> Expected parent version </td></tr>
+<br>
+<h4>PROPERTIES Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>properties</code> </td><td> List<Map> </td><td> Yes </td><td> List of required properties </td></tr>
+<tr><td> <code>properties[].name</code> </td><td> String </td><td> Yes </td><td> Property name </td></tr>
+<tr><td> <code>properties[].expectedValue</code> </td><td> String </td><td> No </td><td> Expected property value (if specified, value must match) </td></tr>
+<br>
+<h4>DEPENDENCIES Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>dependencies</code> </td><td> List<Map> </td><td> Yes </td><td> List of required dependencies </td></tr>
+<tr><td> <code>dependencies[].groupId</code> </td><td> String </td><td> Yes </td><td> Dependency groupId </td></tr>
+<tr><td> <code>dependencies[].artifactId</code> </td><td> String </td><td> Yes </td><td> Dependency artifactId </td></tr>
+<tr><td> <code>dependencies[].version</code> </td><td> String </td><td> <strong>No</strong> </td><td> <strong>Optional</strong>: If specified, validates exact version </td></tr>
+<br>
+> <strong>NEW</strong>: Version validation is now optional! If <code>version</code> is specified, it will be validated. If omitted, any version is accepted.
+<br>
+<h4>PLUGINS Validation</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>plugins</code> </td><td> List<Map> </td><td> Yes </td><td> List of required plugins </td></tr>
+<tr><td> <code>plugins[].groupId</code> </td><td> String </td><td> Yes </td><td> Plugin groupId </td></tr>
+<tr><td> <code>plugins[].artifactId</code> </td><td> String </td><td> Yes </td><td> Plugin artifactId </td></tr>
+<tr><td> <code>plugins[].version</code> </td><td> String </td><td> <strong>No</strong> </td><td> <strong>Optional</strong>: If specified, validates exact version </td></tr>
+<br>
+> <strong>NEW</strong>: Version validation is now optional! If <code>version</code> is specified, it will be validated. If omitted, any version is accepted.
+<br>
+---
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Parent POM Validation (with Version)</h3>
+<br>
+Enforce a specific parent POM with exact version.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-001"</li>
+  name: "Enforce Standard Parent POM"
+  description: "All projects must use MuleParentPom version LATEST"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PARENT
+        parent:
+          groupId: "com.raks.eapi"
+          artifactId: "MuleParentPom"
+          version: "LATEST"  # Exact version required
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if parent is <code>com.raks.eapi:MuleParentPom:LATEST</code></li>
+<li>❌ FAIL if parent version is different (e.g., "1.0.0")</li>
+<li>❌ FAIL if parent is missing</li>
+<br>
+---
+<br>
+<h3>Example 2: Properties Validation (Single Property)</h3>
+<br>
+Validate a single property with exact value.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-002"</li>
+  name: "Mule Runtime Version Check"
+  description: "Mule runtime must be 4.9.0"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PROPERTIES
+        properties:
+          - name: "app.runtime"
+            expectedValue: "4.9.0"
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code><app.runtime>4.9.0</app.runtime></code> exists</li>
+<li>❌ FAIL if value is different (e.g., "4.8.0")</li>
+<li>❌ FAIL if property is missing</li>
+<br>
+---
+<br>
+<h3>Example 3: Properties Validation (Multiple Properties)</h3>
+<br>
+Validate multiple properties with different expected values.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-003"</li>
+  name: "Project Configuration Standards"
+  description: "Validate multiple project properties"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PROPERTIES
+        properties:
+          - name: "mule.maven.plugin.version"
+            expectedValue: "4.5.0"
+          - name: "app.runtime"
+            expectedValue: "4.9.0"
+          - name: "project.build.sourceEncoding"
+            expectedValue: "UTF-8"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Each property is validated independently. Rule fails if ANY property is missing or has wrong value.
+<br>
+---
+<br>
+<h3>Example 4: Properties Validation (Existence Only)</h3>
+<br>
+Check that properties exist without validating their values.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-004"</li>
+  name: "Required Properties Exist"
+  description: "Ensure required properties are defined"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PROPERTIES
+        properties:
+          - name: "app.name"
+            # No expectedValue - just check existence
+          - name: "app.version"
+          - name: "app.description"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Properties must exist but can have any value.
+<br>
+---
+<br>
+<h3>Example 5: Dependency Validation (WITHOUT Version)</h3>
+<br>
+Require a dependency but allow any version.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-005"</li>
+  name: "HTTP Connector Required"
+  description: "Mule HTTP connector must be present"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: DEPENDENCIES
+        dependencies:
+          - groupId: "org.mule.connectors"
+            artifactId: "mule-http-connector"
+            # No version specified - any version OK
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code>org.mule.connectors:mule-http-connector:1.10.5</code> exists</li>
+<li>✅ PASS if <code>org.mule.connectors:mule-http-connector:2.0.0</code> exists</li>
+<li>❌ FAIL if dependency is missing</li>
+<br>
+---
+<br>
+<h3>Example 6: Dependency Validation (WITH Version)</h3>
+<br>
+Require a specific dependency version for security compliance.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-006"</li>
+  name: "Security Library Version"
+  description: "Security library must be version 3.0.0"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: DEPENDENCIES
+        dependencies:
+          - groupId: "com.raks.security"
+            artifactId: "security-core"
+            version: "3.0.0"  # Exact version required
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code>com.raks.security:security-core:3.0.0</code> exists</li>
+<li>❌ FAIL if version is different (e.g., "2.9.0")</li>
+<li>❌ FAIL if dependency is missing</li>
+<br>
+---
+<br>
+<h3>Example 7: Multiple Dependencies (Mixed Version Validation)</h3>
+<br>
+Validate multiple dependencies with different version requirements.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-007"</li>
+  name: "Required Dependencies"
+  description: "Validate multiple required dependencies"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: DEPENDENCIES
+        dependencies:
+          # Require specific version for security library
+          - groupId: "com.raks.eapi"
+            artifactId: "security-framework"
+            version: "2.0.0"
+          
+          # Allow any version for utility library
+          - groupId: "com.raks.eapi"
+            artifactId: "common-utils"
+          
+          # Require specific version for compliance
+          - groupId: "org.mule.connectors"
+            artifactId: "mule-http-connector"
+            version: "1.10.5"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Each dependency is validated according to its configuration.
+<br>
+---
+<br>
+<h3>Example 8: Plugin Validation (WITHOUT Version)</h3>
+<br>
+Require a plugin but allow any version.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-008"</li>
+  name: "Mule Maven Plugin Required"
+  description: "Mule Maven plugin must be present"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PLUGINS
+        plugins:
+          - groupId: "org.mule.tools.maven"
+            artifactId: "mule-maven-plugin"
+            # No version - any version OK
+</code></pre>
+<br>
+<strong>Behavior</strong>: Plugin must exist with any version.
+<br>
+---
+<br>
+<h3>Example 9: Plugin Validation (WITH Version)</h3>
+<br>
+Enforce a specific plugin version for build consistency.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-009"</li>
+  name: "Mule Maven Plugin Version"
+  description: "Mule Maven plugin must be version 4.5.0"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: PLUGINS
+        plugins:
+          - groupId: "org.mule.tools.maven"
+            artifactId: "mule-maven-plugin"
+            version: "4.5.0"  # Exact version required
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if plugin exists with version 4.5.0</li>
+<li>❌ FAIL if version is different</li>
+<li>❌ FAIL if plugin is missing</li>
+<br>
+---
+<br>
+<h3>Example 10: Combined Validation</h3>
+<br>
+Validate multiple POM aspects in a single rule.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-010"</li>
+  name: "Complete POM Validation"
+  description: "Comprehensive POM validation"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: COMBINED
+        parent:
+          groupId: "com.raks.eapi"
+          artifactId: "MuleParentPom"
+          version: "LATEST"
+        properties:
+          - name: "app.runtime"
+            expectedValue: "4.9.0"
+          - name: "mule.maven.plugin.version"
+            expectedValue: "4.5.0"
+        dependencies:
+          - groupId: "com.raks.eapi"
+            artifactId: "apimuleutilities"
+        plugins:
+          - groupId: "org.mule.tools.maven"
+            artifactId: "mule-maven-plugin"
+            version: "4.5.0"
+</code></pre>
+<br>
+<strong>Behavior</strong>: All validations must pass for the rule to pass.
+<br>
+---
+<br>
+<h2>Error Messages</h2>
+<br>
+When validation fails, you'll see detailed messages:
+<br>
+<pre><code>
+Parent version mismatch in pom.xml: expected com.raks.eapi:MuleParentPom:LATEST, got version '1.0.0'
+Property 'app.runtime' has wrong value in pom.xml: expected '4.9.0', got '4.8.0'
+Property 'mule.maven.plugin.version' missing in pom.xml
+Dependency com.raks.security:security-core not found in pom.xml
+Plugin org.mule.tools.maven:mule-maven-plugin not found in pom.xml
+</code></pre>
+<br>
+---
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use Version Validation</h3>
+<br>
+✅ <strong>Use version validation when</strong>:
+<li>Security compliance requires specific versions</li>
+<li>Breaking changes exist between versions</li>
+<li>Standardization across projects is critical</li>
+<li>Vulnerable versions must be blocked</li>
+<br>
+❌ <strong>Don't use version validation when</strong>:
+<li>Version flexibility is desired</li>
+<li>Automatic updates are preferred</li>
+<li>Minor version differences are acceptable</li>
+<br>
+<h3>Recommended Patterns</h3>
+<br>
+<h4>Pattern 1: Critical Dependencies</h4>
+<pre><code class='language-yaml'>
+<h1>Lock critical security libraries to specific versions</h1>
+dependencies:
+  - groupId: "com.raks.security"
+    artifactId: "authentication"
+    version: "2.0.0"
+</code></pre>
+<br>
+<h4>Pattern 2: Utility Libraries</h4>
+<pre><code class='language-yaml'>
+<h1>Allow flexibility for utility libraries</h1>
+dependencies:
+  - groupId: "org.apache.commons"
+    artifactId: "commons-lang3"
+    # No version - any version acceptable
+</code></pre>
+<br>
+<h4>Pattern 3: Parent POM Standardization</h4>
+<pre><code class='language-yaml'>
+<h1>Always validate parent POM with exact version</h1>
+parent:
+  groupId: "com.company"
+  artifactId: "corporate-parent"
+  version: "1.5.0"
+</code></pre>
+<br>
+---
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[POM_VALIDATION_FORBIDDEN](POM_VALIDATION_FORBIDDEN.md)</strong> - Opposite: ensures elements do NOT exist</li>
+<li><strong>[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)</strong> - More complex XPath-based POM validation</li>
+<li><strong>[JSON_VALIDATION_REQUIRED](JSON_VALIDATION_REQUIRED.md)</strong> - Similar validation for JSON files</li>
+<br>
+---
+<br>
+<h2>Version History</h2>
+<br>
+<li><strong>v1.1.0</strong>: Added optional version validation for dependencies and plugins</li>
+<li><strong>v1.0.0</strong>: Initial release with parent, properties, dependencies, and plugins validation</li></div><div id='CODE_XML_ATTRIBUTE_EXISTS' class='rule-content' style='display: none;'><h1>XML_ATTRIBUTE_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> Mule XML configuration files
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>required XML attributes exist</strong> on specified elements with optional value validation. This is one of the most flexible rules, supporting three distinct validation modes. The rule <strong>fails</strong> if required attributes or values are <strong>NOT found</strong>.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Ensure flow elements have required attributes (name, doc:id)</li>
+<li>Validate configuration completeness (cipher suites, protocols, timeouts)</li>
+<li>Enforce naming conventions (e.g., specific values for specific attributes)</li>
+<li>Check that elements contain specific attribute combinations</li>
+<li>Validate connector configurations (hosts, ports, credentials)</li>
+<li>Ensure security settings (TLS versions, encryption algorithms)</li>
+<br>
+<h2>Validation Modes</h2>
+<br>
+This rule supports <strong>three distinct modes</strong> that can be used independently or combined:
+<br>
+1. <strong>Simple Attribute Existence</strong> - Check if attributes exist (any value)
+2. <strong>Attribute Value Pairs</strong> - Validate specific attribute values on elements
+3. <strong>Element Attribute Sets</strong> - Validate multiple attributes on the same element
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files (e.g., <code>src/main/mule/*.xml</code>, <code>**/*.xml</code>) </td></tr>
+<br>
+<h3>Mode-Specific Parameters</h3>
+<br>
+You must configure <strong>at least one</strong> of these modes:
+<br>
+<h4>Mode 1: Simple Attribute Existence</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>elements</code> </td><td> List<String> </td><td> XML element names to check </td></tr>
+<tr><td> <code>attributes</code> </td><td> List<String> </td><td> Attributes that MUST exist on those elements </td></tr>
+<br>
+<h4>Mode 2: Attribute Value Pairs</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>attributeValuePairs</code> </td><td> List<Map> </td><td> List of element-attribute-value triplets </td></tr>
+<tr><td> <code>attributeValuePairs[].element</code> </td><td> String </td><td> Element name </td></tr>
+<tr><td> <code>attributeValuePairs[].attribute</code> </td><td> String </td><td> Attribute name </td></tr>
+<tr><td> <code>attributeValuePairs[].expectedValue</code> </td><td> String </td><td> Required attribute value </td></tr>
+<br>
+<h4>Mode 3: Element Attribute Sets</h4>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>elementAttributeSets</code> </td><td> List<Map> </td><td> List of element configurations </td></tr>
+<tr><td> <code>elementAttributeSets[].element</code> </td><td> String </td><td> Element name </td></tr>
+<tr><td> <code>elementAttributeSets[].attributes</code> </td><td> Map<String,String> </td><td> Map of attribute names to expected values </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>caseSensitive</code> </td><td> Boolean </td><td> <code>true</code> </td><td> Case sensitivity for value matching </td></tr>
+<tr><td> <code>propertyResolution</code> </td><td> Boolean </td><td> <code>false</code> </td><td> If <code>true</code>, allows <code>${property}</code> placeholders as valid matches </td></tr>
+<br>
+---
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Mode 1: Simple Attribute Existence</h3>
+<br>
+<h4>Example 1: Single Element, Single Attribute</h4>
+<br>
+Check that <code>crypto:jce-config</code> has a <code>type</code> attribute (any value).
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-030"</li>
+  name: "Crypto Config Must Have Type"
+  description: "All crypto configurations must specify a type"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        elements: ["crypto:jce-config"]
+        attributes: ["type"]
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code><crypto:jce-config type="JCE"></code> exists</li>
+<li>✅ PASS if <code><crypto:jce-config type="SYMMETRIC"></code> exists</li>
+<li>❌ FAIL if <code><crypto:jce-config></code> exists without <code>type</code> attribute</li>
+<br>
+---
+<br>
+<h4>Example 2: Single Element, Multiple Attributes</h4>
+<br>
+Check that <code>http:listener</code> has both <code>path</code> and <code>config-ref</code> attributes.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-031"</li>
+  name: "HTTP Listener Must Be Configured"
+  description: "HTTP listeners must have path and config-ref"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        elements: ["http:listener"]
+        attributes: ["path", "config-ref"]
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code><http:listener path="/api" config-ref="HTTP_Config"></code> exists</li>
+<li>❌ FAIL if <code><http:listener path="/api"></code> exists (missing config-ref)</li>
+<li>❌ FAIL if <code><http:listener config-ref="HTTP_Config"></code> exists (missing path)</li>
+<br>
+---
+<br>
+<h4>Example 3: Multiple Elements, Same Attributes</h4>
+<br>
+Check that multiple elements all have the same required attributes.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-032"</li>
+  name: "All Components Must Have Names"
+  description: "Flow components must have name and doc:id"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        elements: 
+          - "flow"
+          - "sub-flow"
+          - "error-handler"
+        attributes: 
+          - "name"
+          - "doc:id"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Each element type must have both <code>name</code> and <code>doc:id</code> attributes.
+<br>
+---
+<br>
+<h3>Mode 2: Attribute Value Pairs</h3>
+<br>
+<h4>Example 4: Single Element, Single Attribute-Value</h4>
+<br>
+Validate that <code>http:listener</code> has <code>path</code> attribute with value <code>/api</code>.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-033"</li>
+  name: "API Endpoint Path Validation"
+  description: "HTTP listener must use /api path"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        attributeValuePairs:
+          - element: "http:listener"
+            attribute: "path"
+            expectedValue: "/api"
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code><http:listener path="/api"></code> exists</li>
+<li>❌ FAIL if <code><http:listener path="/test"></code> exists (wrong value)</li>
+<li>❌ FAIL if no http:listener with path="/api" exists</li>
+<br>
+---
+<br>
+<h4>Example 5: Multiple Attribute-Value Pairs</h4>
+<br>
+Validate multiple specific attribute values.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-034"</li>
+  name: "Database Configuration Validation"
+  description: "Database connector must use correct settings"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        attributeValuePairs:
+          - element: "db:config"
+            attribute: "name"
+            expectedValue: "Database_Config"
+          - element: "db:connection"
+            attribute: "database"
+            expectedValue: "production_db"
+</code></pre>
+<br>
+<strong>Behavior</strong>: Both attribute-value pairs must exist in the file.
+<br>
+---
+<br>
+<h3>Mode 3: Element Attribute Sets</h3>
+<br>
+<h4>Example 6: Single Element, Multiple Attributes with Values</h4>
+<br>
+Validate that an element has multiple specific attribute values.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-035"</li>
+  name: "IBM MQ Cipher Suite Validation"
+  description: "IBM MQ must use approved cipher suite and protocol"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        caseSensitive: true
+        elementAttributeSets:
+          - element: "ibm:connection"
+            attributes:
+              cipherSuite: "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+              sslProtocol: "TLSv1.2"
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code><ibm:connection cipherSuite="TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384" sslProtocol="TLSv1.2"></code> exists</li>
+<li>❌ FAIL if cipher suite is different</li>
+<li>❌ FAIL if SSL protocol is different</li>
+<li>❌ FAIL if either attribute is missing</li>
+<br>
+---
+<br>
+<h4>Example 7: Multiple Element Attribute Sets</h4>
+<br>
+Validate multiple elements with different attribute requirements.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-036"</li>
+  name: "Connector Security Standards"
+  description: "All connectors must meet security standards"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        elementAttributeSets:
+          # HTTP connector must use HTTPS
+          - element: "http:request-config"
+            attributes:
+              protocol: "HTTPS"
+              port: "443"
+          
+          # FTP connector must use secure mode
+          - element: "ftp:config"
+            attributes:
+              mode: "PASSIVE"
+              secure: "true"
+</code></pre>
+<br>
+<strong>Behavior</strong>: All element attribute sets must be found in the files.
+<br>
+---
+<br>
+<h4>Example 8: Property Resolution Support</h4>
+<br>
+Allow property placeholders in attribute values.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-037"</li>
+  name: "HTTP Listener with Properties"
+  description: "HTTP listener can use property placeholders"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        propertyResolution: true  # Allow ${...} placeholders
+        elementAttributeSets:
+          - element: "http:listener"
+            attributes:
+              path: "/api"
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code><http:listener path="/api"></code> exists</li>
+<li>✅ PASS if <code><http:listener path="${http.api.path}"></code> exists (property placeholder)</li>
+<li>❌ FAIL if <code><http:listener path="/test"></code> exists (wrong value)</li>
+<br>
+---
+<br>
+<h4>Example 9: Case-Insensitive Matching</h4>
+<br>
+Perform case-insensitive value matching.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-038"</li>
+  name: "Protocol Validation (Case-Insensitive)"
+  description: "HTTP protocol can be any case"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        caseSensitive: false  # Case-insensitive matching
+        elementAttributeSets:
+          - element: "http:request-config"
+            attributes:
+              protocol: "HTTPS"
+</code></pre>
+<br>
+<strong>Behavior</strong>:
+<li>✅ PASS if <code>protocol="HTTPS"</code> exists</li>
+<li>✅ PASS if <code>protocol="https"</code> exists</li>
+<li>✅ PASS if <code>protocol="Https"</code> exists</li>
+<li>❌ FAIL if <code>protocol="HTTP"</code> exists (different value)</li>
+<br>
+---
+<br>
+<h3>Combined Modes</h3>
+<br>
+<h4>Example 10: Using Multiple Modes Together</h4>
+<br>
+Combine different validation modes in a single rule.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-039"</li>
+  name: "Comprehensive HTTP Configuration"
+  description: "Validate HTTP configuration completeness"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        propertyResolution: true
+        
+        # Mode 1: Simple existence
+        elements: ["http:listener-config"]
+        attributes: ["name", "doc:id"]
+        
+        # Mode 3: Specific attribute sets
+        elementAttributeSets:
+          - element: "http:listener-connection"
+            attributes:
+              host: "0.0.0.0"
+              port: "8081"
+              protocol: "HTTP"
+</code></pre>
+<br>
+<strong>Behavior</strong>: All validations must pass.
+<br>
+---
+<br>
+<h3>Advanced Use Cases</h3>
+<br>
+<h4>Example 11: Multiple File Patterns</h4>
+<br>
+Validate across different file locations.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-040"</li>
+  name: "Global Configuration Validation"
+  description: "Validate configurations across all XML files"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: 
+          - "src/main/mule/*.xml"
+          - "src/main/mule/config/*.xml"
+          - "src/main/mule/flows/*.xml"
+        elements: ["configuration"]
+        attributes: ["doc:name"]
+</code></pre>
+<br>
+---
+<br>
+<h4>Example 12: Security Configuration Validation</h4>
+<br>
+Comprehensive security settings validation.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-041"</li>
+  name: "TLS Security Standards"
+  description: "All TLS configurations must meet security standards"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns: ["**/*.xml"]
+        caseSensitive: true
+        elementAttributeSets:
+          # TLS context must use TLS 1.2+
+          - element: "tls:context"
+            attributes:
+              enabledProtocols: "TLSv1.2,TLSv1.3"
+          
+          # Key store must be configured
+          - element: "tls:key-store"
+            attributes:
+              type: "jks"
+              algorithm: "SunX509"
+</code></pre>
+<br>
+---
+<br>
+<h2>Error Messages</h2>
+<br>
+When validation fails, you'll see detailed messages:
+<br>
+<pre><code>
+Element 'crypto:jce-config' missing attribute 'type' in file: src/main/mule/global.xml
+Element 'http:listener' with attribute 'path'='/api' not found in file: src/main/mule/api.xml
+Element 'ibm:connection' with required attributes {cipherSuite=TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384, sslProtocol=TLSv1.2} not found in file: src/main/mule/mq.xml
+</code></pre>
+<br>
+---
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use Each Mode</h3>
+<br>
+<strong>Mode 1 (Simple Existence)</strong>: Use when you only care that attributes exist, not their values.
+<pre><code class='language-yaml'>
+<h1>Good for: Ensuring documentation attributes exist</h1>
+elements: ["flow", "sub-flow"]
+attributes: ["name", "doc:id"]
+</code></pre>
+<br>
+<strong>Mode 2 (Attribute Value Pairs)</strong>: Use for simple single attribute-value validations.
+<pre><code class='language-yaml'>
+<h1>Good for: Checking specific attribute values across different elements</h1>
+attributeValuePairs:
+  - element: "http:listener"
+    attribute: "path"
+    expectedValue: "/api"
+</code></pre>
+<br>
+<strong>Mode 3 (Element Attribute Sets)</strong>: Use for complex multi-attribute validations on the same element.
+<pre><code class='language-yaml'>
+<h1>Good for: Security configurations requiring multiple specific values</h1>
+elementAttributeSets:
+  - element: "tls:context"
+    attributes:
+      protocol: "TLSv1.2"
+      cipherSuite: "STRONG"
+      verifyHostname: "true"
+</code></pre>
+<br>
+<h3>Property Resolution</h3>
+<br>
+Enable <code>propertyResolution: true</code> when:
+<li>✅ Configuration values come from property files</li>
+<li>✅ Environment-specific values are used</li>
+<li>✅ You want to allow both hardcoded and property-based values</li>
+<br>
+Disable <code>propertyResolution: false</code> when:
+<li>❌ You want to enforce hardcoded values only</li>
+<li>❌ Property placeholders should not be allowed</li>
+<br>
+<h3>Case Sensitivity</h3>
+<br>
+Use <code>caseSensitive: true</code> (default) when:
+<li>✅ Exact value matching is required</li>
+<li>✅ Values are case-sensitive (URLs, cipher suites, protocols)</li>
+<br>
+Use <code>caseSensitive: false</code> when:
+<li>✅ Values can be any case (TRUE/true/True)</li>
+<li>✅ User-friendly validation is desired</li>
+<br>
+---
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[XML_ATTRIBUTE_NOT_EXISTS](XML_ATTRIBUTE_NOT_EXISTS.md)</strong> - Opposite: ensures attributes do NOT exist</li>
+<li><strong>[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)</strong> - More complex XPath-based validation</li>
+<li><strong>[XML_ELEMENT_CONTENT_REQUIRED](XML_ELEMENT_CONTENT_REQUIRED.md)</strong> - Validates element content instead of attributes</li>
+<br>
+---
+<br>
+<h2>Version History</h2>
+<br>
+<li><strong>v1.0.0</strong>: Initial release with three validation modes and property resolution support</li></div><div id='CODE_XML_ATTRIBUTE_NOT_EXISTS' class='rule-content' style='display: none;'><h1>XML_ATTRIBUTE_NOT_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> Mule XML configuration files
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>forbidden XML attributes do NOT exist</strong> on specified elements. This rule <strong>fails</strong> if any of the specified forbidden attributes are found on the target elements.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Detect deprecated attributes (e.g., legacy code flags)</li>
+<li>Enforce cleanup of temporary or forbidden configuration</li>
+<li>Prevent usage of insecure or problematic attribute settings</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code>elements</code> </td><td> List<String> </td><td> List of XML element names to scan </td></tr>
+<tr><td> <code>forbiddenAttributes</code> </td><td> List<String> </td><td> List of attributes that must NOT be present </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>shouldIgnorePath</code> </td><td> Internal </td><td> N/A </td><td> Automatically ignores target, bin, .git, etc. </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Remove Legacy Attributes</h3>
+Ensure no elements contain attributes related to legacy application code tracking.
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-010"</li>
+  name: "Remove unsupported from/to ApplicationCode"
+  description: "Scans for legacy tracking attributes"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ATTRIBUTE_NOT_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        elements:
+          - "request_in"
+          - "request_out"
+          - "ee:transform"
+        forbiddenAttributes:
+          - "fromApplicationCode"
+          - "toApplicationCode"
+          - "legacyFlag"
+</code></pre>
+<br>
+<h3>Example 2: Clean up Connector Attributes</h3>
+Ensure <code>doc:id</code> is not present if manual ID management is forbidden (example).
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-099"</li>
+  name: "No Manual IDs"
+  enabled: true
+  checks:
+    - type: XML_ATTRIBUTE_NOT_EXISTS
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        elements: ["http:listener"]
+        forbiddenAttributes: ["doc:id"]
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+Forbidden attribute 'fromApplicationCode' found on element 'request_in' in file: src/main/mule/common.xml
+</code></pre>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Removing deprecated attributes during migration</li>
+<li>✅ Enforcing cleanup of temporary/debug attributes</li>
+<li>✅ Preventing usage of insecure configuration options</li>
+<li>✅ Standardizing code by removing non-standard attributes</li>
+<br>
+<h3>Common Patterns</h3>
+<pre><code class='language-yaml'>
+<h1>Remove legacy tracking attributes</h1>
+forbiddenAttributes: ["fromApplicationCode", "toApplicationCode", "legacyFlag"]
+<br>
+<h1>Block debug/test attributes in production</h1>
+forbiddenAttributes: ["debug", "test-mode", "mock-enabled"]
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[XML_ATTRIBUTE_EXISTS](XML_ATTRIBUTE_EXISTS.md)</strong> - Opposite: ensures attributes DO exist</li></div><div id='CODE_XML_ELEMENT_CONTENT_FORBIDDEN' class='rule-content' style='display: none;'><h1>XML_ELEMENT_CONTENT_FORBIDDEN</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> Mule XML configuration files
+<br>
+<h2>Overview</h2>
+<br>
+Validates that XML elements do <strong>NOT contain forbidden content/tokens</strong>. This rule <strong>fails</strong> if forbidden content <strong>IS found</strong> in the element's text content.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Prevent deprecated values or patterns</li>
+<li>Block hardcoded credentials in element content</li>
+<li>Disallow specific configuration values</li>
+<li>Enforce content restrictions</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code>elementContentPairs</code> </td><td> List<Map> </td><td> Element names with their forbidden content tokens </td></tr>
+<br>
+<h4>Element Content Pair Map Structure</h4>
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>element</code> </td><td> String </td><td> Yes </td><td> XML element name </td></tr>
+<tr><td> <code>forbiddenTokens</code> </td><td> List<String> </td><td> Yes </td><td> Tokens that must NOT be present </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>matchMode</code> </td><td> String </td><td> <code>SUBSTRING</code> </td><td> <code>SUBSTRING</code> or <code>REGEX</code> </td></tr>
+<tr><td> <code>caseSensitive</code> </td><td> Boolean </td><td> <code>true</code> </td><td> Case sensitivity for content matching </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Block Hardcoded Passwords</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-070"</li>
+  name: "No Hardcoded Passwords in Config"
+  description: "Prevent hardcoded passwords in configuration elements"
+  enabled: true
+  severity: CRITICAL
+  checks:
+    - type: XML_ELEMENT_CONTENT_FORBIDDEN
+      params:
+        filePatterns:
+          - "**/*.xml"
+        elementContentPairs:
+          - element: "password"
+            forbiddenTokens: ["admin", "password123", "default"]
+          - element: "secret"
+            forbiddenTokens: ["hardcoded"]
+</code></pre>
+<br>
+<h3>Example 2: Block Deprecated Values</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-071"</li>
+  name: "No Deprecated Log Levels"
+  description: "Prevent usage of deprecated log level values"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_ELEMENT_CONTENT_FORBIDDEN
+      params:
+        filePatterns:
+          - "src/main/mule/**/*.xml"
+        elementContentPairs:
+          - element: "logger"
+            forbiddenTokens: ["TRACE", "ALL"]
+</code></pre>
+<br>
+<h3>Example 3: Block IP Addresses (Regex)</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-072"</li>
+  name: "No Hardcoded IPs in Endpoints"
+  description: "Prevent hardcoded IP addresses in endpoint URLs"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_ELEMENT_CONTENT_FORBIDDEN
+      params:
+        filePatterns:
+          - "**/*.xml"
+        elementContentPairs:
+          - element: "http:request"
+            forbiddenTokens: ["\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"]
+        matchMode: REGEX
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+config.xml element 'password' has forbidden content: admin
+main-flow.xml element 'logger' has forbidden content: TRACE
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Blocking deprecated or forbidden content in XML elements</li>
+<li>✅ Preventing usage of insecure configuration values</li>
+<li>✅ Enforcing cleanup of temporary/debug content</li>
+<li>✅ Standardizing element content by removing non-standard values</li>
+<br>
+<h3>Common Patterns</h3>
+<pre><code class='language-yaml'>
+<h1>Block debug/test content</h1>
+elementContentPairs:
+  - element: "logger"
+    forbiddenTokens: ["DEBUG", "TEST", "TEMP"]
+<br>
+<h1>Prevent insecure values</h1>
+elementContentPairs:
+  - element: "tls:context"
+    forbiddenTokens: ["SSLv3", "TLSv1.0"]
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[XML_ELEMENT_CONTENT_REQUIRED](XML_ELEMENT_CONTENT_REQUIRED.md)</strong> - Opposite: ensures content DOES exist</li>
+<li><strong>[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)</strong> - More complex XPath-based validation</li></div><div id='CODE_XML_ELEMENT_CONTENT_REQUIRED' class='rule-content' style='display: none;'><h1>XML_ELEMENT_CONTENT_REQUIRED</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> Mule XML configuration files
+<br>
+<h2>Overview</h2>
+<br>
+Validates that XML elements contain <strong>required content/tokens</strong>. This rule <strong>fails</strong> if required content is <strong>NOT found</strong> in the element's text content.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Ensure specific values or patterns exist in element content</li>
+<li>Validate configuration values</li>
+<li>Check for required documentation or comments</li>
+<li>Enforce content standards</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code>elementContentPairs</code> </td><td> List<Map> </td><td> Element names with their required content tokens </td></tr>
+<br>
+<h4>Element Content Pair Map Structure</h4>
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>element</code> </td><td> String </td><td> Yes </td><td> XML element name </td></tr>
+<tr><td> <code>requiredTokens</code> </td><td> List<String> </td><td> Yes </td><td> Tokens that must be present in element content </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>matchMode</code> </td><td> String </td><td> <code>SUBSTRING</code> </td><td> <code>SUBSTRING</code> or <code>REGEX</code> </td></tr>
+<tr><td> <code>caseSensitive</code> </td><td> Boolean </td><td> <code>true</code> </td><td> Case sensitivity for content matching </td></tr>
+<tr><td> <code>requireAll</code> </td><td> Boolean </td><td> <code>true</code> </td><td> If <code>true</code>, ALL tokens must be found. If <code>false</code>, at least ONE </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Validate Logger Messages</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-060"</li>
+  name: "Logger Messages Must Be Descriptive"
+  description: "Logger messages must contain specific keywords"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: XML_ELEMENT_CONTENT_REQUIRED
+      params:
+        filePatterns:
+          - "src/main/mule/**/*.xml"
+        elementContentPairs:
+          - element: "logger"
+            requiredTokens: ["Flow", "Request", "Response"]
+        requireAll: false  # At least one keyword
+</code></pre>
+<br>
+<h3>Example 2: Validate Documentation</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-061"</li>
+  name: "Flow Documentation Required"
+  description: "Flow doc:description must contain specific information"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_ELEMENT_CONTENT_REQUIRED
+      params:
+        filePatterns:
+          - "**/*.xml"
+        elementContentPairs:
+          - element: "doc:description"
+            requiredTokens: ["Purpose:", "Input:", "Output:"]
+        requireAll: true
+</code></pre>
+<br>
+<h3>Example 3: Regex Pattern Matching</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-062"</li>
+  name: "Version Format in Description"
+  description: "Description must include version number"
+  enabled: true
+  severity: LOW
+  checks:
+    - type: XML_ELEMENT_CONTENT_REQUIRED
+      params:
+        filePatterns:
+          - "**/pom.xml"
+        elementContentPairs:
+          - element: "description"
+            requiredTokens: ["v\\d+\\.\\d+"]  # Regex: vX.Y
+        matchMode: REGEX
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+<pre><code>
+config.xml element 'logger' is missing required tokens: Flow, Request, Response
+main-flow.xml element 'doc:description' is missing required tokens: Purpose:, Input:, Output:
+</code></pre>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li> Validating XML element content for required keywords or patterns</li>
+<li> Ensuring documentation elements contain specific information</li>
+<li> Checking logger messages for descriptive content</li>
+<li> Enforcing content standards in configuration files</li>
+<br>
+<h3>Common Patterns</h3>
+<pre><code class='language-yaml'>
+<h1>Validate logger messages contain flow information</h1>
+elementContentPairs:
+  - element: "logger"
+    requiredTokens: ["Flow", "Request", "Response"]
+    requireAll: false  # At least one
+<br>
+<h1>Ensure documentation completeness</h1>
+elementContentPairs:
+  - element: "doc:description"
+    requiredTokens: ["Purpose:", "Input:", "Output:"]
+    requireAll: true  # All required
+</code></pre>
+<br>
+<h3>Match Mode Selection</h3>
+<li><strong>SUBSTRING</strong>: Use for simple keyword matching (faster, most common)</li>
+<li><strong>REGEX</strong>: Use for pattern matching (version numbers, formats, complex patterns)</li>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[XML_ELEMENT_CONTENT_FORBIDDEN](XML_ELEMENT_CONTENT_FORBIDDEN.md)</strong> - Opposite: ensures content does NOT exist</li>
+<li><strong>[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)</strong> - More complex XPath-based validation</li></div><div id='CODE_XML_XPATH_EXISTS' class='rule-content' style='display: none;'><h1>XML_XPATH_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> Mule XML configuration files
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>required XPath expressions match</strong> in XML files. This rule <strong>fails</strong> if any required XPath expression does <strong>NOT</strong> find matching nodes.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Verify specific XML elements or attributes exist</li>
+<li>Ensure required configuration is present in Mule flows</li>
+<li>Validate XML structure and hierarchy</li>
+<li>Check for mandatory namespaces or schemas</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code>xpathExpressions</code> </td><td> List<Map> </td><td> List of XPath expressions with optional custom failure messages </td></tr>
+<br>
+<h4>XPath Expression Map Structure</h4>
+<br>
+Each item in <code>xpathExpressions</code> can have:
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>xpath</code> </td><td> String </td><td> Yes </td><td> The XPath expression to evaluate </td></tr>
+<tr><td> <code>failureMessage</code> </td><td> String </td><td> No </td><td> Custom message if XPath doesn't match </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>propertyResolution</code> </td><td> Boolean </td><td> <code>false</code> </td><td> Enable <code>${property}</code> placeholder resolution </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Basic - Ensure Logger Exists</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-020"</li>
+  name: "Logger Component Required"
+  description: "Ensure all flows have a logger component"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+          - "src/main/mule/**/*.xml"
+        xpathExpressions:
+          - xpath: "//logger"
+            failureMessage: "Flow must contain at least one logger component"
+</code></pre>
+<br>
+<h3>Example 2: Check for Specific Attribute</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-021"</li>
+  name: "Flow Name Attribute Required"
+  description: "All flows must have a name attribute"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+          - "**/*-config.xml"
+        xpathExpressions:
+          - xpath: "//flow[@name]"
+            failureMessage: "Flow element missing required 'name' attribute"
+</code></pre>
+<br>
+<h3>Example 3: Multiple XPath Validations</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-022"</li>
+  name: "Required Error Handling Structure"
+  description: "Ensure proper error handling is configured"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+          - "src/main/mule/**/*.xml"
+        xpathExpressions:
+          - xpath: "//error-handler"
+            failureMessage: "Missing error-handler element"
+          - xpath: "//on-error-continue </td><td> //on-error-propagate"
+            failureMessage: "Error handler must have on-error-continue or on-error-propagate"
+</code></pre>
+<br>
+<h3>Example 4: Namespace-Aware XPath</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-023"</li>
+  name: "HTTP Listener Configuration"
+  description: "Ensure HTTP listener configuration exists"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+          - "**/global-config.xml"
+        xpathExpressions:
+          - xpath: "//*[local-name()='listener-config']"
+            failureMessage: "Missing HTTP listener configuration"
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+When validation fails, you'll see messages like:
+<br>
+<pre><code>
+config.xml: Flow must contain at least one logger component (found 0 occurrence(s))
+main-flow.xml: Missing error-handler element (found 0 occurrence(s))
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Complex XML structure validation requiring XPath expressions</li>
+<li>✅ Validating nested element relationships</li>
+<li>✅ Checking conditional element presence</li>
+<li>✅ Advanced attribute and element combinations</li>
+<br>
+<h3>XPath Pattern Examples</h3>
+<pre><code class='language-yaml'>
+<h1>Check nested elements</h1>
+xpathExpressions:
+  - "//flow[@name='main']/http:listener"
+  
+<h1>Validate attribute combinations</h1>
+xpathExpressions:
+  - "//tls:context[@enabledProtocols='TLSv1.2']"
+</code></pre>
+<br>
+<h3>When to Use XPath vs Other Rules</h3>
+<li>Use <strong>XML_ATTRIBUTE_EXISTS</strong> for simple attribute checks</li>
+<li>Use <strong>XML_XPATH_EXISTS</strong> for complex nested validations</li>
+<li>Use <strong>XML_ELEMENT_CONTENT</strong> for element text validation</li>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)</strong> - Opposite: ensures XPath does NOT match</li>
+<li><strong>[XML_ATTRIBUTE_EXISTS](XML_ATTRIBUTE_EXISTS.md)</strong> - Simpler attribute validation</li>
+<li><strong>[XML_ELEMENT_CONTENT_REQUIRED](XML_ELEMENT_CONTENT_REQUIRED.md)</strong> - Validate element content</li></div><div id='CODE_XML_XPATH_NOT_EXISTS' class='rule-content' style='display: none;'><h1>XML_XPATH_NOT_EXISTS</h1>
+<br>
+<strong>Rule Type:</strong> <code>CODE</code> </td><td> <strong>Applies To:</strong> Mule XML configuration files
+<br>
+<h2>Overview</h2>
+<br>
+Validates that <strong>forbidden XPath expressions do NOT match</strong> in XML files. This rule <strong>fails</strong> if any forbidden XPath expression <strong>DOES</strong> find matching nodes.
+<br>
+<h2>Use Cases</h2>
+<br>
+<li>Prevent usage of deprecated XML elements</li>
+<li>Block specific configurations or patterns</li>
+<li>Enforce architectural constraints</li>
+<li>Disallow anti-patterns in Mule flows</li>
+<br>
+<h2>Parameters</h2>
+<br>
+<h3>Required Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Description </td></tr>
+<br>
+<tr><td> <code>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr>
+<tr><td> <code>xpathExpressions</code> </td><td> List<Map> </td><td> List of XPath expressions that should NOT match </td></tr>
+<br>
+<h4>XPath Expression Map Structure</h4>
+<br>
+<tr><td> Field </td><td> Type </td><td> Required </td><td> Description </td></tr>
+<br>
+<tr><td> <code>xpath</code> </td><td> String </td><td> Yes </td><td> The XPath expression to evaluate </td></tr>
+<tr><td> <code>failureMessage</code> </td><td> String </td><td> No </td><td> Custom message if XPath matches (forbidden) </td></tr>
+<br>
+<h3>Optional Parameters</h3>
+<br>
+<tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr>
+<br>
+<tr><td> <code>propertyResolution</code> </td><td> Boolean </td><td> <code>false</code> </td><td> Enable <code>${property}</code> placeholder resolution </td></tr>
+<br>
+<h2>Configuration Examples</h2>
+<br>
+<h3>Example 1: Block Deprecated Component</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-030"</li>
+  name: "No Deprecated HTTP Transport"
+  description: "Prevent usage of deprecated HTTP transport"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+          - "**/*.xml"
+        xpathExpressions:
+          - xpath: "//*[local-name()='http-transport']"
+            failureMessage: "Deprecated HTTP transport found - use HTTP connector instead"
+</code></pre>
+<br>
+<h3>Example 2: Prevent Hardcoded Values</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-031"</li>
+  name: "No Hardcoded Hosts"
+  description: "Prevent hardcoded host values in HTTP requests"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+          - "src/main/mule/**/*.xml"
+        xpathExpressions:
+          - xpath: "//http:request[@host='localhost']"
+            failureMessage: "Hardcoded 'localhost' found - use property placeholders"
+          - xpath: "//http:request[contains(@host, '192.168')]"
+            failureMessage: "Hardcoded IP address found in host attribute"
+</code></pre>
+<br>
+<h3>Example 3: Enforce Architectural Rules</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-032"</li>
+  name: "No Direct Database Calls in API Layer"
+  description: "API flows should not contain direct database operations"
+  enabled: true
+  severity: HIGH
+  checks:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+          - "src/main/mule/api-*.xml"
+        xpathExpressions:
+          - xpath: "//db:select </td><td> //db:insert </td><td> //db:update </td><td> //db:delete"
+            failureMessage: "Direct database operations forbidden in API layer - use service layer"
+</code></pre>
+<br>
+<h3>Example 4: Block Synchronous Processing</h3>
+<br>
+<pre><code class='language-yaml'>
+<li>id: "RULE-033"</li>
+  name: "No Synchronous VM Queues"
+  description: "Prevent synchronous VM queue usage"
+  enabled: true
+  severity: MEDIUM
+  checks:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+          - "**/*.xml"
+        xpathExpressions:
+          - xpath: "//vm:publish[@sendCorrelationId='ALWAYS']"
+            failureMessage: "Synchronous VM publish detected - use asynchronous pattern"
+</code></pre>
+<br>
+<h2>Error Messages</h2>
+<br>
+When validation fails, you'll see messages like:
+<br>
+<pre><code>
+config.xml: Deprecated HTTP transport found - use HTTP connector instead (found 2 occurrence(s))
+api-main.xml: Direct database operations forbidden in API layer - use service layer (found 1 occurrence(s))
+</code></pre>
+<br>
+<br>
+<h2>Best Practices</h2>
+<br>
+<h3>When to Use This Rule</h3>
+<li>✅ Blocking deprecated XML structures</li>
+<li>✅ Preventing forbidden element combinations</li>
+<li>✅ Enforcing removal of legacy configurations</li>
+<li>✅ Complex forbidden pattern detection</li>
+<br>
+<h3>Common Patterns</h3>
+<pre><code class='language-yaml'>
+<h1>Block deprecated elements</h1>
+xpathExpressions:
+  - "//deprecated-connector"
+  - "//legacy:config"
+<br>
+<h1>Prevent insecure combinations</h1>
+xpathExpressions:
+  - "//http:listener[@protocol='HTTP']"
+</code></pre>
+<br>
+<h2>Related Rule Types</h2>
+<br>
+<li><strong>[XML_XPATH_EXISTS](XML_XPATH_EXISTS.md)</strong> - Opposite: ensures XPath DOES match</li>
+<li><strong>[XML_ATTRIBUTE_NOT_EXISTS](XML_ATTRIBUTE_NOT_EXISTS.md)</strong> - Simpler attribute validation</li>
+<li><strong>[XML_ELEMENT_CONTENT_FORBIDDEN](XML_ELEMENT_CONTENT_FORBIDDEN.md)</strong> - Validate element content</li></div>
+        </div>
+    </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var path = window.location.pathname;
+                var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
+                var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
+                var dashboardBtn = document.getElementById('dashboardBtn');
+                var mainPageBtn = document.getElementById('mainPageBtn');
+
+                // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+                var isInMuleWrapper = path.includes('/apiguard/');
+                var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+
+                var sessionId = new URLSearchParams(window.location.search).get('session');
+                if (!sessionId && isMuleReport) {
+                    var parts = path.split('/muleguard/reports/');
+                    if (parts.length > 1) {
+                        var subparts = parts[1].split('/');
+                        if (subparts.length > 0) sessionId = subparts[0];
+                    }
+                }
+                if (isMuleStatic || isMuleReport) {
+                    if (mainPageBtn) {
+                        mainPageBtn.style.display = 'inline-block';
+                        var mainPageUrl = basePath + '/main';
+                        if (sessionId) mainPageUrl += '?session=' + sessionId;
+                        mainPageBtn.href = mainPageUrl;
+                        if (isMuleStatic) {
+                            mainPageBtn.style.right = '40px';
+                            if (dashboardBtn) dashboardBtn.style.display = 'none';
+                        } else {
+                            mainPageBtn.style.right = '180px';
+                        }
+                    }
+                } else {
+                    if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+                }
+            });
+        </script>
+</body>
+</html>

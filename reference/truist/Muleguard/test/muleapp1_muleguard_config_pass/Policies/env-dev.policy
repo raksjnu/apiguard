@@ -1,0 +1,34 @@
+# HTTP Configuration
+http.protocols=HTTPS
+http.private.port=8081
+
+# Rate Limit Policy
+ratelimit.policy.applied=true
+ratelimit.policy.version=1.4.1
+
+# Header Injection Policy
+headerinjection.policy.applied=true
+headerinjection.policy.version=1.3.2
+headerinjection.policy.inboundheadermap.x-tfc-request-out=WARN
+headerinjection.policy.inboundheadermap.x-tfc-response-in=WARN
+
+# Truist Policies
+truist.compositeauthn.policy.applied=true
+truist.compositeauthn.policy.version=3.0.0
+
+truist.authz.policy.applied=true
+truist.authz.policy.version=3.0.0
+
+truist.mTLS-AuthZ.policy.applied=true
+truist.mTLS-AuthZ.policy.version=3.0.0
+
+truist.jsonencdec.policy.version=3.0.0
+truist.wssencdec.policy.version=3.0.0
+
+# Noname Policy
+noname.policy.version=5.1.0
+
+# Header Removal Policy
+headerremoval.policy.version=1.1.2
+
+assetType=rest

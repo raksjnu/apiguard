@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>MuleGuard - Validation Checklist</title>
+    <style>
+        :root {
+            --truist-purple: #663399;
+            --truist-purple-light: #7d4fb2;
+            --text-white: #FFFFFF;
+        }
+        body {font-family: Arial, sans-serif; margin: 0; background-color: #f0f0f0;}
+        .report-container { border: 5px solid var(--truist-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; position: relative; }
+        h1 {color: var(--truist-purple);}
+        table {width: 100%; border-collapse: collapse; box-shadow: 0 4px 12px rgba(0,0,0,0.1);}
+        th, td {border: 1px solid #ddd; padding: 12px; text-align: left;}
+        th {background-color: var(--truist-purple); color: var(--text-white);}
+        .contact-button {
+            background-color: var(--truist-purple);
+            color: var(--text-white);
+            border: none;
+            padding: 12px 24px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            font-weight: bold;
+            margin-top: 25px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .contact-button:hover { background-color: var(--truist-purple-light); }
+        .top-nav-container {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            display: flex;
+            gap: 10px;
+        }
+        .top-nav-button {
+            background-color: var(--truist-purple);
+            color: var(--text-white);
+            border: none;
+            padding: 8px 16px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .top-nav-button:hover { background-color: var(--truist-purple-light); }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+        <div class="top-nav-container">
+            <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
+            <a href="/muleguard/main" id="mainPageBtn" class="top-nav-button" title="Go to Main Page" style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+            <a href="help.html" class="top-nav-button">Help</a>
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
+            <h1 style="margin: 0;">MuleGuard - Mulesoft Application Review & Validation</h1>
+        </div>
+        <p>This page lists all the individual checks performed by the MuleGuard tool.</p>
+        <table>
+            <tr><th>Sr.#</th><th>ChecklistItem</th><th>ChecklistType</th><th>RuleId</th></tr>
+            <tr><td>1</td><td>Validation of codebase for generic forbidden tokens or patterns.</td><td>Code</td><td>RULE-000</td></tr><tr><td>2</td><td>Parent POM validation for correct Group</td><td> Artifact</td><td> and Version.,Code,RULE-001</td></tr><tr><td>3</td><td>Validation of mandatory properties in pom.xml.</td><td>Code</td><td>RULE-002</td></tr><tr><td>4</td><td>Validation of forbidden plugins in pom.xml.</td><td>Code</td><td>RULE-003</td></tr><tr><td>5</td><td>Validation of forbidden dependencies in pom.xml.</td><td>Code</td><td>RULE-004</td></tr><tr><td>6</td><td>Validation of IBM MQ Connector configuration for approved Cipher Suite.</td><td>Code</td><td>RULE-005</td></tr><tr><td>7</td><td>Validation of required dependencies (e.g.</td><td> apimuleutilities).</td><td>Code,RULE-006</td></tr><tr><td>8</td><td>Validation of mule-artifact.json for minimum Mule version</td><td> Java version</td><td> and secure properties.,Code,RULE-007</td></tr><tr><td>9</td><td>Validation that API Autodiscovery is enabled in the application.</td><td>Code</td><td>RULE-008</td></tr><tr><td>10</td><td>Validation to ensure no unsupported error handling expressions are used.</td><td>Code</td><td>RULE-009</td></tr><tr><td>11</td><td>Validation to ensure no legacy attributes (fromApplicationCode</td><td> toApplicationCode) are present.</td><td>Code,RULE-010</td></tr><tr><td>12</td><td>Validation to ensure no DLP-related properties are present.</td><td>Code</td><td>RULE-011</td></tr><tr><td>13</td><td>Validation to ensure no legacy JCE Encryption implementation is used.</td><td>Code</td><td>RULE-012</td></tr><tr><td>14</td><td>Validation of Crypto JCE configuration for mandatory type attribute.</td><td>Code</td><td>RULE-013</td></tr><tr><td>15</td><td>Validation to ensure the 'tobase64' function is not used.</td><td>Code</td><td>RULE-014</td></tr><tr><td>16</td><td>Validation of HTTP Listener paths to ensure standard naming conventions (no /test</td><td> /temp).</td><td>Code,RULE-015</td></tr><tr><td>17</td><td>Validation to ensure no hardcoded versions are used for connector dependencies in pom.xml.</td><td>Code</td><td>RULE-016</td></tr><tr><td>18</td><td>Validation to ensure key configuration properties (Host</td><td> Port</td><td> User, Password) are externalized.,Code,RULE-017</td></tr><tr><td>19</td><td>Validation to ensure connector timeouts (responseTimeout</td><td> etc.) are explicitly configured and externalized.</td><td>Code,RULE-018</td></tr><tr><td>20</td><td>Generic Config validation for mandatory tokens in property files.</td><td>Config</td><td>RULE-100</td></tr><tr><td>21</td><td>Validation of mandatory properties in environment configuration files.</td><td>Config</td><td>RULE-101</td></tr><tr><td>22</td><td>Validation of mandatory policy properties in policy files.</td><td>Config</td><td>RULE-102</td></tr><tr><td>23</td><td>Validation of policy versions to ensure they match required standards.</td><td>Config</td><td>RULE-103</td></tr><tr><td>24</td><td>Validation of Secure Properties format in secure.properties.</td><td>Config</td><td>RULE-104</td></tr><tr><td>25</td><td>Validation of Client ID mapping format in policy files.</td><td>Config</td><td>RULE-105</td></tr><tr><td>26</td><td>Validation of forbidden keys or values (e.g.</td><td> hardcoded passwords</td><td> TODOs) in configuration files.,Config,RULE-107</td></tr><tr><td>27</td><td>Validation of forbidden keys in policy files.</td><td>Config</td><td>RULE-108</td></tr><tr><td>28</td><td>Validation to ensure no IP addresses are hardcoded in property files.</td><td>Config</td><td>RULE-109</td></tr>
+        </table>
+    </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var path = window.location.pathname;
+                var isMuleStatic = path.includes('/apiguard/muleguard/web/') || path.includes('/muleguard/web/');
+                var isMuleReport = path.includes('/apiguard/muleguard/reports/') || path.includes('/muleguard/reports/');
+                var dashboardBtn = document.getElementById('dashboardBtn');
+                var mainPageBtn = document.getElementById('mainPageBtn');
+
+                // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+                var isInMuleWrapper = path.includes('/apiguard/');
+                var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+
+                var sessionId = new URLSearchParams(window.location.search).get('session');
+                if (!sessionId && isMuleReport) {
+                    var parts = path.split('/muleguard/reports/');
+                    if (parts.length > 1) {
+                        var subparts = parts[1].split('/');
+                        if (subparts.length > 0) sessionId = subparts[0];
+                    }
+                }
+                if (isMuleStatic || isMuleReport) {
+                    if (mainPageBtn) {
+                        mainPageBtn.style.display = 'inline-block';
+                        var mainPageUrl = basePath + '/main';
+                        if (sessionId) mainPageUrl += '?session=' + sessionId;
+                        mainPageBtn.href = mainPageUrl;
+                        if (isMuleStatic) {
+                            mainPageBtn.style.right = '40px';
+                            if (dashboardBtn) dashboardBtn.style.display = 'none';
+                        } else {
+                            mainPageBtn.style.right = '180px';
+                        }
+                    }
+                } else {
+                    if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+                }
+            });
+        </script>
+</body>
+</html>

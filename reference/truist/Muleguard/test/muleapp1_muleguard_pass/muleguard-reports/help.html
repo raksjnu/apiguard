@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>MuleGuard - Help & Documentation</title>
+    <style>
+        :root {
+            --truist-purple: #663399;
+            --truist-purple-light: #7d4fb2;
+            --text-white: #FFFFFF;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+
+        .report-container {
+            border: 5px solid var(--truist-purple);
+            padding: 20px 40px;
+            margin: 20px;
+            border-radius: 8px;
+            background-color: white;
+            position: relative;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+
+        h1 {
+            color: var(--truist-purple);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--truist-purple);
+            margin-top: 30px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--truist-purple);
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        p {
+            line-height: 1.6;
+            color: #333;
+        }
+
+        ul {
+            line-height: 1.8;
+            color: #333;
+        }
+
+        .highlight-box {
+            background: #f5f5f5;
+            border-left: 4px solid var(--truist-purple);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .feature-card {
+            background: #f9f9f9;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px solid #ddd;
+        }
+
+        .feature-card h4 {
+            color: var(--truist-purple);
+            margin-top: 0;
+        }
+
+        .dashboard-button {
+            position: absolute;
+            top: 20px;
+            right: 40px;
+            background-color: var(--truist-purple);
+            color: var(--text-white);
+            border: none;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .dashboard-button:hover {
+            background-color: var(--truist-purple-light);
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            color: #c7254e;
+        }
+
+        .rule-count {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: var(--truist-purple);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="report-container">
+        <!-- Buttons container to manage absolute positioning easily -->
+        <div class="header-buttons">
+            <a href="CONSOLIDATED-REPORT.html" id="dashboardBtn" class="dashboard-button"
+                title="Return to main dashboard">← Dashboard</a>
+            <a href="#" id="mainPageBtn" class="dashboard-button" title="Go to Main Page"
+                style="display: none; background-color: #0078d4;">🏠 Main Page</a>
+        </div>
+
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <img src="logo.svg" alt="MuleGuard Logo" style="height: 40px; margin-right: 15px;">
+            <h1 style="margin: 0;">MuleGuard - Help & Documentation</h1>
+        </div>
+
+        <div class="highlight-box">
+            <strong>MuleGuard</strong> is a versatile and comprehensive static analysis solution designed specifically
+            for MuleSoft applications. It is highly flexible and capable of validating any component of your
+            integration,
+            including <code>flow.xml</code>, global configurations, <code>dataweave.dwl</code> files, and more.
+            MuleGuard can be easily configured to support countless rules, tailored to meet your organization's specific
+            needs for standard or customized code review and validation.
+        </div>
+
+        <h2>📋 What MuleGuard Validates</h2>
+        <p>MuleGuard provides thorough analysis across all core project components:</p>
+        <ul>
+            <li><strong>Maven configurations:</strong> pom.xml validation</li>
+            <li><strong>Mule runtime manifests:</strong> mule-artifact.json structure</li>
+            <li><strong>Mule flows & sub-flows:</strong> XML configuration files</li>
+            <li><strong>DataWeave scripts:</strong> .dwl files</li>
+            <li><strong>Environment-specific property files:</strong> .properties and .policy files</li>
+        </ul>
+
+        <h2>🎯 Key Features</h2>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>📊 Comprehensive Checks</h4>
+                <p>Perform a wide variety of checks on code and configuration files. Validates one or more Mule project
+                    folders and their configurations with a single click.</p>
+            </div>
+            <div class="feature-card">
+                <h4>🚀 Flexible Modes</h4>
+                <p>Supports optional usage with ZIP archives or local folder modes to suit your workflow.</p>
+            </div>
+            <div class="feature-card">
+                <h4>📈 Enhanced Reporting</h4>
+                <p>Generates detailed HTML reports and supports email attachments for seamless sharing of result
+                    artifacts.</p>
+            </div>
+            <div class="feature-card">
+                <h4>⚙️ Custom Rules Support</h4>
+                <p>Fully configurable via the GUI or <code>rules.yaml</code> to support custom rules and
+                    organization-specific needs.</p>
+            </div>
+        </div>
+
+        <h2>📚 Supported Validation Checks</h2>
+        <p>MuleGuard supports a wide range of validation types to ensure the integrity and quality of your applications.
+            Possible checks include:</p>
+
+        <ul>
+            <li><strong>Structure & configuration:</strong> Validate XML flows, <code>flow.xml</code>, global
+                configurations, and file structures.</li>
+            <li><strong>Dependencies:</strong> Verify Maven <code>pom.xml</code> configurations and dependencies.</li>
+            <li><strong>Code Content:</strong> Search for specific tokens, patterns, or forbidden content within
+                <code>.dwl</code> DataWeave scripts and other source files.
+            </li>
+            <li><strong>XML Validation:</strong> Perform deep inspection using XPath, check for specific attributes, and
+                validate element content.</li>
+            <li><strong>Property Management:</strong> Validate environment-specific property files, check for mandatory
+                properties, and ensure secure property handling.</li>
+            <li><strong>Custom Logic:</strong> Define custom checks for JSON validation, generic token searches, and
+                more to cover any specific organizational requirement.</li>
+        </ul>
+
+        <h2>🚀 How to Use</h2>
+
+        <h3>Command Line</h3>
+        <div class="highlight-box">
+            <code>java -jar muleguard-1.0.0-jar-with-raks.jar -p /path/to/your/mule-projects</code>
+        </div>
+
+        <h3>GUI Mode</h3>
+        <div class="highlight-box">
+            <p>Run <code>start-gui.bat</code> (Windows) or <code>start-gui.sh</code> (Mac/Linux)</p>
+            <p>Opens browser at <code>http://localhost:8080</code></p>
+        </div>
+
+        <h2>📖 Documentation</h2>
+        <p>Detailed rule type documentation is available in the <a href="rule_guide.html"
+                style="color: var(--truist-purple); font-weight: bold;">Rule Guide</a>:</p>
+        <ul>
+            <li>Interactive guide with detailed documentation for all rule types</li>
+            <li>Includes parameter reference and configuration examples</li>
+            <li>Click "Rule Guide" in the dashboard to access it</li>
+        </ul>
+
+        <h2>⚙️ Configuration</h2>
+        <p>All rules are configured in <code>src/main/resources/rules/rules.yaml</code></p>
+        <ul>
+            <li><strong>Enable/Disable rules:</strong> Set <code>enabled: true/false</code></li>
+            <li><strong>Severity levels:</strong> CRITICAL, HIGH, MEDIUM, LOW</li>
+            <li><strong>Custom parameters:</strong> Each rule type supports specific parameters</li>
+            <li><strong>Environment filtering:</strong> Target specific environments (DEV, QA, PROD)</li>
+        </ul>
+
+        <h2>📊 Report Output</h2>
+        <ul>
+            <li><strong>CONSOLIDATED-REPORT.html:</strong> Dashboard for all scanned APIs</li>
+            <li><strong>Individual reports:</strong> Detailed results for each API</li>
+            <li><strong>checklist.html:</strong> Complete list of all validation rules</li>
+            <li><strong>Excel reports:</strong> .xlsx format for data analysis</li>
+        </ul>
+
+        <h2>💡 Tips</h2>
+        <ul>
+            <li>Start with the consolidated dashboard to get an overview</li>
+            <li>Click on individual API reports for detailed rule-by-rule results</li>
+            <li>Use the checklist to understand all available validation rules</li>
+            <li>Customize <code>rules.yaml</code> to match your organization's standards</li>
+            <li>Review the <strong>Rule Guide</strong> for detailed configuration examples</li>
+        </ul>
+
+        <h2>📧 Contact</h2>
+        <div class="highlight-box" style="margin-top: 15px;">
+            <p><strong>For further information, support, or questions:</strong></p>
+            <p style="margin-top: 10px;">
+                Reach out to <strong>Rakesh Kumar (Raks)</strong><br>
+                Email: <a href="mailto:raksjnu@gmail.com"
+                    style="color: var(--truist-purple); font-weight: bold; text-decoration: none;">raksjnu@gmail.com</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var path = window.location.pathname;
+            var isMuleStatic = path.includes('/apiguard/muleguard/web/');
+            var isMuleReport = path.includes('/apiguard/muleguard/reports/');
+            var dashboardBtn = document.getElementById('dashboardBtn');
+            var mainPageBtn = document.getElementById('mainPageBtn');
+
+            console.log('[MuleGuard Help JAR] Path:', path);
+            console.log('[MuleGuard Help JAR] isMuleStatic:', isMuleStatic, 'isMuleReport:', isMuleReport);
+
+            // Detect if we're in Mule wrapper (has /apiguard prefix) or standalone Java
+            var isInMuleWrapper = path.includes('/apiguard/');
+            var basePath = isInMuleWrapper ? '/apiguard/muleguard' : '/muleguard';
+            console.log('[MuleGuard Help JAR] Environment:', isInMuleWrapper ? 'Mule Wrapper' : 'Standalone Java');
+            console.log('[MuleGuard Help JAR] Base path:', basePath);
+
+            // Session Handling
+            var sessionId = new URLSearchParams(window.location.search).get('session');
+            // If in report path, extract sessionId from path
+            if (!sessionId && isMuleReport) {
+                var reportPath = basePath + '/reports/';
+                var parts = path.split(reportPath);
+                if (parts.length > 1) {
+                    var subparts = parts[1].split('/');
+                    if (subparts.length > 0) sessionId = subparts[0];
+                }
+            }
+
+            if (isMuleStatic || isMuleReport) {
+                // We are in Mule Wrapper Environment
+                if (mainPageBtn) {
+                    mainPageBtn.style.display = 'inline-block';
+                    // Use environment-appropriate base path
+                    var mainPageUrl = basePath + '/main';
+                    if (sessionId) {
+                        mainPageUrl += '?session=' + sessionId;
+                    }
+                    mainPageBtn.href = mainPageUrl;
+                    console.log('[MuleGuard Help JAR] SessionId:', sessionId);
+                    console.log('[MuleGuard Help JAR] Main Page href set to:', mainPageBtn.href);
+
+                    if (isMuleStatic) {
+                        mainPageBtn.style.right = '40px';
+                        if (dashboardBtn) dashboardBtn.style.display = 'none'; // No dashboard in static view
+                    } else {
+                        // In Mule Report
+                        mainPageBtn.style.right = '180px';
+                    }
+                }
+            } else {
+                // Standalone Java or Local File - Main Page button stays hidden
+                if (dashboardBtn) dashboardBtn.style.display = 'inline-block';
+            }
+        });
+    </script>
+</body>

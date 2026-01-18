@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:batch="http://www.mulesoft.org/schema/mule/batch" 
+    xmlns:jms="http://www.mulesoft.org/schema/mule/jms"
+	xmlns:db="http://www.mulesoft.org/schema/mule/db"
+	xmlns:wsc="http://www.mulesoft.org/schema/mule/wsc" 
+    xmlns:http="http://www.mulesoft.org/schema/mule/http" 
+    xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" 
+    xmlns:ibm="http://www.mulesoft.org/schema/mule/ibm-mq"
+    xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+    xmlns:crypto="http://www.mulesoft.org/schema/mule/crypto"
+    xmlns="http://www.mulesoft.org/schema/mule/core" 
+    xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" 
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/wsc http://www.mulesoft.org/schema/mule/wsc/current/mule-wsc.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd
+http://www.mulesoft.org/schema/mule/jms http://www.mulesoft.org/schema/mule/jms/current/mule-jms.xsd
+http://www.mulesoft.org/schema/mule/ibm-mq http://www.mulesoft.org/schema/mule/ibm-mq/current/mule-ibm-mq.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/crypto http://www.mulesoft.org/schema/mule/crypto/current/mule-crypto.xsd
+http://www.mulesoft.org/schema/mule/batch http://www.mulesoft.org/schema/mule/batch/current/mule-batch.xsd">
+	
+	<!-- ================================================================= -->
+	<!-- Global Configuration Elements                                     -->
+	<!-- ================================================================= -->
+	
+    <!-- RULE 008: Autodiscovery (Present) -->
+    <api-gateway:autodiscovery apiId="${api.id}" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="api-autodiscovery-id" flowRef="main-orchestration-flow" />
+
+    <!-- RULE 013: Crypto Config (Missing 'type' attribute -> FAIL) -->
+    <crypto:jce-config name="Crypto_Jce" doc:name="Crypto Jce" doc:id="crypto-jce-id" >
+        <crypto:jce-key-store-provider keyStorePath="keystore.jceks" type="JCEKS" password="password" alias="alias" passwordKey="password" algorithm="AES"/>
+    </crypto:jce-config>
+
+    <!-- RULE 005: IBM MQ Config (Wrong Cipher -> FAIL) -->
+    <ibm:config name="IBM_MQ_Config" doc:name="IBM MQ Config" doc:id="ibm-mq-config-id" >
+        <!-- cipherSuite should be TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384 -->
+        <ibm:connection host="localhost" port="1414" queueManager="QM1" channel="DEV.APP.SVRCONN" cipherSuite="SSL_RSA_WITH_AES_128_CBC_SHA" />
+    </ibm:config>
+
+	<!-- HTTP Listener (Renamed to avoid conflict) -->
+	<http:listener-config name="MuleApp1_HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="http-listener-config-id" basePath="${http.base.path}">
+		<http:listener-connection host="0.0.0.0" port="${http.port}" />
+	</http:listener-config>
+	
+	<!-- HTTP Request (REST) -->
+    <!-- BEST PRACTICE FAIL: Host hardcoded, Timeout Missing/Hardcoded -->
+	<http:request-config name="HTTP_Request_configuration" doc:name="HTTP Request configuration" doc:id="http-request-config-id" basePath="/api" responseTimeout="5000">
+		<http:request-connection host="jsonplaceholder.typicode.com" port="443" protocol="HTTPS"/>
+	</http:request-config>
+	
+	<!-- Database Config (Generic MySQL) -->
+    <!-- BEST PRACTICE PASS: Externalized -->
+	<db:config name="Database_Config" doc:name="Database Config" doc:id="db-config-id">
+		<db:my-sql-connection host="${db.host}" port="${db.port}" user="${db.user}" password="${db.password}" database="${db.database}" />
+	</db:config>
+	
+	<!-- Web Service Consumer (SOAP) -->
+	<wsc:config name="Web_Service_Consumer_Config" doc:name="Web Service Consumer Config" doc:id="wsc-config-id">
+		<wsc:connection wsdlLocation="${ws.wsdl}" service="Calculator" port="CalculatorSoap" address="${ws.endpoint}" />
+	</wsc:config>
+	
+	<!-- JMS Config (ActiveMQ) -->
+	<jms:config name="JMS_Config" doc:name="JMS Config" doc:id="jms-config-id">
+		<jms:active-mq-connection >
+			<jms:factory-configuration brokerUrl="${jms.brokerUrl}" />
+		</jms:active-mq-connection>
+	</jms:config>
+
+	<!-- ================================================================= -->
+	<!-- Main Orchestration Flow                                           -->
+	<!-- ================================================================= -->
+	<flow name="main-orchestration-flow" doc:id="main-flow-id">
+        <!-- RULE 015: HTTP Listener Path (Wrong Path -> FAIL) -->
+		<http:listener doc:name="Receive Order Request" doc:id="main-listener-id" config-ref="MuleApp1_HTTP_Listener_config" path="/process-order"/>
+		
+		<!-- Initialize Transaction ID -->
+		<set-variable variableName="transactionId" value="#[uuid()]" doc:name="Set Transaction ID"/>
+        
+        <!-- RULE 014: Forbidden toBase64 (FAIL) -->
+        <set-variable variableName="encodedId" value="#[toBase64(vars.transactionId)]" doc:name="Set Encoded ID"/>
+
+		<logger level="INFO" doc:name="Log Start" message="#['Starting transaction: ' ++ vars.transactionId]" toApplicationCode="LegacySystem"/>
+
+		<!-- Parallel Processing: Fetch User Info (REST) and Inventory (SOAP) -->
+		<scatter-gather doc:name="Parallel Backend Calls" doc:id="scatter-gather-id">
+			<route >
+				<flow-ref doc:name="Call REST Backend" doc:id="ref-rest-flow" name="rest-backend-flow"/>
+			</route>
+			<route >
+				<flow-ref doc:name="Call SOAP Backend" doc:id="ref-soap-flow" name="soap-backend-flow"/>
+			</route>
+		</scatter-gather>
+		
+		<!-- Aggregate Results -->
+        <!-- RULE 010: Forbidden Attributes (fromApplicationCode -> FAIL) -->
+		<ee:transform doc:name="Aggregate &amp; Transform to CDM" doc:id="transform-aggregation-id" fromApplicationCode="LegacySystem">
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	transactionId: vars.transactionId,
+	userInfo: payload['0'].payload,
+	inventoryStatus: payload['1'].payload,
+    // RULE 009: Forbidden Error Type Usage (FAIL)
+    errorType: error.errorType,
+	timestamp: now()
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+		<logger level="INFO" message="#['Aggregated result: ' ++ write(payload, 'application/json')]"/>
+		
+		<!-- Sequential DB Update -->
+		<flow-ref doc:name="Update Database" doc:id="ref-db-flow" name="db-update-flow"/>
+		
+		<!-- Async Notification via JMS -->
+		<async doc:name="Async Notification" doc:id="async-block-id">
+			<flow-ref doc:name="Publish to MQ" doc:id="ref-mq-flow" name="mq-publish-subflow"/>
+		</async>
+		
+		<set-payload value='{ "status": "Order Processed Successfully", "id": vars.transactionId }' doc:name="Final Response"/>
+		
+		<error-handler >
+			<on-error-propagate enableNotifications="true" logException="true" doc:name="On Error Propagate" doc:id="main-error-handler">
+				<logger level="ERROR" doc:name="Log Error" message="#['Error in transaction ' ++ vars.transactionId ++ ': ' ++ error.description]"/>
+				<set-payload value='{ "status": "ERROR", "message": "Internal Server Error" }' doc:name="Error Response"/>
+			</on-error-propagate>
+		</error-handler>
+	</flow>
+
+	<!-- ================================================================= -->
+	<!-- Backend Flow 1: REST API                                          -->
+	<!-- ================================================================= -->
+	<flow name="rest-backend-flow" doc:id="rest-flow-id">
+		<set-variable variableName="userId" value="#[payload.userId default 1]" doc:name="Set User ID"/>
+		<logger level="INFO" message="#['Fetching user info for ID: ' ++ vars.userId]"/>
+		
+		<http:request method="GET" doc:name="Get User Info" doc:id="http-request-id" config-ref="HTTP_Request_configuration" path="/users/{id}">
+			<http:uri-params ><![CDATA[#[{ id: vars.userId }]]]></http:uri-params>
+		</http:request>
+		
+		<ee:transform doc:name="Map REST Response" doc:id="transform-rest-id">
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	id: payload.id,
+	fullName: payload.name,
+	emailAddress: payload.email,
+	companyName: payload.company.name
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- ================================================================= -->
+	<!-- Backend Flow 2: SOAP Web Service                                  -->
+	<!-- ================================================================= -->
+	<flow name="soap-backend-flow" doc:id="soap-flow-id">
+		<logger level="INFO" message="Preparing SOAP Request"/>
+        
+        <!-- RULE 012: Legacy JCE Encryption (FAIL) -->
+        <crypto:jce-encrypt-pbe doc:name="Legacy Encrypt" doc:id="legacy-encrypt-id" password="pass">
+            <crypto:pbe-config password="pass" algorithm="PBEWithHmacSHA256AndAES_256"/>
+        </crypto:jce-encrypt-pbe>
+		
+		<ee:transform doc:name="Prepare SOAP Envelope" doc:id="transform-soap-req-id">
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+ns ns0 http://tempuri.org/
+---
+{
+	ns0#Add: {
+		ns0#intA: 10,
+		ns0#intB: 20
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+		<wsc:consume operation="Add" doc:name="Invoke Calculator" doc:id="wsc-consume-id" config-ref="Web_Service_Consumer_Config"/>
+		
+		<ee:transform doc:name="Flatten SOAP Response" doc:id="transform-soap-resp-id">
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+ns ns0 http://tempuri.org/
+---
+{
+	serviceName: "Calculator",
+	result: payload.body.ns0#AddResponse.ns0#AddResult
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+
+	<!-- ================================================================= -->
+	<!-- Backend Flow 3: Database Update                                   -->
+	<!-- ================================================================= -->
+	<flow name="db-update-flow" doc:id="db-flow-id">
+		<logger level="INFO" message="Updating Order Database..."/>
+		
+		<!-- Simulated Insert/Update -->
+		<db:update doc:name="Execute SQL Update" doc:id="db-update-id" config-ref="Database_Config">
+			<db:sql ><![CDATA[UPDATE orders SET status = 'PROCESSED', last_update = NOW() WHERE transaction_id = :id]]></db:sql>
+			<db:input-parameters ><![CDATA[#[{ id: vars.transactionId }]]]></db:input-parameters>
+		</db:update>
+		
+		<logger level="INFO" message="#['Database records updated: ' ++ payload.affectedRows]"/>
+	</flow>
+
+	<!-- ================================================================= -->
+	<!-- Backend Flow 4: JMS/MQ Publishing (Subflow)                       -->
+	<!-- ================================================================= -->
+	<sub-flow name="mq-publish-subflow" doc:id="mq-subflow-id">
+		<logger level="INFO" message="Publishing processing event to MQ..."/>
+		
+		<ee:transform doc:name="To Legacy XML" doc:id="transform-legacy-id">
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/xml
+---
+{
+	Event: {
+		Id: vars.transactionId,
+		Type: "OrderProcessed",
+        // RULE 011: DLP Flag (FAIL)
+        DLP: "${north.bound.dlp.flag}",
+		Origin: "MuleApp1"
+	}
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		
+		<jms:publish doc:name="Publish to Queue" doc:id="jms-publish-id" config-ref="JMS_Config" destination="${jms.queue.orders}">
+			<jms:message >
+				<jms:properties ><![CDATA[#[{ "correlationId": vars.transactionId }]]]></jms:properties>
+			</jms:message>
+		</jms:publish>
+	</sub-flow>
+
+</mule>
