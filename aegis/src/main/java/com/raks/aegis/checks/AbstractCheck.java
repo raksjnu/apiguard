@@ -8,9 +8,33 @@ import java.util.Map;
 public abstract class AbstractCheck {
     public abstract CheckResult execute(Path projectRoot, Check check);
     protected Map<String, Object> effectiveParams;
+    protected List<String> propertyResolutions = new java.util.ArrayList<>();
 
     public void init(Map<String, Object> params) {
         this.effectiveParams = params;
+        this.propertyResolutions = new java.util.ArrayList<>();
+    }
+    
+    /**
+     * Track a property resolution for transparency in reports.
+     * @param original The original placeholder (e.g., "${soapversion}")
+     * @param resolved The resolved value (e.g., "SOAP_11")
+     */
+    protected void addPropertyResolution(String original, String resolved) {
+        if (original != null && resolved != null && !original.equals(resolved)) {
+            propertyResolutions.add(original + " → " + resolved);
+        }
+    }
+    
+    /**
+     * Get formatted property resolutions for display.
+     * @return Comma-separated list of resolutions, or empty string if none
+     */
+    protected String getPropertyResolutionsString() {
+        if (propertyResolutions.isEmpty()) {
+            return "";
+        }
+        return String.join(", ", propertyResolutions);
     }
 
     protected Map<String, Object> getEffectiveParams(Check check) {
@@ -113,6 +137,14 @@ public abstract class AbstractCheck {
             result = result.replace("{FOUND_ITEMS}", foundItems);
         } else {
             result = result.replace("{FOUND_ITEMS}", "");
+        }
+        
+        // NEW: Property Resolution Token
+        String propertyResolved = getPropertyResolutionsString();
+        if (!propertyResolved.isEmpty()) {
+            result = result.replace("{PROPERTY_RESOLVED}", "Properties Resolved: " + propertyResolved);
+        } else {
+            result = result.replace("{PROPERTY_RESOLVED}", "");
         }
         
         // If no placeholders found and coreDetails exists, append at end

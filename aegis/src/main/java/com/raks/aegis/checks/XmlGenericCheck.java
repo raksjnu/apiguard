@@ -120,6 +120,7 @@ public class XmlGenericCheck extends AbstractCheck {
                                                 if (expected.equals(resolved)) {
                                                     propertyMatchFound = true;
                                                     logger.info("Property resolution SUCCESS: {} -> {}", rawVal, resolved);
+                                                    addPropertyResolution(rawVal, resolved);  // Track for {PROPERTY_RESOLVED} token
                                                     break;
                                                 }
                                             }

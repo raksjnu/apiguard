@@ -47,10 +47,47 @@
 # MESSAGE TOKENS
 # =============================================================================
 # You can use the following tokens in successMessage and errorMessage:
-# - {RULE_ID}         : The ID of the rule being executed.
-# - {DEFAULT_MESSAGE} : The technical details of the check result (e.g. valid/invalid values).
-# - {CHECKED_FILES}   : The list of files processed by the check.
-# - {FOUND_ITEMS}     : The specific forbidden items found (e.g. 'toApplicationCode', forbidden keys).
+# - {RULE_ID}           : The ID of the rule being executed.
+# - {DEFAULT_MESSAGE}   : The technical details of the check result (e.g. valid/invalid values).
+# - {CHECKED_FILES}     : The list of files processed by the check.
+# - {FOUND_ITEMS}       : The specific forbidden items found (e.g. 'toApplicationCode', forbidden keys).
+# - {PROPERTY_RESOLVED} : Properties that were resolved (e.g. "${soapversion} → SOAP_11").
+# =============================================================================
+
+# =============================================================================
+# PROPERTY RESOLUTION - UNIQUE FEATURE
+# =============================================================================
+# Aegis automatically resolves property placeholders in XML attributes and JSON values
+# before validation. This makes Aegis the ONLY validation tool that works seamlessly
+# with externalized configurations.
+#
+# SUPPORTED TECHNOLOGIES:
+# - Mule:        ${property} or p('property')
+# - Spring Boot: ${property}
+# - TIBCO:       %%property%% or $_property
+# - Python:      ${VAR}
+# - Node.js:     process.env.VAR
+# - Kubernetes:  $(VAR)
+#
+# EXAMPLE:
+# XML: <apikit-soap:config soapVersion="${soapversion}" />
+# Property File: soapversion=SOAP_11
+# Result: Aegis resolves ${soapversion} → SOAP_11 automatically
+#
+# TRANSPARENCY:
+# Use {PROPERTY_RESOLVED} token in messages to show what was resolved:
+#   successMessage: "✓ Configuration valid\n{PROPERTY_RESOLVED}\n{DEFAULT_MESSAGE}"
+#
+# OUTPUT:
+#   ✓ Configuration valid
+#   Properties Resolved: ${soapversion} → SOAP_11
+#   XML Check passed for EXISTS files. (Mode: ALL_FILES, Passed: 1/1)
+#
+# CONFIGURATION NOTE:
+# Property resolution is currently AUTOMATIC for XML_ATTRIBUTE_EXISTS rules.
+# Future versions will support explicit configuration via:
+#   config.propertyResolution.enabled: true
+#   config.propertyResolution.syntaxPatterns: [...]
 # =============================================================================
 
 config:

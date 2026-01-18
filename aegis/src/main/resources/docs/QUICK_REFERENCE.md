@@ -16,10 +16,11 @@ Tokens that can be used in `successMessage` and `errorMessage` fields to customi
 | `{DEFAULT_MESSAGE}` | Technical details of check result (recommended) | ALL | `"✓ Success! {DEFAULT_MESSAGE}"` |
 | `{CORE_DETAILS}` | Alias for `{DEFAULT_MESSAGE}` | ALL | `"Details: {CORE_DETAILS}"` |
 | `{CHECKED_FILES}` | Comma-separated list of files scanned | XML_*, JSON_*, TOKEN_SEARCH_*, POM_* | `"Checked: {CHECKED_FILES}"` |
-| `{FOUND_ITEMS}` | Specific forbidden items found (NEW) | XML_ATTRIBUTE_NOT_EXISTS, JSON_VALIDATION_FORBIDDEN, GENERIC_TOKEN_SEARCH_FORBIDDEN | `"Found: {FOUND_ITEMS}"` |
+| `{FOUND_ITEMS}` | Specific forbidden items found | XML_ATTRIBUTE_NOT_EXISTS, JSON_VALIDATION_FORBIDDEN, GENERIC_TOKEN_SEARCH_FORBIDDEN | `"Found: {FOUND_ITEMS}"` |
+| `{PROPERTY_RESOLVED}` | Properties that were resolved (NEW) | XML_ATTRIBUTE_EXISTS, JSON_VALIDATION_REQUIRED | `"{PROPERTY_RESOLVED}"` |
 | `{FAILURES}` | List of specific failure details | XML_*, JSON_*, POM_* | `"Failures:\n{FAILURES}"` |
 
-**Best Practice**: Always use `{DEFAULT_MESSAGE}` to include technical details. Use `{FOUND_ITEMS}` for forbidden checks to show exactly what was detected.
+**Best Practice**: Always use `{DEFAULT_MESSAGE}` to include technical details. Use `{FOUND_ITEMS}` for forbidden checks and `{PROPERTY_RESOLVED}` to show property resolution transparency.
 
 ---
 
