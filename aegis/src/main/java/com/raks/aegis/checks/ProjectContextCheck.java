@@ -5,9 +5,6 @@ import com.raks.aegis.model.CheckResult;
 import java.nio.file.Path;
 import java.util.Map;
 
-/**
- * Validates metadata about the project itself (e.g., project name).
- */
 public class ProjectContextCheck extends AbstractCheck {
 
     @Override

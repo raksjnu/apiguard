@@ -32,7 +32,7 @@ public class ValidationEngine {
             for (Check check : rule.getChecks()) {
                 try {
                     check.setRuleId(rule.getId());
-                    check.setRule(rule);  // NEW: Link check to its parent rule
+                    check.setRule(rule);  
                     AbstractCheck validator = CheckFactory.create(check);
                     CheckResult result = validator.execute(projectRoot, check);
                     results.add(result);
@@ -57,40 +57,39 @@ public class ValidationEngine {
     }
 
     private String summarizeRule(Rule rule) {
-        // Build the full rule map to match the YAML configuration structure requested by the user
+
         java.util.Map<String, Object> ruleMap = new java.util.LinkedHashMap<>();
-        
+
         ruleMap.put("id", rule.getId());
         ruleMap.put("name", rule.getName());
         ruleMap.put("description", rule.getDescription());
         ruleMap.put("enabled", rule.isEnabled());
         ruleMap.put("severity", rule.getSeverity());
-        
+
         if (rule.getSuccessMessage() != null) ruleMap.put("successMessage", rule.getSuccessMessage());
         if (rule.getErrorMessage() != null) ruleMap.put("errorMessage", rule.getErrorMessage());
-        
-        // Optional fields
+
         if (rule.getUseCase() != null) ruleMap.put("useCase", rule.getUseCase());
         if (rule.getRationale() != null) ruleMap.put("rationale", rule.getRationale());
-        
+
         if (rule.getChecks() != null && !rule.getChecks().isEmpty()) {
             java.util.List<java.util.Map<String, Object>> checksList = new java.util.ArrayList<>();
-            
+
             for (Check check : rule.getChecks()) {
                 java.util.Map<String, Object> checkData = new java.util.LinkedHashMap<>();
                 checkData.put("type", check.getType());
-                
+
                 if (check.getParams() != null) {
                     java.util.Map<String, Object> cleanParams = new java.util.LinkedHashMap<>(check.getParams());
-                    cleanParams.remove("environments"); // Remove per user request
+                    cleanParams.remove("environments"); 
                     checkData.put("params", cleanParams);
                 }
-                
+
                 checksList.add(checkData);
             }
             ruleMap.put("checks", checksList);
         }
-        
+
         return getYamlString(ruleMap);
     }
 
@@ -100,8 +99,8 @@ public class ValidationEngine {
             options.setDefaultFlowStyle(org.yaml.snakeyaml.DumperOptions.FlowStyle.BLOCK);
             options.setPrettyFlow(true);
             options.setIndent(2);
-            options.setWidth(120); // Prevent early wrapping
-            
+            options.setWidth(120); 
+
             org.yaml.snakeyaml.Yaml yaml = new org.yaml.snakeyaml.Yaml(options);
             return yaml.dump(data).trim();
         } catch (Exception e) {

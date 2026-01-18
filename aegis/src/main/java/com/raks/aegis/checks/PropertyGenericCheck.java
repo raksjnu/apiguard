@@ -12,16 +12,6 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.stream.Stream;
 
-/**
- * Universal Property Validation Check.
- * Replaces: GenericPropertyFileCheck, MandatoryPropertyValueCheck, OptionalPropertyValueCheck.
- * Parameters:
- *  - filePatterns (List<String>): Target files.
- *  - property (String): The property key to find.
- *  - value (String, Optional): The expected value (regex).
- *  - mode (String): EXISTS (key must exist), NOT_EXISTS, VALUE_MATCH (key must exist AND match value).
- *  - matchMode (String): ALL_FILES, ANY_FILE, NONE_OF_FILES.
- */
 public class PropertyGenericCheck extends AbstractCheck {
 
     @Override
@@ -33,8 +23,7 @@ public class PropertyGenericCheck extends AbstractCheck {
         Map<String, Object> params = getEffectiveParams(check);
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) params.get("filePatterns");
-        
-        // Support single 'property' or list 'properties'
+
         List<String> properties = new ArrayList<>();
         if (params.containsKey("property")) {
             properties.add((String) params.get("property"));
@@ -47,16 +36,15 @@ public class PropertyGenericCheck extends AbstractCheck {
                 properties.addAll(pList);
             }
         }
-        
+
         String expectedValueRegex = (String) params.get("value");
         String mode = (String) params.getOrDefault("mode", "EXISTS");
-        String operator = (String) params.getOrDefault("operator", "MATCHES"); // Default to Regex for backward compatibility
+        String operator = (String) params.getOrDefault("operator", "MATCHES"); 
         String valueType = (String) params.getOrDefault("valueType", "STRING");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
 
         if (filePatterns == null || filePatterns.isEmpty()) return failConfig(check, "filePatterns required");
-        
-        // Support for 'validationRules' (list of rules with custom messages)
+
         @SuppressWarnings("unchecked")
         List<Map<String, String>> validationRules = (List<Map<String, String>>) params.get("validationRules");
 
@@ -74,9 +62,9 @@ public class PropertyGenericCheck extends AbstractCheck {
                     .filter(path -> matchesAnyPattern(path, filePatterns, projectRoot))
                     .filter(path -> !shouldIgnorePath(projectRoot, path))
                     .toList();
-            
+
             totalFiles = matchingFiles.size();
-            
+
             for (Path file : matchingFiles) {
                 boolean filePassed = true;
                 List<String> fileErrors = new ArrayList<>();
@@ -86,12 +74,12 @@ public class PropertyGenericCheck extends AbstractCheck {
                     else props.load(is);
 
                     if (validationRules != null && !validationRules.isEmpty()) {
-                         // Validation Rules Mode
+
                         for (Map<String, String> rule : validationRules) {
                             String type = rule.getOrDefault("type", "REQUIRED");
                             String pattern = rule.get("pattern");
                             String customMsg = rule.get("message");
-                            
+
                             if ("REQUIRED".equalsIgnoreCase(type)) {
                                  if (!props.containsKey(pattern)) {
                                      filePassed = false;
@@ -111,10 +99,10 @@ public class PropertyGenericCheck extends AbstractCheck {
                             }
                         }
                     } else {
-                        // Existing Single/Multi Property Mode
+
                         for (String propertyKey : properties) {
                             String actualValue = props.getProperty(propertyKey);
-                            
+
                             if ("EXISTS".equalsIgnoreCase(mode)) {
                                 if (actualValue == null) {
                                     filePassed = false;
@@ -146,25 +134,23 @@ public class PropertyGenericCheck extends AbstractCheck {
                                 }
                             }
                         }
-                    } // end legacy mode
+                    } 
 
                 } catch (Exception e) {
                      filePassed = false;
                      fileErrors.add("Read Error: " + e.getMessage());
                 }
-                
+
                 if (filePassed) passedFileCount++;
                 else details.add(projectRoot.relativize(file) + " [\n" + String.join("\n", fileErrors) + "\n]");
             }
 
-
-
             boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
-            
+
             String checkedFilesStr = matchingFiles.stream()
                     .map(p -> projectRoot.relativize(p).toString())
                     .collect(java.util.stream.Collectors.joining(", "));
-            
+
             if (uniqueCondition) {
                 String defaultSuccess = String.format("Property Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
                 return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
@@ -179,13 +165,13 @@ public class PropertyGenericCheck extends AbstractCheck {
              return CheckResult.fail(check.getRuleId(), check.getDescription(), "Scan Error: " + e.getMessage());
         }
     }
-    
+
     private String formatCustomRuleMessage(String customMsg, String defaultDetails) {
         if (customMsg == null || customMsg.isEmpty()) return defaultDetails;
-        // Basic token replacement for inner rules
+
         return customMsg.replace("{DEFAULT_MESSAGE}", defaultDetails).replace("{CORE_DETAILS}", defaultDetails);
     }
-    
+
     private CheckResult failConfig(Check check, String msg) {
         return CheckResult.fail(check.getRuleId(), check.getDescription(), "Config Error: " + msg);
     }

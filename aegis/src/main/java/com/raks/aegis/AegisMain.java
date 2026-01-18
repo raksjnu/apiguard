@@ -65,12 +65,12 @@ public class AegisMain implements Callable<Integer> {
 
         logger.info("Aegis started for project: {}", parentFolder);
         logger.debug("Scanning for projects...");
-        
+
         RootWrapper configWrapper = loadConfig(configFilePath);
         List<Rule> allRules = configWrapper.getRules();
         Map<String, Object> projectIdConfig = configWrapper.getConfig().getProjectIdentification();
         int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> configFolderConfig = (Map<String, Object>) projectIdConfig.get("configFolder");
         String configFolderPattern = null;
@@ -79,23 +79,23 @@ public class AegisMain implements Callable<Integer> {
         } else {
              configFolderPattern = ".*_config"; 
         }
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> targetProjectConfig = (Map<String, Object>) projectIdConfig.get("targetProject");
         String matchMode = (String) targetProjectConfig.getOrDefault("matchMode", "ANY");
         @SuppressWarnings("unchecked")
         List<String> markerFiles = (List<String>) targetProjectConfig.get("markerFiles");
-        
+
         @SuppressWarnings("unchecked")
         Map<String, Object> ignoredFoldersConfig = (Map<String, Object>) projectIdConfig.get("ignoredFolders");
         List<String> exactIgnoredNames = new ArrayList<>();
         List<String> ignoredPrefixes = new ArrayList<>();
-        
+
         if (ignoredFoldersConfig != null) {
             @SuppressWarnings("unchecked")
             List<String> exact = (List<String>) ignoredFoldersConfig.get("exactNames");
             if (exact != null) exactIgnoredNames.addAll(exact);
-            
+
             @SuppressWarnings("unchecked")
             List<String> prefixes = (List<String>) ignoredFoldersConfig.get("prefixes");
             if (prefixes != null) ignoredPrefixes.addAll(prefixes);
@@ -111,7 +111,7 @@ public class AegisMain implements Callable<Integer> {
         final int configRuleEnd = tempEnd;
         List<String> globalEnvironments = configWrapper.getConfig().getEnvironments();
         List<ApiResult> results = new ArrayList<>();
-        
+
         Path reportsRoot = parentFolder.resolve(reportDirName);
         try {
             Files.createDirectories(reportsRoot);
@@ -134,16 +134,16 @@ public class AegisMain implements Callable<Integer> {
             String apiName = apiDir.getFileName().toString();
             boolean isConfigProject = apiName.matches(configFolderPattern);
             logger.info("Validating {}: {}", isConfigProject ? "Config" : "API", apiName);
-            
+
             List<Rule> applicableRules = allRules.stream()
                     .filter(Rule::isEnabled)
                     .filter(rule -> {
                         String idDigits = rule.getId().replaceAll("[^0-9]", "");
                         int ruleIdNum = idDigits.isEmpty() ? -1 : Integer.parseInt(idDigits);
-                        
+
                         boolean isConfigRule = (ruleIdNum >= configRuleStart && ruleIdNum <= configRuleEnd);
                         boolean defaultRanges = (configRuleStart == 0 && configRuleEnd == Integer.MAX_VALUE);
-                        
+
                         if (globalEnvironments != null && !globalEnvironments.isEmpty()) {
                             if (rule.getChecks() != null) {
                                 rule.getChecks().forEach(check -> {
@@ -162,7 +162,7 @@ public class AegisMain implements Callable<Integer> {
                                 });
                             }
                         }
-                        
+
                         if (defaultRanges) return true;
                         return isConfigProject == isConfigRule;
                     }).collect(Collectors.toList());
@@ -171,7 +171,7 @@ public class AegisMain implements Callable<Integer> {
             ValidationReport report = engine.validate();
             report.projectPath = apiName + " (" + apiDir.toString() + ")";
             Path apiReportDir = reportsRoot.resolve(apiName);
-            
+
             try {
                 Files.createDirectories(apiReportDir);
             } catch (IOException e) {
@@ -185,7 +185,7 @@ public class AegisMain implements Callable<Integer> {
             int skipped = report.skipped.size();
             Path rel = parentFolder.relativize(apiDir);
             String repoName = rel.getNameCount() > 1 ? rel.getName(0).toString() : apiName;
-            
+
             results.add(new ApiResult(apiName, repoName, apiDir, passed, failed, skipped, apiReportDir));
             logger.info("   {} | Files Scanned: {} | Passed: {} | Failed: {}", 
                     (failed == 0 ? "PASS" : "FAIL"), (passed + failed + skipped), passed, failed);
@@ -201,7 +201,7 @@ public class AegisMain implements Callable<Integer> {
         int totalFailed = results.stream().mapToInt(r -> r.failed).sum();
         logger.info("Aegis Validation Complete | Total APIs: {} | Passed: {} | Failed: {}", results.size(), totalPassed, totalFailed);
         logger.info("Consolidated report: {}", reportsRoot.resolve("CONSOLIDATED-REPORT.html"));
-        
+
         return 0;
     }
     public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath) {
@@ -230,15 +230,13 @@ public class AegisMain implements Callable<Integer> {
                 return result;
             }
 
-            // --- STRICT CONFIG OVERRIDE: Custom Config replaces Built-in COMPLETELY ---
             RootWrapper activeConfig = customRulesPath != null ? loadConfig(customRulesPath) : loadConfig(null);
-            
-            // Extract Configuration
+
             Map<String, Object> projectIdConfig = activeConfig.getConfig().getProjectIdentification();
         Map<String, Object> targetProjectConfig = (Map<String, Object>) projectIdConfig.get("targetProject");
             Map<String, Object> configFolderConfig = (Map<String, Object>) projectIdConfig.get("configFolder");
             Map<String, Object> ignoredFoldersConfig = (Map<String, Object>) projectIdConfig.get("ignoredFolders");
-            
+
             int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
             String matchMode = (String) targetProjectConfig.getOrDefault("matchMode", "ANY");
             List<String> markerFiles = (List<String>) targetProjectConfig.get("markerFiles");
@@ -255,7 +253,6 @@ public class AegisMain implements Callable<Integer> {
             }
             List<String> globalEnvironments = activeConfig.getConfig().getEnvironments();
 
-            // Discover Projects
             List<Path> discoveredProjects = com.raks.aegis.util.ProjectDiscovery.findProjects(
                     parentFolder,
                     maxSearchDepth,
@@ -268,7 +265,7 @@ public class AegisMain implements Callable<Integer> {
             for (Path apiDir : discoveredProjects) {
                 String apiName = apiDir.getFileName().toString();
                 Path apiReportDir = reportsRoot.resolve(apiName);
-                
+
                 try {
                     Files.createDirectories(apiReportDir);
                 } catch (IOException e) {
@@ -277,24 +274,23 @@ public class AegisMain implements Callable<Integer> {
                 }
 
                 boolean isConfigProject = apiName.matches(configFolderPattern);
-                
-                // --- SCOPE-BASED FILTERING (No ID ranges) ---
+
                 List<Rule> applicableRules = activeConfig.getRules().stream()
                         .filter(Rule::isEnabled)
                         .filter(rule -> {
                             String scope = rule.getScope();
-                            // Default to GLOBAL if null
+
                             if (scope == null || scope.isEmpty() || "GLOBAL".equalsIgnoreCase(scope)) {
                                 return true;
                             }
                             if (isConfigProject) {
                                 return "CONFIG".equalsIgnoreCase(scope) || "BOTH".equalsIgnoreCase(scope); 
                             } else {
-                                return "APP".equalsIgnoreCase(scope) || "BOTH".equalsIgnoreCase(scope); // "APP" or "CODE" logic
+                                return "APP".equalsIgnoreCase(scope) || "BOTH".equalsIgnoreCase(scope); 
                             }
                         })
                         .peek(rule -> {
-                             // Inject Global Environments if Rule is generic
+
                             if (globalEnvironments != null && !globalEnvironments.isEmpty()) {
                                 if (rule.getChecks() != null) {
                                     rule.getChecks().forEach(check -> {
@@ -315,7 +311,7 @@ public class AegisMain implements Callable<Integer> {
                     logger.error("Validation failed for {}", apiName);
                     continue;
                 }
-                // --- Set Configurable Labels (PASS/SUCCESS, FAIL/ERROR) ---
+
                 if (activeConfig.getConfig().getLabels() != null) {
                     report.setLabels(activeConfig.getConfig().getLabels());
                 }
@@ -323,12 +319,10 @@ public class AegisMain implements Callable<Integer> {
                     if (displayName.contains(",")) {
                         String matchedProject = null;
                         String[] projects = displayName.split(",");
-                        
-                        // Calculate root folder name (the cloned repo folder)
+
                         Path relMatch = parentFolder.relativize(apiDir);
                         String rootFolder = (relMatch.getNameCount() > 0) ? relMatch.getName(0).toString() : apiName;
-                        
-                        // 1. Try Exact Match with Root Folder
+
                         for (String proj : projects) {
                             String p = proj.trim();
                             String pName = p;
@@ -336,14 +330,13 @@ public class AegisMain implements Callable<Integer> {
                             int lastSlash = pName.lastIndexOf('/');
                             if (lastSlash >= 0) pName = pName.substring(lastSlash + 1);
                             if (pName.endsWith(".git")) pName = pName.substring(0, pName.length() - 4);
-                            
+
                             if (pName.trim().equalsIgnoreCase(rootFolder.trim())) {
                                 matchedProject = p;
                                 break;
                             }
                         }
-                        
-                        // 2. Fallback: Try Exact Match with ApiName (if different)
+
                         if (matchedProject == null && !apiName.equals(rootFolder)) {
                              for (String proj : projects) {
                                 String p = proj.trim();
@@ -352,15 +345,14 @@ public class AegisMain implements Callable<Integer> {
                                 int lastSlash = pName.lastIndexOf('/');
                                 if (lastSlash >= 0) pName = pName.substring(lastSlash + 1);
                                 if (pName.endsWith(".git")) pName = pName.substring(0, pName.length() - 4);
-                                
+
                                 if (pName.trim().equalsIgnoreCase(apiName.trim())) {
                                     matchedProject = p;
                                     break;
                                 }
                             }
                         }
-                        
-                        // 3. Fallback: Contains Check (Desperate Measure)
+
                         if (matchedProject == null) {
                              for (String proj : projects) {
                                 String p = proj.trim();

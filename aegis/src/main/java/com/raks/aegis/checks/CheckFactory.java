@@ -8,12 +8,11 @@ public class CheckFactory {
     private static Map<String, Class<? extends AbstractCheck>> registry = new HashMap<>();
 
     static {
-        // Universal Checks
+
         registry.put("TOKEN_SEARCH", TokenSearchCheck.class);
         registry.put("XML_GENERIC", XmlGenericCheck.class);
         registry.put("JSON_GENERIC", JsonGenericCheck.class);
         registry.put("PROPERTY_GENERIC", PropertyGenericCheck.class);
-        
 
         registry.put("POM_VALIDATION_REQUIRED", PomValidationRequiredCheck.class);
         registry.put("POM_VALIDATION_FORBIDDEN", PomValidationForbiddenCheck.class);
@@ -23,12 +22,8 @@ public class CheckFactory {
 
     public static AbstractCheck create(Check check) {
         String type = check.getType();
-        // Create a copy of params to modify (effective configuration)
+
         Map<String, Object> effectiveParams = check.getParams() != null ? new HashMap<>(check.getParams()) : new HashMap<>();
-        
-        // ---------------------------------------------------------
-        // Universal Normalization (File Patterns)
-        // ---------------------------------------------------------
 
         if (effectiveParams.containsKey("filePattern")) {
             effectiveParams.put("filePatterns", java.util.Collections.singletonList(effectiveParams.get("filePattern")));
@@ -36,7 +31,7 @@ public class CheckFactory {
         if (effectiveParams.containsKey("targetFiles")) {
             effectiveParams.put("filePatterns", effectiveParams.get("targetFiles"));
         }
-        
+
         if (effectiveParams.containsKey("fileExtensions")) {
              Object extObj = effectiveParams.get("fileExtensions");
              if (extObj instanceof java.util.List) {
@@ -49,14 +44,10 @@ public class CheckFactory {
              }
         }
 
-        // ---------------------------------------------------------
-        // Type-Specific Logic Injection
-        // ---------------------------------------------------------
-
         AbstractCheck instance = null;
 
         if (type.equals("GENERIC_TOKEN_SEARCH") || type.equals("GENERIC_TOKEN_SEARCH_FORBIDDEN") || type.equals("GENERIC_TOKEN_SEARCH_REQUIRED") || type.equals("MANDATORY_SUBSTRING_CHECK") || type.equals("GENERIC_CODE_CHECK") || type.equals("GENERIC_CODE_TOKEN_CHECK") || type.equals("SUBSTRING_TOKEN_CHECK") || type.equals("DLP_REFERENCE_CHECK")  || type.equals("FORBIDDEN_TOKEN_IN_ELEMENT") || type.equals("GENERIC_CONFIG_TOKEN_CHECK")) {
-            
+
             if (type.contains("REQUIRED") || type.contains("MANDATORY")) {
                 effectiveParams.put("mode", "REQUIRED");
             } else {
@@ -68,8 +59,7 @@ public class CheckFactory {
         else if (type.equals("XML_XPATH_EXISTS") || type.equals("XML_ATTRIBUTE_EXISTS") || type.equals("XML_XPATH_NOT_EXISTS") || type.equals("XML_ATTRIBUTE_NOT_EXISTS") || type.equals("XML_ELEMENT_CONTENT_REQUIRED") || type.equals("XML_ELEMENT_CONTENT_FORBIDDEN")) {
             if (type.contains("NOT_EXISTS") || type.contains("FORBIDDEN")) effectiveParams.put("mode", "NOT_EXISTS");
             else effectiveParams.put("mode", "EXISTS");
-            
-            // Logic injection for high-level params -> specific xpath
+
             if (!effectiveParams.containsKey("xpath") && effectiveParams.containsKey("xpathExpressions")) {
                 Object exprsObj = effectiveParams.get("xpathExpressions");
                 if (exprsObj instanceof java.util.List) {
@@ -83,7 +73,7 @@ public class CheckFactory {
                     }
                 }
             }
-            
+
             if (!effectiveParams.containsKey("xpath") && effectiveParams.containsKey("elements") && effectiveParams.containsKey("forbiddenAttributes")) {
                 @SuppressWarnings("unchecked")
                 java.util.List<String> elements = (java.util.List<String>) effectiveParams.get("elements");
@@ -100,7 +90,7 @@ public class CheckFactory {
                      effectiveParams.put("xpath", sb.toString());
                  }
             }
-            
+
             if (!effectiveParams.containsKey("xpath") && effectiveParams.containsKey("elementAttributeSets")) {
                  @SuppressWarnings("unchecked")
                  java.util.List<Map<String, Object>> sets = (java.util.List<Map<String, Object>>) effectiveParams.get("elementAttributeSets");
@@ -108,9 +98,9 @@ public class CheckFactory {
                      StringBuilder sb = new StringBuilder();
                      for (Map<String, Object> set : sets) {
                          String el = (String) set.get("element");
-                         // Handle namespaced elements (e.g. apikit-soap:config -> config)
+
                          String localName = (el != null && el.contains(":")) ? el.substring(el.lastIndexOf(":") + 1) : el;
-                         
+
                          @SuppressWarnings("unchecked")
                          Map<String, String> attrs = (Map<String, String>) set.get("attributes");
                          if (el != null && attrs != null && !attrs.isEmpty()) {
@@ -172,7 +162,7 @@ public class CheckFactory {
             instance = new PropertyGenericCheck();
         }
         else {
-             // Fallback for direct mapping or custom checks
+
              try {
                 Class<? extends AbstractCheck> clazz = registry.get(type);
                 if (clazz == null)
@@ -182,12 +172,11 @@ public class CheckFactory {
                 throw new RuntimeException("Failed to create check: " + check.getType(), e);
             }
         }
-        
-        // Inject the effective configuration into the instance
+
         if (instance != null) {
             instance.init(effectiveParams);
         }
-        
+
         return instance;
     }
 }

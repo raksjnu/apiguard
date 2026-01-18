@@ -33,7 +33,6 @@ public class RulesReorganizer {
             Yaml loader = new Yaml(constructor);
             RootWrapper wrapper = loader.loadAs(input, RootWrapper.class);
 
-
             Map<String, List<Rule>> groupedRules = new LinkedHashMap<>();
 
             List<String> typeOrder = Arrays.asList(
@@ -53,7 +52,7 @@ public class RulesReorganizer {
                 "PROJECT_CONTEXT",
                 "FILE_EXISTS"
             );
-            
+
             for (String type : typeOrder) {
                 groupedRules.put(type, new ArrayList<>());
             }
@@ -72,11 +71,6 @@ public class RulesReorganizer {
                 }
             }
 
-
-
-
-
-            
             List<String> finalTypeOrder = new ArrayList<>(typeOrder);
             finalTypeOrder.add("OTHERS");
 
@@ -85,14 +79,12 @@ public class RulesReorganizer {
                 List<Rule> rules = groupedRules.get(type);
                 if (!rules.isEmpty()) {
 
-
                     rules.sort(Comparator.comparing(Rule::getId));
                     sortedRules.addAll(rules);
                 }
             }
-            
+
             wrapper.setRules(sortedRules);
-            
 
             List<Map<String, Object>> orderedRules = new ArrayList<>();
             for (Rule r : sortedRules) {
@@ -102,13 +94,13 @@ public class RulesReorganizer {
                 if (r.getDescription() != null) map.put("description", r.getDescription());
                 map.put("enabled", r.isEnabled());
                 map.put("severity", r.getSeverity());
-                
+
                 if (r.getUseCase() != null) map.put("useCase", r.getUseCase());
                 if (r.getRationale() != null) map.put("rationale", r.getRationale());
                 if (r.getExampleGood() != null) map.put("exampleGood", r.getExampleGood());
                 if (r.getExampleBad() != null) map.put("exampleBad", r.getExampleBad());
                 if (r.getDocLink() != null) map.put("docLink", r.getDocLink());
-                
+
                 List<Map<String, Object>> orderedChecks = new ArrayList<>();
                 if (r.getChecks() != null) {
                     for (com.raks.aegis.model.Check c : r.getChecks()) {
@@ -122,7 +114,7 @@ public class RulesReorganizer {
                 map.put("checks", orderedChecks);
                 orderedRules.add(map);
             }
-            
+
             Map<String, Object> rootMap = new LinkedHashMap<>();
             rootMap.put("config", wrapper.getConfig());
             rootMap.put("rules", orderedRules);
@@ -142,7 +134,6 @@ public class RulesReorganizer {
 
             Yaml dumper = new Yaml(representer, dumperOptions);
             String output = dumper.dump(rootMap);
-
 
             String headerMetadata = "# =============================================================================\n" +
                                    "# Aegis Rules Configuration\n" +
@@ -183,32 +174,22 @@ public class RulesReorganizer {
                                    "# NOTE: *ANY* check type above can be used as a trigger for the conditional engine!\n" +
                                    "# =============================================================================\n\n";
 
-
-
-
-
-            
-
             int lastRulesIndex = output.lastIndexOf("\nrules:");
             if (lastRulesIndex != -1) {
                 String configPart = output.substring(0, lastRulesIndex + 7);
                 String rulesPart = output.substring(lastRulesIndex + 7);
-                
 
                 rulesPart = rulesPart.replaceAll("(?m)^", "  ");
-                
 
                 rulesPart = rulesPart.replaceAll("  - id: (RULE-\\d+)", "  - id: \"$1\"");
-                
 
                 rulesPart = rulesPart.replaceAll("  - id: \"", "\n  - id: \"");
-                
 
                 for (String type : typeOrder) {
                     if (!groupedRules.get(type).isEmpty()) {
                         String firstId = groupedRules.get(type).stream()
                             .sorted(Comparator.comparing(Rule::getId)).findFirst().get().getId();
-                        
+
                         String target = "\n  - id: \"" + firstId + "\"";
                         String sectionTitle = type;
                         if (type.equals("CONDITIONAL_CHECK") || type.equals("PROJECT_CONTEXT") || type.equals("FILE_EXISTS")) {
@@ -228,22 +209,20 @@ public class RulesReorganizer {
                 }
                 output = configPart + rulesPart;
             }
-            
 
             output = output.replaceAll("!!com.raks.aegis.AegisMain\\$ConfigSection", "");
             output = headerMetadata + output;
-            
+
             FileWriter writer = new FileWriter("src/main/resources/rules/rules.yaml");
             writer.write(output);
             writer.close();
-            
+
             logger.info("Perfected rules (full list) written to src/main/resources/rules/rules.yaml");
 
         } catch (Exception e) {
             logger.error("Error reorganizing rules", e);
         }
     }
-    
 
     public static class LoaderOptions extends org.yaml.snakeyaml.LoaderOptions {
     }

@@ -5,8 +5,8 @@ public class Check {
     private Map<String, Object> params;
     private String description;
     private transient String ruleId;
-    private transient Rule rule;  // NEW: Reference to parent rule
-    
+    private transient Rule rule;  
+
     public String getType() {
         return type;
     }

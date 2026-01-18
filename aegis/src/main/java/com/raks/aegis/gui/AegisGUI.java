@@ -27,10 +27,6 @@ import java.util.ArrayList;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.UnsupportedEncodingException;
 
-/**
- * Aegis Standalone GUI
- * Serves a web interface for running validations and handles file uploads.
- */
 public class AegisGUI {
     private static final Logger logger = LoggerFactory.getLogger(AegisGUI.class);
     private static int PORT = 8080;
@@ -49,7 +45,6 @@ public class AegisGUI {
     public void start() {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
-            
 
             Path appTempDir = Paths.get("temp").toAbsolutePath();
             Files.createDirectories(appTempDir);
@@ -60,16 +55,12 @@ public class AegisGUI {
                 logger.error("Failed to generate Rule Guide at startup", e);
             }
 
-
             server.createContext("/", new StaticResourceHandler());
-            
 
             server.createContext("/rule_guide.html", new RuleGuidePageHandler());
             server.createContext("/web/aegis/rule_guide.html", new RuleGuidePageHandler());
 
-
             server.createContext("/reports/", new ReportHandler());
-            
 
             server.createContext("/api/validate", new ValidationHandler());
             server.createContext("/api/open", new OpenReportHandler());
@@ -77,14 +68,13 @@ public class AegisGUI {
             server.createContext("/api/git/branches", new GitDiscoveryBranchesHandler());
             server.createContext("/download", new DownloadHandler());
             server.createContext("/api/download/sample", new SampleDownloadHandler());
-            
+
             server.setExecutor(null);
             server.start();
 
             String url = "http://localhost:" + PORT;
             logger.info("Aegis GUI started at {}", url);
             logger.info("Press Ctrl+C to stop");
-
 
             if (Desktop.isDesktopSupported() && Desktop.getDesktop().isSupported(Desktop.Action.BROWSE)) {
                 Desktop.getDesktop().browse(new URI(url));
@@ -94,10 +84,6 @@ public class AegisGUI {
         }
     }
 
-    /**
-     * Handler for the Rule Guide page.
-     * Serves the pre-generated rule_guide.html from the temp directory.
-     */
     static class RuleGuidePageHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -121,11 +107,6 @@ public class AegisGUI {
         }
     }
 
-
-
-    /**
-     * Handler for static resources and the main index page.
-     */
     static class StaticResourceHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -137,7 +118,7 @@ public class AegisGUI {
 
             InputStream is = getClass().getResourceAsStream(path);
             if (is == null) {
-                // Fallback for direct resources or legacy paths
+
                 String altPath = path.replace("/web/aegis/", "/");
                 is = getClass().getResourceAsStream(altPath);
             }
@@ -166,9 +147,6 @@ public class AegisGUI {
         }
     }
 
-    /**
-     * Handler for validation requests.
-     */
     static class ValidationHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -178,11 +156,10 @@ public class AegisGUI {
                     String mode = (String) params.getOrDefault("mode", "local");
                     String projectPath = null;
                     String sessionId = (String) params.get("session");
-                    
+
                     if (sessionId == null || sessionId.isEmpty()) {
                         sessionId = SessionManager.createSession();
                     }
-
 
                     String appTempDir = Paths.get("temp").toAbsolutePath().toString();
                     Files.createDirectories(Paths.get(appTempDir));
@@ -205,7 +182,7 @@ public class AegisGUI {
                             String gitUrls = (String) params.get("gitUrls");
                             String gitBranch = (String) params.get("gitBranch");
                             String gitToken = (String) params.get("gitToken");
-                            
+
                             java.util.List<String> urlList = new java.util.ArrayList<>();
                             if (gitUrls != null && !gitUrls.trim().isEmpty()) {
                                 for (String u : gitUrls.split(",")) if (!u.trim().isEmpty()) urlList.add(u.trim());
@@ -216,47 +193,44 @@ public class AegisGUI {
                             if (urlList.isEmpty()) {
                                 throw new IllegalArgumentException("No Git URLs provided");
                             }
-                            
-                            // Create a dedicated directory for this session, aligned with ArchiveExtractor structure
+
                             Path sessionWorkDir = Paths.get(appTempDir, sessionId);
                             Files.createDirectories(sessionWorkDir);
-                            
+
                             for (String url : urlList) {
                                 String repoName = url;
                                 if (repoName.contains("/")) repoName = repoName.substring(repoName.lastIndexOf("/") + 1);
                                 if (repoName.endsWith(".git")) repoName = repoName.substring(0, repoName.length() - 4);
-                                
+
                                 Path repoDir = sessionWorkDir.resolve(repoName);
                                 logger.info("Cloning Git Repo: {} to {}", url, repoDir);
                                 com.raks.aegis.util.GitHelper.cloneRepository(url, gitBranch, gitToken, repoDir.toAbsolutePath().toString());
                             }
-                            
+
                             projectPath = sessionWorkDir.toAbsolutePath().toString();
                         }
 
                     if (projectPath != null) {
                         logger.info("Running validation on: {}", projectPath);
-                        
+
                         List<String> args = new ArrayList<>();
                         args.add("-p");
                         args.add(projectPath);
-                        
-                        // Handle Custom Rules
+
                         File customRulesFile = (File) params.get("customRules");
-                        
+
                         if (customRulesFile != null) {
                             args.add("-c");
                             args.add(customRulesFile.getAbsolutePath());
                         }
-                        
-                        // Explicitly set output directory to session/Aegis-reports to guarantee location
+
                         Path reportDir = Paths.get(appTempDir, sessionId, "Aegis-reports");
                         args.add("-o");
                         args.add(reportDir.toAbsolutePath().toString());
 
                         AegisMain.execute(args.toArray(new String[0]));
                         if (!Files.exists(reportDir)) reportDir = Paths.get("Aegis-reports");
-                        
+
                         if (Files.exists(reportDir)) {
                             Path consolidatedReport = reportDir.resolve("CONSOLIDATED-REPORT.html");
                             if (!Files.exists(consolidatedReport)) {
@@ -264,13 +238,11 @@ public class AegisGUI {
                                     consolidatedReport = stream.filter(p -> p.toString().endsWith(".html")).findFirst().orElse(consolidatedReport);
                                 }
                             }
-                            
 
                             String relativeReportUrl = "";
                             String reportZipName = null;
-                            
-                            if (!"local".equals(mode)) {
 
+                            if (!"local".equals(mode)) {
 
                                 Path sessionBase = Paths.get(appTempDir, sessionId, "Aegis-reports");
                                 try {
@@ -279,46 +251,32 @@ public class AegisGUI {
                                 } catch (IllegalArgumentException e) {
                                     logger.warn("Could not relativize report path: " + e.getMessage());
                                 }
-                                
 
                                 try {
-                                    // Determine a clean base name for the zip
-                                    // Use projectPath filename or fallback
+
                                     String safeBaseName = Paths.get(projectPath).getFileName().toString();
                                     if(mode.equals("git") && args.contains("-p")) {
-                                         // In git mode, projectPath is the temp dir which might be just session ID or similar unless we use sessionWorkDir logic
-                                         // Actually in git mode above, projectPath is sessionWorkDir which ends in valid name?
-                                         // sessionWorkDir was Paths.get(appTempDir, "Aegis-sessions", sessionId);
-                                         // Wait, we cloned into sessionWorkDir/RepoName.
-                                         // But projectPath is set to sessionWorkDir (line 259).
-                                         // So projectPath ends with sessionId. That is annoying.
-                                         
-                                         // Let's improve the name for Git mode.
-                                         // We cloned repos into subfolders.
-                                         // Let's use the first repo name if possible.
+
                                          if (Files.list(Paths.get(projectPath)).anyMatch(p -> Files.isDirectory(p) && !p.getFileName().toString().equals("Aegis-reports"))) {
-                                            // Find first project dir
+
                                             safeBaseName = Files.list(Paths.get(projectPath))
                                                 .filter(p -> Files.isDirectory(p) && !p.getFileName().toString().equals("Aegis-reports"))
                                                 .findFirst()
                                                 .map(p -> p.getFileName().toString())
                                                 .orElse("GitProject");
-                                                
-                                            // If multiple, maybe append etc. but simple is fine.
+
                                          } else {
                                              safeBaseName = "GitProject";
                                          }
                                     }
-                                    
-                                    // Sanitize
+
                                     safeBaseName = safeBaseName.replaceAll("[^a-zA-Z0-9._-]", "_");
-                                    
+
                                     String zipFileName = safeBaseName + "_validation-report.zip";
-                                    // Ensure zip is saved in the session root (parent of sessionBase) to avoid recursive zipping
+
                                     Path zipPath = sessionBase.getParent().resolve(zipFileName);
                                     zipFolder(reportDir, zipPath);
 
-                                    // Return ONLY the filename so frontend can request via /download?file=...&session=...
                                     reportZipName = zipFileName;
                                 } catch (Exception e) {
                                     logger.error("Failed to zip report directory", e);
@@ -348,7 +306,7 @@ public class AegisGUI {
                 exchange.sendResponseHeaders(405, -1);
             }
         }
-        
+
         private void zipFolder(Path sourceFolderPath, Path zipPath) throws IOException {
             try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipPath.toFile()))) {
                 Files.walk(sourceFolderPath)
@@ -370,7 +328,7 @@ public class AegisGUI {
                     });
             }
         }
-        
+
         private void sendResponse(HttpExchange exchange, int statusCode, String response) throws IOException {
             exchange.getResponseHeaders().set("Content-Type", "application/json");
             byte[] responseBytes = response.getBytes(StandardCharsets.UTF_8);
@@ -388,16 +346,16 @@ public class AegisGUI {
             Map<String, Object> params = new HashMap<>();
             String contentType = exchange.getRequestHeaders().getFirst("Content-Type");
             logger.info("DEBUG: Received Content-Type: {}", contentType);
-            
+
             if (contentType != null && contentType.startsWith("multipart/form-data")) {
                 String boundary = contentType.substring(contentType.indexOf("boundary=") + 9);
                 int semi = boundary.indexOf(';');
                 if (semi != -1) boundary = boundary.substring(0, semi);
                 boundary = boundary.trim();
                 if (boundary.startsWith("\"") && boundary.endsWith("\"")) boundary = boundary.substring(1, boundary.length() - 1);
-                
+
                 logger.info("DEBUG: Parsed Boundary: '{}'", boundary);
-                
+
                 try (InputStream is = exchange.getRequestBody()) {
                     MultipartParser parser = new MultipartParser(is, boundary);
                     params.putAll(parser.parse());
@@ -417,7 +375,7 @@ public class AegisGUI {
             return params;
         }
     }
-    
+
     private static byte[] readAllBytes(InputStream inputStream) throws IOException {
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         int nRead;
@@ -440,7 +398,7 @@ public class AegisGUI {
             int offset = 0;
             org.slf4j.Logger logger = LoggerFactory.getLogger(AegisGUI.class);
             logger.info("DEBUG: Multipart details - Total Size: {}", data.length);
-            
+
             while (offset < data.length) {
                 int boundaryIndex = indexOf(data, boundaryBytes, offset);
                 if (boundaryIndex == -1) break;
@@ -461,7 +419,7 @@ public class AegisGUI {
                     String name = extractAttribute(disposition, "name");
                     String filename = extractAttribute(disposition, "filename");
                     logger.info("DEBUG: Found Part: name='{}', filename='{}'", name, filename);
-                    
+
                     int nextBoundary = indexOf(data, boundaryBytes, offset);
                     if (nextBoundary == -1) nextBoundary = data.length;
                     int contentEnd = nextBoundary - 2;
@@ -503,9 +461,6 @@ public class AegisGUI {
         }
     }
 
-    /**
-     * Handler for opening local reports via Desktop.browse().
-     */
     static class OpenReportHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -519,7 +474,7 @@ public class AegisGUI {
                          if (idx > 0) params.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
                      }
                  }
-                 
+
                  String pathStr = (String) params.get("path");
                  if (pathStr != null) {
                      Path path = Paths.get(pathStr);
@@ -555,47 +510,39 @@ public class AegisGUI {
         }
     }
 
-    /**
-     * Handler for serving generated reports for ZIP/JAR sessions.
-     * URI Format: /reports/{sessionId}/{relativePath...}
-     */
     static class ReportHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             String path = exchange.getRequestURI().getPath();
 
-            
             String prefix = "/reports/";
             if (!path.startsWith(prefix)) {
                 exchange.sendResponseHeaders(404, -1);
                 return;
             }
-            
+
             String subPath = path.substring(prefix.length());
             int slashIndex = subPath.indexOf("/");
-            
+
             if (slashIndex == -1) {
 
                 exchange.sendResponseHeaders(404, -1);
                 return;
             }
-            
+
             String sessionId = subPath.substring(0, slashIndex);
             String resourcePath = subPath.substring(slashIndex + 1);
-            
 
             if (resourcePath.contains("..") || sessionId.contains("..") || sessionId.contains("\\")) {
                  exchange.sendResponseHeaders(403, -1);
                  return;
             }
-            
 
             Path appTempDir = Paths.get("temp").toAbsolutePath();
             Path sessionDir = appTempDir.resolve(sessionId).resolve("Aegis-reports");
-            
 
             Path requestFile = sessionDir.resolve(resourcePath);
-            
+
             if (Files.exists(requestFile) && !Files.isDirectory(requestFile)) {
                 String contentType = "text/html"; 
                 String name = requestFile.getFileName().toString().toLowerCase();
@@ -604,7 +551,7 @@ public class AegisGUI {
                 else if (name.endsWith(".png")) contentType = "image/png";
                 else if (name.endsWith(".svg")) contentType = "image/svg+xml";
                 else if (name.endsWith(".xlsx")) contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-                
+
                 byte[] content = Files.readAllBytes(requestFile);
                 exchange.getResponseHeaders().set("Content-Type", contentType);
                 exchange.sendResponseHeaders(200, content.length);
@@ -617,12 +564,6 @@ public class AegisGUI {
         }
     }
 
-    /**
-     * Handler for downloading files from session.
-     */
-    /**
-     * Handler for downloading sample files from resources.
-     */
     static class SampleDownloadHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -643,7 +584,6 @@ public class AegisGUI {
                     return;
                 }
 
-                // Security whitelist
                 if (!filename.equals("sample-project.zip") && !filename.equals("sample-rules.yaml")) {
                     exchange.sendResponseHeaders(404, -1);
                     return;
@@ -660,13 +600,13 @@ public class AegisGUI {
                     buffer.flush();
                     byte[] content = buffer.toByteArray();
                     is.close();
-                    
+
                     if (filename.endsWith(".zip")) {
                          exchange.getResponseHeaders().set("Content-Type", "application/zip");
                     } else if (filename.endsWith(".yaml")) {
                          exchange.getResponseHeaders().set("Content-Type", "application/x-yaml");
                     }
-                    
+
                     exchange.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
                     exchange.sendResponseHeaders(200, content.length);
                     try (OutputStream os = exchange.getResponseBody()) { os.write(content); }
@@ -681,9 +621,6 @@ public class AegisGUI {
         }
     }
 
-    /**
-     * Handler for downloading session reports.
-     */
     static class DownloadHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -699,29 +636,26 @@ public class AegisGUI {
 
              String filename = params.get("file");
              String sessionId = params.get("session");
-             
+
              if (filename == null || filename.isEmpty() || filename.contains("..") || filename.contains("/") || filename.contains("\\")) {
                  exchange.sendResponseHeaders(400, -1);
                  return;
              }
-             
-             // If sessionId is missing, we might try to find it? No, require it.
+
              if (sessionId == null || sessionId.isEmpty() || sessionId.contains("..") || sessionId.contains("/") || sessionId.contains("\\")) {
-                 // For backward compatibility, if filename is a relative path like "Aegis-sessions/UUID/file.zip", we could parse it.
-                 // But clean approach is session+file.
+
                   exchange.sendResponseHeaders(400, -1);
                   return;
              }
 
              Path appTempDir = Paths.get("temp").toAbsolutePath();
              Path sessionDir = appTempDir.resolve(sessionId); 
-             // ZIP is at session root, not inside Aegis-reports
-             // Zip created at projectPath.getParent().resolve(zipFileName) e.g. temp/sessionId/xxx.zip
+
              Path file = sessionDir.resolve(filename);
 
              if (Files.exists(file) && !Files.isDirectory(file)) {
                  byte[] content = Files.readAllBytes(file);
-                 
+
                  exchange.getResponseHeaders().set("Content-Type", "application/zip");
                  exchange.getResponseHeaders().set("Content-Disposition", "attachment; filename=\"" + filename + "\"");
                  exchange.sendResponseHeaders(200, content.length);
@@ -732,54 +666,46 @@ public class AegisGUI {
         }
     }
 
-
-    /**
-     * Handler for discovering Git repositories.
-     */
     static class GitDiscoveryReposHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
             try {
-                // Debug Headers
+
                 String xTokenHeader = exchange.getRequestHeaders().getFirst("x-git-token");
                 String xProviderHeader = exchange.getRequestHeaders().getFirst("x-git-provider");
-                
+
                 String maskedHeaderToken = (xTokenHeader != null && xTokenHeader.length() > 4) 
                                            ? xTokenHeader.substring(0, 2) + "***" 
                                            : (xTokenHeader == null ? "null" : "short");
-                                           
+
                 logger.info("[GitDiscoveryReposHandler] START. Headers -> Token: {}, Provider: {}", maskedHeaderToken, xProviderHeader);
 
                 Map<String, String> queryParams = parseQueryParams(exchange.getRequestURI().getQuery());
-                
+
                 String provider = queryParams.getOrDefault("provider", "gitlab");
                 String token = queryParams.getOrDefault("token", "");
-                
+
                 if (token.isEmpty() && xTokenHeader != null) {
                     token = xTokenHeader;
                 }
-                
-                // Also check for x-git-provider header as fallback
+
                 if (xProviderHeader != null && !xProviderHeader.isBlank()) {
                     provider = xProviderHeader;
                 }
-                
+
                 String group = queryParams.getOrDefault("group", queryParams.getOrDefault("query", ""));
                 String filter = queryParams.getOrDefault("filter", "");
-                
+
                 logger.info("[GitDiscoveryReposHandler] Resolved Params -> Group: {}, Provider: {}, Filter: {}", group, provider, filter);
 
-                
-                // For standalone, we might not have p('...') properties easily, so use defaults or env if needed.
-                // But let's assume standard URLs or allow overriding via query?
                 String gitlabUrl = queryParams.get("gitlabUrl");
                 String githubUrl = queryParams.get("githubUrl");
 
                 java.util.List<String> repos = com.raks.aegis.util.GitHelper.listRepositories(provider, token, group, filter, gitlabUrl, githubUrl);
-                
+
                 ObjectMapper mapper = new ObjectMapper();
                 String response = mapper.writeValueAsString(repos);
-                
+
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, bytes.length);
@@ -793,9 +719,6 @@ public class AegisGUI {
         }
     }
 
-    /**
-     * Handler for discovering Git branches.
-     */
     static class GitDiscoveryBranchesHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -807,20 +730,19 @@ public class AegisGUI {
                     token = exchange.getRequestHeaders().getFirst("x-git-token");
                 }
 
-                // Also check for x-git-provider header as fallback
                 if (exchange.getRequestHeaders().containsKey("x-git-provider")) {
                    provider = exchange.getRequestHeaders().getFirst("x-git-provider");
                 }
                 String repo = queryParams.getOrDefault("repo", "");
-                
+
                 String gitlabUrl = queryParams.get("gitlabUrl");
                 String githubUrl = queryParams.get("githubUrl");
 
                 java.util.List<String> branches = com.raks.aegis.util.GitHelper.listBranches(provider, token, repo, gitlabUrl, githubUrl);
-                
+
                 ObjectMapper mapper = new ObjectMapper();
                 String response = mapper.writeValueAsString(branches);
-                
+
                 exchange.getResponseHeaders().set("Content-Type", "application/json");
                 byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, bytes.length);

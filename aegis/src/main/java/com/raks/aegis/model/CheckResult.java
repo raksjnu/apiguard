@@ -4,8 +4,8 @@ public class CheckResult {
     public final String checkDescription;
     public final boolean passed;
     public final String message;
-    public final String checkedFiles; // Comma-separated list of files involved
-    public final String foundItems;   // Comma-separated list of items found
+    public final String checkedFiles; 
+    public final String foundItems;   
 
     public CheckResult(String ruleId, String checkDescription, boolean passed, String message, String checkedFiles, String foundItems) {
         this.ruleId = ruleId;
@@ -16,7 +16,6 @@ public class CheckResult {
         this.foundItems = foundItems != null ? foundItems : "";
     }
 
-    // Overload for backward compatibility (internal)
     public CheckResult(String ruleId, String checkDescription, boolean passed, String message, String checkedFiles) {
         this(ruleId, checkDescription, passed, message, checkedFiles, null);
     }

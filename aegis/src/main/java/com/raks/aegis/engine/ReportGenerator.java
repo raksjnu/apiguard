@@ -46,8 +46,7 @@ public class ReportGenerator {
     public static void generateIndividualReports(ValidationReport report, Path outputDir) {
         try {
             Files.createDirectories(outputDir);
-            
-            // Copy logo to individual report directory for self-containment
+
             try (InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg")) {
                 if (logoStream != null) {
                     Path logoPath = outputDir.resolve("logo.svg");
@@ -65,24 +64,17 @@ public class ReportGenerator {
     public static void generateHtml(ValidationReport report, Path outputPath) {
         try {
             Files.createDirectories(outputPath.getParent());
-            
-
-
 
             List<RuleResult> allResults = new java.util.ArrayList<>();
             allResults.addAll(report.passed);
             allResults.addAll(report.failed);
-            
 
             allResults.sort((r1, r2) -> {
                 if (r1.passed != r2.passed) {
-                    return r1.passed ? 1 : -1; // FAIL (passed=false) comes first
+                    return r1.passed ? 1 : -1; 
                 }
                 return r1.id.compareTo(r2.id);
             });
-            
-
-
 
             int seq = 1;
             for (RuleResult r : allResults) {
@@ -90,11 +82,7 @@ public class ReportGenerator {
                 r.displayId = String.format("%03d", seq++);
             }
 
-
             StringBuilder rows = new StringBuilder();
-            
-
-
 
             Map<String, String> labels = report.labels != null ? report.labels : new java.util.HashMap<>();
             String passLabel = labels.getOrDefault("PASS", "PASS");
@@ -142,7 +130,7 @@ public class ReportGenerator {
                             "<td><div style='word-wrap: break-word; white-space: pre-wrap;'>%s</div>%s</td></tr>",
                             escape(r.displayId), escape(r.name), escape(r.severity), escape(failLabel), details, configRow));
                 }
-            } // End loop
+            } 
 
             String html = """
                     <!DOCTYPE html>
@@ -226,7 +214,7 @@ public class ReportGenerator {
                                     if(link) link.innerHTML = "[+] Show Rule Config";
                                 }
                             }
-                            
+
                             function toggleAllConfigs(expand) {
                                 var configs = document.getElementsByClassName("rule-config");
                                 for (var i = 0; i < configs.length; i++) {
@@ -249,7 +237,7 @@ public class ReportGenerator {
                                 filter = input.value.toUpperCase();
                                 table = document.getElementById("resultsTable");
                                 tr = table.getElementsByTagName("tr");
-                                
+
                                 // Remove existing highlights first
                                 removeHighlights();
 
@@ -267,7 +255,7 @@ public class ReportGenerator {
                                     }
                                     tr[i].style.display = found ? "" : "none";
                                 }
-                                
+
                                 // Apply highlighting if there is a filter
                                 if (filter.length > 0) {
                                     highlightSearch(input.value);
@@ -355,7 +343,7 @@ public class ReportGenerator {
                     </body>
                     </html>
                     """;
-            
+
             String finalHtml = String.format(html,
                     escape(report.projectPath),
                     escape(report.projectPath),
@@ -392,7 +380,7 @@ public class ReportGenerator {
                 cell.setCellValue(columns[i]);
                 cell.setCellStyle(headerStyle);
             }
-            
+
             Map<String, String> labels = report.labels != null ? report.labels : new java.util.HashMap<>();
             String passLabel = labels.getOrDefault("PASS", "PASS");
             String failLabel = labels.getOrDefault("FAIL", "FAIL");
@@ -439,16 +427,15 @@ public class ReportGenerator {
                 logger.warn("No results to generate consolidated report");
                 return;
             }
-            Files.createDirectories(outputPath); // Ensure report root exists
+            Files.createDirectories(outputPath); 
 
-            // Copy logo to reports root (for Consolidated Report and Individual Reports' parent)
             try (InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg")) {
                 if (logoStream != null) {
                     Path logoPath = outputPath.resolve("logo.svg");
                     Files.copy(logoStream, logoPath, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
                 }
             } catch (Exception ignored) {
-                // Ignore if logo copy fails
+
             }
 
             StringBuilder tableRows = new StringBuilder();
@@ -474,7 +461,7 @@ public class ReportGenerator {
                 }
                 String relativeLink;
                 try {
-                    // Robust relative link: RepoDirName/report.html
+
                      relativeLink = r.reportDir.getFileName().toString() + "/report.html";
                 } catch (Exception e) {
                     relativeLink = "report.html"; 
@@ -638,9 +625,7 @@ public class ReportGenerator {
                     </body>
                     </html>
                     """;
-            
 
-            // Check for git warnings
             String warningHtml = "";
             try {
                 Path warningPath = outputPath.getParent().resolve(".Aegis_git_warnings");
@@ -673,9 +658,7 @@ public class ReportGenerator {
             Path htmlPath = outputPath.resolve("CONSOLIDATED-REPORT.html");
             Files.writeString(htmlPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
             logger.debug("Consolidated report generated: {}", htmlPath.toAbsolutePath());
-            // copyHelpFile(outputPath); // Removed per user request
-            // User asked: "rest the checklist, help and rule guide html files wil not be there."
-            // So I should remove copyHelpFile and generateRuleGuide calls as well.
+
             try (java.io.InputStream logoStream = ReportGenerator.class.getResourceAsStream("/logo.svg")) {
                 if (logoStream != null) {
                     Path logoPath = outputPath.resolve("logo.svg");
@@ -691,7 +674,7 @@ public class ReportGenerator {
             logger.error("Error message: {}", (t.getMessage() != null ? t.getMessage() : "null"), t); 
         }
     }
-    // generateChecklistReport method removed
+
     public static void generateRuleGuide(String outputDir) {
         generateRuleGuide(java.nio.file.Paths.get(outputDir));
     }
@@ -709,11 +692,10 @@ public class ReportGenerator {
                     mdContent = "# " + ruleName + "\n\nDocumentation not found for " + ruleName;
                 }
 
-
                 StringBuilder subNav = new StringBuilder();
                 java.util.regex.Pattern headerPattern = java.util.regex.Pattern.compile("(?m)^## (.*)$");
                 java.util.regex.Matcher matcher = headerPattern.matcher(mdContent);
-                
+
                 if (matcher.find()) {
                     subNav.append("<ul class=\"sub-nav\" id=\"sub-").append(ruleName).append("\">");
                     matcher.reset();
@@ -721,16 +703,14 @@ public class ReportGenerator {
                         String headerTitle = matcher.group(1).trim();
 
                         String sectionId = ruleName + "_" + headerTitle.replaceAll("[^a-zA-Z0-9]", "");
-                        
+
                         subNav.append(String.format("<li><a href=\"#\" onclick=\"showRule(event, '%s', '%s')\">%s</a></li>", 
                                 ruleName, sectionId, headerTitle));
-                        
 
                         mdContent = mdContent.replace("## " + headerTitle, "<h2 id=\"" + sectionId + "\">" + headerTitle + "</h2>");
                     }
                     subNav.append("</ul>");
                 }
-
 
                 boolean hasSubNav = subNav.length() > 0;
                 sidebar.append("<li>");
@@ -746,8 +726,6 @@ public class ReportGenerator {
                 sidebar.append("</li>");
 
                 String htmlContent = convertMdToHtml(mdContent);
-                
-
 
                 content.append(String.format("<div id=\"%s\" class=\"rule-content\" style=\"display: %s;\">%s</div>", 
                         ruleName, (index == 0 ? "block" : "none"), htmlContent));
@@ -791,8 +769,7 @@ public class ReportGenerator {
                             .sidebar-nav a { display: block; color: #333; padding: 15px 20px; text-decoration: none; font-size: 14px; display: flex; justify-content: space-between; align-items: center; }
                             .sidebar-nav a:hover { background-color: #f5f5f5; color: #000; }
                             .sidebar-nav a.active { background-color: var(--raks-purple); color: white; border-left: 4px solid #7d4fb2; }
-                            
-                            
+
                             .rule-header { display: flex; align-items: center; width: 100%%; cursor: pointer; }
                             .rule-header:hover { background-color: #f5f5f5; }
                             .rule-header a { flex-grow: 1; padding: 15px 10px; border: none; }
@@ -889,10 +866,8 @@ public class ReportGenerator {
                                 var contentDiv = document.getElementById(ruleId);
                                 if (contentDiv) {
                                     contentDiv.style.display = 'block';
-                                    
 
                                     expandRuleTree(ruleId);
-
 
                                     if (sectionId) {
                                         var section = document.getElementById(sectionId);
@@ -901,12 +876,11 @@ public class ReportGenerator {
 
                                         document.querySelector('.main-content').scrollTop = 0;
                                     }
-                                    
+
                                     setTimeout(function(){
                                         applyHighlight(contentDiv, currentFilter, false);
                                     }, 0);
                                 }
-                                
 
                                 document.querySelectorAll('.sidebar-nav a').forEach(el => {
                                     el.classList.remove('active');
@@ -920,7 +894,7 @@ public class ReportGenerator {
                                     }
                                 });
                             }
-                            
+
                             function toggleSubNav(event, ruleId) {
                                 if(event) event.stopPropagation();
                                 var subNav = document.getElementById('sub-' + ruleId);
@@ -935,7 +909,7 @@ public class ReportGenerator {
                                     }
                                 }
                             }
-                            
+
                             function expandRuleTree(ruleId) {
                                 var subNav = document.getElementById('sub-' + ruleId);
                                 if (subNav && !subNav.classList.contains('expanded')) {
@@ -948,19 +922,18 @@ public class ReportGenerator {
                                     }
                                 }
                             }
-                            
+
                             function escapeRegExp(string) {
                                 return string.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&'); 
                             }
 
                             function applyHighlight(container, term, shouldScroll) {
                                 if (!container) return;
-                                
 
                                 if (window.CSS && CSS.highlights) {
                                     CSS.highlights.clear();
                                 }
-                                
+
                                 if (!term || term.length < 2) return;
 
                                 var ranges = [];
@@ -975,7 +948,7 @@ public class ReportGenerator {
                                     var text = node.nodeValue;
                                     var valUpper = text.toUpperCase();
                                     var idx = valUpper.indexOf(termUpper);
-                                    
+
                                     while (idx >= 0 && matchCount < maxMatches) {
                                         var range = new Range();
                                         range.setStart(node, idx);
@@ -986,12 +959,10 @@ public class ReportGenerator {
                                     }
                                 }
 
-
                                 if (window.CSS && CSS.highlights) {
                                     var highlight = new Highlight(...ranges);
                                     CSS.highlights.set("search-results", highlight);
                                 }
-
 
                                 if (shouldScroll && ranges.length > 0) {
                                     var firstRange = ranges[0];
@@ -1014,10 +985,7 @@ public class ReportGenerator {
                             function filterSidebar() {
                                 var input = document.getElementById("filterInput");
                                 currentFilter = input.value.trim().toUpperCase();
-                                
 
-
-                                
                                 var matchedIds = new Set();
                                 var matchesMap = {}; // id -> count
 
@@ -1033,29 +1001,25 @@ public class ReportGenerator {
                                     return;
                                 }
 
-
                                 for (var i = 0; i < searchIndex.length; i++) {
                                     var item = searchIndex[i];
                                     var count = 0;
-                                    
 
                                     if (item.id.toUpperCase().indexOf(currentFilter) > -1) {
                                         count++; 
                                     } 
-                                    
 
                                     var pos = item.content.indexOf(currentFilter);
                                     while (pos !== -1 && count < 101) {
                                         count++;
                                         pos = item.content.indexOf(currentFilter, pos + currentFilter.length);
                                     }
-                                    
+
                                     if (count > 0) {
                                         matchedIds.add(item.id);
                                         matchesMap[item.id] = count;
                                     }
                                 }
-
 
                                 var ul = document.getElementById("sidebarNav");
                                 var lis = ul.getElementsByTagName("li");
@@ -1063,9 +1027,6 @@ public class ReportGenerator {
                                 requestAnimationFrame(() => {
                                     for (var i = 0; i < lis.length; i++) {
                                         var a = lis[i].getElementsByTagName("a")[0];
-
-
-
 
                                         // Use data-rule-id for robustness
                                         var ruleId = a.getAttribute("data-rule-id");
@@ -1087,7 +1048,6 @@ public class ReportGenerator {
                                             lis[i].style.display = "none";
                                         }
                                     }
-                                    
 
                                     var visible = document.querySelector('.rule-content[style*="block"]');
                                     if (visible) {
@@ -1099,7 +1059,6 @@ public class ReportGenerator {
                             document.addEventListener('DOMContentLoaded', function() {
 
                                 setTimeout(buildIndex, 100);
-
 
                                 var hash = window.location.hash;
                                 if (hash && hash.length > 1) {
@@ -1114,14 +1073,14 @@ public class ReportGenerator {
                                 const resizer = document.getElementById('resizer');
                                 if (!sidebar || !resizer) return; 
                                 let isResizing = false;
-                                
+
                                 resizer.addEventListener('mousedown', function(e) {
                                     e.preventDefault(); // Critical: Prevents text selection during drag
                                     isResizing = true;
                                     resizer.classList.add('resizing');
                                     document.body.style.cursor = 'col-resize'; 
                                 });
-                                
+
                                 document.addEventListener('mousemove', function(e) {
                                     if (!isResizing) return;
                                     const newWidth = e.clientX;
@@ -1129,7 +1088,7 @@ public class ReportGenerator {
                                         sidebar.style.width = newWidth + 'px';
                                     }
                                 });
-                                
+
                                 document.addEventListener('mouseup', function(e) {
                                     if (isResizing) {
                                         isResizing = false;
@@ -1171,11 +1130,10 @@ public class ReportGenerator {
                                     var isStandalone = path.endsWith('/rule_guide.html');
                                     var dashboardBtn = document.getElementById('dashboardBtn');
                                     var mainPageBtn = document.getElementById('mainPageBtn');
-                                    
 
                                     var isInMuleWrapper = path.includes('/apiguard/');
                                     var basePath = isInMuleWrapper ? '/apiguard/aegis' : '';
-                                    
+
                                     var sessionId = new URLSearchParams(window.location.search).get('session');
                                     if (!sessionId && isReport) {
                                         var parts = path.split('/reports/');
@@ -1184,7 +1142,7 @@ public class ReportGenerator {
                                             if (subparts.length > 0) sessionId = subparts[0];
                                         }
                                     }
-                                    
+
                                     if (dashboardBtn) {
                                         if (isStandalone) {
                                             dashboardBtn.innerText = "Home";
@@ -1196,7 +1154,7 @@ public class ReportGenerator {
                                             dashboardBtn.style.display = 'inline-block';
                                         }
                                     }
-                                    
+
                                     if (isReport && mainPageBtn) {
                                         mainPageBtn.style.display = 'inline-block';
                                         var mainPageUrl = basePath + '/'; 
@@ -1219,8 +1177,7 @@ public class ReportGenerator {
             });
             Files.writeString(ruleGuidePath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
             logger.info("DEBUG: Rule Guide generated successfully at: {}", ruleGuidePath.toAbsolutePath());
-            
-            // Also write to src/main/resources/web/aegis for packaging
+
             try {
                 Path resourcesPath = java.nio.file.Paths.get("src/main/resources/web/aegis/rule_guide.html");
                 if (java.nio.file.Files.exists(resourcesPath.getParent())) {
@@ -1230,21 +1187,21 @@ public class ReportGenerator {
             } catch (Exception e) {
                 logger.warn("Could not write rule_guide.html to resources folder: {}", e.getMessage());
             }
-            
+
             logger.debug("Rule guide generated (dynamic)");
         } catch (Exception e) {
             logger.error("DEBUG: Failed to generate rule guide: {}", e.getMessage(), e);
         }
     }
     private static String convertMdToHtml(String md) {
-        // 1. Extract code blocks to prevent processing them as markdown
+
         java.util.List<String> codeBlocks = new java.util.ArrayList<>();
         java.util.regex.Matcher codeBlockMatcher = java.util.regex.Pattern.compile("(?s)```(.*?)\\n([\\s\\S]*?)```").matcher(md);
         StringBuffer sb = new StringBuffer();
         while (codeBlockMatcher.find()) {
             String language = codeBlockMatcher.group(1).trim();
             String code = codeBlockMatcher.group(2);
-            // Escape HTML in code blocks
+
             code = escape(code);
             String placeholder = "___CODE_BLOCK_" + codeBlocks.size() + "___";
             codeBlocks.add("<pre><code class='language-" + (language.isEmpty() ? "text" : language) + "'>" + code + "</code></pre>");
@@ -1253,7 +1210,6 @@ public class ReportGenerator {
         codeBlockMatcher.appendTail(sb);
         String html = sb.toString();
 
-        // 2. Extract inline code
         java.util.List<String> inlineCode = new java.util.ArrayList<>();
         java.util.regex.Matcher inlineMatcher = java.util.regex.Pattern.compile("`([^`]+)`").matcher(html);
         sb = new StringBuffer();
@@ -1267,7 +1223,6 @@ public class ReportGenerator {
         inlineMatcher.appendTail(sb);
         html = sb.toString();
 
-        // 3. Standard Markdown Processing
         html = html.replaceAll("(?i)(?m)^#{1,6}\\s*Version History[\\s\\S]*$", "");
         html = html.replaceAll("\\[([^\\]]+)\\]\\((?:CODE_|CONFIG_)?([^)]+)\\.md\\)", "<a href=\"#\" onclick=\"showRule(event, '$2')\">$1</a>");
         html = html.replaceAll("(?m)^# (.*)$", "<h1>$1</h1>");
@@ -1280,16 +1235,14 @@ public class ReportGenerator {
         html = html.replaceAll("\\|", "</td><td>");
         html = html.replaceAll("<tr><td></td><td>", "<tr><td>");
         html = html.replaceAll("</td><td></td></tr>", "</td></tr>");
-        // Improved separator line removal (handles colons :---)
+
         html = html.replaceAll("(?m)^<tr><td>[\\s\\-:]+</td>(?:<td>[\\s\\-:]+</td>)*</tr>$", "");
-        
-        // Wrap consecutive <tr> blocks in <table> tags
+
         html = html.replaceAll("(?s)(<tr>.*?</tr>)", "<table>$1</table>");
         html = html.replaceAll("</table>\\s*<table>", "");
 
         html = html.replaceAll("(?m)^$", "<br>");
 
-        // 4. Restore placeholders
         for (int i = 0; i < inlineCode.size(); i++) {
             html = html.replace("___INLINE_CODE_" + i + "___", inlineCode.get(i));
         }

@@ -19,7 +19,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
     public CheckResult execute(Path projectRoot, Check check) {
         String validationType = (String) check.getParams().getOrDefault("validationType", "COMBINED");
         List<String> failures = new ArrayList<>();
-        List<String> successes = new ArrayList<>();  // NEW: Track successes
+        List<String> successes = new ArrayList<>();  
         List<Path> pomFiles = new ArrayList<>();
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             pomFiles = paths
@@ -39,34 +39,30 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                     "Error scanning files: " + e.getMessage());
         }
         if (failures.isEmpty()) {
-            // Build core details
+
             String fileList = pomFiles.stream()
                     .map(projectRoot::relativize)
                     .map(Path::toString)
                     .collect(java.util.stream.Collectors.joining("; "));
-            
+
             String coreDetails = "Files validated: " + fileList;
             if (!successes.isEmpty()) {
                 coreDetails += "\nActual Values Found:\n• " + String.join("\n• ", successes);
             }
-            
-            // Get custom success message from rule (if defined)
+
             String customMessage = check.getRule() != null ? check.getRule().getSuccessMessage() : null;
-            
-            // Format final message with fallback
+
             String finalMessage = formatMessage(customMessage, coreDetails, null);
-            
+
             return CheckResult.pass(check.getRuleId(), check.getDescription(), finalMessage);
         } else {
-            // Build failure details
+
             String failureDetails = "• " + String.join("\n• ", failures);
-            
-            // Get custom error message from rule (if defined)
+
             String customError = check.getRule() != null ? check.getRule().getErrorMessage() : null;
-            
-            // Format final message with fallback
+
             String finalMessage = formatMessage(customError, null, failureDetails);
-            
+
             return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage);
         }
     }
@@ -109,26 +105,23 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         String groupId = getElementText(parentElement, "groupId");
         String artifactId = getElementText(parentElement, "artifactId");
         String version = getElementText(parentElement, "version");
-        
+
         if (!parent.get("groupId").equals(groupId) || !parent.get("artifactId").equals(artifactId)) {
             failures.add(String.format("Parent mismatch in %s: expected %s:%s",
                     projectRoot.relativize(pomFile), parent.get("groupId"), parent.get("artifactId")));
             return;
         }
-        
-        // Add success message with actual values
+
         successes.add(String.format("Parent: %s:%s:%s (in %s)",
                 groupId, artifactId, version, projectRoot.relativize(pomFile)));
-        
-        // Exact version match (backward compatible)
+
         String expectedVersion = parent.get("version");
         if (expectedVersion != null && !expectedVersion.equals(version)) {
             failures.add(String.format("Parent version mismatch in %s: expected %s:%s:%s, got version '%s'",
                     projectRoot.relativize(pomFile), parent.get("groupId"), parent.get("artifactId"), 
                     expectedVersion, version));
         }
-        
-        // Version comparisons (new)
+
         try {
             String minVersion = parent.get("minVersion");
             if (minVersion != null && !VersionComparator.isGreaterThanOrEqual(version, minVersion)) {
@@ -136,7 +129,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                         projectRoot.relativize(pomFile), parent.get("groupId"), parent.get("artifactId"),
                         minVersion, version));
             }
-            
+
             String maxVersion = parent.get("maxVersion");
             if (maxVersion != null && !VersionComparator.isLessThanOrEqual(version, maxVersion)) {
                 failures.add(String.format("Parent version too high in %s: %s:%s expected <= '%s', got '%s'",
@@ -144,7 +137,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                         maxVersion, version));
             }
         } catch (IllegalArgumentException e) {
-            // If version comparison fails, log but don't fail the check
+
         }
     }
     private void validateProperties(Document doc, Map<String, Object> params, Path pomFile,
@@ -162,50 +155,46 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         for (Map<String, String> prop : properties) {
             String name = prop.get("name");
             String actualValue = getElementText(propsElement, name);
-            
+
             if (actualValue == null || actualValue.isEmpty()) {
                 failures.add(String.format("Property '%s' missing in %s", name, projectRoot.relativize(pomFile)));
                 continue;
             }
-            
-            // Add success message with actual value
+
             successes.add(String.format("Property '%s': %s (in %s)", name, actualValue, projectRoot.relativize(pomFile)));
-            
-            // Exact value match (backward compatible)
+
             String expectedValue = prop.get("expectedValue");
             if (expectedValue != null && !expectedValue.equals(actualValue)) {
                 failures.add(String.format("Property '%s' has wrong value in %s: expected '%s', got '%s'",
                         name, projectRoot.relativize(pomFile), expectedValue, actualValue));
             }
-            
-            // Version comparisons (new)
+
             try {
                 String minVersion = prop.get("minVersion");
                 if (minVersion != null && !VersionComparator.isGreaterThanOrEqual(actualValue, minVersion)) {
                     failures.add(String.format("Property '%s' version too low in %s: expected >= '%s', got '%s'",
                             name, projectRoot.relativize(pomFile), minVersion, actualValue));
                 }
-                
+
                 String maxVersion = prop.get("maxVersion");
                 if (maxVersion != null && !VersionComparator.isLessThanOrEqual(actualValue, maxVersion)) {
                     failures.add(String.format("Property '%s' version too high in %s: expected <= '%s', got '%s'",
                             name, projectRoot.relativize(pomFile), maxVersion, actualValue));
                 }
-                
+
                 String greaterThan = prop.get("greaterThan");
                 if (greaterThan != null && !VersionComparator.isGreaterThan(actualValue, greaterThan)) {
                     failures.add(String.format("Property '%s' version not greater in %s: expected > '%s', got '%s'",
                             name, projectRoot.relativize(pomFile), greaterThan, actualValue));
                 }
-                
+
                 String lessThan = prop.get("lessThan");
                 if (lessThan != null && !VersionComparator.isLessThan(actualValue, lessThan)) {
                     failures.add(String.format("Property '%s' version not less in %s: expected < '%s', got '%s'",
                             name, projectRoot.relativize(pomFile), lessThan, actualValue));
                 }
             } catch (IllegalArgumentException e) {
-                // If version comparison fails, log but don't fail the check
-                // This allows non-version properties to still be validated
+
             }
         }
     }
@@ -231,7 +220,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                 failures.add(String.format("Dependency %s:%s not found in %s",
                         dep.get("groupId"), dep.get("artifactId"), projectRoot.relativize(pomFile)));
             } else {
-                // Add success message with actual version
+
                 String versionInfo = foundVersion != null ? ":" + foundVersion : "";
                 successes.add(String.format("Dependency: %s:%s%s (in %s)",
                         dep.get("groupId"), dep.get("artifactId"), versionInfo, projectRoot.relativize(pomFile)));
@@ -260,7 +249,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                 failures.add(String.format("Plugin %s:%s not found in %s",
                         plugin.get("groupId"), plugin.get("artifactId"), projectRoot.relativize(pomFile)));
             } else {
-                // Add success message with actual version
+
                 String versionInfo = foundVersion != null ? ":" + foundVersion : "";
                 successes.add(String.format("Plugin: %s:%s%s (in %s)",
                         plugin.get("groupId"), plugin.get("artifactId"), versionInfo, projectRoot.relativize(pomFile)));

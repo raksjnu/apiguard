@@ -8,20 +8,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-/**
- * Executes a list of 'onSuccess' checks ONLY if 'preconditions' are met.
- * Handles AND/OR logic for preconditions.
- */
 public class ConditionalCheck extends AbstractCheck {
 
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
         Map<String, Object> params = check.getParams();
         String logic = (String) params.getOrDefault("logic", "AND");
-        
+
         List<Check> preconditions = convertToChecks((List<Map<String, Object>>) params.get("preconditions"));
         List<Check> onSuccess = convertToChecks((List<Map<String, Object>>) params.get("onSuccess"));
-        
+
         if (preconditions == null || preconditions.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Configuration error: 'preconditions' is required");
         }
@@ -34,7 +30,7 @@ public class ConditionalCheck extends AbstractCheck {
                     break;
                 }
             }
-        } else { // Default AND
+        } else { 
             preConditionMatched = true;
             for (Check pre : preconditions) {
                 if (!evaluateAtomic(projectRoot, pre).passed) {
@@ -57,13 +53,13 @@ public class ConditionalCheck extends AbstractCheck {
             for (Check nested : onSuccess) {
                 CheckResult res = evaluateAtomic(projectRoot, nested);
                 details.append("- ").append(res.ruleId != null ? res.ruleId : "Check").append(": ").append(res.message).append("\n");
-                
+
                 if (res.checkedFiles != null && !res.checkedFiles.isEmpty()) {
                     for (String f : res.checkedFiles.split(", ")) {
                         if (!f.trim().isEmpty()) aggregatedFiles.add(f.trim());
                     }
                 }
-                
+
                 if (res.foundItems != null && !res.foundItems.isEmpty()) {
                     for (String item : res.foundItems.split(", ")) {
                          if (!item.trim().isEmpty()) aggregatedItems.add(item.trim());
@@ -74,7 +70,7 @@ public class ConditionalCheck extends AbstractCheck {
                     allPassed = false;
                 }
             }
-            
+
             String checkedFilesStr = String.join(", ", aggregatedFiles);
             String foundItemsStr = String.join(", ", aggregatedItems);
 

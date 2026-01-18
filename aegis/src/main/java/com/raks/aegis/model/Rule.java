@@ -9,7 +9,6 @@ public class Rule {
     private boolean enabled = true;
     private String severity;
     private List<Check> checks;
-    
 
     private String useCase;
     private String rationale;

@@ -19,18 +19,18 @@ public class RulesToJsConverter {
             Path jsPath = Paths.get("rules_data.js");
 
             logger.info("Reading YAML from: {}", yamlPath.toAbsolutePath());
-            
+
             Yaml yaml = new Yaml();
             Map<String, Object> obj = yaml.load(new FileReader(yamlPath.toFile()));
-            
+
             ObjectMapper mapper = new ObjectMapper();
             String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(obj);
-            
+
             String jsContent = "const Aegis_RULES_DATA = " + json + ";";
-            
+
             Files.write(jsPath, jsContent.getBytes());
             logger.info("Successfully created {}", jsPath.toAbsolutePath());
-            
+
         } catch (Exception e) {
             logger.error("Error converting rules to JS", e);
             System.exit(1);

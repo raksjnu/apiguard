@@ -18,7 +18,7 @@ public class ValidationReport {
     public boolean hasFailures() {
         return !failed.isEmpty();
     }
-    
+
     public java.util.Map<String, String> labels = new java.util.HashMap<>();
     {
         labels.put("PASS", "PASS");

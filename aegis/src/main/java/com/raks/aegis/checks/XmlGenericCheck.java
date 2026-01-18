@@ -17,16 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-/**
- * Universal XML Validation Check.
- * Replaces: XmlXPathExists, XmlXPathNotExists, XmlAttributeExists, XmlAttributeNotExists.
- * Parameters:
- *  - filePatterns (List<String>): Target files.
- *  - xpath (String): Expression to find.
- *  - attribute (String, optional): Specific attribute value to check on found nodes.
- *  - mode (String): EXISTS (count > 0) or NOT_EXISTS (count == 0).
- *  - matchMode (String): ALL_FILES, ANY_FILE, NONE_OF_FILES.
- */
 public class XmlGenericCheck extends AbstractCheck {
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(XmlGenericCheck.class);
 
@@ -37,7 +27,7 @@ public class XmlGenericCheck extends AbstractCheck {
         }
 
         Map<String, Object> params = getEffectiveParams(check);
-        
+
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) params.get("filePatterns");
         String xpathExpr = (String) params.get("xpath");
@@ -68,11 +58,11 @@ public class XmlGenericCheck extends AbstractCheck {
                     .filter(path -> matchesAnyPattern(path, filePatterns, projectRoot))
                     .filter(path -> !shouldIgnorePath(projectRoot, path))
                     .toList();
-            
+
             totalFiles = matchingFiles.size();
             DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
             factory.setNamespaceAware(true);
-            
+
             List<String> passedFilesList = new ArrayList<>();
             for (Path file : matchingFiles) {
                 boolean filePassed = false;
@@ -81,12 +71,12 @@ public class XmlGenericCheck extends AbstractCheck {
                     Document doc = builder.parse(file.toFile());
                     XPath xpath = XPathFactory.newInstance().newXPath();
                     NodeList nodes = (NodeList) xpath.evaluate(xpathExpr, doc, XPathConstants.NODESET);
-                    
+
                     int foundCount = nodes.getLength();
                     java.util.Set<String> fileFoundItems = new java.util.HashSet<>();
-                    
+
                     if (attributeMatch != null && foundCount > 0) {
-                        // Refine count based on attribute value match?
+
                     }
 
                     if ("EXISTS".equalsIgnoreCase(mode)) {
@@ -115,7 +105,7 @@ public class XmlGenericCheck extends AbstractCheck {
                                 filePassed = true;
                             }
                         } else {
-                            // Property resolution fallback for Attribute checks (Backward Compatibility)
+
                             logger.debug("Attempting property resolution fallback for XPath: {}", xpathExpr);
                             try {
                                 String[] subPaths = xpathExpr.split(" \\| ");
@@ -148,7 +138,7 @@ public class XmlGenericCheck extends AbstractCheck {
                                 details.add(projectRoot.relativize(file) + " [XPath not found]");
                             }
                         }
-                    } else { // NOT_EXISTS / FORBIDDEN
+                    } else { 
                         if (foundCount == 0) {
                             filePassed = true;
                         } else {
@@ -169,7 +159,7 @@ public class XmlGenericCheck extends AbstractCheck {
                                 if (!forbiddenFound) filePassed = true;
                                 else details.add(projectRoot.relativize(file) + " [Forbidden value found]");
                             } else {
-                                // Default forbidden logic (based on elements or attributes existence)
+
                                 if (forbiddenAttrs != null && !forbiddenAttrs.isEmpty()) {
                                     for (int i = 0; i < nodes.getLength(); i++) {
                                         org.w3c.dom.Element e = (org.w3c.dom.Element) nodes.item(i);
@@ -186,11 +176,11 @@ public class XmlGenericCheck extends AbstractCheck {
                             }
                         }
                     }
-                    
+
                 } catch (Exception e) {
                     details.add(projectRoot.relativize(file) + " [Parse Error: " + e.getMessage() + "]");
                 }
-                
+
                 if (filePassed) {
                     passedFileCount++;
                     passedFilesList.add(projectRoot.relativize(file).toString());
@@ -198,13 +188,13 @@ public class XmlGenericCheck extends AbstractCheck {
             }
 
             boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
-            
+
             String checkedFilesStr = matchingFiles.stream()
                     .map(p -> projectRoot.relativize(p).toString())
                     .collect(java.util.stream.Collectors.joining(", "));
-            
+
             String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
-            
+
             String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
 
             if (uniqueCondition) {
@@ -221,7 +211,7 @@ public class XmlGenericCheck extends AbstractCheck {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Scan Error: " + e.getMessage());
         }
     }
-    
+
     private CheckResult failConfig(Check check, String msg) {
         return CheckResult.fail(check.getRuleId(), check.getDescription(), "Config Error: " + msg);
     }

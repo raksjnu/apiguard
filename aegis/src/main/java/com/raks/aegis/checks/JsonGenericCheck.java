@@ -13,17 +13,6 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
-/**
- * Universal JSON Validation Check.
- * Replaces: JsonValidationRequiredCheck, JsonValidationForbiddenCheck.
- * Parameters:
- *  - filePatterns (List<String>): Target files.
- *  - jsonPath (String): JsonPath expression to evaluate.
- *  - mode (String): EXISTS (count > 0) or NOT_EXISTS (count == 0) or VALUE_MATCH.
- *  - expectedValue (String): For VALUE_MATCH mode.
- *  - matchMode (String): ALL_FILES, ANY_FILE, NONE_OF_FILES.
- */
 public class JsonGenericCheck extends AbstractCheck {
     private static final Logger logger = LoggerFactory.getLogger(JsonGenericCheck.class);
 
@@ -42,14 +31,12 @@ public class JsonGenericCheck extends AbstractCheck {
         String operator = (String) params.getOrDefault("operator", "EQ");
         String valueType = (String) params.getOrDefault("valueType", "STRING");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
-        
-        // New Parameters for Object Validation
+
         @SuppressWarnings("unchecked")
         List<String> requiredElements = (List<String>) params.get("requiredElements");
         @SuppressWarnings("unchecked")
         Map<String, String> requiredFields = (Map<String, String>) params.get("requiredFields");
-        
-        // Validation: At least one main check config must exist
+
         if (jsonPath == null && (requiredElements == null || requiredElements.isEmpty()) && (requiredFields == null || requiredFields.isEmpty())) {
              return failConfig(check, "Configuration required: provide 'jsonPath', 'requiredElements', or 'requiredFields'");
         }
@@ -67,13 +54,13 @@ public class JsonGenericCheck extends AbstractCheck {
                     .filter(path -> matchesAnyPattern(path, filePatterns, projectRoot))
                     .filter(path -> !shouldIgnorePath(projectRoot, path))
                     .toList();
-            
+
             totalFiles = matchingFiles.size();
-            
+
             for (Path file : matchingFiles) {
                 boolean filePassed = true;
                 List<String> fileReasons = new ArrayList<>();
-                
+
                 try {
                     String content = Files.readString(file);
                     Object jsonContext = null;
@@ -83,15 +70,15 @@ public class JsonGenericCheck extends AbstractCheck {
                         filePassed = false;
                         fileReasons.add("JSON Parse Error: " + e.getMessage());
                     }
-                    
+
                     if (filePassed) {
-                         // 1. JSONPath Check (if configured)
+
                          if (jsonPath != null) {
                              Object result = null;
                              try {
                                  result = JsonPath.parse(content).read(jsonPath);
                              } catch (Exception e) { result = null; }
-                             
+
                              if ("EXISTS".equalsIgnoreCase(mode)) {
                                  if (result == null) {
                                      filePassed = false;
@@ -117,8 +104,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                      fileReasons.add("JSONPath not found: " + jsonPath);
                                  } else {
                                      String actualStr = result.toString();
-                                     
-                                     // Property resolution for JSON values
+
                                      String resolvedActual = actualStr;
                                      if (actualStr.contains("${") || actualStr.contains("p('") || actualStr.contains("p(\"")) {
                                          resolvedActual = com.raks.aegis.util.PropertyResolver.resolve(actualStr, projectRoot);
@@ -127,7 +113,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                              logger.debug("JSON property resolution: '{}' -> '{}'", actualStr, resolvedActual);
                                          }
                                      }
-                                     
+
                                      if (!compareValues(resolvedActual, expectedValue, operator, valueType)) {
                                          filePassed = false;
                                          fileReasons.add(String.format("Value mismatch at '%s': Actual='%s', Expected='%s'", jsonPath, resolvedActual, expectedValue));
@@ -135,8 +121,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                  }
                              }
                          }
-                         
-                         // 1.5 Min Versions Check (Restored Feature)
+
                          @SuppressWarnings("unchecked")
                          Map<String, String> minVersions = (Map<String, String>) params.get("minVersions");
                          if (minVersions != null && !minVersions.isEmpty()) {
@@ -146,18 +131,18 @@ public class JsonGenericCheck extends AbstractCheck {
                                   for (Map.Entry<String, String> entry : minVersions.entrySet()) {
                                      String key = entry.getKey();
                                      String minVer = entry.getValue();
-                                     
+
                                      if (!jsonMap.containsKey(key)) {
                                          filePassed = false;
                                          fileReasons.add("Missing field for version check: " + key);
                                          continue;
                                      }
-                                     
+
                                      Object val = jsonMap.get(key);
                                      boolean verMatch = false;
-                                     
+
                                      if (val instanceof List) {
-                                         // If array, pass if ANY element >= minVer
+
                                          for (Object item : (List<?>)val) {
                                              if (compareValues(item.toString(), minVer, "GTE", "SEMVER")) {
                                                  verMatch = true;
@@ -169,7 +154,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                              verMatch = true;
                                          }
                                      }
-                                     
+
                                      if (!verMatch) {
                                          filePassed = false;
                                          fileReasons.add(String.format("Version too low for '%s': Found='%s', Min Required='%s'", key, val, minVer));
@@ -178,7 +163,6 @@ public class JsonGenericCheck extends AbstractCheck {
                              }
                          }
 
-                         // 2. Required Elements (Keys) Check
                          if (requiredElements != null && !requiredElements.isEmpty()) {
                              if (jsonContext instanceof Map) {
                                  @SuppressWarnings("unchecked")
@@ -194,8 +178,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                  fileReasons.add("Root is not a JSON Object, cannot check requiredElements");
                              }
                          }
-                         
-                         // 3. Required Fields (Key-Value) Check
+
                          if (requiredFields != null && !requiredFields.isEmpty()) {
                               if (jsonContext instanceof Map) {
                                  @SuppressWarnings("unchecked")
@@ -203,15 +186,14 @@ public class JsonGenericCheck extends AbstractCheck {
                                  for (Map.Entry<String, String> entry : requiredFields.entrySet()) {
                                      String key = entry.getKey();
                                      String expected = entry.getValue();
-                                     
+
                                      if (!jsonMap.containsKey(key)) {
                                          filePassed = false;
                                          fileReasons.add("Missing required field: " + key);
                                       } else {
                                           Object val = jsonMap.get(key);
                                           String actual = val != null ? val.toString() : "null";
-                                          
-                                          // Property resolution for JSON field values
+
                                           String resolvedActual = actual;
                                           if (actual.contains("${") || actual.contains("p('") || actual.contains("p(\"")) {
                                               resolvedActual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
@@ -220,26 +202,23 @@ public class JsonGenericCheck extends AbstractCheck {
                                                   logger.debug("JSON field property resolution: '{}' -> '{}'", actual, resolvedActual);
                                               }
                                           }
-                                          
-                                          // Enhanced Logic: Handle Arrays and Loose Equality
+
                                           boolean match = false;
-                                          
-                                          // 1. Strict String Equality
+
                                           if (resolvedActual.equals(expected)) match = true;
-                                         
-                                         // 2. Array Containment (if value is List)
+
                                          if (!match && val instanceof List) {
                                               List<?> listVal = (List<?>) val;
-                                              // Check precise match
+
                                               if (listVal.contains(expected)) match = true;
-                                              // Check toString match (e.g. "17.0" matching "17.0")
+
                                               else {
                                                   for (Object item : listVal) {
                                                       if (item.toString().equals(expected)) {
                                                           match = true;
                                                           break;
                                                       }
-                                                      // Try exact semver match if it looks like a version
+
                                                       if (compareValues(item.toString(), expected, "EQ", "SEMVER")) {
                                                           match = true;
                                                           break;
@@ -247,8 +226,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                                   }
                                               }
                                          }
-                                         
-                                         // 3. Scalar SemVer Match fallback (e.g. "17.0" == "17")
+
                                           if (!match && compareValues(resolvedActual, expected, "EQ", "SEMVER")) {
                                               match = true;
                                           }
@@ -269,7 +247,7 @@ public class JsonGenericCheck extends AbstractCheck {
                    filePassed = false;
                    fileReasons.add("Processing Error: " + e.getMessage());
                 }
-                
+
                 if (filePassed) {
                     passedFileCount++;
                     checkedFilesList.add(projectRoot.relativize(file).toString());
@@ -285,7 +263,7 @@ public class JsonGenericCheck extends AbstractCheck {
         boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
         String checkedFilesStr = String.join(", ", checkedFilesList);
         String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
-        
+
         if (uniqueCondition) {
             String defaultSuccess = String.format("JSON Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
             return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
@@ -296,7 +274,7 @@ public class JsonGenericCheck extends AbstractCheck {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
         }
     }
-    
+
     private CheckResult failConfig(Check check, String msg) {
         return CheckResult.fail(check.getRuleId(), check.getDescription(), "Config Error: " + msg);
     }

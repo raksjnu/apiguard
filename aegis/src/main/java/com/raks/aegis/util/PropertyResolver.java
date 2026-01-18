@@ -19,13 +19,12 @@ import java.util.stream.Stream;
 public class PropertyResolver {
     private static final Logger logger = LoggerFactory.getLogger(PropertyResolver.class);
     private static final Map<Path, Map<String, String>> projectPropertiesCache = new HashMap<>();
-    
-    // Default patterns (Mule style)
+
     private static List<Pattern> resolutionPatterns = new ArrayList<>();
-    
+
     static {
-        resolutionPatterns.add(Pattern.compile("\\$\\{([^}]+)}")); // ${prop}
-        resolutionPatterns.add(Pattern.compile("p\\(['\"]([^'\"]+)['\"]\\)")); // p('prop')
+        resolutionPatterns.add(Pattern.compile("\\$\\{([^}]+)}")); 
+        resolutionPatterns.add(Pattern.compile("p\\(['\"]([^'\"]+)['\"]\\)")); 
     }
 
     public static synchronized void configure(List<String> regexPatterns) {
@@ -61,13 +60,13 @@ public class PropertyResolver {
         } catch (IOException e) {
             logger.error("Error walking project for properties: {}", e.getMessage());
         }
-        // System.out.println("DEBUG: Loaded " + props.size() + " properties for " + projectRoot);
+
         projectPropertiesCache.put(projectRoot, props);
     }
 
     public static String resolve(String val, Path projectRoot) {
         if (val == null) return null;
-        
+
         loadProperties(projectRoot);
         Map<String, String> props = projectPropertiesCache.get(projectRoot);
         if (props == null || props.isEmpty()) {
@@ -76,8 +75,8 @@ public class PropertyResolver {
 
         String currentVal = val;
         boolean modified = true;
-        int safetyCounter = 0; // Prevent infinite loops
-        
+        int safetyCounter = 0; 
+
         while (modified && safetyCounter < 10) {
             modified = false;
             for (Pattern pattern : resolutionPatterns) {
@@ -87,23 +86,23 @@ public class PropertyResolver {
                      String key = m.group(1);
                      if (props.containsKey(key)) {
                          String replacement = props.get(key);
-                         // Handle $ in replacement for regex safety
+
                          m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
                          modified = true;
                      } else {
-                         // Keep original if not found
+
                          m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));
                      }
                  }
                  m.appendTail(sb);
                  currentVal = sb.toString();
-                 if (modified) break; // Restart with new value to handle nested? Or just sequential.
+                 if (modified) break; 
             }
             if (modified) safetyCounter++;
         }
         return currentVal;
     }
-    
+
     public static void clearCache() {
         projectPropertiesCache.clear();
     }

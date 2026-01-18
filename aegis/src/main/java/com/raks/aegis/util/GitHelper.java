@@ -30,13 +30,12 @@ import java.nio.charset.StandardCharsets;
 
 public class GitHelper {
     private static final Logger logger = LoggerFactory.getLogger(GitHelper.class);
-    
-    // Limits
-    private static final long MAX_REPO_SIZE_BYTES = 500 * 1024 * 1024; // 500 MB
-    private static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
+
+    private static final long MAX_REPO_SIZE_BYTES = 500 * 1024 * 1024; 
+    private static final long MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; 
 
     static {
-        // Prevent file locking issues on Windows by disabling memory mapping
+
         WindowCacheConfig config = new WindowCacheConfig();
         config.setPackedGitMMAP(false);
         config.install();
@@ -45,7 +44,7 @@ public class GitHelper {
     public static void cloneRepository(String repoUrl, String branch, String token, String destinationPath) throws Exception {
         Path destination = Path.of(destinationPath);
         logger.info("[GitHelper] Cloning repository: {} (Branch: {}) to {}", repoUrl, branch, destination);
-        
+
         if (token != null && !token.isBlank()) {
              String masked = token.length() > 4 ? token.substring(0, 2) + "***" + token.substring(token.length()-2) : "***";
              logger.info("[GitHelper] Using Auth Token: {}", masked);
@@ -99,7 +98,7 @@ public class GitHelper {
     private static void enforceRestrictions(Path repoRoot) throws IOException {
         AtomicLong totalSize = new AtomicLong(0);
         List<String> warnings = new ArrayList<>();
-        
+
         Files.walkFileTree(repoRoot, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
@@ -141,13 +140,13 @@ public class GitHelper {
                 return FileVisitResult.CONTINUE;
             }
         });
-        
+
         logger.info("Restriction check complete. Final Repo Size: {} bytes", totalSize.get());
         if (!warnings.isEmpty()) {
             writeWarnings(repoRoot, warnings);
         }
     }
-    
+
     private static void writeWarnings(Path repoRoot, List<String> warnings) {
         try {
             Path warningFile = repoRoot.resolve(".Aegis_git_warnings");
@@ -156,7 +155,7 @@ public class GitHelper {
             logger.error("Failed to write git warning file", e);
         }
     }
-    
+
     private static void deleteDirectory(Path path) throws IOException {
         if (Files.exists(path)) {
             try (Stream<Path> walk = Files.walk(path)) {
@@ -180,27 +179,27 @@ public class GitHelper {
         String cleanBase = (baseUrl == null || baseUrl.isBlank()) ? "https://gitlab.com" : (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl);
         String encodedGroup = URLEncoder.encode(group, StandardCharsets.UTF_8);
         String apiUrl = cleanBase + "/api/v4/groups/" + encodedGroup + "/projects?include_subgroups=true&per_page=100";
-        
+
         if (filter != null && !filter.isBlank() && !filter.contains(",")) {
             apiUrl += "&search=" + URLEncoder.encode(filter, StandardCharsets.UTF_8);
         }
-        
+
         logger.info("[GitHelper] GitLab API Request: {}", apiUrl);
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl));
         if (token != null && !token.isBlank()) {
             reqBuilder.header("PRIVATE-TOKEN", token);
         }
-        
+
         HttpResponse<String> response = client.send(reqBuilder.GET().build(), HttpResponse.BodyHandlers.ofString());
-        
+
         if (response.statusCode() == 404) {
              logger.info("[GitHelper] Group not found. Trying User lookup: {}", group);
              String userApiUrl = cleanBase + "/api/v4/users?username=" + encodedGroup;
              HttpRequest.Builder userReqBuilder = HttpRequest.newBuilder().uri(URI.create(userApiUrl));
              if (token != null && !token.isBlank()) userReqBuilder.header("PRIVATE-TOKEN", token);
              HttpResponse<String> userResp = client.send(userReqBuilder.GET().build(), HttpResponse.BodyHandlers.ofString());
-             
+
              if (userResp.statusCode() == 200) {
                  ObjectMapper mapper = new ObjectMapper();
                  JsonNode userRoot = mapper.readTree(userResp.body());
@@ -216,7 +215,7 @@ public class GitHelper {
         }
 
         if (response.statusCode() != 200) throw new Exception("GitLab API Error: " + response.statusCode());
-        
+
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
         List<String> repos = new ArrayList<>();
@@ -244,22 +243,22 @@ public class GitHelper {
     private static List<String> listGitHubRepos(String token, String group, String filter, String baseUrl) throws Exception {
         String cleanBase = (baseUrl == null || baseUrl.isBlank()) ? "https://api.github.com" : (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl);
         String apiUrl = cleanBase + "/orgs/" + group + "/repos?per_page=100";
-        
+
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
         if (token != null && !token.isBlank()) reqBuilder.header("Authorization", "token " + token);
-        
+
         HttpResponse<String> response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
-        
+
         if (response.statusCode() == 404) {
             apiUrl = cleanBase + "/users/" + group + "/repos?per_page=100";
             HttpRequest.Builder userReqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
             if (token != null && !token.isBlank()) userReqBuilder.header("Authorization", "token " + token);
             response = client.send(userReqBuilder.build(), HttpResponse.BodyHandlers.ofString());
         }
-        
+
         if (response.statusCode() != 200) throw new Exception("GitHub API Error: " + response.statusCode());
-        
+
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
         List<String> repos = new ArrayList<>();
@@ -296,14 +295,14 @@ public class GitHelper {
         String cleanBase = (baseUrl == null || baseUrl.isBlank()) ? "https://gitlab.com" : (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl);
         String repoPath = repo.contains("http") ? repo.replaceFirst("https?://[^/]+/", "").replace(".git", "") : repo;
         String apiUrl = cleanBase + "/api/v4/projects/" + URLEncoder.encode(repoPath, StandardCharsets.UTF_8) + "/repository/branches";
-        
+
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
         if (token != null && !token.isBlank()) reqBuilder.header("PRIVATE-TOKEN", token);
-        
+
         HttpResponse<String> response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) throw new Exception("GitLab Branch API Error: " + response.statusCode());
-        
+
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
         List<String> branches = new ArrayList<>();
@@ -319,14 +318,14 @@ public class GitHelper {
         String cleanBase = (baseUrl == null || baseUrl.isBlank()) ? "https://api.github.com" : (baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl);
         String repoPath = repo.contains("http") ? repo.replaceFirst("https?://[^/]+/", "").replace(".git", "") : repo;
         String apiUrl = cleanBase + "/repos/" + repoPath + "/branches";
-        
+
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
         if (token != null && !token.isBlank()) reqBuilder.header("Authorization", "token " + token);
-        
+
         HttpResponse<String> response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) throw new Exception("GitHub Branch API Error: " + response.statusCode());
-        
+
         ObjectMapper mapper = new ObjectMapper();
         JsonNode root = mapper.readTree(response.body());
         List<String> branches = new ArrayList<>();
