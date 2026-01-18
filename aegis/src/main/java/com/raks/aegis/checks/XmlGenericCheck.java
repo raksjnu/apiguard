@@ -91,6 +91,7 @@ public class XmlGenericCheck extends AbstractCheck {
                         } else {
                             // FALLBACK: Property Resolution Logic
                             // If strict match failed, check if it was due to unresolved property placeholders.
+                            logger.debug("Attempting property resolution fallback for XPath: {}", xpathExpr);
                             try {
                                 String[] subPaths = xpathExpr.split(" \\| ");
                                 boolean propertyMatchFound = false;
@@ -102,8 +103,12 @@ public class XmlGenericCheck extends AbstractCheck {
                                         String attr = m.group(2);
                                         String expected = m.group(3);
                                         
+                                        logger.debug("Checking property resolution: element={}, attribute={}, expected={}", elem, attr, expected);
+                                        
                                         String relaxedXpath = "//*[local-name()='" + elem + "' and @" + attr + "]";
                                         NodeList relaxedNodes = (NodeList) xpath.evaluate(relaxedXpath, doc, XPathConstants.NODESET);
+                                        
+                                        logger.debug("Found {} nodes with relaxed XPath", relaxedNodes.getLength());
                                         
                                         for (int i = 0; i < relaxedNodes.getLength(); i++) {
                                             org.w3c.dom.Node n = relaxedNodes.item(i);
@@ -111,8 +116,10 @@ public class XmlGenericCheck extends AbstractCheck {
                                                 org.w3c.dom.Element e = (org.w3c.dom.Element) n;
                                                 String rawVal = e.getAttribute(attr);
                                                 String resolved = com.raks.aegis.util.PropertyResolver.resolve(rawVal, projectRoot);
+                                                logger.debug("Property resolution: raw='{}', resolved='{}', expected='{}'", rawVal, resolved, expected);
                                                 if (expected.equals(resolved)) {
                                                     propertyMatchFound = true;
+                                                    logger.info("Property resolution SUCCESS: {} -> {}", rawVal, resolved);
                                                     break;
                                                 }
                                             }
@@ -124,12 +131,11 @@ public class XmlGenericCheck extends AbstractCheck {
                                 
                                 if (propertyMatchFound) {
                                     filePassed = true;
-                                    passedFileCount++; // Increment here as we are bypassing the loop content? No, passedFileCount is incremented at end of file processing.
-                                    // Just set filePassed=true.
                                 } else {
                                     details.add(projectRoot.relativize(file) + " [XPath not found]");
                                 }
                             } catch (Exception ex) {
+                                logger.error("Property resolution fallback failed", ex);
                                 details.add(projectRoot.relativize(file) + " [XPath not found]");
                             }
                         }
