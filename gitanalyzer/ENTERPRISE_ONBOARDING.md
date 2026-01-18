@@ -205,3 +205,12 @@ java -jar gitanalyzer.jar --cli --repo "group/repo" --source "master" --target "
 
 **Document Version:** 1.0  
 **Status:** Approved for implementation
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

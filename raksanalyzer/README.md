@@ -299,4 +299,11 @@ Contributions are welcome! Please ensure all tests pass before submitting a pull
 
 ## 📞 Support
 
-For issues, questions, or feature requests, please open an issue on the project repository.
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

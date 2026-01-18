@@ -366,3 +366,12 @@ transform-data:
 ---
 
 **© 2018 RAKS ApiGuard FileSync - Enterprise API Solution Suite**
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

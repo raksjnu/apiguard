@@ -36,3 +36,12 @@ GitAnalyzer is a standalone Java application designed to analyze, compare, and r
 ## Troubleshooting
 -   **Port Conflict**: If 8080 is busy, change `http.port` in `gitanalyzer.properties`.
 -   **Credentials**: Ensure your Token has specific read permissions.
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

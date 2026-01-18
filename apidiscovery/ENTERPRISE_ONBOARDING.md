@@ -151,3 +151,12 @@ All licenses are permissive and compatible with enterprise usage.
 
 - **Repository**: Managed internally.
 - **Updates**: Rebuild periodically to update JGit/parser patterns.
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

@@ -534,3 +534,12 @@ mvn org.cyclonedx:cyclonedx-maven-plugin:makeAggregateBom
 **Document Version:** 1.0  
 **Prepared For:** Enterprise Security and Architecture Review  
 **Classification:** Internal Use
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

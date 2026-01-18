@@ -1,5 +1,5 @@
 
-Lists of 14 third-party dependencies.
+Lists of 15 third-party dependencies.
      (Apache-2.0) Gson (com.google.code.gson:gson:2.10.1 - https://github.com/google/gson/gson)
      (Apache 2) JavaEWAH (com.googlecode.javaewah:JavaEWAH:1.2.3 - https://github.com/lemire/javaewah)
      (Apache-2.0) Apache Commons Codec (commons-codec:commons-codec:1.20.0 - https://commons.apache.org/proper/commons-codec/)
@@ -7,6 +7,7 @@ Lists of 14 third-party dependencies.
      (The Apache License, Version 2.0) org.apiguardian:apiguardian-api (org.apiguardian:apiguardian-api:1.1.2 - https://github.com/apiguardian-team/apiguardian)
      (Apache License, Version 2.0) Plexus Common Utilities (org.codehaus.plexus:plexus-utils:3.5.1 - https://codehaus-plexus.github.io/plexus-utils/)
      (BSD-3-Clause) JGit - Core (org.eclipse.jgit:org.eclipse.jgit:7.5.0.202512021534-r - https://www.eclipse.org/jgit//org.eclipse.jgit)
+     (Public Domain) JSON in Java (org.json:json:20231013 - https://github.com/douglascrockford/JSON-java)
      (Eclipse Public License v2.0) JUnit Jupiter API (org.junit.jupiter:junit-jupiter-api:5.10.1 - https://junit.org/junit5/)
      (Eclipse Public License v2.0) JUnit Jupiter Engine (org.junit.jupiter:junit-jupiter-engine:5.10.1 - https://junit.org/junit5/)
      (Eclipse Public License v2.0) JUnit Platform Commons (org.junit.platform:junit-platform-commons:1.10.1 - https://junit.org/junit5/)

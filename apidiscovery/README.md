@@ -60,3 +60,12 @@ java -jar apidiscovery-1.0.0.jar -source "https://gitlab.com/my-org/my-group" -t
 The tool uses `config.properties` (embedded or external) for defaults:
 - `server.port`: Web server port (default 8085)
 - `gitlab.token`: Default GitLab token
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

@@ -556,6 +556,11 @@ This tool is designed for API testing and validation. Feel free to extend it wit
 
 [Specify your license here]
 
-## Support
+---
+**For any further inquiries, reach out to:**
 
-For issues, questions, or feature requests, please contact the development team.
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

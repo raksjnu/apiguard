@@ -20,7 +20,7 @@
         <jackson.version>2.18.2</jackson.version>
         <poi.version>5.4.0</poi.version>
         <snakeyaml.version>2.2</snakeyaml.version>
-        <log4j.version>2.24.3</log4j.version>  <!-- Updated for POI 5.4.0 compatibility -->
+        <log4j.version>2.25.3</log4j.version>  <!-- Updated for CVE-2025-68161 compatibility -->
     </properties>
 
     <dependencies>
@@ -44,12 +44,12 @@
             <artifactId>json-path</artifactId>
             <version>2.9.0</version>
         </dependency>
-
+        
         <!-- Maven Model (for pom.xml parsing) -->
         <dependency>
             <groupId>org.apache.maven</groupId>
             <artifactId>maven-model</artifactId>
-            <version>3.9.6</version>
+            <version>3.9.9</version>
         </dependency>
 
         <!-- Picocli - CLI -->
@@ -142,6 +142,11 @@
             <artifactId>log4j-core</artifactId>
             <version>${log4j.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-api</artifactId>
+            <version>${log4j.version}</version>
+        </dependency>
 
         <!-- SLF4J API for structured logging -->
         <dependency>
@@ -161,7 +166,7 @@
         <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
-            <version>6.6.1.202309021850-r</version>
+            <version>7.5.0.202512021534-r</version>
         </dependency>
 
         <!-- HTTP Client for Git API interactions -->

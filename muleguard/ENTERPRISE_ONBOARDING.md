@@ -208,5 +208,11 @@ MuleGuard enforces governance via `rules.yaml`. Categories include:
 
 ## 7. Support
 
-- **Issue Tracking**: Internal JIRA/GitHub Issues.
-- **Rule Updates**: Rules are externalized in YAML. Users can provide custom rules via CLI (`--config`), UI file uploads, or persistent paths in **Settings**.
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

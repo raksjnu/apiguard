@@ -88,6 +88,11 @@ The "Wrapper" pattern allows these distinct Java-based tools to run within a uni
 - **Java Bridge**: Each tool exposes a static Java Bridge class (`FileSyncBridge`, `RaksAnalyzerBridge`) that Mule flows invoke.
 - **Resource Sharing**: Tools share the Mule application's classpath and temp directory `${mule.home}/apps/apiguardwrapper/temp`.
 
+### 2.3 Rule Synchronization
+To ensure consistent policy enforcement across the enterprise, the Wrapper automatically synchronizes with the core **Aegis** rule definitions.
+- **Build Time**: The `build-apiguardwrapper-withaegis` scripts automatically copy the master `rules.yaml` from the Aegis project.
+- **Runtime**: The wrapper reads this synchronized file from `src/main/resources/rules/rules.yaml`, ensuring that the Portal always validates against the latest approved standards.
+
 ---
 
 ## 3. FileSync Tool (New Feature)
@@ -138,5 +143,12 @@ Input (ZIP/CSV) -> Extract -> Visual Mapping (JSON) -> Transform Engine -> Outpu
 - **Release Cycle**: Quarterly feature updates.
 
 ### 6.2 Contact
-- **Owner**: RAKS Integration Center of Excellence (ICoE)
-- **Support**: `raksjnu@gmail.com`
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

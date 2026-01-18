@@ -1,6 +1,5 @@
 # MuleGuard - MuleSoft Static Analysis Tool
-# raks
-# By - Rakesh Kumar
+
 
 MuleGuard is a static analysis tool for MuleSoft applications. It validates Mule projects against a defined set of rules to enforce coding standards, security best practices, and migration readiness.
 
@@ -228,10 +227,17 @@ For a complete list of dependencies and their versions, see `pom.xml`.
 
 ### Security
 
-### Security
-
-For security vulnerabilities or concerns, please contact: **Rakesh Kumar (Rakesh.kumar@ibm.com)**
+For security vulnerabilities or concerns, please contact the author below.
 
 **Last Security Audit**: January 2026
 **Status**: All dependencies updated to secure versions.
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+
 

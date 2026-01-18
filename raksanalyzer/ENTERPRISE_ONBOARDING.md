@@ -187,5 +187,12 @@ Configuration is managed via `framework.properties`:
 - `logging.level`: Log verbosity
 
 ### 7.2 Support
-- **Issues**: Report internal git issues.
-- **Updates**: Standard Maven dependency updates.
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+

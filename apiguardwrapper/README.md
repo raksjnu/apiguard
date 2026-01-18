@@ -25,9 +25,23 @@ For detailed enterprise onboarding and architecture, see:
 
 ## Deployment
 
+
 ### Standalone Deployment
 
-1. Build the project:
+**Recommended Build Method**:
+Use the provided build scripts to ensure all dependencies (like Aegis) are correctly built and synchronized.
+
+1. **Build with Aegis Integration**:
+   ```bash
+   # Windows
+   build-apiguardwrapper-withaegis.bat
+
+   # Linux/Mac
+   ./build-apiguardwrapper-withaegis.sh
+   ```
+   *Note: This script automatically builds Aegis, synchronizes the latest `rules.yaml` and web resources, and then builds the wrapper.*
+
+2. **Manual Build (Alternative)**:
    ```bash
    mvn clean package
    ```

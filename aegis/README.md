@@ -1,6 +1,6 @@
 # Aegis - Universal Static Analysis Tool
 
-**By - Rakesh Kumar**
+
 
 Aegis is a powerful, extensible static analysis tool designed to enforce coding standards, security best practices, and operational readiness across diverse technology stacks. While it offers deep native support for MuleSoft, its rule engine is technology-agnostic, supporting validation for:
 
@@ -57,7 +57,23 @@ your-mule-projects/
     └── prod.properties
 ```
 
-**Note**: The folder name must contain `_config` somewhere in the name. The default pattern in `rules.yaml` is `".*_config.*"` which matches any folder containing `_config`. You can modify this pattern if your organization uses a different naming convention. Configuration validation rules (RULE-100 through RULE-199) only apply to files in folders matching this pattern.
+**Note**: The folder name must contain `_config` somewhere in the name. The default pattern in `rules.yaml` is `".*_config.*"` which matches any folder containing `_config`. You can modify this pattern if your organization uses a different naming convention.
+
+## Project Type Filtering
+
+Aegis now supports intelligent **Project Type Filtering** to eliminate noise in reports. By default, the system recognizes two project types:
+
+1.  **CODE**: Application source code (e.g., Mule, Spring Boot).
+    -   *Detection*: Presence of `pom.xml`, `mule-artifact.json`, or `build.gradle`.
+    -   *Rules*: Runs code quality, security, and dependency checks.
+2.  **CONFIG**: Configuration and policy projects.
+    -   *Detection*: Folder name matches `*_config` pattern (e.g., `muleapp_config`).
+    -   *Rules*: Runs property validation, policy checks, and environment consistency rules.
+
+**How it works**:
+- Rules in `rules.yaml` can specify `appliesTo: ["CODE"]` or `appliesTo: ["CONFIG"]`.
+- When scanning, Aegis classifies each project and ONLY runs the applicable rules.
+- Rules without an `appliesTo` field are considered "Universal" and run on ALL projects.
 
 ## Prerequisites
 
@@ -191,8 +207,17 @@ For a complete list of dependencies and their versions, see `pom.xml`.
 
 ### Security
 
-For security vulnerabilities or concerns, please contact: **Rakesh Kumar (Rakesh.kumar@ibm.com)**
+For security vulnerabilities or concerns, please contact the author below.
 
 **Last Security Audit**: January 2026
 **Status**: All dependencies updated to secure versions.
+
+---
+**For any further inquiries, reach out to:**
+
+- **Author**: Rakesh Kumar
+- **Email**: Rakesh.Kumar@ibm.com
+- **Role**: Application Architect
+---
+
 
