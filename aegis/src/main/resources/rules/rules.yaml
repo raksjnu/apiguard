@@ -112,6 +112,20 @@ config:
   - ITE
   - PREP
   - PROD
+  
+  # Project type definitions for rule filtering
+  projectTypes:
+    CODE:
+      description: "Application projects with source code (Mule, Spring, etc.)"
+      detectionCriteria:
+        markerFiles: ["pom.xml", "mule-artifact.json", "build.gradle"]
+        excludePatterns: [".*_config.*", ".*-config$"]
+    
+    CONFIG:
+      description: "Configuration projects with properties and policies"
+      detectionCriteria:
+        namePattern: ".*_config.*|.*-config$"
+  
   # Identifies valid projects and configuration locations
   projectIdentification:
     # Locates the folder containing environment-specific property files
