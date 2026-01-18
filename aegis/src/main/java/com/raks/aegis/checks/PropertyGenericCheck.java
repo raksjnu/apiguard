@@ -152,13 +152,13 @@ public class PropertyGenericCheck extends AbstractCheck {
                                         }
                                         if (!valueMatch) {
                                             filePassed = false;
-                                            fileErrors.add(String.format("Value mismatch for %s: '%s' not in %s", propertyKey, actualValue, constraint.allowedValues));
+                                            fileErrors.add(String.format("Invalid value for '%s'. Found: '%s', Expected one of: %s", propertyKey, actualValue, constraint.allowedValues));
                                         }
                                     } else {
 
                                         if (!compareValues(actualValue, expectedValueRegex, operator, valueType)) {
                                             filePassed = false;
-                                            fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
+                                            fileErrors.add(String.format("Value mismatch for '%s'. Found: '%s', Expected: '%s' (Op: '%s')", 
                                                 propertyKey, actualValue, expectedValueRegex, operator));
                                         }
                                     }
