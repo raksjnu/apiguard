@@ -109,10 +109,14 @@ public class XmlGenericCheck extends AbstractCheck {
                                 else details.add(projectRoot.relativize(file) + " [Value mismatch]");
                             } else {
                                 filePassed = true;
-                                fileSuccesses.add("XPath Found: " + xpathExpr);
+                                List<String> matchDescriptions = new ArrayList<>();
+                                for (int k = 0; k < nodes.getLength() && k < 5; k++) {
+                                    matchDescriptions.add(formatNode(nodes.item(k)));
+                                }
+                                if (nodes.getLength() > 5) matchDescriptions.add("... (" + (nodes.getLength() - 5) + " more)");
+                                fileSuccesses.add("Found: " + String.join(", ", matchDescriptions));
                             }
                         } else {
-
                             logger.debug("Attempting property resolution fallback for XPath: {}", xpathExpr);
                             try {
                                 String[] subPaths = xpathExpr.split(" \\| ");
@@ -193,6 +197,8 @@ public class XmlGenericCheck extends AbstractCheck {
                     passedFileCount++;
                     passedFilesList.add(projectRoot.relativize(file).toString());
                     successDetails.addAll(fileSuccesses);
+                } else {
+                    // Start of block to fix technicalMsg format
                 }
             }
 
@@ -220,6 +226,27 @@ public class XmlGenericCheck extends AbstractCheck {
 
         } catch (Exception e) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Scan Error: " + e.getMessage());
+        }
+    }
+
+    private String formatNode(org.w3c.dom.Node node) {
+        if (node == null) return "null";
+        if (node.getNodeType() == org.w3c.dom.Node.ATTRIBUTE_NODE) {
+            return node.getNodeName() + "=\"" + node.getNodeValue() + "\"";
+        } else if (node.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE) {
+            StringBuilder sb = new StringBuilder("<");
+            sb.append(node.getNodeName());
+            if (node.hasAttributes()) {
+                org.w3c.dom.NamedNodeMap attrs = node.getAttributes();
+                for (int i = 0; i < attrs.getLength(); i++) {
+                    org.w3c.dom.Node attr = attrs.item(i);
+                    sb.append(" ").append(attr.getNodeName()).append("=\"").append(attr.getNodeValue()).append("\"");
+                }
+            }
+            sb.append(">");
+            return sb.toString();
+        } else {
+            return node.getTextContent().trim();
         }
     }
 

@@ -154,7 +154,7 @@ public abstract class AbstractCheck {
         if (!propertyResolved.isEmpty()) {
             result = result.replace("{PROPERTY_RESOLVED}", "Properties Resolved: " + propertyResolved);
         } else {
-            result = result.replace("{PROPERTY_RESOLVED}", "");
+            result = result.replace("{PROPERTY_RESOLVED}", "Properties Resolved: N/A");
         }
 
         if (!template.contains("{") && coreDetails != null && !coreDetails.isEmpty()) {

@@ -1,4 +1,4 @@
-﻿# =============================================================================
+# =============================================================================
 # Aegis Rules Configuration - Raks
 # Targeted for Technical Checklist Compliance
 # Author: Rakesh Kumar (Rakesh.Kumar@ibm.com)
@@ -52,7 +52,7 @@
 # - {CHECKED_FILES}   : The list of files processed by the check. (Alias: {SCANNED_FILES})
 # - {FOUND_ITEMS}     : The specific forbidden items found (e.g. 'toApplicationCode', forbidden keys).
 # - {MATCHING_FILES}  : The list of files that *passed* the check condition (Success Messages).
-# - {PROPERTY_RESOLVED}: Shows if any properties were resolved (e.g. ${app.port} → 8081).
+# - {PROPERTY_RESOLVED}: Shows if any properties were resolved (e.g. ${app.port} ? 8081).
 # - {FAILURES}        : The raw list of failure reasons (often contained in DEFAULT_MESSAGE).
 # =============================================================================
 
