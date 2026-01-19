@@ -144,11 +144,12 @@ payload]]></ee:set-payload>
 		</http:listener>
         <logger level="INFO" doc:name="Log Request" message="#['GitAnalyzer: Fetching Repos for Group: ' ++ (attributes.queryParams.group default 'None')]"/>
 
-        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeRepoDiscovery(java.lang.String,java.lang.String,java.lang.String)">
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeRepoDiscovery(java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
             <java:args>#[{
                 arg0: attributes.queryParams.group as String default null,
                 arg1: attributes.queryParams.filter as String default null,
-                arg2: (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token'))
+                arg2: (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token')),
+                arg3: (attributes.headers['x-git-provider'] default p('gitanalyzer.gitlab.provider'))
             }]</java:args>
         </java:invoke-static>
         
@@ -170,10 +171,11 @@ payload]]></ee:set-payload>
 			</http:response>
 		</http:listener>
 
-        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeBranchDiscovery(java.lang.String,java.lang.String)">
+        <java:invoke-static class="com.raks.gitanalyzer.wrapper.MuleBridge" method="invokeBranchDiscovery(java.lang.String,java.lang.String,java.lang.String)">
             <java:args>#[{
                 arg0: attributes.queryParams.repo as String default "",
-                arg1: (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token'))
+                arg1: (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token')),
+                arg2: (attributes.headers['x-git-provider'] default p('gitanalyzer.gitlab.provider'))
             }]</java:args>
         </java:invoke-static>
         

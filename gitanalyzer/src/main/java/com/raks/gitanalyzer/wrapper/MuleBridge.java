@@ -138,13 +138,13 @@ public class MuleBridge {
     /**
      * Bridges /api/download/list (Repo Discovery)
      */
-    public static Map<String, Object> invokeRepoDiscovery(String groupName, String filterPattern, String token) {
+    public static Map<String, Object> invokeRepoDiscovery(String groupName, String filterPattern, String token, String provider) {
         try {
-            GitProvider provider = getProvider(token, null);
+            GitProvider gitProvider = getProvider(token, provider);
             
             // Default group logic
             if (groupName == null || groupName.isBlank()) {
-                if (provider instanceof GitHubProvider) {
+                if (gitProvider instanceof GitHubProvider) {
                      groupName = ConfigManager.get("github.owner");
                 } else {
                     String fullGroupUrl = ConfigManager.get("gitlab.group");
@@ -162,7 +162,7 @@ public class MuleBridge {
                 }
             }
             
-            List<String> repos = provider.listRepositories(groupName);
+            List<String> repos = gitProvider.listRepositories(groupName);
             
             // Regex Filter
             if (filterPattern != null && !filterPattern.isBlank()) {
@@ -183,13 +183,13 @@ public class MuleBridge {
     /**
      * Bridges /api/download/branches
      */
-    public static Object invokeBranchDiscovery(String repoName, String token) {
+    public static Object invokeBranchDiscovery(String repoName, String token, String provider) {
          try {
             if (repoName == null || repoName.isBlank()) {
                  return Map.of("error", "Repo name is required");
             }
-            GitProvider provider = getProvider(token, null);
-            return provider.listBranches(repoName);
+            GitProvider gitProvider = getProvider(token, provider);
+            return gitProvider.listBranches(repoName);
         } catch (Exception e) {
             e.printStackTrace();
             return Map.of("error", e.getMessage());

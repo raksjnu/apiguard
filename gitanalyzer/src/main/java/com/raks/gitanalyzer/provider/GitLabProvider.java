@@ -129,15 +129,53 @@ public class GitLabProvider implements GitProvider {
         // System.out.println("[DEBUG] ListRepos - Token Present: " + (token != null && !token.isEmpty()));
 
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
-                .header("PRIVATE-TOKEN", token)
-                .GET()
-                .build();
+                .GET();
+        
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("PRIVATE-TOKEN", token);
+        }
+        
+        HttpRequest request = requestBuilder.build();
         
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         
         // System.out.println("[DEBUG] ListRepos - Response Code: " + response.statusCode());
+        
+        // If 404, try User lookup
+        if (response.statusCode() == 404) {
+            String userApiUrl = cleanBase + "/api/v4/users?username=" + encodedGroup;
+            HttpRequest.Builder userReqBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(userApiUrl))
+                    .GET();
+            
+            if (token != null && !token.isBlank()) {
+                userReqBuilder.header("PRIVATE-TOKEN", token);
+            }
+            
+            HttpResponse<String> userResp = client.send(userReqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            
+            if (userResp.statusCode() == 200) {
+                com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
+                com.fasterxml.jackson.databind.JsonNode userRoot = mapper.readTree(userResp.body());
+                
+                if (userRoot.isArray() && userRoot.size() > 0) {
+                    String userId = userRoot.get(0).get("id").asText();
+                    String projectsUrl = cleanBase + "/api/v4/users/" + userId + "/projects?per_page=100";
+                    
+                    HttpRequest.Builder projReqBuilder = HttpRequest.newBuilder()
+                            .uri(URI.create(projectsUrl))
+                            .GET();
+                    
+                    if (token != null && !token.isBlank()) {
+                        projReqBuilder.header("PRIVATE-TOKEN", token);
+                    }
+                    
+                    response = client.send(projReqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+                }
+            }
+        }
         
         if (response.statusCode() == 200) {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();

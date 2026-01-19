@@ -403,8 +403,8 @@ payload]]></ee:set-payload>
 
     <flow name="aegis-git-branches-flow">
         <http:listener path="/aegis/api/git/branches" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
-        <set-variable variableName="provider" value="#[attributes.queryParams.provider default 'gitlab']"/>
-        <set-variable variableName="token" value="#[attributes.queryParams.token default '']"/>
+        <set-variable variableName="provider" value="#[(attributes.queryParams.provider default attributes.headers['x-git-provider']) default 'gitlab']"/>
+        <set-variable variableName="token" value="#[(attributes.queryParams.token default attributes.headers['x-git-token']) default '']"/>
         <set-variable variableName="repo" value="#[attributes.queryParams.repo default '']"/>
         
         <ee:transform>

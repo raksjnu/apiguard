@@ -70,13 +70,26 @@ public class GitHubProvider implements GitProvider {
         String apiUrl = baseUrl + "/repos/" + repoName + "/branches";
         
         HttpClient client = HttpClient.newHttpClient();
+        
+        // Try with "token" prefix first (for Personal Access Tokens - PATs)
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
-                .header("Authorization", "Bearer " + token)
+                .header("Authorization", "token " + token)
                 .GET()
                 .build();
         
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        
+        // If 401 Unauthorized, try with "Bearer" prefix (for OAuth tokens)
+        if (response.statusCode() == 401) {
+            request = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Authorization", "Bearer " + token)
+                    .GET()
+                    .build();
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        }
+        
          if (response.statusCode() == 200) {
             com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
             com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response.body());
@@ -104,25 +117,53 @@ public class GitHubProvider implements GitProvider {
         String apiUrl = baseUrl + "/orgs/" + groupName + "/repos?per_page=100";
         
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Authorization", "Bearer " + token)
-                .header("Accept", "application/vnd.github.v3+json")
-                .GET()
-                .build();
         
+        // Try with "token" prefix first (for Personal Access Tokens)
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
+                .uri(URI.create(apiUrl))
+                .header("Accept", "application/vnd.github.v3+json")
+                .GET();
+        
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "token " + token);
+        }
+        
+        HttpRequest request = requestBuilder.build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        
+        // If 401, try with Bearer
+        if (response.statusCode() == 401 && token != null && !token.isBlank()) {
+            requestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Authorization", "Bearer " + token)
+                    .header("Accept", "application/vnd.github.v3+json")
+                    .GET();
+            response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+        }
         
         // If 404, try Users
         if (response.statusCode() == 404) {
              apiUrl = baseUrl + "/users/" + groupName + "/repos?per_page=100";
-             request = HttpRequest.newBuilder()
+             requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
-                .header("Authorization", "Bearer " + token)
                 .header("Accept", "application/vnd.github.v3+json")
-                .GET()
-                .build();
-             response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                .GET();
+             
+             if (token != null && !token.isBlank()) {
+                 requestBuilder.header("Authorization", "token " + token);
+             }
+             
+             response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+             
+             // If still 401, try Bearer for users endpoint
+             if (response.statusCode() == 401 && token != null && !token.isBlank()) {
+                 requestBuilder = HttpRequest.newBuilder()
+                        .uri(URI.create(apiUrl))
+                        .header("Authorization", "Bearer " + token)
+                        .header("Accept", "application/vnd.github.v3+json")
+                        .GET();
+                 response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+             }
         }
 
         if (response.statusCode() == 200) {
@@ -146,17 +187,40 @@ public class GitHubProvider implements GitProvider {
     @Override
     public String compareBranches(String repoName, String sourceBranch, String targetBranch) throws Exception {
         // GitHub API: GET /repos/{owner}/{repo}/compare/{base}...{head}
-        String apiUrl = baseUrl + "/repos/" + owner + "/" + repoName + "/compare/" + targetBranch + "..." + sourceBranch;
+        // repoName can be "owner/repo" format, need to parse it
+        String ownerName = this.owner;
+        String repoOnly = repoName;
+        
+        if (repoName.contains("/")) {
+            String[] parts = repoName.split("/", 2);
+            ownerName = parts[0];
+            repoOnly = parts[1];
+        }
+        
+        String apiUrl = baseUrl + "/repos/" + ownerName + "/" + repoOnly + "/compare/" + targetBranch + "..." + sourceBranch;
         
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
+        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
-                .header("Authorization", "Bearer " + token)
                 .header("Accept", "application/vnd.github.v3+json")
-                .GET()
-                .build();
-
+                .GET();
+        
+        if (token != null && !token.isBlank()) {
+            requestBuilder.header("Authorization", "token " + token);
+        }
+        
+        HttpRequest request = requestBuilder.build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        
+        // If 401, try with Bearer
+        if (response.statusCode() == 401 && token != null && !token.isBlank()) {
+            requestBuilder = HttpRequest.newBuilder()
+                    .uri(URI.create(apiUrl))
+                    .header("Authorization", "Bearer " + token)
+                    .header("Accept", "application/vnd.github.v3+json")
+                    .GET();
+            response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
+        }
         
         if (response.statusCode() == 200) {
             return response.body();
@@ -174,7 +238,7 @@ public class GitHubProvider implements GitProvider {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(apiUrl))
-                .header("Authorization", "Bearer " + token)
+                .header("Authorization", "token " + token)
                 .header("Accept", "application/vnd.github.v3+json")
                 .GET()
                 .build();

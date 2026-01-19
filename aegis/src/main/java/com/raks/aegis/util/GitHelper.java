@@ -245,16 +245,32 @@ public class GitHelper {
         String apiUrl = cleanBase + "/orgs/" + group + "/repos?per_page=100";
 
         HttpClient client = HttpClient.newHttpClient();
+        
+        // Try with "token" prefix first (for Personal Access Tokens)
         HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
         if (token != null && !token.isBlank()) reqBuilder.header("Authorization", "token " + token);
 
         HttpResponse<String> response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+        
+        // If 401, try with Bearer prefix (for OAuth tokens)
+        if (response.statusCode() == 401 && token != null && !token.isBlank()) {
+            reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
+            reqBuilder.header("Authorization", "Bearer " + token);
+            response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+        }
 
         if (response.statusCode() == 404) {
             apiUrl = cleanBase + "/users/" + group + "/repos?per_page=100";
             HttpRequest.Builder userReqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
             if (token != null && !token.isBlank()) userReqBuilder.header("Authorization", "token " + token);
             response = client.send(userReqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            
+            // If still 401, try Bearer for users endpoint
+            if (response.statusCode() == 401 && token != null && !token.isBlank()) {
+                userReqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
+                userReqBuilder.header("Authorization", "Bearer " + token);
+                response = client.send(userReqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+            }
         }
 
         if (response.statusCode() != 200) throw new Exception("GitHub API Error: " + response.statusCode());
@@ -320,10 +336,20 @@ public class GitHelper {
         String apiUrl = cleanBase + "/repos/" + repoPath + "/branches";
 
         HttpClient client = HttpClient.newHttpClient();
+        
+        // Try with "token" prefix first (for Personal Access Tokens)
         HttpRequest.Builder reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
         if (token != null && !token.isBlank()) reqBuilder.header("Authorization", "token " + token);
 
         HttpResponse<String> response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+        
+        // If 401, try with Bearer prefix (for OAuth tokens)
+        if (response.statusCode() == 401 && token != null && !token.isBlank()) {
+            reqBuilder = HttpRequest.newBuilder().uri(URI.create(apiUrl)).GET();
+            reqBuilder.header("Authorization", "Bearer " + token);
+            response = client.send(reqBuilder.build(), HttpResponse.BodyHandlers.ofString());
+        }
+        
         if (response.statusCode() != 200) throw new Exception("GitHub Branch API Error: " + response.statusCode());
 
         ObjectMapper mapper = new ObjectMapper();
