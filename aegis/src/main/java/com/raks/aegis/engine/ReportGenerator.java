@@ -360,20 +360,84 @@ public class ReportGenerator {
     public static void generateExcel(ValidationReport report, Path outputPath) {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Validation Results");
+
+            // --- Styles ---
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 16);
+            titleStyle.setFont(titleFont);
+            
+            CellStyle labelStyle = workbook.createCellStyle();
+            Font labelFont = workbook.createFont();
+            labelFont.setBold(true);
+            labelStyle.setFont(labelFont);
+            
             CellStyle headerStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
             headerFont.setColor(IndexedColors.WHITE.getIndex());
             headerStyle.setFont(headerFont);
-            headerStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
+            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            
             CellStyle passStyle = workbook.createCellStyle();
             passStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
             passStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            passStyle.setBorderBottom(BorderStyle.THIN);
+            passStyle.setBorderTop(BorderStyle.THIN);
+            passStyle.setBorderLeft(BorderStyle.THIN);
+            passStyle.setBorderRight(BorderStyle.THIN);
+
             CellStyle failStyle = workbook.createCellStyle();
             failStyle.setFillForegroundColor(IndexedColors.CORAL.getIndex());
             failStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            Row header = sheet.createRow(0);
+            failStyle.setBorderBottom(BorderStyle.THIN);
+            failStyle.setBorderTop(BorderStyle.THIN);
+            failStyle.setBorderLeft(BorderStyle.THIN);
+            failStyle.setBorderRight(BorderStyle.THIN);
+
+            // --- Metadata Header ---
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("AEGIS VALIDATION REPORT");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 4));
+            
+            Row projectRow = sheet.createRow(2);
+            projectRow.createCell(0).setCellValue("Project Path:");
+            projectRow.getCell(0).setCellStyle(labelStyle);
+            projectRow.createCell(1).setCellValue(report.projectPath);
+            
+            Row dateRow = sheet.createRow(3);
+            dateRow.createCell(0).setCellValue("Generated:");
+            dateRow.getCell(0).setCellStyle(labelStyle);
+            dateRow.createCell(1).setCellValue(ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z")));
+            
+            int passedCount = report.passed.size();
+            int failedCount = report.failed.size();
+            int total = passedCount + failedCount;
+            
+            Row summaryRow = sheet.createRow(4);
+            summaryRow.createCell(0).setCellValue("Summary:");
+            summaryRow.getCell(0).setCellStyle(labelStyle);
+            summaryRow.createCell(1).setCellValue("Total Rules: " + total + " | Passed: " + passedCount + " | Failed: " + failedCount);
+            
+            Row statusRow = sheet.createRow(5);
+            statusRow.createCell(0).setCellValue("Overall Status:");
+            statusRow.getCell(0).setCellStyle(labelStyle);
+            Cell statusVal = statusRow.createCell(1);
+            statusVal.setCellValue(failedCount == 0 ? "PASS" : "FAIL");
+            CellStyle statusStyle = workbook.createCellStyle();
+            Font statusFont = workbook.createFont();
+            statusFont.setBold(true);
+            statusFont.setColor(failedCount == 0 ? IndexedColors.GREEN.getIndex() : IndexedColors.RED.getIndex());
+            statusStyle.setFont(statusFont);
+            statusVal.setCellStyle(statusStyle);
+
+            // --- Results Table ---
+            int startRow = 7;
+            Row header = sheet.createRow(startRow);
             String[] columns = { "Rule ID", "Name", "Severity", "Status", "Details" };
             for (int i = 0; i < columns.length; i++) {
                 Cell cell = header.createCell(i);
@@ -385,7 +449,7 @@ public class ReportGenerator {
             String passLabel = labels.getOrDefault("PASS", "PASS");
             String failLabel = labels.getOrDefault("FAIL", "FAIL");
 
-            int rowNum = 1;
+            int rowNum = startRow + 1;
             for (RuleResult r : report.passed) {
                 String message = r.checks.isEmpty() ? "All checks passed" : r.checks.get(0).message;
                 Row row = sheet.createRow(rowNum++);
@@ -413,6 +477,10 @@ public class ReportGenerator {
             }
             for (int i = 0; i < columns.length; i++) {
                 sheet.autoSizeColumn(i);
+                // Cap width to avoid extremely wide columns for long details
+                if (sheet.getColumnWidth(i) > 20000) {
+                    sheet.setColumnWidth(i, 20000);
+                }
             }
             try (FileOutputStream fos = new FileOutputStream(outputPath.toFile())) {
                 workbook.write(fos);
@@ -1258,34 +1326,100 @@ public class ReportGenerator {
     private static void generateConsolidatedExcel(List<ApiResult> results, Path outputDir) {
         try (Workbook workbook = new XSSFWorkbook()) {
             Sheet sheet = workbook.createSheet("Aegis Summary");
+            
+            // --- Styles ---
+            CellStyle titleStyle = workbook.createCellStyle();
+            Font titleFont = workbook.createFont();
+            titleFont.setBold(true);
+            titleFont.setFontHeightInPoints((short) 16);
+            titleStyle.setFont(titleFont);
+            
+            CellStyle labelStyle = workbook.createCellStyle();
+            Font labelFont = workbook.createFont();
+            labelFont.setBold(true);
+            labelStyle.setFont(labelFont);
+
             CellStyle headerStyle = workbook.createCellStyle();
             Font headerFont = workbook.createFont();
             headerFont.setBold(true);
             headerFont.setColor(IndexedColors.WHITE.getIndex());
             headerStyle.setFont(headerFont);
-            headerStyle.setFillForegroundColor(IndexedColors.BLUE.getIndex());
+            headerStyle.setFillForegroundColor(IndexedColors.DARK_BLUE.getIndex());
             headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            
             CellStyle passStyle = workbook.createCellStyle();
             passStyle.setFillForegroundColor(IndexedColors.LIGHT_GREEN.getIndex());
             passStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            passStyle.setBorderBottom(BorderStyle.THIN);
+            passStyle.setBorderTop(BorderStyle.THIN);
+            passStyle.setBorderLeft(BorderStyle.THIN);
+            passStyle.setBorderRight(BorderStyle.THIN);
+
             CellStyle failStyle = workbook.createCellStyle();
             failStyle.setFillForegroundColor(IndexedColors.CORAL.getIndex());
             failStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-            Row header = sheet.createRow(0);
+            failStyle.setBorderBottom(BorderStyle.THIN);
+            failStyle.setBorderTop(BorderStyle.THIN);
+            failStyle.setBorderLeft(BorderStyle.THIN);
+            failStyle.setBorderRight(BorderStyle.THIN);
+
+            // --- Stats Calculation ---
+            int totalRules = 0, totalPassed = 0, totalFailed = 0;
+            for (ApiResult r : results) {
+                if (r == null || r.name == null) continue;
+                totalRules += r.passed + r.failed;
+                totalPassed += r.passed;
+                totalFailed += r.failed;
+            }
+
+            // --- Metadata Header ---
+            Row titleRow = sheet.createRow(0);
+            Cell titleCell = titleRow.createCell(0);
+            titleCell.setCellValue("AEGIS CONSOLIDATED REPORT");
+            titleCell.setCellStyle(titleStyle);
+            sheet.addMergedRegion(new org.apache.poi.ss.util.CellRangeAddress(0, 0, 0, 5));
+            
+            Row dateRow = sheet.createRow(2);
+            dateRow.createCell(0).setCellValue("Generated:");
+            dateRow.getCell(0).setCellStyle(labelStyle);
+            dateRow.createCell(1).setCellValue(ZonedDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss z")));
+            
+            Row summaryRow = sheet.createRow(3);
+            summaryRow.createCell(0).setCellValue("Summary:");
+            summaryRow.getCell(0).setCellStyle(labelStyle);
+            summaryRow.createCell(1).setCellValue("Total APIs: " + results.size() + " | Total Rules: " + totalRules);
+            
+            Row statsRow = sheet.createRow(4);
+            statsRow.createCell(0).setCellValue("Statistics:");
+            statsRow.getCell(0).setCellStyle(labelStyle);
+            statsRow.createCell(1).setCellValue("Passed: " + totalPassed + " | Failed: " + totalFailed);
+            
+            Row statusRow = sheet.createRow(5);
+            statusRow.createCell(0).setCellValue("Overall Status:");
+            statusRow.getCell(0).setCellStyle(labelStyle);
+            Cell statusVal = statusRow.createCell(1);
+            statusVal.setCellValue(totalFailed == 0 ? "PASS" : "FAIL");
+            CellStyle statusStyle = workbook.createCellStyle();
+            Font statusFont = workbook.createFont();
+            statusFont.setBold(true);
+            statusFont.setColor(totalFailed == 0 ? IndexedColors.GREEN.getIndex() : IndexedColors.RED.getIndex());
+            statusStyle.setFont(statusFont);
+            statusVal.setCellStyle(statusStyle);
+
+            // --- Results Table ---
+            int startRow = 7;
+            Row header = sheet.createRow(startRow);
             String[] columns = { "API Name", "Total Rules", "Passed", "Failed", "Status", "Report Path" };
             for (int i = 0; i < columns.length; i++) {
                 Cell cell = header.createCell(i);
                 cell.setCellValue(columns[i]);
                 cell.setCellStyle(headerStyle);
             }
-            int rowNum = 1;
-            int totalRules = 0, totalPassed = 0, totalFailed = 0;
+            
+            int rowNum = startRow + 1;
             for (ApiResult r : results) {
                 if (r == null || r.name == null)
                     continue;
-                totalRules += r.passed + r.failed;
-                totalPassed += r.passed;
-                totalFailed += r.failed;
                 Row row = sheet.createRow(rowNum++);
                 CellStyle rowStyle = (r.failed == 0) ? passStyle : failStyle;
                 row.createCell(0).setCellValue(r.name);
@@ -1298,19 +1432,12 @@ public class ReportGenerator {
                     row.getCell(i).setCellStyle(rowStyle);
                 }
             }
-            Row summary = sheet.createRow(rowNum++);
-            summary.createCell(0).setCellValue("TOTAL");
-            summary.createCell(1).setCellValue(totalRules);
-            summary.createCell(2).setCellValue(totalPassed);
-            summary.createCell(3).setCellValue(totalFailed);
-            summary.createCell(4).setCellValue(totalFailed == 0 ? "ALL PASS" : "SOME FAILURES");
-            CellStyle bold = workbook.createCellStyle();
-            Font boldFont = workbook.createFont();
-            boldFont.setBold(true);
-            bold.setFont(boldFont);
-            summary.getCell(0).setCellStyle(bold);
+            
             for (int i = 0; i < columns.length; i++) {
                 sheet.autoSizeColumn(i);
+                if (sheet.getColumnWidth(i) > 15000) {
+                    sheet.setColumnWidth(i, 15000);
+                }
             }
             Path excelPath = outputDir.resolve("CONSOLIDATED-REPORT.xlsx");
             try (FileOutputStream fos = new FileOutputStream(excelPath.toFile())) {
