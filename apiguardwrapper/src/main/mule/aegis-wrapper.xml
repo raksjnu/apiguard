@@ -557,21 +557,19 @@ output application/java
                 <choice>
                     <when expression="#[trim(vars.validationMode) == 'zip']">
 
-                        <java:invoke-static class="com.raks.aegis.util.ArchiveExtractor" method="extractZip(java.lang.String,java.lang.String,java.lang.String)">
+                        <java:invoke-static class="com.raks.apiguardwrapper.util.ZipUtil" method="unzip(java.lang.String,java.lang.String)">
                             <java:args>#[{
                                 arg0: vars.zipFilePath,
-                                arg1: vars.sessionId ++ '/' ++ vars.timestamp,
-                                arg2: p('aegis.work.dir')
+                                arg1: vars.workDir
                             }]</java:args>
                         </java:invoke-static>
                     </when>
                     <otherwise>
                         <!-- JAR mode -->
-                        <java:invoke-static class="com.raks.aegis.util.ArchiveExtractor" method="extractJar(java.lang.String,java.lang.String,java.lang.String)">
+                        <java:invoke-static class="com.raks.apiguardwrapper.util.ZipUtil" method="extractJar(java.lang.String,java.lang.String)">
                             <java:args>#[{
                                 arg0: vars.zipFilePath,
-                                arg1: vars.sessionId ++ '/' ++ vars.timestamp,
-                                arg2: p('aegis.work.dir')
+                                arg1: vars.workDir
                             }]</java:args>
                         </java:invoke-static>
                     </otherwise>
@@ -660,7 +658,7 @@ output application/java
         <!-- Create ZIP of the report directory (Required for email/download) -->
         <logger level="INFO" message="#['Zipping report directory: ' ++ vars.reportDirName]"/>
         <logger level="INFO" message="#['Zipping report directory: ' ++ vars.reportAbsPath]"/>
-        <java:invoke-static doc:name="Zip Reports" class="com.raks.aegis.util.ArchiveExtractor" method="zipDirectory(java.lang.String,java.lang.String)">
+        <java:invoke-static doc:name="Zip Reports" class="com.raks.apiguardwrapper.util.ZipUtil" method="zipDirectory(java.lang.String,java.lang.String)">
             <java:args><![CDATA[#[{
                 arg0: vars.reportAbsPath,
                 arg1: vars.reportAbsPath ++ '.zip'
