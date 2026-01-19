@@ -41,11 +41,11 @@
         <http:listener config-ref="HTTP_Listener_config" path="/soap/orderservice" allowedMethods="POST"/>
         <logger level="INFO" message="SOAP request received"/>
         <choice>
-            <when expression="#[payload contains 'CreateOrderRequest']">
+            <when expression="#[payload as String contains 'CreateOrderRequest']">
                 <logger level="INFO" message="SOAP CreateOrder called"/>
                 <set-payload value='&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice"&gt;&lt;soap:Body&gt;&lt;tns:CreateOrderResponse&gt;&lt;orderNumber&gt;ORD-20260118-001&lt;/orderNumber&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;message&gt;Order created successfully&lt;/message&gt;&lt;/tns:CreateOrderResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;' mimeType="text/xml"/>
             </when>
-            <when expression="#[payload contains 'GetOrderRequest']">
+            <when expression="#[payload as String contains 'GetOrderRequest']">
                 <logger level="INFO" message="SOAP GetOrder called"/>
                 <set-payload value='&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice"&gt;&lt;soap:Body&gt;&lt;tns:GetOrderResponse&gt;&lt;orderNumber&gt;ORD-20260118-001&lt;/orderNumber&gt;&lt;customerName&gt;John Doe&lt;/customerName&gt;&lt;customerEmail&gt;john.doe@example.com&lt;/customerEmail&gt;&lt;orderDate&gt;2026-01-18&lt;/orderDate&gt;&lt;productName&gt;Widget Pro&lt;/productName&gt;&lt;quantity&gt;5&lt;/quantity&gt;&lt;totalAmount&gt;249.99&lt;/totalAmount&gt;&lt;status&gt;CONFIRMED&lt;/status&gt;&lt;/tns:GetOrderResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;' mimeType="text/xml"/>
             </when>
