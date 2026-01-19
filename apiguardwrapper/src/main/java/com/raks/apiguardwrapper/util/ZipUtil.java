@@ -17,6 +17,7 @@ public class ZipUtil {
         Path outputZip = Paths.get(outputZipPath);
         
         LOGGER.info("Zipping directory: {} to {}", sourceDir.toAbsolutePath(), outputZip.toAbsolutePath());
+        final int[] count = {0};
 
         // Ensure parent dir exists
         if (outputZip.getParent() != null) {
@@ -39,6 +40,7 @@ public class ZipUtil {
                         zos.putNextEntry(zipEntry);
                         Files.copy(file, zos);
                         zos.closeEntry();
+                        count[0]++;
                     }
                     return FileVisitResult.CONTINUE;
                 }
@@ -56,7 +58,7 @@ public class ZipUtil {
                 }
             });
         }
-        LOGGER.info("Zip created successfully.");
+        LOGGER.info("Zip created successfully. Total entries: {}", count[0]);
     }
 
     public static String unzip(String zipFilePath, String outputDir) throws IOException {
@@ -67,6 +69,7 @@ public class ZipUtil {
 
         // Ensure output dir exists
         Files.createDirectories(outputPath);
+        int count = 0;
 
         try (ZipInputStream zis = new ZipInputStream(Files.newInputStream(zipFile))) {
             ZipEntry entry;
@@ -87,12 +90,18 @@ public class ZipUtil {
                         Files.createDirectories(targetPath.getParent());
                     }
                     Files.copy(zis, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    count++;
                 }
                 zis.closeEntry();
             }
         }
         
-        LOGGER.info("Unzip completed.");
+        LOGGER.info("Unzip completed. Total files extracted: {}", count);
+        
+        if (count == 0) {
+            throw new IOException("Extraction failed: No files were extracted from the archive. Check path separators or archive validity.");
+        }
+        
         return outputPath.toString();
     }
     
