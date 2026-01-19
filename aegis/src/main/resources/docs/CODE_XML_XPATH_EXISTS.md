@@ -21,6 +21,9 @@ Validates that **required XPath expressions match** in XML files. This rule **fa
 |-----------|------|-------------|
 | `filePatterns` | List<String> | Glob patterns to match XML files |
 | `xpathExpressions` | List<Map> | List of XPath expressions with optional custom failure messages |
+| `requiredFields` | Map<String, String> | XPath-Value pairs for exact matching (Optional) |
+| `minVersions` | Map<String, String> | XPath-MinVersion pairs for SemVer check (Optional) |
+| `exactVersions` | Map<String, String> | XPath-Version pairs for Exact SemVer check (Optional) |
 
 #### XPath Expression Map Structure
 

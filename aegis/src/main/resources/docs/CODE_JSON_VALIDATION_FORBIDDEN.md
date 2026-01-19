@@ -20,7 +20,14 @@ Validates that **forbidden JSON elements do NOT exist** in JSON files. This rule
 | Parameter | Type | Description |
 |-----------|------|-------------|
 | `filePattern` | String | Filename pattern to match (e.g., `mule-artifact.json`, `package.json`) |
-| `forbiddenElements` | List<String> | List of forbidden JSON keys (top-level or simple nested paths) |
+
+### Forbidden Parameters (At least one required)
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| **`forbiddenElements`** | List<String> | List of forbidden JSON keys (top-level or simple nested paths). Fails if **Exists**. |
+| **`forbiddenFields`** | Map | Fails if field **Matches Value** (String equality). Logic: `Actual == ForbiddenValue` -> Fail. |
+| **`forbiddenVersions`** | Map | Fails if field **Matches Version** (SemVer equality). Logic: `Actual == ForbiddenVersion` -> Fail. |
 
 ## Configuration Examples
 
@@ -57,14 +64,18 @@ Ensures `package.json` does not contain sensitive or development-only keys.
         filePattern: "package.json"
         forbiddenElements:
           - "privateRepositoryUrl"
-          - "internalScripts"
+        forbiddenFields:
+          "scripts/test": "echo 'no test'" # Forbid dummy test scripts
+        forbiddenVersions:
+          "engines/node": "14.17.0"      # Forbid a specific known-vulnerable version
 ```
 
 ## Error Messages
 
 ```
 project-descriptor.json has forbidden element: legacyMode
-package.json has forbidden element: privateRepositoryUrl
+Forbidden field value found 'scripts/test': 'echo 'no test''
+Forbidden version found for 'engines/node': '14.17.0'
 ```
 
 ## Best Practices

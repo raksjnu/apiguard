@@ -21,12 +21,13 @@ Validates that **required JSON elements exist** in JSON files. This rule is esse
 |-----------|------|-------------|
 | `filePattern` | String | Precise filename to match (e.g., `mule-artifact.json`, `package.json`) |
 
-### Validation Parameters (Must configure at least one)
+### Standard Validation Parameters (Must configure at least one)
 
 | Parameter | Type | Description |
 |-----------|------|-------------|
-| `minVersions` | Map | Checks if a field's value meets a minimum version (Supports Arrays). Logic: `Actual >= Min`. If array: Pass if *any* element >= Min. |
-| `requiredFields` | Map | Checks if a field matches an expected value (Supports Arrays). Logic: `Actual == Expected`. If array: Pass if *any* element matches (String equality or SemVer). |
+| `minVersions` | Map | Checks if a field's value meets a minimum version (Supports Arrays). Logic: `Actual >= Min` (SemVer). If array: Pass if *any* element >= Min. |
+| **`exactVersions`** | Map | Checks if a field's value exactly matches a version (Supports Arrays). Logic: `Actual == Expected` (SemVer). If array: Pass if *any* element == Expected. |
+| `requiredFields` | Map | Checks if a field matches an expected value (Supports Arrays). Logic: `Actual == Expected` (String Equality). If array: Pass if *any* element matches. |
 | `requiredElements` | List | Checks if a field simply exists (value ignored) |
 
 ## Configuration Examples
@@ -44,10 +45,10 @@ Validates minimum runtime version, required Java version, and presence of secure
     - type: JSON_VALIDATION_REQUIRED
       params:
         filePattern: "mule-artifact.json"
-        minVersions:
-          minMuleVersion: "4.9.0"
+        exactVersions:
+             minMuleVersion: "4.9.0"  # Must be exactly 4.9.0
         requiredFields:
-          javaSpecificationVersions: "17"
+          javaSpecificationVersions: "17" # String match
         requiredElements:
           - "secureProperties"
 ```
@@ -69,7 +70,7 @@ Ensures the project has a start script and requires a minimum Node engine.
         requiredFields:
           scripts/start: "node index.js"
         minVersions:
-          engines/node: "18.0.0"
+          engines/node: "18.0.0" # Must be >= 18.0.0
         requiredElements:
           - "dependencies"
           - "license"
@@ -79,7 +80,7 @@ Ensures the project has a start script and requires a minimum Node engine.
 
 ```
 Field 'minMuleVersion' version too low in mule-artifact.json: expected >= 4.9.0, got 4.4.0
-Field 'engines/node' version too low in package.json: expected >= 18.0.0, got 14.17.0
+Version mismatch for 'minMuleVersion': Found='4.4.0', Expected Exactly='4.9.0'
 Element 'secureProperties' missing in mule-artifact.json
 ```
 
@@ -91,6 +92,7 @@ Element 'secureProperties' missing in mule-artifact.json
 -  Ensuring minimum platform/engine versions for security.
 -  Enforcing required configuration fields in application JSON.
 -  Standardizing JSON structure across multiple repositories.
+
 ## Related Rule Types
 
 - **[JSON_VALIDATION_FORBIDDEN](JSON_VALIDATION_FORBIDDEN.md)** - Opposite: ensures elements do NOT exist

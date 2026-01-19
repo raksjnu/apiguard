@@ -22,6 +22,9 @@ A versatile engine for validating property-based configuration files across diff
 | `fileExtensions` | List | File extensions to scan (e.g., `.properties`, `.yaml`) |
 | `environments` | List | Environment keys to target (e.g., `DEV`, `QA`, `PROD` or `ALL`) |
 | `validationRules` | List<Map> | A collection of validation logic blocks |
+| `requiredFields` | Map<String, String> | Key-value pairs for exact matching (Optional) |
+| `minVersions` | Map<String, String> | Key-MinVersion pairs for SemVer check (Optional) |
+| `exactVersions` | Map<String, String> | Key-Version pairs for Exact SemVer check (Optional) |
 
 ### Validation Rule Map
 
@@ -75,7 +78,28 @@ Validate that technical configurations like ports and timeouts follow specific n
             message: "Database timeout must include 'ms' unit.\n{DEFAULT_MESSAGE}"
 ```
 
-### Example 3: Production Security Guardrails
+### Example 3: Version and Field Validation
+Enforce specific versions and exact field values using standard parameters.
+
+```yaml
+- id: "RULE-PROP-STANDARDS"
+  name: "Standard Property Validation"
+  severity: HIGH
+  checks:
+    - type: GENERIC_PROPERTY_FILE_CHECK
+      params:
+        fileExtensions: [".properties"]
+        environments: ["ALL"]
+        requiredFields:
+          "app.type": "microservice"
+          "deploy.mode": "blue-green"
+        minVersions:
+          "lib.version": "1.2.0"
+        exactVersions:
+          "fixed.dep": "3.0.1"
+```
+
+### Example 4: Production Security Guardrails
 Block the usage of insecure protocols or hardcoded local development strings in production.
 
 ```yaml

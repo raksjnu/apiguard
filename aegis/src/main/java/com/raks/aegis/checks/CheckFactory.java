@@ -38,7 +38,12 @@ public class CheckFactory {
                  java.util.List<?> exts = (java.util.List<?>) extObj;
                  java.util.List<String> patterns = new java.util.ArrayList<>();
                  for (Object o : exts) {
-                     patterns.add("**/*." + o.toString());
+                     String ext = o.toString();
+                     if (ext.startsWith(".")) {
+                         patterns.add("**/*" + ext);
+                     } else {
+                         patterns.add("**/*." + ext);
+                     }
                  }
                  effectiveParams.put("filePatterns", patterns);
              }

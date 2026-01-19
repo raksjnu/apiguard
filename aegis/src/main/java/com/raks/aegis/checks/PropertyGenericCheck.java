@@ -70,8 +70,9 @@ public class PropertyGenericCheck extends AbstractCheck {
         @SuppressWarnings("unchecked")
         List<Map<String, String>> validationRules = (List<Map<String, String>>) params.get("validationRules");
 
-        if (propertyConstraints.isEmpty() && (validationRules == null || validationRules.isEmpty())) {
-             return failConfig(check, "property, properties, or validationRules required");
+        if (propertyConstraints.isEmpty() && (validationRules == null || validationRules.isEmpty()) && 
+            !params.containsKey("minVersions") && !params.containsKey("exactVersions") && !params.containsKey("requiredFields")) {
+             return failConfig(check, "property, properties, validationRules, or standard validation params (minVersions, etc.) required");
         }
 
         int passedFileCount = 0;
@@ -79,6 +80,7 @@ public class PropertyGenericCheck extends AbstractCheck {
         List<String> details = new ArrayList<>();
         java.util.Set<String> successDetails = new java.util.HashSet<>();
         List<String> checkedFilesList = new ArrayList<>();
+        java.util.Set<String> allFoundItems = new java.util.HashSet<>();
 
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             List<Path> matchingFiles = paths
@@ -98,6 +100,75 @@ public class PropertyGenericCheck extends AbstractCheck {
                     Properties props = new Properties();
                     if (file.toString().endsWith(".xml")) props.loadFromXML(is);
                     else props.load(is);
+
+                    // Standard: requiredFields (Exact Match)
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> requiredFields = (Map<String, String>) params.get("requiredFields");
+                    if (requiredFields != null) {
+                        for (Map.Entry<String, String> entry : requiredFields.entrySet()) {
+                            String key = entry.getKey();
+                            String expected = entry.getValue();
+                            String actual = props.getProperty(key);
+
+                            if (actual == null) {
+                                filePassed = false;
+                                fileErrors.add("Missing field: " + key);
+                            } else if (!actual.equals(expected)) {
+                                filePassed = false;
+                                fileErrors.add(String.format("Field mismatch '%s': Found='%s', Expected='%s'", key, actual, expected));
+                                allFoundItems.add(String.format("%s=%s", key, actual));
+                            } else {
+                                fileSuccesses.add(String.format("%s=%s", key, actual));
+                                allFoundItems.add(String.format("%s=%s", key, actual));
+                            }
+                        }
+                    }
+
+                    // Standard: minVersions (>=)
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> minVersions = (Map<String, String>) params.get("minVersions");
+                    if (minVersions != null) {
+                        for (Map.Entry<String, String> entry : minVersions.entrySet()) {
+                            String key = entry.getKey();
+                            String minVer = entry.getValue();
+                            String actual = props.getProperty(key);
+
+                            if (actual == null) {
+                                filePassed = false;
+                                fileErrors.add("Missing version field: " + key);
+                            } else if (!compareValues(actual, minVer, "GTE", "SEMVER")) {
+                                filePassed = false;
+                                fileErrors.add(String.format("Version too low '%s': Found='%s', Min='%s'", key, actual, minVer));
+                                allFoundItems.add(String.format("%s=%s", key, actual));
+                            } else {
+                                fileSuccesses.add(String.format("%s=%s", key, actual));
+                                allFoundItems.add(String.format("%s=%s", key, actual));
+                            }
+                        }
+                    }
+
+                    // Standard: exactVersions (==)
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> exactVersions = (Map<String, String>) params.get("exactVersions");
+                    if (exactVersions != null) {
+                        for (Map.Entry<String, String> entry : exactVersions.entrySet()) {
+                            String key = entry.getKey();
+                            String exactVer = entry.getValue();
+                            String actual = props.getProperty(key);
+
+                            if (actual == null) {
+                                filePassed = false;
+                                fileErrors.add("Missing version field: " + key);
+                            } else if (!compareValues(actual, exactVer, "EQ", "SEMVER")) {
+                                filePassed = false;
+                                fileErrors.add(String.format("Version mismatch '%s': Found='%s', Expected='%s'", key, actual, exactVer));
+                                allFoundItems.add(String.format("%s=%s", key, actual));
+                            } else {
+                                fileSuccesses.add(String.format("%s=%s", key, actual));
+                                allFoundItems.add(String.format("%s=%s", key, actual));
+                            }
+                        }
+                    }
 
                     if (validationRules != null && !validationRules.isEmpty()) {
                         for (Map<String, String> rule : validationRules) {
@@ -121,13 +192,15 @@ public class PropertyGenericCheck extends AbstractCheck {
                                     if (val != null && !val.matches(regex)) {
                                         filePassed = false;
                                          fileErrors.add(formatCustomRuleMessage(customMsg, "Format mismatch for " + key));
+                                         allFoundItems.add(String.format("%s=%s", key, val));
                                     } else if (val != null) {
                                         fileSuccesses.add(key + "=" + val);
+                                        allFoundItems.add(String.format("%s=%s", key, val));
                                     }
                                 }
                             }
                         }
-                    } else {
+                    } else if (propertyConstraints != null && !propertyConstraints.isEmpty()) {
                         for (PropertyConstraint constraint : propertyConstraints) {
                             String propertyKey = constraint.name;
                             String actualValue = props.getProperty(propertyKey);
@@ -138,11 +211,13 @@ public class PropertyGenericCheck extends AbstractCheck {
                                     fileErrors.add("Missing Key: " + propertyKey);
                                 } else {
                                     fileSuccesses.add(propertyKey + "=" + actualValue);
+                                    allFoundItems.add(propertyKey + "=" + actualValue);
                                 }
                             } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
                                 if (actualValue != null) {
                                     filePassed = false;
                                     fileErrors.add("Forbidden Key found: " + propertyKey);
+                                    allFoundItems.add(propertyKey + "=" + actualValue);
                                 }
                             } else if ("VALUE_MATCH".equalsIgnoreCase(mode)) {
                                 if (actualValue == null) {
@@ -163,8 +238,10 @@ public class PropertyGenericCheck extends AbstractCheck {
                                         if (!valueMatch) {
                                             filePassed = false;
                                             fileErrors.add(String.format("Invalid value for '%s'. Found: '%s', Expected one of: %s", propertyKey, actualValue, constraint.allowedValues));
+                                            allFoundItems.add(propertyKey + "=" + actualValue);
                                         } else {
                                             fileSuccesses.add(propertyKey + "=" + actualValue);
+                                            allFoundItems.add(propertyKey + "=" + actualValue);
                                         }
                                     } else {
 
@@ -172,8 +249,10 @@ public class PropertyGenericCheck extends AbstractCheck {
                                             filePassed = false;
                                             fileErrors.add(String.format("Value mismatch for '%s'. Found: '%s', Expected: '%s' (Op: '%s')", 
                                                 propertyKey, actualValue, expectedValueRegex, operator));
+                                            allFoundItems.add(propertyKey + "=" + actualValue);
                                         } else {
                                             fileSuccesses.add(propertyKey + "=" + actualValue);
+                                            allFoundItems.add(propertyKey + "=" + actualValue);
                                         }
                                     }
                                 }
@@ -183,13 +262,17 @@ public class PropertyGenericCheck extends AbstractCheck {
                                         filePassed = false;
                                         fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
                                             propertyKey, actualValue, expectedValueRegex, operator));
+                                        allFoundItems.add(propertyKey + "=" + actualValue);
                                     } else {
                                         fileSuccesses.add(propertyKey + "=" + actualValue);
+                                        allFoundItems.add(propertyKey + "=" + actualValue);
                                     }
                                 }
                             }
                         }
                     } 
+
+                    checkedFilesList.add(projectRoot.relativize(file).toString()); // Always add checked file
 
                 } catch (Exception e) {
                      filePassed = false;
@@ -198,7 +281,6 @@ public class PropertyGenericCheck extends AbstractCheck {
 
                 if (filePassed) {
                     passedFileCount++;
-                    checkedFilesList.add(projectRoot.relativize(file).toString());
                     successDetails.addAll(fileSuccesses);
                 } else {
                     details.add(projectRoot.relativize(file) + " [" + String.join(", ", fileErrors) + "]");
@@ -208,13 +290,7 @@ public class PropertyGenericCheck extends AbstractCheck {
             boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
 
             String checkedFilesStr = String.join(", ", checkedFilesList);
-
-            String foundItemsStr = details.stream()
-                    .filter(det -> det.contains("[") && det.contains("]"))
-                    .map(det -> det.substring(det.indexOf("[") + 1, det.lastIndexOf("]")))
-                    .map(items -> items.replace("\n", ", ").trim())
-                    .collect(java.util.stream.Collectors.joining("; "));
-
+            String foundItemsStr = String.join("; ", allFoundItems);
             String matchingFilesStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
 
             if (uniqueCondition) {

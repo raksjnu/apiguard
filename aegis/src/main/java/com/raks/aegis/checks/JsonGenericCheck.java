@@ -164,6 +164,50 @@ public class JsonGenericCheck extends AbstractCheck {
                                      if (!verMatch) {
                                          filePassed = false;
                                          fileReasons.add(String.format("Version too low for '%s': Found='%s', Min Required='%s'", key, val, minVer));
+                                         allFoundItems.add(String.format("%s=%s", key, val));
+                                     } else {
+                                         fileSuccesses.add(String.format("%s=%s", key, val));
+                                     }
+                                  }
+                             }
+                         }
+
+                         @SuppressWarnings("unchecked")
+                         Map<String, String> exactVersions = (Map<String, String>) params.get("exactVersions");
+                         if (exactVersions != null && !exactVersions.isEmpty()) {
+                             if (jsonContext instanceof Map) {
+                                  @SuppressWarnings("unchecked")
+                                  Map<String, Object> jsonMap = (Map<String, Object>) jsonContext;
+                                  for (Map.Entry<String, String> entry : exactVersions.entrySet()) {
+                                     String key = entry.getKey();
+                                     String exactVer = entry.getValue();
+
+                                     if (!jsonMap.containsKey(key)) {
+                                         filePassed = false;
+                                         fileReasons.add("Missing field for exact version check: " + key);
+                                         continue;
+                                     }
+
+                                     Object val = jsonMap.get(key);
+                                     boolean verMatch = false;
+
+                                     if (val instanceof List) {
+                                         for (Object item : (List<?>)val) {
+                                             if (compareValues(item.toString(), exactVer, "EQ", "SEMVER")) {
+                                                 verMatch = true;
+                                                 break;
+                                             }
+                                         }
+                                     } else if (val != null) {
+                                         if (compareValues(val.toString(), exactVer, "EQ", "SEMVER")) {
+                                             verMatch = true;
+                                         }
+                                     }
+
+                                     if (!verMatch) {
+                                         filePassed = false;
+                                         fileReasons.add(String.format("Version mismatch for '%s': Found='%s', Expected Exactly='%s'", key, val, exactVer));
+                                         allFoundItems.add(String.format("%s=%s", key, val));
                                      } else {
                                          fileSuccesses.add(String.format("%s=%s", key, val));
                                      }
@@ -244,6 +288,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                           if (!match) {
                                               filePassed = false;
                                               fileReasons.add(String.format("Field mismatch '%s': Actual='%s', Expected='%s'", key, resolvedActual, expected));
+                                              allFoundItems.add(String.format("%s=%s", key, resolvedActual));
                                           } else {
                                               fileSuccesses.add(String.format("%s=%s", key, resolvedActual));
                                           }
@@ -254,19 +299,98 @@ public class JsonGenericCheck extends AbstractCheck {
                                  fileReasons.add("Root is not a JSON Object, cannot check requiredFields");
                              }
                          }
-                    }
-                } catch (Exception e) {
-                   filePassed = false;
-                   fileReasons.add("Processing Error: " + e.getMessage());
-                }
 
-                if (filePassed) {
-                    passedFileCount++;
-                    checkedFilesList.add(projectRoot.relativize(file).toString());
-                    successDetails.addAll(fileSuccesses);
-                } else {
-                    details.add(projectRoot.relativize(file) + " [" + String.join(", ", fileReasons) + "]");
-                }
+                         @SuppressWarnings("unchecked")
+                         Map<String, String> forbiddenFields = (Map<String, String>) params.get("forbiddenFields");
+                         if (forbiddenFields != null && !forbiddenFields.isEmpty()) {
+                             if (jsonContext instanceof Map) {
+                                  @SuppressWarnings("unchecked")
+                                  Map<String, Object> jsonMap = (Map<String, Object>) jsonContext;
+                                  for (Map.Entry<String, String> entry : forbiddenFields.entrySet()) {
+                                     String key = entry.getKey();
+                                     String forbiddenVal = entry.getValue();
+
+                                     if (jsonMap.containsKey(key)) {
+                                         Object val = jsonMap.get(key);
+                                         String actual = val != null ? val.toString() : "null";
+                                         String resolvedActual = actual;
+
+                                         if (actual.contains("${") || actual.contains("p('") || actual.contains("p(\"")) {
+                                             resolvedActual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                         }
+
+                                         boolean match = false;
+                                         if (resolvedActual.equals(forbiddenVal)) match = true;
+                                         if (!match && compareValues(resolvedActual, forbiddenVal, "EQ", "SEMVER")) match = true;
+
+                                         if (match) {
+                                             filePassed = false;
+                                             fileReasons.add(String.format("Forbidden field value found '%s': '%s'", key, resolvedActual));
+                                             allFoundItems.add(String.format("%s=%s", key, resolvedActual));
+                                         }
+                                     }
+                                  }
+                             }
+                         }
+
+                         @SuppressWarnings("unchecked")
+                         Map<String, String> forbiddenVersions = (Map<String, String>) params.get("forbiddenVersions");
+                         if (forbiddenVersions != null && !forbiddenVersions.isEmpty()) {
+                             if (jsonContext instanceof Map) {
+                                  @SuppressWarnings("unchecked")
+                                  Map<String, Object> jsonMap = (Map<String, Object>) jsonContext;
+                                  for (Map.Entry<String, String> entry : forbiddenVersions.entrySet()) {
+                                     String key = entry.getKey();
+                                     String forbiddenVer = entry.getValue();
+
+                                     if (jsonMap.containsKey(key)) {
+                                         Object val = jsonMap.get(key);
+                                         boolean verMatch = false;
+
+                                         if (val instanceof List) {
+                                             for (Object item : (List<?>)val) {
+                                                 if (compareValues(item.toString(), forbiddenVer, "EQ", "SEMVER")) {
+                                                     verMatch = true;
+                                                     break;
+                                                 }
+                                             }
+                                         } else if (val != null) {
+                                             if (compareValues(val.toString(), forbiddenVer, "EQ", "SEMVER")) {
+                                                 verMatch = true;
+                                             }
+                                         }
+
+                                         if (verMatch) {
+                                             filePassed = false;
+                                             fileReasons.add(String.format("Forbidden version found for '%s': '%s'", key, forbiddenVer));
+                                             allFoundItems.add(String.format("%s=%s", key, forbiddenVer));
+                                         }
+                                     }
+                                  }
+                             }
+                         }
+                    }
+                     checkedFilesList.add(projectRoot.relativize(file).toString()); // Add to checked files regardless of pass/fail
+                 } catch (Exception e) {
+                    filePassed = false;
+                    fileReasons.add("Processing Error: " + e.getMessage());
+                 }
+
+                 if (filePassed) {
+                     passedFileCount++;
+                     successDetails.addAll(fileSuccesses);
+                 } else {
+                     details.add(projectRoot.relativize(file) + " [" + String.join(", ", fileReasons) + "]");
+                     // If we have failure reasons that identify specific keys, we can try to add them to allFoundItems
+                     // But better to populate allFoundItems directly where failures are detected?
+                     // Since we updated the logic above to NOT populate allFoundItems on failure, let's rely on fileReasons for DETAILS
+                     // and populate allFoundItems with the 'Actual' values we found that caused failure.
+
+                     // We will assume the logic above has been updated to populate allFoundItems?
+                     // No, the previous logic didn't populate allFoundItems on failure for requiredFields/Versions.
+                     // We need to verify if we want to change that in the loop.
+                     // Ideally, 'Found Items' should list what we found.
+                 }
             }
 
         } catch (Exception e) {
