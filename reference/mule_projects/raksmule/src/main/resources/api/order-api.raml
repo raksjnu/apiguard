@@ -1,0 +1,90 @@
+#%RAML 1.0
+title: Order API
+version: v1
+baseUri: http://localhost:8082/api
+mediaType: application/json
+
+types:
+  Order:
+    type: object
+    properties:
+      orderNumber: string
+      customerName: string
+      customerEmail: string
+      orderDate: date-only
+      productName: string
+      quantity: integer
+      totalAmount: number
+      status: string
+
+  CreateOrderRequest:
+    type: object
+    properties:
+      customerName: string
+      customerEmail: string
+      orderDate: date-only
+      productName: string
+      quantity: integer
+      totalAmount: number
+
+  CreateOrderResponse:
+    type: object
+    properties:
+      orderNumber: string
+      status: string
+      message: string
+
+/orders:
+  post:
+    description: Create a new order
+    body:
+      application/json:
+        type: CreateOrderRequest
+        example: |
+          {
+            "customerName": "John Doe",
+            "customerEmail": "john.doe@example.com",
+            "orderDate": "2026-01-18",
+            "productName": "Widget Pro",
+            "quantity": 5,
+            "totalAmount": 249.99
+          }
+    responses:
+      201:
+        body:
+          application/json:
+            type: CreateOrderResponse
+            example: |
+              {
+                "orderNumber": "ORD-20260118-001",
+                "status": "SUCCESS",
+                "message": "Order created successfully"
+              }
+
+  /{orderNumber}:
+    get:
+      description: Get order details by order number
+      responses:
+        200:
+          body:
+            application/json:
+              type: Order
+              example: |
+                {
+                  "orderNumber": "ORD-20260118-001",
+                  "customerName": "John Doe",
+                  "customerEmail": "john.doe@example.com",
+                  "orderDate": "2026-01-18",
+                  "productName": "Widget Pro",
+                  "quantity": 5,
+                  "totalAmount": 249.99,
+                  "status": "CONFIRMED"
+                }
+        404:
+          body:
+            application/json:
+              example: |
+                {
+                  "error": "Order not found",
+                  "orderNumber": "ORD-INVALID"
+                }
