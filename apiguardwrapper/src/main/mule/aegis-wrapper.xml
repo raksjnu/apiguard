@@ -474,7 +474,12 @@ output application/java
     rulesFile: payload.parts.customRules.content default null,
     attachProject: payload.parts.attachProject.content default null,
     gitBranch: payload.parts.gitBranch.content default null,
-    gitToken: payload.parts.gitToken.content default null
+    gitToken: payload.parts.gitToken.content default null,
+    archiveFilename: if (payload.parts.archive.headers["Content-Disposition"].filename != null) 
+                        payload.parts.archive.headers["Content-Disposition"].filename 
+                     else if (payload.parts.archive.headers["Content-Disposition"] != null)
+                        (payload.parts.archive.headers["Content-Disposition"] match /.*filename="?([^"]+)("|$).*/)[1] default "Uploaded Project"
+                     else "Uploaded Project"
 }]]></ee:set-variable>
                     </ee:variables>
                 </ee:transform>
@@ -583,7 +588,14 @@ output application/java
                 <!-- Set targetPath to parent of extracted project so Aegis finds the project and creates reports at parent level -->
                 <set-variable variableName="targetPath" value="#[vars.extractedPath]"/>
 
-                <set-variable variableName="displayPath" value="Uploaded Project"/>
+                <java:invoke-static class="com.raks.apiguardwrapper.util.ZipUtil" method="getProjectRootName(java.lang.String,java.lang.String)" target="projectName">
+                    <java:args>#[{
+                        arg0: vars.extractedPath,
+                        arg1: vars.archiveFilename
+                    }]</java:args>
+                </java:invoke-static>
+
+                <set-variable variableName="displayPath" value="#[vars.projectName]"/>
             </when>
             
              <when expression="#[trim(vars.validationMode) == 'git']">

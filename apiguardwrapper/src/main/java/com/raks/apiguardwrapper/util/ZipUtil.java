@@ -109,4 +109,41 @@ public class ZipUtil {
     public static String extractJar(String jarFilePath, String outputDir) throws IOException {
          return unzip(jarFilePath, outputDir);
     }
+
+    public static String getProjectRootName(String extractPath, String fallbackName) {
+        try {
+            Path dir = Paths.get(extractPath);
+            if (!Files.exists(dir) || !Files.isDirectory(dir)) {
+                return fallbackName;
+            }
+
+            // Check if the root itself is a project (Flat Zip)
+            if (Files.exists(dir.resolve("pom.xml")) || 
+                Files.exists(dir.resolve("mule-artifact.json")) ||
+                Files.exists(dir.resolve(".project"))) {
+                return fallbackName;
+            }
+            
+            // Filter out system files like __MACOSX, .DS_Store, etc.
+            java.util.List<Path> contents = Files.list(dir)
+                .filter(p -> {
+                    String name = p.getFileName().toString();
+                    return !name.equals("__MACOSX") && !name.equals(".DS_Store") && !name.startsWith(".");
+                })
+                .collect(java.util.stream.Collectors.toList());
+            
+            // Single subdirectory -> Use its name
+            if (contents.size() == 1 && Files.isDirectory(contents.get(0))) {
+                return contents.get(0).getFileName().toString();
+            }
+
+            // Multiple items and root is not a project -> Return null to let Aegis discover names
+            // This handles the case of a zip containing multiple project folders
+            return null;
+
+        } catch (IOException e) {
+            LOGGER.warn("Failed to detect project root name from {}: {}", extractPath, e.getMessage());
+        }
+        return fallbackName;
+    }
 }

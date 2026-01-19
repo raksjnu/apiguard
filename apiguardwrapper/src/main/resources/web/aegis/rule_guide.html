@@ -1108,7 +1108,7 @@ A versatile engine for validating property-based configuration files across diff
 <br>
 <h3>Required Parameters</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>fileExtensions</code> </td><td> List </td><td> File extensions to scan (e.g., <code class='inline-token'>.properties</code>, <code class='inline-token'>.yaml</code>) </td></tr><tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> Environment keys to target (e.g., <code class='inline-token'>DEV</code>, <code class='inline-token'>QA</code>, <code class='inline-token'>PROD</code> or <code class='inline-token'>ALL</code>) </td></tr><tr><td> <code class='inline-token'>validationRules</code> </td><td> List<Map> </td><td> A collection of validation logic blocks </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>fileExtensions</code> </td><td> List </td><td> File extensions to scan (e.g., <code class='inline-token'>.properties</code>, <code class='inline-token'>.yaml</code>) </td></tr><tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> Environment keys to target (e.g., <code class='inline-token'>DEV</code>, <code class='inline-token'>QA</code>, <code class='inline-token'>PROD</code> or <code class='inline-token'>ALL</code>) </td></tr><tr><td> <code class='inline-token'>validationRules</code> </td><td> List<Map> </td><td> A collection of validation logic blocks </td></tr><tr><td> <code class='inline-token'>requiredFields</code> </td><td> Map<String, String> </td><td> Key-value pairs for exact matching (Optional) </td></tr><tr><td> <code class='inline-token'>minVersions</code> </td><td> Map<String, String> </td><td> Key-MinVersion pairs for SemVer check (Optional) </td></tr><tr><td> <code class='inline-token'>exactVersions</code> </td><td> Map<String, String> </td><td> Key-Version pairs for Exact SemVer check (Optional) </td></tr></table>
 <br>
 <h3>Validation Rule Map</h3>
 <br>
@@ -1156,7 +1156,27 @@ Validate that technical configurations like ports and timeouts follow specific n
             message: &quot;Database timeout must include 'ms' unit.\n{DEFAULT_MESSAGE}&quot;
 </code></pre>
 <br>
-<h3>Example 3: Production Security Guardrails</h3>
+<h3>Example 3: Version and Field Validation</h3>
+Enforce specific versions and exact field values using standard parameters.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-PROP-STANDARDS&quot;
+  name: &quot;Standard Property Validation&quot;
+  severity: HIGH
+  checks:
+    - type: GENERIC_PROPERTY_FILE_CHECK
+      params:
+        fileExtensions: [&quot;.properties&quot;]
+        environments: [&quot;ALL&quot;]
+        requiredFields:
+          &quot;app.type&quot;: &quot;microservice&quot;
+          &quot;deploy.mode&quot;: &quot;blue-green&quot;
+        minVersions:
+          &quot;lib.version&quot;: &quot;1.2.0&quot;
+        exactVersions:
+          &quot;fixed.dep&quot;: &quot;3.0.1&quot;
+</code></pre>
+<br>
+<h3>Example 4: Production Security Guardrails</h3>
 Block the usage of insecure protocols or hardcoded local development strings in production.
 <br>
 <pre><code class='language-yaml'>- id: &quot;RULE-PROD-SECURITY-KEYS&quot;
@@ -1875,7 +1895,11 @@ Validates that <strong>forbidden JSON elements do NOT exist</strong> in JSON fil
 <br>
 <h3>Required Parameters</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>filePattern</code> </td><td> String </td><td> Filename pattern to match (e.g., <code class='inline-token'>mule-artifact.json</code>, <code class='inline-token'>package.json</code>) </td></tr><tr><td> <code class='inline-token'>forbiddenElements</code> </td><td> List<String> </td><td> List of forbidden JSON keys (top-level or simple nested paths) </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>filePattern</code> </td><td> String </td><td> Filename pattern to match (e.g., <code class='inline-token'>mule-artifact.json</code>, <code class='inline-token'>package.json</code>) </td></tr></table>
+<br>
+<h3>Forbidden Parameters (At least one required)</h3>
+<br>
+<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <strong><code class='inline-token'>forbiddenElements</code></strong> </td><td> List<String> </td><td> List of forbidden JSON keys (top-level or simple nested paths). Fails if <strong>Exists</strong>. </td></tr><tr><td> <strong><code class='inline-token'>forbiddenFields</code></strong> </td><td> Map </td><td> Fails if field <strong>Matches Value</strong> (String equality). Logic: <code class='inline-token'>Actual == ForbiddenValue</code> -> Fail. </td></tr><tr><td> <strong><code class='inline-token'>forbiddenVersions</code></strong> </td><td> Map </td><td> Fails if field <strong>Matches Version</strong> (SemVer equality). Logic: <code class='inline-token'>Actual == ForbiddenVersion</code> -> Fail. </td></tr></table>
 <br>
 <h2 id="JSON_VALIDATION_FORBIDDEN_ConfigurationExamples">Configuration Examples</h2>
 <br>
@@ -1910,13 +1934,17 @@ Ensures <code class='inline-token'>package.json</code> does not contain sensitiv
         filePattern: &quot;package.json&quot;
         forbiddenElements:
           - &quot;privateRepositoryUrl&quot;
-          - &quot;internalScripts&quot;
+        forbiddenFields:
+          &quot;scripts/test&quot;: &quot;echo 'no test'&quot; # Forbid dummy test scripts
+        forbiddenVersions:
+          &quot;engines/node&quot;: &quot;14.17.0&quot;      # Forbid a specific known-vulnerable version
 </code></pre>
 <br>
 <h2 id="JSON_VALIDATION_FORBIDDEN_ErrorMessages">Error Messages</h2>
 <br>
 <pre><code class='language-text'>project-descriptor.json has forbidden element: legacyMode
-package.json has forbidden element: privateRepositoryUrl
+Forbidden field value found 'scripts/test': 'echo 'no test''
+Forbidden version found for 'engines/node': '14.17.0'
 </code></pre>
 <br>
 <h2 id="JSON_VALIDATION_FORBIDDEN_BestPractices">Best Practices</h2>
@@ -1953,9 +1981,9 @@ Validates that <strong>required JSON elements exist</strong> in JSON files. This
 <br>
 <table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>filePattern</code> </td><td> String </td><td> Precise filename to match (e.g., <code class='inline-token'>mule-artifact.json</code>, <code class='inline-token'>package.json</code>) </td></tr></table>
 <br>
-<h3>Validation Parameters (Must configure at least one)</h3>
+<h3>Standard Validation Parameters (Must configure at least one)</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>minVersions</code> </td><td> Map </td><td> Checks if a field's value meets a minimum version (Supports Arrays). Logic: <code class='inline-token'>Actual &gt;= Min</code>. If array: Pass if *any* element >= Min. </td></tr><tr><td> <code class='inline-token'>requiredFields</code> </td><td> Map </td><td> Checks if a field matches an expected value (Supports Arrays). Logic: <code class='inline-token'>Actual == Expected</code>. If array: Pass if *any* element matches (String equality or SemVer). </td></tr><tr><td> <code class='inline-token'>requiredElements</code> </td><td> List </td><td> Checks if a field simply exists (value ignored) </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>minVersions</code> </td><td> Map </td><td> Checks if a field's value meets a minimum version (Supports Arrays). Logic: <code class='inline-token'>Actual &gt;= Min</code> (SemVer). If array: Pass if *any* element >= Min. </td></tr><tr><td> <strong><code class='inline-token'>exactVersions</code></strong> </td><td> Map </td><td> Checks if a field's value exactly matches a version (Supports Arrays). Logic: <code class='inline-token'>Actual == Expected</code> (SemVer). If array: Pass if *any* element == Expected. </td></tr><tr><td> <code class='inline-token'>requiredFields</code> </td><td> Map </td><td> Checks if a field matches an expected value (Supports Arrays). Logic: <code class='inline-token'>Actual == Expected</code> (String Equality). If array: Pass if *any* element matches. </td></tr><tr><td> <code class='inline-token'>requiredElements</code> </td><td> List </td><td> Checks if a field simply exists (value ignored) </td></tr></table>
 <br>
 <h2 id="JSON_VALIDATION_REQUIRED_ConfigurationExamples">Configuration Examples</h2>
 <br>
@@ -1971,10 +1999,10 @@ Validates minimum runtime version, required Java version, and presence of secure
     - type: JSON_VALIDATION_REQUIRED
       params:
         filePattern: &quot;mule-artifact.json&quot;
-        minVersions:
-          minMuleVersion: &quot;4.9.0&quot;
+        exactVersions:
+             minMuleVersion: &quot;4.9.0&quot;  # Must be exactly 4.9.0
         requiredFields:
-          javaSpecificationVersions: &quot;17&quot;
+          javaSpecificationVersions: &quot;17&quot; # String match
         requiredElements:
           - &quot;secureProperties&quot;
 </code></pre>
@@ -1995,7 +2023,7 @@ Ensures the project has a start script and requires a minimum Node engine.
         requiredFields:
           scripts/start: &quot;node index.js&quot;
         minVersions:
-          engines/node: &quot;18.0.0&quot;
+          engines/node: &quot;18.0.0&quot; # Must be &gt;= 18.0.0
         requiredElements:
           - &quot;dependencies&quot;
           - &quot;license&quot;
@@ -2004,7 +2032,7 @@ Ensures the project has a start script and requires a minimum Node engine.
 <h2 id="JSON_VALIDATION_REQUIRED_ErrorMessages">Error Messages</h2>
 <br>
 <pre><code class='language-text'>Field 'minMuleVersion' version too low in mule-artifact.json: expected &gt;= 4.9.0, got 4.4.0
-Field 'engines/node' version too low in package.json: expected &gt;= 18.0.0, got 14.17.0
+Version mismatch for 'minMuleVersion': Found='4.4.0', Expected Exactly='4.9.0'
 Element 'secureProperties' missing in mule-artifact.json
 </code></pre>
 <br>
@@ -2016,6 +2044,7 @@ Element 'secureProperties' missing in mule-artifact.json
 <li> Ensuring minimum platform/engine versions for security.</li>
 <li> Enforcing required configuration fields in application JSON.</li>
 <li> Standardizing JSON structure across multiple repositories.</li>
+<br>
 <h2 id="JSON_VALIDATION_REQUIRED_RelatedRuleTypes">Related Rule Types</h2>
 <br>
 <li><strong><a href="#" onclick="showRule(event, 'JSON_VALIDATION_FORBIDDEN')">JSON_VALIDATION_FORBIDDEN</a></strong> - Opposite: ensures elements do NOT exist</li>
@@ -2909,7 +2938,7 @@ Validates that <strong>required XPath expressions match</strong> in XML files. T
 <br>
 <h3>Required Parameters</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr><tr><td> <code class='inline-token'>xpathExpressions</code> </td><td> List<Map> </td><td> List of XPath expressions with optional custom failure messages </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Description </td></tr><tr><td> <code class='inline-token'>filePatterns</code> </td><td> List<String> </td><td> Glob patterns to match XML files </td></tr><tr><td> <code class='inline-token'>xpathExpressions</code> </td><td> List<Map> </td><td> List of XPath expressions with optional custom failure messages </td></tr><tr><td> <code class='inline-token'>requiredFields</code> </td><td> Map<String, String> </td><td> XPath-Value pairs for exact matching (Optional) </td></tr><tr><td> <code class='inline-token'>minVersions</code> </td><td> Map<String, String> </td><td> XPath-MinVersion pairs for SemVer check (Optional) </td></tr><tr><td> <code class='inline-token'>exactVersions</code> </td><td> Map<String, String> </td><td> XPath-Version pairs for Exact SemVer check (Optional) </td></tr></table>
 <br>
 <h4>XPath Expression Map Structure</h4>
 <br>
