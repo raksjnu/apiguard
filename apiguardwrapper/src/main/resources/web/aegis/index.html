@@ -109,7 +109,7 @@
             <div style="margin-bottom: 15px; display:flex; justify-content:center; align-items:center; gap:20px; flex-wrap:nowrap;">
                 <label style="font-weight:bold;">Git Provider:</label>
                 <label style="cursor:pointer; display:flex; align-items:center; white-space:nowrap;">
-                    <input type="radio" name="gitProvider" value="gitlab" checked onchange="handleProviderChange()" style="margin-right:8px;"> GitLab
+                    <input type="radio" name="gitProvider" value="gitlab" onchange="handleProviderChange()" style="margin-right:8px;"> GitLab
                 </label>
                 <label style="cursor:pointer; display:flex; align-items:center; white-space:nowrap;">
                     <input type="radio" name="gitProvider" value="github" onchange="handleProviderChange()" style="margin-right:8px;"> GitHub
@@ -290,16 +290,7 @@
 
             
             // Initialize view state
-            // 1. Restore Git Provider
-            const savedProvider = localStorage.getItem('aegis_git_provider') || 'gitlab';
-            // Only update DOM if mismatch to prevent false change events
-            const currentChecked = document.querySelector('input[name="gitProvider"]:checked');
-            if (currentChecked && currentChecked.value !== savedProvider) {
-                 const targetRadio = document.querySelector(`input[name="gitProvider"][value="${savedProvider}"]`);
-                 if(targetRadio) targetRadio.checked = true;
-            }
-            // Explicitly handle without clearing input
-            handleProviderChange(false);
+            loadProviderSelection();
 
             // 2. Attach Auto-save listeners to Inputs
             const inputsToSave = ['gitGroup', 'gitRepoFilter', 'gitUrl'];
@@ -338,6 +329,39 @@
                 fetch('/apiguard/gitanalyzer/api/config/ui').catch(e => console.warn('Failed to init GitAnalyzer config', e));
             }
         });
+
+        // Sync provider selection when page becomes visible (user navigated back from Settings)
+        document.addEventListener('visibilitychange', function() {
+            if (!document.hidden) {
+                loadProviderSelection();
+            }
+        });
+        
+        // Also sync when window gains focus (for same-tab navigation)
+        window.addEventListener('focus', function() {
+            loadProviderSelection();
+        });
+        
+        // Sync across tabs when localStorage changes in another tab
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'aegis_git_provider' && e.newValue !== e.oldValue) {
+                loadProviderSelection();
+            }
+        });
+        
+        function loadProviderSelection() {
+            const savedProvider = localStorage.getItem('aegis_git_provider') || 'gitlab';
+            const currentChecked = document.querySelector('input[name="gitProvider"]:checked');
+            
+            // ALWAYS select a provider if none is selected OR if it doesn't match saved
+            if (!currentChecked || currentChecked.value !== savedProvider) {
+                 const targetRadio = document.querySelector(`input[name="gitProvider"][value="${savedProvider}"]`);
+                 if(targetRadio) {
+                     targetRadio.checked = true;
+                     handleProviderChange(false);
+                 }
+            }
+        }
         
         function handleModeChange(save = true) {
             console.log('[DEBUG] handleModeChange called. Save:', save);
@@ -365,15 +389,24 @@
                     selectMode(savedMode);
                 }
 
-                // Load Git Settings
+                // Load Git Settings (using vanilla JavaScript instead of jQuery)
                 const savedGitUrl = localStorage.getItem('aegis_git_url');
-                if (savedGitUrl) $('#gitUrl').val(savedGitUrl);
+                if (savedGitUrl) {
+                    const gitUrlEl = document.getElementById('gitUrl');
+                    if (gitUrlEl) gitUrlEl.value = savedGitUrl;
+                }
                 
                 const savedGitBranch = localStorage.getItem('aegis_git_branch');
-                if (savedGitBranch) $('#gitBranch').val(savedGitBranch);
+                if (savedGitBranch) {
+                    const gitBranchEl = document.getElementById('gitBranch');
+                    if (gitBranchEl) gitBranchEl.value = savedGitBranch;
+                }
                 
                 const savedGitToken = localStorage.getItem('aegis_git_token');
-                if (savedGitToken) $('#gitToken').val(savedGitToken);
+                if (savedGitToken) {
+                    const gitTokenEl = document.getElementById('gitToken');
+                    if (gitTokenEl) gitTokenEl.value = savedGitToken;
+                }
 
                 // Load Toggle States
                 const restored = localStorage.getItem('aegis_settings_restore');
