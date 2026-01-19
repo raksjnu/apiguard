@@ -130,7 +130,9 @@ public class TokenSearchCheck extends AbstractCheck {
         List<String> failureDetails = new ArrayList<>();
         int passedFileCount = 0;
         int totalFiles = 0;
+        List<String> passedFilesList = new ArrayList<>();
         java.util.Set<String> allFoundItems = new java.util.HashSet<>();
+        java.util.Set<String> successDetails = new java.util.HashSet<>();
 
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             List<Path> matchingFiles = paths
@@ -162,6 +164,7 @@ public class TokenSearchCheck extends AbstractCheck {
             for (Path file : matchingFiles) {
                 boolean filePassed = true;
                 String failureReason = "";
+                List<String> fileSuccesses = new ArrayList<>();
 
                 try {
                     String content = Files.readString(file);
@@ -205,6 +208,8 @@ public class TokenSearchCheck extends AbstractCheck {
                             if (found.isEmpty()) {
                                 filePassed = false;
                                 failureReason = "Missing any of: " + tokens;
+                            } else {
+                                fileSuccesses.addAll(found);
                             }
                         } else {
 
@@ -213,6 +218,8 @@ public class TokenSearchCheck extends AbstractCheck {
                                 List<String> missing = new ArrayList<>(tokens);
                                 missing.removeAll(found);
                                 failureReason = "Missing: " + missing;
+                            } else {
+                                fileSuccesses.addAll(found);
                             }
                         }
                     } else {
@@ -241,6 +248,8 @@ public class TokenSearchCheck extends AbstractCheck {
 
                 if (filePassed) {
                     passedFileCount++;
+                    passedFilesList.add(projectRoot.relativize(file).toString());
+                    successDetails.addAll(fileSuccesses);
                 } else {
                     failureDetails.add(projectRoot.relativize(file) + " [" + failureReason + "]");
                 }
@@ -249,17 +258,22 @@ public class TokenSearchCheck extends AbstractCheck {
             String checkedFilesStr = matchingFiles.stream()
                 .map(p -> projectRoot.relativize(p).toString())
                 .collect(java.util.stream.Collectors.joining(", "));
-
+            
+            // If we found specific items (REQUIRED mode), show them.
+            // If successDetails is empty (e.g. FORBIDDEN mode passed because nothing found), it will be null -> N/A in message.
+            String matchingFilesStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
+            
             String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
 
             boolean overallPass = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
 
             if (overallPass) {
                 String defaultSuccess = String.format("Passed %s check in %d/%d files (Mode: %s)", mode, passedFileCount, totalFiles, matchMode);
-                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr), checkedFilesStr);
+                // Pass matchingFilesStr as the 4th argument (matchingFiles)
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr);
             } else {
                  String technicalMsg = String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d). Details:\n• %s", 
-                        mode, matchMode, passedFileCount, totalFiles, String.join("\n• ", failureDetails));
+                        mode, matchMode, passedFileCount, totalFiles, failureDetails.isEmpty() ? "No files matched criteria" : String.join("\n• ", failureDetails));
                  return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
             }
 

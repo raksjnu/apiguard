@@ -55,7 +55,8 @@ public class PomValidationRequiredCheck extends AbstractCheck {
 
             String finalMessage = formatMessage(customMessage, coreDetails, null, fileList);
 
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), finalMessage, fileList);
+            String matchingFilesForPass = successes.isEmpty() ? null : "• " + String.join("\n• ", successes);
+            return CheckResult.pass(check.getRuleId(), check.getDescription(), finalMessage, fileList, matchingFilesForPass);
         } else {
 
             String failureDetails = "• " + String.join("\n• ", failures);
@@ -63,9 +64,10 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             String customError = check.getRule() != null ? check.getRule().getErrorMessage() : null;
 
             // Pass 'fileList' as checkedFiles to populate {CHECKED_FILES} token
-            String finalMessage = formatMessage(customError, null, failureDetails, fileList);
+            // Pass 'failureDetails' as foundItems to populate {FOUND_ITEMS} token
+            String finalMessage = formatMessage(customError, null, failureDetails, fileList, failureDetails);
 
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage, fileList);
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage, fileList, failureDetails);
         }
     }
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,

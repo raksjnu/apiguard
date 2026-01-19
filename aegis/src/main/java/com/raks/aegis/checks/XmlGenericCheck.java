@@ -64,8 +64,12 @@ public class XmlGenericCheck extends AbstractCheck {
             factory.setNamespaceAware(true);
 
             List<String> passedFilesList = new ArrayList<>();
+            java.util.Set<String> successDetails = new java.util.HashSet<>();
+
             for (Path file : matchingFiles) {
                 boolean filePassed = false;
+                List<String> fileSuccesses = new ArrayList<>();
+
                 try {
                     DocumentBuilder builder = factory.newDocumentBuilder();
                     Document doc = builder.parse(file.toFile());
@@ -76,7 +80,7 @@ public class XmlGenericCheck extends AbstractCheck {
                     java.util.Set<String> fileFoundItems = new java.util.HashSet<>();
 
                     if (attributeMatch != null && foundCount > 0) {
-
+                        // Logic for attribute match can be enhanced if needed
                     }
 
                     if ("EXISTS".equalsIgnoreCase(mode)) {
@@ -90,11 +94,13 @@ public class XmlGenericCheck extends AbstractCheck {
                                         if (expectedValue.equals(resolved)) {
                                             valMatched = true;
                                             addPropertyResolution(actual, resolved);
+                                            fileSuccesses.add("Found: " + resolved);
                                             break;
                                         }
                                     } else {
                                         if (expectedValue.equals(actual)) {
                                             valMatched = true;
+                                            fileSuccesses.add("Found: " + actual);
                                             break;
                                         }
                                     }
@@ -103,6 +109,7 @@ public class XmlGenericCheck extends AbstractCheck {
                                 else details.add(projectRoot.relativize(file) + " [Value mismatch]");
                             } else {
                                 filePassed = true;
+                                fileSuccesses.add("XPath Found: " + xpathExpr);
                             }
                         } else {
 
@@ -125,6 +132,7 @@ public class XmlGenericCheck extends AbstractCheck {
                                             if (expectedToken.equals(resolved)) {
                                                 propertyMatchFound = true;
                                                 addPropertyResolution(rawVal, resolved);
+                                                fileSuccesses.add(String.format("Found %s (Resolved: %s)", rawVal, resolved));
                                                 break;
                                             }
                                         }
@@ -184,6 +192,7 @@ public class XmlGenericCheck extends AbstractCheck {
                 if (filePassed) {
                     passedFileCount++;
                     passedFilesList.add(projectRoot.relativize(file).toString());
+                    successDetails.addAll(fileSuccesses);
                 }
             }
 
@@ -193,13 +202,15 @@ public class XmlGenericCheck extends AbstractCheck {
                     .map(p -> projectRoot.relativize(p).toString())
                     .collect(java.util.stream.Collectors.joining(", "));
 
-            String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
+            // Use successDetails for positive matches (e.g., Found: XYZ).
+            // For FORBIDDEN checks where we passed because we found nothing, successDetails is empty -> N/A.
+            String matchingFilesStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
 
             String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
 
             if (uniqueCondition) {
                 String defaultSuccess = String.format("XML Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
-                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr));
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr);
             } else {
                 String technicalMsg = String.format("XML Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
                                 mode, matchMode, passedFileCount, totalFiles, 

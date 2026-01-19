@@ -48,7 +48,8 @@ public class ConditionalCheck extends AbstractCheck {
             StringBuilder details = new StringBuilder("Conditions met. Executing nested checks:\n");
             boolean allPassed = true;
             java.util.Set<String> aggregatedFiles = new java.util.HashSet<>();
-            java.util.Set<String> aggregatedItems = new java.util.LinkedHashSet<>();
+            java.util.Set<String> aggregatedItems = new java.util.LinkedHashSet<>(); // Failures (found items)
+            java.util.Set<String> aggregatedMatchingItems = new java.util.LinkedHashSet<>(); // Success matches
 
             for (Check nested : onSuccess) {
                 CheckResult res = evaluateAtomic(projectRoot, nested);
@@ -65,6 +66,13 @@ public class ConditionalCheck extends AbstractCheck {
                          if (!item.trim().isEmpty()) aggregatedItems.add(item.trim());
                     }
                 }
+                
+                // Aggregate specific success matches
+                if (res.matchingFiles != null && !res.matchingFiles.isEmpty()) {
+                    for (String item : res.matchingFiles.split(", ")) {
+                         if (!item.trim().isEmpty()) aggregatedMatchingItems.add(item.trim());
+                    }
+                }
 
                 if (!res.passed) {
                     allPassed = false;
@@ -73,9 +81,10 @@ public class ConditionalCheck extends AbstractCheck {
 
             String checkedFilesStr = String.join(", ", aggregatedFiles);
             String foundItemsStr = String.join(", ", aggregatedItems);
+            String matchingItemsStr = aggregatedMatchingItems.isEmpty() ? null : String.join(", ", aggregatedMatchingItems);
 
             if (allPassed) {
-                 return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, details.toString(), checkedFilesStr), checkedFilesStr);
+                 return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, details.toString(), checkedFilesStr, matchingItemsStr), checkedFilesStr, matchingItemsStr);
             } else {
                  return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, details.toString(), checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
             }

@@ -45,6 +45,7 @@ public class JsonGenericCheck extends AbstractCheck {
         int passedFileCount = 0;
         int totalFiles = 0;
         List<String> details = new ArrayList<>();
+        java.util.Set<String> successDetails = new java.util.HashSet<>();
         java.util.Set<String> allFoundItems = new java.util.HashSet<>();
         List<String> checkedFilesList = new ArrayList<>();
 
@@ -60,6 +61,7 @@ public class JsonGenericCheck extends AbstractCheck {
             for (Path file : matchingFiles) {
                 boolean filePassed = true;
                 List<String> fileReasons = new ArrayList<>();
+                List<String> fileSuccesses = new ArrayList<>();
 
                 try {
                     String content = Files.readString(file);
@@ -83,8 +85,10 @@ public class JsonGenericCheck extends AbstractCheck {
                                  if (result == null) {
                                      filePassed = false;
                                      fileReasons.add("JSONPath not found: " + jsonPath);
+                                 } else {
+                                     fileSuccesses.add("Found: " + jsonPath);
                                  }
-                     } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
+                             } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
                                  if (result != null) {
                                      filePassed = false;
                                      fileReasons.add("JSONPath found: " + jsonPath);
@@ -117,6 +121,8 @@ public class JsonGenericCheck extends AbstractCheck {
                                      if (!compareValues(resolvedActual, expectedValue, operator, valueType)) {
                                          filePassed = false;
                                          fileReasons.add(String.format("Value mismatch at '%s': Actual='%s', Expected='%s'", jsonPath, resolvedActual, expectedValue));
+                                     } else {
+                                         fileSuccesses.add(String.format("%s=%s", jsonPath, resolvedActual));
                                      }
                                  }
                              }
@@ -158,6 +164,8 @@ public class JsonGenericCheck extends AbstractCheck {
                                      if (!verMatch) {
                                          filePassed = false;
                                          fileReasons.add(String.format("Version too low for '%s': Found='%s', Min Required='%s'", key, val, minVer));
+                                     } else {
+                                         fileSuccesses.add(String.format("%s=%s", key, val));
                                      }
                                   }
                              }
@@ -171,6 +179,8 @@ public class JsonGenericCheck extends AbstractCheck {
                                      if (!jsonMap.containsKey(key)) {
                                          filePassed = false;
                                          fileReasons.add("Missing required element: " + key);
+                                     } else {
+                                         fileSuccesses.add(key);
                                      }
                                  }
                              } else {
@@ -234,6 +244,8 @@ public class JsonGenericCheck extends AbstractCheck {
                                           if (!match) {
                                               filePassed = false;
                                               fileReasons.add(String.format("Field mismatch '%s': Actual='%s', Expected='%s'", key, resolvedActual, expected));
+                                          } else {
+                                              fileSuccesses.add(String.format("%s=%s", key, resolvedActual));
                                           }
                                       }
                                  }
@@ -251,6 +263,7 @@ public class JsonGenericCheck extends AbstractCheck {
                 if (filePassed) {
                     passedFileCount++;
                     checkedFilesList.add(projectRoot.relativize(file).toString());
+                    successDetails.addAll(fileSuccesses);
                 } else {
                     details.add(projectRoot.relativize(file) + " [" + String.join(", ", fileReasons) + "]");
                 }
@@ -263,10 +276,15 @@ public class JsonGenericCheck extends AbstractCheck {
         boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
         String checkedFilesStr = String.join(", ", checkedFilesList);
         String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
+        
+        // Populate matchingFiles with success details for positive matches, or N/A for negative matches (Forbidden)
+        // If mode is NOT_EXISTS (Forbidden), success means we found nothing, so successDetails will be empty, which resolves to N/A/null.
+        // If mode is EXPECTS/REQUIRED, successDetails will contain what we found.
+        String matchingFilesStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
 
         if (uniqueCondition) {
             String defaultSuccess = String.format("JSON Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
+            return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr);
         } else {
             String technicalMsg = String.format("JSON Check failed. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
                             matchMode, passedFileCount, totalFiles, 

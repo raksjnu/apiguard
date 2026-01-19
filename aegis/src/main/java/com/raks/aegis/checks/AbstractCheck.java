@@ -132,24 +132,22 @@ public abstract class AbstractCheck {
         }
         if (checkedFiles != null && !checkedFiles.trim().isEmpty()) {
             result = result.replace("{CHECKED_FILES}", checkedFiles);
-
             result = result.replace("{SCANNED_FILES}", checkedFiles);
         } else {
-
-             result = result.replace("{CHECKED_FILES}", "None");
-             result = result.replace("{SCANNED_FILES}", "None");
+             result = result.replace("{CHECKED_FILES}", "N/A");
+             result = result.replace("{SCANNED_FILES}", "N/A");
         }
 
-        if (foundItems != null) {
+        if (foundItems != null && !foundItems.trim().isEmpty()) {
             result = result.replace("{FOUND_ITEMS}", foundItems);
         } else {
-            result = result.replace("{FOUND_ITEMS}", "");
+            result = result.replace("{FOUND_ITEMS}", "N/A");
         }
 
-        if (matchingFiles != null) {
+        if (matchingFiles != null && !matchingFiles.trim().isEmpty()) {
             result = result.replace("{MATCHING_FILES}", matchingFiles);
         } else {
-            result = result.replace("{MATCHING_FILES}", "None");
+            result = result.replace("{MATCHING_FILES}", "N/A");
         }
 
         String propertyResolved = getPropertyResolutionsString();

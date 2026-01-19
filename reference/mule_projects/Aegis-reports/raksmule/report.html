@@ -1,0 +1,1755 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Aegis Report - raksmule (C:\raks\apiguard\reference\mule_projects\raksmule)</title>
+    <style>
+        :root {
+            --raks-purple: #663399;
+            --raks-purple-light: #7d4fb2;
+            --text-white: #FFFFFF;
+        }
+        body {font-family: Arial, sans-serif; margin: 0; background-color: #f5f5f5;}
+        .report-container { border: 5px solid var(--raks-purple); padding: 20px 40px; margin: 20px; border-radius: 8px; background-color: white; position: relative; }
+        h1 {color: var(--raks-purple);}
+        .summary {background: #e3f2fd; padding: 20px; border-radius: 8px; margin-bottom: 20px;}
+        .search-box { margin-bottom: 20px; width: 100%; }
+        #searchInput { width: 100%; padding: 12px; border: 2px solid var(--raks-purple); border-radius: 5px; font-size: 16px; box-sizing: border-box; }
+        table {width: 100%; border-collapse: collapse; box-shadow: 0 4px 12px rgba(0,0,0,0.1); table-layout: fixed; }
+        th, td {border: 1px solid #ddd; padding: 12px; text-align: left; word-wrap: break-word; overflow-wrap: break-word; }
+        th {background-color: var(--raks-purple); color: var(--text-white); cursor: pointer; position: sticky; top: 0; z-index: 10; }
+        th:hover { background-color: var(--raks-purple-light); }
+        th::after { content: ' ↕'; font-size: 0.8em; }
+        .top-nav-container { position: absolute; top: 20px; right: 40px; display: flex; gap: 10px; }
+        .top-nav-button {
+            background-color: var(--raks-purple); color: var(--text-white);
+            border: none; padding: 8px 16px; text-align: center; text-decoration: none;
+            display: inline-block; font-size: 14px; font-weight: bold;
+            cursor: pointer; border-radius: 5px; transition: background-color 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .top-nav-button:hover { background-color: var(--raks-purple-light); }
+    </style>
+</head>
+<body>
+    <div class="report-container">
+            <div class="top-nav-container">
+            <a href="../CONSOLIDATED-REPORT.html" class="top-nav-button" title="Return to main dashboard">← Dashboard</a>
+            <a href="report.xlsx" class="top-nav-button" style="background-color: #217346;">Excel Report</a>
+        </div>
+        <div style="display: flex; align-items: center; margin-bottom: 20px;">
+            <img src="logo.svg" alt="Aegis Logo" style="height: 40px; margin-right: 15px;">
+            <h1 style="margin: 0;">Aegis Report</h1>
+        </div>
+        <div class="summary">
+            <strong>Project:</strong> raksmule (C:\raks\apiguard\reference\mule_projects\raksmule)<br>
+            <strong>Generated:</strong> 2026-01-19 13:09:34 CST<br>
+            <strong>Total Rules:</strong> 42 | <strong style="color:green">PASS:</strong> 29 | <strong style="color:red">FAIL:</strong> 13
+        </div>
+
+        <div class="search-box" style="display:flex; gap:10px; align-items:center;">
+            <input type="text" id="searchInput" onkeyup="filterTable()" placeholder="Search by name, status, or details..." style="flex-grow:1;">
+            <button class="top-nav-button" onclick="toggleAllConfigs(true)" style="width:150px; font-size:12px; white-space:nowrap;">Expand All Configs</button>
+            <button class="top-nav-button" onclick="toggleAllConfigs(false)" style="width:120px; font-size:12px; background:#999; white-space:nowrap;">Collapse All</button>
+        </div>
+        <table id="resultsTable">
+            <thead>
+                <tr>
+                    <th style="width: 5%;" onclick="sortTable(0)">Rule #</th>
+                    <th style="width: 25%;" onclick="sortTable(1)">Name</th>
+                    <th style="width: 5%;" onclick="sortTable(2)">Severity</th>
+                    <th style="width: 5%;" onclick="sortTable(3)">Status</th>
+                    <th style="width: 60%;" onclick="sortTable(4)">Details</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+                <tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>001</td><td>Validate Parent POM Version</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ Parent POM version is invalid. Must be com.Raks.eapi:MuleParentPom &gt;= 3.0.0
+Files Checked: pom.xml
+Items Found: • Parent element missing in pom.xml
+Items Matched: N/A
+Details: • Parent element missing in pom.xml
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-001-c8d38807-link' class='config-toggle' onclick="toggleConfig('config-RULE-001-c8d38807')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-001-c8d38807' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-001
+name: Validate Parent POM Version
+description: Ensures Parent POM is com.Raks.eapi:MuleParentPom &gt;= 3.0.0
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Parent POM version is valid (3.0.0+)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Parent POM version is invalid. Must be com.Raks.eapi:MuleParentPom &gt;= 3.0.0
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: POM_VALIDATION_REQUIRED
+  params:
+    validationType: PARENT
+    parent:
+      groupId: com.Raks.eapi
+      artifactId: MuleParentPom
+      minVersion: 3.0.0</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>002</td><td>Validate POM Properties</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ Critical POM properties check failed. Ensure mule.maven.plugin.version&gt;=4.6.0, app.runtime&gt;=4.9.LTS, cicd.mule.version&gt;=4.9.LTS, munit.version&gt;=3.5.0
+Files Checked: pom.xml
+Items Found: • Property 'mule.maven.plugin.version' version too low in pom.xml: expected &gt;= '4.6.0', got '4.5.3'
+• Property 'cicd.mule.version' missing in pom.xml
+• Property 'munit.version' missing in pom.xml
+Items Matched: N/A
+Details: • Property 'mule.maven.plugin.version' version too low in pom.xml: expected &gt;= '4.6.0', got '4.5.3'
+• Property 'cicd.mule.version' missing in pom.xml
+• Property 'munit.version' missing in pom.xml
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-002-17b33ebd-link' class='config-toggle' onclick="toggleConfig('config-RULE-002-17b33ebd')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-002-17b33ebd' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-002
+name: Validate POM Properties
+description: Ensures critical properties satisfy minimum versions.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Critical POM properties (runtime, plugin, cicd,munit) are valid
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Critical POM properties check failed. Ensure mule.maven.plugin.version&gt;=4.6.0, app.runtime&gt;=4.9.LTS, cicd.mule.version&gt;=4.9.LTS, munit.version&gt;=3.5.0
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: POM_VALIDATION_REQUIRED
+  params:
+    validationType: PROPERTIES
+    properties:
+    - name: mule.maven.plugin.version
+      minVersion: 4.6.0
+    - name: app.runtime
+      minVersion: 4.9.LTS
+    - name: cicd.mule.version
+      minVersion: 4.9.LTS
+    - name: munit.version
+      minVersion: 3.5.0</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>003</td><td>Forbid Restricted Plugins</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ Forbidden plugin found (maven-clean, maven-compiler, or munit-maven)
+Files Checked: pom.xml
+Items Found: See details
+Items Matched: N/A
+Details: Forbidden POM elements found:
+• Forbidden plugin org.apache.maven.plugins:maven-clean-plugin found in pom.xml
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-003-fb9b8d33-link' class='config-toggle' onclick="toggleConfig('config-RULE-003-fb9b8d33')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-003-fb9b8d33' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-003
+name: Forbid Restricted Plugins
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No restricted plugins found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Forbidden plugin found (maven-clean, maven-compiler, or munit-maven)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: POM_VALIDATION_FORBIDDEN
+  params:
+    validationType: PLUGINS
+    forbiddenPlugins:
+    - groupId: org.apache.maven.plugins
+      artifactId: maven-clean-plugin
+    - groupId: org.apache.maven.plugins
+      artifactId: maven-compiler-plugin
+    - groupId: com.mulesoft.munit.tools
+      artifactId: munit-maven-plugin</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>004</td><td>Require eapimuleutilities</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ Missing required dependency: eapimuleutilities
+Files Checked: pom.xml
+Items Found: • Dependency com.Raks.eapi:eapimuleutilities not found in pom.xml
+Items Matched: N/A
+Details: • Dependency com.Raks.eapi:eapimuleutilities not found in pom.xml
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-005-f15ff4e2-link' class='config-toggle' onclick="toggleConfig('config-RULE-005-f15ff4e2')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-005-f15ff4e2' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-005
+name: Require eapimuleutilities
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ eapimuleutilities dependency found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Missing required dependency: eapimuleutilities
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: POM_VALIDATION_REQUIRED
+  params:
+    validationType: DEPENDENCIES
+    dependencies:
+    - groupId: com.Raks.eapi
+      artifactId: eapimuleutilities</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>005</td><td>Validate mule-artifact.json</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ mule-artifact.json failed validation. Check minMuleVersion (4.9.7+), javaSpecificationVersions (17), or secureProperties
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: JSON Check failed. (Mode: ALL_FILES, Passed: 0/1). Failures:
+• mule-artifact.json [Version too low for 'minMuleVersion': Found='4.9.1', Min Required='4.9.7', Missing required element: secureProperties]
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-008-b1d42aff-link' class='config-toggle' onclick="toggleConfig('config-RULE-008-b1d42aff')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-008-b1d42aff' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-008
+name: Validate mule-artifact.json
+description: Enforces minMuleVersion 4.9.7, Java 17, and secureProperties.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ mule-artifact.json is valid (Version: 4.9.7+, Java: 17)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ mule-artifact.json failed validation. Check minMuleVersion (4.9.7+), javaSpecificationVersions (17), or secureProperties
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: JSON_VALIDATION_REQUIRED
+  params:
+    filePattern: mule-artifact.json
+    minVersions:
+      minMuleVersion: 4.9.7
+    requiredFields:
+      javaSpecificationVersions: '17'
+    requiredElements:
+    - secureProperties</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>006</td><td>Enforce EncUtil Logic</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ Failed EncUtil check: Either legacy 'jce-encrypt-pbe' found or new 'EncUtil::encryptJcePbe' missing
+Files Checked: src\main\mule\raksmule.xml
+Items Found: N/A
+Items Matched: N/A
+Details: Conditions met. Executing nested checks:
+- Check: XML Check passed for NOT_EXISTS files. (Mode: ALL_FILES, Passed: 1/1)
+- Check: XML Check failed for EXISTS. (Mode: ANY_FILE, Passed: 0/1). Failures:
+• src\main\mule\raksmule.xml [XPath not found]
+
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-012-b9d2f7dc-link' class='config-toggle' onclick="toggleConfig('config-RULE-012-b9d2f7dc')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-012-b9d2f7dc' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-012
+name: Enforce EncUtil Logic
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ EncUtil logic is present and legacy crypto is gone
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Failed EncUtil check: Either legacy 'jce-encrypt-pbe' found or new 'EncUtil::encryptJcePbe' missing
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        tokens:
+        - mule
+        matchMode: ANY_FILE
+    onSuccess:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[contains(local-name(), 'jce-encrypt-pbe')]
+          failureMessage: Legacy jce-encrypt-pbe found
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        matchMode: ANY_FILE
+        xpathExpressions:
+        - xpath: //*[local-name()='set-variable' and contains(@value, 'EncUtil::encryptJcePbe')]
+          failureMessage: EncUtil::encryptJcePbe usage missing</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>007</td><td>Verify apimethod variable has encryptedRequestPath</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ apimethod variable logic missing encryptedRequestPath
+Files Checked: src\main\mule\raksmule.xml
+Items Found: N/A
+Items Matched: N/A
+Details: XML Check failed for EXISTS. (Mode: ANY_FILE, Passed: 0/1). Failures:
+• src\main\mule\raksmule.xml [XPath not found]
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-013-3b188361-link' class='config-toggle' onclick="toggleConfig('config-RULE-013-3b188361')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-013-3b188361' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-013
+name: Verify apimethod variable has encryptedRequestPath
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ apimethod variable logic is correct
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ apimethod variable logic missing encryptedRequestPath
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: XML_XPATH_EXISTS
+  params:
+    filePatterns:
+    - src/main/mule/*.xml
+    matchMode: ANY_FILE
+    xpathExpressions:
+    - xpath: //*[local-name()='set-variable' and @variableName='apimethod' and contains(@value, 'vars.encryptedRequestPath')]</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>008</td><td>Require API Autodiscovery</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ Autodiscovery is not enabled
+Files Checked: src\main\mule\raksmule.xml
+Items Found: N/A
+Items Matched: N/A
+Details: XML Check failed for EXISTS. (Mode: ANY_FILE, Passed: 0/1). Failures:
+• src\main\mule\raksmule.xml [XPath not found]
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-014-7b10a92f-link' class='config-toggle' onclick="toggleConfig('config-RULE-014-7b10a92f')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-014-7b10a92f' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-014
+name: Require API Autodiscovery
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Autodiscovery is enabled
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Autodiscovery is not enabled
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: XML_XPATH_EXISTS
+  params:
+    filePatterns:
+    - src/main/mule/*.xml
+    matchMode: ANY_FILE
+    xpathExpressions:
+    - xpath: //*[local-name()='autodiscovery']</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>009</td><td>Mandatory substring check for .properties files</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ No matching files found for pattern: [**/*..properties]</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-025-01de24b8-link' class='config-toggle' onclick="toggleConfig('config-RULE-025-01de24b8')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-025-01de24b8' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-025
+name: Mandatory substring check for .properties files
+description: Scans .properties files for required tokens (exact substring match)
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: MANDATORY_SUBSTRING_CHECK
+  params:
+    fileExtensions:
+    - .properties
+    caseSensitive: true
+    tokens:
+    - apiId</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>010</td><td>Mandatory substring check for .policy files</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ No matching files found for pattern: [**/*..policy]</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-026-aad486e7-link' class='config-toggle' onclick="toggleConfig('config-RULE-026-aad486e7')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-026-aad486e7' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-026
+name: Mandatory substring check for .policy files
+description: Scans .policy files for required tokens (exact substring match)
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: MANDATORY_SUBSTRING_CHECK
+  params:
+    fileExtensions:
+    - .policy
+    caseSensitive: true
+    tokens:
+    - http.protocols=HTTPS
+    - http.private.port=8081</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>011</td><td>Forbidden substring check for .properties files</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ No matching files found for pattern: [**/*..properties]</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-027-79d5a030-link' class='config-toggle' onclick="toggleConfig('config-RULE-027-79d5a030')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-027-79d5a030' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-027
+name: Forbidden substring check for .properties files
+description: Fails if forbidden tokens are found in .properties files
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: MANDATORY_SUBSTRING_CHECK
+  params:
+    fileExtensions:
+    - .properties
+    caseSensitive: true
+    searchMode: FORBIDDEN
+    tokens:
+    - hardcoded.password
+    - TODO
+    - fixmelater</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>012</td><td>Forbidden substring check for .policy files</td><td>HIGH</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ No matching files found for pattern: [**/*..policy]</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-028-32bb6fb1-link' class='config-toggle' onclick="toggleConfig('config-RULE-028-32bb6fb1')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-028-32bb6fb1' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-028
+name: Forbidden substring check for .policy files
+description: Fails if forbidden tokens are found in .policy files
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: MANDATORY_SUBSTRING_CHECK
+  params:
+    fileExtensions:
+    - .policy
+    caseSensitive: true
+    searchMode: FORBIDDEN
+    tokens:
+    - deprecated.policy
+    - old.version</div></div></td></tr><tr style='background-color:#fff5f5; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #dc3545;'>013</td><td>Governance: Prod Secure Config</td><td>CRITICAL</td><td><strong style='color:#721c24'>FAIL</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>• ✗ Rule failed.
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Conditions met. Executing nested checks:
+- Check: Error executing nested check: Failed to create check: FILE_EXISTS
+
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-040-8a20bae7-link' class='config-toggle' onclick="toggleConfig('config-RULE-040-8a20bae7')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-040-8a20bae7' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-040
+name: 'Governance: Prod Secure Config'
+description: If environment is PROD, the secure-prod file must exist.
+enabled: true
+severity: CRITICAL
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Environment-specific security enforcement.
+rationale: Ensures Production credentials are never mixed with lower environments.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions:
+        - .properties
+        environments:
+        - ALL
+        properties:
+        - name: env
+          values:
+          - PROD
+    onSuccess:
+    - type: FILE_EXISTS
+      params:
+        filePatterns:
+        - src/main/resources/secure-prod.properties</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>014</td><td>Forbid Runtime Dependencies</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>No forbidden POM elements found
+Files validated: pom.xml</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-004-4091d790-link' class='config-toggle' onclick="toggleConfig('config-RULE-004-4091d790')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-004-4091d790' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-004
+name: Forbid Runtime Dependencies
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No runtime dependencies found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Forbidden dependency found (mule-core-ee or spring-config-ee)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: POM_VALIDATION_FORBIDDEN
+  params:
+    validationType: DEPENDENCIES
+    forbiddenDependencies:
+    - groupId: com.mulesoft.mule.runtime
+      artifactId: mule-core-ee
+    - groupId: com.mulesoft.mule.runtime.modules
+      artifactId: mule-module-spring-config-ee</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>015</td><td>Forbid Shared Libraries</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ No shared libraries found
+Files Checked: pom.xml
+Items Found: N/A
+Items Matched: N/A
+Details: Passed FORBIDDEN check in 1/1 files (Mode: ALL_FILES)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-006-54389b82-link' class='config-toggle' onclick="toggleConfig('config-RULE-006-54389b82')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-006-54389b82' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-006
+name: Forbid Shared Libraries
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No shared libraries found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Forbidden shared library found (spring-security)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+  params:
+    filePatterns:
+    - pom.xml
+    tokens:
+    - spring-security-ldap
+    - spring-security-web</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>016</td><td>Legacy Dependency Upgrade</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>No forbidden POM elements found
+Files validated: pom.xml</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-007-9a671484-link' class='config-toggle' onclick="toggleConfig('config-RULE-007-9a671484')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-007-9a671484' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-007
+name: Legacy Dependency Upgrade
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No legacy dependencies (javax.mail, ojdbc8) found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Legacy dependency detected. Upgrade required
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: POM_VALIDATION_FORBIDDEN
+  params:
+    validationType: DEPENDENCIES
+    forbiddenDependencies:
+    - groupId: javax.mail
+      artifactId: mail
+    - groupId: com.oracle.database.jdbc
+      artifactId: ojdbc8</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>017</td><td>Forbid Legacy Logger Attributes</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ No legacy logger attributes found
+Files Checked: src\main\mule\raksmule.xml
+Items Found: N/A
+Items Matched: N/A
+Details: XML Check passed for NOT_EXISTS files. (Mode: ALL_FILES, Passed: 1/1)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-009-5bbdc466-link' class='config-toggle' onclick="toggleConfig('config-RULE-009-5bbdc466')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-009-5bbdc466' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-009
+name: Forbid Legacy Logger Attributes
+description: Ensures toApplicationCode and fromApplicationCode are NOT used.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No legacy logger attributes found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Forbidden attribute found in Logger
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: XML_ATTRIBUTE_NOT_EXISTS
+  params:
+    filePatterns:
+    - src/main/mule/*.xml
+    elements:
+    - set-payload
+    forbiddenAttributes:
+    - toApplicationCode
+    - fromApplicationCode</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>018</td><td>Validate SOAP Version</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ SOAP configuration uses valid version (1.1 or 1.2)
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: XML Check passed for EXISTS files. (Mode: ALL_FILES, Passed: 0/0)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-011-d8ece938-link' class='config-toggle' onclick="toggleConfig('config-RULE-011-d8ece938')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-011-d8ece938' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-011
+name: Validate SOAP Version
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ SOAP configuration uses valid version (1.1 or 1.2)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Invalid SOAP version detected. Must be SOAP_11 or SOAP_12
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: XML_ATTRIBUTE_EXISTS
+  params:
+    filePatterns:
+    - src/main/mule/*-config.xml
+    elementAttributeSets:
+    - element: apikit-soap:config
+      attributes:
+        soapVersion: SOAP_11
+    - element: apikit-soap:config
+      attributes:
+        soapVersion: SOAP_12</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>019</td><td>Java 8 to 17 Error Class Fields Migration Check</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ No legacy error field usages (Java 8/Mule 3X) found
+Files Checked: src\main\mule\raksmule.xml
+Items Found: N/A
+Items Matched: N/A
+Details: Passed FORBIDDEN check in 1/1 files (Mode: ALL_FILES)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-015-d08e51ea-link' class='config-toggle' onclick="toggleConfig('config-RULE-015-d08e51ea')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-015-d08e51ea' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-015
+name: Java 8 to 17 Error Class Fields Migration Check
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No legacy error field usages (Java 8/Mule 3X) found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Legacy Java 8 error field usages detected. These fields are removed in Mule 4/Java 17
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+  params:
+    filePatterns:
+    - src/main/**/*.xml
+    - src/main/**/*.dwl
+    - src/main/**/*.java
+    tokens:
+    - error\.muleMessage
+    - error\.muleMessage\.typedValue
+    - error\.muleMessage\.payload
+    - error\.muleMessage\.attributes\.StatusCode
+    - error\.errorType\.asString
+    - error\.errorType\.parentErrorType\.asString
+    - error\.exception\.cause
+    - error\.exception\.cause\.detailMessage
+    - error\.exception\.cause\.Message
+    - error\.exception\.errorMessage\.typedValue
+    - error\.errors
+    matchMode: ALL_FILES
+    isRegex: true</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>020</td><td>Forbid DLP Code Logic</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ No DLP logic found
+Files Checked: pom.xml, src\main\mule\raksmule.xml
+Items Found: N/A
+Items Matched: N/A
+Details: Passed FORBIDDEN check in 2/2 files (Mode: ALL_FILES)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-016-7e4110dc-link' class='config-toggle' onclick="toggleConfig('config-RULE-016-7e4110dc')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-016-7e4110dc' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-016
+name: Forbid DLP Code Logic
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No DLP logic found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ DLP logic detected in HTTP Proxy
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+  params:
+    resolveProperties: true
+    wholeWord: true
+    failureMessage: DLP flag choice found
+    filePatterns:
+    - '**/http-proxy.xml'
+    - '**/*.xml'
+    tokens:
+    - north.bound.dlp.flag
+    - raks.dlp.queue</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>021</td><td>Forbid DLP Properties</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ No DLP properties found
+Files Checked: src\main\resources\mule-app.properties
+Items Found: N/A
+Items Matched: N/A
+Details: Passed FORBIDDEN check in 1/1 files (Mode: ALL_FILES)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-017-02462465-link' class='config-toggle' onclick="toggleConfig('config-RULE-017-02462465')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-017-02462465' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-017
+name: Forbid DLP Properties
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No DLP properties found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ DLP property detected (dlp.flag or dlp.requestqueue)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+  params:
+    wholeWord: true
+    filePatterns:
+    - '**/*.properties'
+    tokens:
+    - north.bound.dlp.flag
+    - south.bound.dlp.flag
+    - wmq.dlp.requestqueue</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>022</td><td>Enforce SQL Server DB connection String Security</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-018-7cf98a09-link' class='config-toggle' onclick="toggleConfig('config-RULE-018-7cf98a09')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-018-7cf98a09' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-018
+name: Enforce SQL Server DB connection String Security
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ SQL Server DB Connection Strings are securely configured (or none found)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ SQL Server DB Connection String missing ';encrypt=false;trustServerCertificate=false'
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+        - '**/*.properties'
+        tokens:
+        - jdbc:sqlserver
+        matchMode: ANY_FILE
+    onSuccess:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+        - '**/*.properties'
+        tokens:
+        - jdbc:sqlserver(?!.*encrypt=false).*
+        - jdbc:sqlserver(?!.*trustServerCertificate=false).*
+        matchMode: REGEX
+        isRegex: true
+        failureMessage: Found SQL Server DB Connection String (missing 'encrypt=false' and/or 'trustServerCertificate=false')</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>023</td><td>Enforce DB2 Connection URL ApplicationId</td><td>MEDIUM</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-019-843cca8b-link' class='config-toggle' onclick="toggleConfig('config-RULE-019-843cca8b')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-019-843cca8b' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-019
+name: Enforce DB2 Connection URL ApplicationId
+description: null
+enabled: true
+severity: MEDIUM
+successMessage: |-
+  ✓ DB2 Connection URL ApplicationId is present
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ DB2 Connection URL ApplicationId is missing
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+        - '**/*.properties'
+        - '**/*.yaml'
+        - '**/*.xml'
+        tokens:
+        - jdbc:db2
+        wholeWord: false
+    onSuccess:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+        - '**/*.properties'
+        - '**/*.yaml'
+        - '**/*.xml'
+        tokens:
+        - jdbc:db2(?!.*(?i)ApplicationId=).*
+        matchMode: REGEX
+        isRegex: true
+        failureMessage: Found DB2 Connection URL missing 'ApplicationId'</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>024</td><td>Forbid Legacy DB2 VIPs</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ No legacy DB2 VIPs found
+Files Checked: src\main\resources\mule-app.properties
+Items Found: N/A
+Items Matched: N/A
+Details: Passed FORBIDDEN check in 1/1 files (Mode: ALL_FILES)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-020-a00cf01a-link' class='config-toggle' onclick="toggleConfig('config-RULE-020-a00cf01a')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-020-a00cf01a' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-020
+name: Forbid Legacy DB2 VIPs
+description: Detects usage of deprecated DB2 connection hostnames.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No legacy DB2 VIPs found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Legacy DB2 VIP connection detected. Migrate to DVIPA (dsndb0e/h)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+  params:
+    filePatterns:
+    - '**/*.properties'
+    tokens:
+    - db2contppvip.Raks-tst.com:50000
+    - db2contstvip.Raks-tst.com:50000
+    - wil-db2contstvip.bbtnet.com:50000</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>025</td><td>Validate MQ Cipher Suite</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-021-9879aade-link' class='config-toggle' onclick="toggleConfig('config-RULE-021-9879aade')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-021-9879aade' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-021
+name: Validate MQ Cipher Suite
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ MQ Cipher Suite is correct (or not applicable)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ MQ Cipher Suite is incorrect. Must be TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        tokens:
+        - ibm-mq:config
+        matchMode: SUBSTRING
+    onSuccess:
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns:
+        - src/main/resources/**/*.properties
+        tokens:
+        - ibm\.mq\.cipherSuite\s*=(?!\s*TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384).*
+        matchMode: REGEX
+        isRegex: true</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>026</td><td>Header Injection Policy (WARN mode logging)</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ Header Injection policy configured correctly (WARN mode logging)
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Property Check passed for VALUE_MATCH files. (Mode: ALL_FILES, Passed: 0/0)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-022-86cf84fb-link' class='config-toggle' onclick="toggleConfig('config-RULE-022-86cf84fb')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-022-86cf84fb' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-022
+name: Header Injection Policy (WARN mode logging)
+description: null
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Header Injection policy configured correctly (WARN mode logging)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Header Injection policy values must be 'WARN mode logging'
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: MANDATORY_PROPERTY_VALUE_CHECK
+  params:
+    filePatterns:
+    - '**/Policies/**/*.policy'
+    properties:
+    - name: headerinjection.policy.inboundheadermap.x-tfc-request-out
+      values:
+      - WARN
+    - name: headerinjection.policy.inboundheadermap.x-tfc-response-in
+      values:
+      - WARN</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>027</td><td>Forbid Legacy Auth Policies</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ No legacy Auth policies found
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Passed FORBIDDEN check in 0/0 files (Mode: ALL_FILES)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-023-b5349b8f-link' class='config-toggle' onclick="toggleConfig('config-RULE-023-b5349b8f')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-023-b5349b8f' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-023
+name: Forbid Legacy Auth Policies
+description: Detects old AAA or Basic Auth policies.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ No legacy Auth policies found
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Legacy Auth policy detected (Raks-AAA or RaksBasicAuthnPolicy). Upgrade to CompositeAuth
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+  params:
+    filePatterns:
+    - '**/Policies/**/*.policy'
+    tokens:
+    - Raks-AAA-SOAP
+    - Raks-AAA-HTTP
+    - RaksBasicAuthnPolicy</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>028</td><td>Enforce Policy Versions</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ All policy versions are correct
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Property Check passed for VALUE_MATCH files. (Mode: ALL_FILES, Passed: 0/0)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-024-9f9d8cdb-link' class='config-toggle' onclick="toggleConfig('config-RULE-024-9f9d8cdb')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-024-9f9d8cdb' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-024
+name: Enforce Policy Versions
+description: Validates all Raks policy versions.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ All policy versions are correct
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Policy version mismatch found (Check report for details)
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: MANDATORY_PROPERTY_VALUE_CHECK
+  params:
+    filePatterns:
+    - '**/Policies/**/*.policy'
+    properties:
+    - name: Raks.compositeauthn.policy.version
+      values:
+      - 3.0.0
+    - name: Raks.authz.policy.version
+      values:
+      - 3.0.0
+    - name: noname.policy.version
+      values:
+      - 5.1.0
+    - name: ratelimit.policy.version
+      values:
+      - 1.4.1
+    - name: headerinjection.policy.version
+      values:
+      - 1.3.2
+    - name: headerremoval.policy.version
+      values:
+      - 1.1.2
+    - name: Raks.wssencdec.policy.version
+      values:
+      - 3.0.0
+    - name: Raks.jsonencdec.policy.version
+      values:
+      - 3.0.0</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>029</td><td>Mandatory name-value check for .properties files</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ Rule passed.
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Property Check passed for VALUE_MATCH files. (Mode: ALL_FILES, Passed: 0/0)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-029-38eff1f7-link' class='config-toggle' onclick="toggleConfig('config-RULE-029-38eff1f7')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-029-38eff1f7' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-029
+name: Mandatory name-value check for .properties files
+description: Ensures required properties exist with correct values in .properties files
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: MANDATORY_PROPERTY_VALUE_CHECK
+  params:
+    fileExtensions:
+    - .properties
+    delimiter: =
+    caseSensitiveNames: true
+    caseSensitiveValues: true
+    properties:
+    - name: LogJsonFormat
+      values:
+      - 'true'
+      - 'false'
+    - name: anotherpropertycheck
+      values:
+      - somevalue</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>030</td><td>Mandatory name-value check for .policy files</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ Rule passed.
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Property Check passed for VALUE_MATCH files. (Mode: ALL_FILES, Passed: 0/0)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-030-08bfd7de-link' class='config-toggle' onclick="toggleConfig('config-RULE-030-08bfd7de')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-030-08bfd7de' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-030
+name: Mandatory name-value check for .policy files
+description: Ensures required policy properties exist with correct values
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: MANDATORY_PROPERTY_VALUE_CHECK
+  params:
+    fileExtensions:
+    - .policy
+    delimiter: =
+    caseSensitiveNames: true
+    caseSensitiveValues: true
+    properties:
+    - name: headerinjection.policy.applied
+      values:
+      - 'true'
+    - name: headerinjection.policy.version
+      values:
+      - 1.3.2
+      - 1.3.3
+    - name: ratelimit.policy.applied
+      values:
+      - 'true'
+    - name: ratelimit.policy.version
+      values:
+      - 1.4.2
+    - name: raks.compositeauthn.policy.applied
+      values:
+      - 'true'
+    - name: raks.compositeauthn.policy.version
+      values:
+      - 1.4.2
+      - 1.4.3
+    - name: raks.authz.policy.applied
+      values:
+      - 'true'
+    - name: raks.authz.policy.version
+      values:
+      - 1.2.2
+      - 1.2.3
+    - name: assetType
+      values:
+      - rest
+      - soap
+      - batch</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>031</td><td>Optional name-value check for .properties files</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ Rule passed.
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Property Check passed for OPTIONAL_MATCH files. (Mode: ALL_FILES, Passed: 0/0)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-031-8b7fc070-link' class='config-toggle' onclick="toggleConfig('config-RULE-031-8b7fc070')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-031-8b7fc070' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-031
+name: Optional name-value check for .properties files
+description: If property exists in .properties files, validates its value
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: OPTIONAL_PROPERTY_VALUE_CHECK
+  params:
+    fileExtensions:
+    - .properties
+    delimiter: =
+    caseSensitiveNames: true
+    caseSensitiveValues: false
+    properties:
+    - name: platform.config.analytics.enabled
+      values:
+      - 'true'
+      - 'false'
+    - name: requestPathEncryption
+      values:
+      - Y
+      - N</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>032</td><td>Optional name-value check for .policy files</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ Rule passed.
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Property Check passed for OPTIONAL_MATCH files. (Mode: ALL_FILES, Passed: 0/0)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-032-7fafeafd-link' class='config-toggle' onclick="toggleConfig('config-RULE-032-7fafeafd')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-032-7fafeafd' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-032
+name: Optional name-value check for .policy files
+description: If property exists in .policy files, validates its value
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: OPTIONAL_PROPERTY_VALUE_CHECK
+  params:
+    fileExtensions:
+    - .policy
+    delimiter: =
+    caseSensitiveNames: true
+    caseSensitiveValues: true
+    properties:
+    - name: mTLS-AuthZ.policy.version
+      values:
+      - 3.0.0
+      - 3.0.1
+    - name: wssencdec.policy.version
+      values:
+      - 3.0.0
+      - 3.0.1</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>033</td><td>Optional regex pattern (ip addresses) check in .properties files</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ Rule passed.
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Passed FORBIDDEN check in 0/0 files (Mode: REGEX)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-033-ab3d4a1a-link' class='config-toggle' onclick="toggleConfig('config-RULE-033-ab3d4a1a')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-033-ab3d4a1a' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-033
+name: Optional regex pattern (ip addresses) check in .properties files
+description: Fails if forbidden regex patterns are found in .properties files
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: GENERIC_TOKEN_SEARCH
+  params:
+    filePatterns:
+    - '**/Properties/**/*.properties'
+    searchMode: FORBIDDEN
+    matchMode: REGEX
+    tokens:
+    - ^(?![\s]*[#!]).*\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b
+    - ^(?![\s]*[#!]).*\blocalhost\b
+    - ^(?![\s]*[#!]).*\b127\.0\.0\.1\b</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>034</td><td>Optional regex pattern (ip addresses) check in .policy files</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>✓ Rule passed.
+Files Checked: N/A
+Items Found: N/A
+Items Matched: N/A
+Details: Passed FORBIDDEN check in 0/0 files (Mode: REGEX)
+</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-034-c890c6d1-link' class='config-toggle' onclick="toggleConfig('config-RULE-034-c890c6d1')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-034-c890c6d1' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-034
+name: Optional regex pattern (ip addresses) check in .policy files
+description: Fails if forbidden regex patterns are found in .policy files
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+checks:
+- type: GENERIC_TOKEN_SEARCH
+  params:
+    filePatterns:
+    - '**/Policies/*.policy'
+    - '**/Policies/**/*.policy'
+    searchMode: FORBIDDEN
+    matchMode: REGEX
+    tokens:
+    - ^(?![\s]*[#!]).*\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b
+    - ^(?![\s]*[#!]).*\blocalhost\b
+    - ^(?![\s]*[#!]).*\b127\.0\.0\.1\b</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>035</td><td>Conditional: Batch API asset type</td><td>MEDIUM</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-035-e9c5d63c-link' class='config-toggle' onclick="toggleConfig('config-RULE-035-e9c5d63c')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-035-e9c5d63c' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-035
+name: 'Conditional: Batch API asset type'
+description: If API name contains 'batch', the property asset.type must be 'batch'.
+enabled: true
+severity: MEDIUM
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Ensures large volume APIs are tagged correctly for infrastructure scaling.
+rationale: Automated provisioning depends on correct asset type metadata.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: PROJECT_CONTEXT
+      params:
+        nameContains: batch
+        ignoreCase: true
+    onSuccess:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions:
+        - .properties
+        environments:
+        - ALL
+        properties:
+        - name: asset.type
+          values:
+          - batch</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>036</td><td>Conditional: MQ and DB Common Timeout</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-036-4db81aed-link' class='config-toggle' onclick="toggleConfig('config-RULE-036-4db81aed')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-036-4db81aed' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-036
+name: 'Conditional: MQ and DB Common Timeout'
+description: Projects using both MQ and DB must define a 'commontimeout' property.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Cross-system timeout synchronization.
+rationale: Prevents partial transaction failures where one system times out much later than the other.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    logic: AND
+    preconditions:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='config' and contains(namespace-uri(), 'mq')]
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='config' and contains(namespace-uri(), 'db')]
+    onSuccess:
+    - type: MANDATORY_PROPERTY_VALUE_CHECK
+      params:
+        fileExtensions:
+        - .properties
+        environments:
+        - ALL
+        properties:
+        - name: commontimeout
+          values:
+          - .+</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>037</td><td>Best Practice: HTTP Config Externalization</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-037-68c9059f-link' class='config-toggle' onclick="toggleConfig('config-RULE-037-68c9059f')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-037-68c9059f' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-037
+name: 'Best Practice: HTTP Config Externalization'
+description: Ensures HTTP Request configurations use externalized properties for timeouts.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Prevents environment-specific hardcoding.
+rationale: Hardcoded timeouts lead to different behaviors across Dev/UAT/Prod without proper control.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='request-config' and contains(namespace-uri(), 'http')]
+    onSuccess:
+    - type: XML_ATTRIBUTE_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        elementName: http:request-config
+        attributeName: responseTimeout
+        expectedValue: ^\$\{.*\}$
+        matchMode: REGEX</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>038</td><td>Resilience: Salesforce Reconnection</td><td>MEDIUM</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-038-f1880fa1-link' class='config-toggle' onclick="toggleConfig('config-RULE-038-f1880fa1')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-038-f1880fa1' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-038
+name: 'Resilience: Salesforce Reconnection'
+description: If Salesforce connector is used, a reconnection strategy must be defined.
+enabled: true
+severity: MEDIUM
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Handling temporary SaaS connectivity issues.
+rationale: Standard reconnection prevents Mule from locking up if Salesforce is briefly unavailable.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='sfdc-config']
+    onSuccess:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='sfdc-config']/*[local-name()='reconnection']
+          failureMessage: Mandatory &lt;reconnection&gt; element missing for Salesforce config.</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>039</td><td>Arch: JMS Dependency Alignment</td><td>LOW</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-039-08728194-link' class='config-toggle' onclick="toggleConfig('config-RULE-039-08728194')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-039-08728194' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-039
+name: 'Arch: JMS Dependency Alignment'
+description: If JMS connector is in POM, it must be used/configured in code.
+enabled: true
+severity: LOW
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Resource optimization and library cleanliness.
+rationale: Unused dependencies bloat the JAR and increase security surface area.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: POM_VALIDATION_REQUIRED
+      params:
+        validationType: DEPENDENCIES
+        dependencies:
+        - artifactId: mule-jms-connector
+    onSuccess:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='config' and contains(namespace-uri(), 'jms')]</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>040</td><td>Standard: APIKit Error Handling</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-041-b24e2739-link' class='config-toggle' onclick="toggleConfig('config-RULE-041-b24e2739')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-041-b24e2739' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-041
+name: 'Standard: APIKit Error Handling'
+description: If APIKit is detected, a Global Error Handler must be present.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Consistent error responses for all experience APIs.
+rationale: Standardized error handling is critical for API consumer experience.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='config' and contains(namespace-uri(), 'apikit')]
+    onSuccess:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='error-handler']
+          failureMessage: APIKit detected but no &lt;error-handler&gt; found.</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>041</td><td>Conditional: Experience API Autodiscovery</td><td>HIGH</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-042-78ea9320-link' class='config-toggle' onclick="toggleConfig('config-RULE-042-78ea9320')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-042-78ea9320' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-042
+name: 'Conditional: Experience API Autodiscovery'
+description: Experience APIs (-exp-) must have Autodiscovery configured.
+enabled: true
+severity: HIGH
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Compliance with API Governance.
+rationale: Experience APIs are public-facing and MUST be managed by the gateway.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: PROJECT_CONTEXT
+      params:
+        nameContains: -exp-
+        ignoreCase: true
+    onSuccess:
+    - type: XML_XPATH_EXISTS
+      params:
+        filePatterns:
+        - src/main/mule/*.xml
+        xpathExpressions:
+        - xpath: //*[local-name()='autodiscovery']
+          failureMessage: Mandatory 'api-gateway:autodiscovery' element is missing</div></div></td></tr><tr style='background-color:#f0fff4; border-bottom: 4px solid white;'> <td style='border-left: 6px solid #28a745;'>042</td><td>Conditional: Secure Property Usage</td><td>CRITICAL</td><td><strong style='color:#155724'>PASS</strong></td><td><div style='word-wrap: break-word; white-space: pre-wrap;'>⊘ Skipped: Preconditions not met for this project.</div><div style='margin-top:5px; padding-top:5px; border-top:1px dashed #ccc; font-size:0.85rem; color:#666;'><a href='javascript:void(0)' id='config-RULE-043-f5ec9492-link' class='config-toggle' onclick="toggleConfig('config-RULE-043-f5ec9492')" style='text-decoration:none; color:#663399; font-weight:bold;'>[+] Show Rule Config</a><div id='config-RULE-043-f5ec9492' class='rule-config' style='display:none; margin-top:10px; margin-left:20px; padding:12px; background:#e3f2fd; border:1px solid #90caf9; border-left: 5px solid #2196f3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius:4px; font-family: Consolas, monospace; white-space: pre-wrap; color: #0d47a1;'>id: RULE-043
+name: 'Conditional: Secure Property Usage'
+description: If secure properties file exists, 'secure::' syntax must be used in Mule XML.
+enabled: true
+severity: CRITICAL
+successMessage: |-
+  ✓ Rule passed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+errorMessage: |-
+  ✗ Rule failed.
+  Files Checked: {CHECKED_FILES}
+  Items Found: {FOUND_ITEMS}
+  Items Matched: {MATCHING_FILES}
+  Details: {DEFAULT_MESSAGE}
+  {PROPERTY_RESOLVED}
+useCase: Encryption enforcement.
+rationale: Prevents plain-text property resolution when vault-encrypted files are present.
+checks:
+- type: CONDITIONAL_CHECK
+  params:
+    preconditions:
+    - type: FILE_EXISTS
+      params:
+        filePatterns:
+        - src/main/resources/secure-*.properties
+    onSuccess:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        tokens:
+        - 'secure::'
+        filePatterns:
+        - src/main/mule/*.xml
+        matchMode: SUBSTRING</div></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function toggleConfig(id) {
+            var x = document.getElementById(id);
+            var link = document.getElementById(id + '-link');
+            if (x.style.display === "none") {
+                x.style.display = "block";
+                if(link) link.innerHTML = "[-] Hide Rule Config";
+            } else {
+                x.style.display = "none";
+                if(link) link.innerHTML = "[+] Show Rule Config";
+            }
+        }
+
+        function toggleAllConfigs(expand) {
+            var configs = document.getElementsByClassName("rule-config");
+            for (var i = 0; i < configs.length; i++) {
+                var div = configs[i];
+                var id = div.id;
+                var link = document.getElementById(id + '-link');
+                if (expand) {
+                    div.style.display = "block";
+                    if (link) link.innerHTML = "[-] Hide Rule Config";
+                } else {
+                    div.style.display = "none";
+                    if (link) link.innerHTML = "[+] Show Rule Config";
+                }
+            }
+        }
+
+        function filterTable() {
+            var input, filter, table, tr, td, i, txtValue;
+            input = document.getElementById("searchInput");
+            filter = input.value.toUpperCase();
+            table = document.getElementById("resultsTable");
+            tr = table.getElementsByTagName("tr");
+
+            // Remove existing highlights first
+            removeHighlights();
+
+            for (i = 1; i < tr.length; i++) {
+                var found = false;
+                var tds = tr[i].getElementsByTagName("td");
+                for (var j = 0; j < tds.length; j++) {
+                    if (tds[j]) {
+                        txtValue = tds[j].textContent || tds[j].innerText;
+                        if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                            found = true;
+                            break;
+                        }
+                    }
+                }
+                tr[i].style.display = found ? "" : "none";
+            }
+
+            // Apply highlighting if there is a filter
+            if (filter.length > 0) {
+                highlightSearch(input.value);
+            }
+        }
+
+        function removeHighlights() {
+            var highlighted = document.querySelectorAll('span.search-highlight');
+            highlighted.forEach(function(span) {
+                var parent = span.parentNode;
+                parent.replaceChild(document.createTextNode(span.textContent), span);
+                parent.normalize();
+            });
+        }
+
+        function highlightSearch(term) {
+            if (!term) return;
+            // Escape regex special characters in the term
+            // We use a simplified character set to avoid Java escaping hell
+            // [-.[]{}()...] -> escaped with double backslash for Java string literal
+            var escapedTerm = term.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, '\\$&');
+            var regex;
+            try {
+                regex = new RegExp("(" + escapedTerm + ")", "gi");
+            } catch (e) {
+                return;
+            }
+            var body = document.getElementById("tableBody");
+            recursiveHighlight(body, regex);
+        }
+
+        function recursiveHighlight(node, regex) {
+            if (node.nodeType === 3) { // Text node
+                 if (node.nodeValue.trim().length > 0 && regex.test(node.nodeValue)) {
+                     var span = document.createElement("span");
+                     span.innerHTML = node.nodeValue.replace(regex, "<span class='search-highlight' style='background-color: #ffeb3b; color: black; font-weight: bold; padding: 2px 4px; border-radius: 2px;'>$1</span>");
+                     node.parentNode.replaceChild(span, node);
+                 }
+            } else if (node.nodeType === 1 && node.nodeName !== "SCRIPT" && node.nodeName !== "STYLE" && !node.classList.contains("search-highlight")) {
+                 // Clone children to avoid iteration issues if we modify DOM
+                 var children = Array.from(node.childNodes);
+                 for (var i = 0; i < children.length; i++) {
+                     recursiveHighlight(children[i], regex);
+                 }
+            }
+        }
+
+        function sortTable(n) {
+            var table, rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
+            table = document.getElementById("resultsTable");
+            switching = true;
+            dir = "asc";
+            while (switching) {
+                switching = false;
+                rows = table.rows;
+                for (i = 1; i < (rows.length - 1); i++) {
+                    shouldSwitch = false;
+                    x = rows[i].getElementsByTagName("TD")[n];
+                    y = rows[i + 1].getElementsByTagName("TD")[n];
+                    if (dir == "asc") {
+                        if (x.innerHTML.toLowerCase() > y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    } else if (dir == "desc") {
+                        if (x.innerHTML.toLowerCase() < y.innerHTML.toLowerCase()) {
+                            shouldSwitch = true;
+                            break;
+                        }
+                    }
+                }
+                if (shouldSwitch) {
+                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
+                    switching = true;
+                    switchcount++;
+                } else {
+                    if (switchcount == 0 && dir == "asc") {
+                        dir = "desc";
+                        switching = true;
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

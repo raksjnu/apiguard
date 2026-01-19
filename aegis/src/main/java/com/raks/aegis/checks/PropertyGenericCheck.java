@@ -77,6 +77,8 @@ public class PropertyGenericCheck extends AbstractCheck {
         int passedFileCount = 0;
         int totalFiles = 0;
         List<String> details = new ArrayList<>();
+        java.util.Set<String> successDetails = new java.util.HashSet<>();
+        List<String> checkedFilesList = new ArrayList<>();
 
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             List<Path> matchingFiles = paths
@@ -90,6 +92,8 @@ public class PropertyGenericCheck extends AbstractCheck {
             for (Path file : matchingFiles) {
                 boolean filePassed = true;
                 List<String> fileErrors = new ArrayList<>();
+                List<String> fileSuccesses = new ArrayList<>();
+
                 try (InputStream is = Files.newInputStream(file)) {
                     Properties props = new Properties();
                     if (file.toString().endsWith(".xml")) props.loadFromXML(is);
@@ -105,6 +109,8 @@ public class PropertyGenericCheck extends AbstractCheck {
                                  if (!props.containsKey(pattern)) {
                                      filePassed = false;
                                      fileErrors.add(formatCustomRuleMessage(customMsg, "Missing required info: " + pattern));
+                                 } else {
+                                     fileSuccesses.add(pattern + " (Verified)");
                                  }
                             } else if ("FORMAT".equalsIgnoreCase(type)) {
                                 String[] parts = pattern.split("=", 2);
@@ -115,6 +121,8 @@ public class PropertyGenericCheck extends AbstractCheck {
                                     if (val != null && !val.matches(regex)) {
                                         filePassed = false;
                                          fileErrors.add(formatCustomRuleMessage(customMsg, "Format mismatch for " + key));
+                                    } else if (val != null) {
+                                        fileSuccesses.add(key + "=" + val);
                                     }
                                 }
                             }
@@ -128,6 +136,8 @@ public class PropertyGenericCheck extends AbstractCheck {
                                 if (actualValue == null) {
                                     filePassed = false;
                                     fileErrors.add("Missing Key: " + propertyKey);
+                                } else {
+                                    fileSuccesses.add(propertyKey + "=" + actualValue);
                                 }
                             } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
                                 if (actualValue != null) {
@@ -153,6 +163,8 @@ public class PropertyGenericCheck extends AbstractCheck {
                                         if (!valueMatch) {
                                             filePassed = false;
                                             fileErrors.add(String.format("Invalid value for '%s'. Found: '%s', Expected one of: %s", propertyKey, actualValue, constraint.allowedValues));
+                                        } else {
+                                            fileSuccesses.add(propertyKey + "=" + actualValue);
                                         }
                                     } else {
 
@@ -160,6 +172,8 @@ public class PropertyGenericCheck extends AbstractCheck {
                                             filePassed = false;
                                             fileErrors.add(String.format("Value mismatch for '%s'. Found: '%s', Expected: '%s' (Op: '%s')", 
                                                 propertyKey, actualValue, expectedValueRegex, operator));
+                                        } else {
+                                            fileSuccesses.add(propertyKey + "=" + actualValue);
                                         }
                                     }
                                 }
@@ -169,6 +183,8 @@ public class PropertyGenericCheck extends AbstractCheck {
                                         filePassed = false;
                                         fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
                                             propertyKey, actualValue, expectedValueRegex, operator));
+                                    } else {
+                                        fileSuccesses.add(propertyKey + "=" + actualValue);
                                     }
                                 }
                             }
@@ -180,24 +196,35 @@ public class PropertyGenericCheck extends AbstractCheck {
                      fileErrors.add("Read Error: " + e.getMessage());
                 }
 
-                if (filePassed) passedFileCount++;
-                else details.add(projectRoot.relativize(file) + " [\n" + String.join("\n", fileErrors) + "\n]");
+                if (filePassed) {
+                    passedFileCount++;
+                    checkedFilesList.add(projectRoot.relativize(file).toString());
+                    successDetails.addAll(fileSuccesses);
+                } else {
+                    details.add(projectRoot.relativize(file) + " [" + String.join(", ", fileErrors) + "]");
+                }
             }
 
             boolean uniqueCondition = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
 
-            String checkedFilesStr = matchingFiles.stream()
-                    .map(p -> projectRoot.relativize(p).toString())
-                    .collect(java.util.stream.Collectors.joining(", "));
+            String checkedFilesStr = String.join(", ", checkedFilesList);
+
+            String foundItemsStr = details.stream()
+                    .filter(det -> det.contains("[") && det.contains("]"))
+                    .map(det -> det.substring(det.indexOf("[") + 1, det.lastIndexOf("]")))
+                    .map(items -> items.replace("\n", ", ").trim())
+                    .collect(java.util.stream.Collectors.joining("; "));
+
+            String matchingFilesStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
 
             if (uniqueCondition) {
                 String defaultSuccess = String.format("Property Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
-                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr));
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr);
             } else {
                 String technicalMsg = String.format("Property Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
                                 mode, matchMode, passedFileCount, totalFiles, 
                                 details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr));
+                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
             }
 
         } catch (Exception e) {
