@@ -9,11 +9,11 @@ import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.LoaderOptions;
 import org.yaml.snakeyaml.TypeDescription;
+import org.yaml.snakeyaml.error.YAMLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -71,6 +71,12 @@ public class AegisMain implements Callable<Integer> {
         logger.debug("Scanning for projects...");
 
         RootWrapper configWrapper = loadConfig(configFilePath);
+        
+        if (configWrapper.getConfig() == null) {
+             logger.error("FATAL ERROR: 'config' section is missing or invalid in the configuration file.");
+             System.exit(1);
+        }
+
         List<Rule> allRules = configWrapper.getRules();
         Map<String, Object> projectIdConfig = configWrapper.getConfig().getProjectIdentification();
         int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
@@ -475,17 +481,25 @@ public class AegisMain implements Callable<Integer> {
     }
     private static RootWrapper loadConfig(String configFilePath) {
         LoaderOptions options = new LoaderOptions();
+        options.setAllowDuplicateKeys(false);
         Constructor constructor = new Constructor(RootWrapper.class, options);
         TypeDescription td = new TypeDescription(RootWrapper.class);
         td.addPropertyParameters("rules", Rule.class);
         constructor.addTypeDescription(td);
         Yaml yaml = new Yaml(constructor);
-        InputStream input;
+        InputStream input = null;
         if (configFilePath != null && !configFilePath.isEmpty()) {
             try {
                 Reader reader = Files.newBufferedReader(Paths.get(configFilePath), StandardCharsets.UTF_8);
                 logger.info("Loaded custom config from: {}", configFilePath);
                 return yaml.loadAs(reader, RootWrapper.class);
+            } catch (YAMLException e) {
+                logger.error("");
+                logger.error("****************************************************************");
+                logger.error("FATAL ERROR: Invalid YAML Configuration in: {}", configFilePath);
+                logger.error("Reason: {}", e.getMessage());
+                logger.error("****************************************************************");
+                System.exit(1);
             } catch (IOException e) {
                 logger.error("Error loading custom config file: {}", configFilePath);
                 logger.warn("Falling back to embedded rules.yaml");
@@ -498,7 +512,14 @@ public class AegisMain implements Callable<Integer> {
             logger.error("rules.yaml not found!");
             System.exit(1);
         }
-        return yaml.loadAs(input, RootWrapper.class);
+        try {
+            return yaml.loadAs(input, RootWrapper.class);
+        } catch (YAMLException e) {
+            logger.error("FATAL ERROR: Invalid YAML in default rules.yaml or fallback!");
+            logger.error("Reason: {}", e.getMessage());
+            System.exit(1);
+            return null; // Unreachable
+        }
     }
     private static Path showFolderDialog() {
         final Path[] selected = new Path[1];
