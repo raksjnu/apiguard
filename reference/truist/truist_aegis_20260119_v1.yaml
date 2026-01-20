@@ -333,36 +333,47 @@ rules:
         elements: ["set-payload"]
         forbiddenAttributes: ["toApplicationCode", "fromApplicationCode"]
 
-  # BANK-004: jce-encrypt
+  # BANK-004: Require jce-encrypt Token (Conditional)
   - id: "BANK-004"
     name: "Require jce-encrypt Token"
-    description: "Ensures usage of jce-encrypt."
-    appliesTo: ["CODE"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ jce-encrypt token found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Missing required token (jce-encrypt)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH_REQUIRED
-      params:
-        filePatterns: ["src/main/mule/*.xml"]
-        tokens: ["\\bjce-encrypt\\b"]
-        matchMode: REGEX
-        ignoreComments: true
+    type: CONDITIONAL_CHECK
+    description: "If <crypto:jce-config> appears, it must use type='JKS' (hardcoded or resolved property)."
+    params:
+      logic: AND
+      preconditions:
+        - type: XML_XPATH_EXISTS
+          params:
+            xpathExpressions:
+              - "//*[local-name()='jce-config']"
+            filePattern: "**/*.xml"
+          description: "Check if jce-config exists"
+      onSuccess:
+        - type: XML_ATTRIBUTE_EXISTS
+          params:
+            xmlElement: "jce-config"
+            attributeName: "type"
+            attributeValue: "JKS"
+            filePattern: "**/*.xml"
+          description: "Ensure type is JKS"
+    successMessage: "✓ JCE Token configuration is valid (or not present)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    errorMessage: "✗ JCE Token invalid. <crypto:jce-config> must have type='JKS' (found: {FOUND_ITEMS})\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
 
   # BANK-005: SOAP Version
   - id: "BANK-005"
     name: "Validate SOAP Version"
+    type: CONDITIONAL_CHECK
+    description: "If apikit-soap:config exists, soapVersion must NOT be SOAP11 or SOAP12 (Deprecated)."
     appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
-    successMessage: "✓ SOAP configuration uses valid version (1.1 or 1.2)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Invalid SOAP version detected. Must be SOAP_11 or SOAP_12\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    successMessage: "✓ SOAP configuration is valid (No deprecated versions found)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    errorMessage: "✗ Invalid SOAP version detected. SOAP11 and SOAP12 are forbidden.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
     checks:
     # CONFIGURATION NOTE:
-    # 'CONDITIONAL_CHECK' ensures we only validate the SOAP version IF an APIKit SOAP config exists.
-    # Precondition: Scans for 'apikit-soap:config'.
-    # OnSuccess: Validates that 'soapVersion' is SOAP_11 or SOAP_12.
+    # 'CONDITIONAL_CHECK' - Forbidden Logic.
+    # Precondition: Scans for 'apikit-soap:config' to see if SOAP is used.
+    # OnSuccess: Scans for Forbidden tokens (SOAP11/12) using Regex.
+    # Regex matches: soapVersion="SOAP11", soapVersion='SOAP_12', etc. (Case Insensitive)
     - type: CONDITIONAL_CHECK
       params:
         preconditions:
@@ -371,14 +382,14 @@ rules:
             filePatterns: ["src/main/mule/*.xml"]
             tokens: ["apikit-soap:config"]
         onSuccess:
-        - type: XML_ATTRIBUTE_EXISTS
+        - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
           params:
             filePatterns: ["src/main/mule/*.xml"]
-            elementAttributeSets:
-            - element: apikit-soap:config
-              attributes: {soapVersion: "SOAP_11"}
-            - element: apikit-soap:config
-              attributes: {soapVersion: "SOAP_12"}
+            # Regex: soapVersion = "SOAP_11" or "SOAP12" (optional underscore)
+            tokens: ["soapVersion\\s*=\\s*['\"](?i)SOAP_?1[12]['\"]"]
+            matchMode: REGEX
+            isRegex: true
+            ignoreComments: true
 
   # BANK-031: jce-encrypt-pbe
   - id: "BANK-031"
