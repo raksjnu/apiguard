@@ -39,7 +39,7 @@ public class XmlGenericCheck extends AbstractCheck {
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
 
         if (filePatterns == null || filePatterns.isEmpty()) {
-             logger.info("DEBUG: filePatterns is null/empty for {} Values: {}", check.getRuleId(), params.get("filePatterns"));
+
              return failConfig(check, "filePatterns required");
         }
         if (xpathExpr == null && 

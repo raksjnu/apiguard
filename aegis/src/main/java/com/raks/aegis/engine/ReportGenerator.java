@@ -1240,20 +1240,20 @@ public class ReportGenerator {
                     """;
             String finalHtml = String.format(html, sidebar.toString(), content.toString());
             Path ruleGuidePath = outputDir.resolve("rule_guide.html");
-            logger.info("DEBUG: Attempting to generate Rule Guide at: {}", ruleGuidePath.toAbsolutePath());
+
             java.util.Optional.ofNullable(ruleGuidePath.getParent()).ifPresent(p -> {
                 try {
                     java.nio.file.Files.createDirectories(p);
                 } catch (Exception e) {}
             });
             Files.writeString(ruleGuidePath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
-            logger.info("DEBUG: Rule Guide generated successfully at: {}", ruleGuidePath.toAbsolutePath());
+
 
             try {
                 Path resourcesPath = java.nio.file.Paths.get("src/main/resources/web/aegis/rule_guide.html");
                 if (java.nio.file.Files.exists(resourcesPath.getParent())) {
                     Files.writeString(resourcesPath, finalHtml, java.nio.charset.StandardCharsets.UTF_8);
-                    logger.info("DEBUG: Rule Guide also written to resources: {}", resourcesPath.toAbsolutePath());
+
                 }
             } catch (Exception e) {
                 logger.warn("Could not write rule_guide.html to resources folder: {}", e.getMessage());
@@ -1261,7 +1261,7 @@ public class ReportGenerator {
 
             logger.debug("Rule guide generated (dynamic)");
         } catch (Exception e) {
-            logger.error("DEBUG: Failed to generate rule guide: {}", e.getMessage(), e);
+            logger.error("Failed to generate rule guide: {}", e.getMessage(), e);
         }
     }
     private static String convertMdToHtml(String md) {

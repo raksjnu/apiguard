@@ -105,11 +105,27 @@ Aegis is a command-line tool. You can run it by executing the JAR file built in 
 
 The tool can scan a single project or a directory containing multiple projects of any supported technology.
 
+### Running the CLI
 ```sh
-# Usage: java -jar <jar-file> <path-to-projects> <output-directory>
+# Usage: java -jar <jar-file> -p <path-to-projects> [--config <rules-yaml>]
 java -jar target/aegis-1.0.0-jar-with-raks.jar -p /path/to/your/projects 
 ```
-example: `java -jar .\target\aegis-1.0.0-jar-with-raks.jar -p C:\projects\my-java-app`
+Example: `java -jar .\target\aegis-1.0.0-jar-with-raks.jar -p C:\projects\my-java-app --config my-rules.yaml`
+
+### Running the GUI
+Aegis now supports a direct GUI mode via the CLI:
+```sh
+# Start GUI on default port 8080
+java -jar target/aegis-1.0.0-jar-with-raks.jar --gui
+
+# Start GUI on custom port
+java -jar target/aegis-1.0.0-jar-with-raks.jar --gui --port 9000
+```
+
+### Using Launch Scripts (Windows/Mac)
+For ease of use, utilize the provided launch scripts which automatically detect the latest JAR:
+- **Windows**: `start-aegis-gui.bat`
+- **Mac/Linux**: `./start-aegis-gui.sh`
 
 This will generate:
 1.  **A Consolidated Report**: `CONSOLIDATED-REPORT.html` and `CONSOLIDATED-REPORT.xlsx` in the root of the output directory.

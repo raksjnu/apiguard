@@ -146,13 +146,32 @@ mvn clean package
 
 ## 5. Deployment Models
 
-### 5.1 Standalone CLI
+### 5.1 Command Line Interface (CLI)
 Run as a standard Java application:
 ```bash
+# Standard Scan
 java -jar aegis.jar -p /path/to/projects
+
+# Provide Custom Rules
+java -jar aegis.jar -p /path/to/projects --config /path/to/custom-rules.yaml
 ```
 
-### 5.2 Wrapper Integration
+### 5.2 Graphical User Interface (GUI)
+Aegis includes a built-in web-based GUI for interactive analysis:
+```bash
+# Start GUI on default port 8080
+java -jar aegis.jar --gui
+
+# Start GUI on custom port
+java -jar aegis.jar --gui --port 9000
+```
+
+### 5.3 Shell Scripts (Recommended)
+Convenience scripts are provided for both Windows and Mac:
+- **Windows**: `start-aegis-gui.bat`
+- **Mac/Linux**: `./start-aegis-gui.sh`
+
+### 5.4 Wrapper Integration
 Aegis is integrated into the **ApiGuard Wrapper** as a core library, allowing it to run within a MuleSoft runtime environment and be accessible via a Web Portal and REST API.
 
 ---
