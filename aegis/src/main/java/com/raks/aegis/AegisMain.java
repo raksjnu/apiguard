@@ -31,7 +31,10 @@ import picocli.CommandLine.Option;
 import java.util.concurrent.Callable;
 
 @Command(name = "aegis", mixinStandardHelpOptions = true, version = "Aegis 1.0.0",
-        description = "Aegis - Universal Code Compliance & Security Engine\n\nTo start the GUI server:\n  java -jar aegis.jar --gui [--port <port>]")
+        description = "Aegis - Universal Code Compliance & Security Engine\n\n" +
+                      "MODES:\n" +
+                      "  CLI: java -jar aegis.jar -p <path> -c <rules.yaml>\n" +
+                      "  GUI: java -jar aegis.jar --gui [--port <port>]")
 public class AegisMain implements Callable<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(AegisMain.class);
 
