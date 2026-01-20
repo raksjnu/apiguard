@@ -475,7 +475,9 @@ output application/java
     archive: payload.parts.archive.content default null,
     sessionId: payload.parts.sessionId.content default null,
     format: payload.parts.format.content default null,
-    rulesFile: payload.parts.customRules.content as Binary default null,
+    rulesFile: if (payload.parts.customRules.content == null) null 
+               else if (typeOf(payload.parts.customRules.content) as String == 'Binary') payload.parts.customRules.content 
+               else write(payload.parts.customRules.content, 'application/x-yaml') as Binary,
     rulesFilename: if (payload.parts.customRules.headers["Content-Disposition"].filename != null) 
                         payload.parts.customRules.headers["Content-Disposition"].filename 
                      else if (payload.parts.customRules.headers["Content-Disposition"] != null)
