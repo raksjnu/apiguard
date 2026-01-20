@@ -144,6 +144,127 @@ mvn clean package
 
 ---
 
+## Prerequisites & Environment Setup
+
+### System Requirements
+
+#### Minimum Requirements
+- **Operating System**: Windows 10+, macOS 10.14+, or Linux (Ubuntu 18.04+)
+- **Java**: JDK 17 or higher
+- **Memory**: 512 MB RAM (1 GB+ recommended for large repositories)
+- **Disk Space**: 100 MB for application + space for reports
+
+#### Recommended Configuration
+- **Java**: JDK 17 (LTS)
+- **Memory**: 2 GB RAM
+- **Disk Space**: 500 MB free space
+- **Network**: Internet connection (for Git repository scanning only)
+
+### Java Installation & Verification
+
+#### Check Java Version
+```bash
+java -version
+```
+
+**Expected Output:**
+```
+java version "17.0.x" 2024-xx-xx LTS
+Java(TM) SE Runtime Environment (build 17.0.x+xx-LTS-xxx)
+Java HotSpot(TM) 64-Bit Server VM (build 17.0.x+xx-LTS-xxx, mixed mode, sharing)
+```
+
+#### Install Java (if needed)
+
+**Windows:**
+1. Download JDK 17 from [Oracle](https://www.oracle.com/java/technologies/downloads/) or [Adoptium](https://adoptium.net/)
+2. Run the installer
+3. Add Java to PATH:
+   - System Properties → Environment Variables
+   - Add `C:\Program Files\Java\jdk-17\bin` to PATH
+
+**macOS:**
+```bash
+# Using Homebrew
+brew install openjdk@17
+
+# Add to PATH
+echo 'export PATH="/opt/homebrew/opt/openjdk@17/bin:$PATH"' >> ~/.zshrc
+source ~/.zshrc
+```
+
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt update
+sudo apt install openjdk-17-jdk
+
+# RHEL/CentOS
+sudo yum install java-17-openjdk-devel
+```
+
+### Git Configuration (Optional - for Git Repository Scanning)
+
+If you plan to scan Git repositories directly, configure Git authentication:
+
+#### For GitLab/GitHub Enterprise:
+1. Generate a Personal Access Token:
+   - **GitLab**: User Settings → Access Tokens → Create token with `read_repository` scope
+   - **GitHub**: Settings → Developer settings → Personal access tokens → Generate new token with `repo` scope
+
+2. Configure in Aegis GUI:
+   - Navigate to Settings page
+   - Enter your token
+   - Click "Validate" to test connection
+
+### File Permissions (Unix/Linux/macOS)
+
+Ensure shell scripts have execute permissions:
+```bash
+chmod +x start-aegis-gui.sh
+chmod +x build-aegis.sh
+chmod +x generate_security_report.sh
+```
+
+### Firewall Configuration (Optional - for GUI Mode)
+
+If using GUI mode, ensure port 8080 (or your custom port) is not blocked:
+
+**Windows Firewall:**
+```powershell
+netsh advfirewall firewall add rule name="Aegis GUI" dir=in action=allow protocol=TCP localport=8080
+```
+
+**macOS:**
+System Preferences → Security & Privacy → Firewall → Firewall Options → Add Aegis
+
+**Linux (UFW):**
+```bash
+sudo ufw allow 8080/tcp
+```
+
+### Verification Steps
+
+After installation, verify your environment:
+
+1. **Check Java:**
+   ```bash
+   java -version
+   ```
+
+2. **Test Aegis:**
+   ```bash
+   java -jar aegis-1.0.0-jar-with-raks.jar --help
+   ```
+
+3. **Start GUI (Optional):**
+   ```bash
+   java -jar aegis-1.0.0-jar-with-raks.jar --gui
+   ```
+   Then open browser to `http://localhost:8080`
+
+---
+
 ## 5. Deployment Models
 
 ### 5.1 Command Line Interface (CLI)
