@@ -509,10 +509,11 @@ public class AegisMain implements Callable<Integer> {
                     decoder.onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT);
                     content = decoder.decode(java.nio.ByteBuffer.wrap(bytes)).toString();
                 } catch (java.nio.charset.CharacterCodingException e) {
-                    logger.warn("Failed to read config as UTF-8 (MalformedInputException). Retrying with ISO-8859-1. File: {}", configFilePath);
-                    content = new String(Files.readAllBytes(Paths.get(configFilePath)), StandardCharsets.ISO_8859_1);
+                    logger.warn("Failed to read config as UTF-8. Retrying with Windows-1252 to handle special characters. File: {}", configFilePath);
+                    content = new String(Files.readAllBytes(Paths.get(configFilePath)), java.nio.charset.Charset.forName("Windows-1252"));
                 }
                 logger.info("Loaded custom config from: {}", configFilePath);
+                content = sanitizeYamlContent(content);
                 return yaml.loadAs(content, RootWrapper.class);
             } catch (YAMLException e) {
                 logger.error("");
@@ -540,6 +541,27 @@ public class AegisMain implements Callable<Integer> {
             logger.error("Reason: {}", e.getMessage());
             throw new AegisConfigurationException("Invalid YAML in default rules.yaml: " + e.getMessage());
         }
+    }
+
+    private static String sanitizeYamlContent(String content) {
+        if (content == null) return null;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < content.length(); i++) {
+            char ch = content.charAt(i);
+            // Allow:
+            // 0x09 (Tab), 0x0A (LF), 0x0D (CR)
+            // 0x20-0x7E (Printable ASCII)
+            // 0x85 (Next Line)
+            // 0xA0-0xD7FF (Unicode printable, mostly)
+            // 0xE000-0xFFFD
+            boolean isControl = (ch <= 0x1F && ch != 0x09 && ch != 0x0A && ch != 0x0D) || 
+                                (ch >= 0x7F && ch <= 0x9F && ch != 0x85); 
+            
+            if (!isControl) {
+                sb.append(ch);
+            }
+        }
+        return sb.toString();
     }
     private static Path showFolderDialog() {
         final Path[] selected = new Path[1];

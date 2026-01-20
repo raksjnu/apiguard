@@ -1,0 +1,4 @@
+rules:
+  - id: "TEST-001"
+    name: "Test’s Rule"
+    enabled: true

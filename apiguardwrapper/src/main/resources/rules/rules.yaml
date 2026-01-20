@@ -410,7 +410,7 @@ rules:
     # 'XML_ATTRIBUTE_EXISTS' validates that specific attributes/values exist on an element.
     # - 'elementAttributeSets': Defines the element and the REQUIRED attribute values.
     # - Useful for enforcing configuration standards like 'soapVersion="SOAP_12"'.
-    checks:
+    #
     # CONFIGURATION NOTE:
     # 'CONDITIONAL_CHECK' ensures we only validate the SOAP version IF an APIKit SOAP config exists.
     # Precondition: Scans for 'apikit-soap:config'.
