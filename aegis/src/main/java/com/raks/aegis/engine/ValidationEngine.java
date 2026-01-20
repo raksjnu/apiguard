@@ -13,15 +13,24 @@ public class ValidationEngine {
     private final List<Rule> rules;
     private final Path projectRoot;
     private final ProjectTypeClassifier projectTypeClassifier;
+    private final List<String> ignoredFileNames;
+    private final List<String> ignoredFilePrefixes;
 
     public ValidationEngine(List<Rule> rules, Path projectRoot) {
-        this(rules, projectRoot, null);
+        this(rules, projectRoot, null, null, null);
     }
 
     public ValidationEngine(List<Rule> rules, Path projectRoot, ProjectTypeClassifier projectTypeClassifier) {
+        this(rules, projectRoot, projectTypeClassifier, null, null);
+    }
+
+    public ValidationEngine(List<Rule> rules, Path projectRoot, ProjectTypeClassifier projectTypeClassifier, 
+                            List<String> ignoredFileNames, List<String> ignoredFilePrefixes) {
         this.rules = rules;
         this.projectRoot = projectRoot;
         this.projectTypeClassifier = projectTypeClassifier;
+        this.ignoredFileNames = ignoredFileNames != null ? ignoredFileNames : new ArrayList<>();
+        this.ignoredFilePrefixes = ignoredFilePrefixes != null ? ignoredFilePrefixes : new ArrayList<>();
     }
 
     public ValidationReport validate() {
@@ -63,6 +72,7 @@ public class ValidationEngine {
                     check.setRuleId(rule.getId());
                     check.setRule(rule);  
                     AbstractCheck validator = CheckFactory.create(check);
+                    validator.setIgnoredFiles(ignoredFileNames, ignoredFilePrefixes); // Pass global ignore config
                     CheckResult result = validator.execute(projectRoot, check);
                     results.add(result);
                     if (!result.passed)

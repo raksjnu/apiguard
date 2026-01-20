@@ -6,6 +6,18 @@ These apply to almost ALL rule types and control file selection and logic.
 
 | Parameter      | Default      | Description                                          |
 |----------------|--------------|------------------------------------------------------|
+      - node_modules
+      prefixes:       # Folder names starting with...
+      - .
+      - temp_
+
+    # Global File Exclusion
+    ignoredFiles:
+      exactNames:     # Specific files to ignore
+      - log4j2-test.xml
+      - .DS_Store
+      prefixes:       # Filenames starting with...
+      - debug_
 | `filePatterns` | (Required)   | List of glob patterns for target files (e.g. `["**/*.xml"]`). |
 | `matchMode`    | `ALL_FILES`  | Controls file-level quantifier (see table below).    |
 | `logic`        | `AND`        | Combining logic for multiple checks or tokens.      |

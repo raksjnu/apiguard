@@ -102,6 +102,22 @@ public class AegisMain implements Callable<Integer> {
             if (prefixes != null) ignoredPrefixes.addAll(prefixes);
         }
 
+        // Parse ignoredFiles configuration
+        @SuppressWarnings("unchecked")
+        Map<String, Object> ignoredFilesConfig = (Map<String, Object>) projectIdConfig.get("ignoredFiles");
+        List<String> ignoredFileNames = new ArrayList<>();
+        List<String> ignoredFilePrefixesList = new ArrayList<>();
+
+        if (ignoredFilesConfig != null) {
+            @SuppressWarnings("unchecked")
+            List<String> exact = (List<String>) ignoredFilesConfig.get("exactNames");
+            if (exact != null) ignoredFileNames.addAll(exact);
+
+            @SuppressWarnings("unchecked")
+            List<String> prefixes = (List<String>) ignoredFilesConfig.get("prefixes");
+            if (prefixes != null) ignoredFilePrefixesList.addAll(prefixes);
+        }
+
         int tempStart = 0;
         int tempEnd = Integer.MAX_VALUE;
         if (configWrapper.getConfig().getRules() != null) {
@@ -177,7 +193,7 @@ public class AegisMain implements Callable<Integer> {
                         return isConfigProject == isConfigRule;
                     }).collect(Collectors.toList());
 
-            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier);
+            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixesList);
             ValidationReport report = engine.validate();
             report.projectPath = apiName + " (" + apiDir.toString() + ")";
             Path apiReportDir = reportsRoot.resolve(apiName);
@@ -246,6 +262,7 @@ public class AegisMain implements Callable<Integer> {
         Map<String, Object> targetProjectConfig = (Map<String, Object>) projectIdConfig.get("targetProject");
             Map<String, Object> configFolderConfig = (Map<String, Object>) projectIdConfig.get("configFolder");
             Map<String, Object> ignoredFoldersConfig = (Map<String, Object>) projectIdConfig.get("ignoredFolders");
+            Map<String, Object> ignoredFilesConfig = (Map<String, Object>) projectIdConfig.get("ignoredFiles");
 
             int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
             String matchMode = (String) targetProjectConfig.getOrDefault("matchMode", "ANY");
@@ -259,6 +276,17 @@ public class AegisMain implements Callable<Integer> {
                 }
                 if (ignoredFoldersConfig.get("prefixes") != null) {
                     ignoredPrefixes = (List<String>) ignoredFoldersConfig.get("prefixes");
+                }
+            }
+            
+            List<String> ignoredFileNames = new ArrayList<>();
+            List<String> ignoredFilePrefixesList = new ArrayList<>();
+            if (ignoredFilesConfig != null) {
+                if (ignoredFilesConfig.get("exactNames") != null) {
+                    ignoredFileNames = (List<String>) ignoredFilesConfig.get("exactNames");
+                }
+                if (ignoredFilesConfig.get("prefixes") != null) {
+                    ignoredFilePrefixesList = (List<String>) ignoredFilesConfig.get("prefixes");
                 }
             }
             List<String> globalEnvironments = activeConfig.getConfig().getEnvironments();
@@ -322,7 +350,7 @@ public class AegisMain implements Callable<Integer> {
                         })
                         .collect(Collectors.toList());
 
-                ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier);
+                ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixesList);
                 ValidationReport report = engine.validate();
                 if (report == null) {
                     logger.error("Validation failed for {}", apiName);

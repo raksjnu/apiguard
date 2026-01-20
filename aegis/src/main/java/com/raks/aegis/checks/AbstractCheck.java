@@ -9,10 +9,17 @@ public abstract class AbstractCheck {
     public abstract CheckResult execute(Path projectRoot, Check check);
     protected Map<String, Object> effectiveParams;
     protected List<String> propertyResolutions = new java.util.ArrayList<>();
+    protected List<String> ignoredFileNames = new java.util.ArrayList<>();
+    protected List<String> ignoredFilePrefixes = new java.util.ArrayList<>();
 
     public void init(Map<String, Object> params) {
         this.effectiveParams = params;
         this.propertyResolutions = new java.util.ArrayList<>();
+    }
+
+    public void setIgnoredFiles(List<String> exactNames, List<String> prefixes) {
+        if (exactNames != null) this.ignoredFileNames.addAll(exactNames);
+        if (prefixes != null) this.ignoredFilePrefixes.addAll(prefixes);
     }
 
     protected void addPropertyResolution(String original, String resolved) {
@@ -175,14 +182,33 @@ public abstract class AbstractCheck {
     protected boolean shouldIgnorePath(Path projectRoot, Path path) {
         Path relativePath = projectRoot.relativize(path);
         String pathString = relativePath.toString().replace('\\', '/');
-        return pathString.startsWith("target/") || pathString.contains("/target/") ||
+        
+        // check folder ignores first (performance)
+        if (pathString.startsWith("target/") || pathString.contains("/target/") ||
                 pathString.startsWith("bin/") || pathString.contains("/bin/") ||
                 pathString.startsWith("build/") || pathString.contains("/build/") ||
                 pathString.startsWith(".git/") || pathString.contains("/.git/") ||
                 pathString.startsWith(".idea/") || pathString.contains("/.idea/") ||
                 pathString.startsWith(".vscode/") || pathString.contains("/.vscode/") ||
                 pathString.startsWith("node_modules/") || pathString.contains("/node_modules/") ||
-                pathString.startsWith("Aegis-reports/") || pathString.contains("/Aegis-reports/");
+                pathString.startsWith("Aegis-reports/") || pathString.contains("/Aegis-reports/")) {
+            return true;
+        }
+
+        // check file ignores
+        String fileName = path.getFileName().toString();
+        
+        if (ignoredFileNames.contains(fileName)) {
+            return true;
+        }
+        
+        for (String prefix : ignoredFilePrefixes) {
+            if (fileName.startsWith(prefix)) {
+                return true;
+            }
+        }
+        
+        return false;
     }
 
     protected boolean matchesAnyPattern(Path path, List<String> patterns, Path projectRoot) {

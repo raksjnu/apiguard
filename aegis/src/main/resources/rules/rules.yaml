@@ -161,6 +161,15 @@ config:
       - Aegis-reports
       - aegis-report
       - aegis-report-config
+
+    # Files to exclude from scanning globally
+    ignoredFiles:
+      exactNames:     # Exact filenames to skip (e.g. log4j2-test.xml)
+      - .DS_Store
+      - thumbs.db
+      prefixes:       # Filenames starting with these prefixes to skip
+      - temp_
+      - debug_
       
 rules:
 
