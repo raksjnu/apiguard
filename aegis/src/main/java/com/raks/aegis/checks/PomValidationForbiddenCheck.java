@@ -47,11 +47,10 @@ public class PomValidationForbiddenCheck extends AbstractCheck {
                     "No forbidden POM elements found\nFiles validated: " + fileList, fileList, fileList);
         } else {
             String technicalMsg = "Forbidden POM elements found:\n• " + String.join("\n• ", failures);
-            // Pass 'fileList' as checkedFiles to populate {CHECKED_FILES} token
-            String finalMessage = getCustomMessage(check, technicalMsg, fileList, "See details"); 
-             // Ideally we should extract items, but "See details" or similar is better than null. 
-             // Actually let's try to pass the failures string as foundItems, or just "Forbidden Elements"
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage, fileList, String.join("; ", failures));
+            String foundItems = String.join("; ", failures);
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), 
+                    getCustomMessage(check, technicalMsg, fileList, foundItems, null), 
+                    fileList, foundItems, null);
         }
     }
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,

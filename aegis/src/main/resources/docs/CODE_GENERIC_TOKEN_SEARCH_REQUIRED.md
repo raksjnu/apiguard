@@ -27,7 +27,7 @@ Validates that **required tokens or patterns exist** in files matching specified
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `excludePatterns` | List | `[]` | Glob patterns to exclude specific files |
-| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
+| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX`. Setting to `REGEX` automatically enables regex matching. |
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
 | `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `matchMode: REGEX`. |
 | `requireAll` | Boolean | `true` | If `true`, ALL tokens must be found. If `false`, at least ONE |
@@ -35,6 +35,7 @@ Validates that **required tokens or patterns exist** in files matching specified
 ## Configuration Examples
 
 ### Example 1: Required Framework Import
+
 Ensure that all implementation files in a project contain the necessary framework imports for logging.
 
 ```yaml
@@ -49,6 +50,7 @@ Ensure that all implementation files in a project contain the necessary framewor
 ```
 
 ### Example 2: Mandatory Error Handling Pattern
+
 Ensure that application configuration files contain mandatory error handling blocks (either "continue" or "propagate" strategies).
 
 ```yaml
@@ -64,6 +66,7 @@ Ensure that application configuration files contain mandatory error handling blo
 ```
 
 ### Example 3: Regex Format Validation
+
 Verify that a version string following semantic versioning exists in the project's build descriptor.
 
 ```yaml
@@ -79,7 +82,7 @@ Verify that a version string following semantic versioning exists in the project
 
 ## Error Messages
 
-```
+```text
 DatabaseConfig.java: Missing required token: import org.slf4j.Logger
 app-descriptor.xml: Missing at least one required token: [on-error-continue, on-error-propagate]
 ```
@@ -107,6 +110,7 @@ Standard configurations for enforcing mandatory components.
 | **🐎 MuleSoft** | DataWeave Version | `REQUIRED` | `*.dwl` |
 
 ### ☕ Java / Spring Boot Patterns
+
 Ensure controllers have standard security annotations.
 
 ```yaml
@@ -121,6 +125,7 @@ Ensure controllers have standard security annotations.
 ```
 
 ### 🐍 Python Patterns
+
 Ensure scripts specify the required python version via shebang.
 
 ```yaml

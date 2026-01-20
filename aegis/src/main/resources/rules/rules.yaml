@@ -386,6 +386,7 @@ rules:
         filePatterns: ["src/main/mule/*.xml"]
         tokens: ["\\bjce-encrypt\\b"]
         matchMode: REGEX
+        ignoreComments: true
 
   # RULE-005: SOAP Version
   - id: "RULE-011"
@@ -536,9 +537,9 @@ rules:
         # CONFIG_NOTE: 
         # isRegex: true -> Enables regex pattern matching for tokens.
         # matchMode: ALL_FILES -> Ensures ALL scanned files must pass the check (i.e., contain NO forbidden tokens).
-        # (Do not use matchMode: REGEX, it is invalid and defaults to ALL_FILES).
         matchMode: ALL_FILES
         isRegex: true
+        ignoreComments: true
 
   # RULE-019: DLP XML
   - id: "RULE-016"
@@ -564,6 +565,7 @@ rules:
         tokens:
         - "north.bound.dlp.flag"
         - "raks.dlp.queue"
+        ignoreComments: true
 
   # RULE-020: DLP Properties
   - id: "RULE-017"
@@ -582,6 +584,7 @@ rules:
         wholeWord: true # Set to 'true' to match exact words. Set to 'false' for substring mode.
         filePatterns: ["**/*.properties"]
         tokens: ["north.bound.dlp.flag", "south.bound.dlp.flag", "wmq.dlp.requestqueue"]
+        ignoreComments: true
 
   # RULE-021: SQL Security
   - id: "RULE-018"
@@ -616,6 +619,7 @@ rules:
               - "jdbc:sqlserver(?!.*trustServerCertificate=false).*"
             matchMode: REGEX
             isRegex: true
+            ignoreComments: true
             failureMessage: "Found SQL Server DB Connection String (missing 'encrypt=false' and/or 'trustServerCertificate=false')"
 
   # RULE-032: DB2 AppId

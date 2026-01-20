@@ -7,8 +7,10 @@ import com.raks.aegis.model.CheckResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,8 +47,9 @@ public class JsonGenericCheck extends AbstractCheck {
         int passedFileCount = 0;
         int totalFiles = 0;
         List<String> details = new ArrayList<>();
-        java.util.Set<String> successDetails = new java.util.HashSet<>();
-        java.util.Set<String> allFoundItems = new java.util.HashSet<>();
+        List<String> successDetails = new ArrayList<>();
+        List<String> passedFilesList = new ArrayList<>();
+        Set<String> allFoundItems = new LinkedHashSet<>();
         List<String> checkedFilesList = new ArrayList<>();
 
         try (Stream<Path> paths = Files.walk(projectRoot)) {
@@ -378,6 +381,7 @@ public class JsonGenericCheck extends AbstractCheck {
 
                  if (filePassed) {
                      passedFileCount++;
+                     passedFilesList.add(projectRoot.relativize(file).toString());
                      successDetails.addAll(fileSuccesses);
                  } else {
                      details.add(projectRoot.relativize(file) + " [" + String.join(", ", fileReasons) + "]");
@@ -401,10 +405,8 @@ public class JsonGenericCheck extends AbstractCheck {
         String checkedFilesStr = String.join(", ", checkedFilesList);
         String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
         
-        // Populate matchingFiles with success details for positive matches, or N/A for negative matches (Forbidden)
-        // If mode is NOT_EXISTS (Forbidden), success means we found nothing, so successDetails will be empty, which resolves to N/A/null.
-        // If mode is EXPECTS/REQUIRED, successDetails will contain what we found.
-        String matchingFilesStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
+        // Populate matchingFiles with passed file names for consistency
+        String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
 
         if (uniqueCondition) {
             String defaultSuccess = String.format("JSON Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
@@ -413,7 +415,7 @@ public class JsonGenericCheck extends AbstractCheck {
             String technicalMsg = String.format("JSON Check failed. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
                             matchMode, passedFileCount, totalFiles, 
                             details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr);
         }
     }
 

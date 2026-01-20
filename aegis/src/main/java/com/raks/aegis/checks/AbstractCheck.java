@@ -60,10 +60,14 @@ public abstract class AbstractCheck {
     }
 
     protected String getCustomMessage(Check check, String defaultMsg, String checkedFiles) {
-        return getCustomMessage(check, defaultMsg, checkedFiles, null);
+        return getCustomMessage(check, defaultMsg, checkedFiles, null, null);
     }
 
     protected String getCustomMessage(Check check, String defaultMsg, String checkedFiles, String foundItems) {
+        return getCustomMessage(check, defaultMsg, checkedFiles, foundItems, null);
+    }
+
+    protected String getCustomMessage(Check check, String defaultMsg, String checkedFiles, String foundItems, String matchingFiles) {
 
         Map<String, Object> params = getEffectiveParams(check);
         if (params.containsKey("message")) {
@@ -71,7 +75,7 @@ public abstract class AbstractCheck {
         }
 
         if (check.getRule() != null && check.getRule().getErrorMessage() != null && !check.getRule().getErrorMessage().isEmpty()) {
-            return formatMessage(check.getRule().getErrorMessage(), defaultMsg, null, checkedFiles, foundItems);
+            return formatMessage(check.getRule().getErrorMessage(), defaultMsg, null, checkedFiles, foundItems, matchingFiles);
         }
 
         return defaultMsg;
@@ -82,12 +86,16 @@ public abstract class AbstractCheck {
     }
 
     protected String getCustomSuccessMessage(Check check, String defaultMsg, String checkedFiles) {
-        return getCustomSuccessMessage(check, defaultMsg, checkedFiles, null);
+        return getCustomSuccessMessage(check, defaultMsg, checkedFiles, null, null);
     }
 
     protected String getCustomSuccessMessage(Check check, String defaultMsg, String checkedFiles, String matchingFiles) {
+        return getCustomSuccessMessage(check, defaultMsg, checkedFiles, null, matchingFiles);
+    }
+
+    protected String getCustomSuccessMessage(Check check, String defaultMsg, String checkedFiles, String foundItems, String matchingFiles) {
         if (check.getRule() != null && check.getRule().getSuccessMessage() != null && !check.getRule().getSuccessMessage().isEmpty()) {
-            return formatMessage(check.getRule().getSuccessMessage(), defaultMsg, null, checkedFiles, null, matchingFiles);
+            return formatMessage(check.getRule().getSuccessMessage(), defaultMsg, null, checkedFiles, foundItems, matchingFiles);
         }
         return defaultMsg;
     }

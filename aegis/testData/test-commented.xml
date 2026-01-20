@@ -1,0 +1,12 @@
+\u003c?xml version="1.0" encoding="UTF-8"?\u003e
+\u003cmule xmlns="http://www.mulesoft.org/schema/mule/core"\u003e
+    
+    \u003c!-- This is a commented section with toApplicationCode --\u003e
+    \u003c!--
+    \u003cset-payload value="toApplicationCode" /\u003e
+    --\u003e
+    
+    \u003c!-- Active code without the forbidden attribute --\u003e
+    \u003cset-payload value="validValue" /\u003e
+    
+\u003c/mule\u003e

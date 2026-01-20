@@ -45,29 +45,18 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                 .collect(java.util.stream.Collectors.joining("; "));
 
         if (failures.isEmpty()) {
-
-            String coreDetails = "Files validated: " + fileList;
+            String defaultSuccess = "All required POM elements found\nFiles validated: " + fileList;
             if (!successes.isEmpty()) {
-                coreDetails += "\nActual Values Found:\n• " + String.join("\n• ", successes);
+                defaultSuccess += "\nActual Values Found:\n• " + String.join("\n• ", successes);
             }
-
-            String customMessage = check.getRule() != null ? check.getRule().getSuccessMessage() : null;
-
-            String finalMessage = formatMessage(customMessage, coreDetails, null, fileList);
-
-            String matchingFilesForPass = successes.isEmpty() ? null : "• " + String.join("\n• ", successes);
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), finalMessage, fileList, matchingFilesForPass);
+            String matchingFilesForPass = successes.isEmpty() ? null : String.join("; ", successes);
+            return CheckResult.pass(check.getRuleId(), check.getDescription(), 
+                    getCustomSuccessMessage(check, defaultSuccess, fileList, matchingFilesForPass), fileList, matchingFilesForPass);
         } else {
-
-            String failureDetails = "• " + String.join("\n• ", failures);
-
-            String customError = check.getRule() != null ? check.getRule().getErrorMessage() : null;
-
-            // Pass 'fileList' as checkedFiles to populate {CHECKED_FILES} token
-            // Pass 'failureDetails' as foundItems to populate {FOUND_ITEMS} token
-            String finalMessage = formatMessage(customError, null, failureDetails, fileList, failureDetails);
-
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), finalMessage, fileList, failureDetails);
+            String technicalMsg = "Missing or incorrect required POM elements:\n• " + String.join("\n• ", failures);
+            String failureDetails = String.join("; ", failures);
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), 
+                    getCustomMessage(check, technicalMsg, fileList, failureDetails, null), fileList, failureDetails, null);
         }
     }
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,

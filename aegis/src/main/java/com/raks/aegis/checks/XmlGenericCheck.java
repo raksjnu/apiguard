@@ -337,9 +337,8 @@ public class XmlGenericCheck extends AbstractCheck {
                     .map(p -> projectRoot.relativize(p).toString())
                     .collect(java.util.stream.Collectors.joining(", "));
 
-            // Use successDetails for positive matches (e.g., Found: XYZ).
-            // For FORBIDDEN checks where we passed because we found nothing, successDetails is empty -> N/A.
-            String matchingFilesStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
+            // Use passedFilesList for matchingFilesStr to consistently show filenames that passed the check.
+            String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
 
             String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
 
@@ -350,7 +349,7 @@ public class XmlGenericCheck extends AbstractCheck {
                 String technicalMsg = String.format("XML Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
                                 mode, matchMode, passedFileCount, totalFiles, 
                                 details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
+                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr);
             }
 
         } catch (Exception e) {

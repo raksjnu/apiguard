@@ -86,7 +86,7 @@ public class ConditionalCheck extends AbstractCheck {
             if (allPassed) {
                  return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, details.toString(), checkedFilesStr, matchingItemsStr), checkedFilesStr, matchingItemsStr);
             } else {
-                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, details.toString(), checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
+                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, details.toString(), checkedFilesStr, foundItemsStr, matchingItemsStr), checkedFilesStr, foundItemsStr, matchingItemsStr);
             }
         } else {
 

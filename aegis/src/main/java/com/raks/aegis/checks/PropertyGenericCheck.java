@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
+import java.util.LinkedHashSet;
 import java.util.stream.Stream;
 
 public class PropertyGenericCheck extends AbstractCheck {
@@ -78,9 +80,10 @@ public class PropertyGenericCheck extends AbstractCheck {
         int passedFileCount = 0;
         int totalFiles = 0;
         List<String> details = new ArrayList<>();
-        java.util.Set<String> successDetails = new java.util.HashSet<>();
+        List<String> successDetails = new ArrayList<>(); // Changed from Set to List
+        Set<String> allFoundItems = new LinkedHashSet<>(); // Changed from HashSet to LinkedHashSet
         List<String> checkedFilesList = new ArrayList<>();
-        java.util.Set<String> allFoundItems = new java.util.HashSet<>();
+        List<String> passedFilesList = new ArrayList<>(); // Track passing files
 
         try (Stream<Path> paths = Files.walk(projectRoot)) {
             List<Path> matchingFiles = paths
@@ -94,7 +97,8 @@ public class PropertyGenericCheck extends AbstractCheck {
             for (Path file : matchingFiles) {
                 boolean filePassed = true;
                 List<String> fileErrors = new ArrayList<>();
-                List<String> fileSuccesses = new ArrayList<>();
+                List<String> fileSuccesses = new ArrayList<>(); // Renamed to fileFoundItems in instruction, but keeping fileSuccesses for consistency with existing logic
+                List<String> fileFoundItems = new ArrayList<>(); // Added to match instruction for successDetails.addAll
 
                 try (InputStream is = Files.newInputStream(file)) {
                     Properties props = new Properties();
@@ -117,9 +121,11 @@ public class PropertyGenericCheck extends AbstractCheck {
                                 filePassed = false;
                                 fileErrors.add(String.format("Field mismatch '%s': Found='%s', Expected='%s'", key, actual, expected));
                                 allFoundItems.add(String.format("%s=%s", key, actual));
+                                fileFoundItems.add(String.format("%s=%s", key, actual));
                             } else {
                                 fileSuccesses.add(String.format("%s=%s", key, actual));
                                 allFoundItems.add(String.format("%s=%s", key, actual));
+                                fileFoundItems.add(String.format("%s=%s", key, actual));
                             }
                         }
                     }
@@ -140,9 +146,11 @@ public class PropertyGenericCheck extends AbstractCheck {
                                 filePassed = false;
                                 fileErrors.add(String.format("Version too low '%s': Found='%s', Min='%s'", key, actual, minVer));
                                 allFoundItems.add(String.format("%s=%s", key, actual));
+                                fileFoundItems.add(String.format("%s=%s", key, actual));
                             } else {
                                 fileSuccesses.add(String.format("%s=%s", key, actual));
                                 allFoundItems.add(String.format("%s=%s", key, actual));
+                                fileFoundItems.add(String.format("%s=%s", key, actual));
                             }
                         }
                     }
@@ -163,9 +171,11 @@ public class PropertyGenericCheck extends AbstractCheck {
                                 filePassed = false;
                                 fileErrors.add(String.format("Version mismatch '%s': Found='%s', Expected='%s'", key, actual, exactVer));
                                 allFoundItems.add(String.format("%s=%s", key, actual));
+                                fileFoundItems.add(String.format("%s=%s", key, actual));
                             } else {
                                 fileSuccesses.add(String.format("%s=%s", key, actual));
                                 allFoundItems.add(String.format("%s=%s", key, actual));
+                                fileFoundItems.add(String.format("%s=%s", key, actual));
                             }
                         }
                     }
@@ -182,6 +192,7 @@ public class PropertyGenericCheck extends AbstractCheck {
                                      fileErrors.add(formatCustomRuleMessage(customMsg, "Missing required info: " + pattern));
                                  } else {
                                      fileSuccesses.add(pattern + " (Verified)");
+                                     fileFoundItems.add(pattern + " (Verified)");
                                  }
                             } else if ("FORMAT".equalsIgnoreCase(type)) {
                                 String[] parts = pattern.split("=", 2);
@@ -193,9 +204,11 @@ public class PropertyGenericCheck extends AbstractCheck {
                                         filePassed = false;
                                          fileErrors.add(formatCustomRuleMessage(customMsg, "Format mismatch for " + key));
                                          allFoundItems.add(String.format("%s=%s", key, val));
+                                         fileFoundItems.add(String.format("%s=%s", key, val));
                                     } else if (val != null) {
                                         fileSuccesses.add(key + "=" + val);
                                         allFoundItems.add(String.format("%s=%s", key, val));
+                                        fileFoundItems.add(String.format("%s=%s", key, val));
                                     }
                                 }
                             }
@@ -212,12 +225,14 @@ public class PropertyGenericCheck extends AbstractCheck {
                                 } else {
                                     fileSuccesses.add(propertyKey + "=" + actualValue);
                                     allFoundItems.add(propertyKey + "=" + actualValue);
+                                    fileFoundItems.add(propertyKey + "=" + actualValue);
                                 }
                             } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
                                 if (actualValue != null) {
                                     filePassed = false;
                                     fileErrors.add("Forbidden Key found: " + propertyKey);
                                     allFoundItems.add(propertyKey + "=" + actualValue);
+                                    fileFoundItems.add(propertyKey + "=" + actualValue);
                                 }
                             } else if ("VALUE_MATCH".equalsIgnoreCase(mode)) {
                                 if (actualValue == null) {
@@ -239,9 +254,11 @@ public class PropertyGenericCheck extends AbstractCheck {
                                             filePassed = false;
                                             fileErrors.add(String.format("Invalid value for '%s'. Found: '%s', Expected one of: %s", propertyKey, actualValue, constraint.allowedValues));
                                             allFoundItems.add(propertyKey + "=" + actualValue);
+                                            fileFoundItems.add(propertyKey + "=" + actualValue);
                                         } else {
                                             fileSuccesses.add(propertyKey + "=" + actualValue);
                                             allFoundItems.add(propertyKey + "=" + actualValue);
+                                            fileFoundItems.add(propertyKey + "=" + actualValue);
                                         }
                                     } else {
 
@@ -250,22 +267,31 @@ public class PropertyGenericCheck extends AbstractCheck {
                                             fileErrors.add(String.format("Value mismatch for '%s'. Found: '%s', Expected: '%s' (Op: '%s')", 
                                                 propertyKey, actualValue, expectedValueRegex, operator));
                                             allFoundItems.add(propertyKey + "=" + actualValue);
+                                            fileFoundItems.add(String.format("%s=%s", propertyKey, actualValue));
                                         } else {
                                             fileSuccesses.add(propertyKey + "=" + actualValue);
                                             allFoundItems.add(propertyKey + "=" + actualValue);
+                                            fileFoundItems.add(String.format("%s=%s", propertyKey, actualValue));
                                         }
                                     }
                                 }
                             } else if ("OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
                                 if (actualValue != null) {
+                                    boolean foundMismatch = false;
                                     if (!compareValues(actualValue, expectedValueRegex, operator, valueType)) {
+                                        foundMismatch = true;
+                                    }
+
+                                    if (foundMismatch) {
                                         filePassed = false;
                                         fileErrors.add(String.format("Value mismatch: %s='%s', Expected='%s', Op='%s'", 
                                             propertyKey, actualValue, expectedValueRegex, operator));
                                         allFoundItems.add(propertyKey + "=" + actualValue);
+                                        fileFoundItems.add(String.format("%s=%s", propertyKey, actualValue));
                                     } else {
                                         fileSuccesses.add(propertyKey + "=" + actualValue);
                                         allFoundItems.add(propertyKey + "=" + actualValue);
+                                        fileFoundItems.add(String.format("%s=%s", propertyKey, actualValue));
                                     }
                                 }
                             }
@@ -281,7 +307,8 @@ public class PropertyGenericCheck extends AbstractCheck {
 
                 if (filePassed) {
                     passedFileCount++;
-                    successDetails.addAll(fileSuccesses);
+                    passedFilesList.add(projectRoot.relativize(file).toString()); // Add filename to passing list
+                    successDetails.addAll(fileFoundItems);
                 } else {
                     details.add(projectRoot.relativize(file) + " [" + String.join(", ", fileErrors) + "]");
                 }
@@ -291,7 +318,8 @@ public class PropertyGenericCheck extends AbstractCheck {
 
             String checkedFilesStr = String.join(", ", checkedFilesList);
             String foundItemsStr = String.join("; ", allFoundItems);
-            String matchingFilesStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
+            // Use passedFilesList for matchingFilesStr to lists files that satisfied the local check
+            String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
 
             if (uniqueCondition) {
                 String defaultSuccess = String.format("Property Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
@@ -300,7 +328,7 @@ public class PropertyGenericCheck extends AbstractCheck {
                 String technicalMsg = String.format("Property Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
                                 mode, matchMode, passedFileCount, totalFiles, 
                                 details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr), checkedFilesStr, foundItemsStr);
+                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr);
             }
 
         } catch (Exception e) {

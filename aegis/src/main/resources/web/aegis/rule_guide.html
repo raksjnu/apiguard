@@ -597,7 +597,13 @@ Each rule type has its own required parameters. Using the wrong parameter name w
 <h4><strong>TOKEN_SEARCH</strong> (Global Token Search)</h4>
 Used for scanning text files for literal strings or regex patterns. Use <code class='inline-token'>GENERIC_TOKEN_SEARCH_REQUIRED</code> or <code class='inline-token'>GENERIC_TOKEN_SEARCH_FORBIDDEN</code>.
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>tokens</code> </td><td> List </td><td> (Required) </td><td> List of strings or regex patterns to search for. </td></tr><tr><td> <code class='inline-token'>isRegex</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> Set to <code class='inline-token'>true</code> if <code class='inline-token'>tokens</code> are regular expressions. </td></tr><tr><td> <code class='inline-token'>caseSensitive</code></td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Enable/disable case sensitivity. </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). </td></tr><tr><td> <code class='inline-token'>logic</code> </td><td> String </td><td> <code class='inline-token'>AND</code> (Req) / <code class='inline-token'>OR</code> (Forb) </td><td> Use <code class='inline-token'>OR</code> to fail if ANY token is found in FORBIDDEN mode. </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>tokens</code> </td><td> List </td><td> (Required) </td><td> List of strings or regex patterns to search for. </td></tr><tr><td> <code class='inline-token'>isRegex</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> Set to <code class='inline-token'>true</code> if <code class='inline-token'>tokens</code> are regular expressions. </td></tr><tr><td> <code class='inline-token'>caseSensitive</code></td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Enable/disable case sensitivity. </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). </td></tr><tr><td> <strong><code class='inline-token'>ignoreComments</code></strong> </td><td> <strong>Boolean</strong> </td><td> <strong><code class='inline-token'>false</code></strong> </td><td> <strong>If <code class='inline-token'>true</code>, removes comments before searching (strict mode). Recommended for FORBIDDEN rules to avoid false positives. Supports XML, Java, Groovy, DataWeave, JSON, Properties, YAML, SQL, and Shell files.</strong> </td></tr><tr><td> <code class='inline-token'>logic</code> </td><td> String </td><td> <code class='inline-token'>AND</code> (Req) / <code class='inline-token'>OR</code> (Forb) </td><td> Use <code class='inline-token'>OR</code> to fail if ANY token is found in FORBIDDEN mode. </td></tr></table>
+<br>
+> [!TIP]
+> <strong>Comment Handling</strong>: Use <code class='inline-token'>ignoreComments: true</code> for FORBIDDEN rules to avoid false positives from commented code.
+> Supports both single-line (<code class='inline-token'>//</code>, <code class='inline-token'>#</code>, <code class='inline-token'>--</code>) and multi-line block comments (<code class='inline-token'>/* */</code>, <code class='inline-token'>&lt;!-- --&gt;</code>).
+> See <a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_FORBIDDEN')">CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN.md</a> for detailed examples.
+<br>
 <br>
 > [!IMPORTANT]
 > <strong>Token Matching vs. File Matching</strong>:
@@ -1654,7 +1660,63 @@ Validates that <strong>forbidden tokens or patterns do NOT exist</strong> in fil
 <br>
 <h3>Optional Parameters</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code> </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>isRegex: true</code>. </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code> </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>isRegex: true</code>. </td></tr><tr><td> <strong><code class='inline-token'>ignoreComments</code></strong> </td><td> <strong>Boolean</strong> </td><td> <strong><code class='inline-token'>false</code></strong> </td><td> <strong>If <code class='inline-token'>true</code>, removes comments before searching (strict mode). Recommended for FORBIDDEN rules to avoid false positives.</strong> </td></tr></table>
+<br>
+<h3>🎯 Comment Handling (<code class='inline-token'>ignoreComments</code>)</h3>
+<br>
+<strong>NEW FEATURE:</strong> The <code class='inline-token'>ignoreComments</code> parameter allows you to choose between <strong>strict mode</strong> (comments ignored) and <strong>normal mode</strong> (comments included).
+<br>
+<h4>Why This Matters</h4>
+<br>
+By default, token searches include commented code, which can cause <strong>false positives</strong> for FORBIDDEN rules:
+<br>
+<pre><code class='language-xml'>&lt;!-- &lt;logger level=&quot;DEBUG&quot; /&gt; --&gt;  ❌ FALSE POSITIVE without ignoreComments
+&lt;logger level=&quot;INFO&quot; /&gt;             ✅ This should be checked
+</code></pre>
+<br>
+<h4>Supported File Types</h4>
+<br>
+<table><tr><td> File Type </td><td> Extensions </td><td> Comment Syntax </td><td> Single-Line </td><td> Multi-Line Block </td></tr><tr><td> <strong>XML</strong> </td><td> <code class='inline-token'>.xml</code>, <code class='inline-token'>.process</code>, <code class='inline-token'>.bwp</code> </td><td> <code class='inline-token'>&lt;!-- --&gt;</code> </td><td> ✅ </td><td> ✅ </td></tr><tr><td> <strong>Java</strong> </td><td> <code class='inline-token'>.java</code> </td><td> <code class='inline-token'>//</code>, <code class='inline-token'>/* */</code> </td><td> ✅ </td><td> ✅ </td></tr><tr><td> <strong>Groovy</strong> </td><td> <code class='inline-token'>.groovy</code> </td><td> <code class='inline-token'>//</code>, <code class='inline-token'>/* */</code> </td><td> ✅ </td><td> ✅ </td></tr><tr><td> <strong>DataWeave</strong> </td><td> <code class='inline-token'>.dwl</code> </td><td> <code class='inline-token'>//</code>, <code class='inline-token'>/* */</code> </td><td> ✅ </td><td> ✅ </td></tr><tr><td> <strong>JavaScript</strong> </td><td> <code class='inline-token'>.js</code> </td><td> <code class='inline-token'>//</code>, <code class='inline-token'>/* */</code> </td><td> ✅ </td><td> ✅ </td></tr><tr><td> <strong>JSON</strong> </td><td> <code class='inline-token'>.json</code> </td><td> <code class='inline-token'>//</code>, <code class='inline-token'>/* */</code> (non-standard) </td><td> ✅ </td><td> ✅ </td></tr><tr><td> <strong>Properties</strong> </td><td> <code class='inline-token'>.properties</code>, <code class='inline-token'>.substvar</code> </td><td> <code class='inline-token'>#</code>, <code class='inline-token'>!</code> (line start only) </td><td> ✅ </td><td> ❌ </td></tr><tr><td> <strong>YAML</strong> </td><td> <code class='inline-token'>.yaml</code>, <code class='inline-token'>.yml</code> </td><td> <code class='inline-token'>#</code> (inline supported) </td><td> ✅ </td><td> ❌ </td></tr><tr><td> <strong>SQL</strong> </td><td> <code class='inline-token'>.sql</code> </td><td> <code class='inline-token'>--</code>, <code class='inline-token'>#</code>, <code class='inline-token'>/* */</code> </td><td> ✅ </td><td> ✅ </td></tr><tr><td> <strong>Shell</strong> </td><td> <code class='inline-token'>.sh</code>, <code class='inline-token'>.bash</code> </td><td> <code class='inline-token'>#</code> </td><td> ✅ </td><td> ❌ </td></tr></table>
+<br>
+<h4>When to Use</h4>
+<br>
+<li><strong>FORBIDDEN Rules:</strong> ✅ <strong>Always use <code class='inline-token'>ignoreComments: true</code></strong> to avoid false positives</li>
+<li><strong>REQUIRED Rules:</strong> ⚠️ Use <code class='inline-token'>ignoreComments: false</code> (default) to check documentation</li>
+<li><strong>Documentation Files:</strong> ⚠️ Use <code class='inline-token'>ignoreComments: false</code> to ensure content exists</li>
+<br>
+<h4>Example: Strict Mode (Recommended)</h4>
+<br>
+<pre><code class='language-yaml'>- id: &quot;BANK-002&quot;
+  name: &quot;Forbid Legacy Logger Attributes&quot;
+  type: &quot;CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN&quot;
+  severity: &quot;HIGH&quot;
+  checks:
+    - type: &quot;TOKEN_SEARCH&quot;
+      params:
+        filePatterns: [&quot;**/*.xml&quot;]
+        tokens: [&quot;toApplicationCode&quot;, &quot;DEBUG&quot;]
+        ignoreComments: true  # ✅ Strict mode - ignore commented code
+</code></pre>
+<br>
+<strong>Test Case:</strong>
+<pre><code class='language-xml'>&lt;!-- &lt;logger level=&quot;DEBUG&quot; /&gt; --&gt;  ✅ IGNORED (in comment)
+&lt;logger level=&quot;INFO&quot; /&gt;             ✅ CHECKED (active code)
+</code></pre>
+<strong>Result:</strong> PASS ✅ (no forbidden tokens in active code)
+<br>
+<h4>Example: Normal Mode</h4>
+<br>
+<pre><code class='language-yaml'>- id: &quot;DOC-001&quot;
+  name: &quot;Ensure Documentation Mentions Feature&quot;
+  type: &quot;CODE_GENERIC_TOKEN_SEARCH_REQUIRED&quot;
+  checks:
+    - type: &quot;TOKEN_SEARCH&quot;
+      params:
+        filePatterns: [&quot;**/*.md&quot;, &quot;**/*.txt&quot;]
+        tokens: [&quot;authentication&quot;]
+        ignoreComments: false  # ✅ Check everywhere including comments
+</code></pre>
+<br>
 <br>
 <h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_ConfigurationExamples">Configuration Examples</h2>
 <br>

@@ -27,13 +27,85 @@ Validates that **forbidden tokens or patterns do NOT exist** in files matching s
 | Parameter | Type | Default | Description |
 | :--- | :--- | :--- | :--- |
 | `excludePatterns` | List | `[]` | Glob patterns to exclude specific files |
-| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
+| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX`. Setting to `REGEX` automatically enables regex matching. |
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
-| `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `isRegex: true`. |
+| `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `matchMode: REGEX`. |
+| **`ignoreComments`** | **Boolean** | **`false`** | **If `true`, removes comments before searching (strict mode). Recommended for FORBIDDEN rules to avoid false positives.** |
+
+### 🎯 Comment Handling (`ignoreComments`)
+
+**NEW FEATURE:** The `ignoreComments` parameter allows you to choose between **strict mode** (comments ignored) and **normal mode** (comments included).
+
+#### Why This Matters
+
+By default, token searches include commented code, which can cause **false positives** for FORBIDDEN rules:
+
+```xml
+<!-- <logger level="DEBUG" /> -->  ❌ FALSE POSITIVE without ignoreComments
+<logger level="INFO" />             ✅ This should be checked
+```
+
+#### Supported File Types
+
+| File Type | Extensions | Comment Syntax | Single-Line | Multi-Line Block |
+| :--- | :--- | :--- | :--- | :--- |
+| **XML** | `.xml`, `.process`, `.bwp` | `<!-- -->` | ✅ | ✅ |
+| **Java** | `.java` | `//`, `/* */` | ✅ | ✅ |
+| **Groovy** | `.groovy` | `//`, `/* */` | ✅ | ✅ |
+| **DataWeave** | `.dwl` | `//`, `/* */` | ✅ | ✅ |
+| **JavaScript** | `.js` | `//`, `/* */` | ✅ | ✅ |
+| **JSON** | `.json` | `//`, `/* */` (non-standard) | ✅ | ✅ |
+| **Properties** | `.properties`, `.substvar` | `#`, `!` (line start only) | ✅ | ❌ |
+| **YAML** | `.yaml`, `.yml` | `#` (inline supported) | ✅ | ❌ |
+| **SQL** | `.sql` | `--`, `#`, `/* */` | ✅ | ✅ |
+| **Shell** | `.sh`, `.bash` | `#` | ✅ | ❌ |
+
+#### When to Use
+
+- **FORBIDDEN Rules:** ✅ **Always use `ignoreComments: true`** to avoid false positives
+- **REQUIRED Rules:** ⚠️ Use `ignoreComments: false` (default) to check documentation
+- **Documentation Files:** ⚠️ Use `ignoreComments: false` to ensure content exists
+
+#### Example: Strict Mode (Recommended)
+
+```yaml
+- id: "BANK-002"
+  name: "Forbid Legacy Logger Attributes"
+  type: "CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN"
+  severity: "HIGH"
+  checks:
+    - type: "TOKEN_SEARCH"
+      params:
+        filePatterns: ["**/*.xml"]
+        tokens: ["toApplicationCode", "DEBUG"]
+        ignoreComments: true  # ✅ Strict mode - ignore commented code
+```
+
+**Test Case:**
+```xml
+<!-- <logger level="DEBUG" /> -->  ✅ IGNORED (in comment)
+<logger level="INFO" />             ✅ CHECKED (active code)
+```
+**Result:** PASS ✅ (no forbidden tokens in active code)
+
+#### Example: Normal Mode
+
+```yaml
+- id: "DOC-001"
+  name: "Ensure Documentation Mentions Feature"
+  type: "CODE_GENERIC_TOKEN_SEARCH_REQUIRED"
+  checks:
+    - type: "TOKEN_SEARCH"
+      params:
+        filePatterns: ["**/*.md", "**/*.txt"]
+        tokens: ["authentication"]
+        ignoreComments: false  # ✅ Check everywhere including comments
+```
 
 ## Configuration Examples
 
 ### Example 1: Block Deprecated Global Functions
+
 Prevent the usage of a deprecated transformation function across all scripts.
 
 ```yaml
@@ -48,6 +120,7 @@ Prevent the usage of a deprecated transformation function across all scripts.
 ```
 
 ### Example 2: Block Hardcoded Credentials
+
 Identify potential hardcoded secrets in properties or XML configuration files.
 
 ```yaml
@@ -73,8 +146,7 @@ Prevent false positives by ensuring only exact words are matched (e.g., match "a
       params:
         filePatterns: ["**/*.properties"]
         tokens: ["admin"]
-        wholeWord: true  # Matters 'admin' but not 'administrator'
-```
+        wholeWord: true  # Matches 'admin' but not 'administrator'
 ```
 
 ### Example 3: Detect IP Addresses (Regex)
@@ -95,7 +167,7 @@ Block hardcoded IP addresses in source code directory to enforce hostname usage.
 
 ## Error Messages
 
-```
+```text
 AuthService.java: Forbidden token found: password=
 legacy-script.js: Forbidden token found: toBase64Legacy()
 DatabaseConfig.xml: Forbidden IP pattern found: 192.168.1.1
@@ -125,6 +197,7 @@ Standard configurations for blocking anti-patterns.
 | **🐎 MuleSoft** | Block legacy MEL | `FORBIDDEN` | `**/*.xml` |
 
 ### ☕ Java / Spring Boot Patterns
+
 Prevent developers from using standard output streams for logging.
 
 ```yaml
@@ -138,6 +211,7 @@ Prevent developers from using standard output streams for logging.
 ```
 
 ### 🐎 MuleSoft Patterns
+
 Block legacy Mule Expression Language (MEL) patterns in modern projects.
 
 ```yaml

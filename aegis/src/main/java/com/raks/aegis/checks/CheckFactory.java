@@ -53,10 +53,12 @@ public class CheckFactory {
 
         if (type.equals("GENERIC_TOKEN_SEARCH") || type.equals("GENERIC_TOKEN_SEARCH_FORBIDDEN") || type.equals("GENERIC_TOKEN_SEARCH_REQUIRED") || type.equals("MANDATORY_SUBSTRING_CHECK") || type.equals("GENERIC_CODE_CHECK") || type.equals("GENERIC_CODE_TOKEN_CHECK") || type.equals("SUBSTRING_TOKEN_CHECK") || type.equals("DLP_REFERENCE_CHECK")  || type.equals("FORBIDDEN_TOKEN_IN_ELEMENT") || type.equals("GENERIC_CONFIG_TOKEN_CHECK")) {
 
-            if (type.contains("REQUIRED") || type.contains("MANDATORY")) {
-                effectiveParams.put("mode", "REQUIRED");
-            } else {
-                effectiveParams.put("mode", "FORBIDDEN");
+            if (!effectiveParams.containsKey("mode")) {
+                if (type.contains("REQUIRED") || type.contains("MANDATORY")) {
+                    effectiveParams.put("mode", "REQUIRED");
+                } else {
+                    effectiveParams.put("mode", "FORBIDDEN");
+                }
             }
             instance = new TokenSearchCheck();
         }

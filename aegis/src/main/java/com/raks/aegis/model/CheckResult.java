@@ -42,6 +42,10 @@ public class CheckResult {
         return new CheckResult(ruleId, description, true, message, checkedFiles, null, matchingFiles);
     }
 
+    public static CheckResult pass(String ruleId, String description, String message, String checkedFiles, String foundItems, String matchingFiles) {
+        return new CheckResult(ruleId, description, true, message, checkedFiles, foundItems, matchingFiles);
+    }
+
     public static CheckResult fail(String ruleId, String description, String message) {
         return new CheckResult(ruleId, description, false, message, null, null, null);
     }
@@ -52,5 +56,9 @@ public class CheckResult {
 
     public static CheckResult fail(String ruleId, String description, String message, String checkedFiles, String foundItems) {
         return new CheckResult(ruleId, description, false, message, checkedFiles, foundItems, null);
+    }
+
+    public static CheckResult fail(String ruleId, String description, String message, String checkedFiles, String foundItems, String matchingFiles) {
+        return new CheckResult(ruleId, description, false, message, checkedFiles, foundItems, matchingFiles);
     }
 }

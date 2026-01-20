@@ -245,7 +245,14 @@ Used for scanning text files for literal strings or regex patterns. Use `GENERIC
 | `isRegex` | Boolean | `false` | Set to `true` if `tokens` are regular expressions. |
 | `caseSensitive`| Boolean | `true` | Enable/disable case sensitivity. |
 | `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). |
+| **`ignoreComments`** | **Boolean** | **`false`** | **If `true`, removes comments before searching (strict mode). Recommended for FORBIDDEN rules to avoid false positives. Supports XML, Java, Groovy, DataWeave, JSON, Properties, YAML, SQL, and Shell files.** |
 | `logic` | String | `AND` (Req) / `OR` (Forb) | Use `OR` to fail if ANY token is found in FORBIDDEN mode. |
+
+> [!TIP]
+> **Comment Handling**: Use `ignoreComments: true` for FORBIDDEN rules to avoid false positives from commented code.
+> Supports both single-line (`//`, `#`, `--`) and multi-line block comments (`/* */`, `<!-- -->`).
+> See [CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN.md](CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN.md) for detailed examples.
+
 
 > [!IMPORTANT]
 > **Token Matching vs. File Matching**:
