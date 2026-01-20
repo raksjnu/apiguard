@@ -8,9 +8,18 @@ echo "║          Aegis GUI Launcher                                ║"
 echo "╚════════════════════════════════════════════════════════════╝"
 echo ""
 
-# Check if JAR exists
-if [ ! -f "aegis.jar" ]; then
-    echo "ERROR: JAR file not found: aegis.jar"
+# Resolve JAR file path - prioritize fat JAR in target
+IF_TARGET_JAR="target/aegis-1.0.0-jar-with-raks.jar"
+IF_ROOT_JAR="aegis.jar"
+
+if [ -f "$IF_TARGET_JAR" ]; then
+    JAR_FILE="$IF_TARGET_JAR"
+    echo "[INFO] Using latest built JAR: $JAR_FILE"
+elif [ -f "$IF_ROOT_JAR" ]; then
+    JAR_FILE="$IF_ROOT_JAR"
+    echo "[INFO] Using JAR: $JAR_FILE"
+else
+    echo "ERROR: JAR file not found!"
     echo "Please run: ./build-aegis.sh"
     echo ""
     read -p "Press Enter to exit..."
@@ -37,12 +46,12 @@ echo "Using Java: $JAVA_CMD"
 "$JAVA_CMD" -version
 echo ""
 
-echo "Starting Aegis GUI on port $AEGIS_PORT..."
+echo Starting Aegis GUI on port $AEGIS_PORT...
 echo ""
 echo "Press Ctrl+C to stop the server"
 echo ""
 
-"$JAVA_CMD" -cp aegis.jar com.raks.aegis.gui.AegisGUI $AEGIS_PORT
+"$JAVA_CMD" -jar "$JAR_FILE" --gui --port $AEGIS_PORT
 
 # Check exit status
 if [ $? -ne 0 ]; then

@@ -56,7 +56,7 @@ echo.
 echo Press Ctrl+C to stop the server
 echo.
 
-"%JAVA_CMD%" -cp "%JAR_FILE%" com.raks.aegis.gui.AegisGUI %AEGIS_PORT%
+"%JAVA_CMD%" -jar "%JAR_FILE%" --gui --port %AEGIS_PORT%
 
 REM Keep window open if there was an error
 if errorlevel 1 (

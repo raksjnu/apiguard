@@ -31,7 +31,7 @@ import picocli.CommandLine.Option;
 import java.util.concurrent.Callable;
 
 @Command(name = "aegis", mixinStandardHelpOptions = true, version = "Aegis 1.0.0",
-        description = "Aegis - Universal Code Compliance & Security Engine")
+        description = "Aegis - Universal Code Compliance & Security Engine\n\nTo start the GUI server:\n  java -jar aegis.jar --gui [--port <port>]")
 public class AegisMain implements Callable<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(AegisMain.class);
 
@@ -43,6 +43,12 @@ public class AegisMain implements Callable<Integer> {
 
     @Option(names = {"-o", "--output"}, description = "Report output directory name (default: Aegis-reports)", defaultValue = "Aegis-reports")
     private String reportDirName;
+
+    @Option(names = {"-g", "--gui"}, description = "Start the Aegis GUI server", required = false)
+    private boolean startGui;
+
+    @Option(names = {"--port"}, description = "Port for the GUI server (default: 8080)", defaultValue = "8080")
+    private int guiPort;
 
     public static class AegisConfigurationException extends RuntimeException {
         public AegisConfigurationException(String message) {
@@ -65,6 +71,16 @@ public class AegisMain implements Callable<Integer> {
 
     @Override
     public Integer call() throws Exception {
+        if (startGui) {
+            String[] guiArgs = {String.valueOf(guiPort)};
+            com.raks.aegis.gui.AegisGUI.main(guiArgs);
+            // Keep the process alive while the server is running
+            System.out.println("Aegis GUI is running. Press Ctrl+C to stop.");
+            while (true) {
+                Thread.sleep(1000);
+            }
+        }
+
         if (parentFolder == null) {
             parentFolder = showFolderDialog();
             if (parentFolder == null) {
