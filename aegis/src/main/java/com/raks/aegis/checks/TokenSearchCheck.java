@@ -81,42 +81,64 @@ public class TokenSearchCheck extends AbstractCheck {
                 checkedFilesList.add(projectRoot.relativize(file).toString());
 
                 try {
-                    String content = Files.readString(file);
-                    if (ignoreComments) {
-                        content = removeComments(content, file);
-                    }
-
+                    List<String> lines = Files.readAllLines(file);
                     boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "false")));
-                    if (resolveProperties) {
-                        content = com.raks.aegis.util.PropertyResolver.resolve(content, projectRoot);
+                    
+                    if (!caseSensitive && !isRegex && !wholeWord) {
+                        // Pre-process tokens for case-insensitive non-regex search
+                        for (int i = 0; i < tokens.size(); i++) {
+                            tokens.set(i, tokens.get(i).toLowerCase());
+                        }
                     }
-
-                    if (!caseSensitive && !isRegex && !wholeWord) content = content.toLowerCase();
 
                     java.util.Set<String> thisFileMatchedConfigTokens = new java.util.HashSet<>();
 
-                    for (int i = 0; i < tokens.size(); i++) {
-                        String configToken = tokens.get(i);
-                        String tokenToAdd = configToken;
-                        boolean match = false;
+                    for (int lineNum = 0; lineNum < lines.size(); lineNum++) {
+                        String originalLine = lines.get(lineNum);
+                        String processedLine = originalLine;
 
-                        if (isRegex || wholeWord) {
-                             java.util.regex.Matcher m = patterns.get(i).matcher(content);
-                             if (m.find()) {
-                                 match = true;
-                                 tokenToAdd = m.group(); 
-                             }
-                        } else {
-                            String t = caseSensitive ? configToken : configToken.toLowerCase();
-                            if (content.contains(t)) {
-                                match = true;
-                            }
+                        // 1. Resolve properties into a temporary list
+                        List<String> lineResolutions = new ArrayList<>();
+                        if (resolveProperties) {
+                            processedLine = resolve(processedLine, projectRoot, lineResolutions);
                         }
 
-                        if (match) {
-                            fileFound.add(tokenToAdd);
-                            thisFileMatchedConfigTokens.add(configToken);
-                            allFoundItems.add(tokenToAdd);
+                        // 2. Handle comments
+                        String contentForMatch = processedLine;
+                        if (ignoreComments) {
+                            contentForMatch = removeCommentsFromLine(contentForMatch, file);
+                        }
+
+                        if (!caseSensitive && !isRegex && !wholeWord) {
+                            contentForMatch = contentForMatch.toLowerCase();
+                        }
+
+                        // 3. Check tokens
+                        for (int i = 0; i < tokens.size(); i++) {
+                            String configToken = tokens.get(i);
+                            String tokenToAdd = configToken;
+                            boolean match = false;
+
+                            if (isRegex || wholeWord) {
+                                java.util.regex.Matcher m = patterns.get(i).matcher(contentForMatch);
+                                if (m.find()) {
+                                    match = true;
+                                    tokenToAdd = m.group();
+                                }
+                            } else {
+                                if (contentForMatch.contains(configToken)) {
+                                    match = true;
+                                }
+                            }
+
+                            if (match) {
+                                fileFound.add(tokenToAdd);
+                                thisFileMatchedConfigTokens.add(configToken);
+                                allFoundItems.add(tokenToAdd);
+
+                                // SIGNAL HIT: Record property resolutions for this line
+                                recordResolutions(lineResolutions);
+                            }
                         }
                     }
 
@@ -125,8 +147,6 @@ public class TokenSearchCheck extends AbstractCheck {
                             if (fileFound.isEmpty()) {
                                 filePassed = false;
                                 failureReason = "Missing any of: " + tokens;
-                            } else {
-                                // File passed, results captured below
                             }
                         } else {
                             if (thisFileMatchedConfigTokens.size() < tokens.size()) {
@@ -134,14 +154,11 @@ public class TokenSearchCheck extends AbstractCheck {
                                 List<String> missing = new ArrayList<>(tokens);
                                 missing.removeAll(thisFileMatchedConfigTokens);
                                 
-                                // Format missing tokens for readability (e.g. strip \b from regex)
                                 List<String> readableMissing = missing.stream()
                                     .map(t -> cleanToken(t, isRegex))
                                     .toList();
                                     
                                 failureReason = "Missing: " + readableMissing;
-                            } else {
-                                // File passed, results captured below
                             }
                         }
                     } else { // FORBIDDEN
@@ -181,13 +198,13 @@ public class TokenSearchCheck extends AbstractCheck {
                 String defaultSuccess = String.format("Passed %s check in %d/%d files (Mode: %s)", mode, passedFileCount, totalFiles, matchMode);
                 return CheckResult.pass(check.getRuleId(), check.getDescription(), 
                         getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, foundItemsStr, matchingFilesStr), 
-                        checkedFilesStr, foundItemsStr, matchingFilesStr);
+                        checkedFilesStr, matchingFilesStr, this.propertyResolutions);
             } else {
                 String technicalMsg = String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d).\n• %s", 
                         mode, matchMode, passedFileCount, totalFiles, failureDetails.isEmpty() ? "No files matched criteria" : String.join("\n• ", failureDetails));
                 return CheckResult.fail(check.getRuleId(), check.getDescription(), 
                         getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), 
-                        checkedFilesStr, foundItemsStr, matchingFilesStr);
+                        checkedFilesStr, foundItemsStr, matchingFilesStr, this.propertyResolutions);
             }
 
         } catch (Exception e) {
@@ -200,16 +217,16 @@ public class TokenSearchCheck extends AbstractCheck {
         return token.replace("\\b", "");
     }
 
-    private String removeComments(String content, Path file) {
+    private String removeCommentsFromLine(String line, Path file) {
         String fileName = file.getFileName().toString().toLowerCase();
         if (fileName.endsWith(".xml") || fileName.endsWith(".html") || fileName.endsWith(".mule")) {
-            return content.replaceAll("(?s)<!--.*?-->", "");
+            return line.replaceAll("(?s)<!--.*?-->", "");
         } else if (fileName.endsWith(".java") || fileName.endsWith(".js") || fileName.endsWith(".c") || fileName.endsWith(".cpp")) {
-            String temp = content.replaceAll("(?s)/\\*.*?\\*/", "");
+            String temp = line.replaceAll("(?s)/\\*.*?\\*/", "");
             return temp.replaceAll("//.*", "");
         } else if (fileName.endsWith(".properties") || fileName.endsWith(".yaml") || fileName.endsWith(".yml") || fileName.endsWith(".sh")) {
-            return content.replaceAll("(?m)^\\s*#.*", "");
+            return line.replaceAll("^\\s*#.*", "");
         }
-        return content;
+        return line;
     }
 }

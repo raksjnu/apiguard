@@ -65,6 +65,10 @@ public class PropertyResolver {
     }
 
     public static String resolve(String val, Path projectRoot) {
+        return resolve(val, projectRoot, null);
+    }
+
+    public static String resolve(String val, Path projectRoot, List<String> resolutions) {
         if (val == null) return null;
 
         loadProperties(projectRoot);
@@ -86,11 +90,17 @@ public class PropertyResolver {
                      String key = m.group(1);
                      if (props.containsKey(key)) {
                          String replacement = props.get(key);
+                         
+                         if (resolutions != null) {
+                             String mapping = m.group(0) + " → " + replacement;
+                             if (!resolutions.contains(mapping)) {
+                                 resolutions.add(mapping);
+                             }
+                         }
 
                          m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
                          modified = true;
                      } else {
-
                          m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));
                      }
                  }

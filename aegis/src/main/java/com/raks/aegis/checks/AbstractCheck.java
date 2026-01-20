@@ -24,7 +24,19 @@ public abstract class AbstractCheck {
 
     protected void addPropertyResolution(String original, String resolved) {
         if (original != null && resolved != null && !original.equals(resolved)) {
-            propertyResolutions.add(original + " → " + resolved);
+            String resolution = original + " → " + resolved;
+            if (!propertyResolutions.contains(resolution)) {
+                propertyResolutions.add(resolution);
+            }
+        }
+    }
+
+    protected void recordResolutions(List<String> list) {
+        if (list == null || list.isEmpty()) return;
+        for (String res : list) {
+            if (!this.propertyResolutions.contains(res)) {
+                this.propertyResolutions.add(res);
+            }
         }
     }
 
@@ -41,20 +53,30 @@ public abstract class AbstractCheck {
     }
 
     protected CheckResult pass(String message) {
-        return new CheckResult("", "", true, message, null);
+        return new CheckResult("", "", true, message, null, null, null, this.propertyResolutions);
     }
     protected CheckResult pass(String message, String checkedFiles) {
-        return new CheckResult("", "", true, message, checkedFiles);
+        return new CheckResult("", "", true, message, checkedFiles, null, null, this.propertyResolutions);
     }
     protected CheckResult fail(String message) {
-        return new CheckResult("", "", false, message, null);
+        return new CheckResult("", "", false, message, null, null, null, this.propertyResolutions);
     }
     protected CheckResult fail(String message, String checkedFiles) {
-        return new CheckResult("", "", false, message, checkedFiles);
+        return new CheckResult("", "", false, message, checkedFiles, null, null, this.propertyResolutions);
     }
     protected CheckResult fail(String message, String checkedFiles, String foundItems) {
-        return new CheckResult("", "", false, message, checkedFiles, foundItems);
+        return new CheckResult("", "", false, message, checkedFiles, foundItems, null, this.propertyResolutions);
     }
+    protected String resolve(String value, java.nio.file.Path projectRoot) {
+        if (value == null) return null;
+        return com.raks.aegis.util.PropertyResolver.resolve(value, projectRoot, this.propertyResolutions);
+    }
+
+    protected String resolve(String value, java.nio.file.Path projectRoot, java.util.List<String> collection) {
+        if (value == null) return null;
+        return com.raks.aegis.util.PropertyResolver.resolve(value, projectRoot, collection);
+    }
+
     protected List<String> resolveEnvironments(Check check) {
         Map<String, Object> params = getEffectiveParams(check);
         @SuppressWarnings("unchecked")
@@ -166,6 +188,9 @@ public abstract class AbstractCheck {
         }
 
         String propertyResolved = getPropertyResolutionsString();
+        // If we are formatting a message, we might want to override the property resolved string 
+        // if it's already in the result provided to this method. 
+        // But here we use the one from 'this' check instance.
         if (!propertyResolved.isEmpty()) {
             result = result.replace("{PROPERTY_RESOLVED}", "Properties Resolved: " + propertyResolved);
         } else {

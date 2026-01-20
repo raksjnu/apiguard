@@ -105,11 +105,14 @@ public class ValidationEngine {
         ruleMap.put("enabled", rule.isEnabled());
         ruleMap.put("severity", rule.getSeverity());
 
-        if (rule.getSuccessMessage() != null) ruleMap.put("successMessage", rule.getSuccessMessage());
-        if (rule.getErrorMessage() != null) ruleMap.put("errorMessage", rule.getErrorMessage());
+        if (rule.getScope() != null) ruleMap.put("scope", rule.getScope());
+        if (rule.getAppliesTo() != null && !rule.getAppliesTo().isEmpty()) ruleMap.put("appliesTo", rule.getAppliesTo());
 
         if (rule.getUseCase() != null) ruleMap.put("useCase", rule.getUseCase());
         if (rule.getRationale() != null) ruleMap.put("rationale", rule.getRationale());
+
+        if (rule.getSuccessMessage() != null) ruleMap.put("successMessage", rule.getSuccessMessage());
+        if (rule.getErrorMessage() != null) ruleMap.put("errorMessage", rule.getErrorMessage());
 
         if (rule.getChecks() != null && !rule.getChecks().isEmpty()) {
             java.util.List<java.util.Map<String, Object>> checksList = new java.util.ArrayList<>();

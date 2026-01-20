@@ -102,16 +102,20 @@ public class XmlGenericCheck extends AbstractCheck {
                                     boolean anyMatch = false;
                                     for (int i=0; i < nodes.getLength(); i++) {
                                         String actual = nodes.item(i).getTextContent().trim();
+                                        List<String> localResolutions = new ArrayList<>();
                                         if (resolveProperties) {
-                                            actual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                            actual = resolve(actual, projectRoot, localResolutions);
                                         }
 
                                         if (actual.equals(expected)) {
                                             anyMatch = true;
                                             fileSuccesses.add(String.format("%s=%s", xp, actual));
                                             allFoundItems.add(String.format("%s=%s", xp, actual));
+                                            
+                                            // Record resolutions on match
+                                            recordResolutions(localResolutions);
                                         } else {
-                                            // Collecting non-matches for debug/report
+                                            // Collecting non-matches for debug/report (but NOT resolutions to reduce noise)
                                             allFoundItems.add(String.format("%s=%s", xp, actual)); 
                                         }
                                     }
@@ -145,14 +149,18 @@ public class XmlGenericCheck extends AbstractCheck {
                                     boolean anyMatch = false;
                                     for (int i=0; i < nodes.getLength(); i++) {
                                         String actual = nodes.item(i).getTextContent().trim();
+                                        List<String> localResolutions = new ArrayList<>();
                                         if (resolveProperties) {
-                                            actual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                            actual = resolve(actual, projectRoot, localResolutions);
                                         }
 
                                         if (compareValues(actual, minVer, "GTE", "SEMVER")) {
                                             anyMatch = true;
                                             fileSuccesses.add(String.format("%s=%s", xp, actual));
                                             allFoundItems.add(String.format("%s=%s", xp, actual));
+                                            
+                                            // Record resolutions
+                                            recordResolutions(localResolutions);
                                         } else {
                                              allFoundItems.add(String.format("%s=%s", xp, actual));
                                         }
@@ -187,14 +195,18 @@ public class XmlGenericCheck extends AbstractCheck {
                                     boolean anyMatch = false;
                                     for (int i=0; i < nodes.getLength(); i++) {
                                         String actual = nodes.item(i).getTextContent().trim();
+                                        List<String> localResolutions = new ArrayList<>();
                                         if (resolveProperties) {
-                                            actual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                            actual = resolve(actual, projectRoot, localResolutions);
                                         }
 
                                         if (compareValues(actual, exactVer, "EQ", "SEMVER")) {
                                             anyMatch = true;
                                             fileSuccesses.add(String.format("%s=%s", xp, actual));
                                             allFoundItems.add(String.format("%s=%s", xp, actual));
+                                            
+                                            // Record resolutions
+                                            recordResolutions(localResolutions);
                                         } else {
                                              allFoundItems.add(String.format("%s=%s", xp, actual));
                                         }
@@ -230,12 +242,15 @@ public class XmlGenericCheck extends AbstractCheck {
                                     boolean valMatched = false;
                                     for (int i = 0; i < nodes.getLength(); i++) {
                                         String actual = nodes.item(i).getTextContent();
+                                        List<String> localResolutions = new ArrayList<>();
                                         if (resolveProperties) {
-                                            String resolved = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                            String resolved = resolve(actual, projectRoot, localResolutions);
                                             if (expectedValue.equals(resolved)) {
                                                 valMatched = true;
-                                                addPropertyResolution(actual, resolved);
                                                 fileSuccesses.add("Found: " + resolved);
+                                                
+                                                // Record resolutions
+                                                recordResolutions(localResolutions);
                                                 break;
                                             }
                                         } else {
@@ -272,12 +287,16 @@ public class XmlGenericCheck extends AbstractCheck {
                                     boolean forbiddenFound = false;
                                     for (int i = 0; i < nodes.getLength(); i++) {
                                         String actual = nodes.item(i).getTextContent();
+                                        List<String> localResolutions = new ArrayList<>();
                                         if (resolveProperties) {
-                                            actual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                            actual = resolve(actual, projectRoot, localResolutions);
                                         }
                                         if (forbiddenValue.equals(actual)) {
                                             forbiddenFound = true;
                                             allFoundItems.add("Forbidden: " + actual);
+                                            
+                                            // Record resolutions
+                                            recordResolutions(localResolutions);
                                             break;
                                         }
                                     }
@@ -344,12 +363,12 @@ public class XmlGenericCheck extends AbstractCheck {
 
             if (uniqueCondition) {
                 String defaultSuccess = String.format("XML Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
-                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr);
+                return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr, this.propertyResolutions);
             } else {
                 String technicalMsg = String.format("XML Check failed for %s. (Mode: %s, Passed: %d/%d).\n• %s", 
                                 mode, matchMode, passedFileCount, totalFiles, 
                                 details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr);
+                return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr, this.propertyResolutions);
             }
 
         } catch (Exception e) {

@@ -12,11 +12,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Stream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class JsonGenericCheck extends AbstractCheck {
-    private static final Logger logger = LoggerFactory.getLogger(JsonGenericCheck.class);
 
     @Override
     public CheckResult execute(Path projectRoot, Check check) {
@@ -33,6 +30,7 @@ public class JsonGenericCheck extends AbstractCheck {
         String operator = (String) params.getOrDefault("operator", "EQ");
         String valueType = (String) params.getOrDefault("valueType", "STRING");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
+        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "false")));
 
         @SuppressWarnings("unchecked")
         List<String> requiredElements = (List<String>) params.get("requiredElements");
@@ -113,12 +111,9 @@ public class JsonGenericCheck extends AbstractCheck {
                                      String actualStr = result.toString();
 
                                      String resolvedActual = actualStr;
-                                     if (actualStr.contains("${") || actualStr.contains("p('") || actualStr.contains("p(\"")) {
-                                         resolvedActual = com.raks.aegis.util.PropertyResolver.resolve(actualStr, projectRoot);
-                                         if (!actualStr.equals(resolvedActual)) {
-                                             addPropertyResolution(actualStr, resolvedActual);
-                                             logger.debug("JSON property resolution: '{}' -> '{}'", actualStr, resolvedActual);
-                                         }
+                                     List<String> localResolutions = new ArrayList<>();
+                                     if (resolveProperties) {
+                                         resolvedActual = resolve(actualStr, projectRoot, localResolutions);
                                      }
 
                                      if (!compareValues(resolvedActual, expectedValue, operator, valueType)) {
@@ -126,6 +121,8 @@ public class JsonGenericCheck extends AbstractCheck {
                                          fileReasons.add(String.format("Value mismatch at '%s': Actual='%s', Expected='%s'", jsonPath, resolvedActual, expectedValue));
                                      } else {
                                          fileSuccesses.add(String.format("%s=%s", jsonPath, resolvedActual));
+                                         // Record resolutions on success
+                                         recordResolutions(localResolutions);
                                      }
                                  }
                              }
@@ -149,18 +146,30 @@ public class JsonGenericCheck extends AbstractCheck {
 
                                      Object val = jsonMap.get(key);
                                      boolean verMatch = false;
+                                     List<String> localResolutions = new ArrayList<>();
 
                                      if (val instanceof List) {
-
                                          for (Object item : (List<?>)val) {
-                                             if (compareValues(item.toString(), minVer, "GTE", "SEMVER")) {
+                                             String actual = item.toString();
+                                             if (resolveProperties) {
+                                                 actual = resolve(actual, projectRoot, localResolutions);
+                                             }
+                                             if (compareValues(actual, minVer, "GTE", "SEMVER")) {
                                                  verMatch = true;
+                                                 val = actual; // For reporting
                                                  break;
                                              }
                                          }
                                      } else if (val != null) {
-                                         if (compareValues(val.toString(), minVer, "GTE", "SEMVER")) {
+                                         String actual = val.toString();
+                                         if (resolveProperties) {
+                                             actual = resolve(actual, projectRoot, localResolutions);
+                                         }
+                                         if (compareValues(actual, minVer, "GTE", "SEMVER")) {
                                              verMatch = true;
+                                             val = actual; // For reporting
+                                         } else {
+                                             val = actual; // For reporting mismatch
                                          }
                                      }
 
@@ -168,8 +177,11 @@ public class JsonGenericCheck extends AbstractCheck {
                                          filePassed = false;
                                          fileReasons.add(String.format("Version too low for '%s': Found='%s', Min Required='%s'", key, val, minVer));
                                          allFoundItems.add(String.format("%s=%s", key, val));
+                                         // Still record resolutions because they identify the "found" item
+                                         recordResolutions(localResolutions);
                                      } else {
                                          fileSuccesses.add(String.format("%s=%s", key, val));
+                                         recordResolutions(localResolutions);
                                      }
                                   }
                              }
@@ -193,17 +205,30 @@ public class JsonGenericCheck extends AbstractCheck {
 
                                      Object val = jsonMap.get(key);
                                      boolean verMatch = false;
+                                     List<String> localResolutions = new ArrayList<>();
 
                                      if (val instanceof List) {
                                          for (Object item : (List<?>)val) {
-                                             if (compareValues(item.toString(), exactVer, "EQ", "SEMVER")) {
+                                             String actual = item.toString();
+                                             if (resolveProperties) {
+                                                 actual = resolve(actual, projectRoot, localResolutions);
+                                             }
+                                             if (compareValues(actual, exactVer, "EQ", "SEMVER")) {
                                                  verMatch = true;
+                                                 val = actual; // For reporting
                                                  break;
                                              }
                                          }
                                      } else if (val != null) {
-                                         if (compareValues(val.toString(), exactVer, "EQ", "SEMVER")) {
+                                         String actual = val.toString();
+                                         if (resolveProperties) {
+                                             actual = resolve(actual, projectRoot, localResolutions);
+                                         }
+                                         if (compareValues(actual, exactVer, "EQ", "SEMVER")) {
                                              verMatch = true;
+                                             val = actual; // For reporting
+                                         } else {
+                                             val = actual; // For reporting mismatch
                                          }
                                      }
 
@@ -211,8 +236,10 @@ public class JsonGenericCheck extends AbstractCheck {
                                          filePassed = false;
                                          fileReasons.add(String.format("Version mismatch for '%s': Found='%s', Expected Exactly='%s'", key, val, exactVer));
                                          allFoundItems.add(String.format("%s=%s", key, val));
+                                         recordResolutions(localResolutions);
                                      } else {
                                          fileSuccesses.add(String.format("%s=%s", key, val));
+                                         recordResolutions(localResolutions);
                                      }
                                   }
                              }
@@ -252,17 +279,18 @@ public class JsonGenericCheck extends AbstractCheck {
                                           String actual = val != null ? val.toString() : "null";
 
                                           String resolvedActual = actual;
-                                          if (actual.contains("${") || actual.contains("p('") || actual.contains("p(\"")) {
-                                              resolvedActual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
-                                              if (!actual.equals(resolvedActual)) {
-                                                  addPropertyResolution(actual, resolvedActual);
-                                                  logger.debug("JSON field property resolution: '{}' -> '{}'", actual, resolvedActual);
-                                              }
+                                          List<String> localResolutions = new ArrayList<>();
+                                          if (resolveProperties) {
+                                              resolvedActual = resolve(actual, projectRoot, localResolutions);
                                           }
 
                                           boolean match = false;
 
-                                          if (resolvedActual.equals(expected)) match = true;
+                                          if (resolvedActual.equals(expected)) {
+                                              match = true;
+                                              // Record resolutions on match
+                                              recordResolutions(localResolutions);
+                                          }
 
                                          if (!match && val instanceof List) {
                                               List<?> listVal = (List<?>) val;
@@ -286,6 +314,7 @@ public class JsonGenericCheck extends AbstractCheck {
 
                                           if (!match && compareValues(resolvedActual, expected, "EQ", "SEMVER")) {
                                               match = true;
+                                              recordResolutions(localResolutions);
                                           }
 
                                           if (!match) {
@@ -317,9 +346,10 @@ public class JsonGenericCheck extends AbstractCheck {
                                          Object val = jsonMap.get(key);
                                          String actual = val != null ? val.toString() : "null";
                                          String resolvedActual = actual;
+                                         List<String> localResolutions = new ArrayList<>();
 
-                                         if (actual.contains("${") || actual.contains("p('") || actual.contains("p(\"")) {
-                                             resolvedActual = com.raks.aegis.util.PropertyResolver.resolve(actual, projectRoot);
+                                         if (resolveProperties) {
+                                             resolvedActual = resolve(actual, projectRoot, localResolutions);
                                          }
 
                                          boolean match = false;
@@ -330,6 +360,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                              filePassed = false;
                                              fileReasons.add(String.format("Forbidden field value found '%s': '%s'", key, resolvedActual));
                                              allFoundItems.add(String.format("%s=%s", key, resolvedActual));
+                                             recordResolutions(localResolutions);
                                          }
                                      }
                                   }
@@ -349,24 +380,37 @@ public class JsonGenericCheck extends AbstractCheck {
                                      if (jsonMap.containsKey(key)) {
                                          Object val = jsonMap.get(key);
                                          boolean verMatch = false;
+                                         String finalActual = val != null ? val.toString() : "null";
+                                         List<String> localResolutions = new ArrayList<>();
 
                                          if (val instanceof List) {
                                              for (Object item : (List<?>)val) {
-                                                 if (compareValues(item.toString(), forbiddenVer, "EQ", "SEMVER")) {
+                                                 String actual = item.toString();
+                                                 if (resolveProperties) {
+                                                     actual = resolve(actual, projectRoot, localResolutions);
+                                                 }
+                                                 if (compareValues(actual, forbiddenVer, "EQ", "SEMVER")) {
                                                      verMatch = true;
+                                                     finalActual = actual;
                                                      break;
                                                  }
                                              }
                                          } else if (val != null) {
-                                             if (compareValues(val.toString(), forbiddenVer, "EQ", "SEMVER")) {
+                                             String actual = val.toString();
+                                             if (resolveProperties) {
+                                                 actual = resolve(actual, projectRoot, localResolutions);
+                                             }
+                                             if (compareValues(actual, forbiddenVer, "EQ", "SEMVER")) {
                                                  verMatch = true;
+                                                 finalActual = actual;
                                              }
                                          }
 
                                          if (verMatch) {
                                              filePassed = false;
-                                             fileReasons.add(String.format("Forbidden version found for '%s': '%s'", key, forbiddenVer));
-                                             allFoundItems.add(String.format("%s=%s", key, forbiddenVer));
+                                             fileReasons.add(String.format("Forbidden version found for '%s': '%s'", key, finalActual));
+                                             allFoundItems.add(String.format("%s=%s", key, finalActual));
+                                             recordResolutions(localResolutions);
                                          }
                                      }
                                   }
@@ -410,12 +454,12 @@ public class JsonGenericCheck extends AbstractCheck {
 
         if (uniqueCondition) {
             String defaultSuccess = String.format("JSON Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr);
+            return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr, this.propertyResolutions);
         } else {
             String technicalMsg = String.format("JSON Check failed. (Mode: %s, Passed: %d/%d).\n• %s", 
                             matchMode, passedFileCount, totalFiles, 
                             details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr);
+            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr, this.propertyResolutions);
         }
     }
 

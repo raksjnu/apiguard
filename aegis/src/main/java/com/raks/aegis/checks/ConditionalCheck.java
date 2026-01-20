@@ -74,6 +74,14 @@ public class ConditionalCheck extends AbstractCheck {
                     }
                 }
 
+                if (res.propertyResolutions != null) {
+                    for (String resItem : res.propertyResolutions) {
+                        if (!this.propertyResolutions.contains(resItem)) {
+                            this.propertyResolutions.add(resItem);
+                        }
+                    }
+                }
+
                 if (!res.passed) {
                     allPassed = false;
                 }
@@ -84,9 +92,9 @@ public class ConditionalCheck extends AbstractCheck {
             String matchingItemsStr = aggregatedMatchingItems.isEmpty() ? null : String.join(", ", aggregatedMatchingItems);
 
             if (allPassed) {
-                 return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, details.toString(), checkedFilesStr, matchingItemsStr), checkedFilesStr, matchingItemsStr);
+                 return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, details.toString(), checkedFilesStr, matchingItemsStr), checkedFilesStr, matchingItemsStr, this.propertyResolutions);
             } else {
-                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, details.toString(), checkedFilesStr, foundItemsStr, matchingItemsStr), checkedFilesStr, foundItemsStr, matchingItemsStr);
+                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, details.toString(), checkedFilesStr, foundItemsStr, matchingItemsStr), checkedFilesStr, foundItemsStr, matchingItemsStr, this.propertyResolutions);
             }
         } else {
 
