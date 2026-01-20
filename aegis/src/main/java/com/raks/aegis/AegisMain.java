@@ -44,12 +44,23 @@ public class AegisMain implements Callable<Integer> {
     @Option(names = {"-o", "--output"}, description = "Report output directory name (default: Aegis-reports)", defaultValue = "Aegis-reports")
     private String reportDirName;
 
+    public static class AegisConfigurationException extends RuntimeException {
+        public AegisConfigurationException(String message) {
+            super(message);
+        }
+    }
+
     public static void main(String[] args) {
         System.exit(execute(args));
     }
 
     public static int execute(String[] args) {
-        return new CommandLine(new AegisMain()).execute(args);
+        try {
+            return new CommandLine(new AegisMain()).execute(args);
+        } catch (AegisConfigurationException e) {
+            logger.error("Aegis Configuration Error: {}", e.getMessage());
+            return 1;
+        }
     }
 
     @Override
@@ -74,7 +85,7 @@ public class AegisMain implements Callable<Integer> {
         
         if (configWrapper.getConfig() == null) {
              logger.error("FATAL ERROR: 'config' section is missing or invalid in the configuration file.");
-             System.exit(1);
+             throw new AegisConfigurationException("'config' section is missing or invalid in the configuration file.");
         }
 
         List<Rule> allRules = configWrapper.getRules();
@@ -499,7 +510,7 @@ public class AegisMain implements Callable<Integer> {
                 logger.error("FATAL ERROR: Invalid YAML Configuration in: {}", configFilePath);
                 logger.error("Reason: {}", e.getMessage());
                 logger.error("****************************************************************");
-                System.exit(1);
+                throw new AegisConfigurationException("Invalid YAML Configuration in " + configFilePath + ": " + e.getMessage());
             } catch (IOException e) {
                 logger.error("Error loading custom config file: {}", configFilePath);
                 logger.warn("Falling back to embedded rules.yaml");
@@ -510,15 +521,14 @@ public class AegisMain implements Callable<Integer> {
         }
         if (input == null) {
             logger.error("rules.yaml not found!");
-            System.exit(1);
+            throw new AegisConfigurationException("Default rules.yaml not found!");
         }
         try {
             return yaml.loadAs(input, RootWrapper.class);
         } catch (YAMLException e) {
             logger.error("FATAL ERROR: Invalid YAML in default rules.yaml or fallback!");
             logger.error("Reason: {}", e.getMessage());
-            System.exit(1);
-            return null; // Unreachable
+            throw new AegisConfigurationException("Invalid YAML in default rules.yaml: " + e.getMessage());
         }
     }
     private static Path showFolderDialog() {
