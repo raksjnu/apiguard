@@ -93,8 +93,11 @@ public class TokenSearchCheck extends AbstractCheck {
 
                     if (!caseSensitive && !isRegex && !wholeWord) content = content.toLowerCase();
 
+                    java.util.Set<String> thisFileMatchedConfigTokens = new java.util.HashSet<>();
+
                     for (int i = 0; i < tokens.size(); i++) {
-                        String tokenToAdd = tokens.get(i);
+                        String configToken = tokens.get(i);
+                        String tokenToAdd = configToken;
                         boolean match = false;
 
                         if (isRegex || wholeWord) {
@@ -104,7 +107,7 @@ public class TokenSearchCheck extends AbstractCheck {
                                  tokenToAdd = m.group(); 
                              }
                         } else {
-                            String t = caseSensitive ? tokens.get(i) : tokens.get(i).toLowerCase();
+                            String t = caseSensitive ? configToken : configToken.toLowerCase();
                             if (content.contains(t)) {
                                 match = true;
                             }
@@ -112,6 +115,7 @@ public class TokenSearchCheck extends AbstractCheck {
 
                         if (match) {
                             fileFound.add(tokenToAdd);
+                            thisFileMatchedConfigTokens.add(configToken);
                             allFoundItems.add(tokenToAdd);
                         }
                     }
@@ -125,11 +129,17 @@ public class TokenSearchCheck extends AbstractCheck {
                                 // File passed, results captured below
                             }
                         } else {
-                            if (fileFound.size() < tokens.size()) {
+                            if (thisFileMatchedConfigTokens.size() < tokens.size()) {
                                 filePassed = false;
                                 List<String> missing = new ArrayList<>(tokens);
-                                for(String f : fileFound) missing.remove(f); 
-                                failureReason = "Missing: " + missing;
+                                missing.removeAll(thisFileMatchedConfigTokens);
+                                
+                                // Format missing tokens for readability (e.g. strip \b from regex)
+                                List<String> readableMissing = missing.stream()
+                                    .map(t -> cleanToken(t, isRegex))
+                                    .toList();
+                                    
+                                failureReason = "Missing: " + readableMissing;
                             } else {
                                 // File passed, results captured below
                             }
@@ -173,7 +183,7 @@ public class TokenSearchCheck extends AbstractCheck {
                         getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, foundItemsStr, matchingFilesStr), 
                         checkedFilesStr, foundItemsStr, matchingFilesStr);
             } else {
-                String technicalMsg = String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d). Details:\n• %s", 
+                String technicalMsg = String.format("Validation failed for %s. (MatchMode: %s, Passed: %d/%d).\n• %s", 
                         mode, matchMode, passedFileCount, totalFiles, failureDetails.isEmpty() ? "No files matched criteria" : String.join("\n• ", failureDetails));
                 return CheckResult.fail(check.getRuleId(), check.getDescription(), 
                         getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), 
@@ -183,6 +193,11 @@ public class TokenSearchCheck extends AbstractCheck {
         } catch (Exception e) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Scan Error: " + e.getMessage());
         }
+    }
+
+    private String cleanToken(String token, boolean isRegex) {
+        if (!isRegex) return token;
+        return token.replace("\\b", "");
     }
 
     private String removeComments(String content, Path file) {

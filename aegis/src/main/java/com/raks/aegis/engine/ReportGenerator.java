@@ -105,11 +105,11 @@ public class ReportGenerator {
                             "<td style='border-left: 6px solid #28a745;'>%s</td>" + 
                             "<td>%s</td><td>%s</td><td><strong style='color:#155724'>%s</strong></td>" + 
                             "<td><div style='word-wrap: break-word; white-space: pre-wrap;'>%s</div>%s</td></tr>",
-                            escape(r.displayId), escape(r.name), escape(r.severity), escape(passLabel), escape(message), configRow));
+                            escape(r.displayId), escape(r.name), escape(r.severity), escape(passLabel), formatMessage(message), configRow));
                 } else {
                     List<String> messages = r.checks.stream()
                             .filter(c -> !c.passed)
-                            .map(c -> escape(c.message))
+                            .map(c -> formatMessage(c.message))
                             .toList();
                     String details = messages.stream()
                             .collect(Collectors.groupingBy(
@@ -1452,6 +1452,16 @@ public class ReportGenerator {
         if (s == null)
             return "";
         return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+    }
+
+    private static String formatMessage(String message) {
+        String escaped = escape(message);
+        return escaped.replace("Files Checked:", "<strong>Files Checked:</strong>")
+                      .replace("Items Found:", "<strong>Items Found:</strong>")
+                      .replace("Items Matched:", "<strong>Items Matched:</strong>")
+                      .replace("Details:", "<strong>Details:</strong>")
+                      .replace("Failures:", "<strong>Failures:</strong>") // Bold 'Failures:' for failed checks
+                      .replace("Properties Resolved:", "<strong>Properties Resolved:</strong>");
     }
     private static String readResource(String path) {
         try (InputStream is = ReportGenerator.class.getResourceAsStream(path)) {

@@ -325,7 +325,7 @@ public class PropertyGenericCheck extends AbstractCheck {
                 String defaultSuccess = String.format("Property Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
                 return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr);
             } else {
-                String technicalMsg = String.format("Property Check failed for %s. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
+                String technicalMsg = String.format("Property Check failed for %s. (Mode: %s, Passed: %d/%d).\n• %s", 
                                 mode, matchMode, passedFileCount, totalFiles, 
                                 details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr);

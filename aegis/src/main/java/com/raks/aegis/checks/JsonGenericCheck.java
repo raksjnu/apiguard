@@ -412,7 +412,7 @@ public class JsonGenericCheck extends AbstractCheck {
             String defaultSuccess = String.format("JSON Check passed for %s files. (Mode: %s, Passed: %d/%d)", mode, matchMode, passedFileCount, totalFiles);
             return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr);
         } else {
-            String technicalMsg = String.format("JSON Check failed. (Mode: %s, Passed: %d/%d). Failures:\n• %s", 
+            String technicalMsg = String.format("JSON Check failed. (Mode: %s, Passed: %d/%d).\n• %s", 
                             matchMode, passedFileCount, totalFiles, 
                             details.isEmpty() ? "Pattern mismatch" : String.join("\n• ", details));
             return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), checkedFilesStr, foundItemsStr, matchingFilesStr);
