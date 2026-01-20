@@ -265,21 +265,28 @@
         
         <h3>Command Line</h3>
         <div class="code-block">
-            <code>java -jar aegis-1.0.0-jar-with-raks.jar -p /path/to/projects [-c rules.yaml] [-o reports]</code>
-            <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
+            <p><strong>Standard CLI Mode:</strong></p>
+            <code>java -jar aegis.jar -p /path/to/projects [-c rules.yaml] [-o reports]</code>
+            
+            <p style="margin-top: 15px;"><strong>GUI Server Mode:</strong></p>
+            <code>java -jar aegis.jar --gui [--port 8080]</code>
+            
+            <p style="margin-top: 15px; font-size: 0.9em; color: #666;">
                 <strong>Parameters:</strong><br>
-                <code>-p, --path</code>: (Required) Absolute path to the root folder containing projects to scan.<br>
+                <code>-p, --path</code>: (Required for CLI) Absolute path to the root folder containing projects to scan.<br>
                 <code>-c, --config</code>: (Optional) Path to a custom <code>rules.yaml</code> file. If omitted, built-in rules are used.<br>
                 <code>-o, --output</code>: (Optional) Name of the report directory (Default: Aegis-reports).<br>
+                <code>-g, --gui</code>: Start the Aegis GUI server.<br>
+                <code>--port</code>: (Optional) Set a custom port for the GUI server (Default: 8080).<br>
                 <code>-h, --help</code>: Show the help message and exit.<br>
                 <code>-V, --version</code>: Print version information and exit.
             </p>
-            <p><strong>Note:</strong> CLI mode currently supports local folder analysis only. For ZIP/JAR uploads, please use the GUI.</p>
+            <p><strong>Note:</strong> Standalone CLI mode currently supports local folder analysis only. For ZIP/JAR uploads, please use the GUI.</p>
         </div>
 
         <h3>GUI Mode (All Input Modes)</h3>
         <div class="highlight-box">
-            <p>Run <code>start-gui.bat</code> (Windows) or <code>start-gui.sh</code> (Mac/Linux)</p>
+            <p>Run <code>start-aegis-gui.bat</code> (Windows) or <code>start-aegis-gui.sh</code> (Mac/Linux)</p>
             <p>Opens browser at <code>http://localhost:8080</code></p>
             <p><strong>Supports:</strong> Local folder, ZIP upload, JAR upload</p>
         </div>
