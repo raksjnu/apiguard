@@ -133,6 +133,14 @@ config:
       - Aegis-reports
       - aegis-report
       - aegis-report-config
+
+    # Files to exclude from scanning globally
+    ignoredFiles:
+      exactNames: 
+      - log4j2-test.xml
+      - log4j2.xml
+      prefixes:
+      - temp_
       
 rules:
 

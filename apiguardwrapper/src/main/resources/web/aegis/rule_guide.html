@@ -395,7 +395,21 @@
 <br>
 These apply to almost ALL rule types and control file selection and logic.
 <br>
-<table><tr><td> Parameter      </td><td> Default      </td><td> Description                                          </td></tr><tr><td> <code class='inline-token'>filePatterns</code> </td><td> (Required)   </td><td> List of glob patterns for target files (e.g. <code class='inline-token'>[&quot;**/*.xml&quot;]</code>). </td></tr><tr><td> <code class='inline-token'>matchMode</code>    </td><td> <code class='inline-token'>ALL_FILES</code>  </td><td> Controls file-level quantifier (see table below).    </td></tr><tr><td> <code class='inline-token'>logic</code>        </td><td> <code class='inline-token'>AND</code>        </td><td> Combining logic for multiple checks or tokens.      </td></tr><tr><td> <code class='inline-token'>environments</code> </td><td> <code class='inline-token'>[]</code>         </td><td> List of environments where this rule applies.        </td></tr></table>
+<table><tr><td> Parameter      </td><td> Default      </td><td> Description                                          </td></tr></table>
+<br>
+      - node_modules
+      prefixes:       # Folder names starting with...
+      - .
+      - temp_
+<br>
+    # Global File Exclusion
+    ignoredFiles:
+      exactNames:     # Specific files to ignore
+      - log4j2-test.xml
+      - .DS_Store
+      prefixes:       # Filenames starting with...
+      - debug_
+<table><tr><td> <code class='inline-token'>filePatterns</code> </td><td> (Required)   </td><td> List of glob patterns for target files (e.g. <code class='inline-token'>[&quot;**/*.xml&quot;]</code>). </td></tr><tr><td> <code class='inline-token'>matchMode</code>    </td><td> <code class='inline-token'>ALL_FILES</code>  </td><td> Controls file-level quantifier (see table below).    </td></tr><tr><td> <code class='inline-token'>logic</code>        </td><td> <code class='inline-token'>AND</code>        </td><td> Combining logic for multiple checks or tokens.      </td></tr><tr><td> <code class='inline-token'>environments</code> </td><td> <code class='inline-token'>[]</code>         </td><td> List of environments where this rule applies.        </td></tr></table>
 <br>
 <h4>File Match Quantifiers (<code class='inline-token'>matchMode</code>)</h4>
 <br>
