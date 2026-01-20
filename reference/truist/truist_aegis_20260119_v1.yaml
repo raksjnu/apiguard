@@ -1,5 +1,5 @@
 # =============================================================================
-# Aegis Rules Configuration - Raks
+# Aegis Rules Configuration - Truist
 # Targeted for Technical Checklist Compliance
 # Author: Rakesh Kumar (Rakesh.Kumar@ibm.com)
 # Date: 2026-01-18
@@ -52,36 +52,8 @@
 # - {CHECKED_FILES}   : The list of files processed by the check. (Alias: {SCANNED_FILES})
 # - {FOUND_ITEMS}     : The specific forbidden items found (e.g. 'toApplicationCode', forbidden keys).
 # - {MATCHING_FILES}  : The list of files that *passed* the check condition (Success Messages).
-# - {PROPERTY_RESOLVED}: Shows if any properties were resolved (e.g. ${app.port} ? 8081).
+# - {PROPERTY_RESOLVED}: Shows if any properties were resolved (e.g. ${app.port} → 8081).
 # - {FAILURES}        : The raw list of failure reasons (often contained in DEFAULT_MESSAGE).
-# =============================================================================
-
-# =============================================================================
-# PROJECT TYPE FILTERING (NEW FEATURE)
-# =============================================================================
-# Eliminate report noise by only running applicable rules on each project type.
-#
-# 1. Define project types in config.projectTypes:
-#    CODE:
-#      description: "Mule applications"
-#      detectionCriteria:
-#        markerFiles: ["pom.xml"]
-#        excludePatterns: [".*_config.*"]
-#    CONFIG:
-#      description: "Configuration projects"
-#      detectionCriteria:
-#        namePattern: ".*_config.*"
-#
-# 2. Reference types in rules using appliesTo:
-#    - id: "RULE-001"
-#      appliesTo: ["CODE"]  # Only runs on CODE projects
-#
-# 3. Rules without appliesTo apply to ALL projects (backward compatible)
-#
-# Benefits:
-# - Cleaner reports (only relevant rules shown)
-# - No false positives (CONFIG projects won't fail CODE rules)
-# - Zero performance impact (classification cached)
 # =============================================================================
 
 # =============================================================================
@@ -107,7 +79,7 @@
 # EXAMPLE:
 # XML: <version>${app.version}</version>
 # Property File: app.version=1.0.0
-# Result: Aegis resolves ${app.version} †’ 1.0.0 before checking
+# Result: Aegis resolves ${app.version} → 1.0.0 before checking
 # =============================================================================
 
 config:
@@ -120,15 +92,15 @@ config:
   # Project type definitions for rule filtering
   projectTypes:
     CODE:
-      description: "Application projects with source code (Mule, Spring, etc.)"
+      description: "Mule application projects with source code"
       detectionCriteria:
-        markerFiles: ["pom.xml", "mule-artifact.json", "build.gradle"]
-        excludePatterns: [".*_config.*", ".*-config$"]
+        markerFiles: ["pom.xml", "mule-artifact.json"]
+        excludePatterns: [".*_config.*"]
     
     CONFIG:
       description: "Configuration projects with properties and policies"
       detectionCriteria:
-        namePattern: ".*_config.*|.*-config$"
+        namePattern: ".*_config.*"
   
   # Identifies valid projects and configuration locations
   projectIdentification:
@@ -168,15 +140,15 @@ rules:
   # POM.XML VALIDATION
   # ---------------------------------------------------------------------------
 
-  # RULE-023: Parent POM
+  # BANK-023: Parent POM
   - id: "RULE-001"
     name: "Validate Parent POM Version"
-    description: "Ensures Parent POM is com.Raks.eapi:MuleParentPom >= 3.0.0"
-    appliesTo: ["CODE"]
+    description: "Ensures the parent POM version matches the required value"
+    appliesTo: ["CODE"]  # Only applies to CODE projects
     enabled: true
     severity: HIGH
     successMessage: "✓ Parent POM version is valid (3.0.0+)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Parent POM version is invalid. Must be com.Raks.eapi:MuleParentPom >= 3.0.0\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    errorMessage: "✗ Parent POM version is invalid. Must be com.truist.eapi:MuleParentPom >= 3.0.0\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
     checks:
     # CONFIGURATION NOTE:
     # 'POM_VALIDATION_REQUIRED' with 'validationType: PARENT' allows you to enforce
@@ -185,12 +157,12 @@ rules:
       params:
         validationType: PARENT
         parent:
-          groupId: com.Raks.eapi
+          groupId: com.truist.eapi
           artifactId: MuleParentPom
           minVersion: 3.0.0
 
-  # RULE-024: POM Properties
-  - id: "RULE-002"
+  # BANK-024: POM Properties
+  - id: "BANK-024"
     name: "Validate POM Properties"
     description: "Ensures critical properties satisfy minimum versions."
     appliesTo: ["CODE"]
@@ -215,8 +187,8 @@ rules:
         - name: munit.version
           minVersion: "3.5.0"
 
-  # RULE-026: Forbidden Plugins
-  - id: "RULE-003"
+  # BANK-026: Forbidden Plugins
+  - id: "BANK-026"
     name: "Forbid Restricted Plugins"
     appliesTo: ["CODE"]
     enabled: true
@@ -238,14 +210,14 @@ rules:
         - groupId: com.mulesoft.munit.tools
           artifactId: munit-maven-plugin
 
-  # RULE-027: Forbidden Dependencies
-  - id: "RULE-004"
-    name: "Forbid Runtime Dependencies"
+  # BANK-027: Forbidden Dependencies
+  - id: "BANK-027"
+    name: "Forbid Restricted/Legacy Dependencies"
     appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
-    successMessage: "✓ No runtime dependencies found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Forbidden dependency found (mule-core-ee or spring-config-ee)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    successMessage: "✓ No restricted or legacy dependencies found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    errorMessage: "✗ Forbidden dependency found (mule-core-ee, javax.mail, or ojdbc8)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
     checks:
     # CONFIGURATION NOTE:
     # 'POM_VALIDATION_FORBIDDEN' ensures specific dependencies are NOT present.
@@ -258,10 +230,14 @@ rules:
           artifactId: mule-core-ee
         - groupId: com.mulesoft.mule.runtime.modules
           artifactId: mule-module-spring-config-ee
+        - groupId: javax.mail
+          artifactId: mail
+        - groupId: com.oracle.database.jdbc
+          artifactId: ojdbc8
 
-  # RULE-029: Required Dependency
-  - id: "RULE-005"
-    name: "Require eapimuleutilities"
+  # BANK-029: Required Dependency
+  - id: "BANK-029"
+    name: "Adhere to eapimuleutilities Dependency"
     appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
@@ -274,13 +250,13 @@ rules:
       params:
         validationType: DEPENDENCIES
         dependencies:
-        - groupId: com.Raks.eapi
+        - groupId: com.truist.eapi
           artifactId: eapimuleutilities
 
-  # RULE-028: Shared Libs
-  - id: "RULE-006"
+  # BANK-028: Shared Libs
+  - id: "BANK-028"
     name: "Forbid Shared Libraries"
-    appliesTo: ["CODE", "CONFIG"]
+    appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
     successMessage: "✓ No shared libraries found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
@@ -293,35 +269,17 @@ rules:
         filePatterns: ["pom.xml"]
         tokens: ["spring-security-ldap", "spring-security-web"]
 
-  # RULE-038: Legacy Deps
-  - id: "RULE-007"
-    name: "Legacy Dependency Upgrade"
-    appliesTo: ["CODE", "CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ No legacy dependencies (javax.mail, ojdbc8) found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Legacy dependency detected. Upgrade required\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    # CONFIGURATION NOTE:
-    # Explicitly forbids known legacy dependencies (javax.mail, old oracle drivers).
-    - type: POM_VALIDATION_FORBIDDEN
-      params:
-        validationType: DEPENDENCIES
-        forbiddenDependencies:
-        - groupId: javax.mail
-          artifactId: mail
-        - groupId: com.oracle.database.jdbc
-          artifactId: ojdbc8
+
 
   # ---------------------------------------------------------------------------
   # MULE ARTIFACT VALIDATION
   # ---------------------------------------------------------------------------
 
-  # RULE-001: mule-artifact.json validation
-  - id: "RULE-008"
+  # MULE-ARTIFACT-VALIDATION: mule-artifact.json validation
+  - id: "MULE-ARTIFACT-VALIDATION"
     name: "Validate mule-artifact.json"
     description: "Enforces minMuleVersion 4.9.7, Java 17, and secureProperties."
-    appliesTo: ["CODE", "CONFIG"]
+    appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
     successMessage: "✓ mule-artifact.json is valid (Version: 4.9.7+, Java: 17)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
@@ -347,11 +305,11 @@ rules:
   # CODE & IMPLEMENTATION VALIDATION (XML, Java, Config)
   # ---------------------------------------------------------------------------
 
-  # RULE-002: Logger Attributes
-  - id: "RULE-009"
+  # BANK-002: Logger Attributes
+  - id: "BANK-002"
     name: "Forbid Legacy Logger Attributes"
     description: "Ensures toApplicationCode and fromApplicationCode are NOT used."
-    appliesTo: ["CODE", "CONFIG"]
+    appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
     successMessage: "✓ No legacy logger attributes found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
@@ -367,8 +325,8 @@ rules:
         elements: ["set-payload"]
         forbiddenAttributes: ["toApplicationCode", "fromApplicationCode"]
 
-  # RULE-004: jce-encrypt
-  - id: "RULE-010"
+  # BANK-004: jce-encrypt
+  - id: "BANK-004"
     name: "Forbid jce-encrypt Token"
     description: "Detects usage of legacy jce-encrypt."
     appliesTo: ["CODE"]
@@ -386,10 +344,9 @@ rules:
         filePatterns: ["src/main/mule/*.xml"]
         tokens: ["\\bjce-encrypt\\b"]
         matchMode: REGEX
-        ignoreComments: true
 
-  # RULE-005: SOAP Version
-  - id: "RULE-011"
+  # BANK-005: SOAP Version
+  - id: "BANK-005"
     name: "Validate SOAP Version"
     appliesTo: ["CODE"]
     enabled: true
@@ -401,30 +358,17 @@ rules:
     # 'XML_ATTRIBUTE_EXISTS' validates that specific attributes/values exist on an element.
     # - 'elementAttributeSets': Defines the element and the REQUIRED attribute values.
     # - Useful for enforcing configuration standards like 'soapVersion="SOAP_12"'.
-    checks:
-    # CONFIGURATION NOTE:
-    # 'CONDITIONAL_CHECK' ensures we only validate the SOAP version IF an APIKit SOAP config exists.
-    # Precondition: Scans for 'apikit-soap:config'.
-    # OnSuccess: Validates that 'soapVersion' is SOAP_11 or SOAP_12.
-    - type: CONDITIONAL_CHECK
+    - type: XML_ATTRIBUTE_EXISTS
       params:
-        preconditions:
-        - type: GENERIC_TOKEN_SEARCH_REQUIRED
-          params:
-            filePatterns: ["src/main/mule/*.xml"]
-            tokens: ["apikit-soap:config"]
-        onSuccess:
-        - type: XML_ATTRIBUTE_EXISTS
-          params:
-            filePatterns: ["src/main/mule/*.xml"]
-            elementAttributeSets:
-            - element: apikit-soap:config
-              attributes: {soapVersion: "SOAP_11"}
-            - element: apikit-soap:config
-              attributes: {soapVersion: "SOAP_12"}
+        filePatterns: ["src/main/mule/*-config.xml"]
+        elementAttributeSets:
+        - element: apikit-soap:config
+          attributes: {soapVersion: "SOAP_11"}
+        - element: apikit-soap:config
+          attributes: {soapVersion: "SOAP_12"}
 
-  # RULE-031: EncUtil Replacement
-  - id: "RULE-012"
+  # BANK-031: EncUtil Replacement
+  - id: "BANK-031"
     name: "Enforce EncUtil Logic"
     appliesTo: ["CODE"]
     enabled: true
@@ -461,8 +405,8 @@ rules:
                 - xpath: "//*[local-name()='set-variable' and contains(@value, 'EncUtil::encryptJcePbe')]"
                   failureMessage: "EncUtil::encryptJcePbe usage missing"
 
-  # RULE-033: ApiMethod
-  - id: "RULE-013"
+  # BANK-033: ApiMethod
+  - id: "BANK-033"
     name: "Verify apimethod variable has encryptedRequestPath"
     appliesTo: ["CODE"]
     enabled: true
@@ -480,8 +424,8 @@ rules:
         xpathExpressions:
         - xpath: "//*[local-name()='set-variable' and @variableName='apimethod' and contains(@value, 'vars.encryptedRequestPath')]"
   
-  # RULE-036: Autodiscovery
-  - id: "RULE-014"
+  # BANK-036: Autodiscovery
+  - id: "BANK-036"
     name: "Require API Autodiscovery"
     appliesTo: ["CODE"]
     enabled: true
@@ -499,8 +443,8 @@ rules:
         xpathExpressions:
         - xpath: "//*[local-name()='autodiscovery']"
 
-  # RULE-040: Java 17 Errors
-  - id: "RULE-015"
+  # BANK-040: Java 17 Errors
+  - id: "BANK-040"
     name: "Java 8 to 17 Error Class Fields Migration Check"
     appliesTo: ["CODE"]
     enabled: true
@@ -537,12 +481,12 @@ rules:
         # CONFIG_NOTE: 
         # isRegex: true -> Enables regex pattern matching for tokens.
         # matchMode: ALL_FILES -> Ensures ALL scanned files must pass the check (i.e., contain NO forbidden tokens).
+        # (Do not use matchMode: REGEX, it is invalid and defaults to ALL_FILES).
         matchMode: ALL_FILES
         isRegex: true
-        ignoreComments: true
 
-  # RULE-019: DLP XML
-  - id: "RULE-016"
+  # BANK-019: DLP XML
+  - id: "BANK-019"
     name: "Forbid DLP Code Logic"
     appliesTo: ["CODE"]
     enabled: true
@@ -565,31 +509,29 @@ rules:
         tokens:
         - "north.bound.dlp.flag"
         - "raks.dlp.queue"
-        ignoreComments: true
 
-  # RULE-020: DLP Properties
-  - id: "RULE-017"
+  # BANK-020: DLP Properties
+  - id: "BANK-020"
     name: "Forbid DLP Properties"
-    appliesTo: ["CONFIG"]
+    appliesTo: ["CODE", "CONFIG"]
     enabled: true
     severity: HIGH
     successMessage: "✓ No DLP properties found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
     errorMessage: "✗ DLP property detected (dlp.flag or dlp.requestqueue)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
     checks:
     # CONFIGURATION NOTE:
-    # Same strategy as RULE-019 but targeting .properties files.
+    # Same strategy as BANK-019 but targeting .properties files.
     # - 'wholeWord: true': Prevents false positives.
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
         wholeWord: true # Set to 'true' to match exact words. Set to 'false' for substring mode.
         filePatterns: ["**/*.properties"]
         tokens: ["north.bound.dlp.flag", "south.bound.dlp.flag", "wmq.dlp.requestqueue"]
-        ignoreComments: true
 
-  # RULE-021: SQL Security
-  - id: "RULE-018"
+  # BANK-021: SQL Security
+  - id: "BANK-021"
     name: "Enforce SQL Server DB connection String Security"
-    appliesTo: ["CONFIG"]
+    appliesTo: ["CODE", "CONFIG"]
     enabled: true
     severity: HIGH
     successMessage: "✓ SQL Server DB Connection Strings are securely configured (or none found)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
@@ -619,13 +561,12 @@ rules:
               - "jdbc:sqlserver(?!.*trustServerCertificate=false).*"
             matchMode: REGEX
             isRegex: true
-            ignoreComments: true
             failureMessage: "Found SQL Server DB Connection String (missing 'encrypt=false' and/or 'trustServerCertificate=false')"
 
-  # RULE-032: DB2 AppId
-  - id: "RULE-019"
-    name: "Enforce DB2 Connection URL ApplicationId"
-    appliesTo: ["CONFIG"]
+  # DB2 AppId
+  - id: "DB2 AppId"
+    name: "Enforce DB2 Connection URL contains ApplicationId"
+    appliesTo: ["CODE", "CONFIG"]
     enabled: true
     severity: MEDIUM
     successMessage: "✓ DB2 Connection URL ApplicationId is present\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
@@ -640,24 +581,23 @@ rules:
           preconditions:
             - type: "GENERIC_TOKEN_SEARCH_REQUIRED"
               params:
-                filePatterns: ["**/*.properties", "**/*.yaml", "**/*.xml"]
+                filePatterns: ["**/*.properties"]
                 tokens: ["jdbc:db2"]
                 wholeWord: false
           onSuccess:
             - type: "GENERIC_TOKEN_SEARCH_FORBIDDEN"
               params:
-                filePatterns: ["**/*.properties", "**/*.yaml", "**/*.xml"]
+                filePatterns: ["**/*.properties"]
                 # Regex: Match jdbc:db2 line that DOES NOT contain 'ApplicationId=' (Case Insensitive)
                 tokens: ["jdbc:db2(?!.*(?i)ApplicationId=).*"]
                 matchMode: REGEX
                 isRegex: true
                 failureMessage: "Found DB2 Connection URL missing 'ApplicationId'"
 
-  # RULE-009: Legacy DB2 VIPs
-  - id: "RULE-020"
+  # Legacy DB2 VIPs
+  - id: "Legacy DB2 VIPs"
     name: "Forbid Legacy DB2 VIPs"
-    description: "Detects usage of deprecated DB2 connection hostnames."
-    appliesTo: ["CONFIG"]
+    appliesTo: ["CODE", "CONFIG"]
     enabled: true
     severity: HIGH
     successMessage: "✓ No legacy DB2 VIPs found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
@@ -669,11 +609,11 @@ rules:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
         filePatterns: ["**/*.properties"]
-        tokens: ["db2contppvip.Raks-tst.com:50000", "db2contstvip.Raks-tst.com:50000", "wil-db2contstvip.bbtnet.com:50000"]
+        tokens: ["db2contppvip.truist-tst.com:50000", "db2contstvip.truist-tst.com:50000", "wil-db2contstvip.bbtnet.com:50000"]
 
-  # RULE-022: MQ Cipher Suite (Conditional)
-  - id: "RULE-021"
-    name: "Validate MQ Cipher Suite"
+  # MQ Cipher Suite Validation in Code
+  - id: "MQ Cipher Suite Validation in Code"
+    name: "Validate MQ Cipher Suite in Code"
     appliesTo: ["CODE"]
     enabled: true
     severity: HIGH
@@ -702,14 +642,37 @@ rules:
             matchMode: REGEX
             isRegex: true
 
+  # MQ Cipher Suite Validation in Config
+  - id: "MQ Cipher Suite Validation in Config"
+    name: "Validate MQ Cipher Suite in Config"
+    description: "Ensures ibm.mq.cipherSuite uses the secure value IF it is defined."
+    appliesTo: ["CONFIG"]
+    enabled: true
+    severity: HIGH
+    successMessage: "✓ MQ Cipher Suite is correct (or not defined)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    errorMessage: "✗ MQ Cipher Suite is incorrect. Must be TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    checks:
+    # CONFIGURATION NOTE:
+    # This rule runs on CONFIG projects where we cannot check for <ibm-mq:config> existence.
+    # It strictly validates the property value IF the key exists.
+    # Uses GENERIC_TOKEN_SEARCH_FORBIDDEN with Negative Lookahead Regex.
+    # - Matches if: 'ibm.mq.cipherSuite=' found AND value is NOT the required string.
+    # - Passes if: Key not found OR Key found with correct value.
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
+      params:
+        filePatterns: ["**/*.properties"]
+        tokens: ["ibm\\.mq\\.cipherSuite\\s*=(?!\\s*TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384).*"]
+        matchMode: REGEX
+        isRegex: true
+
   # ---------------------------------------------------------------------------
   # POLICY & ENVIRONMENT VALIDATION (Config Files)
   # ---------------------------------------------------------------------------
 
-  # RULE-006: Header Injection
-  - id: "RULE-022"
+  # Header Injection Policy Validation in Config
+  - id: "Header Injection Policy Validation in Config"
     name: "Header Injection Policy (WARN mode logging)"
-    appliesTo: ["CONFIG"]
+    appliesTo: ["CONFIG"]  # Only applies to CONFIG projects
     enabled: true
     severity: HIGH
     successMessage: "✓ Header Injection policy configured correctly (WARN mode logging)\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
@@ -728,15 +691,15 @@ rules:
         - name: headerinjection.policy.inboundheadermap.x-tfc-response-in
           values: ['WARN']
 
-  # RULE-008: Legacy Auth
-  - id: "RULE-023"
+  # BANK-008: Legacy Auth
+  - id: "BANK-008"
     name: "Forbid Legacy Auth Policies"
     description: "Detects old AAA or Basic Auth policies."
     appliesTo: ["CONFIG"]
     enabled: true
     severity: HIGH
     successMessage: "✓ No legacy Auth policies found\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Legacy Auth policy detected (Raks-AAA or RaksBasicAuthnPolicy). Upgrade to CompositeAuth\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
+    errorMessage: "✗ Legacy Auth policy detected (Truist-AAA or TruistBasicAuthnPolicy). Upgrade to CompositeAuth\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
     checks:
     # CONFIGURATION NOTE:
     # Uses simple token search to find deprecated policy names in XML/Policy files.
@@ -744,12 +707,12 @@ rules:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
         filePatterns: ["**/Policies/**/*.policy"]
-        tokens: ["Raks-AAA-SOAP", "Raks-AAA-HTTP", "RaksBasicAuthnPolicy"]
+        tokens: ["Truist-AAA-SOAP", "Truist-AAA-HTTP", "TruistBasicAuthnPolicy"]
 
-  # RULE-109: Policy Versions
-  - id: "RULE-024"
+  # BANK-109: Policy Versions
+  - id: "BANK-109"
     name: "Enforce Policy Versions"
-    description: "Validates all Raks policy versions."
+    description: "Validates all Truist policy versions."
     appliesTo: ["CONFIG"]
     enabled: true
     severity: HIGH
@@ -763,9 +726,9 @@ rules:
         filePatterns: ["**/Policies/**/*.policy"]
         environments: ['ALL']
         properties:
-        - name: Raks.compositeauthn.policy.version
+        - name: truist.compositeauthn.policy.version
           values: ['3.0.0']
-        - name: Raks.authz.policy.version
+        - name: truist.authz.policy.version
           values: ['3.0.0']
         - name: noname.policy.version
           values: ['5.1.0']
@@ -775,551 +738,7 @@ rules:
           values: ['1.3.2']
         - name: headerremoval.policy.version
           values: ['1.1.2']
-        - name: Raks.wssencdec.policy.version
+        - name: truist.wssencdec.policy.version
           values: ['3.0.0']
-        - name: Raks.jsonencdec.policy.version
+        - name: truist.jsonencdec.policy.version
           values: ['3.0.0']
-
-  # ---------------------------------------------------------------------------
-  # CONFIG RULES: MANDATORY_SUBSTRING_CHECK
-  # ---------------------------------------------------------------------------
-
-  - id: "RULE-025"
-    name: Mandatory substring check for .properties files
-    description: Scans .properties files for required tokens (exact substring match)
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: MANDATORY_SUBSTRING_CHECK
-      params:
-        fileExtensions:
-        - .properties
-        caseSensitive: true
-        environments:
-        - ALL
-        tokens:
-        - apiId
-
-  - id: "RULE-026"
-    name: Mandatory substring check for .policy files
-    description: Scans .policy files for required tokens (exact substring match)
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: MANDATORY_SUBSTRING_CHECK
-      params:
-        fileExtensions:
-        - .policy
-        caseSensitive: true
-        environments:
-        - ALL
-        tokens:
-        - http.protocols=HTTPS
-        - http.private.port=8081
-
-  - id: "RULE-027"
-    name: Forbidden substring check for .properties files
-    description: Fails if forbidden tokens are found in .properties files
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        fileExtensions:
-        - .properties
-        caseSensitive: true
-        environments:
-        - ALL
-        tokens:
-        - hardcoded.password
-        - TODO
-        - fixmelater
-
-  - id: "RULE-028"
-    name: Forbidden substring check for .policy files
-    description: Fails if forbidden tokens are found in .policy files
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
-      params:
-        fileExtensions:
-        - .policy
-        caseSensitive: true
-        environments:
-        - ALL
-        tokens:
-        - deprecated.policy
-        - old.version
-
-  # ---------------------------------------------------------------------------
-  # CONFIG RULES: MANDATORY_PROPERTY_VALUE_CHECK
-  # ---------------------------------------------------------------------------
-
-  - id: "RULE-029"
-    name: Mandatory name-value check for .properties files
-    description: Ensures required properties exist with correct values in .properties files
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: MANDATORY_PROPERTY_VALUE_CHECK
-      params:
-        fileExtensions:
-        - .properties
-        delimiter: =
-        caseSensitiveNames: true
-        caseSensitiveValues: true
-        environments:
-        - ALL
-        properties:
-        - name: LogJsonFormat
-          values:
-          - 'true'
-          - 'false'
-        - name: anotherpropertycheck
-          values:
-          - somevalue
-
-  - id: "RULE-030"
-    name: Mandatory name-value check for .policy files
-    description: Ensures required policy properties exist with correct values
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: MANDATORY_PROPERTY_VALUE_CHECK
-      params:
-        fileExtensions:
-        - .policy
-        delimiter: =
-        caseSensitiveNames: true
-        caseSensitiveValues: true
-        environments:
-        - ALL
-        properties:
-        - name: headerinjection.policy.applied
-          values:
-          - 'true'
-        - name: headerinjection.policy.version
-          values:
-          - 1.3.2
-          - 1.3.3
-        - name: ratelimit.policy.applied
-          values:
-          - 'true'
-        - name: ratelimit.policy.version
-          values:
-          - 1.4.2
-        - name: raks.compositeauthn.policy.applied
-          values:
-          - 'true'
-        - name: raks.compositeauthn.policy.version
-          values:
-          - 1.4.2
-          - 1.4.3
-        - name: raks.authz.policy.applied
-          values:
-          - 'true'
-        - name: raks.authz.policy.version
-          values:
-          - 1.2.2
-          - 1.2.3
-        - name: assetType
-          values:
-          - rest
-          - soap
-          - batch
-
-  # ---------------------------------------------------------------------------
-  # CONFIG RULES: OPTIONAL_PROPERTY_VALUE_CHECK
-  # ---------------------------------------------------------------------------
-
-  - id: "RULE-031"
-    name: Optional name-value check for .properties files
-    description: If property exists in .properties files, validates its value
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: OPTIONAL_PROPERTY_VALUE_CHECK
-      params:
-        fileExtensions:
-        - .properties
-        delimiter: =
-        caseSensitiveNames: true
-        caseSensitiveValues: false
-        environments:
-        - ALL
-        properties:
-        - name: platform.config.analytics.enabled
-          values:
-          - 'true'
-          - 'false'
-        - name: requestPathEncryption
-          values:
-          - Y
-          - N
-
-  - id: "RULE-032"
-    name: Optional name-value check for .policy files
-    description: If property exists in .policy files, validates its value
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: OPTIONAL_PROPERTY_VALUE_CHECK
-      params:
-        fileExtensions:
-        - .policy
-        delimiter: =
-        caseSensitiveNames: true
-        caseSensitiveValues: true
-        environments:
-        - ALL
-        properties:
-        - name: mTLS-AuthZ.policy.version
-          values:
-          - 3.0.0
-          - 3.0.1
-        - name: wssencdec.policy.version
-          values:
-          - 3.0.0
-          - 3.0.1
-
-  # ---------------------------------------------------------------------------
-  # CONFIG RULES: GENERIC_TOKEN_SEARCH
-  # ---------------------------------------------------------------------------
-
-  - id: "RULE-033"
-    name: Optional regex pattern (ip addresses) check in .properties files
-    description: Fails if forbidden regex patterns are found in .properties files
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH
-      params:
-        filePatterns:
-        - '**/Properties/**/*.properties'
-        environments:
-        - ALL
-        searchMode: FORBIDDEN
-        matchMode: REGEX
-        tokens:
-        - ^(?![\s]*[#!]).*\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b
-        - ^(?![\s]*[#!]).*\blocalhost\b
-        - ^(?![\s]*[#!]).*\b127\.0\.0\.1\b
-
-  - id: "RULE-034"
-    name: Optional regex pattern (ip addresses) check in .policy files
-    description: Fails if forbidden regex patterns are found in .policy files
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    checks:
-    - type: GENERIC_TOKEN_SEARCH
-      params:
-        filePatterns:
-        - '**/Policies/*.policy'
-        - '**/Policies/**/*.policy'
-        environments:
-        - ALL
-        searchMode: FORBIDDEN
-        matchMode: REGEX
-        tokens:
-        - ^(?![\s]*[#!]).*\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b
-        - ^(?![\s]*[#!]).*\blocalhost\b
-        - ^(?![\s]*[#!]).*\b127\.0\.0\.1\b
-
-
-
-  - id: "RULE-035"
-    name: 'Conditional: Batch API asset type'
-    description: If API name contains 'batch', the property asset.type must be 'batch'.
-    appliesTo: ["CONFIG"]
-    enabled: true
-    severity: MEDIUM
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Ensures large volume APIs are tagged correctly for infrastructure scaling.
-    rationale: Automated provisioning depends on correct asset type metadata.
-    exampleGood: 'Project: user-batch-api, asset.type=batch'
-    exampleBad: 'Project: user-batch-api, asset.type=rest'
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: PROJECT_CONTEXT
-          params:
-            nameContains: batch
-            ignoreCase: true
-        onSuccess:
-        - type: MANDATORY_PROPERTY_VALUE_CHECK
-          params:
-            fileExtensions:
-            - .properties
-            environments:
-            - ALL
-            properties:
-            - name: asset.type
-              values:
-              - batch
-  - id: "RULE-036"
-    name: 'Conditional: MQ and DB Common Timeout'
-    description: Projects using both MQ and DB must define a 'commontimeout' property.
-    appliesTo: ["CODE", "CONFIG"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Cross-system timeout synchronization.
-    rationale: Prevents partial transaction failures where one system times out much later than the other.
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        logic: AND
-        preconditions:
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='config' and contains(namespace-uri(), 'mq')]
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='config' and contains(namespace-uri(), 'db')]
-        onSuccess:
-        - type: MANDATORY_PROPERTY_VALUE_CHECK
-          params:
-            fileExtensions:
-            - .properties
-            environments:
-            - ALL
-            properties:
-            - name: commontimeout
-              values:
-              - .+
-  - id: "RULE-037"
-    name: 'Best Practice: HTTP Config Externalization'
-    description: Ensures HTTP Request configurations use externalized properties for timeouts.
-    appliesTo: ["CODE"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Prevents environment-specific hardcoding.
-    rationale: Hardcoded timeouts lead to different behaviors across Dev/UAT/Prod without proper control.
-    exampleGood: <http:request-config responseTimeout='${http.timeout}' ...>
-    exampleBad: <http:request-config responseTimeout='5000' ...>
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='request-config' and contains(namespace-uri(), 'http')]
-        onSuccess:
-        - type: XML_ATTRIBUTE_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            elementName: http:request-config
-            attributeName: responseTimeout
-            expectedValue: ^\$\{.*\}$
-            matchMode: REGEX
-  - id: "RULE-038"
-    name: 'Resilience: Salesforce Reconnection'
-    description: If Salesforce connector is used, a reconnection strategy must be defined.
-    appliesTo: ["CODE"]
-    enabled: true
-    severity: MEDIUM
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Handling temporary SaaS connectivity issues.
-    rationale: Standard reconnection prevents Mule from locking up if Salesforce is briefly unavailable.
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='sfdc-config']
-        onSuccess:
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='sfdc-config']/*[local-name()='reconnection']
-              failureMessage: Mandatory <reconnection> element missing for Salesforce config.
-  - id: "RULE-039"
-    name: 'Arch: JMS Dependency Alignment'
-    description: If JMS connector is in POM, it must be used/configured in code.
-    appliesTo: ["CODE"]
-    enabled: true
-    severity: LOW
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Resource optimization and library cleanliness.
-    rationale: Unused dependencies bloat the JAR and increase security surface area.
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: POM_VALIDATION_REQUIRED
-          params:
-            validationType: DEPENDENCIES
-            dependencies:
-            - artifactId: mule-jms-connector
-        onSuccess:
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='config' and contains(namespace-uri(), 'jms')]
-  - id: "RULE-040"
-    name: 'Governance: Prod Secure Config'
-    description: If environment is PROD, the secure-prod file must exist.
-    appliesTo: ["CODE", "CONFIG"]
-    enabled: true
-    severity: CRITICAL
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Environment-specific security enforcement.
-    rationale: Ensures Production credentials are never mixed with lower environments.
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: MANDATORY_PROPERTY_VALUE_CHECK
-          params:
-            fileExtensions:
-            - .properties
-            environments:
-            - ALL
-            properties:
-            - name: env
-              values:
-              - PROD
-        onSuccess:
-        - type: FILE_EXISTS
-          params:
-            filePatterns:
-            - src/main/resources/secure-prod.properties
-  - id: "RULE-041"
-    name: 'Standard: APIKit Error Handling'
-    description: If APIKit is detected, a Global Error Handler must be present.
-    appliesTo: ["CODE"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Consistent error responses for all experience APIs.
-    rationale: Standardized error handling is critical for API consumer experience.
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='config' and contains(namespace-uri(), 'apikit')]
-        onSuccess:
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='error-handler']
-              failureMessage: APIKit detected but no <error-handler> found.
-  - id: "RULE-042"
-    name: 'Conditional: Experience API Autodiscovery'
-    description: Experience APIs (-exp-) must have Autodiscovery configured.
-    appliesTo: ["CODE"]
-    enabled: true
-    severity: HIGH
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Compliance with API Governance.
-    rationale: Experience APIs are public-facing and MUST be managed by the gateway.
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: PROJECT_CONTEXT
-          params:
-            nameContains: -exp-
-            ignoreCase: true
-        onSuccess:
-        - type: XML_XPATH_EXISTS
-          params:
-            filePatterns:
-            - src/main/mule/*.xml
-            xpathExpressions:
-            - xpath: //*[local-name()='autodiscovery']
-              failureMessage: Mandatory 'api-gateway:autodiscovery' element is missing
-  - id: "RULE-043"
-    name: 'Conditional: Secure Property Usage'
-    description: If secure properties file exists, 'secure::' syntax must be used in Mule XML.
-    appliesTo: ["CODE", "CONFIG"]
-    enabled: true
-    severity: CRITICAL
-    successMessage: "✓ Rule passed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    errorMessage: "✗ Rule failed.\nFiles Checked: {CHECKED_FILES}\nItems Found: {FOUND_ITEMS}\nItems Matched: {MATCHING_FILES}\nDetails: {DEFAULT_MESSAGE}\n{PROPERTY_RESOLVED}"
-    useCase: Encryption enforcement.
-    rationale: Prevents plain-text property resolution when vault-encrypted files are present.
-    exampleGood: value='${secure::db.password}'
-    exampleBad: value='${db.password}'
-    checks:
-    - type: CONDITIONAL_CHECK
-      params:
-        preconditions:
-        - type: FILE_EXISTS
-          params:
-            filePatterns:
-            - src/main/resources/secure-*.properties
-        onSuccess:
-        - type: GENERIC_TOKEN_SEARCH_REQUIRED
-          params:
-            tokens:
-            - 'secure::'
-            filePatterns:
-            - src/main/mule/*.xml
-            matchMode: SUBSTRING

@@ -1531,7 +1531,7 @@ Advanced token search with <strong>environment filtering</strong> and <strong>re
 <br>
 <h3>Optional Parameters</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> N/A </td><td> Filter files by environment keys (e.g., <code class='inline-token'>PROD</code>, <code class='inline-token'>QA</code>) </td></tr><tr><td> <code class='inline-token'>searchMode</code> </td><td> String </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> Choose <code class='inline-token'>REQUIRED</code> or <code class='inline-token'>FORBIDDEN</code> </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code>, <code class='inline-token'>REGEX</code>, or <code class='inline-token'>ELEMENT_ATTRIBUTE</code> </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>matchMode: REGEX</code>. </td></tr><tr><td> <code class='inline-token'>message</code> </td><td> String </td><td> (Default) </td><td> Custom message to display on failure </td></tr><tr><td> <code class='inline-token'>elementName</code> </td><td> String </td><td> N/A </td><td> For XML element-specific attribute searches </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>environments</code> </td><td> List </td><td> N/A </td><td> Filter files by environment keys (e.g., <code class='inline-token'>PROD</code>, <code class='inline-token'>QA</code>) </td></tr><tr><td> <code class='inline-token'>searchMode</code> </td><td> String </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> Choose <code class='inline-token'>REQUIRED</code> or <code class='inline-token'>FORBIDDEN</code> </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code>, <code class='inline-token'>REGEX</code>, or <code class='inline-token'>ELEMENT_ATTRIBUTE</code>. Setting to <code class='inline-token'>REGEX</code> automatically enables regex matching. </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>matchMode: REGEX</code>. </td></tr><tr><td> <code class='inline-token'>message</code> </td><td> String </td><td> (Default) </td><td> Custom message to display on failure </td></tr><tr><td> <code class='inline-token'>elementName</code> </td><td> String </td><td> N/A </td><td> For XML element-specific attribute searches </td></tr></table>
 <br>
 <h2 id="GENERIC_TOKEN_SEARCH_ConfigurationExamples">Configuration Examples</h2>
 <br>
@@ -1660,7 +1660,7 @@ Validates that <strong>forbidden tokens or patterns do NOT exist</strong> in fil
 <br>
 <h3>Optional Parameters</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code> </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>isRegex: true</code>. </td></tr><tr><td> <strong><code class='inline-token'>ignoreComments</code></strong> </td><td> <strong>Boolean</strong> </td><td> <strong><code class='inline-token'>false</code></strong> </td><td> <strong>If <code class='inline-token'>true</code>, removes comments before searching (strict mode). Recommended for FORBIDDEN rules to avoid false positives.</strong> </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code>. Setting to <code class='inline-token'>REGEX</code> automatically enables regex matching. </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>matchMode: REGEX</code>. </td></tr><tr><td> <strong><code class='inline-token'>ignoreComments</code></strong> </td><td> <strong>Boolean</strong> </td><td> <strong><code class='inline-token'>false</code></strong> </td><td> <strong>If <code class='inline-token'>true</code>, removes comments before searching (strict mode). Recommended for FORBIDDEN rules to avoid false positives.</strong> </td></tr></table>
 <br>
 <h3>🎯 Comment Handling (<code class='inline-token'>ignoreComments</code>)</h3>
 <br>
@@ -1717,10 +1717,10 @@ By default, token searches include commented code, which can cause <strong>false
         ignoreComments: false  # ✅ Check everywhere including comments
 </code></pre>
 <br>
-<br>
 <h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_ConfigurationExamples">Configuration Examples</h2>
 <br>
 <h3>Example 1: Block Deprecated Global Functions</h3>
+<br>
 Prevent the usage of a deprecated transformation function across all scripts.
 <br>
 <pre><code class='language-yaml'>- id: &quot;RULE-DEPRECATED-TRANSFORM&quot;
@@ -1734,6 +1734,7 @@ Prevent the usage of a deprecated transformation function across all scripts.
 </code></pre>
 <br>
 <h3>Example 2: Block Hardcoded Credentials</h3>
+<br>
 Identify potential hardcoded secrets in properties or XML configuration files.
 <br>
 <pre><code class='language-yaml'>- id: &quot;RULE-NO-HARDCODED-SECRETS&quot;
@@ -1758,72 +1759,79 @@ Prevent false positives by ensuring only exact words are matched (e.g., match &q
       params:
         filePatterns: ["**/*.properties"]
         tokens: ["admin"]
-        wholeWord: true  # Matters 'admin' but not 'administrator'
-<pre><code class='language-text'></code></pre>
-<br>
-<h3>Example 3: Detect IP Addresses (Regex)</h3>
+        wholeWord: true  # Matches 'admin' but not 'administrator'
+<pre><code class='language-text'>
+### Example 3: Detect IP Addresses (Regex)
 Block hardcoded IP addresses in source code directory to enforce hostname usage.
-<br>
-<pre><code class='language-yaml'>- id: &quot;RULE-HOSTNAME-ENFORCEMENT&quot;
-  name: &quot;No Hardcoded IP Addresses&quot;
+
+</code></pre>yaml
+<li>id: "RULE-HOSTNAME-ENFORCEMENT"</li>
+  name: "No Hardcoded IP Addresses"
   severity: HIGH
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
-        filePatterns: [&quot;src/**/*.java&quot;, &quot;src/**/*.py&quot;]
-        excludePatterns: [&quot;**/test/**&quot;]
-        tokens: [&quot;\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b&quot;]
+        filePatterns: ["src/<strong>/*.java", "src/</strong>/*.py"]
+        excludePatterns: ["<strong>/test/</strong>"]
+        tokens: ["\\b(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b"]
         matchMode: REGEX
-</code></pre>
-<br>
-<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_ErrorMessages">Error Messages</h2>
-<br>
-<pre><code class='language-text'>AuthService.java: Forbidden token found: password=
+<pre><code class='language-text'>
+&lt;h2 id=&quot;GENERIC_TOKEN_SEARCH_FORBIDDEN_ErrorMessages&quot;&gt;Error Messages&lt;/h2&gt;
+
+</code></pre>text
+AuthService.java: Forbidden token found: password=
 legacy-script.js: Forbidden token found: toBase64Legacy()
 DatabaseConfig.xml: Forbidden IP pattern found: 192.168.1.1
-</code></pre>
-<br>
-<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_BestPractices">Best Practices</h2>
-<br>
-<li><strong>Case Sensitivity</strong>: Set <code class='inline-token'>caseSensitive: false</code> when blocking configuration keys (like <code class='inline-token'>PWD=</code>) to catch variants like <code class='inline-token'>pwd=</code> or <code class='inline-token'>Pwd=</code>.</li>
-<li><strong>Targeted Exclusions</strong>: Use <code class='inline-token'>excludePatterns</code> for third-party libraries or internal test suites where forbidden patterns might be legitimate for testing purposes.</li>
-<li><strong>Whole Word Matching</strong>: Use <code class='inline-token'>wholeWord: true</code> instead of complex Regex <code class='inline-token'>\b</code> patterns for simple exact word matching.</li>
-<li><strong>Regex Guardrails</strong>: When using REGEX, ensure patterns are specific to avoid false positives (e.g., use word boundaries <code class='inline-token'>\\b</code>).</li>
-<br>
-<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_RelatedRuleTypes">Related Rule Types</h2>
-<br>
-<li><strong><a href="#" onclick="showRule(event, 'GENERIC_TOKEN_SEARCH_REQUIRED')">GENERIC_TOKEN_SEARCH_REQUIRED</a></strong> - Opposite: ensures tokens DO exist.</li>
-<li><strong><a href="#" onclick="showRule(event, 'XML_XPATH_NOT_EXISTS')">XML_XPATH_NOT_EXISTS</a></strong> - Precise blocking of XML structures.</li>
-<br>
-<h2 id="GENERIC_TOKEN_SEARCH_FORBIDDEN_SolutionPatternsandTechnologyReference">Solution Patterns and Technology Reference</h2>
-<br>
+<pre><code class='language-text'>
+&lt;h2 id=&quot;GENERIC_TOKEN_SEARCH_FORBIDDEN_BestPractices&quot;&gt;Best Practices&lt;/h2&gt;
+
+- **Case Sensitivity**: Set `caseSensitive: false` when blocking configuration keys (like `PWD=`) to catch variants like `pwd=` or `Pwd=`.
+- **Targeted Exclusions**: Use `excludePatterns` for third-party libraries or internal test suites where forbidden patterns might be legitimate for testing purposes.
+- **Whole Word Matching**: Use `wholeWord: true` instead of complex Regex `\b` patterns for simple exact word matching.
+- **Regex Guardrails**: When using REGEX, ensure patterns are specific to avoid false positives (e.g., use word boundaries `\\b`).
+
+&lt;h2 id=&quot;GENERIC_TOKEN_SEARCH_FORBIDDEN_RelatedRuleTypes&quot;&gt;Related Rule Types&lt;/h2&gt;
+
+- **[GENERIC_TOKEN_SEARCH_REQUIRED](GENERIC_TOKEN_SEARCH_REQUIRED.md)** - Opposite: ensures tokens DO exist.
+- **[XML_XPATH_NOT_EXISTS](XML_XPATH_NOT_EXISTS.md)** - Precise blocking of XML structures.
+
+&lt;h2 id=&quot;GENERIC_TOKEN_SEARCH_FORBIDDEN_SolutionPatternsandTechnologyReference&quot;&gt;Solution Patterns and Technology Reference&lt;/h2&gt;
+
 Standard configurations for blocking anti-patterns.
-<br>
-<table><tr><td> Technology </td><td> Scenario </td><td> Mode </td><td> Target File </td></tr><tr><td> <strong>☕ Java</strong> </td><td> Block <code class='inline-token'>System.out</code> </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>**/*.java</code> </td></tr><tr><td> <strong>🐍 Python</strong> </td><td> Block Debugger </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>**/*.py</code> </td></tr><tr><td> <strong>📦 Node.js</strong> </td><td> Block <code class='inline-token'>eval()</code> </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>**/*.js</code> </td></tr><tr><td> <strong>🐎 MuleSoft</strong> </td><td> Block legacy MEL </td><td> <code class='inline-token'>FORBIDDEN</code> </td><td> <code class='inline-token'>**/*.xml</code> </td></tr></table>
-<br>
-<h3>☕ Java / Spring Boot Patterns</h3>
+
+| Technology | Scenario | Mode | Target File |
+| :--- | :--- | :--- | :--- |
+| **☕ Java** | Block `System.out` | `FORBIDDEN` | `**/*.java` |
+| **🐍 Python** | Block Debugger | `FORBIDDEN` | `**/*.py` |
+| **📦 Node.js** | Block `eval()` | `FORBIDDEN` | `**/*.js` |
+| **🐎 MuleSoft** | Block legacy MEL | `FORBIDDEN` | `**/*.xml` |
+
+### ☕ Java / Spring Boot Patterns
+
 Prevent developers from using standard output streams for logging.
-<br>
-<pre><code class='language-yaml'>- id: &quot;JAVA-LOGGING-STANDARDS&quot;
-  name: &quot;No System.out&quot;
+
+</code></pre>yaml
+<li>id: "JAVA-LOGGING-STANDARDS"</li>
+  name: "No System.out"
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
-        filePatterns: [&quot;**/*.java&quot;]
-        tokens: [&quot;System.out.println&quot;, &quot;System.err.println&quot;]
-</code></pre>
-<br>
-<h3>🐎 MuleSoft Patterns</h3>
+        filePatterns: ["**/*.java"]
+        tokens: ["System.out.println", "System.err.println"]
+<pre><code class='language-text'>
+### 🐎 MuleSoft Patterns
+
 Block legacy Mule Expression Language (MEL) patterns in modern projects.
-<br>
-<pre><code class='language-yaml'>- id: &quot;MULE-MODERNIZATION&quot;
-  name: &quot;No Legacy MEL&quot;
+
+</code></pre>yaml
+<li>id: "MULE-MODERNIZATION"</li>
+  name: "No Legacy MEL"
   checks:
     - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
-        filePatterns: [&quot;**/*.xml&quot;]
-        tokens: [&quot;message.inboundProperties&quot;, &quot;message.outboundProperties&quot;]
-</code></pre>
+        filePatterns: ["**/*.xml"]
+        tokens: ["message.inboundProperties", "message.outboundProperties"]
+```
 </div><div id="GENERIC_TOKEN_SEARCH_REQUIRED" class="rule-content" style="display: none;"><h1>GENERIC_TOKEN_SEARCH_REQUIRED</h1>
 <br>
 <strong>Rule Type:</strong> <code class='inline-token'>CODE</code> - <strong>Applies To:</strong> Any text-based source files
@@ -1847,11 +1855,12 @@ Validates that <strong>required tokens or patterns exist</strong> in files match
 <br>
 <h3>Optional Parameters</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code> </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>matchMode: REGEX</code>. </td></tr><tr><td> <code class='inline-token'>requireAll</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> If <code class='inline-token'>true</code>, ALL tokens must be found. If <code class='inline-token'>false</code>, at least ONE </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code>. Setting to <code class='inline-token'>REGEX</code> automatically enables regex matching. </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>matchMode: REGEX</code>. </td></tr><tr><td> <code class='inline-token'>requireAll</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> If <code class='inline-token'>true</code>, ALL tokens must be found. If <code class='inline-token'>false</code>, at least ONE </td></tr></table>
 <br>
 <h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_ConfigurationExamples">Configuration Examples</h2>
 <br>
 <h3>Example 1: Required Framework Import</h3>
+<br>
 Ensure that all implementation files in a project contain the necessary framework imports for logging.
 <br>
 <pre><code class='language-yaml'>- id: &quot;RULE-JAVA-REQD-LOGGER&quot;
@@ -1865,6 +1874,7 @@ Ensure that all implementation files in a project contain the necessary framewor
 </code></pre>
 <br>
 <h3>Example 2: Mandatory Error Handling Pattern</h3>
+<br>
 Ensure that application configuration files contain mandatory error handling blocks (either "continue" or "propagate" strategies).
 <br>
 <pre><code class='language-yaml'>- id: &quot;RULE-CONFIG-ERROR-POLICY&quot;
@@ -1879,6 +1889,7 @@ Ensure that application configuration files contain mandatory error handling blo
 </code></pre>
 <br>
 <h3>Example 3: Regex Format Validation</h3>
+<br>
 Verify that a version string following semantic versioning exists in the project's build descriptor.
 <br>
 <pre><code class='language-yaml'>- id: &quot;RULE-VERSION-SEMVER&quot;
@@ -1915,6 +1926,7 @@ Standard configurations for enforcing mandatory components.
 <table><tr><td> Technology </td><td> Requirement </td><td> Mode </td><td> Target File </td></tr><tr><td> <strong>☕ Java</strong> </td><td> Security Annotations </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>*Controller.java</code> </td></tr><tr><td> <strong>🐍 Python</strong> </td><td> Shebang Reference </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>*.py</code> </td></tr><tr><td> <strong>📦 Node.js</strong> </td><td> Module Exports </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>*.js</code> </td></tr><tr><td> <strong>🐎 MuleSoft</strong> </td><td> DataWeave Version </td><td> <code class='inline-token'>REQUIRED</code> </td><td> <code class='inline-token'>*.dwl</code> </td></tr></table>
 <br>
 <h3>☕ Java / Spring Boot Patterns</h3>
+<br>
 Ensure controllers have standard security annotations.
 <br>
 <pre><code class='language-yaml'>- id: &quot;JAVA-SECURE-CONTROLLER&quot;
@@ -1928,6 +1940,7 @@ Ensure controllers have standard security annotations.
 </code></pre>
 <br>
 <h3>🐍 Python Patterns</h3>
+<br>
 Ensure scripts specify the required python version via shebang.
 <br>
 <pre><code class='language-yaml'>- id: &quot;PY-MIN-VERSION&quot;
