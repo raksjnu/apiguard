@@ -89,6 +89,7 @@ public class AegisMain implements Callable<Integer> {
         }
 
         List<Rule> allRules = configWrapper.getRules();
+        logger.info("Total rules loaded from config: {}", allRules != null ? allRules.size() : 0);
         Map<String, Object> projectIdConfig = configWrapper.getConfig().getProjectIdentification();
         int maxSearchDepth = (Integer) projectIdConfig.getOrDefault("maxSearchDepth", 5);
 
@@ -277,6 +278,7 @@ public class AegisMain implements Callable<Integer> {
             }
 
             RootWrapper activeConfig = customRulesPath != null ? loadConfig(customRulesPath) : loadConfig(null);
+            logger.info("Total rules loaded from config: {}", activeConfig.getRules() != null ? activeConfig.getRules().size() : 0);
 
             Map<String, Object> projectIdConfig = activeConfig.getConfig().getProjectIdentification();
         Map<String, Object> targetProjectConfig = (Map<String, Object>) projectIdConfig.get("targetProject");
@@ -512,20 +514,19 @@ public class AegisMain implements Callable<Integer> {
                     logger.warn("Failed to read config as UTF-8. Retrying with Windows-1252 to handle special characters. File: {}", configFilePath);
                     content = new String(Files.readAllBytes(Paths.get(configFilePath)), java.nio.charset.Charset.forName("Windows-1252"));
                 }
-                logger.info("Loaded custom config from: {}", configFilePath);
+                logger.info("Loaded custom config from: {}", Paths.get(configFilePath).toAbsolutePath());
                 content = sanitizeYamlContent(content);
                 return yaml.loadAs(content, RootWrapper.class);
             } catch (YAMLException e) {
                 logger.error("");
                 logger.error("****************************************************************");
-                logger.error("FATAL ERROR: Invalid YAML Configuration in: {}", configFilePath);
+                logger.error("FATAL ERROR: Invalid YAML Configuration in: {}", Paths.get(configFilePath).toAbsolutePath());
                 logger.error("Reason: {}", e.getMessage());
                 logger.error("****************************************************************");
-                throw new AegisConfigurationException("Invalid YAML Configuration in " + configFilePath + ": " + e.getMessage());
+                throw new AegisConfigurationException("Invalid YAML Configuration in " + Paths.get(configFilePath).toAbsolutePath() + ": " + e.getMessage());
             } catch (IOException e) {
-                logger.error("Error loading custom config file: {}", configFilePath);
-                logger.warn("Falling back to embedded rules.yaml");
-                input = AegisMain.class.getClassLoader().getResourceAsStream("rules/rules.yaml");
+                logger.error("FATAL ERROR: Could not read custom config file: {}", Paths.get(configFilePath).toAbsolutePath());
+                throw new AegisConfigurationException("Custom config file not found or unreadable: " + Paths.get(configFilePath).toAbsolutePath());
             }
         } else {
             input = AegisMain.class.getClassLoader().getResourceAsStream("rules/rules.yaml");
@@ -545,17 +546,46 @@ public class AegisMain implements Callable<Integer> {
 
     private static String sanitizeYamlContent(String content) {
         if (content == null) return null;
+        
+        // Log the first 500 characters to debug cloudhub file mismatches
+        String preview = content.length() > 500 ? content.substring(0, 500) : content;
+        logger.info("--- YAML CONTENT PREVIEW (First 500 chars) ---");
+        logger.info(preview);
+        logger.info("----------------------------------------------");
+
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < content.length(); i++) {
             char ch = content.charAt(i);
+            
+            // Normalize non-breaking space (0xA0) to regular space
+            if (ch == 0xA0) {
+                sb.append(' ');
+                continue;
+            }
+
+            // Strip Byte Order Mark (BOM) 0xFEFF
+            if (ch == '\uFEFF') {
+                 continue;
+            }
+
+            // Strip Next Line (NEL) 0x85 - Treat as invalid/control to force standard newlines
+            if (ch == 0x85) {
+                // Optionally replace with \n if it was acting as newline, but usually better to let existing \n handle it.
+                // If the file uses purely NEL newlines, stripping it breaks lines.
+                // But normally we have CRLF or LF. Let's assume standard files. 
+                // Replacing with \n is safer if it IS a newline.
+                sb.append('\n'); 
+                continue; 
+            }
+
             // Allow:
             // 0x09 (Tab), 0x0A (LF), 0x0D (CR)
             // 0x20-0x7E (Printable ASCII)
-            // 0x85 (Next Line)
-            // 0xA0-0xD7FF (Unicode printable, mostly)
+            // 0xA0-0xD7FF (Unicode printable) - handled above for A0
             // 0xE000-0xFFFD
+            
             boolean isControl = (ch <= 0x1F && ch != 0x09 && ch != 0x0A && ch != 0x0D) || 
-                                (ch >= 0x7F && ch <= 0x9F && ch != 0x85); 
+                                (ch >= 0x7F && ch <= 0x9F); // 0x85 checked specifically above
             
             if (!isControl) {
                 sb.append(ch);
