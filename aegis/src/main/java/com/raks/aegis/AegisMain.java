@@ -12,6 +12,9 @@ import org.yaml.snakeyaml.TypeDescription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.InputStream;
+import java.io.Reader;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -480,8 +483,9 @@ public class AegisMain implements Callable<Integer> {
         InputStream input;
         if (configFilePath != null && !configFilePath.isEmpty()) {
             try {
-                input = Files.newInputStream(Paths.get(configFilePath));
+                Reader reader = Files.newBufferedReader(Paths.get(configFilePath), StandardCharsets.UTF_8);
                 logger.info("Loaded custom config from: {}", configFilePath);
+                return yaml.loadAs(reader, RootWrapper.class);
             } catch (IOException e) {
                 logger.error("Error loading custom config file: {}", configFilePath);
                 logger.warn("Falling back to embedded rules.yaml");
