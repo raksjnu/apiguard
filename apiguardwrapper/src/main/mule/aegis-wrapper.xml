@@ -471,7 +471,7 @@ output application/java
     archive: payload.parts.archive.content default null,
     sessionId: payload.parts.sessionId.content default null,
     format: payload.parts.format.content default null,
-    rulesFile: payload.parts.customRules.content default null,
+    rulesFile: payload.parts.customRules.content as Binary default null,
     attachProject: payload.parts.attachProject.content default null,
     gitBranch: payload.parts.gitBranch.content default null,
     gitToken: payload.parts.gitToken.content default null,
