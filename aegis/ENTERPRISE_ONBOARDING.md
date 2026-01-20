@@ -58,7 +58,7 @@ graph TB
 
     subgraph "Core Engine"
         Classifier[Project Type Classifier]
-        Loader[Rule Loader (YAML)]
+        Loader["Rule Loader (YAML)"]
         Validator[Rule Validator Engine]
     end
 
