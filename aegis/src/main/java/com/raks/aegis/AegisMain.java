@@ -13,7 +13,7 @@ import org.yaml.snakeyaml.error.YAMLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.InputStream;
-import java.io.Reader;
+
 import java.nio.charset.StandardCharsets;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -501,9 +501,19 @@ public class AegisMain implements Callable<Integer> {
         InputStream input = null;
         if (configFilePath != null && !configFilePath.isEmpty()) {
             try {
-                Reader reader = Files.newBufferedReader(Paths.get(configFilePath), StandardCharsets.UTF_8);
+                String content;
+                try {
+                    byte[] bytes = Files.readAllBytes(Paths.get(configFilePath));
+                    java.nio.charset.CharsetDecoder decoder = StandardCharsets.UTF_8.newDecoder();
+                    decoder.onMalformedInput(java.nio.charset.CodingErrorAction.REPORT);
+                    decoder.onUnmappableCharacter(java.nio.charset.CodingErrorAction.REPORT);
+                    content = decoder.decode(java.nio.ByteBuffer.wrap(bytes)).toString();
+                } catch (java.nio.charset.CharacterCodingException e) {
+                    logger.warn("Failed to read config as UTF-8 (MalformedInputException). Retrying with ISO-8859-1. File: {}", configFilePath);
+                    content = new String(Files.readAllBytes(Paths.get(configFilePath)), StandardCharsets.ISO_8859_1);
+                }
                 logger.info("Loaded custom config from: {}", configFilePath);
-                return yaml.loadAs(reader, RootWrapper.class);
+                return yaml.loadAs(content, RootWrapper.class);
             } catch (YAMLException e) {
                 logger.error("");
                 logger.error("****************************************************************");
