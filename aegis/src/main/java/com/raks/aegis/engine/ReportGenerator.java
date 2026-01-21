@@ -22,10 +22,8 @@ public class ReportGenerator {
             "QUICK_REFERENCE.md",
             "GLOBAL_CONFIGURATION.md",
             "PROJECT_IDENTIFICATION.md",
-            "CONFIG_GENERIC_PROPERTY_FILE_CHECK.md",
-            "CONFIG_MANDATORY_PROPERTY_VALUE_CHECK.md",
-            "CONFIG_MANDATORY_SUBSTRING_CHECK.md",
-            "CONFIG_OPTIONAL_PROPERTY_VALUE_CHECK.md",
+            "CROSS_PROJECT_RESOLUTION.md",
+            "CODE_FILE_EXISTS.md",
             "CODE_GENERIC_TOKEN_SEARCH.md",
             "CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN.md",
             "CODE_GENERIC_TOKEN_SEARCH_REQUIRED.md",
@@ -33,6 +31,7 @@ public class ReportGenerator {
             "CODE_JSON_VALIDATION_REQUIRED.md",
             "CODE_POM_VALIDATION_FORBIDDEN.md",
             "CODE_POM_VALIDATION_REQUIRED.md",
+            "CODE_PROJECT_CONTEXT.md",
             "CODE_XML_ATTRIBUTE_EXISTS.md",
             "CODE_XML_ATTRIBUTE_NOT_EXISTS.md",
             "CODE_XML_ELEMENT_CONTENT_FORBIDDEN.md",
@@ -40,8 +39,10 @@ public class ReportGenerator {
             "CODE_XML_XPATH_EXISTS.md",
             "CODE_XML_XPATH_NOT_EXISTS.md",
             "CONDITIONAL_CHECK.md",
-            "CODE_PROJECT_CONTEXT.md",
-            "CODE_FILE_EXISTS.md"
+            "CONFIG_GENERIC_PROPERTY_FILE_CHECK.md",
+            "CONFIG_MANDATORY_PROPERTY_VALUE_CHECK.md",
+            "CONFIG_MANDATORY_SUBSTRING_CHECK.md",
+            "CONFIG_OPTIONAL_PROPERTY_VALUE_CHECK.md"
     };
     public static void generateIndividualReports(ValidationReport report, Path outputDir) {
         try {
