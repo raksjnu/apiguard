@@ -198,6 +198,61 @@
             </div>
         </div>
 
+        <h2>⚙️ Prerequisites & Environment Setup</h2>
+        <p>Before using Aegis, ensure your environment meets the following requirements:</p>
+
+        <h3>System Requirements</h3>
+        <div class="feature-grid">
+            <div class="feature-card">
+                <h4>Minimum Requirements</h4>
+                <ul style="text-align: left; font-size: 14px;">
+                    <li><strong>OS:</strong> Windows 10+, macOS 10.14+, Linux (Ubuntu 18.04+)</li>
+                    <li><strong>Java:</strong> JDK 17 or higher</li>
+                    <li><strong>Memory:</strong> 512 MB RAM (1 GB+ for large repos)</li>
+                    <li><strong>Disk:</strong> 100 MB + space for reports</li>
+                </ul>
+            </div>
+            <div class="feature-card">
+                <h4>Recommended Configuration</h4>
+                <ul style="text-align: left; font-size: 14px;">
+                    <li><strong>Java:</strong> JDK 17 (LTS)</li>
+                    <li><strong>Memory:</strong> 2 GB RAM</li>
+                    <li><strong>Disk:</strong> 500 MB free space</li>
+                    <li><strong>Network:</strong> Internet (for Git scanning)</li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>Java Installation</h3>
+        <div class="highlight-box">
+            <p><strong>Check Java Version:</strong></p>
+            <code style="display: block; background: #2d2d2d; color: #f8f8f2; padding: 10px; border-radius: 4px; margin: 10px 0;">java -version</code>
+            
+            <p style="margin-top: 15px;"><strong>Install Java (if needed):</strong></p>
+            <ul style="text-align: left;">
+                <li><strong>Windows:</strong> Download JDK 17 from <a href="https://www.oracle.com/java/technologies/downloads/" target="_blank">Oracle</a> or <a href="https://adoptium.net/" target="_blank">Adoptium</a></li>
+                <li><strong>macOS:</strong> <code>brew install openjdk@17</code></li>
+                <li><strong>Linux:</strong> <code>sudo apt install openjdk-17-jdk</code> (Ubuntu/Debian)</li>
+            </ul>
+        </div>
+
+        <h3>Git Configuration (Optional)</h3>
+        <p>For Git repository scanning, configure authentication tokens in the <strong>Settings</strong> page:</p>
+        <ul>
+            <li><strong>GitLab:</strong> User Settings → Access Tokens → Create token with <code>read_repository</code> scope</li>
+            <li><strong>GitHub:</strong> Settings → Developer settings → Personal access tokens → Generate with <code>repo</code> scope</li>
+        </ul>
+
+        <h3>Quick Start Verification</h3>
+        <div class="highlight-box" style="background: #e6fffa; border-left-color: #00bfa5;">
+            <p><strong>✅ Verify Installation:</strong></p>
+            <ol style="text-align: left;">
+                <li>Check Java: <code>java -version</code></li>
+                <li>Test Aegis: <code>java -jar aegis.jar --help</code></li>
+                <li>Start GUI: <code>java -jar aegis.jar --gui</code> then open <code>http://localhost:8080</code></li>
+            </ol>
+        </div>
+
         <h2>📚 Supported Validation Checks</h2>
         <p>Aegis supports a wide range of validation types to ensure the integrity and quality of your applications.
             Possible checks include:</p>
