@@ -15,22 +15,29 @@ public class ValidationEngine {
     private final ProjectTypeClassifier projectTypeClassifier;
     private final List<String> ignoredFileNames;
     private final List<String> ignoredFilePrefixes;
+    private Path linkedConfigPath;
 
     public ValidationEngine(List<Rule> rules, Path projectRoot) {
-        this(rules, projectRoot, null, null, null);
+        this(rules, projectRoot, null, null, null, null);
     }
 
     public ValidationEngine(List<Rule> rules, Path projectRoot, ProjectTypeClassifier projectTypeClassifier) {
-        this(rules, projectRoot, projectTypeClassifier, null, null);
+        this(rules, projectRoot, projectTypeClassifier, null, null, null);
     }
 
     public ValidationEngine(List<Rule> rules, Path projectRoot, ProjectTypeClassifier projectTypeClassifier, 
                             List<String> ignoredFileNames, List<String> ignoredFilePrefixes) {
+        this(rules, projectRoot, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixes, null);
+    }
+
+    public ValidationEngine(List<Rule> rules, Path projectRoot, ProjectTypeClassifier projectTypeClassifier, 
+                            List<String> ignoredFileNames, List<String> ignoredFilePrefixes, Path linkedConfigPath) {
         this.rules = rules;
         this.projectRoot = projectRoot;
         this.projectTypeClassifier = projectTypeClassifier;
         this.ignoredFileNames = ignoredFileNames != null ? ignoredFileNames : new ArrayList<>();
         this.ignoredFilePrefixes = ignoredFilePrefixes != null ? ignoredFilePrefixes : new ArrayList<>();
+        this.linkedConfigPath = linkedConfigPath;
     }
 
     public ValidationReport validate() {
@@ -73,6 +80,7 @@ public class ValidationEngine {
                     check.setRule(rule);  
                     AbstractCheck validator = CheckFactory.create(check);
                     validator.setIgnoredFiles(ignoredFileNames, ignoredFilePrefixes); // Pass global ignore config
+                    validator.setLinkedConfigPath(this.linkedConfigPath); // Pass linked config context
                     CheckResult result = validator.execute(projectRoot, check);
                     results.add(result);
                     if (!result.passed)

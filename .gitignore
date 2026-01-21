@@ -42,3 +42,10 @@ APIGUARD_COMMON_INFO.md
 # User Specific Ignores (Sibling/Dev Environment Safety)
 AnypointStudio*/
 mule-enterprise-standalone-*/
+
+# Aegis Sync/Logs
+aegis/ICCA
+aegis/aegis_run_log.txt
+aegis_run_log.txt
+run_log*.txt
+output.log
