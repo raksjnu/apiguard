@@ -26,9 +26,13 @@ Validates that **required or forbidden substrings exist** in environment-specifi
 ### Optional Parameters
 
 | Parameter | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
+| :--- | :--- | :--- |
 | `searchMode` | String | `REQUIRED` | Choose `REQUIRED` or `FORBIDDEN` |
 | `caseSensitive` | Boolean | `true` | Whether substring matching is case-sensitive |
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
+| `message` | String | (Default) | Custom message to display on failure |
 | `message` | String | (Default) | Custom message to display on failure |
 
 ## Configuration Examples

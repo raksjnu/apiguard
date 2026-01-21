@@ -69,7 +69,13 @@ Supports validation of:
 | `plugins` | List<Map> | Yes | List of required plugins |
 | `plugins[].groupId` | String | Yes | Plugin groupId |
 | `plugins[].artifactId` | String | Yes | Plugin artifactId |
-| `plugins[].version` | String | **No** | **Optional**: If specified, validates exact version |
+#### GLOBAL Parameters (Optional)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 
 ---
 

@@ -38,7 +38,10 @@ Validates that **required property name-value pairs exist** in environment-speci
 | :--- | :--- | :--- | :--- |
 | `delimiter` | String | `=` | The character separating key and value |
 | `caseSensitiveNames` | Boolean | `true` | Global case sensitivity for property names |
-| `caseSensitiveValues` | Boolean | `true` | Global case sensitivity for property values |
+| `caseSensitive` | Boolean | `true` | Whether value comparison is case-sensitive |
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution before validation |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve values from the linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in the linked CONFIG project |
 
 ## Configuration Examples
 

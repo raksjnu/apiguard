@@ -33,9 +33,11 @@ Validates that XML elements contain **required content strings or tokens**. This
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
 | `caseSensitive` | Boolean | `true` | Case sensitivity for content matching |
 | `requireAll` | Boolean | `true` | If `true`, ALL tokens must be found. If `false`, at least ONE |
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 
 ## Configuration Examples
 

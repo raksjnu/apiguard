@@ -29,6 +29,9 @@ Validates that **required JSON elements exist** in JSON files. This rule is esse
 | **`exactVersions`** | Map | Checks if a field's value exactly matches a version (Supports Arrays). Logic: `Actual == Expected` (SemVer). If array: Pass if *any* element == Expected. |
 | `requiredFields` | Map | Checks if a field matches an expected value (Supports Arrays). Logic: `Actual == Expected` (String Equality). If array: Pass if *any* element matches. |
 | `requiredElements` | List | Checks if a field simply exists (value ignored) |
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 
 ## Configuration Examples
 

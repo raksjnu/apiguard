@@ -13,7 +13,13 @@ Validates that **forbidden JSON elements do NOT exist** in JSON files. This rule
 - Disallow certain unapproved metadata or development-only flags in production JSON.
 - Enforce strict JSON structure by restricting specific keys.
 
-## Parameters
+### Global Settings (Optional)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 
 ### Required Parameters
 
@@ -84,6 +90,14 @@ Forbidden version found for 'engines/node': '14.17.0'
 - **Deprecation**: Use it to enforce a "hard cut-over" when migrating from old config formats to new ones.
 - **Security**: Prevent hardcoded secrets or insecure flags (like `allowInsecure: true`) from being committed.
 - **Cleanliness**: Keep project descriptors streamlined by blocking unapproved experimental fields.
+
+#### GLOBAL Parameters (Optional)
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 
 ---
 

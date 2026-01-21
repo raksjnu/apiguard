@@ -25,6 +25,9 @@ A versatile engine for validating property-based configuration files across diff
 | `requiredFields` | Map<String, String> | Key-value pairs for exact matching (Optional) |
 | `minVersions` | Map<String, String> | Key-MinVersion pairs for SemVer check (Optional) |
 | `exactVersions` | Map<String, String> | Key-Version pairs for Exact SemVer check (Optional) |
+| `resolveProperties` | Boolean | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | Scan files in linked CONFIG project |
 
 ### Validation Rule Map
 

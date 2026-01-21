@@ -38,7 +38,9 @@ Each item in `xpathExpressions` can have:
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `propertyResolution` | Boolean | `false` | Enable `${property}` placeholder resolution |
+| `resolveProperties` | Boolean | `false` | Enable `${property}` placeholder resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 
 ## Configuration Examples
 

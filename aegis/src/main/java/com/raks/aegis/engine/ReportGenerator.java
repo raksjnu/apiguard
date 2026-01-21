@@ -120,7 +120,18 @@ public class ReportGenerator {
                                                     : "",
                                             Collectors.joining(", "))))
                             .entrySet().stream()
-                            .map(entry -> "• " + entry.getKey() + entry.getValue())
+                            .map(entry -> {
+                                String msg = entry.getKey().replace("[Config]", "<span class='config-label'>CONFIG - </span>");
+                                String files = entry.getValue().replace("[Config]", "<span class='config-label'>CONFIG - </span>");
+                                if (files.isEmpty()) return "• " + msg;
+                                
+                                String[] fileArr = files.split(", ");
+                                if (fileArr.length > 5) {
+                                    return "• " + msg + " <details style='display:inline-block; margin-left:10px;'><summary style='cursor:pointer; color:#663399; font-weight:bold;'>[" + fileArr.length + " files]</summary><div style='padding:5px; background:#f9f9f9; border:1px solid #ddd; border-radius:3px; margin-top:5px; max-height:200px; overflow-y:auto;'>" + files + "</div></details>";
+                                } else {
+                                    return "• " + msg + " " + files;
+                                }
+                            })
                             .collect(Collectors.joining("<br>"));
 
                     rows.append(String.format(
@@ -164,6 +175,7 @@ public class ReportGenerator {
                                 box-shadow: 0 2px 4px rgba(0,0,0,0.2);
                             }
                             .top-nav-button:hover { background-color: var(--raks-purple-light); }
+                            .config-label { color: #0047AB; font-weight: bold; }
                         </style>
                     </head>
                     <body>
@@ -1461,7 +1473,8 @@ public class ReportGenerator {
                       .replace("Items Matched:", "<strong>Items Matched:</strong>")
                       .replace("Details:", "<strong>Details:</strong>")
                       .replace("Failures:", "<strong>Failures:</strong>") // Bold 'Failures:' for failed checks
-                      .replace("Properties Resolved:", "<strong>Properties Resolved:</strong>");
+                      .replace("Properties Resolved:", "<strong>Properties Resolved:</strong>")
+                      .replace("[Config]", "<span class='config-label'>CONFIG - </span>");
     }
     private static String readResource(String path) {
         try (InputStream is = ReportGenerator.class.getResourceAsStream(path)) {

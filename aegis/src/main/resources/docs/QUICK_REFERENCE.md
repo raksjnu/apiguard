@@ -22,6 +22,9 @@ These apply to almost ALL rule types and control file selection and logic.
 | `matchMode`    | `ALL_FILES`  | Controls file-level quantifier (see table below).    |
 | `logic`        | `AND`        | Combining logic for multiple checks or tokens.      |
 | `environments` | `[]`         | List of environments where this rule applies.        |
+| `resolveProperties` | `false`  | Enable resolution of `${property}` placeholders. |
+| `resolveLinkedConfig`| `false` | Resolve properties from the **linked CONFIG project**. |
+| `includeLinkedConfig`| `false` | Scan files in **both** CODE and linked CONFIG projects. |
 
 #### File Match Quantifiers (`matchMode`)
 
@@ -341,11 +344,35 @@ Used for validating JSON structure and values.
 
 ### Supported Resolutions
 
-| Rule Type | Resolves What? | Example |
-|-----------|---------------|---------|
 | `XML_ATTRIBUTE_EXISTS` | Attribute Values | `soapVersion="${soapversion}"` |
 | `XML_ELEMENT_CONTENT_REQUIRED` | Text Content | `<version>${pom.version}</version>` |
 | `JSON_VALIDATION_REQUIRED` | JSON Values | `{"muleEnv": "${env}"}` |
+| `TOKEN_SEARCH` | Text Search | `tokens: ["${db2.url}"]` |
+
+### Cross-Project Resolution (CODE + CONFIG)
+
+When a rule applies to both `CODE` and `CONFIG` (using `appliesTo: ["CODE", "CONFIG"]`), you can enable cross-project resolution to validate that properties referenced in your code exist in your configuration files.
+
+**Example**:
+```yaml
+- id: "DB2-URL-CHECK"
+  name: "Validate DB2 URL from Config"
+  appliesTo: ["CODE", "CONFIG"]
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        tokens: ["${db2.url}"]
+        resolveProperties: true
+        resolveLinkedConfig: true
+        includeLinkedConfig: true
+```
+
+*   **Behavior**:
+    1.  Aegis finds `${db2.url}` in a Mule XML file.
+    2.  `resolveProperties: true` triggers the search for `db2.url`.
+    3.  `resolveLinkedConfig: true` allows searching in the linked property files (e.g., `dev.properties` in the CONFIG project).
+    4.  `includeLinkedConfig: true` ensures the property files themselves are also validated if needed.
 
 
 201: > [!TIP]

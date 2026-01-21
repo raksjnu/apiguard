@@ -110,6 +110,22 @@ You can use placeholders in rule values which Aegis will attempt to resolve agai
 1. Project build descriptors (`pom.xml`, `package.json`, etc.).
 2. System environment variables.
 3. Custom scan-time variables provided via CLI or UI.
+4. **Linked Configuration Projects**: (New) Resolve properties from a separate CONFIG project when using `resolveLinkedConfig: true`.
+
+### Cross-Project Linking
+Aegis automatically links projects when scanned together. If a project is identified as `CODE` and another as `CONFIG` within the same scan session, the `CODE` project can "see" properties defined in the `CONFIG` project's property files.
+
+---
+
+## 2. Cross-Project Resolution Flags
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `resolveProperties` | Boolean | Resolves `${...}` within the local project. |
+| `resolveLinkedConfig`| Boolean | Resolves `${...}` from the linked configuration project. |
+| `includeLinkedConfig`| Boolean | Includes linked configuration files in the current search. |
+
+---
 
 ---
 

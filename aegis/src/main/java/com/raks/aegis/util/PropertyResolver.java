@@ -12,13 +12,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class PropertyResolver {
     private static final Logger logger = LoggerFactory.getLogger(PropertyResolver.class);
-    private static final Map<Path, Map<String, String>> projectPropertiesCache = new HashMap<>();
+    
+    // Cache: ProjectRoot -> { PropertyKey -> { SourceFileName -> Value } }
+    private static final Map<Path, Map<String, Map<String, String>>> projectPropertiesCache = new HashMap<>();
 
     private static List<Pattern> resolutionPatterns = new ArrayList<>();
 
@@ -42,16 +45,18 @@ public class PropertyResolver {
     public static synchronized void loadProperties(Path projectRoot) {
         if (projectPropertiesCache.containsKey(projectRoot)) return;
 
-        Map<String, String> props = new HashMap<>();
+        Map<String, Map<String, String>> multiProps = new HashMap<>();
         try (Stream<Path> walk = Files.walk(projectRoot)) {
             walk.filter(Files::isRegularFile)
                 .filter(p -> p.toString().endsWith(".properties"))
                 .forEach(p -> {
+                    String sourceName = p.getFileName().toString();
                     try (InputStream is = Files.newInputStream(p)) {
                         Properties pObj = new Properties();
                         pObj.load(is);
                         for (String name : pObj.stringPropertyNames()) {
-                            props.put(name, pObj.getProperty(name));
+                            multiProps.computeIfAbsent(name, k -> new TreeMap<>())
+                                      .put(sourceName, pObj.getProperty(name));
                         }
                     } catch (IOException e) {
                         logger.warn("Failed to load properties from {}: {}", p, e.getMessage());
@@ -61,7 +66,7 @@ public class PropertyResolver {
             logger.error("Error walking project for properties: {}", e.getMessage());
         }
 
-        projectPropertiesCache.put(projectRoot, props);
+        projectPropertiesCache.put(projectRoot, multiProps);
     }
 
     public static String resolve(String val, Path projectRoot) {
@@ -69,11 +74,15 @@ public class PropertyResolver {
     }
 
     public static String resolve(String val, Path projectRoot, List<String> resolutions) {
-        if (val == null) return null;
+        return resolve(val, projectRoot, resolutions, "");
+    }
+
+    public static String resolve(String val, Path projectRoot, List<String> resolutions, String sourcePrefix) {
+        if (val == null) return val;
 
         loadProperties(projectRoot);
-        Map<String, String> props = projectPropertiesCache.get(projectRoot);
-        if (props == null || props.isEmpty()) {
+        Map<String, Map<String, String>> multiProps = projectPropertiesCache.get(projectRoot);
+        if (multiProps == null || multiProps.isEmpty()) {
             return val;
         }
 
@@ -88,13 +97,21 @@ public class PropertyResolver {
                  StringBuffer sb = new StringBuffer();
                  while (m.find()) {
                      String key = m.group(1);
-                     if (props.containsKey(key)) {
-                         String replacement = props.get(key);
+                     if (multiProps.containsKey(key)) {
+                         Map<String, Map<String, String>> currentMultiProps = multiProps;
+                         Map<String, String> sources = currentMultiProps.get(key);
+                         
+                         // Pick a value for actual replacement (the first one found in alphabet order of source file)
+                         String firstSource = sources.keySet().iterator().next();
+                         String replacement = sources.get(firstSource);
                          
                          if (resolutions != null) {
-                             String mapping = m.group(0) + " → " + replacement;
-                             if (!resolutions.contains(mapping)) {
-                                 resolutions.add(mapping);
+                             String effectivePrefix = (sourcePrefix != null) ? sourcePrefix : "from ";
+                             for (Map.Entry<String, String> entry : sources.entrySet()) {
+                                 String mapping = m.group(0) + " → " + entry.getValue() + " (" + effectivePrefix + entry.getKey() + ")";
+                                 if (!resolutions.contains(mapping)) {
+                                     resolutions.add(mapping);
+                                 }
                              }
                          }
 

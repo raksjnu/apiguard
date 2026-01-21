@@ -27,7 +27,11 @@ Validates that **forbidden XML attributes do NOT exist** on specified elements. 
 
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
-| `shouldIgnorePath` | Internal | N/A | Automatically ignores build directories like `target/`, `bin/`, etc. |
+| `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX` |
+| `caseSensitive` | Boolean | `true` | Case sensitivity for content matching |
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 
 ## Configuration Examples
 

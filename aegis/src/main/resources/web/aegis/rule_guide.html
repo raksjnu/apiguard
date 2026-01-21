@@ -1869,7 +1869,7 @@ Validates that <strong>required tokens or patterns exist</strong> in files match
 <br>
 <h3>Optional Parameters</h3>
 <br>
-<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code>. Setting to <code class='inline-token'>REGEX</code> automatically enables regex matching. </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>matchMode: REGEX</code>. </td></tr><tr><td> <code class='inline-token'>requireAll</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> If <code class='inline-token'>true</code>, ALL tokens must be found. If <code class='inline-token'>false</code>, at least ONE </td></tr></table>
+<table><tr><td> Parameter </td><td> Type </td><td> Default </td><td> Description </td></tr><tr><td> <code class='inline-token'>excludePatterns</code> </td><td> List </td><td> <code class='inline-token'>[]</code> </td><td> Glob patterns to exclude specific files </td></tr><tr><td> <code class='inline-token'>matchMode</code> </td><td> String </td><td> <code class='inline-token'>SUBSTRING</code> </td><td> Choose <code class='inline-token'>SUBSTRING</code> or <code class='inline-token'>REGEX</code>. Setting to <code class='inline-token'>REGEX</code> automatically enables regex matching. </td></tr><tr><td> <code class='inline-token'>caseSensitive</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> Whether token matching is case-sensitive </td></tr><tr><td> <code class='inline-token'>wholeWord</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, ensures exact word matching (wraps tokens in <code class='inline-token'>\b</code>). Ignored if <code class='inline-token'>matchMode: REGEX</code>. </td></tr><tr><td> <code class='inline-token'>requireAll</code> </td><td> Boolean </td><td> <code class='inline-token'>true</code> </td><td> If <code class='inline-token'>true</code>, ALL tokens must be found. If <code class='inline-token'>false</code>, at least ONE </td></tr><tr><td> <code class='inline-token'>resolveLinkedConfig</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, resolves properties from the linked configuration project as a fallback. </td></tr><tr><td> <code class='inline-token'>includeLinkedConfig</code> </td><td> Boolean </td><td> <code class='inline-token'>false</code> </td><td> If <code class='inline-token'>true</code>, scans files in BOTH the target project and the linked configuration project. </td></tr></table>
 <br>
 <h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_ConfigurationExamples">Configuration Examples</h2>
 <br>
@@ -1902,10 +1902,6 @@ Ensure that application configuration files contain mandatory error handling blo
         requireAll: false  # At least one must exist
 </code></pre>
 <br>
-<h3>Example 3: Regex Format Validation</h3>
-<br>
-Verify that a version string following semantic versioning exists in the project's build descriptor.
-<br>
 <pre><code class='language-yaml'>- id: &quot;RULE-VERSION-SEMVER&quot;
   name: &quot;Required SemVer Descriptor&quot;
   checks:
@@ -1914,6 +1910,22 @@ Verify that a version string following semantic versioning exists in the project
         filePatterns: [&quot;**/pom.xml&quot;, &quot;**/package.json&quot;]
         tokens: [&quot;\\d+\\.\\d+\\.\\d+&quot;]
         matchMode: REGEX
+</code></pre>
+<br>
+<h3>Example 4: Cross-Project Validation (New)</h3>
+<br>
+Validate that a property defined in the linked configuration project is correctly referenced in the source code.
+<br>
+<pre><code class='language-yaml'>- id: &quot;RULE-CROSS-CONFIG-VALIDATION&quot;
+  name: &quot;Linked Config Property Validation&quot;
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: [&quot;src/main/mule/*.xml&quot;]
+        tokens: [&quot;${secure.key}&quot;]
+        resolveProperties: true
+        resolveLinkedConfig: true     # Resolves from linked project if not found in current
+        includeLinkedConfig: true      # Also scans files in the linked project
 </code></pre>
 <br>
 <h2 id="GENERIC_TOKEN_SEARCH_REQUIRED_ErrorMessages">Error Messages</h2>

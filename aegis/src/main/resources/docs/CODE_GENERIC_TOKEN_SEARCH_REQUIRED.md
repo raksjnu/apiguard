@@ -31,6 +31,9 @@ Validates that **required tokens or patterns exist** in files matching specified
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
 | `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `matchMode: REGEX`. |
 | `requireAll` | Boolean | `true` | If `true`, ALL tokens must be found. If `false`, at least ONE |
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig` | Boolean | `false` | If `true`, resolves properties from the linked configuration project as a fallback. |
+| `includeLinkedConfig` | Boolean | `false` | If `true`, scans files in BOTH the target project and the linked configuration project. |
 
 ## Configuration Examples
 
@@ -65,10 +68,6 @@ Ensure that application configuration files contain mandatory error handling blo
         requireAll: false  # At least one must exist
 ```
 
-### Example 3: Regex Format Validation
-
-Verify that a version string following semantic versioning exists in the project's build descriptor.
-
 ```yaml
 - id: "RULE-VERSION-SEMVER"
   name: "Required SemVer Descriptor"
@@ -78,6 +77,23 @@ Verify that a version string following semantic versioning exists in the project
         filePatterns: ["**/pom.xml", "**/package.json"]
         tokens: ["\\d+\\.\\d+\\.\\d+"]
         matchMode: REGEX
+```
+
+### Example 4: Cross-Project Validation (New)
+
+Validate that a property defined in the linked configuration project is correctly referenced in the source code.
+
+```yaml
+- id: "RULE-CROSS-CONFIG-VALIDATION"
+  name: "Linked Config Property Validation"
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: ["src/main/mule/*.xml"]
+        tokens: ["${secure.key}"]
+        resolveProperties: true
+        resolveLinkedConfig: true     # Resolves from linked project if not found in current
+        includeLinkedConfig: true      # Also scans files in the linked project
 ```
 
 ## Error Messages

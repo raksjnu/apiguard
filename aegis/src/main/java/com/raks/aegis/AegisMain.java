@@ -233,7 +233,8 @@ public class AegisMain implements Callable<Integer> {
                         return isConfigProject == isConfigRule;
                     }).collect(Collectors.toList());
 
-            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixesList);
+            Path linkedConfigPath = com.raks.aegis.util.ProjectContextHelper.findLinkedConfig(apiDir, discoveredProjects).orElse(null);
+            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixesList, linkedConfigPath);
             ValidationReport report = engine.validate();
             report.projectPath = apiName + " (" + apiDir.toString() + ")";
             Path apiReportDir = reportsRoot.resolve(apiName);
@@ -391,7 +392,8 @@ public class AegisMain implements Callable<Integer> {
                         })
                         .collect(Collectors.toList());
 
-                ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixesList);
+                java.nio.file.Path linkedConfigPath = com.raks.aegis.util.ProjectContextHelper.findLinkedConfig(apiDir, discoveredProjects).orElse(null);
+                ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixesList, linkedConfigPath);
                 ValidationReport report = engine.validate();
                 if (report == null) {
                     logger.error("Validation failed for {}", apiName);

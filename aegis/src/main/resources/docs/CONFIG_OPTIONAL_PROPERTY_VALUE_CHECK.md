@@ -24,6 +24,9 @@ Same as **[MANDATORY_PROPERTY_VALUE_CHECK](CONFIG_MANDATORY_PROPERTY_VALUE_CHECK
 | `fileExtensions` | List | File extensions to check (e.g., `.properties`) |
 | `environments` | List | Environment names to check (e.g., `ALL`, `PROD`) |
 | `properties` | List | List of optional property configurations |
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 
 ## Configuration Examples
 

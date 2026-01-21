@@ -30,6 +30,9 @@ Validates that **forbidden tokens or patterns do NOT exist** in files matching s
 | `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX`. Setting to `REGEX` automatically enables regex matching. |
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
 | `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `matchMode: REGEX`. |
+| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
 | **`ignoreComments`** | **Boolean** | **`false`** | **If `true`, removes comments before searching (strict mode). Recommended for FORBIDDEN rules to avoid false positives.** |
 
 ### 🎯 Comment Handling (`ignoreComments`)
