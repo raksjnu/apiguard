@@ -27,7 +27,7 @@ public class PropertyGenericCheck extends AbstractCheck {
         String operator = (String) params.getOrDefault("operator", "MATCHES"); 
         String valueType = (String) params.getOrDefault("valueType", "STRING");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
-        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "false")));
+        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "true")));
 
         if (filePatterns == null || filePatterns.isEmpty()) return failConfig(check, "filePatterns required");
 
@@ -70,7 +70,75 @@ public class PropertyGenericCheck extends AbstractCheck {
                     }
                 }
                 
-                // Single property check
+                // Support for 'properties' list (List of Maps)
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> propList = (List<Map<String, Object>>) params.get("properties");
+                if (propList != null) {
+                    for (Map<String, Object> propMap : propList) {
+                        String namePattern = (String) propMap.get("name");
+                        if (namePattern == null) continue;
+                        
+                        String propOperator = (String) propMap.getOrDefault("operator", "EQ");
+                        String propType = (String) propMap.getOrDefault("valueType", "STRING");
+                        
+                        // Handle multiple allowed values
+                        @SuppressWarnings("unchecked")
+                        List<String> allowedValues = (List<String>) propMap.get("values");
+                        
+                        // Find matching keys in the properties file
+                        List<String> matchingKeys = new ArrayList<>();
+                        boolean isRegexPattern = namePattern.contains("*") || namePattern.contains(".") || namePattern.contains("?");
+                        
+                        if (isRegexPattern) {
+                            try {
+                                java.util.regex.Pattern p = java.util.regex.Pattern.compile(namePattern);
+                                for (Object keyObj : props.keySet()) {
+                                    String key = String.valueOf(keyObj);
+                                    if (p.matcher(key).matches()) matchingKeys.add(key);
+                                }
+                            } catch (Exception e) {
+                                // Fallback to literal if regex is invalid
+                                if (props.containsKey(namePattern)) matchingKeys.add(namePattern);
+                            }
+                        } else {
+                            if (props.containsKey(namePattern)) matchingKeys.add(namePattern);
+                        }
+
+                        if (matchingKeys.isEmpty()) {
+                            if (!"OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
+                                filePassed = false;
+                                fileErrors.add("Missing mandatory property matching: " + namePattern);
+                            }
+                        } else {
+                            for (String key : matchingKeys) {
+                                String val = props.getProperty(key);
+                                if (resolveProperties) val = resolve(val, currentRoot, this.propertyResolutions);
+                                
+                                boolean match = false;
+                                if (allowedValues != null && !allowedValues.isEmpty()) {
+                                    for (String expected : allowedValues) {
+                                        if (compareValues(val, expected, propOperator, propType)) {
+                                            match = true;
+                                            break;
+                                        }
+                                    }
+                                } else {
+                                    // If no allowed values provided, treat it as existence check
+                                    match = true;
+                                }
+
+                                if (!match) {
+                                    filePassed = false;
+                                    fileErrors.add("Value mismatch for " + key + " (Found: " + val + ")");
+                                } else {
+                                    fileSuccesses.add(key + "=" + val);
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Single property check (Existing logic kept for backward compatibility)
                 if (params.containsKey("property")) {
                     String key = (String) params.get("property");
                     String val = props.getProperty(key);

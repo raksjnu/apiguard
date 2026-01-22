@@ -1,10 +1,10 @@
-# GLOBAL_CONFIGURATION
+# GLOBAL CONFIGURATION
 
 **Rule Type:** `GLOBAL` | **Applies To:** All Rule Types
 
 ## Overview
 
-Aegis provides a powerful set of global configuration options that apply across various rule types. Understanding these operators, match modes, and scope controls allows you to create precise, efficient, and robust validation rules across disparate technologies.
+Aegis provides a powerful set of global configuration options that apply across various rule types. Understanding these operators, match modes, and scope controls allows you to create precise, efficient, and robust validation rules.
 
 ## Match Modes
 
@@ -14,27 +14,27 @@ Match modes define how Aegis evaluates rule compliance across multiple file sets
 
 The rule passes ONLY if **EVERY** matching file satisfies the condition.
 
-- **Use Case**: Consistency checks (e.g., "Every Java file must have a specific license header", "No configuration file should contain hardcoded IPs").
+- **Use Case**: Consistency checks (e.g., "Every Java file must have a specific license header").
 - **Failure**: Fails if even one file violates the rule.
 
 ### ANY_FILE
 
 The rule passes if **AT LEAST ONE** matching file satisfies the condition.
 
-- **Use Case**: Existence checks (e.g., "The project must have a `README.md` defined somewhere", "At least one security configuration file must exist").
+- **Use Case**: Existence checks (e.g., "The project must have a `README.md` defined somewhere").
 - **Failure**: Fails ONLY if zero files satisfy the condition.
 
 ### SUBSTRING
 
 Simple text matching. Checks if a token exists as a literal substring within the file content.
 
-- **Use Case**: Fast, simple checks for specific keywords, property names, or clear-text strings.
+- **Use Case**: Fast, simple checks for specific keywords or property names.
 
 ### REGEX
 
 Content matching using Regular Expressions.
 
-- **Use Case**: Complex pattern matching (e.g., credit card numbers, specific IP ranges, variable naming conventions with wildcards).
+- **Use Case**: Complex pattern matching (e.g., credit card numbers, IP ranges).
 
 ### EXACT (XPath)
 
@@ -51,9 +51,7 @@ Operators modify how the rule engine interprets the results of a search or evalu
 **Type**: `Boolean` | **Default**: `false`
 
 - **true**: The rule FAILS if the specified pattern, token, or XPath IS FOUND.
-  - *Example*: "Fail if a hardcoded secret is found."
 - **false**: The rule FAILS if the specified pattern, token, or XPath IS NOT FOUND.
-  - *Example*: "Fail if a required framework module is missing."
 
 ### caseSensitive
 
@@ -61,6 +59,13 @@ Operators modify how the rule engine interprets the results of a search or evalu
 
 - **true**: "Error" and "error" are treated as different strings.
 - **false**: Case is ignored during matching ("Error" == "error").
+
+### ignoreComments
+
+**Type**: `Boolean` | **Default**: `true`
+
+- **true**: Skip commented lines during selection. This is the recommended setting to avoid false positives.
+- **false**: Include comments in the search. Required only for specialized rules (e.g., Munit detection).
 
 ### negativeMatch
 
@@ -74,58 +79,62 @@ Operators modify how the rule engine interprets the results of a search or evalu
 
 Control exactly which files and environments a rule targets.
 
+### scope (Metadata)
+
+**Type**: `String` | **Default**: `null`
+
+Defines the organizational or architectural scope of the rule. By default, the `scope` is `null` and is not displayed in reports.
+
 ### environments
 
-**Type**: `List`
+**Type**: `List` | **Default**: `[]`
 
 Defines which environments the rule applies to.
 
 - **Values**:
   - `["ALL"]`: Applies to all scans regardless of environment key.
-  - `["DEV", "QA"]`: Applies only when the scan is triggered for these specific environment keys.
-- **Best Practice**: Use this for environment-specific property checks (e.g., ensuring debug mode is only allowed in `DEV`).
+  - `["DEV", "QA"]`: Applies only when the scan is triggered for these specific keys.
+- **Best Practice**: Use this for environment-specific property checks.
 
 ### filePatterns
 
-**Type**: `List`
+**Type**: `List` | **Default**: (Required)
 
 Glob patterns to filter which files are scanned by the rule engine.
 
 - **Examples**:
-  - `src/main/resources/*.properties` (Java / Spring)
-  - `src/main/mule/*.xml` (MuleSoft)
-  - `**/*.py` (Python)
-  - `package.json` (Node.js)
+  - `src/main/resources/*.properties`
+  - `src/main/mule/*.xml`
 
 ---
 
 ## Property Resolution
 
-Aegis supports dynamic property resolution in rule parameters to make rules portable.
+Aegis supports dynamic property resolution in rule parameters.
 
 ### `${property.name}` Placeholders
 
-You can use placeholders in rule values which Aegis will attempt to resolve against:
+You can use placeholders in rule values which Aegis will resolve against:
 
 1. Project build descriptors (`pom.xml`, `package.json`, etc.).
 2. System environment variables.
 3. Custom scan-time variables provided via CLI or UI.
-4. **Linked Configuration Projects**: (New) Resolve properties from a separate CONFIG project when using `resolveLinkedConfig: true`.
+4. **Linked Configuration Projects**: Resolve properties from a separate CONFIG project when using `resolveLinkedConfig: true`.
 
 ### Cross-Project Linking
-Aegis automatically links projects when scanned together. If a project is identified as `CODE` and another as `CONFIG` within the same scan session, the `CODE` project can "see" properties defined in the `CONFIG` project's property files.
+
+Aegis automatically links projects when scanned together. If a project is identified as `CODE` and another as `CONFIG` within the same scan session, the `CODE` project can "see" properties defined in the `CONFIG` project.
 
 ---
 
-## 2. Cross-Project Resolution Flags
+## Cross-Project Resolution Flags
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `resolveProperties` | Boolean | Resolves `${...}` within the local project. |
-| `resolveLinkedConfig`| Boolean | Resolves `${...}` from the linked configuration project. |
-| `includeLinkedConfig`| Boolean | Includes linked configuration files in the current search. |
-
----
+| Parameter             | Type    | Default | Description                                                   |
+|-----------------------|---------|---------|---------------------------------------------------------------|
+| `resolveProperties`   | Boolean | `true`  | Resolves `${...}` within the local project.                  |
+| `ignoreComments`      | Boolean | `true`  | Skip commented lines during selection.                        |
+| `resolveLinkedConfig` | Boolean | `false` | Resolves `${...}` from the linked configuration project.      |
+| `includeLinkedConfig` | Boolean | `false` | Includes linked configuration files in the current search.    |
 
 ---
 
@@ -133,50 +142,42 @@ Aegis automatically links projects when scanned together. If a project is identi
 
 ### 1. Efficient "Existence" Checks
 
-If you want to ensure your project has a specific component (like a global configuration file), don't check every file and fail if it's missing from any of them. Instead, use `matchMode: ANY_FILE`.
+If you want to ensure your project has a specific component, use `matchMode: ANY_FILE`.
 
 ```yaml
 - type: CODE_FILE_EXISTS
   params:
     filePatterns: ["**/security-config.xml"]
-    matchMode: ANY_FILE  # Essential for existence checks!
+    matchMode: ANY_FILE
 ```
 
-### 2. Combining Validations
+### 2. Performance Optimization
 
-When checking both the presence of a key and its specific value in property files, prefer specialized rules like `MANDATORY_PROPERTY_VALUE_CHECK` which handle both logic paths more efficiently than standard substring searches.
+- Prefer **SUBSTRING** over **REGEX** for static tokens.
+- Scope your **filePatterns** as narrowly as possible. Avoid `**/*` if the rule only applies to a single file.
 
-### 3. Performance Optimization
+### 3. Precision with XPath
 
-- Prefer **SUBSTRING** over **REGEX** for static tokens. Regex engines are significantly more resource-intensive.
-- Scope your **filePatterns** as narrowly as possible. Avoid `**/*` if the rule only applies to a single configuration file.
-
-### 4. Precision with XPath
-
-For XML validation, always use **XPath** rules instead of **Token Search**. Token searches can be fooled by comments or complex formatting, whereas XPath understands the underlying document structure.
+For XML validation, always use **XPath** rules instead of **Token Search**. XPath understands the underlying document structure.
 
 ---
 
 ## Message Customization
 
-Aegis allows you to customize the success and error messages for each rule using placeholders. This allows you to provide context-specific feedback while still retaining the technical details of the check.
+Aegis allows you to customize the success and error messages for each rule using placeholders.
 
 ### Supported Tokens
 
-You can use the following tokens in your `successMessage` and `errorMessage` fields:
-
-| Token | Description |
-| :--- | :--- |
-| `{RULE_ID}` | The ID of the rule being executed (e.g., `RULE-001`). |
-| `{CORE_DETAILS}` | The technical details of the check result (e.g., "Found 3 issues in pom.xml"). |
-| `{DEFAULT_MESSAGE}` | **Alias for `{CORE_DETAILS}`**. Recommended for clarity. |
-| `{FAILURES}` | A list of specific failure details (if applicable). |
-| `{CHECKED_FILES}` | A comma-separated list of files that were scanned or passed the check. Useful for listing specific files in the report. |
-| `{FOUND_ITEMS}` | A comma-separated list of forbidden items (tokens, keys, attributes) that were found, causing the rule to fail. Supports `XmlGenericCheck`, `JsonGenericCheck`, and `TokenSearchCheck`. |
+| Token                | Description                                                                 |
+|:---------------------|:----------------------------------------------------------------------------|
+| `{RULE_ID}`          | The ID of the rule being executed.                                          |
+| `{DEFAULT_MESSAGE}`  | The technical details of the check result (Alias for `{CORE_DETAILS}`).    |
+| `{CHECKED_FILES}`    | A comma-separated list of files that were scanned.                          |
+| `{FOUND_ITEMS}`      | A list of forbidden items found, causing the rule to fail.                  |
 
 ### Newline Formatting
 
-You can use `\n` in your messages to create line breaks. This is useful for separating your custom message from the technical details.
+You can use `\n` in your messages to create line breaks.
 
 **Example:**
 
@@ -184,46 +185,3 @@ You can use `\n` in your messages to create line breaks. This is useful for sepa
 successMessage: "Validation passed!\n{DEFAULT_MESSAGE}"
 errorMessage: "Validation failed.\n{DEFAULT_MESSAGE}"
 ```
-
-### Token Examples
-
-You can use either `{DEFAULT_MESSAGE}` or `{CORE_DETAILS}`. They result in the exact same output.
-
-**Using `{DEFAULT_MESSAGE}` (Recommended):**
-
-```yaml
-errorMessage: "Validation failed.\n{DEFAULT_MESSAGE}"
-```
-
-**Using `{CORE_DETAILS}`:**
-
-```yaml
-errorMessage: "Validation failed.\n{CORE_DETAILS}"
-```
-
----
-
-## Project Identification
-
-Aegis uses specific rules to identify which folders contain valid projects to scan. This is configured in the `projectIdentification` section of your main configuration file.
-
-### configFolder
-
-Defines patterns to identify configuration projects (e.g., "global-config", "common-library"). These are scanned differently than standard Mule applications.
-
-- **namePattern**: Regex to match folder names (e.g., `.*_config.*`).
-
-### targetProject
-
-Defines rules for identifying standard Mule applications.
-
-- **matchMode**:
-  - `ALL`: All specified marker files must exist.
-  - `ANY`: At least one marker file must exist.
-- **markerFiles**: List of files that signify a project root (e.g., `pom.xml`, `mule-artifact.json`).
-
-### ignoredFolders
-
-Defines folders that are strictly excluded from scanning to improve performance and avoid false positives.
-
-- **exactNames**: List of folder names to ignore (e.g., `target`, `.git`, `node_modules`).

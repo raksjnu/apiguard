@@ -30,10 +30,11 @@ Validates that **forbidden tokens or patterns do NOT exist** in files matching s
 | `matchMode` | String | `SUBSTRING` | Choose `SUBSTRING` or `REGEX`. Setting to `REGEX` automatically enables regex matching. |
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
 | `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `matchMode: REGEX`. |
-| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
-| `resolveLinkedConfig`| Boolean | `false` | Resolve from linked CONFIG project |
-| `includeLinkedConfig`| Boolean | `false` | Scan files in linked CONFIG project |
-| **`ignoreComments`** | **Boolean** | **`false`** | **If `true`, removes comments before searching (strict mode). Recommended for FORBIDDEN rules to avoid false positives.** |
+| `resolveProperties` | Boolean | `true` | Enable `${...}` resolution |
+| `resolveLinkedConfig` | Boolean | `false` | Resolve from linked CONFIG project |
+| `includeLinkedConfig` | Boolean | `false` | Scan files in linked CONFIG project |
+| `ignoreComments` | Boolean | `true` | Removes comments before searching. Recommended to avoid false positives. |
+| **`wholeFile`** | **Boolean** | **`false`** | **If `true`, reads the entire file as a single string. Recommended for multi-line regex validation.** |
 
 ### 🎯 Comment Handling (`ignoreComments`)
 
@@ -92,17 +93,30 @@ By default, token searches include commented code, which can cause **false posit
 **Result:** PASS ✅ (no forbidden tokens in active code)
 
 #### Example: Normal Mode
+... (existing content) ...
+
+### 📄 Whole File Search (`wholeFile`)
+
+**NEW FEATURE:** When `wholeFile: true` is enabled, the check processes the entire file content as a single block of text rather than line-by-line.
+
+#### Why Use This?
+Standard line-by-line regex cannot see relationships between different lines. With `wholeFile`, you can use **DOTALL** regex `(?s)` to validate that if a property exists on line 1, its value must be correct even if it's defined on line 10.
+
+#### Example: Per-File Conditional Validation
+Fails if a policy is `applied=true` but its `version` is not `3.0.0` within the same file.
 
 ```yaml
-- id: "DOC-001"
-  name: "Ensure Documentation Mentions Feature"
-  type: "CODE_GENERIC_TOKEN_SEARCH_REQUIRED"
+- id: "BANK-109"
+  name: "Enforce Policy Versions"
   checks:
-    - type: "TOKEN_SEARCH"
+    - type: GENERIC_TOKEN_SEARCH_FORBIDDEN
       params:
-        filePatterns: ["**/*.md", "**/*.txt"]
-        tokens: ["authentication"]
-        ignoreComments: false  # ✅ Check everywhere including comments
+        filePatterns: ["**/Policies/**/*.policy"]
+        wholeFile: true # ✅ Read entire file for cross-line checking
+        isRegex: true
+        tokens:
+          # Fails if 'applied=true' is found, but 'version=3.0.0' is NOT found
+          - '(?s)^(?=.*policy\.applied\s*=\s*true)(?!.*policy\.version\s*=\s*"3\.0\.0").*$'
 ```
 
 ## Configuration Examples

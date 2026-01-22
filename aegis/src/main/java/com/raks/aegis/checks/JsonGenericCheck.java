@@ -29,7 +29,7 @@ public class JsonGenericCheck extends AbstractCheck {
         String operator = (String) params.getOrDefault("operator", "EQ");
         String valueType = (String) params.getOrDefault("valueType", "STRING");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
-        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "false")));
+        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "true")));
 
         if (jsonPath == null && !params.containsKey("requiredElements") && !params.containsKey("requiredFields")) {
              return failConfig(check, "Configuration required: provide 'jsonPath', 'requiredElements', or 'requiredFields'");

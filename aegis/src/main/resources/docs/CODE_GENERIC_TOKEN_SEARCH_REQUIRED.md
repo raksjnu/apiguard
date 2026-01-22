@@ -31,9 +31,11 @@ Validates that **required tokens or patterns exist** in files matching specified
 | `caseSensitive` | Boolean | `true` | Whether token matching is case-sensitive |
 | `wholeWord` | Boolean | `false` | If `true`, ensures exact word matching (wraps tokens in `\b`). Ignored if `matchMode: REGEX`. |
 | `requireAll` | Boolean | `true` | If `true`, ALL tokens must be found. If `false`, at least ONE |
-| `resolveProperties` | Boolean | `false` | Enable `${...}` resolution |
+| `resolveProperties` | Boolean | `true` | Enable `${...}` resolution |
 | `resolveLinkedConfig` | Boolean | `false` | If `true`, resolves properties from the linked configuration project as a fallback. |
 | `includeLinkedConfig` | Boolean | `false` | If `true`, scans files in BOTH the target project and the linked configuration project. |
+| `ignoreComments` | Boolean | `true` | If `true`, removes comments before searching. |
+| **`wholeFile`** | **Boolean** | **`false`** | **If `true`, reads the entire file as a single string. Recommended for multi-line regex validation.** |
 
 ## Configuration Examples
 
@@ -101,6 +103,30 @@ Validate that a property defined in the linked configuration project is correctl
 ```text
 DatabaseConfig.java: Missing required token: import org.slf4j.Logger
 app-descriptor.xml: Missing at least one required token: [on-error-continue, on-error-propagate]
+```
+
+### 📄 Whole File Search (`wholeFile`)
+
+**NEW FEATURE:** When `wholeFile: true` is enabled, the check processes the entire file content as a single block of text rather than line-by-line. 
+
+#### Why Use This?
+Standard line-by-line regex cannot see relationships between different lines. With `wholeFile`, you can use **DOTALL** regex `(?s)` to validate patterns spanning multiple lines.
+
+#### Example: Cross-Line Requirement
+Ensures that if a certain property is present, a related property must also exist anywhere in the same file.
+
+```yaml
+- id: "BANK-MANDATORY-REFS"
+  name: "Enforce Property References"
+  checks:
+    - type: GENERIC_TOKEN_SEARCH_REQUIRED
+      params:
+        filePatterns: ["**/*.properties"]
+        wholeFile: true
+        isRegex: true
+        tokens:
+          # Match a file that contains BOTH property A and property B
+          - '(?s)^(?=.*prop\.A=.*)(?=.*prop\.B=.*).*$'
 ```
 
 ## Best Practices

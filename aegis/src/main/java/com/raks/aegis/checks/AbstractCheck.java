@@ -108,13 +108,13 @@ public abstract class AbstractCheck {
         boolean resolveLinked = (Boolean) getEffectiveParams(null).getOrDefault("resolveLinkedConfig", false);
         
         // Determine prefix for this root: [Config] for linked config path, null (for "from ") for primary
-        String prefix = (linkedConfigPath != null && projectRoot.equals(linkedConfigPath)) ? "[Config]" : null;
+        String prefix = (linkedConfigPath != null && projectRoot.equals(linkedConfigPath)) ? "[Config] " : null;
         
         String resolved = com.raks.aegis.util.PropertyResolver.resolve(value, projectRoot, collection, prefix);
         
         // Fallback to linked config if resolved value still contains placeholders and it's not already the linkedConfigPath
         if (resolveLinked && linkedConfigPath != null && !projectRoot.equals(linkedConfigPath)) {
-            resolved = com.raks.aegis.util.PropertyResolver.resolve(resolved, linkedConfigPath, collection, "[Config]");
+            resolved = com.raks.aegis.util.PropertyResolver.resolve(resolved, linkedConfigPath, collection, "[Config] ");
         }
         return resolved;
     }

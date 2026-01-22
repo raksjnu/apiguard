@@ -49,6 +49,14 @@ public class PropertyResolver {
         try (Stream<Path> walk = Files.walk(projectRoot)) {
             walk.filter(Files::isRegularFile)
                 .filter(p -> p.toString().endsWith(".properties"))
+                .filter(p -> {
+                    String pathStr = p.toString().replace('\\', '/');
+                    return !pathStr.contains("/target/") && 
+                           !pathStr.contains("/bin/") && 
+                           !pathStr.contains("/build/") && 
+                           !pathStr.contains("/.git/") &&
+                           !pathStr.contains("/.idea/");
+                })
                 .forEach(p -> {
                     String sourceName = p.getFileName().toString();
                     try (InputStream is = Files.newInputStream(p)) {
@@ -106,7 +114,7 @@ public class PropertyResolver {
                          String replacement = sources.get(firstSource);
                          
                          if (resolutions != null) {
-                             String effectivePrefix = (sourcePrefix != null) ? sourcePrefix : "from ";
+                             String effectivePrefix = (sourcePrefix != null) ? sourcePrefix : "[Config] ";
                              for (Map.Entry<String, String> entry : sources.entrySet()) {
                                  String mapping = m.group(0) + " → " + entry.getValue() + " (" + effectivePrefix + entry.getKey() + ")";
                                  if (!resolutions.contains(mapping)) {

@@ -32,7 +32,9 @@ public class TokenSearchCheck extends AbstractCheck {
                           || "REGEX".equalsIgnoreCase(matchMode);
         boolean caseSensitive = Boolean.parseBoolean(String.valueOf(params.getOrDefault("caseSensitive", "true")));
         boolean wholeWord = Boolean.parseBoolean(String.valueOf(params.getOrDefault("wholeWord", "false")));
-        boolean ignoreComments = Boolean.parseBoolean(String.valueOf(params.getOrDefault("ignoreComments", "false")));
+        boolean ignoreComments = Boolean.parseBoolean(String.valueOf(params.getOrDefault("ignoreComments", "true")));
+        boolean wholeFile = Boolean.parseBoolean(String.valueOf(params.getOrDefault("wholeFile", "false")));
+
 
         if (filePatterns == null || filePatterns.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(), "Configuration error: 'filePatterns' is required");
@@ -77,38 +79,61 @@ public class TokenSearchCheck extends AbstractCheck {
             checkedFilesList.add(relativePath);
 
             try {
-                List<String> lines = Files.readAllLines(file);
-                boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "false")));
+                boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "true")));
                 java.util.Set<String> thisFileMatchedTokens = new java.util.HashSet<>();
 
-                for (int lineNum = 0; lineNum < lines.size(); lineNum++) {
-                    String originalLine = lines.get(lineNum);
-                    List<String> lineResolutions = new ArrayList<>();
-                    String processedLine = resolveProperties ? resolve(originalLine, currentRoot, lineResolutions) : originalLine;
+                List<String> contentsToSearch = new ArrayList<>();
+                List<List<String>> resolutionsPerContent = new ArrayList<>();
+                if (wholeFile) {
+                    String content = Files.readString(file);
+                    List<String> fileResolutions = new ArrayList<>();
+                    String processed = resolveProperties ? resolve(content, currentRoot, fileResolutions) : content;
+                    contentsToSearch.add(processed);
+                    resolutionsPerContent.add(fileResolutions);
+                } else {
+                    List<String> lines = Files.readAllLines(file);
+                    for (String line : lines) {
+                        List<String> lineResolutions = new ArrayList<>();
+                        String processedLine = resolveProperties ? resolve(line, currentRoot, lineResolutions) : line;
+                        contentsToSearch.add(processedLine);
+                        resolutionsPerContent.add(lineResolutions);
+                    }
+                }
 
-                    String contentForMatch = ignoreComments ? removeCommentsFromLine(processedLine, file) : processedLine;
+                for (int cIdx = 0; cIdx < contentsToSearch.size(); cIdx++) {
+                    String contentForMatch = contentsToSearch.get(cIdx);
+                    List<String> contentResolutions = resolutionsPerContent.get(cIdx);
+                    boolean matchFoundInThisContent = false;
+
+                    if (ignoreComments) contentForMatch = removeCommentsFromLine(contentForMatch, file);
                     if (!caseSensitive && !isRegex && !wholeWord) contentForMatch = contentForMatch.toLowerCase();
 
                     for (int i = 0; i < tokens.size(); i++) {
                         String configToken = tokens.get(i);
                         if (!caseSensitive && !isRegex && !wholeWord) configToken = configToken.toLowerCase();
                         
-                        boolean match = false;
-                        String tokenToAdd = configToken;
-
                         if (isRegex || wholeWord) {
                             java.util.regex.Matcher m = patterns.get(i).matcher(contentForMatch);
-                            if (m.find()) { match = true; tokenToAdd = m.group(); }
+                            while (m.find()) { 
+                                String tokenToAdd = m.group();
+                                fileFound.add(tokenToAdd);
+                                thisFileMatchedTokens.add(tokens.get(i));
+                                allFoundItems.add(tokenToAdd);
+                                matchFoundInThisContent = true;
+                            }
                         } else {
-                            if (contentForMatch.contains(configToken)) match = true;
+                            if (contentForMatch.contains(configToken)) {
+                                fileFound.add(configToken);
+                                thisFileMatchedTokens.add(tokens.get(i));
+                                allFoundItems.add(configToken);
+                                matchFoundInThisContent = true;
+                            }
                         }
+                    }
 
-                        if (match) {
-                            fileFound.add(tokenToAdd);
-                            thisFileMatchedTokens.add(tokens.get(i));
-                            allFoundItems.add(tokenToAdd);
-                            recordResolutions(lineResolutions);
-                        }
+                    // Only record resolutions if a match occurred in this specific line/content
+                    if (matchFoundInThisContent) {
+                        recordResolutions(contentResolutions);
                     }
                 }
 
@@ -169,8 +194,8 @@ public class TokenSearchCheck extends AbstractCheck {
             return line.replaceAll("(?s)<!--.*?-->", "");
         } else if (fileName.endsWith(".java") || fileName.endsWith(".js") || fileName.endsWith(".c") || fileName.endsWith(".cpp")) {
             return line.replaceAll("(?s)/\\*.*?\\*/", "").replaceAll("//.*", "");
-        } else if (fileName.endsWith(".properties") || fileName.endsWith(".yaml") || fileName.endsWith(".yml") || fileName.endsWith(".sh")) {
-            return line.replaceAll("^\\s*#.*", "");
+        } else if (fileName.endsWith(".properties") || fileName.endsWith(".yaml") || fileName.endsWith(".yml") || fileName.endsWith(".sh") || fileName.endsWith(".policy")) {
+            return line.replaceAll("(?m)^\\s*#.*", "");
         }
         return line;
     }

@@ -27,7 +27,7 @@ public class XmlGenericCheck extends AbstractCheck {
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) params.get("filePatterns");
         String xpathExpr = (String) params.get("xpath");
-        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "false")));
+        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "true")));
         String mode = (String) params.getOrDefault("mode", "EXISTS");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
 

@@ -122,8 +122,8 @@ public class ReportGenerator {
                                             Collectors.joining(", "))))
                             .entrySet().stream()
                             .map(entry -> {
-                                String msg = entry.getKey().replace("[Config]", "<span class='config-label'>CONFIG - </span>");
-                                String files = entry.getValue().replace("[Config]", "<span class='config-label'>CONFIG - </span>");
+                                String msg = entry.getKey().replace("[Config] ", "<span class='config-label'>CONFIG - </span>");
+                                String files = entry.getValue().replace("[Config] ", "<span class='config-label'>CONFIG - </span>");
                                 if (files.isEmpty()) return "• " + msg;
                                 
                                 String[] fileArr = files.split(", ");
@@ -1464,7 +1464,7 @@ public class ReportGenerator {
     private static String escape(String s) {
         if (s == null)
             return "";
-        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+        return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
     }
 
     private static String formatMessage(String message) {
@@ -1475,7 +1475,7 @@ public class ReportGenerator {
                       .replace("Details:", "<strong>Details:</strong>")
                       .replace("Failures:", "<strong>Failures:</strong>") // Bold 'Failures:' for failed checks
                       .replace("Properties Resolved:", "<strong>Properties Resolved:</strong>")
-                      .replace("[Config]", "<span class='config-label'>CONFIG - </span>");
+                      .replace("[Config] ", "<span class='config-label'>CONFIG - </span>");
     }
     private static String readResource(String path) {
         try (InputStream is = ReportGenerator.class.getResourceAsStream(path)) {

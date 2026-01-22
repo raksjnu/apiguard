@@ -14,7 +14,7 @@ public class Rule {
     private String rationale;
     private String exampleGood;
     private String exampleBad;
-    private String scope = "GLOBAL";
+    private String scope = null;
     private String successMessage;
     private String errorMessage;
     private String docLink;
