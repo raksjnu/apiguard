@@ -32,6 +32,7 @@ public class ProjectContextHelper {
 
         String[] suffixes = {"_config", "-config", ".config"};
         
+        // 1. Search in discovered projects (cached/known)
         for (String suffix : suffixes) {
             String targetName = projectName + suffix;
             Optional<Path> found = discoveredProjects.stream()
@@ -39,8 +40,20 @@ public class ProjectContextHelper {
                     .findFirst();
             
             if (found.isPresent()) {
-                logger.info("🔗 Linked project discovery: {} <-> {}", projectName, targetName);
+                logger.debug("🔗 Linked project matched from discovery: {} <-> {}", projectName, targetName);
                 return found;
+            }
+        }
+
+        // 2. Fallback: Search for sibling folders on disk (useful when scanning a single project subfolder)
+        Path parent = projectRoot.getParent();
+        if (parent != null && Files.isDirectory(parent)) {
+            for (String suffix : suffixes) {
+                 Path sibling = parent.resolve(projectName + suffix);
+                 if (Files.isDirectory(sibling)) {
+                     logger.info("🔗 Linked project found as sibling on disk: {} <-> {}", projectName, sibling.getFileName());
+                     return Optional.of(sibling);
+                 }
             }
         }
         

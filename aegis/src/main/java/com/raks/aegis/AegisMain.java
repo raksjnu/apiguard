@@ -1,10 +1,7 @@
 package com.raks.aegis;
 
-import com.raks.aegis.engine.ReportGenerator;
-import com.raks.aegis.engine.ValidationEngine;
-import com.raks.aegis.model.ProjectTypeDefinition;
-import com.raks.aegis.model.Rule;
-import com.raks.aegis.model.ValidationReport;
+import com.raks.aegis.model.*;
+import com.raks.aegis.engine.*;
 import org.yaml.snakeyaml.Yaml;
 import org.yaml.snakeyaml.constructor.Constructor;
 import org.yaml.snakeyaml.LoaderOptions;
@@ -13,16 +10,10 @@ import org.yaml.snakeyaml.error.YAMLException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.io.InputStream;
-
 import java.nio.charset.StandardCharsets;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
+import java.nio.file.*;
+import java.util.*;
 import java.util.stream.Collectors;
 import javax.swing.JFileChooser;
 import picocli.CommandLine;
@@ -38,7 +29,7 @@ import java.util.concurrent.Callable;
 public class AegisMain implements Callable<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(AegisMain.class);
 
-    @Option(names = {"-p", "--path"}, description = "Root folder to scan for projects", required = false)
+    @Option(names = {"-p", "--path", "--project"}, description = "Root folder to scan for projects", required = false)
     private Path parentFolder;
 
     @Option(names = {"-c", "--config"}, description = "Path to custom rules.yaml configuration", required = false)
@@ -52,6 +43,9 @@ public class AegisMain implements Callable<Integer> {
 
     @Option(names = {"--port"}, description = "Port for the GUI server (default: 8080)", defaultValue = "8080")
     private int guiPort;
+
+    @Option(names = {"-l", "--linkedConfig"}, description = "Path to the linked configuration project root", required = false)
+    private Path linkedConfigPath;
 
     public static class AegisConfigurationException extends RuntimeException {
         public AegisConfigurationException(String message) {
@@ -233,8 +227,8 @@ public class AegisMain implements Callable<Integer> {
                         return isConfigProject == isConfigRule;
                     }).collect(Collectors.toList());
 
-            Path linkedConfigPath = com.raks.aegis.util.ProjectContextHelper.findLinkedConfig(apiDir, discoveredProjects).orElse(null);
-            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixesList, linkedConfigPath);
+            Path currentLinkedConfig = (linkedConfigPath != null) ? linkedConfigPath : com.raks.aegis.util.ProjectContextHelper.findLinkedConfig(apiDir, discoveredProjects).orElse(null);
+            ValidationEngine engine = new ValidationEngine(applicableRules, apiDir, projectTypeClassifier, ignoredFileNames, ignoredFilePrefixesList, currentLinkedConfig);
             ValidationReport report = engine.validate();
             report.projectPath = apiName + " (" + apiDir.toString() + ")";
             Path apiReportDir = reportsRoot.resolve(apiName);
@@ -568,12 +562,6 @@ public class AegisMain implements Callable<Integer> {
     private static String sanitizeYamlContent(String content) {
         if (content == null) return null;
         
-        // Log the first 500 characters to debug cloudhub file mismatches
-        String preview = content.length() > 500 ? content.substring(0, 500) : content;
-        logger.info("--- YAML CONTENT PREVIEW (First 500 chars) ---");
-        logger.info(preview);
-        logger.info("----------------------------------------------");
-
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < content.length(); i++) {
             char ch = content.charAt(i);

@@ -29,7 +29,6 @@ public class JsonGenericCheck extends AbstractCheck {
         String operator = (String) params.getOrDefault("operator", "EQ");
         String valueType = (String) params.getOrDefault("valueType", "STRING");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
-        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "true")));
 
         if (jsonPath == null && !params.containsKey("requiredElements") && !params.containsKey("requiredFields")) {
              return failConfig(check, "Configuration required: provide 'jsonPath', 'requiredElements', or 'requiredFields'");
@@ -46,6 +45,7 @@ public class JsonGenericCheck extends AbstractCheck {
         List<String> passedFilesList = new ArrayList<>();
         Set<String> allFoundItems = new LinkedHashSet<>();
 
+        java.util.Set<Path> matchedPathsSet = new java.util.HashSet<>();
         for (Path file : matchingFiles) {
             boolean filePassed = true;
             List<String> fileErrors = new ArrayList<>();
@@ -63,19 +63,47 @@ public class JsonGenericCheck extends AbstractCheck {
                     Object result = null;
                     try { result = JsonPath.parse(content).read(jsonPath); } catch (Exception e) { result = null; }
 
-                    if ("EXISTS".equalsIgnoreCase(mode)) {
-                        if (result == null) { filePassed = false; fileErrors.add("JSONPath not found: " + jsonPath); }
-                        else fileSuccesses.add("Found: " + jsonPath);
+                    if ("EXISTS".equalsIgnoreCase(mode) || "OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
+                        if (result == null) { 
+                            if (!"OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
+                                filePassed = false; 
+                                fileErrors.add("JSONPath not found: " + jsonPath); 
+                            }
+                        } else fileSuccesses.add("Found: " + jsonPath);
                     } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
-                        if (result != null) { filePassed = false; fileErrors.add("JSONPath found: " + jsonPath); allFoundItems.add(result.toString()); }
-                    } else if ("VALUE_MATCH".equalsIgnoreCase(mode)) {
-                        if (result == null) { filePassed = false; fileErrors.add("JSONPath not found: " + jsonPath); }
-                        else {
-                            String actual = result.toString();
-                            if (resolveProperties) actual = resolve(actual, currentRoot, this.propertyResolutions);
-                            if (!compareValues(actual, expectedValue, operator, valueType)) {
-                                filePassed = false; fileErrors.add(String.format("Mismatch: Actual='%s', Expected='%s'", actual, expectedValue));
-                            } else fileSuccesses.add(String.format("%s=%s", jsonPath, actual));
+                        if (result != null) { 
+                            String forbiddenValue = (String) params.get("forbiddenValue");
+                            if (forbiddenValue == null) {
+                                filePassed = false; fileErrors.add("JSONPath found: " + jsonPath); allFoundItems.add(result.toString()); 
+                            } else {
+                                String rawValue = result.toString();
+                                java.util.Set<String> allValues = resolveAndRecord(rawValue, currentRoot, java.util.Collections.singletonList(forbiddenValue), false);
+                                for (String actual : allValues) {
+                                    if (compareValues(actual, forbiddenValue, operator, valueType)) {
+                                        filePassed = false; 
+                                        fileErrors.add("Forbidden value '" + forbiddenValue + "' found at resolution: '" + actual + "' for JSONPath: " + jsonPath);
+                                        allFoundItems.add(actual);
+                                    }
+                                }
+                            }
+                        }
+                    } else if ("VALUE_MATCH".equalsIgnoreCase(mode) || "OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
+                        if (result == null) { 
+                            if (!"OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
+                                filePassed = false; 
+                                fileErrors.add("JSONPath not found: " + jsonPath); 
+                            }
+                        } else {
+                            String rawValue = result.toString();
+                            java.util.Set<String> allValues = resolveAndRecord(rawValue, currentRoot, java.util.Collections.singletonList(expectedValue), true);
+                            for (String actual : allValues) {
+                                if (!compareValues(actual, expectedValue, operator, valueType)) {
+                                    filePassed = false; 
+                                    fileErrors.add(String.format("Resolution mismatch: Actual='%s', Expected='%s' (from raw: '%s')", actual, expectedValue, rawValue));
+                                } else {
+                                    fileSuccesses.add(String.format("%s=%s", jsonPath, actual));
+                                }
+                            }
                         }
                     }
                 }
@@ -89,11 +117,44 @@ public class JsonGenericCheck extends AbstractCheck {
                     for (Map.Entry<String, String> entry : requiredFields.entrySet()) {
                         String key = entry.getKey();
                         String expected = entry.getValue();
-                        if (!jsonMap.containsKey(key)) { filePassed = false; fileErrors.add("Missing required field: " + key); }
-                        else {
-                            String actual = String.valueOf(jsonMap.get(key));
-                            if (resolveProperties) actual = resolve(actual, currentRoot, this.propertyResolutions);
-                            if (!actual.equals(expected)) { filePassed = false; fileErrors.add("Mismatch at " + key); }
+                        if (!jsonMap.containsKey(key)) {
+                            filePassed = false;
+                            fileErrors.add("Missing required field: " + key);
+                        } else {
+                            Object actualRaw = jsonMap.get(key);
+                            List<String> actualsToCompare = new ArrayList<>();
+                            
+                            if (actualRaw instanceof List) {
+                                for (Object item : (List<?>) actualRaw) {
+                                    if (item != null) actualsToCompare.add(String.valueOf(item).trim());
+                                }
+                            } else if (actualRaw != null) {
+                                actualsToCompare.add(String.valueOf(actualRaw).trim());
+                            }
+
+                            boolean foundMatch = false;
+                            List<String> rawResolutions = new ArrayList<>();
+                            for (String raw : actualsToCompare) {
+                                java.util.Set<String> resolvedValues = resolveAndRecord(raw, currentRoot, java.util.Collections.singletonList(expected), true);
+                                for (String actual : resolvedValues) {
+                                    if (compareValues(actual, expected, operator, valueType)) {
+                                        foundMatch = true;
+                                        break;
+                                    } else {
+                                        rawResolutions.add(actual);
+                                    }
+                                }
+                                if (foundMatch) break;
+                            }
+
+                            if (!foundMatch) {
+                                filePassed = false;
+                                if (rawResolutions.isEmpty()) {
+                                    fileErrors.add(String.format("Field '%s' check failed (no values found)", key));
+                                } else {
+                                    fileErrors.add(String.format("Resolution mismatch at '%s': Actual='%s', Expected='%s'", key, rawResolutions.toString(), expected));
+                                }
+                            }
                         }
                     }
                 }
@@ -104,6 +165,9 @@ public class JsonGenericCheck extends AbstractCheck {
 
             if (filePassed) {
                 passedFileCount++; passedFilesList.add(relativePath);
+                if (!fileSuccesses.isEmpty()) {
+                    matchedPathsSet.add(file);
+                }
             } else {
                 details.add(relativePath + " [" + String.join(", ", fileErrors) + "]");
             }
@@ -116,16 +180,19 @@ public class JsonGenericCheck extends AbstractCheck {
         }).toList());
 
         String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
+        String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
         boolean passed = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
 
         if (passed) {
             String msg = String.format("Passed JSON check (%d/%d files)", passedFileCount, totalFiles);
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, msg, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr, this.propertyResolutions);
+            return finalizePass(check, msg, checkedFilesStr, foundItemsStr, matchingFilesStr, matchedPathsSet);
         } else {
+            String failDetailsStr = String.join("; ", details);
             String msg = String.format("JSON check failed. (Passed: %d/%d)\n• %s", passedFileCount, totalFiles, String.join("\n• ", details));
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, msg, checkedFilesStr, null, matchingFilesStr), checkedFilesStr, null, matchingFilesStr, this.propertyResolutions);
+            return finalizeFail(check, msg, checkedFilesStr, failDetailsStr, matchingFilesStr, matchedPathsSet);
         }
     }
+
 
     private CheckResult failConfig(Check check, String msg) {
         return CheckResult.fail(check.getRuleId(), check.getDescription(), "Config Error: " + msg);

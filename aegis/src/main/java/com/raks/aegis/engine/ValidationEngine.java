@@ -79,6 +79,7 @@ public class ValidationEngine {
                     check.setRuleId(rule.getId());
                     check.setRule(rule);  
                     AbstractCheck validator = CheckFactory.create(check);
+                    // validator.init(check.getParams()); // Removed: CheckFactory already calls init with synthesized params
                     validator.setIgnoredFiles(ignoredFileNames, ignoredFilePrefixes); // Pass global ignore config
                     validator.setLinkedConfigPath(this.linkedConfigPath); // Pass linked config context
                     CheckResult result = validator.execute(projectRoot, check);

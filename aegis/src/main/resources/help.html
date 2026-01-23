@@ -323,8 +323,9 @@
             <code>java -jar aegis-1.0.0-jar-with-raks.jar -p /path/to/projects [-c rules.yaml] [-o reports]</code>
             <p style="margin-top: 10px; font-size: 0.9em; color: #666;">
                 <strong>Parameters:</strong><br>
-                <code>-p, --path</code>: (Required) Absolute path to the root folder containing projects to scan.<br>
+                <code>-p, --path, --project</code>: (Required) Absolute path to the root folder containing projects to scan.<br>
                 <code>-c, --config</code>: (Optional) Path to a custom <code>rules.yaml</code> file. If omitted, built-in rules are used.<br>
+                <code>-l, --linkedConfig</code>: (Optional) Path to a linked configuration project (e.g., matching _config project).<br>
                 <code>-o, --output</code>: (Optional) Name of the report directory (Default: Aegis-reports).<br>
                 <code>-h, --help</code>: Show the help message and exit.<br>
                 <code>-V, --version</code>: Print version information and exit.

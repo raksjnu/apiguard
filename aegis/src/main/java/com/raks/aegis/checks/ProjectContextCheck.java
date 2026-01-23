@@ -22,8 +22,7 @@ public class ProjectContextCheck extends AbstractCheck {
                 projectName.toLowerCase().contains(nameContains.toLowerCase()) : 
                 projectName.contains(nameContains);
             if (!matches) {
-                return CheckResult.fail(check.getRuleId(), check.getDescription(), 
-                    "Project name '" + projectName + "' does not contain '" + nameContains + "'");
+                return finalizeFail(check, "Project name '" + projectName + "' does not contain '" + nameContains + "'", projectName, nameContains, null);
             }
         }
 
@@ -32,18 +31,17 @@ public class ProjectContextCheck extends AbstractCheck {
                 projectName.toLowerCase().contains(nameNotContains.toLowerCase()) : 
                 projectName.contains(nameNotContains);
             if (matches) {
-                return CheckResult.fail(check.getRuleId(), check.getDescription(), 
-                    "Project name '" + projectName + "' forbiddenly contains '" + nameNotContains + "'");
+                return finalizeFail(check, "Project name '" + projectName + "' forbiddenly contains '" + nameNotContains + "'", projectName, nameNotContains, null);
             }
         }
 
         if (nameRegex != null) {
             if (!projectName.matches(nameRegex)) {
-                return CheckResult.fail(check.getRuleId(), check.getDescription(), 
-                    "Project name '" + projectName + "' does not match regex '" + nameRegex + "'");
+                return finalizeFail(check, "Project name '" + projectName + "' does not match regex '" + nameRegex + "'", projectName, nameRegex, null);
             }
         }
 
-        return CheckResult.pass(check.getRuleId(), check.getDescription(), "Project context validation passed.");
+        return finalizePass(check, "Project context validation passed.", projectName, projectName);
     }
 }
+

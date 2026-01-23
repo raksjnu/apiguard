@@ -58,7 +58,7 @@ public class PropertyResolver {
                            !pathStr.contains("/.idea/");
                 })
                 .forEach(p -> {
-                    String sourceName = p.getFileName().toString();
+                    String sourceName = projectRoot.relativize(p).toString();
                     try (InputStream is = Files.newInputStream(p)) {
                         Properties pObj = new Properties();
                         pObj.load(is);
@@ -81,61 +81,126 @@ public class PropertyResolver {
         return resolve(val, projectRoot, null);
     }
 
-    public static String resolve(String val, Path projectRoot, List<String> resolutions) {
-        return resolve(val, projectRoot, resolutions, "");
+    /**
+     * The single source of truth for resolving project-level properties with priority and labeling.
+     */
+    public static String resolveProjectProperty(String value, Path projectRoot, Path linkedConfigPath, boolean includeLinked, List<String> resolutionCollector) {
+        java.util.Set<String> all = resolveProjectPropertyAll(value, projectRoot, linkedConfigPath, includeLinked, resolutionCollector);
+        return all.isEmpty() ? value : all.iterator().next(); 
     }
 
-    public static String resolve(String val, Path projectRoot, List<String> resolutions, String sourcePrefix) {
-        if (val == null) return val;
+    /**
+     * Resolves all possible unique combinations of placeholders in the value.
+     */
+    public static java.util.Set<String> resolveProjectPropertyAll(String value, Path projectRoot, Path linkedConfigPath, boolean includeLinked, List<String> resolutionCollector) {
+        if (value == null) return java.util.Collections.emptySet();
 
-        loadProperties(projectRoot);
-        Map<String, Map<String, String>> multiProps = projectPropertiesCache.get(projectRoot);
-        if (multiProps == null || multiProps.isEmpty()) {
-            return val;
+        java.util.LinkedHashMap<Path, String> rootsWithLabels = new java.util.LinkedHashMap<>();
+        if (includeLinked && linkedConfigPath != null) {
+            rootsWithLabels.put(linkedConfigPath, "CONFIG - ");
+        }
+        if (projectRoot != null && !projectRoot.equals(linkedConfigPath)) {
+            rootsWithLabels.put(projectRoot, "");
         }
 
-        String currentVal = val;
+        if (rootsWithLabels.isEmpty()) return java.util.Collections.singleton(value);
+
+        // Ensure all roots are loaded
+        for (Path root : rootsWithLabels.keySet()) {
+            loadProperties(root);
+        }
+
+        java.util.Set<String> currentValues = new java.util.HashSet<>();
+        currentValues.add(value);
         boolean modified = true;
-        int safetyCounter = 0; 
+        int safetyCounter = 0;
 
         while (modified && safetyCounter < 10) {
             modified = false;
-            for (Pattern pattern : resolutionPatterns) {
-                 Matcher m = pattern.matcher(currentVal);
-                 StringBuffer sb = new StringBuffer();
-                 while (m.find()) {
-                     String key = m.group(1);
-                     if (multiProps.containsKey(key)) {
-                         Map<String, Map<String, String>> currentMultiProps = multiProps;
-                         Map<String, String> sources = currentMultiProps.get(key);
-                         
-                         // Pick a value for actual replacement (the first one found in alphabet order of source file)
-                         String firstSource = sources.keySet().iterator().next();
-                         String replacement = sources.get(firstSource);
-                         
-                         if (resolutions != null) {
-                             String effectivePrefix = (sourcePrefix != null) ? sourcePrefix : "[Config] ";
-                             for (Map.Entry<String, String> entry : sources.entrySet()) {
-                                 String mapping = m.group(0) + " → " + entry.getValue() + " (" + effectivePrefix + entry.getKey() + ")";
-                                 if (!resolutions.contains(mapping)) {
-                                     resolutions.add(mapping);
-                                 }
-                             }
-                         }
+            java.util.Set<String> nextValues = new java.util.HashSet<>();
 
-                         m.appendReplacement(sb, Matcher.quoteReplacement(replacement));
-                         modified = true;
-                     } else {
-                         m.appendReplacement(sb, Matcher.quoteReplacement(m.group(0)));
-                     }
-                 }
-                 m.appendTail(sb);
-                 currentVal = sb.toString();
-                 if (modified) break; 
+            for (String val : currentValues) {
+                boolean valModified = false;
+                for (Pattern pattern : resolutionPatterns) {
+                    Matcher m = pattern.matcher(val);
+                    if (m.find()) {
+                        modified = true;
+                        valModified = true;
+                        String fullPlaceholder = m.group(0);
+                        String key = m.group(1);
+                        java.util.Set<String> replacements = new java.util.HashSet<>();
+
+                        // Search in all prioritized roots
+                        for (Map.Entry<Path, String> entry : rootsWithLabels.entrySet()) {
+                            Path root = entry.getKey();
+                            String label = entry.getValue();
+                            Map<String, Map<String, String>> multiProps = projectPropertiesCache.get(root);
+                            
+                            if (multiProps != null && multiProps.containsKey(key)) {
+                                Map<String, String> sources = multiProps.get(key);
+                                for (Map.Entry<String, String> srcEntry : sources.entrySet()) {
+                                    replacements.add(srcEntry.getValue());
+                                    
+                                    if (resolutionCollector != null) {
+                                        String sourceFilePath = srcEntry.getKey();
+                                        Path fullSourcePath = root.resolve(sourceFilePath);
+                                        String displayedPath;
+                                        Path rootParent = root.getParent();
+                                        if (rootParent != null) {
+                                            displayedPath = rootParent.relativize(fullSourcePath).toString();
+                                        } else {
+                                            displayedPath = root.getFileName().resolve(sourceFilePath).toString();
+                                        }
+                                        String mapping = fullPlaceholder + " → " + srcEntry.getValue() + " (" + label + displayedPath + ")";
+                                        if (!resolutionCollector.contains(mapping)) {
+                                            resolutionCollector.add(mapping);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (replacements.isEmpty()) {
+                            // Mark as NOT RESOLVED if no root has this property
+                            if (resolutionCollector != null) {
+                                String mapping = fullPlaceholder + " → NOT RESOLVED";
+                                if (!resolutionCollector.contains(mapping)) {
+                                    resolutionCollector.add(mapping);
+                                }
+                            }
+                            nextValues.add(val); 
+                            valModified = false; 
+                        } else {
+                            for (String r : replacements) {
+                                nextValues.add(val.replace(fullPlaceholder, r));
+                            }
+                        }
+                        break; // Process one placeholder at a time per value
+                    }
+                }
+                if (!valModified) {
+                    nextValues.add(val);
+                }
             }
+            currentValues = nextValues;
             if (modified) safetyCounter++;
         }
-        return currentVal;
+        return currentValues;
+    }
+
+    // Deprecated methods linked to resolveProjectProperty to avoid code duplication
+    public static String resolve(String val, Path projectRoot, List<String> resolutions) {
+        return resolveProjectProperty(val, projectRoot, null, false, resolutions);
+    }
+
+    public static String resolve(String val, Map<Path, String> rootsWithLabels, List<String> resolutions) {
+        if (val == null) return null;
+        String resolved = val;
+        for (Map.Entry<Path, String> entry : rootsWithLabels.entrySet()) {
+            boolean isConfig = "CONFIG - ".equals(entry.getValue());
+            resolved = resolveProjectProperty(resolved, entry.getKey(), isConfig ? entry.getKey() : null, isConfig, resolutions);
+        }
+        return resolved;
     }
 
     public static void clearCache() {

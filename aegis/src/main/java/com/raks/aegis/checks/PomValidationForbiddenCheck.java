@@ -3,13 +3,10 @@ import com.raks.aegis.model.Check;
 import com.raks.aegis.model.CheckResult;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -18,23 +15,21 @@ public class PomValidationForbiddenCheck extends AbstractCheck {
     public CheckResult execute(Path projectRoot, Check check) {
         String validationType = (String) check.getParams().getOrDefault("validationType", "COMBINED");
         List<String> failures = new ArrayList<>();
-        List<Path> pomFiles = new ArrayList<>();
-        try (Stream<Path> paths = Files.walk(projectRoot)) {
-            pomFiles = paths
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().equals("pom.xml"))
-                    .filter(path -> !shouldIgnorePath(projectRoot, path)) 
-                    .toList();
-            if (pomFiles.isEmpty()) {
-                return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                        "No pom.xml files found (nothing to validate)");
+        List<Path> pomFiles = findFiles(projectRoot, java.util.Collections.singletonList("**/pom.xml"), false);
+        if (pomFiles.isEmpty()) {
+            return CheckResult.pass(check.getRuleId(), check.getDescription(),
+                    "No pom.xml files found (nothing to validate)");
+        }
+        
+        java.util.Set<Path> matchedPathsSet = new java.util.HashSet<>();
+        for (Path pomFile : pomFiles) {
+            List<String> fileFailures = new ArrayList<>();
+            validatePom(pomFile, check.getParams(), validationType, projectRoot, fileFailures);
+            
+            if (!fileFailures.isEmpty()) {
+                matchedPathsSet.add(pomFile);
             }
-            for (Path pomFile : pomFiles) {
-                validatePom(pomFile, check.getParams(), validationType, projectRoot, failures);
-            }
-        } catch (IOException e) {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "Error scanning files: " + e.getMessage());
+            failures.addAll(fileFailures);
         }
         // Generate file list for reporting (used in both pass and fail scenarios)
         String fileList = pomFiles.stream()
@@ -43,16 +38,15 @@ public class PomValidationForbiddenCheck extends AbstractCheck {
                 .collect(java.util.stream.Collectors.joining("; "));
 
         if (failures.isEmpty()) {
-            return CheckResult.pass(check.getRuleId(), check.getDescription(),
-                    "No forbidden POM elements found\nFiles validated: " + fileList, fileList, fileList);
+            String msg = "No forbidden POM elements found\nFiles validated: " + fileList;
+            return finalizePass(check, msg, fileList, null, fileList, matchedPathsSet);
         } else {
             String technicalMsg = "Forbidden POM elements found:\n• " + String.join("\n• ", failures);
             String foundItems = String.join("; ", failures);
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), 
-                    getCustomMessage(check, technicalMsg, fileList, foundItems, null), 
-                    fileList, foundItems, null);
+            return finalizeFail(check, technicalMsg, fileList, foundItems, null, matchedPathsSet);
         }
     }
+
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,
             Path projectRoot, List<String> failures) {
         try {

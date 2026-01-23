@@ -27,18 +27,23 @@ public class XmlGenericCheck extends AbstractCheck {
         @SuppressWarnings("unchecked")
         List<String> filePatterns = (List<String>) params.get("filePatterns");
         String xpathExpr = (String) params.get("xpath");
-        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "true")));
         String mode = (String) params.getOrDefault("mode", "EXISTS");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
 
         if (filePatterns == null || filePatterns.isEmpty()) {
              return failConfig(check, "filePatterns required");
         }
+        
+        // Relaxed validation: allow elementContentPairs, forbiddenTokens, or xpathExpressions
         if (xpathExpr == null && 
             !params.containsKey("minVersions") && 
             !params.containsKey("exactVersions") && 
-            !params.containsKey("requiredFields")) {
-             return failConfig(check, "xpath or standard validation params (minVersions, etc.) required");
+            !params.containsKey("requiredFields") &&
+            !params.containsKey("elementContentPairs") &&
+            !params.containsKey("forbiddenTokens") &&
+            !params.containsKey("xpathExpressions") &&
+            !params.containsKey("elements")) {
+             return failConfig(check, "xpath or validation parameters required (e.g., forbiddenTokens, elementContentPairs)");
         }
 
         boolean includeLinkedConfig = Boolean.parseBoolean(String.valueOf(params.getOrDefault("includeLinkedConfig", "false")));
@@ -55,6 +60,7 @@ public class XmlGenericCheck extends AbstractCheck {
         factory.setNamespaceAware(true);
         try { factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false); } catch (Exception ignore) {}
 
+        java.util.Set<Path> matchedPathsSet = new java.util.HashSet<>();
         for (Path file : matchingFiles) {
             boolean filePassed = true;
             List<String> fileSuccesses = new ArrayList<>();
@@ -69,7 +75,7 @@ public class XmlGenericCheck extends AbstractCheck {
                 Document doc = builder.parse(file.toFile());
                 XPath xpath = XPathFactory.newInstance().newXPath();
 
-                // Required Fields
+                // 1. Required Fields
                 @SuppressWarnings("unchecked")
                 Map<String, String> requiredFields = (Map<String, String>) params.get("requiredFields");
                 if (requiredFields != null) {
@@ -80,18 +86,28 @@ public class XmlGenericCheck extends AbstractCheck {
                         if (nodes == null || nodes.getLength() == 0) {
                             filePassed = false; fileErrors.add("Missing: " + xp);
                         } else {
-                            boolean matched = false;
                             for (int i=0; i<nodes.getLength(); i++) {
-                                String actual = nodes.item(i).getTextContent().trim();
-                                if (resolveProperties) actual = resolve(actual, currentRoot, this.propertyResolutions);
-                                if (actual.equals(expected)) { matched = true; fileSuccesses.add(xp + "=" + actual); break; }
+                                String rawValue = nodes.item(i).getTextContent().trim();
+                                java.util.Set<String> allValues = resolveAll(rawValue, currentRoot);
+                                boolean anyMatch = false;
+                                for (String actual : allValues) {
+                                    if (actual.equals(expected)) {
+                                        anyMatch = true;
+                                        fileSuccesses.add(xp + "=" + actual);
+                                    } else {
+                                        filePassed = false;
+                                        fileErrors.add("Resolution of " + xp + " mismatch: '" + actual + "' (Expected: '" + expected + "')");
+                                    }
+                                }
+                                if (!anyMatch && allValues.isEmpty()) { 
+                                     filePassed = false; fileErrors.add("Mismatch at " + xp);
+                                }
                             }
-                            if (!matched) { filePassed = false; fileErrors.add("Mismatch at " + xp); }
                         }
                     }
                 }
 
-                // Min Versions
+                // 2. Min Versions
                 @SuppressWarnings("unchecked")
                 Map<String, String> minVersions = (Map<String, String>) params.get("minVersions");
                 if (minVersions != null) {
@@ -102,27 +118,134 @@ public class XmlGenericCheck extends AbstractCheck {
                         if (nodes == null || nodes.getLength() == 0) {
                             filePassed = false; fileErrors.add("Missing Version: " + xp);
                         } else {
-                            boolean matched = false;
                             for (int i=0; i<nodes.getLength(); i++) {
-                                String actual = nodes.item(i).getTextContent().trim();
-                                if (resolveProperties) actual = resolve(actual, currentRoot, this.propertyResolutions);
-                                if (compareValues(actual, minVer, "GTE", "SEMVER")) { matched = true; fileSuccesses.add(xp + "=" + actual); break; }
+                                String rawValue = nodes.item(i).getTextContent().trim();
+                                java.util.Set<String> allValues = resolveAll(rawValue, currentRoot);
+                                for (String actual : allValues) {
+                                    if (compareValues(actual, minVer, "GTE", "SEMVER")) {
+                                        fileSuccesses.add(xp + "=" + actual);
+                                    } else {
+                                        filePassed = false;
+                                        fileErrors.add("Resolution of " + xp + " too low: '" + actual + "' (Min: '" + minVer + "')");
+                                    }
+                                }
                             }
-                            if (!matched) { filePassed = false; fileErrors.add("Version too low: " + xp); }
                         }
                     }
                 }
 
-                // Legacy/Xpath logic
-                if (xpathExpr != null) {
-                    NodeList nodes = (NodeList) xpath.evaluate(xpathExpr, doc, XPathConstants.NODESET);
-                    if ("EXISTS".equalsIgnoreCase(mode)) {
-                        if (nodes.getLength() == 0) { filePassed = false; fileErrors.add("XPath not found: " + xpathExpr); }
-                        else fileSuccesses.add("Found: " + xpathExpr);
-                    } else { // FORBIDDEN
-                        if (nodes.getLength() > 0) { filePassed = false; fileErrors.add("Forbidden XPath found: " + xpathExpr); }
+                // 3. Element Content Pairs
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> contentPairs = (List<Map<String, Object>>) params.get("elementContentPairs");
+                if (contentPairs != null) {
+                    for (Map<String, Object> pair : contentPairs) {
+                        String el = (String) pair.get("element");
+                        String localName = (el != null && el.contains(":")) ? el.substring(el.lastIndexOf(":") + 1) : el;
+                        String xp = "//*[local-name()='" + localName + "']";
+                        @SuppressWarnings("unchecked")
+                        List<String> fTokens = (List<String>) pair.get("forbiddenTokens");
+                        @SuppressWarnings("unchecked")
+                        List<String> rTokens = (List<String>) pair.get("requiredTokens");
+
+                        NodeList nodes = (NodeList) xpath.evaluate(xp, doc, XPathConstants.NODESET);
+                        if (nodes != null && nodes.getLength() > 0) {
+                            for (int i=0; i<nodes.getLength(); i++) {
+                                String rawValue = nodes.item(i).getTextContent().trim();
+                                if (localName.equals("config")) {
+                                    String sv = ((org.w3c.dom.Element)nodes.item(i)).getAttribute("soapVersion");
+                                    if (sv != null && !sv.isEmpty()) rawValue = sv;
+                                }
+
+                                java.util.Set<String> allValues = resolveAll(rawValue, currentRoot);
+                                for (String actualValue : allValues) {
+                                    boolean thisValuePassed = true;
+                                    if (fTokens != null) {
+                                        for (String ft : fTokens) {
+                                            if (actualValue.contains(ft)) {
+                                                filePassed = false;
+                                                thisValuePassed = false;
+                                                fileErrors.add("Forbidden token '" + ft + "' found in <" + el + ">: " + actualValue);
+                                            }
+                                        }
+                                    }
+                                    if (rTokens != null) {
+                                        boolean found = false;
+                                        for (String rt : rTokens) {
+                                            if (actualValue.contains(rt)) { found = true; break; }
+                                        }
+                                        if (!found) {
+                                            filePassed = false;
+                                            thisValuePassed = false;
+                                            fileErrors.add("None of required tokens " + rTokens + " found in <" + el + ">: " + actualValue);
+                                        }
+                                    }
+                                    if (thisValuePassed) {
+                                        fileSuccesses.add(el + " : " + actualValue);
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
+                // 4. Legacy/Xpath logic
+                if (xpathExpr != null) {
+                    NodeList nodes = (NodeList) xpath.evaluate(xpathExpr, doc, XPathConstants.NODESET);
+                    String forbiddenValue = (String) params.get("forbiddenValue");
+                    String expectedValue = (String) params.get("expectedValue");
+                    @SuppressWarnings("unchecked")
+                    List<String> forbiddenTokens = (List<String>) params.get("forbiddenTokens");
+                    String operator = (String) params.getOrDefault("operator", "EQ");
+                    String valueType = (String) params.getOrDefault("valueType", "STRING");
+                    boolean wholeWord = Boolean.parseBoolean(String.valueOf(params.getOrDefault("wholeWord", "false")));
+
+                    if ("EXISTS".equalsIgnoreCase(mode) || "OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
+                        if (nodes.getLength() == 0) { 
+                            if (!"OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
+                                filePassed = false; 
+                                fileErrors.add("XPath not found: " + xpathExpr); 
+                            }
+                        } else {
+                            for (int i=0; i<nodes.getLength(); i++) {
+                                String rawValue = nodes.item(i).getTextContent().trim();
+                                java.util.Set<String> allValues = resolveAll(rawValue, currentRoot);
+                                if (expectedValue != null) {
+                                    for (String actual : allValues) {
+                                        if (compareValues(actual, expectedValue, operator, valueType)) { 
+                                            fileSuccesses.add(xpathExpr + " matches " + expectedValue + " (" + actual + ")"); 
+                                        } else {
+                                            filePassed = false;
+                                            fileErrors.add("Resolution of " + xpathExpr + " mismatch: '" + actual + "' (Expected: '" + expectedValue + "')");
+                                        }
+                                    }
+                                } else {
+                                    fileSuccesses.add("Found: " + xpathExpr + " with resolution: " + allValues);
+                                }
+                            }
+                        }
+                    } else { // NOT_EXISTS / FORBIDDEN
+                        if (nodes.getLength() > 0) { 
+                            for (int i=0; i<nodes.getLength(); i++) {
+                                String rawValue = nodes.item(i).getTextContent().trim();
+                                java.util.Set<String> allValues = resolveAll(rawValue, currentRoot);
+                                for (String actual : allValues) {
+                                    if (forbiddenValue != null && compareValues(actual, forbiddenValue, operator, valueType)) { 
+                                        filePassed = false; 
+                                        fileErrors.add("Forbidden value '" + forbiddenValue + "' found at resolution: '" + actual + "' for XPath: " + xpathExpr); 
+                                    }
+                                    if (forbiddenTokens != null) {
+                                        for (String ft : forbiddenTokens) {
+                                            if (com.raks.aegis.util.CheckHelper.isTokenPresent(actual, ft, wholeWord, false, true)) {
+                                                filePassed = false;
+                                                fileErrors.add("Forbidden token '" + ft + "' found at resolution: '" + actual + "' for XPath: " + xpathExpr);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
 
             } catch (Exception e) {
                 filePassed = false; fileErrors.add("Error: " + e.getMessage());
@@ -130,6 +253,14 @@ public class XmlGenericCheck extends AbstractCheck {
 
             if (filePassed) {
                 passedFileCount++; passedFilesList.add(relativePath); successDetails.addAll(fileSuccesses);
+                if (xpathExpr != null) {
+                    // Re-evaluate or just use a flag? It's easier to just add it here if it passed and wasn't the "optional but missing" case.
+                    // If filePassed is true and it's OPTIONAL_MATCH, it could be missing.
+                    // But if fileSuccesses is not empty, it means we found something or it passed.
+                    if (!fileSuccesses.isEmpty()) {
+                        matchedPathsSet.add(file);
+                    }
+                }
             } else {
                 details.add(relativePath + " [" + String.join(", ", fileErrors) + "]");
             }
@@ -142,14 +273,16 @@ public class XmlGenericCheck extends AbstractCheck {
         }).toList());
 
         String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
+        String foundItemsStr = successDetails.isEmpty() ? null : String.join(", ", successDetails);
         boolean passed = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
 
         if (passed) {
             String msg = String.format("Passed XML check (%d/%d files)", passedFileCount, totalFiles);
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, msg, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr, this.propertyResolutions);
+            return finalizePass(check, msg, checkedFilesStr, foundItemsStr, matchingFilesStr, matchedPathsSet);
         } else {
+            String failDetailsStr = String.join("; ", details);
             String msg = String.format("XML check failed. (Passed: %d/%d)\n• %s", passedFileCount, totalFiles, String.join("\n• ", details));
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, msg, checkedFilesStr, null, matchingFilesStr), checkedFilesStr, null, matchingFilesStr, this.propertyResolutions);
+            return finalizeFail(check, msg, checkedFilesStr, failDetailsStr, matchingFilesStr, matchedPathsSet);
         }
     }
 

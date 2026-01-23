@@ -1,5 +1,5 @@
 package com.raks.aegis.engine;
-import com.raks.aegis.model.ValidationReport;
+import com.raks.aegis.model.*;
 import com.raks.aegis.model.ValidationReport.RuleResult;
 import com.raks.aegis.AegisMain.ApiResult;
 import org.apache.poi.ss.usermodel.*;
@@ -20,9 +20,7 @@ public class ReportGenerator {
     private static final Logger logger = LoggerFactory.getLogger(ReportGenerator.class);
     private static final String[] RULE_DOCS = {
             "QUICK_REFERENCE.md",
-            "GLOBAL_CONFIGURATION.md",
             "PROJECT_IDENTIFICATION.md",
-            "CROSS_PROJECT_RESOLUTION.md",
             "CODE_FILE_EXISTS.md",
             "CODE_GENERIC_TOKEN_SEARCH.md",
             "CODE_GENERIC_TOKEN_SEARCH_FORBIDDEN.md",
@@ -31,7 +29,6 @@ public class ReportGenerator {
             "CODE_JSON_VALIDATION_REQUIRED.md",
             "CODE_POM_VALIDATION_FORBIDDEN.md",
             "CODE_POM_VALIDATION_REQUIRED.md",
-            "CODE_PROJECT_CONTEXT.md",
             "CODE_XML_ATTRIBUTE_EXISTS.md",
             "CODE_XML_ATTRIBUTE_NOT_EXISTS.md",
             "CODE_XML_ELEMENT_CONTENT_FORBIDDEN.md",
@@ -122,8 +119,8 @@ public class ReportGenerator {
                                             Collectors.joining(", "))))
                             .entrySet().stream()
                             .map(entry -> {
-                                String msg = entry.getKey().replace("[Config] ", "<span class='config-label'>CONFIG - </span>");
-                                String files = entry.getValue().replace("[Config] ", "<span class='config-label'>CONFIG - </span>");
+                                String msg = entry.getKey();
+                                String files = entry.getValue();
                                 if (files.isEmpty()) return "• " + msg;
                                 
                                 String[] fileArr = files.split(", ");
@@ -910,7 +907,13 @@ public class ReportGenerator {
                             table { border-collapse: collapse; width: 100%%; margin: 20px 0; color: #333 !important; }
                             th, td { border: 1px solid #ddd; padding: 10px; text-align: left; }
                             th { background: #f1f1f1; color: #333 !important; }
-                            blockquote { border-left: 4px solid var(--raks-purple); margin: 0; padding-left: 20px; color: #555; }
+                            blockquote { border-left: 4px solid var(--raks-purple); margin: 20px 0; padding: 10px 20px; color: #555; background-color: #f9f9f9; }
+                            .alert { padding: 15px; margin: 20px 0; border-left: 5px solid #eee; border-radius: 4px; }
+                            .alert.tip { background-color: #f3f9f1; border-color: #28a745; color: #1e4620; }
+                            .alert.important { background-color: #f5f0ff; border-color: #663399; color: #3c1e5a; }
+                            .alert.note { background-color: #f0f7ff; border-color: #0366d6; color: #004085; }
+                            .alert.warning { background-color: #fff9e6; border-color: #ffc107; color: #856404; }
+                            .alert.caution { background-color: #fff5f5; border-color: #dc3545; color: #721c24; }
                             .search-highlight { background-color: #ffeb3b; color: black; font-weight: bold; border-radius: 2px; }
                             ::highlight(search-results) { background-color: #ffeb3b; color: black; }
                             .match-count { background: #663399; color: white; border-radius: 10px; padding: 2px 8px; font-size: 0.8em; margin-left: 10px; font-weight: bold; white-space: nowrap; }
@@ -1309,13 +1312,29 @@ public class ReportGenerator {
 
         html = html.replaceAll("(?i)(?m)^#{1,6}\\s*Version History[\\s\\S]*$", "");
         html = html.replaceAll("\\[([^\\]]+)\\]\\((?:CODE_|CONFIG_)?([^)]+)\\.md\\)", "<a href=\"#\" onclick=\"showRule(event, '$2')\">$1</a>");
-        html = html.replaceAll("(?m)^# (.*)$", "<h1>$1</h1>");
-        html = html.replaceAll("(?m)^## (.*)$", "<h2>$1</h2>");
-        html = html.replaceAll("(?m)^### (.*)$", "<h3>$1</h3>");
-        html = html.replaceAll("(?m)^#### (.*)$", "<h4>$1</h4>");
+        
+        // Horizontal Rules
+        html = html.replaceAll("(?m)^\\s*---+$", "<hr>");
+
+        // GitHub style alerts
+        html = html.replaceAll("(?m)^\\s*> \\[!TIP\\]\\s*(.*)$", "<div class='alert tip'><strong>TIP:</strong> $1</div>");
+        html = html.replaceAll("(?m)^\\s*> \\[!IMPORTANT\\]\\s*(.*)$", "<div class='alert important'><strong>IMPORTANT:</strong> $1</div>");
+        html = html.replaceAll("(?m)^\\s*> \\[!NOTE\\]\\s*(.*)$", "<div class='alert note'><strong>NOTE:</strong> $1</div>");
+        html = html.replaceAll("(?m)^\\s*> \\[!WARNING\\]\\s*(.*)$", "<div class='alert warning'><strong>WARNING:</strong> $1</div>");
+        html = html.replaceAll("(?m)^\\s*> \\[!CAUTION\\]\\s*(.*)$", "<div class='alert caution'><strong>CAUTION:</strong> $1</div>");
+        
+        // Headers
+        html = html.replaceAll("(?m)^\\s*# (.*)$", "<h1>$1</h1>");
+        html = html.replaceAll("(?m)^\\s*## (.*)$", "<h2>$1</h2>");
+        html = html.replaceAll("(?m)^\\s*### (.*)$", "<h3>$1</h3>");
+        html = html.replaceAll("(?m)^\\s*#### (.*)$", "<h4>$1</h4>");
+        
+        // Formatting
         html = html.replaceAll("\\*\\*(.*?)\\*\\*", "<strong>$1</strong>");
-        html = html.replaceAll("(?m)^- (.*)$", "<li>$1</li>");
-        html = html.replaceAll("(?m)^\\|(.+)\\|$", "<tr><td>$1</td></tr>");
+        html = html.replaceAll("(?m)^\\s*- (.*)$", "<li>$1</li>");
+        
+        // Tables
+        html = html.replaceAll("(?m)^\\s*\\|(.+)\\|$", "<tr><td>$1</td></tr>");
         html = html.replaceAll("\\|", "</td><td>");
         html = html.replaceAll("<tr><td></td><td>", "<tr><td>");
         html = html.replaceAll("</td><td></td></tr>", "</td></tr>");
@@ -1324,6 +1343,9 @@ public class ReportGenerator {
 
         html = html.replaceAll("(?s)(<tr>.*?</tr>)", "<table>$1</table>");
         html = html.replaceAll("</table>\\s*<table>", "");
+
+        // Blockquotes (generic - if not an alert)
+        html = html.replaceAll("(?m)^\\s*> (?!\\s*\\[!)(.*)$", "<blockquote>$1</blockquote>");
 
         html = html.replaceAll("(?m)^$", "<br>");
 
@@ -1469,12 +1491,14 @@ public class ReportGenerator {
 
     private static String formatMessage(String message) {
         String escaped = escape(message);
-        return escaped.replace("Files Checked:", "<strong>Files Checked:</strong>")
+        return escaped.replace("\n", "<br/>")
+                      .replace("Files Checked:", "<strong>Files Checked:</strong>")
                       .replace("Items Found:", "<strong>Items Found:</strong>")
                       .replace("Items Matched:", "<strong>Items Matched:</strong>")
                       .replace("Details:", "<strong>Details:</strong>")
                       .replace("Failures:", "<strong>Failures:</strong>") // Bold 'Failures:' for failed checks
                       .replace("Properties Resolved:", "<strong>Properties Resolved:</strong>")
+                      .replace("CONFIG - ", "<span class='config-label'>CONFIG - </span>")
                       .replace("[Config] ", "<span class='config-label'>CONFIG - </span>");
     }
     private static String readResource(String path) {

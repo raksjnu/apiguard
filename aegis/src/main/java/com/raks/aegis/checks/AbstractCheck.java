@@ -16,6 +16,7 @@ public abstract class AbstractCheck {
     protected List<String> ignoredFileNames = new java.util.ArrayList<>();
     protected List<String> ignoredFilePrefixes = new java.util.ArrayList<>();
     protected Path linkedConfigPath;
+    protected java.util.Set<Path> fileFilter;
 
     public void init(Map<String, Object> params) {
         this.effectiveParams = params;
@@ -31,24 +32,39 @@ public abstract class AbstractCheck {
         this.linkedConfigPath = linkedConfigPath;
     }
 
+    public void setFileFilter(java.util.Set<Path> fileFilter) {
+        this.fileFilter = fileFilter;
+    }
+
     /**
      * Additive helper to find files across project and linked config roots.
      */
     protected List<Path> findFiles(Path projectRoot, List<String> filePatterns, boolean includeLinked) {
         List<Path> searchRoots = com.raks.aegis.util.ProjectContextHelper.getEffectiveSearchRoots(projectRoot, this.linkedConfigPath, includeLinked);
-        List<Path> matchingFiles = new ArrayList<>();
+        List<Path> allMatching = new ArrayList<>();
         
         for (Path root : searchRoots) {
-            try (Stream<Path> paths = Files.walk(root)) {
-                paths.filter(Files::isRegularFile)
+            try (java.util.stream.Stream<Path> paths = java.nio.file.Files.walk(root)) {
+                paths.filter(java.nio.file.Files::isRegularFile)
                     .filter(path -> matchesAnyPattern(path, filePatterns, root))
                     .filter(path -> !shouldIgnorePath(root, path))
-                    .forEach(matchingFiles::add);
-            } catch (Exception e) {
-                // Silently skip if a root is inaccessible (safe fallback)
+                    .forEach(allMatching::add);
+            } catch (Exception e) {}
+        }
+
+        if (fileFilter != null && !fileFilter.isEmpty()) {
+            boolean filterApplicable = false;
+            for (Path f : fileFilter) {
+                if (allMatching.contains(f)) {
+                    filterApplicable = true;
+                    break;
+                }
+            }
+            if (filterApplicable) {
+                return allMatching.stream().filter(fileFilter::contains).toList();
             }
         }
-        return matchingFiles;
+        return allMatching;
     }
 
     protected void addPropertyResolution(String original, String resolved) {
@@ -73,7 +89,7 @@ public abstract class AbstractCheck {
         if (propertyResolutions.isEmpty()) {
             return "";
         }
-        return String.join(", ", propertyResolutions);
+        return String.join("\n", propertyResolutions);
     }
 
     protected Map<String, Object> getEffectiveParams(Check check) {
@@ -98,25 +114,109 @@ public abstract class AbstractCheck {
     }
     
     protected String resolve(String value, Path projectRoot) {
-        if (value == null) return null;
-        boolean resolveLinked = (Boolean) getEffectiveParams(null).getOrDefault("resolveLinkedConfig", false);
-        return com.raks.aegis.util.ProjectContextHelper.resolveWithFallback(value, projectRoot, this.linkedConfigPath, resolveLinked);
+        return resolve(value, projectRoot, this.propertyResolutions);
     }
 
     protected String resolve(String value, Path projectRoot, java.util.List<String> collection) {
         if (value == null) return null;
-        boolean resolveLinked = (Boolean) getEffectiveParams(null).getOrDefault("resolveLinkedConfig", false);
         
-        // Determine prefix for this root: [Config] for linked config path, null (for "from ") for primary
-        String prefix = (linkedConfigPath != null && projectRoot.equals(linkedConfigPath)) ? "[Config] " : null;
-        
-        String resolved = com.raks.aegis.util.PropertyResolver.resolve(value, projectRoot, collection, prefix);
-        
-        // Fallback to linked config if resolved value still contains placeholders and it's not already the linkedConfigPath
-        if (resolveLinked && linkedConfigPath != null && !projectRoot.equals(linkedConfigPath)) {
-            resolved = com.raks.aegis.util.PropertyResolver.resolve(resolved, linkedConfigPath, collection, "[Config] ");
+        Map<String, Object> params = getEffectiveParams(null);
+        boolean resolvePropertiesMaster = true; 
+        if (params != null && (params.containsKey("resolveProperties") || params.containsKey("resolveProperty"))) {
+             resolvePropertiesMaster = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", params.getOrDefault("resolveProperty", "true"))));
         }
-        return resolved;
+
+        if (!resolvePropertiesMaster) return value;
+
+        boolean includeLinked = false;
+        if (params != null) {
+            if (params.containsKey("includeLinkedConfig")) {
+                includeLinked = Boolean.parseBoolean(String.valueOf(params.get("includeLinkedConfig")));
+            } else if (params.containsKey("resolveLinkedConfig")) {
+                includeLinked = Boolean.parseBoolean(String.valueOf(params.get("resolveLinkedConfig")));
+            }
+        }
+        
+        return com.raks.aegis.util.PropertyResolver.resolveProjectProperty(value, projectRoot, this.linkedConfigPath, includeLinked, collection);
+    }
+
+    protected java.util.Set<String> resolveAll(String value, Path projectRoot) {
+        return resolveAll(value, projectRoot, this.propertyResolutions);
+    }
+
+    protected java.util.Set<String> resolveAll(String value, Path projectRoot, java.util.List<String> collection) {
+        if (value == null) return java.util.Collections.emptySet();
+        
+        Map<String, Object> params = getEffectiveParams(null);
+        boolean resolvePropertiesMaster = true; 
+        if (params != null && (params.containsKey("resolveProperties") || params.containsKey("resolveProperty"))) {
+             resolvePropertiesMaster = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", params.getOrDefault("resolveProperty", "true"))));
+        }
+
+        if (!resolvePropertiesMaster) return java.util.Collections.singleton(value);
+
+        boolean includeLinked = false;
+        if (params != null) {
+            if (params.containsKey("includeLinkedConfig")) {
+                includeLinked = Boolean.parseBoolean(String.valueOf(params.get("includeLinkedConfig")));
+            } else if (params.containsKey("resolveLinkedConfig")) {
+                includeLinked = Boolean.parseBoolean(String.valueOf(params.get("resolveLinkedConfig")));
+            }
+        }
+        
+        return com.raks.aegis.util.CheckHelper.resolveAndRecord(value, projectRoot, this.linkedConfigPath, null, true, collection, includeLinked);
+    }
+
+    protected java.util.Set<String> resolveAndRecord(String value, Path projectRoot, List<String> searchTokens, boolean alwaysRecord) {
+        Map<String, Object> params = getEffectiveParams(null);
+        boolean includeLinked = false;
+        if (params != null) {
+            if (params.containsKey("includeLinkedConfig")) {
+                includeLinked = Boolean.parseBoolean(String.valueOf(params.get("includeLinkedConfig")));
+            } else if (params.containsKey("resolveLinkedConfig")) {
+                includeLinked = Boolean.parseBoolean(String.valueOf(params.get("resolveLinkedConfig")));
+            }
+        }
+        return com.raks.aegis.util.CheckHelper.resolveAndRecord(value, projectRoot, this.linkedConfigPath, searchTokens, alwaysRecord, this.propertyResolutions, includeLinked);
+    }
+
+    protected boolean searchAll(String rawContent, Path projectRoot, List<String> tokens, 
+                              boolean caseSensitive, boolean isRegex, boolean wholeWord, 
+                              List<java.util.regex.Pattern> patterns, 
+                              java.util.Set<String> fileFound, 
+                              java.util.Set<String> thisFileMatchedTokens, 
+                              java.util.Set<String> allFoundItems) {
+        
+        java.util.Set<String> resolvedContents = resolveAndRecord(rawContent, projectRoot, tokens, false);
+        boolean contentMatched = false;
+
+        for (String contentForMatch : resolvedContents) {
+            if (!caseSensitive && !isRegex && !wholeWord) contentForMatch = contentForMatch.toLowerCase();
+
+            for (int i = 0; i < tokens.size(); i++) {
+                String configToken = tokens.get(i);
+                if (!caseSensitive && !isRegex && !wholeWord) configToken = configToken.toLowerCase();
+                
+                if (isRegex || wholeWord) {
+                    java.util.regex.Matcher m = patterns.get(i).matcher(contentForMatch);
+                    while (m.find()) { 
+                        String tokenToAdd = m.group();
+                        fileFound.add(tokenToAdd);
+                        thisFileMatchedTokens.add(tokens.get(i));
+                        allFoundItems.add(tokenToAdd);
+                        contentMatched = true;
+                    }
+                } else {
+                    if (contentForMatch.contains(configToken)) {
+                        fileFound.add(configToken);
+                        thisFileMatchedTokens.add(tokens.get(i));
+                        allFoundItems.add(configToken);
+                        contentMatched = true;
+                    }
+                }
+            }
+        }
+        return contentMatched;
     }
 
     protected List<String> resolveEnvironments(Check check) {
@@ -127,7 +227,7 @@ public abstract class AbstractCheck {
     }
 
     protected String getCustomMessage(Check check, String defaultMsg) {
-        return getCustomMessage(check, defaultMsg, null);
+        return getCustomMessage(check, defaultMsg, null, null, null);
     }
 
     protected String getCustomMessage(Check check, String defaultMsg, String checkedFiles) {
@@ -140,17 +240,21 @@ public abstract class AbstractCheck {
 
     protected String getCustomMessage(Check check, String defaultMsg, String checkedFiles, String foundItems, String matchingFiles) {
         Map<String, Object> params = getEffectiveParams(check);
+        String template = null;
         if (params.containsKey("message")) {
-            return (String) params.get("message");
+            template = (String) params.get("message");
+        } else if (check.getRule() != null && check.getRule().getErrorMessage() != null && !check.getRule().getErrorMessage().isEmpty()) {
+            template = check.getRule().getErrorMessage();
         }
-        if (check.getRule() != null && check.getRule().getErrorMessage() != null && !check.getRule().getErrorMessage().isEmpty()) {
-            return formatMessage(check.getRule().getErrorMessage(), defaultMsg, null, checkedFiles, foundItems, matchingFiles);
+        
+        if (template != null) {
+            return formatMessage(template, defaultMsg, null, checkedFiles, foundItems, matchingFiles);
         }
-        return defaultMsg;
+        return formatMessage("{DEFAULT_MESSAGE}", defaultMsg, null, checkedFiles, foundItems, matchingFiles);
     }
 
     protected String getCustomSuccessMessage(Check check, String defaultMsg) {
-        return getCustomSuccessMessage(check, defaultMsg, null);
+        return getCustomSuccessMessage(check, defaultMsg, null, null, null);
     }
 
     protected String getCustomSuccessMessage(Check check, String defaultMsg, String checkedFiles) {
@@ -162,30 +266,85 @@ public abstract class AbstractCheck {
     }
 
     protected String getCustomSuccessMessage(Check check, String defaultMsg, String checkedFiles, String foundItems, String matchingFiles) {
+        String template = null;
         if (check.getRule() != null && check.getRule().getSuccessMessage() != null && !check.getRule().getSuccessMessage().isEmpty()) {
-            return formatMessage(check.getRule().getSuccessMessage(), defaultMsg, null, checkedFiles, foundItems, matchingFiles);
+            template = check.getRule().getSuccessMessage();
         }
-        return defaultMsg;
+        
+        if (template != null) {
+            return formatMessage(template, defaultMsg, null, checkedFiles, foundItems, matchingFiles);
+        }
+        // If no template, use {DEFAULT_MESSAGE} as template for pass case too to get auto-append
+        return formatMessage("{DEFAULT_MESSAGE}", defaultMsg, null, checkedFiles, foundItems, matchingFiles);
+    }
+
+    // New helper methods to finalize results in a segregated way
+    protected CheckResult finalizePass(Check check, String defaultMsg, String checkedFiles, String matchingFiles) {
+        return finalizePass(check, defaultMsg, checkedFiles, null, matchingFiles, null);
+    }
+    protected CheckResult finalizePass(Check check, String defaultMsg, String checkedFiles, String foundItems, String matchingFiles) {
+        return finalizePass(check, defaultMsg, checkedFiles, foundItems, matchingFiles, null);
+    }
+
+    protected CheckResult finalizePass(Check check, String defaultMsg, String checkedFiles, String foundItems, String matchingFiles, java.util.Set<Path> matchedPaths) {
+        String msg = getCustomSuccessMessage(check, defaultMsg, checkedFiles, foundItems, matchingFiles);
+        return CheckResult.pass(check.getRuleId(), check.getDescription(), msg, checkedFiles, foundItems, matchingFiles, this.propertyResolutions, matchedPaths);
+    }
+
+    protected CheckResult finalizeFail(Check check, String defaultMsg, String checkedFiles, String foundItems, String matchingFiles) {
+        return finalizeFail(check, defaultMsg, checkedFiles, foundItems, matchingFiles, null);
+    }
+
+    protected CheckResult finalizeFail(Check check, String defaultMsg, String checkedFiles, String foundItems, String matchingFiles, java.util.Set<Path> matchedPaths) {
+        String msg = getCustomMessage(check, defaultMsg, checkedFiles, foundItems, matchingFiles);
+        return CheckResult.fail(check.getRuleId(), check.getDescription(), msg, checkedFiles, foundItems, matchingFiles, this.propertyResolutions, matchedPaths);
     }
 
     protected String formatMessage(String template, String coreDetails, String failures, String checkedFiles, String foundItems, String matchingFiles) {
         if (template == null || template.isEmpty()) {
-            return coreDetails != null ? coreDetails : "";
+            template = "{DEFAULT_MESSAGE}";
         }
+        
         String result = template;
         String effectiveDetails = coreDetails != null ? coreDetails : (failures != null ? failures : "");
+        
+        // Define standard tokens
+        String cf = (checkedFiles != null && !checkedFiles.trim().isEmpty()) ? checkedFiles : "N/A";
+        String fi = (foundItems != null && !foundItems.trim().isEmpty()) ? foundItems : "N/A";
+        String mf = (matchingFiles != null && !matchingFiles.trim().isEmpty()) ? matchingFiles : "N/A";
+        String propertyResolved = getPropertyResolutionsString();
+        String pr = !propertyResolved.isEmpty() ? "Properties Resolved:\n" + propertyResolved : "Properties Resolved: N/A";
+
+        // Check if template uses tokens. If not, we will append them automatically.
+        boolean usesTokens = template.contains("{CHECKED_FILES}") || template.contains("{FOUND_ITEMS}") || 
+                             template.contains("{MATCHING_FILES}") || template.contains("{PROPERTY_RESOLVED}") ||
+                             template.contains("{DEFAULT_MESSAGE}") || template.contains("{CORE_DETAILS}") ||
+                             template.contains("{SCANNED_FILES}") || template.contains("{FAILURES}");
+
         result = result.replace("{CORE_DETAILS}", effectiveDetails);
         result = result.replace("{DEFAULT_MESSAGE}", effectiveDetails);
         result = result.replace("{FAILURES}", failures != null ? failures : "");
-        result = result.replace("{CHECKED_FILES}", (checkedFiles != null && !checkedFiles.trim().isEmpty()) ? checkedFiles : "N/A");
-        result = result.replace("{SCANNED_FILES}", (checkedFiles != null && !checkedFiles.trim().isEmpty()) ? checkedFiles : "N/A");
-        result = result.replace("{FOUND_ITEMS}", (foundItems != null && !foundItems.trim().isEmpty()) ? foundItems : "N/A");
-        result = result.replace("{MATCHING_FILES}", (matchingFiles != null && !matchingFiles.trim().isEmpty()) ? matchingFiles : "N/A");
-        String propertyResolved = getPropertyResolutionsString();
-        result = result.replace("{PROPERTY_RESOLVED}", !propertyResolved.isEmpty() ? "Properties Resolved: " + propertyResolved : "Properties Resolved: N/A");
-        if (!template.contains("{") && coreDetails != null && !coreDetails.isEmpty()) {
-            result += "\n\n" + coreDetails;
+        result = result.replace("{CHECKED_FILES}", cf);
+        result = result.replace("{SCANNED_FILES}", cf);
+        result = result.replace("{FOUND_ITEMS}", fi);
+        result = result.replace("{MATCHING_FILES}", mf);
+        result = result.replace("{PROPERTY_RESOLVED}", pr);
+
+        // Innovation: Automatically append tokens if they are not explicitly mentioned in the template
+        if (!usesTokens) {
+            StringBuilder autoAppend = new StringBuilder();
+            if (result.equals(effectiveDetails)) {
+                // If the result is just the default message, we prefix it to separate from tokens
+                // But normally we want the original message at the top
+            }
+            autoAppend.append("\nFiles Checked: ").append(cf);
+            autoAppend.append("\nItems Found: ").append(fi);
+            autoAppend.append("\nItems Matched: ").append(mf);
+            autoAppend.append("\nDetails: ").append(effectiveDetails);
+            autoAppend.append("\n").append(pr);
+            result += autoAppend.toString();
         }
+        
         return result;
     }
 
@@ -271,81 +430,10 @@ public abstract class AbstractCheck {
     }
 
     protected boolean evaluateMatchMode(String matchMode, int totalFiles, int matchingFiles) {
-        if (matchMode == null || matchMode.isEmpty()) return matchingFiles == totalFiles; 
-        switch (matchMode.toUpperCase()) {
-            case "ANY_FILE": return matchingFiles > 0;
-            case "NONE_OF_FILES": return matchingFiles == 0;
-            case "EXACTLY_ONE": return matchingFiles == 1;
-            case "ALL_FILES":
-            default: return matchingFiles == totalFiles;
-        }
+        return com.raks.aegis.util.CheckHelper.evaluateMatchMode(matchMode, totalFiles, matchingFiles);
     }
 
     protected boolean compareValues(String actual, String expected, String operator, String type) {
-        if (actual == null || expected == null) return false;
-        if (operator == null) operator = "EQ";
-        if (type == null) type = "STRING";
-        try {
-            if ("INTEGER".equalsIgnoreCase(type)) {
-                long act = Long.parseLong(actual.trim());
-                long exp = Long.parseLong(expected.trim());
-                return compareNumeric(act, exp, operator);
-            } else if ("SEMVER".equalsIgnoreCase(type)) {
-                return compareSemVer(actual.trim(), expected.trim(), operator);
-            } else {
-                return compareString(actual, expected, operator);
-            }
-        } catch (NumberFormatException e) {
-            return "NEQ".equalsIgnoreCase(operator);
-        }
-    }
-
-    private boolean compareNumeric(long a, long b, String op) {
-        switch (op.toUpperCase()) {
-            case "EQ": return a == b;
-            case "NEQ": return a != b;
-            case "GT": return a > b;
-            case "GTE": return a >= b;
-            case "LT": return a < b;
-            case "LTE": return a <= b;
-            default: return false;
-        }
-    }
-
-    private boolean compareString(String a, String b, String op) {
-        switch (op.toUpperCase()) {
-            case "EQ": return a.equals(b);
-            case "NEQ": return !a.equals(b);
-            case "CONTAINS": return a.contains(b);
-            case "NOT_CONTAINS": return !a.contains(b);
-            case "MATCHES": return a.matches(b);
-            case "NOT_MATCHES": return !a.matches(b);
-            case "GT": return a.compareTo(b) > 0;
-            case "GTE": return a.compareTo(b) >= 0;
-            case "LT": return a.compareTo(b) < 0;
-            case "LTE": return a.compareTo(b) <= 0;
-            default: return a.equals(b);
-        }
-    }
-
-    private boolean compareSemVer(String v1, String v2, String op) {
-        String[] p1 = v1.replaceAll("[^0-9\\.]", "").split("\\.");
-        String[] p2 = v2.replaceAll("[^0-9\\.]", "").split("\\.");
-        int len = Math.max(p1.length, p2.length);
-        int result = 0;
-        for (int i = 0; i < len; i++) {
-            int n1 = i < p1.length && !p1[i].isEmpty() ? Integer.parseInt(p1[i]) : 0;
-            int n2 = i < p2.length && !p2[i].isEmpty() ? Integer.parseInt(p2[i]) : 0;
-            if (n1 != n2) { result = Integer.compare(n1, n2); break; }
-        }
-        switch (op.toUpperCase()) {
-            case "EQ": return result == 0;
-            case "NEQ": return result != 0;
-            case "GT": return result > 0;
-            case "GTE": return result >= 0;
-            case "LT": return result < 0;
-            case "LTE": return result <= 0;
-            default: return result == 0;
-        }
+        return com.raks.aegis.util.CheckHelper.compareValues(actual, expected, operator, type);
     }
 }

@@ -1,6 +1,5 @@
 package com.raks.aegis.checks;
 
-import com.raks.aegis.checks.CheckFactory;
 import com.raks.aegis.model.Check;
 import com.raks.aegis.model.CheckResult;
 import java.nio.file.Path;
@@ -23,19 +22,26 @@ public class ConditionalCheck extends AbstractCheck {
         }
 
         boolean preConditionMatched = false;
+        java.util.Set<java.nio.file.Path> preconditionMatchedPaths = new java.util.HashSet<>();
+
         if ("OR".equalsIgnoreCase(logic)) {
             for (Check pre : preconditions) {
-                if (evaluateAtomic(projectRoot, pre).passed) {
+                CheckResult res = evaluateAtomic(projectRoot, pre, null);
+                if (res.passed) {
                     preConditionMatched = true;
+                    if (res.matchedPaths != null) preconditionMatchedPaths.addAll(res.matchedPaths);
                     break;
                 }
             }
         } else { 
             preConditionMatched = true;
             for (Check pre : preconditions) {
-                if (!evaluateAtomic(projectRoot, pre).passed) {
+                CheckResult res = evaluateAtomic(projectRoot, pre, null);
+                if (!res.passed) {
                     preConditionMatched = false;
                     break;
+                } else if (res.matchedPaths != null) {
+                    preconditionMatchedPaths.addAll(res.matchedPaths);
                 }
             }
         }
@@ -52,7 +58,8 @@ public class ConditionalCheck extends AbstractCheck {
             java.util.Set<String> aggregatedMatchingItems = new java.util.LinkedHashSet<>(); // Success matches
 
             for (Check nested : onSuccess) {
-                CheckResult res = evaluateAtomic(projectRoot, nested);
+                // Pass the collected matched paths from preconditions as a filter to success checks
+                CheckResult res = evaluateAtomic(projectRoot, nested, preconditionMatchedPaths);
                 details.append("- ").append(res.ruleId != null ? res.ruleId : "Check").append(": ").append(res.message).append("\n");
 
                 if (res.checkedFiles != null && !res.checkedFiles.isEmpty()) {
@@ -92,9 +99,9 @@ public class ConditionalCheck extends AbstractCheck {
             String matchingItemsStr = aggregatedMatchingItems.isEmpty() ? null : String.join(", ", aggregatedMatchingItems);
 
             if (allPassed) {
-                 return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, details.toString(), checkedFilesStr, matchingItemsStr), checkedFilesStr, matchingItemsStr, this.propertyResolutions);
+                 return finalizePass(check, details.toString(), checkedFilesStr, matchingItemsStr);
             } else {
-                 return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, details.toString(), checkedFilesStr, foundItemsStr, matchingItemsStr), checkedFilesStr, foundItemsStr, matchingItemsStr, this.propertyResolutions);
+                 return finalizeFail(check, details.toString(), checkedFilesStr, foundItemsStr, matchingItemsStr);
             }
         } else {
 
@@ -102,12 +109,18 @@ public class ConditionalCheck extends AbstractCheck {
         }
     }
 
-    private CheckResult evaluateAtomic(Path projectRoot, Check check) {
+    private CheckResult evaluateAtomic(Path projectRoot, Check check, java.util.Set<Path> fileFilter) {
         try {
             AbstractCheck validator = CheckFactory.create(check);
+            validator.setLinkedConfigPath(this.linkedConfigPath);
+            validator.setIgnoredFiles(this.ignoredFileNames, this.ignoredFilePrefixes);
+            if (fileFilter != null && !fileFilter.isEmpty()) {
+                validator.setFileFilter(fileFilter);
+            }
             return validator.execute(projectRoot, check);
         } catch (Exception e) {
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), "Error executing nested check: " + e.getMessage());
+            return CheckResult.fail(check.getRuleId(), check.getDescription() != null ? check.getDescription() : check.getType(), 
+                    "Error executing nested check: " + e.getMessage());
         }
     }
 

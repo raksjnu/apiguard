@@ -27,7 +27,6 @@ public class PropertyGenericCheck extends AbstractCheck {
         String operator = (String) params.getOrDefault("operator", "MATCHES"); 
         String valueType = (String) params.getOrDefault("valueType", "STRING");
         String matchMode = (String) params.getOrDefault("matchMode", "ALL_FILES");
-        boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "true")));
 
         if (filePatterns == null || filePatterns.isEmpty()) return failConfig(check, "filePatterns required");
 
@@ -39,11 +38,14 @@ public class PropertyGenericCheck extends AbstractCheck {
         int totalFiles = matchingFiles.size();
         List<String> details = new ArrayList<>();
         List<String> passedFilesList = new ArrayList<>();
+        java.util.Set<String> allFoundItems = new java.util.LinkedHashSet<>();
 
+        java.util.Set<Path> matchedPathsSet = new java.util.HashSet<>();
         for (Path file : matchingFiles) {
             boolean filePassed = true;
             List<String> fileErrors = new ArrayList<>();
             List<String> fileSuccesses = new ArrayList<>();
+
             
             Path currentRoot = searchRoots.stream().filter(file::startsWith).findFirst().orElse(projectRoot);
             String relativePath = currentRoot.relativize(file).toString().replace("\\", "/");
@@ -63,9 +65,15 @@ public class PropertyGenericCheck extends AbstractCheck {
                         String actual = props.getProperty(key);
                         if (actual == null) { filePassed = false; fileErrors.add("Missing field: " + key); }
                         else {
-                            if (resolveProperties) actual = resolve(actual, currentRoot, this.propertyResolutions);
-                            if (!actual.equals(expected)) { filePassed = false; fileErrors.add("Mismatch at " + key); }
-                            else fileSuccesses.add(key + "=" + actual);
+                            java.util.Set<String> allValues = resolveAndRecord(actual, currentRoot, java.util.Collections.singletonList(expected), true);
+                            for (String res : allValues) {
+                                if (!res.equals(expected)) { 
+                                    filePassed = false; 
+                                    fileErrors.add(String.format("Resolution mismatch for '%s': Actual='%s', Expected='%s'", key, res, expected));
+                                } else {
+                                    fileSuccesses.add(key + "=" + res);
+                                }
+                            }
                         }
                     }
                 }
@@ -111,27 +119,29 @@ public class PropertyGenericCheck extends AbstractCheck {
                             }
                         } else {
                             for (String key : matchingKeys) {
-                                String val = props.getProperty(key);
-                                if (resolveProperties) val = resolve(val, currentRoot, this.propertyResolutions);
+                                String rawVal = props.getProperty(key);
+                                java.util.Set<String> allValues = resolveAndRecord(rawVal, currentRoot, allowedValues, !"OPTIONAL_MATCH".equalsIgnoreCase(mode));
                                 
-                                boolean match = false;
-                                if (allowedValues != null && !allowedValues.isEmpty()) {
-                                    for (String expected : allowedValues) {
-                                        if (compareValues(val, expected, propOperator, propType)) {
-                                            match = true;
-                                            break;
+                                for (String val : allValues) {
+                                    boolean match = false;
+                                    if (allowedValues != null && !allowedValues.isEmpty()) {
+                                        for (String expected : allowedValues) {
+                                            if (compareValues(val, expected, propOperator, propType)) {
+                                                match = true;
+                                                break;
+                                            }
                                         }
+                                    } else {
+                                        // If no allowed values provided, treat it as existence check
+                                        match = true;
                                     }
-                                } else {
-                                    // If no allowed values provided, treat it as existence check
-                                    match = true;
-                                }
 
-                                if (!match) {
-                                    filePassed = false;
-                                    fileErrors.add("Value mismatch for " + key + " (Found: " + val + ")");
-                                } else {
-                                    fileSuccesses.add(key + "=" + val);
+                                    if (!match) {
+                                        filePassed = false;
+                                        fileErrors.add("Resolution mismatch for " + key + " (Found: " + val + ")");
+                                    } else {
+                                        fileSuccesses.add(key + "=" + val);
+                                    }
                                 }
                             }
                         }
@@ -148,10 +158,15 @@ public class PropertyGenericCheck extends AbstractCheck {
                     } else if ("VALUE_MATCH".equalsIgnoreCase(mode)) {
                         if (val == null) { filePassed = false; fileErrors.add("Missing key: " + key); }
                         else {
-                            if (resolveProperties) val = resolve(val, currentRoot, this.propertyResolutions);
-                            if (!compareValues(val, expectedValueRegex, operator, valueType)) {
-                                filePassed = false; fileErrors.add("Value mismatch for " + key);
-                            } else fileSuccesses.add(key + "=" + val);
+                            java.util.Set<String> allValues = resolveAndRecord(val, currentRoot, java.util.Collections.singletonList(expectedValueRegex), true);
+                            for (String actual : allValues) {
+                                if (!compareValues(actual, expectedValueRegex, operator, valueType)) {
+                                    filePassed = false; 
+                                    fileErrors.add("Resolution mismatch for " + key + " (Found: " + actual + ")");
+                                } else {
+                                    fileSuccesses.add(key + "=" + actual);
+                                }
+                            }
                         }
                     }
                 }
@@ -162,8 +177,13 @@ public class PropertyGenericCheck extends AbstractCheck {
 
             if (filePassed) {
                 passedFileCount++; passedFilesList.add(relativePath);
+                if (!fileSuccesses.isEmpty()) {
+                    matchedPathsSet.add(file);
+                }
+                allFoundItems.addAll(fileSuccesses);
             } else {
                 details.add(relativePath + " [" + String.join(", ", fileErrors) + "]");
+                allFoundItems.addAll(fileErrors);
             }
         }
 
@@ -174,16 +194,18 @@ public class PropertyGenericCheck extends AbstractCheck {
         }).toList());
 
         String matchingFilesStr = passedFilesList.isEmpty() ? null : String.join(", ", passedFilesList);
+        String foundItemsStr = allFoundItems.isEmpty() ? null : String.join(", ", allFoundItems);
         boolean passed = evaluateMatchMode(matchMode, totalFiles, passedFileCount);
 
         if (passed) {
             String msg = String.format("Passed Property check (%d/%d files)", passedFileCount, totalFiles);
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), getCustomSuccessMessage(check, msg, checkedFilesStr, matchingFilesStr), checkedFilesStr, matchingFilesStr, this.propertyResolutions);
+            return finalizePass(check, msg, checkedFilesStr, foundItemsStr, matchingFilesStr, matchedPathsSet);
         } else {
             String msg = String.format("Property check failed. (Passed: %d/%d)\n• %s", passedFileCount, totalFiles, String.join("\n• ", details));
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), getCustomMessage(check, msg, checkedFilesStr, null, matchingFilesStr), checkedFilesStr, null, matchingFilesStr, this.propertyResolutions);
+            return finalizeFail(check, msg, checkedFilesStr, foundItemsStr, matchingFilesStr, matchedPathsSet);
         }
     }
+
 
     private CheckResult failConfig(Check check, String msg) {
         return CheckResult.fail(check.getRuleId(), check.getDescription(), "Config Error: " + msg);

@@ -63,9 +63,12 @@ public class CheckFactory {
             instance = new TokenSearchCheck();
         }
 
-        else if (type.equals("XML_XPATH_EXISTS") || type.equals("XML_ATTRIBUTE_EXISTS") || type.equals("XML_XPATH_NOT_EXISTS") || type.equals("XML_ATTRIBUTE_NOT_EXISTS") || type.equals("XML_ELEMENT_CONTENT_REQUIRED") || type.equals("XML_ELEMENT_CONTENT_FORBIDDEN")) {
-            if (type.contains("NOT_EXISTS") || type.contains("FORBIDDEN")) effectiveParams.put("mode", "NOT_EXISTS");
-            else effectiveParams.put("mode", "EXISTS");
+        else if (type.equals("XML_XPATH_EXISTS") || type.equals("XML_ATTRIBUTE_EXISTS") || type.equals("XML_XPATH_NOT_EXISTS") || type.equals("XML_ATTRIBUTE_NOT_EXISTS") || type.equals("XML_ELEMENT_CONTENT_REQUIRED") || type.equals("XML_ELEMENT_CONTENT_FORBIDDEN") || type.equals("XML_XPATH_OPTIONAL")) {
+            if (!effectiveParams.containsKey("mode")) {
+                if (type.contains("NOT_EXISTS") || type.contains("FORBIDDEN")) effectiveParams.put("mode", "NOT_EXISTS");
+                else if (type.contains("OPTIONAL")) effectiveParams.put("mode", "OPTIONAL_MATCH");
+                else effectiveParams.put("mode", "EXISTS");
+            }
 
             if (!effectiveParams.containsKey("xpath") && effectiveParams.containsKey("xpathExpressions")) {
                 Object exprsObj = effectiveParams.get("xpathExpressions");
@@ -132,12 +135,18 @@ public class CheckFactory {
              instance = new XmlGenericCheck();
         }
 
-        else if (type.equals("JSON_VALIDATION_REQUIRED")) {
+        else if (type.equals("JSON_VALIDATION_REQUIRED") || type.equals("JSON_VALIDATION_OPTIONAL")) {
             if (!effectiveParams.containsKey("jsonPath")) {
                 effectiveParams.put("jsonPath", "$");
             }
-            effectiveParams.put("mode", "EXISTS"); 
-            if (effectiveParams.containsKey("expectedValue")) effectiveParams.put("mode", "VALUE_MATCH");
+            if (!effectiveParams.containsKey("mode")) {
+                if (type.contains("OPTIONAL")) effectiveParams.put("mode", "OPTIONAL_MATCH");
+                else if (effectiveParams.containsKey("expectedValue") || effectiveParams.containsKey("requiredFields") || effectiveParams.containsKey("requiredElements")) {
+                    effectiveParams.put("mode", "VALUE_MATCH");
+                } else {
+                    effectiveParams.put("mode", "EXISTS");
+                }
+            }
             instance = new JsonGenericCheck();
         }
         else if (type.equals("JSON_VALIDATION_FORBIDDEN")) {

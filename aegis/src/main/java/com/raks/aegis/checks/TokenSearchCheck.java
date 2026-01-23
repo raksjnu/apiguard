@@ -64,11 +64,12 @@ public class TokenSearchCheck extends AbstractCheck {
 
         String defaultLogic = "FORBIDDEN".equalsIgnoreCase(mode) ? "OR" : "AND";
         String logic = (String) params.getOrDefault("logic", defaultLogic);
+        java.util.Set<Path> matchedPathsSet = new java.util.HashSet<>();
 
         for (Path file : matchingFiles) {
             boolean filePassed = true;
             String failureReason = "";
-            List<String> fileFound = new ArrayList<>();
+            java.util.Set<String> fileFound = new java.util.HashSet<>();
             
             // Relativization logic with source labeling
             Path currentRoot = searchRoots.stream().filter(file::startsWith).findFirst().orElse(projectRoot);
@@ -79,61 +80,17 @@ public class TokenSearchCheck extends AbstractCheck {
             checkedFilesList.add(relativePath);
 
             try {
-                boolean resolveProperties = Boolean.parseBoolean(String.valueOf(params.getOrDefault("resolveProperties", "true")));
                 java.util.Set<String> thisFileMatchedTokens = new java.util.HashSet<>();
 
-                List<String> contentsToSearch = new ArrayList<>();
-                List<List<String>> resolutionsPerContent = new ArrayList<>();
                 if (wholeFile) {
                     String content = Files.readString(file);
-                    List<String> fileResolutions = new ArrayList<>();
-                    String processed = resolveProperties ? resolve(content, currentRoot, fileResolutions) : content;
-                    contentsToSearch.add(processed);
-                    resolutionsPerContent.add(fileResolutions);
+                    if (ignoreComments) content = removeCommentsFromLine(content, file);
+                    searchAll(content, currentRoot, tokens, caseSensitive, isRegex, wholeWord, patterns, fileFound, thisFileMatchedTokens, allFoundItems);
                 } else {
                     List<String> lines = Files.readAllLines(file);
                     for (String line : lines) {
-                        List<String> lineResolutions = new ArrayList<>();
-                        String processedLine = resolveProperties ? resolve(line, currentRoot, lineResolutions) : line;
-                        contentsToSearch.add(processedLine);
-                        resolutionsPerContent.add(lineResolutions);
-                    }
-                }
-
-                for (int cIdx = 0; cIdx < contentsToSearch.size(); cIdx++) {
-                    String contentForMatch = contentsToSearch.get(cIdx);
-                    List<String> contentResolutions = resolutionsPerContent.get(cIdx);
-                    boolean matchFoundInThisContent = false;
-
-                    if (ignoreComments) contentForMatch = removeCommentsFromLine(contentForMatch, file);
-                    if (!caseSensitive && !isRegex && !wholeWord) contentForMatch = contentForMatch.toLowerCase();
-
-                    for (int i = 0; i < tokens.size(); i++) {
-                        String configToken = tokens.get(i);
-                        if (!caseSensitive && !isRegex && !wholeWord) configToken = configToken.toLowerCase();
-                        
-                        if (isRegex || wholeWord) {
-                            java.util.regex.Matcher m = patterns.get(i).matcher(contentForMatch);
-                            while (m.find()) { 
-                                String tokenToAdd = m.group();
-                                fileFound.add(tokenToAdd);
-                                thisFileMatchedTokens.add(tokens.get(i));
-                                allFoundItems.add(tokenToAdd);
-                                matchFoundInThisContent = true;
-                            }
-                        } else {
-                            if (contentForMatch.contains(configToken)) {
-                                fileFound.add(configToken);
-                                thisFileMatchedTokens.add(tokens.get(i));
-                                allFoundItems.add(configToken);
-                                matchFoundInThisContent = true;
-                            }
-                        }
-                    }
-
-                    // Only record resolutions if a match occurred in this specific line/content
-                    if (matchFoundInThisContent) {
-                        recordResolutions(contentResolutions);
+                        if (ignoreComments) line = removeCommentsFromLine(line, file);
+                        searchAll(line, currentRoot, tokens, caseSensitive, isRegex, wholeWord, patterns, fileFound, thisFileMatchedTokens, allFoundItems);
                     }
                 }
 
@@ -154,6 +111,9 @@ public class TokenSearchCheck extends AbstractCheck {
                     } else {
                         if (!fileFound.isEmpty()) { filePassed = false; failureReason = "Found forbidden: " + fileFound; }
                     }
+                }
+                if (!fileFound.isEmpty() || !thisFileMatchedTokens.isEmpty()) {
+                    matchedPathsSet.add(file);
                 }
             } catch (Exception e) {
                 filePassed = false;
@@ -176,15 +136,11 @@ public class TokenSearchCheck extends AbstractCheck {
 
         if (overallPass) {
             String defaultSuccess = String.format("Passed %s check in %d/%d files", mode, passedFileCount, totalFiles);
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), 
-                    getCustomSuccessMessage(check, defaultSuccess, checkedFilesStr, foundItemsStr, matchingFilesStr), 
-                    checkedFilesStr, matchingFilesStr, this.propertyResolutions);
+            return finalizePass(check, defaultSuccess, checkedFilesStr, foundItemsStr, matchingFilesStr, matchedPathsSet);
         } else {
             String technicalMsg = String.format("Validation failed for %s. (Passed: %d/%d)\n• %s", 
                     mode, passedFileCount, totalFiles, failureDetails.isEmpty() ? "No files matched" : String.join("\n• ", failureDetails));
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), 
-                    getCustomMessage(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr), 
-                    checkedFilesStr, foundItemsStr, matchingFilesStr, this.propertyResolutions);
+            return finalizeFail(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr, matchedPathsSet);
         }
     }
 

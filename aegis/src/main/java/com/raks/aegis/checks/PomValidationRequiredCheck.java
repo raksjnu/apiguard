@@ -4,13 +4,12 @@ import com.raks.aegis.model.CheckResult;
 import com.raks.aegis.util.VersionComparator;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.Set;
+import java.util.HashSet;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -20,23 +19,23 @@ public class PomValidationRequiredCheck extends AbstractCheck {
         String validationType = (String) check.getParams().getOrDefault("validationType", "COMBINED");
         List<String> failures = new ArrayList<>();
         List<String> successes = new ArrayList<>();  
-        List<Path> pomFiles = new ArrayList<>();
-        try (Stream<Path> paths = Files.walk(projectRoot)) {
-            pomFiles = paths
-                    .filter(Files::isRegularFile)
-                    .filter(path -> path.getFileName().toString().equals("pom.xml"))
-                    .filter(path -> !shouldIgnorePath(projectRoot, path)) 
-                    .toList();
-            if (pomFiles.isEmpty()) {
-                return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                        "No pom.xml files found in project");
-            }
-            for (Path pomFile : pomFiles) {
-                validatePom(pomFile, check.getParams(), validationType, projectRoot, failures, successes);
-            }
-        } catch (IOException e) {
+        List<Path> pomFiles = findFiles(projectRoot, java.util.Collections.singletonList("**/pom.xml"), false);
+        if (pomFiles.isEmpty()) {
             return CheckResult.fail(check.getRuleId(), check.getDescription(),
-                    "Error scanning files: " + e.getMessage());
+                    "No pom.xml files found in project");
+        }
+        
+        Set<Path> matchedPathsSet = new HashSet<>();
+        for (Path pomFile : pomFiles) {
+            List<String> fileFailures = new ArrayList<>();
+            List<String> fileSuccesses = new ArrayList<>();
+            validatePom(pomFile, check.getParams(), validationType, projectRoot, fileFailures, fileSuccesses);
+            
+            if (fileFailures.isEmpty() && !fileSuccesses.isEmpty()) {
+                matchedPathsSet.add(pomFile);
+            }
+            failures.addAll(fileFailures);
+            successes.addAll(fileSuccesses);
         }
         // Generate file list for reporting (used in both pass and fail scenarios)
         String fileList = pomFiles.stream()
@@ -50,15 +49,14 @@ public class PomValidationRequiredCheck extends AbstractCheck {
                 defaultSuccess += "\nActual Values Found:\n• " + String.join("\n• ", successes);
             }
             String matchingFilesForPass = successes.isEmpty() ? null : String.join("; ", successes);
-            return CheckResult.pass(check.getRuleId(), check.getDescription(), 
-                    getCustomSuccessMessage(check, defaultSuccess, fileList, matchingFilesForPass), fileList, matchingFilesForPass);
+            return finalizePass(check, defaultSuccess, fileList, matchingFilesForPass, fileList, matchedPathsSet);
         } else {
             String technicalMsg = "Missing or incorrect required POM elements:\n• " + String.join("\n• ", failures);
             String failureDetails = String.join("; ", failures);
-            return CheckResult.fail(check.getRuleId(), check.getDescription(), 
-                    getCustomMessage(check, technicalMsg, fileList, failureDetails, null), fileList, failureDetails, null);
+            return finalizeFail(check, technicalMsg, fileList, failureDetails, fileList, matchedPathsSet);
         }
     }
+
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,
             Path projectRoot, List<String> failures, List<String> successes) {
         try {
