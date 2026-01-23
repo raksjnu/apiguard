@@ -59,7 +59,7 @@ public class JsonGenericCheck extends AbstractCheck {
                 String content = Files.readString(file);
                 Object jsonContext = JsonPath.parse(content).json();
 
-                if (jsonPath != null) {
+                if (jsonPath != null && !"$".equals(jsonPath)) {
                     Object result = null;
                     try { result = JsonPath.parse(content).read(jsonPath); } catch (Exception e) { result = null; }
 
@@ -69,8 +69,12 @@ public class JsonGenericCheck extends AbstractCheck {
                                 filePassed = false; 
                                 fileErrors.add("JSONPath not found: " + jsonPath); 
                             }
-                        } else fileSuccesses.add("Found: " + jsonPath);
+                        } else {
+                            fileSuccesses.add("Found: " + jsonPath);
+                            allFoundItems.add(jsonPath + " exists");
+                        }
                     } else if ("NOT_EXISTS".equalsIgnoreCase(mode)) {
+                        // ... existing logic for NOT_EXISTS
                         if (result != null) { 
                             String forbiddenValue = (String) params.get("forbiddenValue");
                             if (forbiddenValue == null) {
@@ -93,7 +97,7 @@ public class JsonGenericCheck extends AbstractCheck {
                                 filePassed = false; 
                                 fileErrors.add("JSONPath not found: " + jsonPath); 
                             }
-                        } else {
+                        } else if (expectedValue != null) {
                             String rawValue = result.toString();
                             java.util.Set<String> allValues = resolveAndRecord(rawValue, currentRoot, java.util.Collections.singletonList(expectedValue), true);
                             for (String actual : allValues) {
@@ -102,13 +106,54 @@ public class JsonGenericCheck extends AbstractCheck {
                                     fileErrors.add(String.format("Resolution mismatch: Actual='%s', Expected='%s' (from raw: '%s')", actual, expectedValue, rawValue));
                                 } else {
                                     fileSuccesses.add(String.format("%s=%s", jsonPath, actual));
+                                    allFoundItems.add(String.format("%s: %s", jsonPath, actual));
                                 }
                             }
                         }
                     }
                 }
 
-                // Required Fields
+                // Required Elements (Existence only)
+                @SuppressWarnings("unchecked")
+                List<String> requiredElements = (List<String>) params.get("requiredElements");
+                if (requiredElements != null && jsonContext instanceof Map) {
+                    Map<?, ?> jsonMap = (Map<?, ?>) jsonContext;
+                    for (String element : requiredElements) {
+                        if (!jsonMap.containsKey(element)) {
+                            filePassed = false;
+                            fileErrors.add("Missing required element: " + element);
+                        } else {
+                            fileSuccesses.add("Element exists: " + element);
+                            allFoundItems.add("Element: " + element + " (exists)");
+                        }
+                    }
+                }
+
+                // Exact Versions (Value matching)
+                @SuppressWarnings("unchecked")
+                Map<String, String> exactVersions = (Map<String, String>) params.get("exactVersions");
+                if (exactVersions != null && jsonContext instanceof Map) {
+                    Map<?, ?> jsonMap = (Map<?, ?>) jsonContext;
+                    for (Map.Entry<String, String> entry : exactVersions.entrySet()) {
+                        String key = entry.getKey();
+                        String expected = String.valueOf(entry.getValue());
+                        if (!jsonMap.containsKey(key)) {
+                            filePassed = false;
+                            fileErrors.add("Missing field for version check: " + key);
+                        } else {
+                            String actual = String.valueOf(jsonMap.get(key));
+                            if (!compareValues(actual, expected, operator, valueType)) {
+                                filePassed = false;
+                                fileErrors.add(String.format("Version mismatch at '%s': Actual='%s', Expected='%s'", key, actual, expected));
+                            } else {
+                                fileSuccesses.add(String.format("%s=%s", key, actual));
+                                allFoundItems.add(String.format("%s: %s (in %s)", key, actual, relativePath));
+                            }
+                        }
+                    }
+                }
+
+                // Required Fields (Value matching with resolution)
                 @SuppressWarnings("unchecked")
                 Map<String, String> requiredFields = (Map<String, String>) params.get("requiredFields");
                 if (requiredFields != null && jsonContext instanceof Map) {
@@ -134,11 +179,13 @@ public class JsonGenericCheck extends AbstractCheck {
 
                             boolean foundMatch = false;
                             List<String> rawResolutions = new ArrayList<>();
+                            String matchedActual = null;
                             for (String raw : actualsToCompare) {
                                 java.util.Set<String> resolvedValues = resolveAndRecord(raw, currentRoot, java.util.Collections.singletonList(expected), true);
                                 for (String actual : resolvedValues) {
                                     if (compareValues(actual, expected, operator, valueType)) {
                                         foundMatch = true;
+                                        matchedActual = actual;
                                         break;
                                     } else {
                                         rawResolutions.add(actual);
@@ -154,6 +201,9 @@ public class JsonGenericCheck extends AbstractCheck {
                                 } else {
                                     fileErrors.add(String.format("Resolution mismatch at '%s': Actual='%s', Expected='%s'", key, rawResolutions.toString(), expected));
                                 }
+                            } else {
+                                fileSuccesses.add(String.format("%s MATCHED", key));
+                                allFoundItems.add(String.format("%s: %s (in %s)", key, matchedActual, relativePath));
                             }
                         }
                     }

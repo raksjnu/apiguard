@@ -99,7 +99,7 @@ public class ConditionalCheck extends AbstractCheck {
             String matchingItemsStr = aggregatedMatchingItems.isEmpty() ? null : String.join(", ", aggregatedMatchingItems);
 
             if (allPassed) {
-                 return finalizePass(check, details.toString(), checkedFilesStr, matchingItemsStr);
+                 return finalizePass(check, details.toString(), checkedFilesStr, foundItemsStr, matchingItemsStr);
             } else {
                  return finalizeFail(check, details.toString(), checkedFilesStr, foundItemsStr, matchingItemsStr);
             }

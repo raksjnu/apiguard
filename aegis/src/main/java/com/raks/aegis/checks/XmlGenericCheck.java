@@ -211,14 +211,14 @@ public class XmlGenericCheck extends AbstractCheck {
                                 if (expectedValue != null) {
                                     for (String actual : allValues) {
                                         if (compareValues(actual, expectedValue, operator, valueType)) { 
-                                            fileSuccesses.add(xpathExpr + " matches " + expectedValue + " (" + actual + ")"); 
+                                            fileSuccesses.add(String.format("%s matches '%s' (Actual: '%s')", xpathExpr, expectedValue, actual)); 
                                         } else {
                                             filePassed = false;
                                             fileErrors.add("Resolution of " + xpathExpr + " mismatch: '" + actual + "' (Expected: '" + expectedValue + "')");
                                         }
                                     }
                                 } else {
-                                    fileSuccesses.add("Found: " + xpathExpr + " with resolution: " + allValues);
+                                    fileSuccesses.add(String.format("Found %s (Resolution: %s)", xpathExpr, allValues.toString()));
                                 }
                             }
                         }
