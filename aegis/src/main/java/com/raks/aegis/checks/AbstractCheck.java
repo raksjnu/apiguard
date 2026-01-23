@@ -7,7 +7,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.io.IOException;
+import org.w3c.dom.Document;
 
 public abstract class AbstractCheck {
     public abstract CheckResult execute(Path projectRoot, Check check);
@@ -411,14 +412,59 @@ public abstract class AbstractCheck {
         return true;
     }
 
+    protected String readFileContent(Path file, Map<String, Object> params) throws IOException {
+        String content = Files.readString(file);
+        boolean ignoreComments = true;
+        if (params != null && params.containsKey("ignoreComments")) {
+            ignoreComments = Boolean.parseBoolean(String.valueOf(params.get("ignoreComments")));
+        }
+        if (ignoreComments) {
+            content = removeComments(content, file);
+        }
+        return content;
+    }
+
+    protected Document parseXml(Path file, Map<String, Object> params) throws Exception {
+        String content = readFileContent(file, params);
+        javax.xml.parsers.DocumentBuilderFactory factory = javax.xml.parsers.DocumentBuilderFactory.newInstance();
+        factory.setNamespaceAware(true);
+        // Security features to prevent XXE
+        try {
+            factory.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            factory.setFeature("http://xml.org/sax/features/external-general-entities", false);
+            factory.setFeature("http://xml.org/sax/features/external-parameter-entities", false);
+            factory.setFeature("http://apache.org/xml/features/nonvalidating/load-external-dtd", false);
+        } catch (Exception ignore) {}
+        
+        javax.xml.parsers.DocumentBuilder builder = factory.newDocumentBuilder();
+        return builder.parse(new java.io.ByteArrayInputStream(content.getBytes(java.nio.charset.StandardCharsets.UTF_8)));
+    }
+
+    protected String removeComments(String content, Path file) {
+        if (content == null) return null;
+        String fileName = file.getFileName().toString().toLowerCase();
+        if (fileName.endsWith(".xml") || fileName.endsWith(".html") || fileName.endsWith(".mule")) {
+            return content.replaceAll("(?s)<!--.*?-->", "");
+        } else if (fileName.endsWith(".java") || fileName.endsWith(".js") || fileName.endsWith(".c") || fileName.endsWith(".cpp")) {
+            // Multi-line and single-line
+            return content.replaceAll("(?s)/\\*.*?\\*/", "").replaceAll("(?m)//.*$", "");
+        } else if (fileName.endsWith(".properties") || fileName.endsWith(".yaml") || fileName.endsWith(".yml") || fileName.endsWith(".sh") || fileName.endsWith(".policy")) {
+            return content.replaceAll("(?m)^\\s*#.*$", "");
+        } else if (fileName.endsWith(".json")) {
+            // JSON theoretically doesn't have comments, but many tools allow them
+            return content.replaceAll("(?s)/\\*.*?\\*/", "").replaceAll("(?m)//.*$", "");
+        }
+        return content;
+    }
+
     private boolean checkNamespaceExists(Path projectRoot, String namespaceUri) {
-         try (Stream<Path> paths = Files.walk(projectRoot)) {
+         try (java.util.stream.Stream<Path> paths = java.nio.file.Files.walk(projectRoot)) {
             return paths
-                    .filter(Files::isRegularFile)
+                    .filter(java.nio.file.Files::isRegularFile)
                     .filter(p -> p.toString().endsWith(".xml"))
                     .anyMatch(file -> {
                         try {
-                            String content = Files.readString(file);
+                            String content = java.nio.file.Files.readString(file);
                             return content.contains(namespaceUri);
                         } catch (java.io.IOException e) {
                             return false;

@@ -1,8 +1,6 @@
 package com.raks.aegis.checks;
 import com.raks.aegis.model.Check;
 import com.raks.aegis.model.CheckResult;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,7 +48,7 @@ public class PomValidationForbiddenCheck extends AbstractCheck {
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,
             Path projectRoot, List<String> failures) {
         try {
-            Document doc = parseXml(pomFile);
+            Document doc = parseXml(pomFile, params);
             if ("PROPERTIES".equals(validationType) || "COMBINED".equals(validationType)) {
                 validateForbiddenProperties(doc, params, pomFile, projectRoot, failures);
             }
@@ -149,11 +147,5 @@ public class PomValidationForbiddenCheck extends AbstractCheck {
             return nodes.item(0).getTextContent().trim();
         }
         return null;
-    }
-    private Document parseXml(Path file) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        return builder.parse(file.toFile());
     }
 }

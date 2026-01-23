@@ -3,7 +3,6 @@ package com.raks.aegis.checks;
 import com.raks.aegis.model.Check;
 import com.raks.aegis.model.CheckResult;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +31,6 @@ public class TokenSearchCheck extends AbstractCheck {
                           || "REGEX".equalsIgnoreCase(matchMode);
         boolean caseSensitive = Boolean.parseBoolean(String.valueOf(params.getOrDefault("caseSensitive", "true")));
         boolean wholeWord = Boolean.parseBoolean(String.valueOf(params.getOrDefault("wholeWord", "false")));
-        boolean ignoreComments = Boolean.parseBoolean(String.valueOf(params.getOrDefault("ignoreComments", "true")));
         boolean wholeFile = Boolean.parseBoolean(String.valueOf(params.getOrDefault("wholeFile", "false")));
 
 
@@ -81,15 +79,13 @@ public class TokenSearchCheck extends AbstractCheck {
 
             try {
                 java.util.Set<String> thisFileMatchedTokens = new java.util.HashSet<>();
+                String content = readFileContent(file, params);
 
                 if (wholeFile) {
-                    String content = Files.readString(file);
-                    if (ignoreComments) content = removeCommentsFromLine(content, file);
                     searchAll(content, currentRoot, tokens, caseSensitive, isRegex, wholeWord, patterns, fileFound, thisFileMatchedTokens, allFoundItems);
                 } else {
-                    List<String> lines = Files.readAllLines(file);
+                    String[] lines = content.split("\\r?\\n");
                     for (String line : lines) {
-                        if (ignoreComments) line = removeCommentsFromLine(line, file);
                         searchAll(line, currentRoot, tokens, caseSensitive, isRegex, wholeWord, patterns, fileFound, thisFileMatchedTokens, allFoundItems);
                     }
                 }
@@ -142,17 +138,5 @@ public class TokenSearchCheck extends AbstractCheck {
                     mode, passedFileCount, totalFiles, failureDetails.isEmpty() ? "No files matched" : String.join("\n• ", failureDetails));
             return finalizeFail(check, technicalMsg, checkedFilesStr, foundItemsStr, matchingFilesStr, matchedPathsSet);
         }
-    }
-
-    private String removeCommentsFromLine(String line, Path file) {
-        String fileName = file.getFileName().toString().toLowerCase();
-        if (fileName.endsWith(".xml") || fileName.endsWith(".html") || fileName.endsWith(".mule")) {
-            return line.replaceAll("(?s)<!--.*?-->", "");
-        } else if (fileName.endsWith(".java") || fileName.endsWith(".js") || fileName.endsWith(".c") || fileName.endsWith(".cpp")) {
-            return line.replaceAll("(?s)/\\*.*?\\*/", "").replaceAll("//.*", "");
-        } else if (fileName.endsWith(".properties") || fileName.endsWith(".yaml") || fileName.endsWith(".yml") || fileName.endsWith(".sh") || fileName.endsWith(".policy")) {
-            return line.replaceAll("(?m)^\\s*#.*", "");
-        }
-        return line;
     }
 }

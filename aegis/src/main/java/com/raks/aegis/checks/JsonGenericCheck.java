@@ -1,10 +1,8 @@
 package com.raks.aegis.checks;
 
-import com.jayway.jsonpath.JsonPath;
 import com.raks.aegis.model.Check;
 import com.raks.aegis.model.CheckResult;
 
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -56,12 +54,12 @@ public class JsonGenericCheck extends AbstractCheck {
             if (currentRoot.equals(linkedConfigPath)) { relativePath = "[Config] " + relativePath; }
 
             try {
-                String content = Files.readString(file);
-                Object jsonContext = JsonPath.parse(content).json();
+                String content = readFileContent(file, params);
+                Object jsonContext = com.jayway.jsonpath.JsonPath.parse(content).json();
 
                 if (jsonPath != null && !"$".equals(jsonPath)) {
                     Object result = null;
-                    try { result = JsonPath.parse(content).read(jsonPath); } catch (Exception e) { result = null; }
+                    try { result = com.jayway.jsonpath.JsonPath.parse(content).read(jsonPath); } catch (Exception e) { result = null; }
 
                     if ("EXISTS".equalsIgnoreCase(mode) || "OPTIONAL_MATCH".equalsIgnoreCase(mode)) {
                         if (result == null) { 

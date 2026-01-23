@@ -2,8 +2,6 @@ package com.raks.aegis.checks;
 import com.raks.aegis.model.Check;
 import com.raks.aegis.model.CheckResult;
 import com.raks.aegis.util.VersionComparator;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -60,7 +58,7 @@ public class PomValidationRequiredCheck extends AbstractCheck {
     private void validatePom(Path pomFile, Map<String, Object> params, String validationType,
             Path projectRoot, List<String> failures, List<String> successes) {
         try {
-            Document doc = parseXml(pomFile);
+            Document doc = parseXml(pomFile, params);
             if (doc == null) {
                 failures.add("Failed to parse " + projectRoot.relativize(pomFile));
                 return;
@@ -279,11 +277,5 @@ public class PomValidationRequiredCheck extends AbstractCheck {
             return nodes.item(0).getTextContent().trim();
         }
         return null;
-    }
-    private Document parseXml(Path file) throws Exception {
-        DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-        factory.setNamespaceAware(true);
-        DocumentBuilder builder = factory.newDocumentBuilder();
-        return builder.parse(file.toFile());
     }
 }

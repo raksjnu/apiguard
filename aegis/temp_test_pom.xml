@@ -1,0 +1,11 @@
+<project>
+  <dependencies>
+    <!--
+    <dependency>
+      <groupId>com.mulesoft.mule.runtime</groupId>
+      <artifactId>mule-core-ee</artifactId>
+      <version>1.0.0</version>
+    </dependency>
+    -->
+  </dependencies>
+</project>
