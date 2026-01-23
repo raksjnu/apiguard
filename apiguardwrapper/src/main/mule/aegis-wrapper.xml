@@ -47,9 +47,17 @@ http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/m
                     'Content-Type': 'text/html; charset=UTF-8',
                     'Cache-Control': 'no-cache, no-store, must-revalidate'
                 }]"/>
-                <async>
-                     <flow-ref name="aegis-send-launch-notification-flow"/>
-                </async>
+                <!-- Send launch notification if enabled -->
+                <choice>
+                    <when expression="#[p('aegis.email.enabled') == 'true']">
+                        <async>
+                             <flow-ref name="aegis-send-launch-notification-flow"/>
+                        </async>
+                    </when>
+                    <otherwise>
+                        <logger level="DEBUG" message="Aegis email notifications disabled (aegis.email.enabled=false)"/>
+                    </otherwise>
+                </choice>
                 <parse-template location="web/aegis/index.html"/>
             </otherwise>
         </choice>
@@ -690,9 +698,16 @@ output application/java
         </os:store>
         
         <!-- Send usage notification (Async) -->
-        <async>
-             <flow-ref name="aegis-send-usage-notification-flow"/>
-        </async>
+        <choice>
+            <when expression="#[p('aegis.email.enabled') == 'true']">
+                <async>
+                     <flow-ref name="aegis-send-usage-notification-flow"/>
+                </async>
+            </when>
+            <otherwise>
+                <logger level="DEBUG" message="Aegis usage notification disabled (aegis.email.enabled=false)"/>
+            </otherwise>
+        </choice>
 
         <ee:transform>
             <ee:message>
@@ -794,7 +809,7 @@ output text/plain
         
         <!-- Send Email -->
         <email:send config-ref="Email_SMTP" 
-                    subject="#['${notification.email.subject}' replace 'MuleGuard' with 'Aegis' replace '{name}' with vars.sessionData.name replace '{emailId}' with vars.sessionData.email]"
+                    subject="#['${notification.email.subject}' replace '{name}' with vars.sessionData.name replace '{emailId}' with vars.sessionData.email]"
                     toAddresses="#[(vars.sessionData.email default p('notification.email.to')) splitBy ',']"
                     fromAddress="Aegis &lt;${notification.email.from}&gt;">
             <email:body contentType="text/html">
