@@ -670,8 +670,15 @@ document.addEventListener('DOMContentLoaded', () => {
             handleBaselineUI('BASELINE');
             // Populate services when switching to compare
             loadBaselineServices();
-            // Preserve type
+            // Preserve type and sync UI
             document.getElementById('testType').value = currentType;
+            if (currentType === 'REST') {
+                document.getElementById('typeRest').classList.add('active');
+                document.getElementById('typeSoap').classList.remove('active');
+            } else {
+                document.getElementById('typeSoap').classList.add('active');
+                document.getElementById('typeRest').classList.remove('active');
+            }
         };
     }
 
@@ -682,8 +689,22 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ensure default Capture is set
             opCapture.click();
             handleBaselineUI('BASELINE');
-            // Re-sync type after click triggers might have reset it
+            // Re-sync type and UI after click triggers might have reset it
             document.getElementById('testType').value = currentType;
+            if (currentType === 'REST') {
+                document.getElementById('typeRest').classList.add('active');
+                document.getElementById('typeSoap').classList.remove('active');
+            } else {
+                document.getElementById('typeSoap').classList.add('active');
+                document.getElementById('typeRest').classList.remove('active');
+            }
+            if (currentType === 'REST') {
+                document.getElementById('typeRest').classList.add('active');
+                document.getElementById('typeSoap').classList.remove('active');
+            } else {
+                document.getElementById('typeSoap').classList.add('active');
+                document.getElementById('typeRest').classList.remove('active');
+            }
         });
     }
 
