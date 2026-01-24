@@ -103,20 +103,43 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- UI Activity Logging ---
-    const logActivity = (msg, type = 'info') => {
+    const logActivity = (msg, type = 'info', contentToCopy = null) => {
         const log = document.getElementById('activityLog');
         if (!log) return;
         const entry = document.createElement('div');
         entry.className = `log-entry log-${type}`;
         const ts = new Date().toLocaleTimeString();
-        entry.innerHTML = `<span class="log-timestamp">[${ts}]</span> ${msg}`;
+        
+        // Escape HTML for safety, especially for XML/WSDL content
+        const escapedMsg = msg
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+
+        let html = `<span class="log-timestamp">[${ts}]</span> ${escapedMsg}`;
+        if (contentToCopy) {
+            html += ` <button type="button" class="btn-secondary log-copy-btn" style="padding:2px 6px; font-size:0.6rem; margin-left:10px; vertical-align:middle;">📋 Copy</button>`;
+        }
+        
+        entry.innerHTML = html;
+        if (contentToCopy) {
+            entry.querySelector('.log-copy-btn').onclick = (e) => {
+                e.stopPropagation();
+                copyToClipboard(contentToCopy, e.target);
+            };
+        }
+        
         log.appendChild(entry);
         log.scrollTop = log.scrollHeight;
     };
 
     document.getElementById('clearLogBtn').onclick = () => {
-        document.getElementById('activityLog').innerHTML = '[Log Cleared]\n';
-        logActivity('Waiting for utility interaction...');
+        if (confirm('Clear the current session Activity Logs? This will not affect stored data.')) {
+            document.getElementById('activityLog').innerHTML = '<div class="log-entry log-info" style="border:none; padding:10px; text-align:center; color:#94a3b8;">[Log Cleared]</div>';
+            logActivity('New session log started. Utilities and Comparisons will be tracked here.');
+        }
     };
 
     // --- Settings Persistence ---
@@ -158,6 +181,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const saveState = () => {
         const state = {
             testType: document.getElementById('testType').value,
+            wd: document.getElementById('workingDirectory').value,
             method: document.getElementById('method').value,
             opName: document.getElementById('operationName').value,
             url1: document.getElementById('url1').value,
@@ -183,6 +207,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!saved) return false;
         try {
             const s = JSON.parse(saved);
+            if (s.testType) {
+                document.getElementById('testType').value = s.testType;
+                syncTypeButtons();
+            }
+            if (s.wd) document.getElementById('workingDirectory').value = s.wd;
             document.getElementById('operationName').value = s.opName || '';
             document.getElementById('url1').value = s.url1 || '';
             document.getElementById('url2').value = s.url2 || '';
@@ -233,53 +262,39 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const populateFormFields = (type) => {
-        if (!loadedConfig) return;
-        const activeApis = (type === 'SOAP') ? loadedConfig.soap : loadedConfig.rest;
-        if (!activeApis) return;
-
-        document.getElementById('url1').value = activeApis.api1?.baseUrl || '';
-        document.getElementById('url2').value = activeApis.api2?.baseUrl || '';
-
-        const op = activeApis.api1?.operations?.[0];
-        if (op) {
-            document.getElementById('operationName').value = op.name || '';
-            document.getElementById('payload').value = op.payloadTemplatePath || '';
-            document.getElementById('method').value = op.methods?.[0] || 'POST';
-            
-            headersTable.innerHTML = '';
-            if (op.headers) {
-                Object.entries(op.headers).forEach(([k, v]) => addRow(headersTable, ['Header Name', 'Value'], [k, v]));
-            }
-        }
-
-        // Only populate tokens during explicit "Load Mock" action
-        tokensTable.innerHTML = '';
-        if (loadedConfig.tokens) {
-            Object.entries(loadedConfig.tokens).forEach(([k, list]) => {
-                addRow(tokensTable, ['Token Name', 'Value'], [k, list.join('; ')]);
-            });
-        }
     };
 
     const loadDefaults = async () => {
+        // First, try to restore the user's exact prior state
+        const stateRestored = loadState();
+
         try {
             const response = await fetch('api/config');
-            if (!response.ok) return;
+            if (!response.ok) {
+                 if (!stateRestored) resetFormToStandard('REST');
+                 return;
+            }
             loadedConfig = await response.json();
             
-            const initialType = loadedConfig.testType || 'REST';
-            document.getElementById('testType').value = initialType;
-            
-            // Set global settings
-            if (loadedConfig.maxIterations) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
-            if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
-            if (loadedConfig.ignoredFields) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
-
-            if (!loadState()) {
+            // Only use server defaults if there was no local state
+            if (!stateRestored) {
+                const initialType = loadedConfig.testType || 'REST';
+                document.getElementById('testType').value = initialType;
+                
+                if (loadedConfig.maxIterations) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
+                if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
+                if (loadedConfig.ignoredFields) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
+                
                 resetFormToStandard(initialType);
             }
+            
+            // Sync specific global settings if server has them but local doesn't (or just always sync them)
+            if (loadedConfig.workingDirectory && !document.getElementById('workingDirectory').value) {
+                document.getElementById('workingDirectory').value = loadedConfig.workingDirectory;
+            }
+
         } catch (e) { console.error('Defaults error:', e); }
+        syncTypeButtons();
     };
 
     document.getElementById('testType').addEventListener('change', (e) => resetFormToStandard(e.target.value));
@@ -394,6 +409,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!config.rest.api1.baseUrl && !config.soap.api1.baseUrl) { alert('URL 1 is required'); return; }
 
+        logActivity(`STARTING: ${btnText} Operation`, 'debug');
+        logActivity(`Mode: ${config.testType} | Service: ${config.operationName}`, 'info');
+
         showProgressModal(btnText);
         compareBtn.disabled = true;
         resultsContainer.innerHTML = ''; 
@@ -402,15 +420,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (isBaseline) {
                 await handleBaselineComparison(config);
             } else {
+                logActivity(`EXEC: POST api/compare (Internal API call)`, 'debug');
                 const response = await fetch('api/compare', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
                 });
-                if (!response.ok) throw new Error('Execution failed');
-                renderResults(await response.json());
+                if (!response.ok) throw new Error(`Execution failed: ${response.status}`);
+                const data = await response.json();
+                
+                const matches = data.filter(r => r.status === 'MATCH').length;
+                logActivity(`COMPLETED: Received ${data.length} results. Matches: ${matches}, Mismatches: ${data.length - matches}`, 'success');
+                renderResults(data);
             }
         } catch (err) {
+            logActivity(`ERROR: ${err.message}`, 'error');
             resultsContainer.innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
         } finally {
             hideProgressModal();
@@ -447,13 +471,17 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
 
+        logActivity(`BASELINE EXEC: ${config.baseline.operation} for Service: ${config.baseline.serviceName}`, 'debug');
+
         const response = await fetch('api/compare', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(config)
         });
-        if (!response.ok) throw new Error('Baseline op failed');
-        renderResults(await response.json());
+        if (!response.ok) throw new Error(`Baseline op failed: ${response.status}`);
+        const data = await response.json();
+        logActivity(`BASELINE COMPLETED: ${config.baseline.operation} success for ${config.baseline.serviceName}`, 'success');
+        renderResults(data);
     };
 
     // --- Rendering Results ---
@@ -1157,15 +1185,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('pingBtn').addEventListener('click', async () => {
         const url = document.getElementById('utilUrl').value.trim();
         if (!url) { alert('URL required'); return; }
-        logActivity(`Starting Connectivity Test for: ${url}`, 'debug');
+        const fullInternalUrl = `api/utils/ping?url=${encodeURIComponent(url)}`;
+        logActivity(`STARTING: Connectivity Test (Ping)`, 'debug');
+        logActivity(`EXEC: GET ${fullInternalUrl}`, 'info');
         
         try {
-            const resp = await fetch(`api/utils/ping?url=${encodeURIComponent(url)}`);
+            const resp = await fetch(fullInternalUrl);
             const data = await resp.json();
             if (data.success) {
                 logActivity(`PING SUCCESS: ${url} (Status: ${data.statusCode}, Latency: ${data.latency}ms)`, 'success');
+                logActivity(`RAW OUTPUT: ${JSON.stringify(data)}`, 'info');
             } else {
                 logActivity(`PING FAILED: ${url} (Error: ${data.error || 'N/A'}, Status: ${data.statusCode})`, 'error');
+                logActivity(`RAW OUTPUT: ${JSON.stringify(data)}`, 'info');
             }
         } catch(e) { logActivity(`Connection Error during Ping: ${e.message}`, 'error'); }
     });
@@ -1173,18 +1205,18 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('fetchWsdlBtn').addEventListener('click', async () => {
         const url = document.getElementById('utilUrl').value.trim();
         if (!url) { alert('URL required'); return; }
-        logActivity(`Attempting WSDL Discovery at: ${url}`, 'debug');
+        const wsdlUrl = url.includes('?') ? url : url + '?wsdl';
+        const fullInternalUrl = `api/utils/wsdl?url=${encodeURIComponent(wsdlUrl)}`;
+        
+        logActivity(`STARTING: WSDL Discovery`, 'debug');
+        logActivity(`EXEC: GET ${fullInternalUrl}`, 'info');
         
         try {
-            const wsdlUrl = url.includes('?') ? url : url + '?wsdl';
-            const resp = await fetch(`api/utils/wsdl?url=${encodeURIComponent(wsdlUrl)}`);
+            const resp = await fetch(fullInternalUrl);
             if (resp.ok) {
                 const wsdlContent = await resp.text();
                 logActivity(`WSDL DISCOVERY SUCCESS: Found source at ${wsdlUrl}`, 'success');
-                logActivity(`CONTENT PREVIEW:\n${wsdlContent.substring(0, 1000)}...`, 'info');
-                // Auto-copy or just notify
-                navigator.clipboard.writeText(wsdlContent);
-                logActivity(`Full WSDL content has been copied to clipboard for your workspace.`, 'debug');
+                logActivity(`WSDL XML CONTENT (FULL):`, 'info', wsdlContent);
             } else {
                 logActivity(`WSDL DISCOVERY FAILED: Endpoint returned code ${resp.status}`, 'error');
             }
@@ -1241,6 +1273,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const workDir = document.getElementById('workingDirectory').value.trim();
         const url = `api/baselines/export?service=${encodeURIComponent(svc)}&workDir=${encodeURIComponent(workDir)}`;
         
+        logActivity(`STARTING: Baseline Export for service: ${svc}`, 'debug');
+        showProgressModal(`Zipping Baselines for ${svc}...`);
         const btn = document.getElementById('exportBtn');
         const orig = btn.innerText;
         btn.innerText = '⏳ Zipping...';
@@ -1256,18 +1290,25 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.appendChild(a);
             a.click();
             a.remove();
+            logActivity(`EXPORT SUCCESS: Baseline package downloaded.`, 'success');
             btn.innerText = '✅ Exported!';
             setTimeout(() => btn.innerText = orig, 2000);
         } catch(e) { 
+            logActivity(`EXPORT ERROR: ${e.message}`, 'error');
             alert('Export failed: ' + e.message); 
             btn.innerText = orig;
+        } finally {
+            hideProgressModal();
         }
     };
 
     const handleImport = async (file, overwrite = false) => {
         const workDir = document.getElementById('workingDirectory').value.trim();
         const status = document.getElementById('importStatus');
-        status.innerText = '⏳ Uploading & Importing...';
+        if(status) status.innerText = '⏳ Uploading & Importing...';
+        
+        logActivity(`STARTING: Baseline Import. Overwrite=${overwrite}`, 'debug');
+        showProgressModal(`Unzipping & Importing Baselines...`);
         
         try {
             const resp = await fetch(`api/baselines/import?workDir=${encodeURIComponent(workDir)}&overwrite=${overwrite}`, {
@@ -1276,20 +1317,30 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (resp.status === 409) {
+                hideProgressModal();
                 const conflicts = await resp.json();
                 if (confirm(`Conflicts detected for: ${conflicts.join(', ')}. Overwrite existing data?`)) {
                     await handleImport(file, true);
                 } else {
-                    status.innerText = 'Import cancelled by user.';
+                    logActivity(`IMPORT CANCELLED: User declined overwrite.`, 'info');
+                    if(status) status.innerText = 'Import cancelled by user.';
                 }
             } else if (resp.ok) {
-                status.innerText = '✅ Import Successful!';
+                logActivity(`IMPORT SUCCESS: Baselines restored to workspace.`, 'success');
+                if(status) status.innerText = '✅ Import Successful!';
                 loadExportServices(); // Refresh list
+                hideProgressModal();
             } else {
                 const err = await resp.json();
-                status.innerText = '❌ Import failed: ' + (err.error || 'Unknown error');
+                logActivity(`IMPORT ERROR: ${err.error || 'Unknown'}`, 'error');
+                if(status) status.innerText = '❌ Import failed: ' + (err.error || 'Unknown error');
+                hideProgressModal();
             }
-        } catch(e) { status.innerText = '❌ Connection Error'; }
+        } catch(e) { 
+            logActivity(`IMPORT ERROR: ${e.message}`, 'error');
+            if(status) status.innerText = '❌ Connection Error'; 
+            hideProgressModal();
+        }
     };
 
     document.getElementById('importFile').onchange = (e) => { 
