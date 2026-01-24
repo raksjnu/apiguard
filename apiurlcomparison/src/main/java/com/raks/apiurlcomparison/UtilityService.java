@@ -74,7 +74,8 @@ public class UtilityService {
         return conflicts;
     }
 
-    public void importBaselines(String storageDir, InputStream zipStream) throws IOException {
+    public List<String> importBaselines(String storageDir, InputStream zipStream) throws IOException {
+        List<String> importedFiles = new ArrayList<>();
         try (ZipInputStream zis = new ZipInputStream(zipStream)) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
@@ -84,9 +85,66 @@ public class UtilityService {
                 } else {
                     Files.createDirectories(targetPath.getParent());
                     Files.copy(zis, targetPath, StandardCopyOption.REPLACE_EXISTING);
+                    importedFiles.add(entry.getName());
                 }
                 zis.closeEntry();
             }
+        }
+        return importedFiles;
+    }
+    public Map<String, Object> ping(String targetUrl) {
+        Map<String, Object> pingRes = new HashMap<>();
+        if (targetUrl == null || targetUrl.isEmpty()) {
+            pingRes.put("error", "URL is required");
+            return pingRes;
+        }
+        
+        long start = System.currentTimeMillis();
+        try {
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(targetUrl).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(5000);
+            conn.setReadTimeout(5000);
+            int code = conn.getResponseCode();
+            long end = System.currentTimeMillis();
+
+            pingRes.put("success", code >= 200 && code < 400);
+            pingRes.put("statusCode", code);
+            pingRes.put("latency", end - start);
+
+        } catch (Exception e) {
+            pingRes.put("success", false);
+            pingRes.put("statusCode", 0);
+            pingRes.put("error", e.getMessage());
+            pingRes.put("latency", System.currentTimeMillis() - start);
+        }
+        return pingRes;
+    }
+
+    public String fetchWsdl(String targetUrl) {
+        if (targetUrl == null || targetUrl.isEmpty()) return "Error: URL is required";
+
+        try {
+            java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(targetUrl).openConnection();
+            conn.setRequestMethod("GET");
+            conn.setConnectTimeout(8000);
+            conn.setReadTimeout(8000);
+
+            int code = conn.getResponseCode();
+            if (code >= 200 && code < 400) {
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                    StringBuilder sb = new StringBuilder();
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        sb.append(line).append("\n");
+                    }
+                    return sb.toString();
+                }
+            } else {
+                return "Error fetching WSDL: HTTP " + code;
+            }
+        } catch (Exception e) {
+            return "Error fetching WSDL: " + e.getMessage();
         }
     }
 }

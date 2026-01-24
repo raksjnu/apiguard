@@ -4,49 +4,33 @@
 
     const CACHE_KEY = 'apiForge_formCache';
     const SOAP_DEFAULTS = {
-        operationName: 'getAccountDetails',
-        url1: 'http://localhost:9089/ws/AccountService',
-        url2: 'http://localhost:9094/ws/AccountService',
+        operationName: 'OperationName',
+        url1: 'https://api1.example.com/soap',
+        url2: 'https://api2.example.com/soap',
         method: 'POST',
-        payload: `<?xml version="1.0" encoding="utf-8"?>
-<soapenv:Envelope
-xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/"
-xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+        payload: `<soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/">
     <soapenv:Body>
-        <GetAccountNumber>
-            <accountNumber>{{accountNumber}}</accountNumber>
-        </GetAccountNumber>
+        <Placeholder>{{token}}</Placeholder>
     </soapenv:Body>
 </soapenv:Envelope>`,
         headers: [
-            { name: 'Content-Type', value: 'text/xml;charset=UTF-8' },
-            { name: 'SOAPAction', value: 'getAccountDetails' }
+            { name: 'Content-Type', value: 'text/xml;charset=UTF-8' }
         ],
-        tokens: [
-            { name: 'account', values: '999; 1000; 1001' },
-            { name: 'uuid', values: 'id1; id2' }
-        ]
+        tokens: []
     };
 
     const REST_DEFAULTS = {
-        operationName: 'createResource',
-        url1: 'http://localhost:9091/api/resource',
-        url2: 'http://localhost:9092/api/resource',
+        operationName: 'operationName',
+        url1: 'https://api1.example.com/rest',
+        url2: 'https://api2.example.com/rest',
         method: 'POST',
         payload: `{
-  "id": "{{id}}",
-  "name": "{{name}}",
-  "status": "active"
+  "id": "{{id}}"
 }`,
         headers: [
-            { name: 'Content-Type', value: 'application/json' },
-            { name: 'Accept', value: 'application/json' }
+            { name: 'Content-Type', value: 'application/json' }
         ],
-        tokens: [
-            { name: 'id', values: '1; 2; 3' },
-            { name: 'name', values: 'test1; test2' }
-        ]
+        tokens: []
     };
 
     // Save form to cache

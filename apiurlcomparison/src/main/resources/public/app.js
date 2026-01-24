@@ -86,6 +86,14 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (target === 'utilitiesView') {
                 loadExportServices();
+                // Ensure log is scrolled to bottom when view becomes visible
+                 const log = document.getElementById('activityLog');
+                 if(log) log.scrollTop = log.scrollHeight;
+            } else if (target === 'mainView') {
+                // Refresh baseline services if in Compare Baseline mode
+                if (document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'COMPARE') {
+                    loadBaselineServices();
+                }
             }
         });
     });
@@ -125,7 +133,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e) { console.error('Failed to load export services', e); }
     };
 
-    // --- UI Activity Logging ---
+    // --- UI Activity Logging (Persistent) ---
+    const LOG_STORAGE_KEY = 'api_forge_activity_log';
+    
+    // Load logs on startup
+    const loadLogs = () => {
+        const log = document.getElementById('activityLog');
+        if (!log) return;
+        const savedLogs = sessionStorage.getItem(LOG_STORAGE_KEY);
+        if (savedLogs) {
+            log.innerHTML = savedLogs;
+            log.scrollTop = log.scrollHeight;
+        } else {
+             // Initial Welcome Log if empty
+             // logActivity('Session started. Ready for action.');
+        }
+    };
+
     const logActivity = (msg, type = 'info', contentToCopy = null) => {
         const log = document.getElementById('activityLog');
         if (!log) return;
@@ -156,11 +180,15 @@ document.addEventListener('DOMContentLoaded', () => {
         
         log.appendChild(entry);
         log.scrollTop = log.scrollHeight;
+        
+        // Persist
+        sessionStorage.setItem(LOG_STORAGE_KEY, log.innerHTML);
     };
 
     document.getElementById('clearLogBtn').onclick = () => {
         if (confirm('Clear the current session Activity Logs? This will not affect stored data.')) {
             document.getElementById('activityLog').innerHTML = '<div class="log-entry log-info" style="border:none; padding:10px; text-align:center; color:#94a3b8;">[Log Cleared]</div>';
+            sessionStorage.removeItem(LOG_STORAGE_KEY);
             logActivity('New session log started. Utilities and Comparisons will be tracked here.');
         }
     };
@@ -1432,10 +1460,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 return;
             } else if (resp.ok) {
-                logActivity(`IMPORT SUCCESS: Baselines restored to workspace.`, 'success');
-                if(status) status.innerText = '✅ Import Successful!';
-                loadExportServices(); // Refresh list
-                setTimeout(hideProgressModal, 1000); // Keep modal visible for a second so user can see success
+                const resData = await resp.json();
+                if (resData.success) {
+                    const count = resData.imported ? resData.imported.length : 0;
+                    const fileList = resData.imported ? resData.imported.join(', ') : 'Unknown files';
+                    
+                    logActivity(`IMPORT SUCCESS: Restored ${count} files.`, 'success');
+                    logActivity(`IMPORTED FILES: ${fileList}`, 'debug');
+                    
+                    if(status) status.innerText = '✅ Import Successful!';
+                    loadExportServices(); // Refresh list
+                    setTimeout(hideProgressModal, 1000); 
+                } else {
+                     throw new Error(resData.error || 'Unknown error');
+                }
             } else {
                 const err = await resp.json();
                 logActivity(`IMPORT ERROR: ${err.error || 'Unknown'}`, 'error');

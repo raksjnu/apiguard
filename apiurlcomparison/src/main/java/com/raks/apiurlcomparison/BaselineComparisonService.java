@@ -197,7 +197,10 @@ public class BaselineComparisonService {
         }
         
         if (headers == null) {
-            headers = operation.getHeaders();
+            headers = new HashMap<>(operation.getHeaders() != null ? operation.getHeaders() : new HashMap<>());
+        } else {
+            // Ensure we don't modify the forcedHeaders map directly if it's shared
+            headers = new HashMap<>(headers);
         }
         
         long start = System.currentTimeMillis();
@@ -205,7 +208,7 @@ public class BaselineComparisonService {
         apiCallResult.setDuration(System.currentTimeMillis() - start);
         
 
-        Map<String, String> actualHeaders = new HashMap<>(operation.getHeaders() != null ? operation.getHeaders() : new HashMap<>());
+        Map<String, String> actualHeaders = new HashMap<>(headers);
         if (client.getAccessToken() != null) {
             actualHeaders.put("Authorization", "Bearer " + client.getAccessToken());
         } else if (apiConfig.getAuthentication() != null 

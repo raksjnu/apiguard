@@ -105,7 +105,7 @@
                 <nav class="header-tabs">
                     <a class="nav-tab active" data-view="mainView" style="text-decoration: none; border-bottom: 3px solid var(--primary-color);">⚖️ Main</a>
                     <a class="nav-tab" data-view="utilitiesView" style="text-decoration: none;">🛠️ Utilities</a>
-                    <a class="nav-tab" data-view="helpView" style="text-decoration: none;">❓ Help</a>
+                    <a class="nav-tab" data-view="helpView" style="text-decoration: none;">📖 Help</a>
                 </nav>
                 <div style="display: flex; gap: 10px;">
                     <button id="clearFormBtn" type="button" class="btn-secondary" style="padding: 8px 16px;">
@@ -122,7 +122,7 @@
                         <div class="card-header" style="justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0;">
                             <h2 style="font-size: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 8px; margin: 0;">
                                 ⚙️ Configuration
-                                <span onclick="showHelp('help-live')" style="cursor:pointer; font-size:0.8rem; opacity:0.6;" title="Config Help">❓</span>
+                                <span class="help-btn" onclick="showHelp('help-live')" title="Config Help">?</span>
                             </h2>
                             <div class="toggle-container">
                                 <button type="button" class="toggle-btn" id="typeRest" data-type="REST">REST</button>
@@ -142,7 +142,7 @@
                         <div id="baselineControls" style="display:none; margin-bottom: 15px; padding: 12px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid var(--primary-color);">
                             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                                 <label style="font-size: 0.8rem; font-weight: 700; margin: 0;">Baseline Operation</label>
-                                <span onclick="showHelp('help-baseline')" style="cursor:pointer; font-size:0.8rem; opacity:0.6;" title="Baseline Help">❓</span>
+                                <span class="help-btn" onclick="showHelp('help-baseline')" title="Baseline Help">?</span>
                             </div>
                             <div style="display: flex; gap: 8px; margin-bottom: 12px;">
                                 <button type="button" class="mode-tab active" id="opCapture" style="flex:1; font-size: 0.75rem; padding: 8px; font-weight:700;">📸 Capture Baseline</button>
@@ -227,7 +227,7 @@
                                 <div class="accordion-header">
                                     <span>🔄 Iteration Tokens</span>
                                     <div style="display:flex; align-items:center; gap:10px;">
-                                        <span onclick="event.stopPropagation(); showHelp('help-tokens')" style="cursor:pointer; font-size:0.8rem; opacity:0.6;" title="Token Help">❓</span>
+                                        <span class="help-btn" onclick="event.stopPropagation(); showHelp('help-tokens')" title="Token Help">?</span>
                                         <span class="icon">▼</span>
                                     </div>
                                 </div>
@@ -329,7 +329,7 @@
                         <div class="card utility-tile" style="border-radius: 16px;">
                             <div class="card-header" style="background: rgba(46, 125, 50, 0.05); border-left-color: var(--success-color); justify-content: space-between;">
                                 <h2 style="font-size: 0.95rem; color: var(--success-color); display:flex; align-items:center; gap:10px;">🌐 Connectivity Suite</h2>
-                                <span onclick="showHelp('help-toolkit')" style="cursor:pointer; font-size:0.8rem; opacity:0.6;" title="Utility Help">❓</span>
+                                <span class="help-btn" onclick="showHelp('help-toolkit')" title="Utility Help">?</span>
                             </div>
                             <div class="card-body" style="padding: 15px;">
                                 <div>

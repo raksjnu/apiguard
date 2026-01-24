@@ -1470,6 +1470,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     
                     if(status) status.innerText = '✅ Import Successful!';
                     loadExportServices(); // Refresh list
+                    loadBaselineServices(); // Refresh baseline comparison dropdowns
                     setTimeout(hideProgressModal, 1000); 
                 } else {
                      throw new Error(resData.error || 'Unknown error');
@@ -1496,4 +1497,5 @@ document.addEventListener('DOMContentLoaded', () => {
     initResize();
     initUtilResize();
     loadDefaults();
+    loadLogs();
 });

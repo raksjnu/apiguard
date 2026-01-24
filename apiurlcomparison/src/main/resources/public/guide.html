@@ -161,7 +161,7 @@
                         <li><code>Baseline Testing</code>: Capture a golden master or compare against one.</li>
                     </ul>
                 </li>
-                <li><strong>Endpoints:</strong> Enter the full URLs for your APIs (e.g., <code>http://api.example.com/v1/resource</code>).</li>
+                <li><strong>Endpoints:</strong> Enter the full URLs for your APIs (e.g., <code>https://api1.example.com/v1/resource</code>).</li>
                 <li><strong>Enable Authentication:</strong> (Optional) Check this box if your API requires Basic Authentication. This enables the <em>Client ID</em> and <em>Client Secret</em> fields.</li>
                 <li><strong>Ignored Fields:</strong> (Optional) Enter flexible fields that change with every request (like <code>timestamp</code>, <code>processId</code>, <code>guid</code>). The tool will <strong>skip comparison</strong> for these specific JSON keys or XML tags, ensuring you don't get false mismatches.
                     <br><em>Note: Only applicable in Live and Compare modes.</em>
@@ -219,7 +219,7 @@
                 <li>Set <strong>Mode</strong> to <code>Baseline Testing</code>.</li>
                 <li>Set <strong>Operation</strong> to <code>Capture Baseline</code>.</li>
                 <li>Enter the <strong>Production URL</strong> as API 1.</li>
-                <li>Enter a <strong>Service Name</strong> (e.g., <code>AccountService</code>).</li>
+                <li>Enter a <strong>Service Name</strong> (e.g., <code>OrderService</code>).</li>
                 <li>Add a description like "Prod Pre-Deployment v1.0".</li>
                 <li>(Optional) Set a custom <strong>Working Directory</strong>.</li>
                 <li>Click <strong>Run Comparison</strong>. The tool will execute requests against Prod and save the responses locally. You will see a <span class="badge badge-primary">CAPTURED</span> badge.</li>
@@ -244,7 +244,7 @@
         <section class="guide-section" id="mock-server">
             <h2>5. Mock Server</h2>
             <div class="note">
-                <strong>Note for CloudHub Users:</strong> The embedded mock servers (ports 9091-9094) identify as localhost. When deployed to CloudHub, these ports are internal only.
+                <strong>Note for CloudHub Users:</strong> The tool uses real Mule services. Ensure your connectivity is configured in the centralized <code>config.yaml</code>.
             </div>
             <p>Use the built-in Mock Server to test the tool without external dependencies.</p>
             <ol>

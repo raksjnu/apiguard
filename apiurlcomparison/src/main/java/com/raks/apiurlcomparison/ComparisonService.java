@@ -175,6 +175,15 @@ public class ComparisonService {
                 api1CallResult.setStatusCode(httpResponse1.getStatusCode());
                 api1CallResult.setResponsePayload(httpResponse1.getBody());
                 api1CallResult.setResponseHeaders(httpResponse1.getHeaders());
+
+                // Reflect actual headers sent (including Authorization)
+                Map<String, String> actualHeaders1 = new HashMap<>(op1.getHeaders() != null ? op1.getHeaders() : new HashMap<>());
+                if (client1.getAccessToken() != null) actualHeaders1.put("Authorization", "Bearer " + client1.getAccessToken());
+                else if (api1Config.getAuthentication() != null && api1Config.getAuthentication().getClientId() != null) {
+                    String auth = api1Config.getAuthentication().getClientId() + ":" + api1Config.getAuthentication().getClientSecret();
+                    actualHeaders1.put("Authorization", "Basic " + java.util.Base64.getEncoder().encodeToString(auth.getBytes()));
+                }
+                api1CallResult.setRequestHeaders(actualHeaders1);
                 
                 long start2 = System.currentTimeMillis();
                 com.raks.apiurlcomparison.http.HttpResponse httpResponse2 = client2.sendRequest(url2, method2, op2.getHeaders(), payload2);
@@ -182,6 +191,14 @@ public class ComparisonService {
                 api2CallResult.setStatusCode(httpResponse2.getStatusCode());
                 api2CallResult.setResponsePayload(httpResponse2.getBody());
                 api2CallResult.setResponseHeaders(httpResponse2.getHeaders());
+
+                Map<String, String> actualHeaders2 = new HashMap<>(op2.getHeaders() != null ? op2.getHeaders() : new HashMap<>());
+                if (client2.getAccessToken() != null) actualHeaders2.put("Authorization", "Bearer " + client2.getAccessToken());
+                else if (api2Config.getAuthentication() != null && api2Config.getAuthentication().getClientId() != null) {
+                    String auth = api2Config.getAuthentication().getClientId() + ":" + api2Config.getAuthentication().getClientSecret();
+                    actualHeaders2.put("Authorization", "Basic " + java.util.Base64.getEncoder().encodeToString(auth.getBytes()));
+                }
+                api2CallResult.setRequestHeaders(actualHeaders2);
                 
                 logger.info("Comparison - API1 status: {}, API2 status: {}", 
                     httpResponse1.getStatusCode(), httpResponse2.getStatusCode());
