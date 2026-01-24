@@ -543,29 +543,94 @@ body.resizing .resize-handle::before {
     }
 }
 
-/* Activity Log Console Enhancement */
+/* Utilities View Overhaul */
+.util-flex-container {
+    display: flex;
+    gap: 0;
+    height: calc(100vh - 180px);
+    overflow: hidden;
+}
+
+.util-toolkit-panel {
+    flex: 1;
+    min-width: 300px;
+    padding-right: 15px;
+    overflow-y: auto;
+}
+
+.util-log-panel {
+    width: 600px; /* Default width */
+    min-width: 250px;
+    display: flex;
+    flex-direction: column;
+    background: #fdfbff; /* Very light purple/white */
+    border-left: 1px solid #e2e8f0;
+}
+
+.util-resize-handle {
+    width: 6px;
+    cursor: col-resize;
+    background: transparent;
+    transition: background 0.2s;
+}
+
+.util-resize-handle:hover {
+    background: var(--primary-color);
+    opacity: 0.3;
+}
+
+/* Light Console Theme */
+#activityLog {
+    flex: 1;
+    padding: 15px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.75rem;
+    overflow-y: auto;
+    background: #f8fafc; /* Very light blue */
+    color: #4a5568;
+    line-height: 1.5;
+    border-top: 1px solid #edf2f7;
+    white-space: pre-wrap;
+}
+
 #activityLog::-webkit-scrollbar {
     width: 6px;
 }
 #activityLog::-webkit-scrollbar-track {
-    background: #1a202c;
+    background: #f1f5f9;
 }
 #activityLog::-webkit-scrollbar-thumb {
-    background: #4a5568;
+    background: #cbd5e1;
     border-radius: 3px;
-}
-#activityLog::-webkit-scrollbar-thumb:hover {
-    background: #718096;
 }
 
 .log-entry {
-    margin-bottom: 4px;
-    border-left: 2px solid transparent;
-    padding-left: 8px;
+    margin-bottom: 6px;
+    border-left: 3px solid transparent;
+    padding-left: 10px;
 }
-.log-info { color: #a0aec0; }
-.log-success { color: #68d391; border-left-color: #68d391; }
-.log-error { color: #f56565; border-left-color: #f56565; }
-.log-debug { color: #63b3ed; }
-.log-timestamp { color: #4a5568; font-size: 0.65rem; margin-right: 8px; }
+.log-info { color: #4a5568; }
+.log-success { color: #2f855a; border-left-color: #48bb78; background: rgba(72, 187, 120, 0.05); }
+.log-error { color: #c53030; border-left-color: #f56565; background: rgba(245, 101, 101, 0.05); }
+.log-debug { color: #2b6cb0; border-left-color: #63b3ed; }
+.log-timestamp { color: #94a3b8; font-size: 0.65rem; margin-right: 8px; font-weight: 600; }
+
+.toolkit-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.utility-tile {
+    min-height: 200px;
+    display: flex;
+    flex-direction: column;
+}
+
+.utility-tile .card-body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
 

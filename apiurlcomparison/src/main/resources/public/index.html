@@ -289,97 +289,108 @@
             </main>
         </div>
 
-        <div id="utilitiesView" class="view-container" style="padding: 20px; overflow-y: auto; background: var(--bg-color);">
-            <!-- Workspace Management (Pinned Top) -->
-            <div class="card" style="margin-bottom: 25px; border-radius: 16px;">
-                <div class="card-header" style="background: rgba(94, 39, 139, 0.05); border-radius: 12px 12px 0 0;">
-                    <h2 style="font-size: 1.1rem; color: var(--primary-color); display:flex; align-items:center; gap:10px;">📂 Workspace Management</h2>
-                </div>
-                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 30px; padding: 20px;">
-                    <div>
-                        <label style="font-weight:700; display:block; margin-bottom:10px; color:#444;">Working Directory</label>
-                        <input type="text" id="workingDirectory" placeholder="C:\raks\baselines..." style="padding: 12px; border-radius: 8px;">
-                        <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">Source path for baseline data storage and session state.</p>
-                    </div>
-                    <div style="display: flex; flex-direction: column; justify-content: center;">
-                        <label style="font-weight:700; display:block; margin-bottom:10px; color:#444;">Mock Data Initialization</label>
-                        <button type="button" id="loadMockTestDataBtn" class="btn-primary" style="width: 100%; padding: 12px; border-radius: 8px; font-weight:700;">🚀 Load Test Templates</button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Utilities Grid (Tiles) -->
-            <div class="toolkit-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
-                
-                <!-- Connectivity Suite -->
-                <div class="card utility-tile" style="border-radius: 16px;">
-                    <div class="card-header" style="background: rgba(46, 125, 50, 0.05); border-left-color: var(--success-color);">
-                        <h2 style="font-size: 1rem; color: var(--success-color); display:flex; align-items:center; gap:10px;">🌐 Connectivity Suite</h2>
-                    </div>
-                    <div style="padding: 15px;">
-                        <label style="font-size: 0.75rem; font-weight:700; color:#666; margin-bottom:8px; display:block;">TARGET ENDPOINT URL</label>
-                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                            <input type="text" id="utilUrl" placeholder="https://..." style="border-radius: 8px; flex: 1;">
+        <div id="utilitiesView" class="view-container" style="padding: 20px; overflow-y: hidden; background: var(--bg-color);">
+            <div class="util-flex-container">
+                <!-- Left Column: Settings and Toolkit -->
+                <div class="util-toolkit-panel">
+                    <!-- Workspace Management (Split Tiles) -->
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px;">
+                        <div class="card" style="border-radius: 16px; min-height: 140px;">
+                            <div class="card-header" style="background: rgba(94, 39, 139, 0.05); border-radius: 12px 12px 0 0; padding: 10px 15px;">
+                                <h2 style="font-size: 0.95rem; color: var(--primary-color); display:flex; align-items:center; gap:8px;">📂 Working Directory</h2>
+                            </div>
+                            <div style="padding: 15px;">
+                                <input type="text" id="workingDirectory" placeholder="C:\raks\baselines..." style="padding: 10px; border-radius: 8px; font-size: 0.85rem; width: 100%;">
+                                <p style="font-size: 0.75rem; color: #666; margin-top: 8px;">Source path for baseline data storage.</p>
+                            </div>
                         </div>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                            <button id="pingBtn" class="btn-secondary" style="font-weight:700;">🚀 Ping Test</button>
-                            <button id="fetchWsdlBtn" class="btn-secondary" style="font-weight:700;">📘 Discovery (WSDL)</button>
+                        <div class="card" style="border-radius: 16px; min-height: 140px;">
+                            <div class="card-header" style="background: rgba(94, 39, 139, 0.05); border-radius: 12px 12px 0 0; padding: 10px 15px;">
+                                <h2 style="font-size: 0.95rem; color: var(--primary-color); display:flex; align-items:center; gap:8px;">🚀 Mock Data Initialization</h2>
+                            </div>
+                            <div style="padding: 15px; display: flex; flex-direction: column; justify-content: center; flex: 1;">
+                                <button type="button" id="loadMockTestDataBtn" class="btn-primary" style="width: 100%; padding: 10px; border-radius: 8px; font-weight:700; font-size: 0.85rem;">Load Test Templates</button>
+                                <p style="font-size: 0.75rem; color: #666; margin-top: 8px; text-align: center;">Populate form with standard templates.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                <!-- Auth Studio -->
-                <div class="card utility-tile" style="border-radius: 16px;">
-                    <div class="card-header" style="background: rgba(0, 86, 179, 0.05); border-left-color: #0056b3;">
-                        <h2 style="font-size: 1rem; color: #0056b3; display:flex; align-items:center; gap:10px;">🔐 Auth Studio</h2>
-                    </div>
-                    <div style="padding: 15px;">
-                        <textarea id="jwtInput" placeholder="Paste JWT/Bearer Token here..." style="height: 60px; margin-bottom: 10px; font-size: 0.75rem;"></textarea>
-                        <button id="decodeJwtBtn" class="btn-secondary" style="width: 100%; font-weight:700;">🔍 Inspect JWT Claims</button>
-                    </div>
-                </div>
+                    <!-- Utilities Toolkit Grid -->
+                    <div class="toolkit-grid">
+                        <!-- Connectivity Suite -->
+                        <div class="card utility-tile" style="border-radius: 16px;">
+                            <div class="card-header" style="background: rgba(46, 125, 50, 0.05); border-left-color: var(--success-color);">
+                                <h2 style="font-size: 0.95rem; color: var(--success-color); display:flex; align-items:center; gap:10px;">🌐 Connectivity Suite</h2>
+                            </div>
+                            <div class="card-body" style="padding: 15px;">
+                                <div>
+                                    <label style="font-size: 0.7rem; font-weight:700; color:#666; margin-bottom:5px; display:block;">TARGET ENDPOINT URL</label>
+                                    <input type="text" id="utilUrl" placeholder="https://..." style="border-radius: 8px; font-size: 0.8rem; width: 100%; margin-bottom: 12px;">
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                                    <button id="pingBtn" class="btn-secondary" style="font-size: 0.75rem; font-weight:700;">Ping Test</button>
+                                    <button id="fetchWsdlBtn" class="btn-secondary" style="font-size: 0.75rem; font-weight:700;">WSDL Fetch</button>
+                                </div>
+                            </div>
+                        </div>
 
-                <!-- Data Foundry -->
-                <div class="card utility-tile" style="border-radius: 16px;">
-                    <div class="card-header" style="background: rgba(229, 62, 62, 0.05); border-left-color: var(--error-color);">
-                        <h2 style="font-size: 1rem; color: var(--error-color); display:flex; align-items:center; gap:10px;">🛠️ Data Foundry</h2>
-                    </div>
-                    <div style="padding: 15px;">
-                        <textarea id="dataWorkpad" placeholder="JSON/XML/Base64 utility workpad..." style="height: 60px; margin-bottom: 10px; font-size: 0.75rem;"></textarea>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                            <button id="minifyBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Minify JSON</button>
-                            <button id="prettyBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Pretty Print</button>
-                            <button id="b64EncBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Base64 Enc</button>
-                            <button id="b64DecBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Base64 Dec</button>
+                        <!-- Auth Studio -->
+                        <div class="card utility-tile" style="border-radius: 16px;">
+                            <div class="card-header" style="background: rgba(0, 86, 179, 0.05); border-left-color: #0056b3;">
+                                <h2 style="font-size: 0.95rem; color: #0056b3; display:flex; align-items:center; gap:10px;">🔐 Auth Studio</h2>
+                            </div>
+                            <div class="card-body" style="padding: 15px;">
+                                <textarea id="jwtInput" placeholder="Paste JWT/Bearer Token here..." style="flex: 1; min-height: 60px; margin-bottom: 10px; font-size: 0.7rem; padding: 8px;"></textarea>
+                                <button id="decodeJwtBtn" class="btn-secondary" style="width: 100%; font-size: 0.75rem; font-weight:700;">Inspect Claims</button>
+                            </div>
+                        </div>
+
+                        <!-- Data Foundry -->
+                        <div class="card utility-tile" style="border-radius: 16px;">
+                            <div class="card-header" style="background: rgba(229, 62, 62, 0.05); border-left-color: var(--error-color);">
+                                <h2 style="font-size: 0.95rem; color: var(--error-color); display:flex; align-items:center; gap:10px;">🛠️ Data Foundry</h2>
+                            </div>
+                            <div class="card-body" style="padding: 15px;">
+                                <textarea id="dataWorkpad" placeholder="JSON/XML/Base64 data..." style="flex: 1; min-height: 60px; margin-bottom: 10px; font-size: 0.7rem; padding: 8px;"></textarea>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px;">
+                                    <button id="minifyBtn" class="btn-secondary" style="font-size: 0.65rem; font-weight:700;">Minify</button>
+                                    <button id="prettyBtn" class="btn-secondary" style="font-size: 0.65rem; font-weight:700;">Pretty</button>
+                                    <button id="b64EncBtn" class="btn-secondary" style="font-size: 0.65rem; font-weight:700;">B64 Enc</button>
+                                    <button id="b64DecBtn" class="btn-secondary" style="font-size: 0.65rem; font-weight:700;">B64 Dec</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Baseline Portability -->
+                        <div class="card utility-tile" style="border-radius: 16px;">
+                            <div class="card-header" style="background: rgba(94, 39, 139, 0.05); border-left-color: var(--primary-color);">
+                                <h2 style="font-size: 0.95rem; color: var(--primary-color); display:flex; align-items:center; gap:10px;">📦 Baseline Sync</h2>
+                            </div>
+                            <div class="card-body" style="padding: 15px;">
+                                <div style="margin-bottom: 10px;">
+                                    <select id="exportService" style="width: 100%; font-size: 0.75rem; padding: 6px; border-radius: 6px; margin-bottom: 8px;"><option value="ALL">-- All Services --</option></select>
+                                    <button id="exportBtn" class="btn-primary" style="width: 100%; padding: 8px; font-size: 0.75rem; font-weight:800;">📥 Export to .zip</button>
+                                </div>
+                                <input type="file" id="importFile" style="display:none;" accept=".zip">
+                                <button id="importBtn" class="btn-secondary" style="width: 100%; padding: 8px; border-style: dashed; font-size: 0.75rem; font-weight:700;" onclick="document.getElementById('importFile').click()">📂 Import .zip</button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Baseline Portability -->
-                <div class="card utility-tile" style="border-radius: 16px;">
-                    <div class="card-header" style="background: rgba(94, 39, 139, 0.05); border-left-color: var(--primary-color);">
-                        <h2 style="font-size: 1rem; color: var(--primary-color); display:flex; align-items:center; gap:10px;">📦 Baseline Portability</h2>
-                    </div>
-                    <div style="padding: 15px;">
-                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                            <select id="exportService" style="flex:1; font-size: 0.8rem;"><option value="ALL">-- All Services --</option></select>
-                            <button id="exportBtn" class="btn-primary" style="width: auto; padding: 8px 12px; font-size: 0.8rem; font-weight:800;">📥 Export</button>
-                        </div>
-                        <input type="file" id="importFile" style="display:none;" accept=".zip">
-                        <button id="importBtn" class="btn-secondary" style="width: 100%; padding: 8px; border-style: dashed; font-size: 0.8rem; font-weight:700;" onclick="document.getElementById('importFile').click()">📂 Import .zip</button>
-                    </div>
-                </div>
-            </div>
+                <!-- Resize Handle -->
+                <div class="util-resize-handle" id="utilResizeHandle"></div>
 
-            <!-- Activity Log (Full Width Bottom) -->
-            <div class="card" style="border-radius: 16px; display: flex; flex-direction: column;">
-                <div class="card-header" style="background: rgba(0, 0, 0, 0.05); border-bottom: 1px solid #ddd; border-left: none;">
-                    <h2 style="font-size: 1rem; color: #444; display:flex; align-items:center; gap:10px;">📜 Activity Log Console</h2>
-                    <button id="clearLogBtn" class="btn-secondary" style="font-size: 0.7rem; padding: 4px 8px;">🗑️ Clear</button>
-                </div>
-                <div id="activityLog" style="padding: 15px; font-family: 'Consolas', monospace; font-size: 0.75rem; overflow-y: auto; background: #2d3748; color: #a0aec0; line-height: 1.4; border-radius: 0 0 12px 12px; height: 250px; white-space: pre-wrap;">
+                <!-- Right Column: Activity Log -->
+                <div class="util-log-panel" id="utilLogPanel">
+                    <div class="card-header" style="background: rgba(0, 0, 0, 0.03); border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+                        <h2 style="font-size: 0.9rem; color: #475569; display:flex; align-items:center; gap:8px;">📜 Activity Logs</h2>
+                        <button id="clearLogBtn" class="btn-secondary" style="font-size: 0.65rem; padding: 3px 8px; border-color: #cbd5e1;">Clear Console</button>
+                    </div>
+                    <div id="activityLog">
 [System Ready]
 > Waiting for utility interaction...
+                    </div>
                 </div>
             </div>
         </div>

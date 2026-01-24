@@ -136,13 +136,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('api/config');
                 if (response.ok) {
                     loadedConfig = await response.json();
-                    const isSoap = document.getElementById('typeSoap').classList.contains('active');
-                    const currentType = isSoap ? 'SOAP' : 'REST';
-                    populateFormFields(currentType);
+                    const preservedType = document.getElementById('testType').value;
+                    populateFormFields(preservedType);
                     btn.innerHTML = '✅ Templates Loaded!';
                     setTimeout(() => {
                         document.querySelector('[data-view="mainView"]').click();
                         btn.innerHTML = originalText;
+                        syncTypeButtons(); // Force UI sync after view swap
                     }, 800);
                 }
             } catch (e) {
@@ -787,7 +787,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if(ps.length > 1) sync(ps);
     };
 
-    // --- Resizing ---
     const initResize = () => {
         const handle = document.getElementById('resizeHandle');
         const grid = document.querySelector('.main-grid');
@@ -800,6 +799,30 @@ document.addEventListener('DOMContentLoaded', () => {
             if (w > 250 && w < 900) grid.style.setProperty('--config-width', `${w}px`);
         });
         document.addEventListener('mouseup', () => { resizing = false; document.body.classList.remove('resizing'); });
+    };
+
+    const initUtilResize = () => {
+        const handle = document.getElementById('utilResizeHandle');
+        const logPanel = document.getElementById('utilLogPanel');
+        if (!handle || !logPanel) return;
+        let resizing = false;
+        handle.addEventListener('mousedown', (e) => { 
+            resizing = true; 
+            document.body.style.cursor = 'col-resize';
+            e.preventDefault();
+        });
+        document.addEventListener('mousemove', (e) => {
+            if (!resizing) return;
+            const screenWidth = window.innerWidth;
+            const newWidth = screenWidth - e.clientX - 30; // 30 for padding/buffer
+            if (newWidth > 250 && newWidth < screenWidth * 0.7) {
+                logPanel.style.width = `${newWidth}px`;
+            }
+        });
+        document.addEventListener('mouseup', () => { 
+            resizing = false; 
+            document.body.style.cursor = 'default';
+        });
     };
 
     // --- Baseline Metadata Loading ---
@@ -1019,14 +1042,23 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('url2Group').style.display = 'block';
             document.getElementById('comparisonMode').value = 'LIVE';
             handleBaselineUI('LIVE');
+            syncTypeButtons();
         });
         modeBaseline.addEventListener('click', () => {
+             // CRITICAL: Capture the actual user selection BEFORE mode switch
+            const preservedType = document.getElementById('testType').value;
+            
             modeBaseline.classList.add('active');
             modeCompare.classList.remove('active');
             document.getElementById('baselineControls').style.display = 'block';
             document.getElementById('url2Group').style.display = 'none';
             document.getElementById('comparisonMode').value = 'BASELINE';
+            
+            // This click triggers handleBaselineUI which used to flip types
             opCapture.click();
+            
+            // Re-apply the preserved type immediately
+            document.getElementById('testType').value = preservedType;
             syncTypeButtons();
         });
     }
@@ -1267,5 +1299,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     initResize();
+    initUtilResize();
     loadDefaults();
 });
