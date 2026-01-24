@@ -344,16 +344,31 @@ public class ApiUrlComparisonWeb {
     private static void resolveApiPayloads(ApiConfig api) {
         if (api == null || api.getOperations() == null) return;
         for (Operation op : api.getOperations()) {
-            if (op.getPayloadTemplatePath() != null && !op.getPayloadTemplatePath().isEmpty()) {
+            String templatePath = op.getPayloadTemplatePath();
+            if (templatePath != null && !templatePath.isEmpty() && !templatePath.trim().startsWith("<")) {
                 try {
-                    java.nio.file.Path path = java.nio.file.Paths.get(op.getPayloadTemplatePath());
+                    java.nio.file.Path path = java.nio.file.Paths.get(templatePath);
 
                     if (java.nio.file.Files.exists(path)) {
+                        logger.info("Resolving payload from file: {}", path.toAbsolutePath());
                         String content = new String(java.nio.file.Files.readAllBytes(path), java.nio.charset.StandardCharsets.UTF_8);
                         op.setPayloadTemplatePath(content);
+                    } else {
+                        // Try classpath fallback
+                        String resourcePath = templatePath.replace('\\', '/');
+                        if (!resourcePath.startsWith("/")) resourcePath = "/" + resourcePath;
+                        try (java.io.InputStream is = ApiUrlComparisonWeb.class.getResourceAsStream(resourcePath)) {
+                            if (is != null) {
+                                logger.info("Resolving payload from classpath: {}", resourcePath);
+                                String content = new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
+                                op.setPayloadTemplatePath(content);
+                            } else {
+                                logger.debug("Payload template not found as file or resource: {}", templatePath);
+                            }
+                        }
                     }
                 } catch (Exception e) {
-                    logger.warn("Failed to resolve payload path: {}", op.getPayloadTemplatePath());
+                    logger.warn("Failed to resolve payload path: {} - {}", templatePath, e.getMessage());
                 }
             }
         }

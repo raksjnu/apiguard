@@ -1,0 +1,12 @@
+{
+  "iterationNumber" : 4,
+  "timestamp" : "2026-01-24 08:37:44",
+  "tokensUsed" : {
+    "amount" : "10",
+    "name" : "sanu"
+  },
+  "endpoint" : "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice",
+  "method" : "POST",
+  "soapAction" : "http://raks.com/orderservice/CreateOrder",
+  "authentication" : { }
+}

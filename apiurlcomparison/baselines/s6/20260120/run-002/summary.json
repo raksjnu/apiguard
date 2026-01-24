@@ -1,0 +1,44 @@
+{
+  "totalIterations" : 6,
+  "iterations" : [ {
+    "duration" : 242,
+    "tokens" : { },
+    "iterationNumber" : 1,
+    "statusCode" : 200
+  }, {
+    "duration" : 217,
+    "tokens" : {
+      "name" : "1729"
+    },
+    "iterationNumber" : 2,
+    "statusCode" : 200
+  }, {
+    "duration" : 216,
+    "tokens" : {
+      "name" : "2016"
+    },
+    "iterationNumber" : 3,
+    "statusCode" : 200
+  }, {
+    "duration" : 217,
+    "tokens" : {
+      "name" : "2018"
+    },
+    "iterationNumber" : 4,
+    "statusCode" : 200
+  }, {
+    "duration" : 211,
+    "tokens" : {
+      "name" : "12"
+    },
+    "iterationNumber" : 5,
+    "statusCode" : 200
+  }, {
+    "duration" : 216,
+    "tokens" : {
+      "name" : "56"
+    },
+    "iterationNumber" : 6,
+    "statusCode" : 200
+  } ]
+}

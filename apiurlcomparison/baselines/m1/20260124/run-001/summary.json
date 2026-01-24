@@ -1,0 +1,33 @@
+{
+  "totalIterations" : 4,
+  "iterations" : [ {
+    "duration" : 240,
+    "tokens" : { },
+    "iterationNumber" : 1,
+    "statusCode" : 200
+  }, {
+    "duration" : 208,
+    "tokens" : {
+      "amount" : "300",
+      "name" : "raks"
+    },
+    "iterationNumber" : 2,
+    "statusCode" : 200
+  }, {
+    "duration" : 249,
+    "tokens" : {
+      "amount" : "900",
+      "name" : "raks"
+    },
+    "iterationNumber" : 3,
+    "statusCode" : 200
+  }, {
+    "duration" : 196,
+    "tokens" : {
+      "amount" : "300",
+      "name" : "neha"
+    },
+    "iterationNumber" : 4,
+    "statusCode" : 200
+  } ]
+}

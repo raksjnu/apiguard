@@ -1,0 +1,8 @@
+{
+  "Transfer-Encoding" : "chunked",
+  "Strict-Transport-Security" : "max-age=31536000; includeSubdomains",
+  "Connection" : "Keep-Alive",
+  "x-correlation-id" : "07c90906-1cb1-4829-8497-a6a199e1d654",
+  "Date" : "Sat, 24 Jan 2026 05:23:06 GMT",
+  "Content-Type" : "text/xml"
+}

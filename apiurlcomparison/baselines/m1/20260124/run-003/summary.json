@@ -1,0 +1,41 @@
+{
+  "totalIterations" : 5,
+  "iterations" : [ {
+    "duration" : 236,
+    "tokens" : { },
+    "iterationNumber" : 1,
+    "statusCode" : 200
+  }, {
+    "duration" : 241,
+    "tokens" : {
+      "amount" : "10",
+      "name" : "rio"
+    },
+    "iterationNumber" : 2,
+    "statusCode" : 200
+  }, {
+    "duration" : 201,
+    "tokens" : {
+      "amount" : "10",
+      "name" : "sanu"
+    },
+    "iterationNumber" : 3,
+    "statusCode" : 200
+  }, {
+    "duration" : 261,
+    "tokens" : {
+      "amount" : "20",
+      "name" : "rio"
+    },
+    "iterationNumber" : 4,
+    "statusCode" : 200
+  }, {
+    "duration" : 257,
+    "tokens" : {
+      "amount" : "20",
+      "name" : "sanu"
+    },
+    "iterationNumber" : 5,
+    "statusCode" : 200
+  } ]
+}

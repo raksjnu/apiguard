@@ -74,15 +74,38 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('.nav-tab').forEach(tab => {
         tab.addEventListener('click', () => {
             const target = tab.dataset.view;
-            document.querySelectorAll('.nav-tab').forEach(t => t.style.borderBottom = 'none');
+            document.querySelectorAll('.nav-tab').forEach(t => {
+                t.classList.remove('active');
+                t.style.borderBottom = 'none';
+            });
+            tab.classList.add('active');
             tab.style.borderBottom = '3px solid var(--primary-color)';
+            
             document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
             document.getElementById(target).classList.add('active');
+            
             if (target === 'utilitiesView') {
                 loadExportServices();
             }
         });
     });
+
+    // --- Contextual Help Tiggers ---
+    window.showHelp = (sectionId) => {
+        const helpTab = Array.from(document.querySelectorAll('.nav-tab')).find(t => t.dataset.view === 'helpView');
+        if (helpTab) helpTab.click();
+        
+        if (sectionId) {
+            setTimeout(() => {
+                const el = document.getElementById(sectionId);
+                if (el) {
+                    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    el.style.boxShadow = '0 0 20px rgba(94, 39, 139, 0.4)';
+                    setTimeout(() => el.style.boxShadow = '', 2000);
+                }
+            }, 100);
+        }
+    };
 
     const loadExportServices = async () => {
         const select = document.getElementById('exportService');
@@ -262,8 +285,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const populateFormFields = (type) => {
+        if (!loadedConfig) return;
+        const activeApis = (type === 'SOAP') ? loadedConfig.soap : loadedConfig.rest;
+        if (!activeApis) return;
 
+        document.getElementById('url1').value = activeApis.api1?.baseUrl || '';
+        document.getElementById('url2').value = activeApis.api2?.baseUrl || '';
 
+        const op = activeApis.api1?.operations?.[0];
+        if (op) {
+            document.getElementById('operationName').value = op.name || '';
+            document.getElementById('payload').value = op.payloadTemplatePath || '';
+            document.getElementById('method').value = op.methods?.[0] || 'POST';
+            
+            headersTable.innerHTML = '';
+            if (op.headers) {
+                Object.entries(op.headers).forEach(([k, v]) => addRow(headersTable, ['Header Name', 'Value'], [k, v]));
+            }
+        }
+
+        // Only populate tokens during explicit "Load Mock" action
+        tokensTable.innerHTML = '';
+        if (loadedConfig.tokens) {
+            Object.entries(loadedConfig.tokens).forEach(([k, list]) => {
+                addRow(tokensTable, ['Token Name', 'Value'], [k, list.join('; ')]);
+            });
+        }
+        saveState();
+    };
     const loadDefaults = async () => {
         // First, try to restore the user's exact prior state
         const stateRestored = loadState();
@@ -779,32 +829,63 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const formatXml = (xml) => {
-        let formatted = '';
-        let reg = /(>)(<)(\/*)/g;
-        xml = xml.replace(reg, '$1\r\n$2$3');
-        let pad = 0;
-        xml.split('\r\n').forEach(node => {
-            let indent = 0;
-            if (node.match(/.+<\/\w[^>]*>$/)) {
-                indent = 0;
-            } else if (node.match(/^<\/\w/)) {
-                if (pad != 0) {
-                    pad -= 1;
-                }
-            } else if (node.match(/^<\w[^>]*[^\/]>.*$/)) {
-                indent = 1;
-            } else {
-                indent = 0;
+        if (!xml) return '';
+        try {
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xml.trim(), 'text/xml');
+            
+            // Check for parsing errors
+            if (xmlDoc.getElementsByTagName('parsererror').length > 0) {
+                return xml; 
             }
 
-            let padding = '';
-            for (let i = 0; i < pad; i++) {
-                padding += '  ';
+            const formatNode = (node, level = 0) => {
+                const indent = '  '.repeat(level);
+                
+                if (node.nodeType === 1) { // Element
+                    let tag = '<' + node.nodeName;
+                    for (let i = 0; i < node.attributes.length; i++) {
+                        const attr = node.attributes[i];
+                        tag += ` ${attr.name}="${attr.value}"`;
+                    }
+                    
+                    if (node.childNodes.length === 0) {
+                        return indent + tag + '/>\n';
+                    }
+
+                    // Check if it's a simple text-only element
+                    if (node.childNodes.length === 1 && node.childNodes[0].nodeType === 3) {
+                        const text = node.childNodes[0].textContent.trim();
+                        return indent + tag + '>' + text + '</' + node.nodeName + '>\n';
+                    }
+                    
+                    let result = indent + tag + '>\n';
+                    for (let i = 0; i < node.childNodes.length; i++) {
+                        const child = node.childNodes[i];
+                        if (child.nodeType === 1) {
+                            result += formatNode(child, level + 1);
+                        } else if (child.nodeType === 3) {
+                            const txt = child.textContent.trim();
+                            if (txt) result += '  '.repeat(level + 1) + txt + '\n';
+                        }
+                    }
+                    result += indent + '</' + node.nodeName + '>\n';
+                    return result;
+                }
+                return '';
+            };
+
+            let output = '';
+            for (let i = 0; i < xmlDoc.childNodes.length; i++) {
+                const child = xmlDoc.childNodes[i];
+                if (child.nodeType === 1) output += formatNode(child);
+                else if (child.nodeType === 7) output += `<?${child.target} ${child.data}?>\n`;
             }
-            formatted += padding + node + '\r\n';
-            pad += indent;
-        });
-        return formatted;
+            return output.trim();
+        } catch (e) {
+            console.warn('[APP] XML Format Error:', e);
+            return xml;
+        }
     };
 
     const setupSync = (body) => {
@@ -1252,8 +1333,20 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     document.getElementById('prettyBtn').onclick = () => { 
         logActivity('Formatting Data...', 'debug');
-        workpad.value = formatData(workpad.value); 
-        logActivity('Data Formatted.', 'success');
+        const original = workpad.value.trim();
+        if (!original) {
+            logActivity('Data Foundry: No content to format.', 'info');
+            return;
+        }
+        
+        const formatted = formatData(original);
+        workpad.value = formatted;
+        
+        let subType = 'Data';
+        if (original.startsWith('{') || original.startsWith('[')) subType = 'JSON';
+        else if (original.startsWith('<')) subType = 'XML';
+        
+        logActivity(`${subType} Formatted.`, 'success');
     };
     document.getElementById('b64EncBtn').onclick = () => { 
         logActivity('Encoding to Base64...', 'debug');
@@ -1322,17 +1415,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (resp.status === 409) {
                 hideProgressModal();
                 const conflicts = await resp.json();
+                logActivity(`IMPORT CONFLICTS: ${conflicts.length} services already exist in working directory.`, 'warning');
                 if (confirm(`Conflicts detected for: ${conflicts.join(', ')}. Overwrite existing data?`)) {
                     await handleImport(file, true);
                 } else {
-                    logActivity(`IMPORT CANCELLED: User declined overwrite.`, 'info');
+                    logActivity(`IMPORT CANCELLED: User declined overwrite for ${conflicts.length} services.`, 'info');
                     if(status) status.innerText = 'Import cancelled by user.';
                 }
+                return;
             } else if (resp.ok) {
                 logActivity(`IMPORT SUCCESS: Baselines restored to workspace.`, 'success');
                 if(status) status.innerText = '✅ Import Successful!';
                 loadExportServices(); // Refresh list
-                hideProgressModal();
+                setTimeout(hideProgressModal, 1000); // Keep modal visible for a second so user can see success
             } else {
                 const err = await resp.json();
                 logActivity(`IMPORT ERROR: ${err.error || 'Unknown'}`, 'error');

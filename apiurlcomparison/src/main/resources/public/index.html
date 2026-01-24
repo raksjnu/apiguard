@@ -105,6 +105,7 @@
                 <nav class="header-tabs">
                     <a class="nav-tab active" data-view="mainView" style="text-decoration: none; border-bottom: 3px solid var(--primary-color);">⚖️ Main</a>
                     <a class="nav-tab" data-view="utilitiesView" style="text-decoration: none;">🛠️ Utilities</a>
+                    <a class="nav-tab" data-view="helpView" style="text-decoration: none;">❓ Help</a>
                 </nav>
                 <div style="display: flex; gap: 10px;">
                     <button id="clearFormBtn" type="button" class="btn-secondary" style="padding: 8px 16px;">
@@ -121,6 +122,7 @@
                         <div class="card-header" style="justify-content: space-between; align-items: center; border-radius: 8px 8px 0 0;">
                             <h2 style="font-size: 1rem; color: var(--primary-color); display: flex; align-items: center; gap: 8px; margin: 0;">
                                 ⚙️ Configuration
+                                <span onclick="showHelp('help-live')" style="cursor:pointer; font-size:0.8rem; opacity:0.6;" title="Config Help">❓</span>
                             </h2>
                             <div class="toggle-container">
                                 <button type="button" class="toggle-btn" id="typeRest" data-type="REST">REST</button>
@@ -138,7 +140,10 @@
 
                         <!-- Baseline Controls (Visible only in Baseline mode) -->
                         <div id="baselineControls" style="display:none; margin-bottom: 15px; padding: 12px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid var(--primary-color);">
-                            <label style="font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; display: block;">Baseline Operation</label>
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label style="font-size: 0.8rem; font-weight: 700; margin: 0;">Baseline Operation</label>
+                                <span onclick="showHelp('help-baseline')" style="cursor:pointer; font-size:0.8rem; opacity:0.6;" title="Baseline Help">❓</span>
+                            </div>
                             <div style="display: flex; gap: 8px; margin-bottom: 12px;">
                                 <button type="button" class="mode-tab active" id="opCapture" style="flex:1; font-size: 0.75rem; padding: 8px; font-weight:700;">📸 Capture Baseline</button>
                                 <button type="button" class="mode-tab" id="opCompare" style="flex:1; font-size: 0.75rem; padding: 8px; font-weight:700;">🔍 Compare Baseline</button>
@@ -221,7 +226,10 @@
                             <div class="accordion">
                                 <div class="accordion-header">
                                     <span>🔄 Iteration Tokens</span>
-                                    <span class="icon">▼</span>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <span onclick="event.stopPropagation(); showHelp('help-tokens')" style="cursor:pointer; font-size:0.8rem; opacity:0.6;" title="Token Help">❓</span>
+                                        <span class="icon">▼</span>
+                                    </div>
                                 </div>
                                 <div class="accordion-content">
                                     <table id="tokensTable" class="input-table" style="font-size: 0.8rem;">
@@ -319,8 +327,9 @@
                     <div class="toolkit-grid">
                         <!-- Connectivity Suite -->
                         <div class="card utility-tile" style="border-radius: 16px;">
-                            <div class="card-header" style="background: rgba(46, 125, 50, 0.05); border-left-color: var(--success-color);">
+                            <div class="card-header" style="background: rgba(46, 125, 50, 0.05); border-left-color: var(--success-color); justify-content: space-between;">
                                 <h2 style="font-size: 0.95rem; color: var(--success-color); display:flex; align-items:center; gap:10px;">🌐 Connectivity Suite</h2>
+                                <span onclick="showHelp('help-toolkit')" style="cursor:pointer; font-size:0.8rem; opacity:0.6;" title="Utility Help">❓</span>
                             </div>
                             <div class="card-body" style="padding: 15px;">
                                 <div>
@@ -383,7 +392,7 @@
 
                 <!-- Right Column: Activity Log -->
                 <div class="util-log-panel" id="utilLogPanel">
-                    <div class="card-header" style="background: rgba(0, 0, 0, 0.03); border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+                    <div class="util-log-header">
                         <h2 style="font-size: 0.9rem; color: #475569; display:flex; align-items:center; gap:8px;">📜 Activity Logs</h2>
                         <button id="clearLogBtn" class="btn-secondary" style="font-size: 0.65rem; padding: 3px 8px; border-color: #cbd5e1;">Clear Console</button>
                     </div>
@@ -394,7 +403,106 @@
                 </div>
             </div>
         </div>
-    </div>
+
+        <div id="helpView" class="view-container" style="padding: 30px; overflow-y: auto; background: var(--bg-color);">
+            <div style="max-width: 1200px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px;">
+                <section class="help-hero">
+                    <h2>API Forge Documentation</h2>
+                    <p>Master the art of API Comparison, Baseline Management, and Rapid Prototyping.</p>
+                </section>
+
+                <div class="highlight-box">
+                    <strong>API Forge</strong> is a flexible, Java-based static and live analysis engine designed for <strong>Universal API Compliance</strong>.
+                    It allows you to validate migrations, compare REST/SOAP responses, and perform baseline testing with deep structural inspection.
+                </div>
+
+                <div class="help-grid">
+                    <!-- Tech Stack -->
+                    <div class="card help-card" id="help-tech-stack">
+                        <div class="card-header" style="background: rgba(94, 39, 139, 0.05);">
+                            <h2 style="font-size: 1.1rem;">💻 Tech Stack</h2>
+                        </div>
+                        <div class="card-body">
+                            <p>Built with enterprise-grade stability and modern web standards:</p>
+                            <div style="margin-top: 15px;">
+                                <span class="tech-stack-tag">Java 17 (LTS)</span>
+                                <span class="tech-stack-tag">Maven 3.8+</span>
+                                <span class="tech-stack-tag">Spark Java</span>
+                                <span class="tech-stack-tag">Apache HttpClient</span>
+                                <span class="tech-stack-tag">Jackson (JSON)</span>
+                                <span class="tech-stack-tag">XMLUnit (SOAP)</span>
+                                <span class="tech-stack-tag">Vanilla JS/CSS</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Usage Guide -->
+                    <div class="card help-card" id="help-usage">
+                        <div class="card-header" style="background: rgba(0, 86, 179, 0.05);">
+                            <h2 style="font-size: 1.1rem; color: #0056b3;">🚀 How to Use</h2>
+                        </div>
+                        <div class="card-body">
+                            <ol style="padding-left: 20px; font-size: 0.9rem;">
+                                <li><strong>Global Setup:</strong> Set your <em>Working Directory</em> in Utilities for baseline storage.</li>
+                                <li><strong>Configure:</strong> Enter your Endpoint URLs and Payload in the Main panel.</li>
+                                <li><strong>Tokens:</strong> Add iteration tokens (e.g., <code>id=100;101</code>) to test multiple scenarios.</li>
+                                <li><strong>Execute:</strong> Click <em>Run Comparison</em> and inspect the highlighted structural diffs.</li>
+                            </ol>
+                        </div>
+                    </div>
+                </div>
+
+                <h2>🎯 Key Capabilities</h2>
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <h4>⚖️ Live Comparison</h4>
+                        <p>Real-time A/B testing between two active endpoints with visual field-level diffing.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>📊 Baseline Engine</h4>
+                        <p>Capture "Golden master" states and verify future releases against saved truth.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔄 Matrix Testing</h4>
+                        <p>Generate hundreds of test cases automatically using "All Combinations" token strategy.</p>
+                    </div>
+                    <div class="feature-card">
+                        <h4>🔐 Auth Studio</h4>
+                        <p>Inspect JWT claims and connectivity health directly from the built-in toolkit.</p>
+                    </div>
+                </div>
+
+                <section class="card" style="padding: 30px; border-radius: 16px; border-left: 8px solid var(--accent-color);">
+                    <h3 style="color: var(--primary-color); margin-bottom: 25px;">💼 Strategic Enterprise Scenarios</h3>
+                    <div class="feature-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+                        <div class="feature-card">
+                            <span class="uc-badge badge-ops">Ops & Release Monitoring</span>
+                            <h4>🚀 Zero-Day Release Guard</h4>
+                            <p style="font-size: 0.85rem;">Capture a "Golden Baseline" of stable services before production deployment. Immediately after release, run a comparison to detect semantic shifts before users report issues. Transition from <em>Reactive</em> to <em>Proactive</em> incident management.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="uc-badge badge-dev">Massive Matrix Testing</span>
+                            <h4>🧪 Universal Compliance</h4>
+                            <p style="font-size: 0.85rem;">Professional tools often lack structural matrix testing. API Forge's <strong>Iteration Tokens</strong> allow you to verify hundreds of data permutations in one run, ensuring your API behaves consistently across all business rules.</p>
+                        </div>
+                        <div class="feature-card">
+                            <span class="uc-badge badge-arch">Migration & Cloud Modernization</span>
+                            <h4>🏗️ Bit-Perfect Core Parity</h4>
+                            <p style="font-size: 0.85rem;">During legacy system migrations, use API Forge as the ultimate source of truth. Compare the legacy output against the new cloud-native service to ensure bit-perfect semantic parity during critical transitions.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="highlight-box" style="background: #f1e6f9; border-left-color: var(--primary-color);">
+                    <h3 style="margin-top: 0; color: var(--primary-color);">📧 Contact & Support</h3>
+                    <p>For further information, feature requests, or enterprise support:</p>
+                    <p style="margin-top: 10px; font-weight: 700;">
+                        Rakesh Kumar (Raks)<br>
+                        Email: <a href="mailto:rakesh.kumar@ibm.com" style="color: var(--primary-color); text-decoration: none;">rakesh.kumar@ibm.com</a>
+                    </p>
+                </div>
+            </div>
+        </div>
 
     <script src="app.js"></script>
 </body>
