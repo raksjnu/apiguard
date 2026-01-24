@@ -78,7 +78,7 @@ soap:
         payloadTemplatePath: "testData/api2/get_order_payload.xml"
       
 # Set the maximum number of iterations to run, as a safeguard.
-maxIterations: 100
+maxIterations: 25
 
 # Define tokens and the values to iterate over.
 tokens:

@@ -335,7 +335,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
                 if (loadedConfig.ignoredFields) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
                 
+                // CRITICAL: Ensure form starts clean of test data but has standard headers
                 resetFormToStandard(initialType);
+            } else {
+                // Even if state was restored, if it looks like "Sample Test Data", clear it
+                // Logic: If URL1 or Operation name matches common sample keywords, or just generally clear it anyway?
+                // The user was very specific: "when ui starts it should not have test data".
+                // I will call resetFormToStandard after loading state to ensure it starts clean 
+                // but preserves the TYPE and global settings.
+                resetFormToStandard(document.getElementById('testType').value);
             }
             
             // Sync specific global settings if server has them but local doesn't (or just always sync them)
