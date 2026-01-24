@@ -1,0 +1,115 @@
+# Configuration for the API Comparison Tool
+
+# Set the type of test to run: "REST" or "SOAP"
+testType: "SOAP"
+
+# Configuration block for REST APIs
+rest:
+  api1:
+    baseUrl: "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders"
+    authentication:
+      tokenUrl: null
+    operations:
+      - name: "createOrder"
+        path: "/api/orders"
+        methods: ["POST"]
+        headers:
+          Content-Type: "application/json"
+        payloadTemplatePath: "testData/api1/payload.json"
+      - name: "getOrder"
+        path: "/api/orders/{{orderNumber}}"
+        methods: ["GET"]
+        headers:
+          Accept: "application/json"
+      
+  api2:
+    baseUrl: "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders"
+    authentication:
+      tokenUrl: null
+    operations:
+      - name: "createOrder"
+        path: "/api/orders"
+        methods: ["POST"]
+        headers:
+          Content-Type: "application/json"
+        payloadTemplatePath: "testData/api2/payload.json"
+      - name: "getOrder"
+        path: "/api/orders/{{orderNumber}}"
+        methods: ["GET"]
+        headers:
+          Accept: "application/json"
+      
+# Configuration block for SOAP APIs
+soap:
+  api1:
+    baseUrl: "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice"
+    authentication:
+      tokenUrl: null
+    operations:
+      - name: "createOrder"
+        methods: ["POST"]
+        headers:
+          Content-Type: "text/xml"
+          SOAPAction: "http://raks.com/orderservice/CreateOrder"
+        payloadTemplatePath: "testData/api1/payload.xml"
+      - name: "getOrder"
+        methods: ["POST"]
+        headers:
+          Content-Type: "text/xml"
+          SOAPAction: "http://raks.com/orderservice/GetOrder"
+        payloadTemplatePath: "testData/api1/get_order_payload.xml"
+      
+  api2:
+    baseUrl: "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice"
+    authentication:
+      tokenUrl: null
+    operations:
+      - name: "createOrder"
+        methods: ["POST"]
+        headers:
+          Content-Type: "text/xml"
+          SOAPAction: "http://raks.com/orderservice/CreateOrder"
+        payloadTemplatePath: "testData/api2/payload.xml"
+      - name: "getOrder"
+        methods: ["POST"]
+        headers:
+          Content-Type: "text/xml"
+          SOAPAction: "http://raks.com/orderservice/GetOrder"
+        payloadTemplatePath: "testData/api2/get_order_payload.xml"
+      
+# Set the maximum number of iterations to run, as a safeguard.
+maxIterations: 25
+
+# Define tokens and the values to iterate over.
+tokens:
+  account:
+    - "1729"
+    - "2018"
+
+# Iteration Strategy: "ALL_COMBINATIONS" (default) or "ONE_BY_ONE"
+iterationController: "ONE_BY_ONE"
+
+# ============================================
+# BASELINE TESTING CONFIGURATION (Optional)
+# ============================================
+# Comparison mode: "LIVE" (default - compare API1 vs API2) or "BASELINE" (compare against saved baseline)
+comparisonMode: "LIVE"
+
+# Baseline configuration (only used when comparisonMode: "BASELINE")
+baseline:
+  # Operation: "CAPTURE" (save new baseline) or "COMPARE" (compare against existing baseline)
+  operation: "CAPTURE"
+  
+  # Directory where baselines are stored (can be relative or absolute path)
+  storageDir: "baselines"
+  
+  # Service name (used for folder organization: baselines/{serviceName}/{date}/{run})
+  serviceName: "RaksMuleOrderService"
+  
+  # Description for this baseline capture (optional)
+  description: "Initial baseline for RaksMule Service"
+  
+  # Tags for easy identification (optional)
+  tags:
+    - "mulesoft"
+    - "orders"

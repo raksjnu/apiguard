@@ -1,12 +1,20 @@
 package com.raks.muleguard.wrapper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.raks.apiurlcomparison.ApiConfig;
 import com.raks.apiurlcomparison.ComparisonResult;
 import com.raks.apiurlcomparison.ComparisonService;
 import com.raks.apiurlcomparison.Config;
+import com.raks.apiurlcomparison.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -16,10 +24,94 @@ import java.io.File;
 public class ApiUrlComparisonInvoker {
     private static final Logger logger = LoggerFactory.getLogger(ApiUrlComparisonInvoker.class);
     private static final ObjectMapper objectMapper = new ObjectMapper();
+    private static final ObjectMapper yamlMapper = new ObjectMapper(new YAMLFactory());
+
+    public static String getConfig() {
+        try {
+            Config config = loadConfigFromFile();
+            resolvePayloads(config);
+            return objectMapper.writeValueAsString(config);
+        } catch (Exception e) {
+            logger.error("Error loading config for wrapper", e);
+            return "{}";
+        }
+    }
+
+    private static Config loadConfigFromFile() throws Exception {
+        // Try to load from CWD first (often where the standalone JAR runs)
+        File cwdConfig = new File("config.yaml");
+        if (cwdConfig.exists()) {
+            logger.info("Loading config from CWD: {}", cwdConfig.getAbsolutePath());
+            return yamlMapper.readValue(cwdConfig, Config.class);
+        }
+
+        // Try to load from classpath (where the wrapper resources are)
+        logger.info("Loading config from classpath resources: web/apiforge/config.yaml");
+        try (InputStream is = ApiUrlComparisonInvoker.class.getClassLoader().getResourceAsStream("web/apiforge/config.yaml")) {
+            if (is == null) {
+                logger.warn("web/apiforge/config.yaml not found in classpath. Returning empty config.");
+                return new Config();
+            }
+            return yamlMapper.readValue(is, Config.class);
+        }
+    }
+
+    private static void resolvePayloads(Config config) {
+        if (config.getRestApis() != null) {
+            config.getRestApis().values().forEach(ApiUrlComparisonInvoker::resolveApiPayloads);
+        }
+        if (config.getSoapApis() != null) {
+            config.getSoapApis().values().forEach(ApiUrlComparisonInvoker::resolveApiPayloads);
+        }
+    }
+
+    private static void resolveApiPayloads(ApiConfig api) {
+        if (api == null || api.getOperations() == null) return;
+        for (Operation op : api.getOperations()) {
+            String templatePath = op.getPayloadTemplatePath();
+            if (templatePath != null && !templatePath.isEmpty() && !templatePath.trim().startsWith("<") && !templatePath.trim().startsWith("{")) {
+                try {
+                    // Try to read as a file relative to CWD
+                    Path path = Paths.get(templatePath);
+                    if (Files.exists(path)) {
+                        logger.info("Resolving payload from file: {}", path.toAbsolutePath());
+                        String content = new String(Files.readAllBytes(path), StandardCharsets.UTF_8);
+                        op.setPayloadTemplatePath(content);
+                    } else {
+                        // Try classpath fallback
+                        String resourcePath = templatePath.replace('\\', '/');
+                        if (!resourcePath.startsWith("/")) resourcePath = "/" + resourcePath;
+                        try (InputStream is = ApiUrlComparisonInvoker.class.getResourceAsStream(resourcePath)) {
+                            if (is != null) {
+                                logger.info("Resolving payload from classpath: {}", resourcePath);
+                                String content = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+                                op.setPayloadTemplatePath(content);
+                            } else {
+                                // Fallback: Try prepending web/apiforge/
+                                String fallbackPath = "/web/apiforge" + resourcePath;
+                                logger.info("Payload not found at {}, trying fallback: {}", resourcePath, fallbackPath);
+                                try (InputStream is2 = ApiUrlComparisonInvoker.class.getResourceAsStream(fallbackPath)) {
+                                    if (is2 != null) {
+                                        logger.info("Resolving payload from fallback classpath: {}", fallbackPath);
+                                        String content = new String(is2.readAllBytes(), StandardCharsets.UTF_8);
+                                        op.setPayloadTemplatePath(content);
+                                    } else {
+                                        logger.warn("Payload not found at fallback path: {}", fallbackPath);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to resolve payload path: {} - {}", templatePath, e.getMessage());
+                }
+            }
+        }
+    }
 
     public static List<ComparisonResult> compare(Map<String, Object> configMap, String workDir) {
         try {
-            logger.info("Invoking ApiUrlComparison calculation with workDir: {}", workDir);
+            logger.info("Invoking API Forge calculation with workDir: {}", workDir);
 
             // Convert Map to Config object using Jackson
             Config config = objectMapper.convertValue(configMap, Config.class);
@@ -40,11 +132,11 @@ public class ApiUrlComparisonInvoker {
             ComparisonService service = new ComparisonService();
             List<ComparisonResult> results = service.execute(config);
 
-            logger.info("ApiUrlComparison completed. Results count: {}", results.size());
+            logger.info("API Forge completed. Results count: {}", results.size());
             return results;
 
         } catch (Exception e) {
-            logger.error("Error during ApiUrlComparison invocation", e);
+            logger.error("Error during API Forge invocation", e);
             // Return empty list or handle error appropriately for Mule to catch
             ComparisonResult errorResult = new ComparisonResult();
             errorResult.setStatus(ComparisonResult.Status.ERROR);
@@ -53,33 +145,11 @@ public class ApiUrlComparisonInvoker {
         }
     }
 
-    // --- MOCK SERVER WRAPPERS ---
-    public static Map<String, Object> startMockServer() {
-        try {
-            com.raks.apiurlcomparison.MockApiServer.start();
-            return Collections.singletonMap("status", "started");
-        } catch (Exception e) {
-            logger.error("Failed to start mock server", e);
-            return Collections.singletonMap("error", e.getMessage());
-        }
-    }
-
-    public static Map<String, Object> stopMockServer() {
-        try {
-            com.raks.apiurlcomparison.MockApiServer.stop();
-            return Collections.singletonMap("status", "stopped");
-        } catch (Exception e) {
-            logger.error("Failed to stop mock server", e);
-            return Collections.singletonMap("error", e.getMessage());
-        }
-    }
-
-    public static Map<String, Object> getMockServerStatus() {
-        return Collections.singletonMap("running", com.raks.apiurlcomparison.MockApiServer.isRunning());
-    }
+    // Mock server methods removed as mocks are now managed by Mule flows
 
     // --- BASELINE WRAPPERS ---
     public static List<String> listBaselineServices(String workDir) {
+        logger.info("Listing Baseline Services from WorkDir: {}", workDir);
         try {
             if (workDir == null) return Collections.emptyList();
             com.raks.apiurlcomparison.BaselineStorageService storage = new com.raks.apiurlcomparison.BaselineStorageService(workDir);
@@ -225,5 +295,71 @@ public class ApiUrlComparisonInvoker {
             }
         }
         return count;
+    }
+
+    // --- UTILITY WRAPPERS ---
+    public static String ping(String url) {
+        try {
+             com.raks.apiurlcomparison.UtilityService util = new com.raks.apiurlcomparison.UtilityService();
+             Map<String, Object> result = util.ping(url);
+             return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            logger.error("Error invoking ping", e);
+            return "{\"success\": false, \"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    public static String fetchWsdl(String url) {
+        try {
+             com.raks.apiurlcomparison.UtilityService util = new com.raks.apiurlcomparison.UtilityService();
+             return util.fetchWsdl(url);
+        } catch (Exception e) {
+            logger.error("Error invoking fetchWsdl", e);
+            return "Error fetching WSDL: " + e.getMessage();
+        }
+    }
+
+    public static File exportBaselines(String workDir, String serviceName) {
+        try {
+            if (workDir == null) throw new IllegalArgumentException("Working Directory required");
+            com.raks.apiurlcomparison.UtilityService util = new com.raks.apiurlcomparison.UtilityService();
+            return util.exportBaselines(workDir, serviceName);
+        } catch (Exception e) {
+            logger.error("Error exporting baselines", e);
+            return null;
+        }
+    }
+
+    public static String detectConflicts(String workDir, InputStream zipStream) {
+        try {
+            if (workDir == null) return "[]";
+            com.raks.apiurlcomparison.UtilityService util = new com.raks.apiurlcomparison.UtilityService();
+            // We need to support reading the stream without consuming it permanently if we want to reuse it?
+            // Actually, for conflict detection we might consume it. 
+            // In Mule, we might need to buffer it or simple let the user re-upload for the actual import if conflict confirmed.
+            // But typical flow is: check conflict, if none import.
+            // Let's assume the conflict check consumes the stream.
+            List<String> conflicts = util.detectConflicts(workDir, zipStream);
+            return objectMapper.writeValueAsString(conflicts);
+        } catch (Exception e) {
+            logger.error("Error detecting conflicts", e);
+            return "[]";
+        }
+    }
+
+    public static String importBaselines(String workDir, InputStream zipStream) {
+          try {
+            logger.info("Importing Baselines to WorkDir: " + workDir);
+            if (workDir == null) throw new IllegalArgumentException("Working Directory required");
+            com.raks.apiurlcomparison.UtilityService util = new com.raks.apiurlcomparison.UtilityService();
+            List<String> imported = util.importBaselines(workDir, zipStream);
+            Map<String, Object> result = new HashMap<>();
+            result.put("success", true);
+            result.put("imported", imported);
+            return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            logger.error("Error importing baselines", e);
+            return "{\"success\": false, \"error\": \"" + e.getMessage() + "\"}";
+        }
     }
 }

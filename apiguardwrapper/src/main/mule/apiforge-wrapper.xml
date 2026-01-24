@@ -1,0 +1,401 @@
+<mule xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns:java="http://www.mulesoft.org/schema/mule/java" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd">
+
+
+
+	<!-- Flow 0: Redirect Root to Index -->
+    <flow name="apiurlcomparison-root-flow">
+        <http:listener path="/apiurlcomparison" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+        <set-variable variableName="redirectLocation" value="/apiguard/apiforge/index.html"/>
+        <set-payload value="#['&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=' ++ vars.redirectLocation ++ '&quot;&gt;&lt;/head&gt;&lt;body&gt;Redirecting...&lt;/body&gt;&lt;/html&gt;']" mimeType="text/html"/>
+    </flow>
+
+    <!-- Startup Flow: Initialize Mock Server State to Stopped -->
+    <flow name="apiurlcomparison-init-flow" initialState="started">
+        <scheduler>
+            <scheduling-strategy>
+                <fixed-frequency frequency="999999999"/>  <!-- Run once, then never again -->
+            </scheduling-strategy>
+        </scheduler>
+        <logger level="INFO" message="Initializing API Forge Mock Server state to STOPPED"/>
+        <os:store key="mockRunning">
+            <os:value><![CDATA[#[false]]]></os:value>
+        </os:store>
+    </flow>
+
+	<!-- Flow to serve ApiUrlComparison UI (index/guide/assets) -->
+	<flow name="apiforge-ui-flow" doc:id="apiforge-ui-flow-id">
+		<http:listener doc:name="Listener" config-ref="HTTP_Listener_config" path="/apiforge/*">
+			<http:response >
+				<http:headers ><![CDATA[#[
+                    {
+                        "Content-Type": vars.mimeType default "text/html",
+                        "Cache-Control": "public, max-age=3600"
+                    }
+                ]]]></http:headers>
+			</http:response>
+		</http:listener>
+		
+		<set-variable variableName="resourcePath" value="#[attributes.relativePath replace /^\/?apiforge\/?/ with '']" doc:name="Extract Path"/>
+		
+		<!-- Determine MIME type based on extension -->
+        <set-variable variableName="mimeType" value="#[
+            if (vars.resourcePath endsWith '.css') 'text/css'
+            else if (vars.resourcePath endsWith '.js') 'application/javascript'
+            else if (vars.resourcePath endsWith '.png') 'image/png'
+            else if (vars.resourcePath endsWith '.svg') 'image/svg+xml'
+            else if (vars.resourcePath endsWith '.jpg') 'image/jpeg'
+            else 'text/html'
+        ]"/>
+		
+		<choice doc:name="Route UI vs API">
+			<when expression="#[vars.resourcePath == '' or vars.resourcePath == 'index' or vars.resourcePath == 'index.html']">
+                <!-- Redirect if accessing folder root without trailing slash to ensure relative assets work -->
+                <choice doc:name="Check Trailing Slash">
+                    <when expression="#[vars.resourcePath == '' and !(attributes.relativePath endsWith '/')]">
+                         <set-variable variableName="redirectLocation" value="/apiguard/apiforge/"/>
+                         <set-payload value="#['&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=' ++ vars.redirectLocation ++ '&quot;&gt;&lt;/head&gt;&lt;body&gt;Redirecting...&lt;/body&gt;&lt;/html&gt;']" mimeType="text/html"/>
+                    </when>
+                    <otherwise>
+        				<!-- Serve Index Page -->
+        				<file:read doc:name="Read Index" path="${apiforge.web.dir}/index.html" config-ref="File_Config"/>
+                    </otherwise>
+                </choice>
+			</when>
+			<when expression="#[vars.resourcePath == 'guide' or vars.resourcePath == 'guide.html']">
+				<!-- Serve Guide Page -->
+				<file:read doc:name="Read Guide" path="${apiforge.web.dir}/guide.html" config-ref="File_Config"/>
+			</when>
+
+			<otherwise>
+				<!-- Static Assets -->
+				<!-- Static Assets -->
+				<file:read doc:name="Read Asset" path="#[p('apiforge.web.dir') ++ '/' ++ vars.resourcePath]" config-ref="File_Config"/>
+			</otherwise>
+		</choice>
+	</flow>
+
+	<!-- Flow to handle API requests -->
+	<flow name="apiforge-api-flow" doc:id="apiforge-api-flow-id">
+		<http:listener doc:name="Listener" config-ref="HTTP_Listener_config" path="/apiforge/api/*" allowedMethods="GET, POST">
+			<http:response statusCode="#[vars.httpStatus default 200]" >
+                <http:headers><![CDATA[#[{
+                    "Content-Type": vars.contentType default "application/json"
+                }]]]></http:headers>
+            </http:response>
+		</http:listener>
+		
+        <!-- Robust apiPath extraction: just remove leading slash -->
+        <set-variable variableName="apiPath" value="#[attributes.relativePath replace /^\/?apiforge\/api\// with '' replace /^\// with '']" doc:name="Extract API Path"/>
+        <logger level="INFO" doc:name="Log Request" message="#['API Forge Request: ' ++ vars.apiPath ++ ' Method: ' ++ attributes.method]"/>
+        <choice doc:name="Route Request">
+            <!-- CONFIG ENDPOINT -->
+            <when expression="#[vars.apiPath == 'config' and attributes.method == 'GET']">
+                <java:invoke-static doc:name="Get Config" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="getConfig()"/>
+                <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+            
+            <!-- COMPARE ENDPOINT -->
+            <when expression="#[vars.apiPath == 'compare' and attributes.method == 'POST']">
+                <set-variable variableName="clientIp" value="#[(attributes.headers['x-forwarded-for'] default attributes.remoteAddress)]"/>
+                <logger level="INFO" message="#['[COMPARE REQUEST] IP: ' ++ vars.clientIp]"/>
+                <ee:transform doc:name="To Java Map">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+payload]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                 <!-- Extract working directory from payload if provided -->
+                 <set-variable variableName="workDir" value="#[if (payload.baseline != null and payload.baseline.storageDir != null and payload.baseline.storageDir != '') payload.baseline.storageDir else p('apiforge.work.dir')]"/>
+                 <logger level="INFO" message="#['Using working directory: ' ++ vars.workDir]"/>
+                 <java:invoke-static doc:name="Invoke ApiUrlComparison" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="compare(java.util.Map, java.lang.String)">
+                    <java:args><![CDATA[#[{
+						arg0: payload,
+						arg1: vars.workDir
+					}]]]></java:args>
+                 </java:invoke-static>
+                 <ee:transform doc:name="Transform Result">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+                    </ee:message>
+                 </ee:transform>
+            </when>
+
+            <!-- MOCK SERVER CONTROL ENDPOINTS (Managed by Mule) -->
+            <when expression="#[vars.apiPath == 'mock/start' and attributes.method == 'POST']">
+                <logger level="INFO" message="#['Mock Server START requested from IP: ' ++ (attributes.headers['x-forwarded-for'] default attributes.remoteAddress)]"/>
+                <os:store key="mockRunning"><os:value><![CDATA[#[true]]]></os:value></os:store>
+                <set-payload value='{"status": "running", "message": "Mock APIs started."}' mimeType="application/json"/>
+            </when>
+            <when expression="#[vars.apiPath == 'mock/stop' and attributes.method == 'POST']">
+                 <logger level="INFO" message="#['Mock Server STOP requested from IP: ' ++ (attributes.headers['x-forwarded-for'] default attributes.remoteAddress)]"/>
+                 <os:store key="mockRunning"><os:value><![CDATA[#[false]]]></os:value></os:store>
+                 <set-payload value='{"status": "stopped", "message": "Mock APIs stopped."}' mimeType="application/json"/>
+            </when>
+            <when expression="#[vars.apiPath == 'mock/status' and attributes.method == 'GET']">
+                 <os:retrieve key="mockRunning" target="mockRunning">
+                    <os:default-value><![CDATA[#[false]]]></os:default-value>
+                 </os:retrieve>
+                 <logger level="INFO" message="#['Mock Server STATUS check from IP: ' ++ (attributes.headers['x-forwarded-for'] default attributes.remoteAddress) ++ ' | Status: ' ++ (if (vars.mockRunning == true) 'RUNNING' else 'STOPPED')]"/>
+                 <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{ status: if (vars.mockRunning == true) "running" else "stopped" }
+]]></ee:set-payload>
+                    </ee:message>
+                 </ee:transform>
+            </when>
+
+            <!-- BASELINE ENDPOINTS -->
+            <!-- /api/baselines/services -->
+            <when expression="#[vars.apiPath == 'baselines/services' and attributes.method == 'GET']">
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 <java:invoke-static doc:name="List Services" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineServices(java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.workDir }]]]></java:args>
+                 </java:invoke-static>
+                 <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload></ee:message></ee:transform>
+            </when>
+            
+             <!-- /api/baselines/dates/{serviceName} -->
+            <when expression="#[(vars.apiPath startsWith 'baselines/dates/') and attributes.method == 'GET']">
+                 <set-variable variableName="serviceName" value="#[vars.apiPath replace 'baselines/dates/' with '']" />
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 <java:invoke-static doc:name="List Dates" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineDates(java.lang.String, java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName }]]]></java:args>
+                 </java:invoke-static>
+                 <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload></ee:message></ee:transform>
+            </when>
+
+            <!-- /api/baselines/runs/{serviceName}/{date}/{runId}/details -->
+            <when expression="#[(vars.apiPath startsWith 'baselines/runs/') and (vars.apiPath endsWith '/details') and attributes.method == 'GET']">
+                 <!-- Extract parts: runs/service/date/runId/details -->
+                 <gw:set-variable variableName="parts" value="#[vars.apiPath splitBy '/']" xmlns:gw="http://www.mulesoft.org/schema/mule/core" />
+                 <set-variable variableName="serviceName" value="#[vars.parts[2]]" />
+                 <set-variable variableName="date" value="#[vars.parts[3]]" />
+                 <set-variable variableName="runId" value="#[vars.parts[4]]" />
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 
+                 <java:invoke-static doc:name="Get Run Details" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="getRunDetails(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName, arg2: vars.date, arg3: vars.runId }]]]></java:args>
+                 </java:invoke-static>
+                 
+                 <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+
+            <!-- /api/baselines/runs/{serviceName}/{date}/{runId}/endpoint -->
+            <when expression="#[(vars.apiPath startsWith 'baselines/runs/') and (vars.apiPath endsWith '/endpoint') and attributes.method == 'GET']">
+                 <!-- Extract parts: runs/service/date/runId/endpoint -->
+                 <gw:set-variable variableName="parts" value="#[vars.apiPath splitBy '/']" xmlns:gw="http://www.mulesoft.org/schema/mule/core" />
+                 <set-variable variableName="serviceName" value="#[vars.parts[2]]" />
+                 <set-variable variableName="date" value="#[vars.parts[3]]" />
+                 <set-variable variableName="runId" value="#[vars.parts[4]]" />
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 
+                 <java:invoke-static doc:name="Get Endpoint" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="getRunEndpoint(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName, arg2: vars.date, arg3: vars.runId }]]]></java:args>
+                 </java:invoke-static>
+                 
+                 <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+
+            <!-- /api/baselines/runs/{serviceName}/{date} -->
+            <when expression="#[(vars.apiPath startsWith 'baselines/runs/') and attributes.method == 'GET']">
+                 <!-- Extract parts: runs/service/date -->
+                 <gw:set-variable variableName="parts" value="#[vars.apiPath splitBy '/']" xmlns:gw="http://www.mulesoft.org/schema/mule/core" />
+                 <set-variable variableName="serviceName" value="#[vars.parts[2]]" />
+                 <set-variable variableName="date" value="#[vars.parts[3]]" />
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 
+                 <java:invoke-static doc:name="List Runs" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineRuns(java.lang.String, java.lang.String, java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName, arg2: vars.date }]]]></java:args>
+                 </java:invoke-static>
+                 
+                 <!-- Result is already JSON string from backend -->
+                 <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+            
+            <!-- UTILITY ENDPOINTS -->
+            <!-- /api/utils/ping -->
+            <when expression="#[(vars.apiPath startsWith 'utils/ping') and attributes.method == 'GET']">
+                 <set-variable variableName="url" value="#[attributes.queryParams.url]"/>
+                 <java:invoke-static doc:name="Ping" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="ping(java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.url }]]]></java:args>
+                 </java:invoke-static>
+                 <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+
+            <!-- /api/utils/wsdl -->
+            <when expression="#[(vars.apiPath startsWith 'utils/wsdl') and attributes.method == 'GET']">
+                 <set-variable variableName="url" value="#[attributes.queryParams.url]"/>
+                 <java:invoke-static doc:name="Fetch WSDL" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="fetchWsdl(java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.url }]]]></java:args>
+                 </java:invoke-static>
+                 <!-- Return raw text/xml content -->
+                 <set-payload value="#[payload]" mimeType="text/xml"/>
+            </when>
+
+            <!-- /api/baselines/export -->
+             <when expression="#[(vars.apiPath startsWith 'baselines/export') and attributes.method == 'GET']">
+                 <set-variable variableName="service" value="#[attributes.queryParams.service]"/>
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 
+                 <java:invoke-static doc:name="Export Baselines" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="exportBaselines(java.lang.String, java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.service }]]]></java:args>
+                 </java:invoke-static>
+                 
+                 <!-- Return file stream -->
+                 <file:read doc:name="Read Zip" path="#[payload.getAbsolutePath()]" config-ref="File_Config"/>
+                 <set-variable variableName="zipName" value="#[payload.getName default 'baselines.zip']"/>
+                 <!-- Set headers for download -->
+            </when>
+
+            <!-- /api/baselines/import -->
+             <when expression="#[(vars.apiPath startsWith 'baselines/import') and attributes.method == 'POST']">
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 <set-variable variableName="overwrite" value="#[attributes.queryParams.overwrite == 'true']"/>
+                 
+                 <!-- Read InputStream from payload -->
+                 <!-- If not overwriting, check for conflicts first -->
+                 <choice>
+                    <when expression="#[vars.overwrite == false]">
+                        <java:invoke-static doc:name="Check Conflicts" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="detectConflicts(java.lang.String, java.io.InputStream)">
+                             <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: payload }]]]></java:args>
+                        </java:invoke-static>
+                        <choice>
+                            <when expression="#[payload != '[]']">
+                                <!-- Conficts found -->
+                                <set-payload value="#[payload]" mimeType="application/json"/>
+                                <set-variable variableName="httpStatus" value="409"/>
+                            </when>
+                            <otherwise>
+                                <!-- No conflicts, proceed to import (need to re-read stream? Or hopefully payload was buffered?) -->
+                                <!-- In Mule 4, stream might be consumed. We should have saved it to a temp file or used repeatable streams. -->
+                                <!-- Assuming repeatable streams are enabled by default in Mule 4 -->
+                                <java:invoke-static doc:name="Import Baselines" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="importBaselines(java.lang.String, java.io.InputStream)">
+                                     <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: payload }]]]></java:args>
+                                </java:invoke-static>
+                                <set-payload value="#[payload]" mimeType="application/json"/>
+                            </otherwise>
+                        </choice>
+                    </when>
+                    <otherwise>
+                        <!-- Overwrite true, just import -->
+                        <java:invoke-static doc:name="Import Baselines Force" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="importBaselines(java.lang.String, java.io.InputStream)">
+                             <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: payload }]]]></java:args>
+                        </java:invoke-static>
+                        <set-payload value="#[payload]" mimeType="application/json"/>
+                    </otherwise>
+                 </choice>
+            </when>
+            
+            <!-- DEFAULT / 404 -->
+            <otherwise>
+                <logger level="WARN" message="#['Endpoint not found: ' ++ vars.apiPath]"/>
+                <set-payload value='#[%dw 2.0
+output application/json
+---
+{"status": "error", "message": "Endpoint not found: " ++ (vars.apiPath default "null")}]' mimeType="application/json"/>
+                <set-variable variableName="httpStatus" value="404"/>
+            </otherwise>
+        </choice>
+	</flow>
+	
+	<!-- ============================================== -->
+	<!--             MOCK SIMULATION FLOWS              -->
+	<!-- ============================================== -->
+
+    <!-- REST API 1 Mock -->
+    <flow name="apiforge-mock-api1-flow">
+        <http:listener config-ref="HTTP_Listener_config" path="/apiforge/mock/api1/*" allowedMethods="GET, POST">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[{"Content-Type": "application/json; charset=utf-8"}]]]></http:headers>
+            </http:response>
+        </http:listener>
+        <os:retrieve key="mockRunning" target="mockRunning">
+            <os:default-value><![CDATA[#[false]]]></os:default-value>
+        </os:retrieve>
+        <choice>
+            <when expression="#[!vars.mockRunning]">
+                <raise-error type="APP:SERVICE_UNAVAILABLE" description="Mock server is stopped"/>
+            </when>
+            <otherwise>
+                <set-variable variableName="subPath" value="#[attributes.relativePath replace /^\/?apiforge\/mock\/api1\// with '']"/>
+                
+                <choice>
+                    <!-- /api/resource (POST) -->
+                    <when expression="#[vars.subPath == 'api/resource' and attributes.method == 'POST']">
+                         <ee:transform>
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+        output application/json
+        var account = payload.account default ""
+        var common = {
+            timestamp: now(),
+            processId: "pid-" ++ (uuid()[0 to 7]),
+            randomId: uuid()
+        }
+        ---
+        if (account == "999") 
+          {status:"success", id:"api1-specific-id-for-999"} ++ common
+        else 
+          {status:"success", id:"shared-id-12345"} ++ common
+        ]]></ee:set-payload>
+                            </ee:message>
+                         </ee:transform>
+                    </when>
+                    <!-- /api/resource (GET) -->
+                    <when expression="#[vars.subPath == 'api/resource' and attributes.method == 'GET']">
+                         <set-payload value='{"status":"success","message":"Resource details retrieved via GET"}' mimeType="application/json"/>
+                    </when>
+                     <!-- /api/anotherResource (GET) -->
+                    <when expression="#[vars.subPath == 'api/anotherResource' and attributes.method == 'GET']">
+                         <set-payload value='{"status":"success","data":"This is the other resource"}' mimeType="application/json"/>
+                    </when>
+                    <otherwise>
+                        <set-payload value='{"error": "Mock endpoint not found"}' mimeType="application/json"/>
+                        <set-variable variableName="httpStatus" value="404"/>
+                    </otherwise>
+                </choice>
+            </otherwise>
+        </choice>
+
+    </flow>
+
+
+
+    
+    <!-- CLEANUP SCHEDULER -->
+    <flow name="apiforge-cleanup-flow">
+        <scheduler doc:name="Cleanup Scheduler">
+            <scheduling-strategy>
+                <fixed-frequency frequency="1" timeUnit="HOURS"/>
+            </scheduling-strategy>
+        </scheduler>
+        <logger level="INFO" message="Running API Forge Workspace Cleanup"/>
+        <java:invoke-static doc:name="Run Cleanup" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="cleanup(java.lang.String, int)">
+            <java:args><![CDATA[#[{ arg0: p('apiforge.work.dir'), arg1: p('apiforge.cleanup.retention.hours') as Number }]]]></java:args>
+        </java:invoke-static>
+        <logger level="INFO" message="Cleanup Complete: #[payload]"/>
+    </flow>
+
+</mule>

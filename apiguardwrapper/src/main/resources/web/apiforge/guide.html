@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Forge - User Guide</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .guide-container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .guide-section {
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid #eee;
+        }
+        .guide-section h2 {
+            color: #27173e;
+            border-bottom: 2px solid #5a3c89;
+            padding-bottom: 8px;
+            margin-bottom: 16px;
+        }
+        .guide-section h3 {
+            color: #4a4a4a;
+            margin-top: 24px;
+            margin-bottom: 12px;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            color: #d63384;
+        }
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 4px;
+            overflow-x: auto;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+        .note, .tip, .warning {
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+        .note {
+            background-color: #e7f3fe;
+            border-left: 6px solid #2196F3;
+        }
+        .tip {
+            background-color: #e6fffa;
+            border-left: 6px solid #00b894;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 6px solid #ffc107;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25em 0.4em;
+            font-size: 75%;
+            font-weight: 700;
+            line-height: 1;
+            text-align: center;
+            white-space: nowrap;
+            vertical-align: baseline;
+            border-radius: 0.25rem;
+            color: #fff;
+            background-color: #6c757d;
+        }
+        .badge-success { background-color: #28a745; }
+        .badge-primary { background-color: #007bff; }
+        
+        /* Mermaid Diagram Fallback Styling */
+        .mermaid-diagram {
+            background: #f8f9fa;
+            border: 1px dashed #ccc;
+            padding: 20px;
+            text-align: center;
+            font-family: monospace;
+            margin: 15px 0;
+        }
+    </style>
+</head>
+<body>
+    <header class="header" style="display: flex; justify-content: space-between; align-items: center;">
+        <h1 class="logo">
+            <img src="raks.svg" alt="RAKS Logo" style="height: 40px; vertical-align: middle; margin-right: 15px;">
+            API Forge
+        </h1>
+        <a href="index.html" class="btn-primary" style="text-decoration: none; display: flex; align-items: center; gap: 8px; margin-right: 20px; width: auto; padding: 10px 20px; font-size: 16px;">
+             Back to Tool
+        </a>
+    </header>
+
+    <div class="guide-container">
+        <h1>User Guide & Documentation</h1>
+            <hr style="border-top: 1px solid #eee; margin-top: 20px;">
+
+        <section class="guide-section" id="overview">
+            <h2>1. Overview</h2>
+            <p>The <strong>API Forge</strong> is a Java-based utility designed to validate API migrations, compare REST/SOAP responses, and perform baseline testing. It allows you to deeply inspect differences in structure, content, and data types between two endpoints.</p>
+            <ul>
+                <li><strong>Protocol Support:</strong> REST (JSON) and SOAP (XML).</li>
+                <li><strong>Comparison Modes:</strong> Live (A/B testing) and Baseline (Regression testing).</li>
+                <li><strong>Iteration Strategies:</strong> Token-based iteration for dynamic payload generation.</li>
+                <li><strong>Reporting:</strong> Real-time GUI dashboard and detailed HTML/JSON reports.</li>
+            </ul>
+        </section>
+
+        <section class="guide-section" id="getting-started">
+            <h2>2. Getting Started</h2>
+            <h3>Prerequisites</h3>
+            <ul>
+                <li><strong>Java Runtime:</strong> JDK 17 or higher.</li>
+                <li><strong>Maven:</strong> Version 3.6+ (for building from source).</li>
+                <li><strong>Browser:</strong> Modern web browser (Chrome, Firefox, Edge).</li>
+            </ul>
+
+            <h3>Quick Start</h3>
+            <p>To launch the Graphical User Interface (GUI):</p>
+            <ol>
+                <li><strong>Windows:</strong> Double-click <code>start-gui.bat</code>.</li>
+                <li><strong>Linux/macOS:</strong> Run <code>./start-gui.sh</code>.</li>
+                <li>Open your browser to <code>http://localhost:4567</code> (automatically opens).</li>
+            </ol>
+        </section>
+
+        <section class="guide-section" id="usage-gui">
+            <h2>3. Using the Web GUI</h2>
+            
+            <h3>Step 1: Configuration</h3>
+            <p>Fill in the configuration panel on the left:</p>
+            <ul>
+                <li><strong>Type:</strong> Select <code>REST</code> (JSON) or <code>SOAP</code> (XML).</li>
+                <li><strong>Mode:</strong>
+                    <ul>
+                        <li><code>Live (API1 vs API2)</code>: Compare two running endpoints in real-time.</li>
+                        <li><code>Baseline Testing</code>: Capture a golden master or compare against one.</li>
+                    </ul>
+                </li>
+                <li><strong>Endpoints:</strong> Enter the full URLs for your APIs (e.g., <code>https://api1.example.com/v1/resource</code>).</li>
+                <li><strong>Enable Authentication:</strong> (Optional) Check this box if your API requires Basic Authentication. This enables the <em>Client ID</em> and <em>Client Secret</em> fields.</li>
+                <li><strong>Ignored Fields:</strong> (Optional) Enter flexible fields that change with every request (like <code>timestamp</code>, <code>processId</code>, <code>guid</code>). The tool will <strong>skip comparison</strong> for these specific JSON keys or XML tags, ensuring you don't get false mismatches.
+                    <br><em>Note: Only applicable in Live and Compare modes.</em>
+                </li>
+                <li><strong>Disable Header Comparison:</strong> Check this to completely ignore HTTP headers during verification, allowing you to focus solely on status codes and payloads.</li>
+                <li><strong>Clear Form:</strong> Use the "Clear Form" button in the header to reset all inputs to their default state.</li>
+                <li><strong>Payload:</strong> Paste your JSON or XML body template. Use tokens like <code>{{id}}</code> for dynamic values.</li>
+            </ul>
+
+            <h3>Step 2: Dynamic Iterations</h3>
+            <p>Test multiple scenarios in one run by defining <strong>Iteration Tokens</strong>:</p>
+            <ol>
+                <li>In the "Iteration Tokens" section, click <strong>+ Add Token</strong>.</li>
+                <li><strong>Token Name:</strong> Match the placeholder in your payload (e.g., <code>id</code>).</li>
+                <li><strong>Values:</strong> Semicolon-separated list (e.g., <code>100;101;102</code>).</li>
+            </ol>
+            <div class="tip">
+                <strong>Strategy:</strong> Choose "One-By-One" to test each value efficiently, or "All Combinations" for exhaustive matrix testing. The tool <strong>always</strong> runs the original payload as-is first (Iteration #1).
+            </div>
+
+            <h3>Step 3: Execution & Results</h3>
+            <p>Click <strong>Run Comparison</strong>. The dashboard on the right will update in real-time:</p>
+            <ul>
+                <li><span class="badge badge-success">MATCH</span> - Responses are identical.</li>
+                <li><span class="badge badge-primary">CAPTURED</span> - (Baseline Mode) Response successfully captured and saved.</li>
+                <li><span class="badge" style="background-color: #dc3545;">MISMATCH</span> - Differences found (highlighted in red).</li>
+                <li><span class="badge" style="background-color: #ffc107; color: #000;">ERROR</span> - Connection or server error.</li>
+            </ul>
+
+            <div class="tip">
+                <strong>Understanding Results:</strong>
+                <ul>
+                    <li><strong>Matches:</strong> Indicates the API response status, headers, and body are identical.</li>
+                    <li><strong>Captured:</strong> In "Capture Baseline" mode, this indicates the response was successfully received and stored.</li>
+                    <li><strong>Mismatches:</strong> Differences in Body, Headers, or Status are highlighted.</li>
+                    <li><strong>Ignored Fields:</strong> If you specified fields to ignore (e.g., timestamp), differences in those fields will NOT cause a mismatch.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="guide-section" id="baseline-testing">
+            <h2>4. Baseline Testing & Production Verification</h2>
+            <p>Baseline testing allows you to save the state of an API ("Capture Baseline") and compare future results against it ("Compare with Baseline"). This is critical for regression testing and verifying production deployments.</p>
+            
+            <div class="tip">
+                <strong>New Feature: Working Directory</strong><br>
+                You can now specify a custom <strong>Working Directory</strong> in the UI. This determines where baseline files are saved and loaded from. Use this to organize baselines by project or environment (e.g., <code>C:\baselines\prod_release_v2</code>).
+            </div>
+
+            <h3>Workflow: Production Deployment Verification</h3>
+            <p>Use this workflow to ensure a production deployment introduces no regressions:</p>
+            
+            <h4>Phase 1: Pre-Deployment (Capture "Golden" State)</h4>
+            <ol>
+                <li>Set <strong>Mode</strong> to <code>Baseline Testing</code>.</li>
+                <li>Set <strong>Operation</strong> to <code>Capture Baseline</code>.</li>
+                <li>Enter the <strong>Production URL</strong> as API 1.</li>
+                <li>Enter a <strong>Service Name</strong> (e.g., <code>OrderService</code>).</li>
+                <li>Add a description like "Prod Pre-Deployment v1.0".</li>
+                <li>(Optional) Set a custom <strong>Working Directory</strong>.</li>
+                <li>Click <strong>Run Comparison</strong>. The tool will execute requests against Prod and save the responses locally. You will see a <span class="badge badge-primary">CAPTURED</span> badge.</li>
+            </ol>
+
+            <h4>Phase 2: Post-Deployment (Verify Changes)</h4>
+            <ol>
+                <li>After deployment, keep <strong>Mode</strong> as <code>Baseline Testing</code>.</li>
+                <li>Set <strong>Operation</strong> to <code>Compare with Baseline</code>.</li>
+                <li>Ensure the <strong>Working Directory</strong> is the same as Phase 1.</li>
+                <li>Select the <strong>Service Name</strong>. The tool will <strong>auto-select</strong> the latest Date and Run ID.</li>
+                <li>The <strong>Payload</strong> box will automatically populate with the payload used during the capture phase.</li>
+                <li><strong>New:</strong> The <strong>Request Headers</strong> table (below the form) will automatically load the headers from the baseline run.</li>
+                <li><strong>New:</strong> Click the <strong>View Details</strong> button next to the Run dropdown to inspect the full baseline context (headers, payload, metadata, endpoint) before comparing.</li>
+                <li>Enter the <strong>Production URL</strong> (now v2.0) as API 2.</li>
+                <li>Click <strong>Run Comparison</strong>.</li>
+            </ol>
+            
+            <p><strong>Result:</strong> The tool compares the <em>saved</em> pre-deployment responses (API 1 from baseline) against the <em>live</em> post-deployment responses (API 2). Any mismatch indicates a change in behavior.</p>
+        </section>
+
+        <section class="guide-section" id="mock-server">
+            <h2>5. Mock Server</h2>
+            <div class="note">
+                <strong>Note for CloudHub Users:</strong> The tool uses real Mule services. Ensure your connectivity is configured in the centralized <code>config.yaml</code>.
+            </div>
+            <p>Use the built-in Mock Server to test the tool without external dependencies.</p>
+            <ol>
+                <li>Click <strong>Start Server</strong> in the top-left Mock Server panel.</li>
+                <li>Wait for status <span style="color: green; font-weight: bold;">RUNNING</span>.</li>
+                <li>The tool will automatically be ready to use predefined mock endpoints.</li>
+            </ol>
+        </section>
+
+        <section class="guide-section" id="troubleshooting">
+            <h2>6. Troubleshooting</h2>
+            
+            <h3>Common Issues</h3>
+            <table>
+                <tr>
+                    <th>Issue</th>
+                    <th>Solution</th>
+                </tr>
+                <tr>
+                    <td><strong>Port 4567 in use</strong></td>
+                    <td>The tool will automatically try to find the next available port (e.g., 4568). Check the console logs for the actual URL.</td>
+                </tr>
+                <tr>
+                    <td><strong>Token replacement failed</strong></td>
+                    <td>Ensure your token names in the payload (<code>{{token}}</code>) match the defined Token Names exactly (case-sensitive).</td>
+                </tr>
+                <tr>
+                    <td><strong>404 Not Found</strong></td>
+                    <td>Verify your Base URL and Path. If using the Mock Server, ensure it is started.</td>
+                </tr>
+            </table>
+        </section>
+
+        <section class="guide-section" id="security">
+            <h2>7. Security & Compliance</h2>
+            <p>The tool is designed with enterprise security in mind:</p>
+            <ul>
+                <li><strong>Local Processing:</strong> All comparisons happen locally or within your private network. No data is sent to external cloud services.</li>
+                <li><strong>Data Privacy:</strong> Request/response data is not stored persistently unless you explicitly use the "Capture Baseline" feature (stored in local <code>baselines/</code> directory).</li>
+                <li><strong>Dependencies:</strong> Built using secure, standard libraries (Apache HttpClient, Jackson, XMLUnit).</li>
+            </ul>
+        </section>
+        
+        <script>
+            // Ensure links work correctly when served via Mule Wrapper
+             document.addEventListener('DOMContentLoaded', () => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const session = urlParams.get('session');
+                if (session) {
+                    document.querySelectorAll('a').forEach(link => {
+                        if (!link.href.includes('session=')) {
+                            const separator = link.href.includes('?') ? '&' : '?';
+                            link.href += separator + 'session=' + session;
+                        }
+                    });
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

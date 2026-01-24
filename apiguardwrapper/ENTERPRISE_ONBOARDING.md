@@ -30,7 +30,7 @@ The **ApiGuard Wrapper** is a unified Mule 4 Application that packages multiple 
 | **RaksAnalyzer - MuleDocgen** | Automated documentation for MuleSoft projects | Active |
 | **RaksAnalyzer - TibcoDocgen** | Automated documentation for TIBCO BusinessWorks | Active |
 | **TibcoGuard** | TIBCO code analysis and validation | Inactive |
-| **ApiUrlComparison** | Compare API responses vs baseline (Regression Testing) | Active |
+| **API Forge** | Universal Semantic Compliance & Comparison Engine (Regression Testing) | Active |
 | **API Discovery** | Scan and discover APIs from GitLab repositories | Active |
 | **GitAnalyzer** | Semantic code analysis for Git repositories | Active |
 | **CSV FileSync** | **[NEW]** Configuration-driven CSV transformation & mapping | Active |
@@ -55,7 +55,7 @@ graph TB
             MG[MuleGuard Engine]
             RA[RaksAnalyzer Engine]
             TG[TibcoGuard Engine]
-            AUC[ApiUrlComparison Engine]
+            AUC[API Forge Engine]
             GA[GitAnalyzer Engine]
             FS[FileSync Engine]
         end

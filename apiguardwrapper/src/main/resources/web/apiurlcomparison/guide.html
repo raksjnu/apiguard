@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ApiUrlComparison - User Guide</title>
+    <title>API Forge - User Guide</title>
     <link rel="stylesheet" href="style.css">
     <style>
         .guide-container {
@@ -107,8 +107,8 @@
 <body>
     <header class="header" style="display: flex; justify-content: space-between; align-items: center;">
         <h1 class="logo">
-            <img src="logo.svg" alt="RAKS Logo" style="height: 40px; vertical-align: middle; margin-right: 15px;">
-            API Response Comparison Tool - <span class="highlight">APITestingGuard</span>
+            <img src="raks.svg" alt="RAKS Logo" style="height: 40px; vertical-align: middle; margin-right: 15px;">
+            API Forge
         </h1>
         <a href="index.html" class="btn-primary" style="text-decoration: none; display: flex; align-items: center; gap: 8px; margin-right: 20px; width: auto; padding: 10px 20px; font-size: 16px;">
              Back to Tool
@@ -121,7 +121,7 @@
 
         <section class="guide-section" id="overview">
             <h2>1. Overview</h2>
-            <p>The <strong>API Response Comparison Tool</strong> is a Java-based utility designed to validate API migrations, compare REST/SOAP responses, and perform baseline testing. It allows you to deeply inspect differences in structure, content, and data types between two endpoints.</p>
+            <p>The <strong>API Forge</strong> is a Java-based utility designed to validate API migrations, compare REST/SOAP responses, and perform baseline testing. It allows you to deeply inspect differences in structure, content, and data types between two endpoints.</p>
             <ul>
                 <li><strong>Protocol Support:</strong> REST (JSON) and SOAP (XML).</li>
                 <li><strong>Comparison Modes:</strong> Live (A/B testing) and Baseline (Regression testing).</li>
@@ -161,7 +161,7 @@
                         <li><code>Baseline Testing</code>: Capture a golden master or compare against one.</li>
                     </ul>
                 </li>
-                <li><strong>Endpoints:</strong> Enter the full URLs for your APIs (e.g., <code>http://api.example.com/v1/resource</code>).</li>
+                <li><strong>Endpoints:</strong> Enter the full URLs for your APIs (e.g., <code>https://api1.example.com/v1/resource</code>).</li>
                 <li><strong>Enable Authentication:</strong> (Optional) Check this box if your API requires Basic Authentication. This enables the <em>Client ID</em> and <em>Client Secret</em> fields.</li>
                 <li><strong>Ignored Fields:</strong> (Optional) Enter flexible fields that change with every request (like <code>timestamp</code>, <code>processId</code>, <code>guid</code>). The tool will <strong>skip comparison</strong> for these specific JSON keys or XML tags, ensuring you don't get false mismatches.
                     <br><em>Note: Only applicable in Live and Compare modes.</em>
@@ -219,7 +219,7 @@
                 <li>Set <strong>Mode</strong> to <code>Baseline Testing</code>.</li>
                 <li>Set <strong>Operation</strong> to <code>Capture Baseline</code>.</li>
                 <li>Enter the <strong>Production URL</strong> as API 1.</li>
-                <li>Enter a <strong>Service Name</strong> (e.g., <code>AccountService</code>).</li>
+                <li>Enter a <strong>Service Name</strong> (e.g., <code>OrderService</code>).</li>
                 <li>Add a description like "Prod Pre-Deployment v1.0".</li>
                 <li>(Optional) Set a custom <strong>Working Directory</strong>.</li>
                 <li>Click <strong>Run Comparison</strong>. The tool will execute requests against Prod and save the responses locally. You will see a <span class="badge badge-primary">CAPTURED</span> badge.</li>
@@ -244,7 +244,7 @@
         <section class="guide-section" id="mock-server">
             <h2>5. Mock Server</h2>
             <div class="note">
-                <strong>Note for CloudHub Users:</strong> The embedded mock servers (ports 9091-9094) identify as localhost. When deployed to CloudHub, these ports are internal only.
+                <strong>Note for CloudHub Users:</strong> The tool uses real Mule services. Ensure your connectivity is configured in the centralized <code>config.yaml</code>.
             </div>
             <p>Use the built-in Mock Server to test the tool without external dependencies.</p>
             <ol>
@@ -266,6 +266,8 @@
                 <tr>
                     <td><strong>Port 4567 in use</strong></td>
                     <td>The tool will automatically try to find the next available port (e.g., 4568). Check the console logs for the actual URL.</td>
+                </tr>
+                <tr>
                     <td><strong>Token replacement failed</strong></td>
                     <td>Ensure your token names in the payload (<code>{{token}}</code>) match the defined Token Names exactly (case-sensitive).</td>
                 </tr>

@@ -101,36 +101,50 @@ else
     exit 1
 fi
 
-# Step 3: Build & Install ApiDiscovery
+# Step 4: Build & Install API Forge (formerly ApiUrlComparison)
 echo ""
-echo "[3/5] Building & Installing ApiDiscovery..."
+echo "[4/5] Building & Installing API Forge..."
 echo "============================================================"
-if [ -d "$SCRIPT_DIR/../apidiscovery" ]; then
-    cd "$SCRIPT_DIR/../apidiscovery"
+if [ -d "$SCRIPT_DIR/../apiurlcomparison" ]; then
+    cd "$SCRIPT_DIR/../apiurlcomparison"
     mvn clean install -DskipTests
     
     if [ $? -ne 0 ]; then
         echo ""
-        echo "[ERROR] ApiDiscovery build failed!"
+        echo "[ERROR] API Forge build failed!"
         exit 1
     fi
     
-    # Copy apidiscovery JAR to apiguardwrapper/lib
+    # Copy apiurlcomparison JAR to apiguardwrapper/lib
     echo ""
-    echo "[INFO] Copying apidiscovery JAR to lib folder..."
-    DISCOVERY_JAR="$HOME/.m2/repository/com/raks/apidiscovery/1.0.0/apidiscovery-1.0.0.jar"
-    if [ -f "$DISCOVERY_JAR" ]; then
-        cp "$DISCOVERY_JAR" "$SCRIPT_DIR/lib/apidiscovery-1.0.0.jar"
+    echo "[INFO] Copying apiurlcomparison JAR to lib folder..."
+    APIURL_JAR="$HOME/.m2/repository/com/raks/apiurlcomparison/1.0.0/apiurlcomparison-1.0.0.jar"
+    # Fallback to target if not in m2 (sanity check)
+    if [ ! -f "$APIURL_JAR" ]; then
+         APIURL_JAR="$SCRIPT_DIR/../apiurlcomparison/target/apiurlcomparison-1.0.0-jar-with-raks.jar"
+    fi
+
+    if [ -f "$APIURL_JAR" ]; then
+        cp "$APIURL_JAR" "$SCRIPT_DIR/lib/apiurlcomparison-1.0.0.jar"
         if [ $? -eq 0 ]; then
-            echo "[INFO] apidiscovery-1.0.0.jar copied successfully"
+            echo "[INFO] apiurlcomparison JAR copied successfully"
         else
-            echo "[WARN] Failed to copy apidiscovery JAR"
+            echo "[WARN] Failed to copy apiurlcomparison JAR"
         fi
     else
-        echo "[WARN] apidiscovery JAR not found in .m2 repository"
+        echo "[WARN] apiurlcomparison JAR not found"
     fi
+
+    # Sync Config and Test Data to apiforge
+    echo ""
+    echo "[INFO] Synchronizing Configuration and Test Data..."
+    cp "$SCRIPT_DIR/../apiurlcomparison/src/main/resources/config.yaml" "$SCRIPT_DIR/src/main/resources/web/apiforge/"
+    mkdir -p "$SCRIPT_DIR/src/main/resources/web/apiforge/testData"
+    cp -r "$SCRIPT_DIR/../apiurlcomparison/src/main/resources/testData/"* "$SCRIPT_DIR/src/main/resources/web/apiforge/testData/"
+    echo "[INFO] Resources, Config, and Test Data synchronized successfully."
+
 else
-    echo "[ERROR] ApiDiscovery project not found at ../apidiscovery"
+    echo "[ERROR] API Forge project not found at ../apiurlcomparison"
     exit 1
 fi
 
