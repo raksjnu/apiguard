@@ -1,11 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('[APP] Initializing API Comparison Tool...');
+    // console.log('[APP] Check statusIndicator removal...'); 
+    // User requested removal of "Running..." indicator. We'll ensure it's hidden or removed.
+    const statusIndicator = document.getElementById('statusIndicator');
+    if(statusIndicator) statusIndicator.style.display = 'none'; // Force hide globally
     
     // --- State & Core Elements ---
     let loadedConfig = null;
     const compareBtn = document.getElementById('compareBtn');
     const resultsContainer = document.getElementById('resultsContainer');
-    const statusIndicator = document.getElementById('statusIndicator');
+    // const statusIndicator = document.getElementById('statusIndicator'); // Moved to top
     const headersTable = document.getElementById('headersTable').querySelector('tbody');
     const tokensTable = document.getElementById('tokensTable').querySelector('tbody');
 
@@ -207,45 +210,51 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
+    // --- Modal Progress ---
+    const showProgressModal = (msg) => {
+        let modal = document.getElementById('progressModal');
+        if (!modal) {
+            modal = document.createElement('div');
+            modal.id = 'progressModal';
+            modal.style.cssText = `
+                position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+                background: rgba(0,0,0,0.6); z-index: 10000;
+                display: flex; justify-content: center; align-items: center;
+                backdrop-filter: blur(2px);
+            `;
+            modal.innerHTML = `
+                <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2); width:400px; text-align:center;">
+                    <div style="font-size:1.2rem; font-weight:800; color:var(--primary-color); margin-bottom:15px;">${msg}</div>
+                    <div style="background:#edf2f7; height:10px; border-radius:5px; overflow:hidden; position:relative;">
+                        <div class="progress-bar-anim" style="background:var(--primary-color); height:100%; width:30%; position:absolute; left:0; border-radius:5px;"></div>
+                    </div>
+                    <div style="font-size:0.85rem; color:#718096; margin-top:10px;">Please wait...</div>
+                    <style>
+                        @keyframes slide { 0% { left: -30%; } 100% { left: 100%; } }
+                        .progress-bar-anim { animation: slide 1.5s infinite linear; }
+                    </style>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        } else {
+            modal.querySelector('div > div').innerText = msg;
+            modal.style.display = 'flex';
+        }
+    };
+
+    const hideProgressModal = () => {
+        const modal = document.getElementById('progressModal');
+        if (modal) modal.style.display = 'none';
+    };
+
     compareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         const config = buildConfig();
         if (!config.rest.api1.baseUrl && !config.soap.api1.baseUrl) { alert('URL 1 is required'); return; }
 
-        const syncBtnText = () => {
-            const mode = document.getElementById('comparisonMode').value;
-            const op = document.getElementById('baselineOperation').value;
-            const btn = document.getElementById('compareBtn');
-            if (mode === 'BASELINE') {
-                btn.innerText = (op === 'CAPTURE') ? '📸 Capture Baseline' : '🔍 Compare Baseline';
-                btn.style.fontWeight = '800';
-            } else {
-                btn.innerText = '▶ Run Comparison';
-                btn.style.fontWeight = '800';
-            }
-        };
-
-        const handleBaselineUI = (mode) => {
-            const ignoreHeaders = document.getElementById('ignoreHeaders');
-            if (mode === 'BASELINE') {
-                const op = document.getElementById('baselineOperation').value;
-                if (op === 'CAPTURE') {
-                    if (ignoreHeaders) {
-                        ignoreHeaders.checked = false;
-                        ignoreHeaders.disabled = true;
-                    }
-                } else {
-                    if (ignoreHeaders) ignoreHeaders.disabled = false;
-                }
-            } else {
-                if (ignoreHeaders) ignoreHeaders.disabled = false;
-            }
-            syncBtnText();
-        };
-
-        statusIndicator.classList.remove('hidden');
+        showProgressModal('Running Comparison...');
         compareBtn.disabled = true;
-        resultsContainer.innerHTML = '<div class="empty-state">Running comparison...</div>';
+        resultsContainer.innerHTML = ''; // Clear previous results immediately
 
         try {
             if (config.comparisonMode === 'BASELINE') {
@@ -262,7 +271,7 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (err) {
             resultsContainer.innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
         } finally {
-            statusIndicator.classList.add('hidden');
+            hideProgressModal();
             compareBtn.disabled = false;
         }
     });
@@ -440,11 +449,69 @@ document.addEventListener('DOMContentLoaded', () => {
             const hasAPI2 = !!res.api2;
             const isMatch = isHeader ? areHeadersMatch(v1, v2) : arePayloadsMatch(v1, v2);
 
-            const renderSingleBox = (val, title, flex = 1) => `
+            // Visual Diff Logic
+            let c1 = isHeader ? renderHeaders(v1) : formatData(v1);
+            let c2 = isHeader ? renderHeaders(v2) : formatData(v2);
+
+            // Compute line-by-line highlights if mismatch and dual pane
+            if (!isMatch && hasAPI2) {
+                // For headers, they are text lines. For payload, formatData returns string.
+                // We split by newline and compare.
+                const lines1 = c1.split(/\r?\n/);
+                const lines2 = c2.split(/\r?\n/);
+                const max = Math.max(lines1.length, lines2.length);
+                
+                let out1 = '';
+                let out2 = '';
+                
+                for (let i = 0; i < max; i++) {
+                    const l1 = lines1[i] || '';
+                    const l2 = lines2[i] || '';
+                    const isDiff = l1.trim() !== l2.trim();
+                    const style = isDiff ? 'background-color:#ffe6e6; font-weight:bold; color:#c53030; display:inline-block; width:100%; border-radius:2px;' : '';
+                    
+                    out1 += `<div style="${style}">${l1 || '&nbsp;'}</div>`;
+                    out2 += `<div style="${style}">${l2 || '&nbsp;'}</div>`;
+                }
+                c1 = out1;
+                c2 = out2;
+            } else {
+                // If match or single pane, just wrap carefully to preserve existing style
+                 if (!isHeader) {
+                    // formatData returns raw string which we usually put in <pre>. 
+                    // To keep consistent with diff view (divs), we'll split it too, or just use pre.
+                    // Actually, let's keep it simple for matches.
+                 }
+            }
+
+            const renderSingleBoxContent = (val, isDiffMode) => {
+               if (isDiffMode) return `<div class="sync-p" style="margin:0; font-family:monospace; white-space:pre-wrap; font-size:0.8rem;">${val}</div>`;
+               // Fallback for match/single
+               return isHeader ? 
+                   `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
+                   `<pre class="sync-p" style="margin:0;">${formatData(val)}</pre>`;
+            };
+
+            // Custom renders for mismatch Diff View
+            const renderDiffBox = (valHtml, title, flex=1) => `
                 <div class="${type}-box" style="flex:${flex}; min-width:0; position:relative;">
                     <div style="font-size:0.7rem; font-weight:700; color:var(--primary-color); margin-bottom:5px; text-transform:uppercase;">${title}</div>
                     <div style="position:relative;">
-                        <button type="button" class="copy-btn" title="Copy ${label}">${isHeader ? 'Copy' : 'Copy'}</button>
+                        <button type="button" class="copy-btn" title="Copy ${label}">Copy</button>
+                        ${isHeader ? 
+                           `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${valHtml}</div>` : 
+                           `<div class="sync-p" style="margin:0; font-family:monospace; white-space:pre-wrap; font-size:0.8rem; overflow-x:auto;">${valHtml}</div>`
+                        }
+                    </div>
+                </div>
+            `;
+            
+            // Standard render for matches (reusing old logic style)
+            const renderStandardBox = (val, title, flex=1) => `
+                <div class="${type}-box" style="flex:${flex}; min-width:0; position:relative;">
+                    <div style="font-size:0.7rem; font-weight:700; color:var(--primary-color); margin-bottom:5px; text-transform:uppercase;">${title}</div>
+                     <div style="position:relative;">
+                        <button type="button" class="copy-btn" title="Copy ${label}">Copy</button>
                         ${isHeader ? 
                             `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
                             `<pre class="sync-p" style="margin:0;">${formatData(val)}</pre>`
@@ -454,15 +521,15 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
 
             if (!hasAPI2 || isMatch) {
-                return `<div style="display:flex; margin-bottom:10px;">${renderSingleBox(v1, `${label} ${isMatch && hasAPI2 ? '(Match)' : ''}`)}</div>`;
+                return `<div style="display:flex; margin-bottom:10px;">${renderStandardBox(v1, `${label} ${isMatch && hasAPI2 ? '(Match)' : ''}`)}</div>`;
             } else {
                 const isBaseline = document.getElementById('comparisonMode').value === 'BASELINE';
                 const t1 = isBaseline ? `Current ${label}` : `API 1 ${label}`;
                 const t2 = isBaseline ? `Target/Baseline ${label}` : `API 2 ${label}`;
                 return `
                     <div style="display:flex; gap:12px; margin-bottom:10px;">
-                        ${renderSingleBox(v1, t1)}
-                        ${renderSingleBox(v2, t2)}
+                        ${renderDiffBox(c1, t1)}
+                        ${renderDiffBox(c2, t2)}
                     </div>
                 `;
             }
