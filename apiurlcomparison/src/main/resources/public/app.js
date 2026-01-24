@@ -516,8 +516,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const renderHeaders = (headers) => {
             if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
-            // Join with newline to support line-by-line diff splitting
-            return Object.entries(headers).sort().map(([k,v])=>`<div><strong>${k}:</strong> ${v}</div>`).join('\n');
+            // Join with newline for diffing. Escape VALUES but keep our controlled <strong> tags.
+            return Object.entries(headers).sort().map(([k,v])=>`<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`).join('\n');
         };
 
         const renderComponent = (v1, v2, label, type, isHeader) => {
@@ -544,12 +544,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const isDiff = l1.trim() !== l2.trim();
                     const style = isDiff ? 'background-color:#ffe6e6; font-weight:bold; color:#c53030; display:inline-block; width:100%; border-radius:2px;' : '';
                     
-                    // Escape content to prevent structure breaking while preserving our div wrapper
-                    const el1 = escapeHtml(l1).replace(/ /g, '&nbsp;');
-                    const el2 = escapeHtml(l2).replace(/ /g, '&nbsp;');
+                    // If it's a header, l1 already contains safe HTML from renderHeaders.
+                    // If it's a payload, we must escape it now (unless it was already escaped).
+                    // Actually, let's just make l1/l2 reliable before the loop.
+                    const content1 = isHeader ? l1 : escapeHtml(l1).replace(/ /g, '&nbsp;');
+                    const content2 = isHeader ? l2 : escapeHtml(l2).replace(/ /g, '&nbsp;');
                     
-                    out1 += `<div style="${style}">${el1 || '&nbsp;'}</div>`;
-                    out2 += `<div style="${style}">${el2 || '&nbsp;'}</div>`;
+                    out1 += `<div style="${style}">${content1 || '&nbsp;'}</div>`;
+                    out2 += `<div style="${style}">${content2 || '&nbsp;'}</div>`;
                 }
                 c1 = out1;
                 c2 = out2;
@@ -592,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button type="button" class="copy-btn" title="Copy ${label}">Copy</button>
                         ${isHeader ? 
                             `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
-                            `<pre class="sync-p" style="margin:0;">${escapeHtml(formatData(val))}</pre>`
+                            `<pre class="sync-p" style="margin:0;">${formatData(val)}</pre>`
                         }
                     </div>
                 </div>

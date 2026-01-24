@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+  <soap:Body>
+    <tns:CreateOrderResponse xmlns:tns="http://raks.com/orderservice">
+      <orderNumber>ORD-20260118-001</orderNumber>
+      <status>SUCCESS</status>
+      <message>Order created successfully</message>
+      <timestamp>2026-01-24T05:23:06.969956859Z</timestamp>
+    </tns:CreateOrderResponse>
+  </soap:Body>
+</soap:Envelope>
