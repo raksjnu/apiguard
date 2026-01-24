@@ -27,6 +27,10 @@ public class BaselineComparisonService {
         if (config.getTokens() != null && !config.getTokens().isEmpty()) {
             iterations.add(0, new HashMap<>());
         }
+        
+        // Identify used tokens using the shared utility from ComparisonService
+        java.util.Set<String> usedTokens = ComparisonService.identifyUsedTokens(config);
+
         Map<String, ApiConfig> apis = "SOAP".equalsIgnoreCase(config.getTestType())
                 ? config.getSoapApis()
                 : config.getRestApis();
@@ -40,6 +44,21 @@ public class BaselineComparisonService {
         for (Map<String, Object> currentTokens : iterations) {
             iterationNumber++;
             boolean isOriginal = (iterationNumber == 1);
+            
+            // Smart Iteration Check (Shared Logic)
+            if (!isOriginal && !currentTokens.isEmpty()) {
+                boolean isRelevent = false;
+                for (String tokenKey : currentTokens.keySet()) {
+                    if (usedTokens.contains(tokenKey)) {
+                        isRelevent = true;
+                        break;
+                    }
+                }
+                if (!isRelevent) {
+                    logger.warn("Iteration {}: Tokens {} do not appear to be used in the current API configuration. Proceeding anyway.", iterationNumber, currentTokens.keySet());
+                }
+            }
+
             logger.info("Capturing iteration {}: {}{}", iterationNumber, currentTokens,
                     isOriginal ? " (Original Input Payload)" : "");
             try {

@@ -369,10 +369,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="result-header" style="cursor:pointer; padding:12px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div style="font-weight:700; font-size:0.9rem;">#${i+1} - ${res.operationName}</div>
-                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:2px; font-family:monospace;">${res.api1 ? res.api1.url : ''}</div>
+                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:1px; font-family:monospace;">1: ${res.api1 ? res.api1.url : ''}</div>
+                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:2px; font-family:monospace;">2: ${res.api2 ? res.api2.url : (document.getElementById('comparisonMode').value === 'BASELINE' ? 'Baseline' : '')}</div>
                         ${tokens}
                     </div>
-                    <span class="${statusClass}" style="padding:2px 10px; border-radius:10px; font-weight:700; font-size:0.7rem;">${res.status}</span>
+                    <span class="${statusClass}" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem; color: #fff; background-color: ${res.status === 'MISMATCH' ? '#fc8181' : (res.status === 'MATCH' ? 'var(--success-color)' : (res.status === 'ERROR' ? 'var(--error-color)' : '#cbd5e0'))};">${res.status}</span>
                 </div>
                 <div class="result-body" style="display:none; padding:15px; border-top:1px solid #eee; background:#fafafa;">
                     ${renderPayloadContent(res, i)}
@@ -498,13 +499,47 @@ document.addEventListener('DOMContentLoaded', () => {
         try { 
             return JSON.stringify(typeof d === 'string' ? JSON.parse(d) : d, null, 2); 
         } catch(e) { 
-            // Escape HTML for XML display
-            return String(d).replace(/&/g, "&amp;")
-                            .replace(/</g, "&lt;")
-                            .replace(/>/g, "&gt;")
-                            .replace(/"/g, "&quot;")
-                            .replace(/'/g, "&#039;");
+            // Check if it looks like XML
+            const str = String(d).trim();
+            if (str.startsWith('<') && str.endsWith('>')) {
+                 return formatXml(str);
+            }
+            return str;
         }
+    };
+
+    const formatXml = (xml) => {
+        let formatted = '';
+        let reg = /(>)(<)(\/*)/g;
+        xml = xml.replace(reg, '$1\r\n$2$3');
+        let pad = 0;
+        xml.split('\r\n').forEach(node => {
+            let indent = 0;
+            if (node.match(/.+<\/\w[^>]*>$/)) {
+                indent = 0;
+            } else if (node.match(/^<\/\w/)) {
+                if (pad != 0) {
+                    pad -= 1;
+                }
+            } else if (node.match(/^<\w[^>]*[^\/]>.*$/)) {
+                indent = 1;
+            } else {
+                indent = 0;
+            }
+
+            let padding = '';
+            for (let i = 0; i < pad; i++) {
+                padding += '  ';
+            }
+            formatted += padding + node + '\r\n';
+            pad += indent;
+        });
+        // Escape HTML for display
+        return formatted.replace(/&/g, '&amp;')
+               .replace(/</g, '&lt;')
+               .replace(/>/g, '&gt;')
+               .replace(/"/g, '&quot;')
+               .replace(/'/g, '&#039;');
     };
 
     const setupSync = (body) => {
@@ -608,7 +643,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Enhanced label with Description and Tags
                 const desc = r.description ? ` - ${r.description}` : '';
                 const tags = (r.tags && r.tags.length > 0) ? ` [${r.tags.join(', ')}]` : '';
-                opt.textContent = `${r.runId}${desc}${tags} (${r.timestamp})`;
+                // Format timestamp manually to YYYY-MM-DDTHH:mm:ss CST
+                // Note: JS Date doesn't support CST strictly without libs, simplifying to local ISO-like
+                const dateObj = new Date(r.timestamp);
+                const year = dateObj.getFullYear();
+                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+                const day = String(dateObj.getDate()).padStart(2, '0');
+                const hours = String(dateObj.getHours()).padStart(2, '0');
+                const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+                const seconds = String(dateObj.getSeconds()).padStart(2, '0');
+                const ts = `${year}-${month}-${day}T${hours}:${minutes}:${seconds} CST`;
+                
+                opt.textContent = `${r.runId}${desc}${tags} (${ts})`;
                 baselineRunSelect.appendChild(opt);
             });
             

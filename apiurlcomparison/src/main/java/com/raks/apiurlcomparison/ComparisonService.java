@@ -49,8 +49,7 @@ public class ComparisonService {
                     }
                 }
                 if (!isRelevent) {
-                    logger.info("Skipping iteration {}: Tokens {} are not used in API configuration.", iterationCount, currentTokens.keySet());
-                    continue; 
+                    logger.warn("Iteration {}: Tokens {} do not appear to be used in the current API configuration (URL/Headers/Payload). Proceeding anyway as per user request.", iterationCount, currentTokens.keySet());
                 }
             }
 
@@ -219,7 +218,7 @@ public class ComparisonService {
         return normalizedBase + normalizedPath;
     }
 
-    private Set<String> identifyUsedTokens(Config config) {
+    public static Set<String> identifyUsedTokens(Config config) {
         Set<String> usedTokens = new HashSet<>();
         Pattern tokenPattern = Pattern.compile("\\{\\{([^}]+)\\}\\}");
 

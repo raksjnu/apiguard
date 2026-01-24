@@ -1,0 +1,17 @@
+{
+  "runId" : "run-003",
+  "serviceName" : "s3",
+  "captureDate" : "20260123",
+  "captureTimestamp" : "2026-01-23T21:39:38.769154-06:00",
+  "testType" : "REST",
+  "endpoint" : "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders",
+  "operation" : "createOrder",
+  "totalIterations" : 1,
+  "description" : "d3",
+  "tags" : [ "t4" ],
+  "configUsed" : {
+    "maxIterations" : 100,
+    "iterationController" : "ONE_BY_ONE",
+    "testType" : "REST"
+  }
+}
