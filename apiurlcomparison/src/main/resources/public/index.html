@@ -289,6 +289,7 @@
             </main>
         </div>
 
+        <div id="utilitiesView" class="view-container" style="padding: 20px; overflow-y: auto; background: var(--bg-color);">
             <!-- Workspace Management (Pinned Top) -->
             <div class="card" style="margin-bottom: 25px; border-radius: 16px;">
                 <div class="card-header" style="background: rgba(94, 39, 139, 0.05); border-radius: 12px 12px 0 0;">
@@ -307,80 +308,78 @@
                 </div>
             </div>
 
-            <div style="display: flex; gap: 25px; align-items: start;">
-                <!-- Left Column: Utilities Grid -->
-                <div class="toolkit-grid" style="flex: 2; display: grid; grid-template-columns: 1fr 1fr; gap: 25px;">
-                    
-                    <!-- Connectivity Suite -->
-                    <div class="card utility-tile" style="border-radius: 16px;">
-                        <div class="card-header" style="background: rgba(46, 125, 50, 0.05); border-left-color: var(--success-color);">
-                            <h2 style="font-size: 1rem; color: var(--success-color); display:flex; align-items:center; gap:10px;">🌐 Connectivity Suite</h2>
-                        </div>
-                        <div style="padding: 15px;">
-                            <label style="font-size: 0.75rem; font-weight:700; color:#666; margin-bottom:8px; display:block;">TARGET ENDPOINT URL</label>
-                            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
-                                <input type="text" id="utilUrl" placeholder="https://..." style="border-radius: 8px; flex: 1;">
-                            </div>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-                                <button id="pingBtn" class="btn-secondary" style="font-weight:700;">🚀 Ping Test</button>
-                                <button id="fetchWsdlBtn" class="btn-secondary" style="font-weight:700;">📘 Discovery (WSDL)</button>
-                            </div>
-                        </div>
+            <!-- Utilities Grid (Tiles) -->
+            <div class="toolkit-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px;">
+                
+                <!-- Connectivity Suite -->
+                <div class="card utility-tile" style="border-radius: 16px;">
+                    <div class="card-header" style="background: rgba(46, 125, 50, 0.05); border-left-color: var(--success-color);">
+                        <h2 style="font-size: 1rem; color: var(--success-color); display:flex; align-items:center; gap:10px;">🌐 Connectivity Suite</h2>
                     </div>
-
-                    <!-- Auth Studio -->
-                    <div class="card utility-tile" style="border-radius: 16px;">
-                        <div class="card-header" style="background: rgba(0, 86, 179, 0.05); border-left-color: #0056b3;">
-                            <h2 style="font-size: 1rem; color: #0056b3; display:flex; align-items:center; gap:10px;">🔐 Auth Studio</h2>
+                    <div style="padding: 15px;">
+                        <label style="font-size: 0.75rem; font-weight:700; color:#666; margin-bottom:8px; display:block;">TARGET ENDPOINT URL</label>
+                        <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                            <input type="text" id="utilUrl" placeholder="https://..." style="border-radius: 8px; flex: 1;">
                         </div>
-                        <div style="padding: 15px;">
-                            <textarea id="jwtInput" placeholder="Paste JWT/Bearer Token here..." style="height: 60px; margin-bottom: 10px; font-size: 0.75rem;"></textarea>
-                            <button id="decodeJwtBtn" class="btn-secondary" style="width: 100%; font-weight:700;">🔍 Inspect JWT Claims</button>
-                        </div>
-                    </div>
-
-                    <!-- Data Foundry -->
-                    <div class="card utility-tile" style="border-radius: 16px;">
-                        <div class="card-header" style="background: rgba(229, 62, 62, 0.05); border-left-color: var(--error-color);">
-                            <h2 style="font-size: 1rem; color: var(--error-color); display:flex; align-items:center; gap:10px;">🛠️ Data Foundry</h2>
-                        </div>
-                        <div style="padding: 15px;">
-                            <textarea id="dataWorkpad" placeholder="JSON/XML/Base64 utility workpad..." style="height: 60px; margin-bottom: 10px; font-size: 0.75rem;"></textarea>
-                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                                <button id="minifyBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Minify JSON</button>
-                                <button id="prettyBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Pretty Print</button>
-                                <button id="b64EncBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Base64 Enc</button>
-                                <button id="b64DecBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Base64 Dec</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Baseline Portability -->
-                    <div class="card utility-tile" style="border-radius: 16px;">
-                        <div class="card-header" style="background: rgba(94, 39, 139, 0.05); border-left-color: var(--primary-color);">
-                            <h2 style="font-size: 1rem; color: var(--primary-color); display:flex; align-items:center; gap:10px;">📦 Baseline Portability</h2>
-                        </div>
-                        <div style="padding: 15px;">
-                            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
-                                <select id="exportService" style="flex:1; font-size: 0.8rem;"><option value="ALL">-- All Services --</option></select>
-                                <button id="exportBtn" class="btn-primary" style="width: auto; padding: 8px 12px; font-size: 0.8rem; font-weight:800;">📥 Export</button>
-                            </div>
-                            <input type="file" id="importFile" style="display:none;" accept=".zip">
-                            <button id="importBtn" class="btn-secondary" style="width: 100%; padding: 8px; border-style: dashed; font-size: 0.8rem; font-weight:700;" onclick="document.getElementById('importFile').click()">📂 Import .zip</button>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button id="pingBtn" class="btn-secondary" style="font-weight:700;">🚀 Ping Test</button>
+                            <button id="fetchWsdlBtn" class="btn-secondary" style="font-weight:700;">📘 Discovery (WSDL)</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- Right Column: Activity Log -->
-                <div class="card" style="flex: 1; border-radius: 16px; align-self: stretch; display: flex; flex-direction: column;">
-                    <div class="card-header" style="background: rgba(0, 0, 0, 0.05); border-bottom: 1px solid #ddd; border-left: none;">
-                        <h2 style="font-size: 1rem; color: #444; display:flex; align-items:center; gap:10px;">📜 Activity Log Console</h2>
-                        <button id="clearLogBtn" class="btn-secondary" style="font-size: 0.7rem; padding: 4px 8px;">🗑️ Clear</button>
+                <!-- Auth Studio -->
+                <div class="card utility-tile" style="border-radius: 16px;">
+                    <div class="card-header" style="background: rgba(0, 86, 179, 0.05); border-left-color: #0056b3;">
+                        <h2 style="font-size: 1rem; color: #0056b3; display:flex; align-items:center; gap:10px;">🔐 Auth Studio</h2>
                     </div>
-                    <div id="activityLog" style="flex: 1; padding: 15px; font-family: 'Consolas', monospace; font-size: 0.75rem; overflow-y: auto; background: #2d3748; color: #a0aec0; line-height: 1.4; border-radius: 0 0 12px 12px; min-height: 400px; white-space: pre-wrap;">
+                    <div style="padding: 15px;">
+                        <textarea id="jwtInput" placeholder="Paste JWT/Bearer Token here..." style="height: 60px; margin-bottom: 10px; font-size: 0.75rem;"></textarea>
+                        <button id="decodeJwtBtn" class="btn-secondary" style="width: 100%; font-weight:700;">🔍 Inspect JWT Claims</button>
+                    </div>
+                </div>
+
+                <!-- Data Foundry -->
+                <div class="card utility-tile" style="border-radius: 16px;">
+                    <div class="card-header" style="background: rgba(229, 62, 62, 0.05); border-left-color: var(--error-color);">
+                        <h2 style="font-size: 1rem; color: var(--error-color); display:flex; align-items:center; gap:10px;">🛠️ Data Foundry</h2>
+                    </div>
+                    <div style="padding: 15px;">
+                        <textarea id="dataWorkpad" placeholder="JSON/XML/Base64 utility workpad..." style="height: 60px; margin-bottom: 10px; font-size: 0.75rem;"></textarea>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                            <button id="minifyBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Minify JSON</button>
+                            <button id="prettyBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Pretty Print</button>
+                            <button id="b64EncBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Base64 Enc</button>
+                            <button id="b64DecBtn" class="btn-secondary" style="font-size: 0.7rem; font-weight:700;">Base64 Dec</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Baseline Portability -->
+                <div class="card utility-tile" style="border-radius: 16px;">
+                    <div class="card-header" style="background: rgba(94, 39, 139, 0.05); border-left-color: var(--primary-color);">
+                        <h2 style="font-size: 1rem; color: var(--primary-color); display:flex; align-items:center; gap:10px;">📦 Baseline Portability</h2>
+                    </div>
+                    <div style="padding: 15px;">
+                        <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+                            <select id="exportService" style="flex:1; font-size: 0.8rem;"><option value="ALL">-- All Services --</option></select>
+                            <button id="exportBtn" class="btn-primary" style="width: auto; padding: 8px 12px; font-size: 0.8rem; font-weight:800;">📥 Export</button>
+                        </div>
+                        <input type="file" id="importFile" style="display:none;" accept=".zip">
+                        <button id="importBtn" class="btn-secondary" style="width: 100%; padding: 8px; border-style: dashed; font-size: 0.8rem; font-weight:700;" onclick="document.getElementById('importFile').click()">📂 Import .zip</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Activity Log (Full Width Bottom) -->
+            <div class="card" style="border-radius: 16px; display: flex; flex-direction: column;">
+                <div class="card-header" style="background: rgba(0, 0, 0, 0.05); border-bottom: 1px solid #ddd; border-left: none;">
+                    <h2 style="font-size: 1rem; color: #444; display:flex; align-items:center; gap:10px;">📜 Activity Log Console</h2>
+                    <button id="clearLogBtn" class="btn-secondary" style="font-size: 0.7rem; padding: 4px 8px;">🗑️ Clear</button>
+                </div>
+                <div id="activityLog" style="padding: 15px; font-family: 'Consolas', monospace; font-size: 0.75rem; overflow-y: auto; background: #2d3748; color: #a0aec0; line-height: 1.4; border-radius: 0 0 12px 12px; height: 250px; white-space: pre-wrap;">
 [System Ready]
 > Waiting for utility interaction...
-                    </div>
                 </div>
             </div>
         </div>

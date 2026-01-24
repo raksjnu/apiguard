@@ -990,18 +990,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const modeBaseline = document.getElementById('modeBaseline');
 
         opCapture.onclick = () => {
-            const currentType = document.getElementById('testType').value;
             opCapture.classList.add('active');
             opCompare.classList.remove('active');
             document.getElementById('baselineOperation').value = 'CAPTURE';
             document.getElementById('captureFields').style.display = 'block';
             document.getElementById('compareFields').style.display = 'none';
             handleBaselineUI('BASELINE');
-            // Sync UI type buttons
-            updateTypeToggle(currentType);
+            // Ensure UI buttons stay in sync with hidden value
+            syncTypeButtons();
         };
         opCompare.onclick = () => {
-            const currentType = document.getElementById('testType').value;
             opCompare.classList.add('active');
             opCapture.classList.remove('active');
             document.getElementById('baselineOperation').value = 'COMPARE';
@@ -1009,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('compareFields').style.display = 'block';
             handleBaselineUI('BASELINE');
             loadBaselineServices();
-            updateTypeToggle(currentType);
+            syncTypeButtons();
         };
 
 
@@ -1023,21 +1021,26 @@ document.addEventListener('DOMContentLoaded', () => {
             handleBaselineUI('LIVE');
         });
         modeBaseline.addEventListener('click', () => {
-            const currentType = document.getElementById('testType').value;
             modeBaseline.classList.add('active');
             modeCompare.classList.remove('active');
             document.getElementById('baselineControls').style.display = 'block';
             document.getElementById('url2Group').style.display = 'none';
             document.getElementById('comparisonMode').value = 'BASELINE';
             opCapture.click();
+            syncTypeButtons();
         });
     }
 
-    const updateTypeToggle = (type) => {
-        document.getElementById('testType').value = type;
+    const syncTypeButtons = () => {
+        const type = document.getElementById('testType').value || 'REST';
         const isRest = (type === 'REST');
         document.getElementById('typeRest').classList.toggle('active', isRest);
         document.getElementById('typeSoap').classList.toggle('active', !isRest);
+    };
+
+    const updateTypeToggle = (type) => {
+        document.getElementById('testType').value = type;
+        syncTypeButtons();
     };
 
     // Export internal logic for mode switches
