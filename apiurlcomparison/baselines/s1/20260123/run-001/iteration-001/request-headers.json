@@ -1,4 +1,3 @@
 {
-  "SOAPAction" : "http://raks.com/orderservice/CreateOrder",
-  "Content-Type" : "text/xml"
+  "Content-Type" : "application/json"
 }

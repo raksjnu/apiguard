@@ -1,6 +1,6 @@
 {
-  "duration" : 15,
-  "contentType" : "text/xml",
+  "duration" : 210,
+  "contentType" : "application/json",
   "statusCode" : 200,
-  "timestamp" : "2026-01-23 21:09:08"
+  "timestamp" : "2026-01-23 23:09:24"
 }

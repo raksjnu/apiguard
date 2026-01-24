@@ -1,8 +1,0 @@
-{
-  "Strict-Transport-Security" : "max-age=31536000; includeSubdomains",
-  "Connection" : "Keep-Alive",
-  "x-correlation-id" : "92fe829e-fe02-4d16-abc1-dc45f3b5d239",
-  "Content-Length" : "92",
-  "Date" : "Sat, 24 Jan 2026 03:41:00 GMT",
-  "Content-Type" : "application/json"
-}

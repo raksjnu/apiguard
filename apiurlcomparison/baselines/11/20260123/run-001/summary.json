@@ -1,9 +1,0 @@
-{
-  "totalIterations" : 1,
-  "iterations" : [ {
-    "duration" : 261,
-    "tokens" : { },
-    "iterationNumber" : 1,
-    "statusCode" : 200
-  } ]
-}

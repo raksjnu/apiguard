@@ -36,7 +36,8 @@ Content-Type: application/json
 {
   "orderNumber": "ORD-20260118-001",
   "status": "SUCCESS",
-  "message": "Order created successfully"
+  "message": "Order created successfully",
+  "timestamp": "2026-01-23T23:06:52.428-06:00"
 }
 ```
 
@@ -74,7 +75,8 @@ curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders \
   "productName": "Widget Pro",
   "quantity": 5,
   "totalAmount": 249.99,
-  "status": "CONFIRMED"
+  "status": "CONFIRMED",
+  "timestamp": "2026-01-23T23:06:52.428-06:00"
 }
 ```
 
@@ -137,6 +139,7 @@ SOAPAction: http://raks.com/orderservice/CreateOrder
       <orderNumber>ORD-20260118-001</orderNumber>
       <status>SUCCESS</status>
       <message>Order created successfully</message>
+      <timestamp>2026-01-23T23:06:52.428-06:00</timestamp>
     </tns:CreateOrderResponse>
   </soap:Body>
 </soap:Envelope>
@@ -206,6 +209,7 @@ SOAPAction: http://raks.com/orderservice/GetOrder
       <quantity>5</quantity>
       <totalAmount>249.99</totalAmount>
       <status>CONFIRMED</status>
+      <timestamp>2026-01-23T23:06:52.428-06:00</timestamp>
     </tns:GetOrderResponse>
   </soap:Body>
 </soap:Envelope>

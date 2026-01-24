@@ -22,14 +22,14 @@
     <flow name="rest-create-order">
         <http:listener config-ref="HTTP_Listener_config" path="/api/orders" allowedMethods="POST"/>
         <logger level="INFO" message="REST CreateOrder called"/>
-        <set-payload value='{"orderNumber":"ORD-20260118-001","status":"SUCCESS","message":"Order created successfully"}' mimeType="application/json"/>
+        <set-payload value="#[output application/json --- {orderNumber:'ORD-20260118-001',status:'SUCCESS',message:'Order created successfully',timestamp:now()}]" mimeType="application/json"/>
     </flow>
 
     <!-- REST: GET /api/orders/{orderNumber} (Get Order) -->
     <flow name="rest-get-order">
         <http:listener config-ref="HTTP_Listener_config" path="/api/orders/*" allowedMethods="GET"/>
         <logger level="INFO" message="REST GetOrder called"/>
-        <set-payload value='{"orderNumber":"ORD-20260118-001","customerName":"John Doe","customerEmail":"john.doe@example.com","orderDate":"2026-01-18","productName":"Widget Pro","quantity":5,"totalAmount":249.99,"status":"CONFIRMED"}' mimeType="application/json"/>
+        <set-payload value="#[output application/json --- {orderNumber:'ORD-20260118-001',customerName:'John Doe',customerEmail:'john.doe@example.com',orderDate:'2026-01-18',productName:'Widget Pro',quantity:5,totalAmount:249.99,status:'CONFIRMED',timestamp:now()}]" mimeType="application/json"/>
     </flow>
 
     <!-- ========================================== -->
@@ -44,11 +44,11 @@
             <!-- Check presence of XML element safely -->
             <when expression="#[write(payload, 'application/xml') contains 'CreateOrderRequest']">
                 <logger level="INFO" message="SOAP CreateOrder called"/>
-                <set-payload value='&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice"&gt;&lt;soap:Body&gt;&lt;tns:CreateOrderResponse&gt;&lt;orderNumber&gt;ORD-20260118-001&lt;/orderNumber&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;message&gt;Order created successfully&lt;/message&gt;&lt;/tns:CreateOrderResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;' mimeType="text/xml"/>
+                <set-payload value="#[output application/xml --- read('&lt;soap:Envelope xmlns:soap=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:tns=&quot;http://raks.com/orderservice&quot;&gt;&lt;soap:Body&gt;&lt;tns:CreateOrderResponse&gt;&lt;orderNumber&gt;ORD-20260118-001&lt;/orderNumber&gt;&lt;status&gt;SUCCESS&lt;/status&gt;&lt;message&gt;Order created successfully&lt;/message&gt;&lt;timestamp&gt;' ++ (now() as String) ++ '&lt;/timestamp&gt;&lt;/tns:CreateOrderResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;', 'application/xml')]" mimeType="text/xml"/>
             </when>
             <when expression="#[write(payload, 'application/xml') contains 'GetOrderRequest']">
                 <logger level="INFO" message="SOAP GetOrder called"/>
-                <set-payload value='&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice"&gt;&lt;soap:Body&gt;&lt;tns:GetOrderResponse&gt;&lt;orderNumber&gt;ORD-20260118-001&lt;/orderNumber&gt;&lt;customerName&gt;John Doe&lt;/customerName&gt;&lt;customerEmail&gt;john.doe@example.com&lt;/customerEmail&gt;&lt;orderDate&gt;2026-01-18&lt;/orderDate&gt;&lt;productName&gt;Widget Pro&lt;/productName&gt;&lt;quantity&gt;5&lt;/quantity&gt;&lt;totalAmount&gt;249.99&lt;/totalAmount&gt;&lt;status&gt;CONFIRMED&lt;/status&gt;&lt;/tns:GetOrderResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;' mimeType="text/xml"/>
+                <set-payload value="#[output application/xml --- read('&lt;soap:Envelope xmlns:soap=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot; xmlns:tns=&quot;http://raks.com/orderservice&quot;&gt;&lt;soap:Body&gt;&lt;tns:GetOrderResponse&gt;&lt;orderNumber&gt;ORD-20260118-001&lt;/orderNumber&gt;&lt;customerName&gt;John Doe&lt;/customerName&gt;&lt;customerEmail&gt;john.doe@example.com&lt;/customerEmail&gt;&lt;orderDate&gt;2026-01-18&lt;/orderDate&gt;&lt;productName&gt;Widget Pro&lt;/productName&gt;&lt;quantity&gt;5&lt;/quantity&gt;&lt;totalAmount&gt;249.99&lt;/totalAmount&gt;&lt;status&gt;CONFIRMED&lt;/status&gt;&lt;timestamp&gt;' ++ (now() as String) ++ '&lt;/timestamp&gt;&lt;/tns:GetOrderResponse&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;', 'application/xml')]" mimeType="text/xml"/>
             </when>
             <otherwise>
                 <set-payload value='&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;&lt;soap:Body&gt;&lt;soap:Fault&gt;&lt;faultcode&gt;soap:Client&lt;/faultcode&gt;&lt;faultstring&gt;Unknown Operation&lt;/faultstring&gt;&lt;/soap:Fault&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;' mimeType="text/xml"/>
