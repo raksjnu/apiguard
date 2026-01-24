@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    };
+
 
     const loadDefaults = async () => {
         // First, try to restore the user's exact prior state
@@ -1102,6 +1102,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('testType').value = type;
         syncTypeButtons();
     };
+
+    document.getElementById('typeRest').addEventListener('click', () => updateTypeToggle('REST'));
+    document.getElementById('typeSoap').addEventListener('click', () => updateTypeToggle('SOAP'));
 
     // Export internal logic for mode switches
     window.handleBaselineUI = (mode) => {
