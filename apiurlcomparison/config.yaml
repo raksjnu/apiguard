@@ -42,7 +42,7 @@ rest:
 # Configuration block for SOAP APIs
 soap:
   api1:
-    baseUrl: "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice"
+    baseUrl: "http://localhost:8082/soap/orderservice" #"https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice"
     authentication:
       tokenUrl: null
     operations:

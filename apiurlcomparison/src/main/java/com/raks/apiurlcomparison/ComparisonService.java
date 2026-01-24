@@ -6,6 +6,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 public class ComparisonService {
     private static final Logger logger = LoggerFactory.getLogger(ComparisonService.class);
     public List<ComparisonResult> execute(Config config) {
@@ -21,10 +27,33 @@ public class ComparisonService {
         if (config.getTokens() != null && !config.getTokens().isEmpty()) {
             iterations.add(0, new HashMap<>());
         }
+        
+        // Identify all tokens actually used in the templates/config
+        java.util.Set<String> usedTokens = identifyUsedTokens(config);
+        
         int iterationCount = 0;
         for (Map<String, Object> currentTokens : iterations) {
             iterationCount++;
             boolean isOriginal = (iterationCount == 1);
+            
+            // Smart Iteration Check:
+            // If this is NOT the original iteration, and NONE of the tokens in the current map 
+            // are actually used by the target APIs, then this iteration produces an identical request 
+            // to the original (or baseline). We should skip it to save resources.
+            if (!isOriginal && !currentTokens.isEmpty()) {
+                boolean isRelevent = false;
+                for (String tokenKey : currentTokens.keySet()) {
+                    if (usedTokens.contains(tokenKey)) {
+                        isRelevent = true;
+                        break;
+                    }
+                }
+                if (!isRelevent) {
+                    logger.info("Skipping iteration {}: Tokens {} are not used in API configuration.", iterationCount, currentTokens.keySet());
+                    continue; 
+                }
+            }
+
             logger.info("Running iteration {}: {}{}", iterationCount, currentTokens,
                     isOriginal ? " (Original Input Payload)" : "");
             try {
@@ -188,5 +217,53 @@ public class ComparisonService {
             return normalizedBase;
         }
         return normalizedBase + normalizedPath;
+    }
+
+    private Set<String> identifyUsedTokens(Config config) {
+        Set<String> usedTokens = new HashSet<>();
+        Pattern tokenPattern = Pattern.compile("\\{\\{([^}]+)\\}\\}");
+
+        Map<String, ApiConfig> apis = "SOAP".equalsIgnoreCase(config.getTestType()) ? config.getSoapApis() : config.getRestApis();
+        if (apis == null) return usedTokens;
+
+        for (ApiConfig api : apis.values()) {
+            if (api == null) continue;
+            
+            // Check Base URL
+            if (api.getBaseUrl() != null) {
+                Matcher m = tokenPattern.matcher(api.getBaseUrl());
+                while (m.find()) usedTokens.add(m.group(1));
+            }
+
+            if (api.getOperations() != null) {
+                for (Operation op : api.getOperations()) {
+                    // Check Path
+                    if (op.getPath() != null) {
+                        Matcher m = tokenPattern.matcher(op.getPath());
+                        while (m.find()) usedTokens.add(m.group(1));
+                    }
+                    
+                    // Check Headers
+                    if (op.getHeaders() != null) {
+                        for (String headerVal : op.getHeaders().values()) {
+                             Matcher m = tokenPattern.matcher(headerVal);
+                             while (m.find()) usedTokens.add(m.group(1));
+                        }
+                    }
+
+                    // Check Payload Template
+                    if (op.getPayloadTemplatePath() != null && !op.getPayloadTemplatePath().isEmpty()) {
+                        try {
+                             String content = new String(Files.readAllBytes(Paths.get(op.getPayloadTemplatePath())));
+                             Matcher m = tokenPattern.matcher(content);
+                             while (m.find()) usedTokens.add(m.group(1));
+                        } catch (Exception e) {
+                            logger.warn("Could not read payload template for token analysis: {}", op.getPayloadTemplatePath());
+                        }
+                    }
+                }
+            }
+        }
+        return usedTokens;
     }
 }

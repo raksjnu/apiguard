@@ -369,6 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="result-header" style="cursor:pointer; padding:12px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div style="font-weight:700; font-size:0.9rem;">#${i+1} - ${res.operationName}</div>
+                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:2px; font-family:monospace;">${res.api1 ? res.api1.url : ''}</div>
                         ${tokens}
                     </div>
                     <span class="${statusClass}" style="padding:2px 10px; border-radius:10px; font-weight:700; font-size:0.7rem;">${res.status}</span>
@@ -404,7 +405,10 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const renderPayloadContent = (res, idx) => {
-        if (res.errorMessage) return `<div style="color:var(--error-color); font-size:0.85rem; padding:10px; background:#fff5f5; border-radius:6px; border:1px solid #feb2b2;"><strong>HTTP ERROR DETECTED:</strong> ${res.errorMessage}</div>`;
+        let contentHtml = '';
+        if (res.errorMessage) {
+            contentHtml += `<div style="color:var(--error-color); font-size:0.85rem; padding:10px; background:#fff5f5; border-radius:6px; border:1px solid #feb2b2; margin-bottom:10px;"><strong>HTTP ERROR DETECTED:</strong> ${res.errorMessage}</div>`;
+        }
         const a1 = res.api1 || {};
         const a2 = res.api2 || {};
 
@@ -451,10 +455,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!hasAPI2 || isMatch) {
                 return `<div style="display:flex; margin-bottom:10px;">${renderSingleBox(v1, `${label} ${isMatch && hasAPI2 ? '(Match)' : ''}`)}</div>`;
             } else {
+                const isBaseline = document.getElementById('comparisonMode').value === 'BASELINE';
+                const t1 = isBaseline ? `Current ${label}` : `API 1 ${label}`;
+                const t2 = isBaseline ? `Target/Baseline ${label}` : `API 2 ${label}`;
                 return `
                     <div style="display:flex; gap:12px; margin-bottom:10px;">
-                        ${renderSingleBox(v1, `Current ${label}`)}
-                        ${renderSingleBox(v2, `Target/Baseline ${label}`)}
+                        ${renderSingleBox(v1, t1)}
+                        ${renderSingleBox(v2, t2)}
                     </div>
                 `;
             }

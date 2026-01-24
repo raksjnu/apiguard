@@ -1,0 +1,9 @@
+{
+  "iterationNumber" : 1,
+  "timestamp" : "2026-01-23 21:09:08",
+  "tokensUsed" : { },
+  "endpoint" : "http://localhost:8082/soap/orderservice",
+  "method" : "POST",
+  "soapAction" : "http://raks.com/orderservice/CreateOrder",
+  "authentication" : { }
+}
