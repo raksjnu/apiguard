@@ -1,0 +1,17 @@
+{
+  "runId" : "run-001",
+  "serviceName" : "h1",
+  "captureDate" : "20260123",
+  "captureTimestamp" : "2026-01-23T22:43:44.0716265-06:00",
+  "testType" : "REST",
+  "endpoint" : "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice",
+  "operation" : "createOrder",
+  "totalIterations" : 4,
+  "description" : "1",
+  "tags" : [ "1" ],
+  "configUsed" : {
+    "maxIterations" : 100,
+    "iterationController" : "ONE_BY_ONE",
+    "testType" : "REST"
+  }
+}

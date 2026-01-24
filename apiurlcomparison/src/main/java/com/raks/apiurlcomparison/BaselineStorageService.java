@@ -137,8 +137,8 @@ public class BaselineStorageService {
             return Collections.emptyList();
         }
         return Arrays.stream(serviceDirs)
+                .sorted(Comparator.comparing(File::lastModified).reversed())
                 .map(File::getName)
-                .sorted()
                 .collect(Collectors.toList());
     }
     public List<String> listDates(String serviceName) {

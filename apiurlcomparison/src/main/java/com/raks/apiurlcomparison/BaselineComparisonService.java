@@ -55,7 +55,8 @@ public class BaselineComparisonService {
                     }
                 }
                 if (!isRelevent) {
-                    logger.warn("Iteration {}: Tokens {} do not appear to be used in the current API configuration. Proceeding anyway.", iterationNumber, currentTokens.keySet());
+                    logger.info("Skipping iteration {}: Tokens {} do not appear to be used (explicitly or implicitly) in the current API configuration.", iterationNumber, currentTokens.keySet());
+                    continue;
                 }
             }
 
@@ -125,6 +126,13 @@ public class BaselineComparisonService {
         for (BaselineStorageService.BaselineIteration baselineIter : baselineIterations) {
             int iterNum = baselineIter.getIterationNumber();
             Map<String, Object> tokens = convertTokensToMap(baselineIter.getRequestMetadata().getTokensUsed());
+            
+            // Smart Iteration Check (Compare Mode)
+            // Even replay should respect usage? Maybe not, but let's check config to be safe if user wants filtering.
+            // Actually, for Compare mode, we usually respect the Baseline's existence. 
+            // But if the user provided specific tokens in the UI that override/filter, we might need logic.
+            // For now, let's leave Compare mode valid as it replays exact history.
+            
             logger.info("Comparing iteration {}: {}", iterNum, tokens);
             try {
                 ComparisonResult result = executeApiCall(

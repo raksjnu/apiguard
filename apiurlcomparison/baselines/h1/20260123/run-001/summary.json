@@ -1,0 +1,30 @@
+{
+  "totalIterations" : 4,
+  "iterations" : [ {
+    "duration" : 238,
+    "tokens" : { },
+    "iterationNumber" : 1,
+    "statusCode" : 200
+  }, {
+    "duration" : 212,
+    "tokens" : {
+      "account" : "1729"
+    },
+    "iterationNumber" : 2,
+    "statusCode" : 200
+  }, {
+    "duration" : 237,
+    "tokens" : {
+      "account" : "2016"
+    },
+    "iterationNumber" : 3,
+    "statusCode" : 200
+  }, {
+    "duration" : 211,
+    "tokens" : {
+      "account" : "2018"
+    },
+    "iterationNumber" : 4,
+    "statusCode" : 200
+  } ]
+}

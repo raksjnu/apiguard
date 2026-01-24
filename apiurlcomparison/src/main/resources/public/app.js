@@ -1,3 +1,4 @@
+document.addEventListener('DOMContentLoaded', () => {
     // Inject Styles for Settings Panel
     const style = document.createElement('style');
     style.innerHTML = `
@@ -488,7 +489,8 @@
 
         const renderHeaders = (headers) => {
             if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
-            return Object.entries(headers).map(([k,v])=>`<div><strong>${k}:</strong> ${v}</div>`).join('');
+            // Join with newline to support line-by-line diff splitting
+            return Object.entries(headers).sort().map(([k,v])=>`<div><strong>${k}:</strong> ${v}</div>`).join('\n');
         };
 
         const renderComponent = (v1, v2, label, type, isHeader) => {
@@ -751,14 +753,25 @@
             const response = await fetch(url);
             const runs = await response.json();
             
+            // Sort runs: Latest (by ID/Time) last, so pop() works OR sort descending and take [0]
+            // The file system returns them unsorted or alphabetical.
+            // Let's sort robustly: Extract timestamp or ID.
+            // Run format: "run-001" or "run-001 - desc..."
+            runs.sort((a,b) => {
+                // Try comparing numeric run IDs first "run-001"
+                const ra = parseInt(a.runId.replace(/run-/,'')) || 0;
+                const rb = parseInt(b.runId.replace(/run-/,'')) || 0;
+                return ra - rb; // Ascending
+            });
+            
+            baselineRunSelect.innerHTML = '<option value="">-- Select Run --</option>'; // Reset again to be sure
             runs.forEach(r => {
                 const opt = document.createElement('option');
                 opt.value = r.runId;
-                // Enhanced label with Description and Tags
                 const desc = r.description ? ` - ${r.description}` : '';
                 const tags = (r.tags && r.tags.length > 0) ? ` [${r.tags.join(', ')}]` : '';
-                // Format timestamp manually to YYYY-MM-DDTHH:mm:ss CST
-                // Note: JS Date doesn't support CST strictly without libs, simplifying to local ISO-like
+                
+                 // Format timestamp manually to YYYY-MM-DDTHH:mm:ss CST
                 const dateObj = new Date(r.timestamp);
                 const year = dateObj.getFullYear();
                 const month = String(dateObj.getMonth() + 1).padStart(2, '0');
@@ -771,6 +784,7 @@
                 opt.textContent = `${r.runId}${desc}${tags} (${ts})`;
                 baselineRunSelect.appendChild(opt);
             });
+            
             
             if (runs.length > 0) {
                 baselineRunSelect.disabled = false;

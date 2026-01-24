@@ -1,0 +1,30 @@
+{
+  "totalIterations" : 4,
+  "iterations" : [ {
+    "duration" : 313,
+    "tokens" : { },
+    "iterationNumber" : 1,
+    "statusCode" : 200
+  }, {
+    "duration" : 325,
+    "tokens" : {
+      "amount" : "1"
+    },
+    "iterationNumber" : 2,
+    "statusCode" : 200
+  }, {
+    "duration" : 215,
+    "tokens" : {
+      "amount" : "2"
+    },
+    "iterationNumber" : 3,
+    "statusCode" : 200
+  }, {
+    "duration" : 223,
+    "tokens" : {
+      "amount" : "3"
+    },
+    "iterationNumber" : 4,
+    "statusCode" : 200
+  } ]
+}

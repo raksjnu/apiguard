@@ -6,12 +6,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.HashSet;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 public class ComparisonService {
     private static final Logger logger = LoggerFactory.getLogger(ComparisonService.class);
     public List<ComparisonResult> execute(Config config) {
@@ -49,7 +43,8 @@ public class ComparisonService {
                     }
                 }
                 if (!isRelevent) {
-                    logger.warn("Iteration {}: Tokens {} do not appear to be used in the current API configuration (URL/Headers/Payload). Proceeding anyway as per user request.", iterationCount, currentTokens.keySet());
+                    logger.info("Skipping iteration {}: Tokens {} do not appear to be used (explicitly or implicitly) in the current API configuration.", iterationCount, currentTokens.keySet());
+                    continue;
                 }
             }
 
@@ -218,51 +213,48 @@ public class ComparisonService {
         return normalizedBase + normalizedPath;
     }
 
-    public static Set<String> identifyUsedTokens(Config config) {
-        Set<String> usedTokens = new HashSet<>();
-        Pattern tokenPattern = Pattern.compile("\\{\\{([^}]+)\\}\\}");
-
-        Map<String, ApiConfig> apis = "SOAP".equalsIgnoreCase(config.getTestType()) ? config.getSoapApis() : config.getRestApis();
-        if (apis == null) return usedTokens;
-
-        for (ApiConfig api : apis.values()) {
-            if (api == null) continue;
+    public static java.util.Set<String> identifyUsedTokens(Config config) {
+        java.util.Set<String> used = new java.util.HashSet<>();
+        if (config.getTokens() == null) return used;
+        
+        List<ApiConfig> apis = new ArrayList<>();
+        if (config.getRestApis() != null) {
+            apis.add(config.getRestApis().get("api1"));
+            apis.add(config.getRestApis().get("api2"));
+        }
+        if (config.getSoapApis() != null) {
+            apis.add(config.getSoapApis().get("api1"));
+            apis.add(config.getSoapApis().get("api2"));
+        }
+        
+        for (String token : config.getTokens().keySet()) {
+            boolean found = false;
+            String strictPattern = "{{" + token + "}}";
             
-            // Check Base URL
-            if (api.getBaseUrl() != null) {
-                Matcher m = tokenPattern.matcher(api.getBaseUrl());
-                while (m.find()) usedTokens.add(m.group(1));
-            }
-
-            if (api.getOperations() != null) {
-                for (Operation op : api.getOperations()) {
-                    // Check Path
-                    if (op.getPath() != null) {
-                        Matcher m = tokenPattern.matcher(op.getPath());
-                        while (m.find()) usedTokens.add(m.group(1));
-                    }
-                    
-                    // Check Headers
-                    if (op.getHeaders() != null) {
-                        for (String headerVal : op.getHeaders().values()) {
-                             Matcher m = tokenPattern.matcher(headerVal);
-                             while (m.find()) usedTokens.add(m.group(1));
+            for (ApiConfig api : apis) {
+                if (api == null) continue;
+                String baseUrl = api.getBaseUrl() != null ? api.getBaseUrl().toLowerCase() : "";
+                if (baseUrl.contains(strictPattern.toLowerCase()) || baseUrl.contains(token.toLowerCase())) { found = true; break; }
+                
+                if (api.getOperations() != null) {
+                    for (Operation op : api.getOperations()) {
+                        String payload = op.getPayloadTemplatePath() != null ? op.getPayloadTemplatePath().toLowerCase() : "";
+                        if (payload.contains(strictPattern.toLowerCase()) || payload.contains(token.toLowerCase())) { 
+                            found = true; break; 
                         }
-                    }
-
-                    // Check Payload Template
-                    if (op.getPayloadTemplatePath() != null && !op.getPayloadTemplatePath().isEmpty()) {
-                        try {
-                             String content = new String(Files.readAllBytes(Paths.get(op.getPayloadTemplatePath())));
-                             Matcher m = tokenPattern.matcher(content);
-                             while (m.find()) usedTokens.add(m.group(1));
-                        } catch (Exception e) {
-                            logger.warn("Could not read payload template for token analysis: {}", op.getPayloadTemplatePath());
+                        if (op.getHeaders() != null) {
+                            for (Map.Entry<String, String> h : op.getHeaders().entrySet()) {
+                                 String hVal = h.getValue() != null ? h.getValue().toLowerCase() : "";
+                                 if (hVal.contains(strictPattern.toLowerCase()) || hVal.contains(token.toLowerCase())) { found = true; break; }
+                            }
                         }
+                        if (found) break;
                     }
                 }
+                if (found) break;
             }
+            if (found) used.add(token);
         }
-        return usedTokens;
+        return used;
     }
 }
