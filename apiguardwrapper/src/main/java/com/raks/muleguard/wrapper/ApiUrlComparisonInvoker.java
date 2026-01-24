@@ -191,10 +191,14 @@ public class ApiUrlComparisonInvoker {
              com.raks.apiurlcomparison.BaselineStorageService storage = new com.raks.apiurlcomparison.BaselineStorageService(workDir);
              String endpoint = storage.getRunEndpoint(serviceName, date, runId);
              String payload = storage.getRunRequestPayload(serviceName, date, runId);
+             Map<String, String> headers = storage.getRunRequestHeaders(serviceName, date, runId);
+             com.raks.apiurlcomparison.RunMetadata metadata = storage.getRunMetadata(serviceName, date, runId);
              
-             Map<String, String> result = new HashMap<>();
+             Map<String, Object> result = new HashMap<>();
              result.put("endpoint", endpoint);
              result.put("payload", payload);
+             result.put("headers", headers);
+             result.put("metadata", metadata);
              return objectMapper.writeValueAsString(result);
         } catch (Exception e) {
             logger.error("Error fetching run endpoint", e);
