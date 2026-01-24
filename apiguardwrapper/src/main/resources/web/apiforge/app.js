@@ -134,19 +134,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- UI Activity Logging (Persistent) ---
-    const LOG_STORAGE_KEY = 'api_forge_activity_log';
+    const LOG_STORAGE_KEY = 'api_forge_activity_log_v2';
     
     // Load logs on startup
     const loadLogs = () => {
         const log = document.getElementById('activityLog');
         if (!log) return;
-        const savedLogs = sessionStorage.getItem(LOG_STORAGE_KEY);
+        const savedLogs = localStorage.getItem(LOG_STORAGE_KEY);
         if (savedLogs) {
             log.innerHTML = savedLogs;
             log.scrollTop = log.scrollHeight;
-        } else {
-             // Initial Welcome Log if empty
-             // logActivity('Session started. Ready for action.');
         }
     };
 

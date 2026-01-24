@@ -271,39 +271,44 @@ payload]]></ee:set-payload></ee:message></ee:transform>
 
             <!-- /api/baselines/import -->
              <when expression="#[(vars.apiPath startsWith 'baselines/import') and attributes.method == 'POST']">
-                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiurlcomparison.work.dir')]"/>
+                 <set-variable variableName="workDir" value="#[attributes.queryParams.workDir default p('apiforge.work.dir')]"/>
                  <set-variable variableName="overwrite" value="#[attributes.queryParams.overwrite == 'true']"/>
                  
-                 <!-- Read InputStream from payload -->
-                 <!-- If not overwriting, check for conflicts first -->
+                 <!-- Save InputStream to Temp File to avoid stream exhaustion/consumption issues -->
+                 <set-variable variableName="tempZipPath" value="#[Mule::p('java.io.tmpdir') ++ '/import_' ++ uuid() ++ '.zip']"/>
+                 <file:write doc:name="Save Zip" path="#[vars.tempZipPath]" config-ref="File_Config">
+                    <file:content><![CDATA[#[payload]]]></file:content>
+                 </file:write>
+                 
                  <choice>
                     <when expression="#[vars.overwrite == false]">
-                        <java:invoke-static doc:name="Check Conflicts" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="detectConflicts(java.lang.String, java.io.InputStream)">
-                             <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: payload }]]]></java:args>
+                        <java:invoke-static doc:name="Check Conflicts" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="detectConflictsFromFile(java.lang.String, java.lang.String)">
+                             <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.tempZipPath }]]]></java:args>
                         </java:invoke-static>
                         <choice>
                             <when expression="#[payload != '[]']">
                                 <!-- Conficts found -->
                                 <set-payload value="#[payload]" mimeType="application/json"/>
                                 <set-variable variableName="httpStatus" value="409"/>
+                                <file:delete doc:name="Delete Temp Zip" path="#[vars.tempZipPath]" config-ref="File_Config"/>
                             </when>
                             <otherwise>
-                                <!-- No conflicts, proceed to import (need to re-read stream? Or hopefully payload was buffered?) -->
-                                <!-- In Mule 4, stream might be consumed. We should have saved it to a temp file or used repeatable streams. -->
-                                <!-- Assuming repeatable streams are enabled by default in Mule 4 -->
-                                <java:invoke-static doc:name="Import Baselines" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="importBaselines(java.lang.String, java.io.InputStream)">
-                                     <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: payload }]]]></java:args>
+                                <!-- No conflicts, proceed to import -->
+                                <java:invoke-static doc:name="Import Baselines" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="importBaselinesFromFile(java.lang.String, java.lang.String)">
+                                     <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.tempZipPath }]]]></java:args>
                                 </java:invoke-static>
                                 <set-payload value="#[payload]" mimeType="application/json"/>
+                                <file:delete doc:name="Delete Temp Zip" path="#[vars.tempZipPath]" config-ref="File_Config"/>
                             </otherwise>
                         </choice>
                     </when>
                     <otherwise>
                         <!-- Overwrite true, just import -->
-                        <java:invoke-static doc:name="Import Baselines Force" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="importBaselines(java.lang.String, java.io.InputStream)">
-                             <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: payload }]]]></java:args>
+                        <java:invoke-static doc:name="Import Baselines Force" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="importBaselinesFromFile(java.lang.String, java.lang.String)">
+                             <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.tempZipPath }]]]></java:args>
                         </java:invoke-static>
                         <set-payload value="#[payload]" mimeType="application/json"/>
+                        <file:delete doc:name="Delete Temp Zip" path="#[vars.tempZipPath]" config-ref="File_Config"/>
                     </otherwise>
                  </choice>
             </when>

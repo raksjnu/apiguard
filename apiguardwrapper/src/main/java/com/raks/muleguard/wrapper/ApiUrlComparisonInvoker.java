@@ -10,6 +10,7 @@ import com.raks.apiurlcomparison.Operation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -359,6 +360,25 @@ public class ApiUrlComparisonInvoker {
             return objectMapper.writeValueAsString(result);
         } catch (Exception e) {
             logger.error("Error importing baselines", e);
+            return "{\"success\": false, \"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    // --- File-Based Wrappers (To avoid Stream Exhaustion) ---
+    public static String detectConflictsFromFile(String workDir, String zipPath) {
+        try (InputStream is = new FileInputStream(zipPath)) {
+            return detectConflicts(workDir, is);
+        } catch (Exception e) {
+            logger.error("Error detecting conflicts from file", e);
+            return "[]";
+        }
+    }
+
+    public static String importBaselinesFromFile(String workDir, String zipPath) {
+        try (InputStream is = new FileInputStream(zipPath)) {
+            return importBaselines(workDir, is);
+        } catch (Exception e) {
+            logger.error("Error importing baselines from file", e);
             return "{\"success\": false, \"error\": \"" + e.getMessage() + "\"}";
         }
     }
