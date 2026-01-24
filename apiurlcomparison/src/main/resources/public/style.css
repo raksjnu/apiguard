@@ -450,3 +450,34 @@ body.resizing .resize-handle::before {
     background: var(--primary-color);
     height: 100%;
 }
+
+/* Table input styling - make value cells wider */
+.input-table {
+    width: 100%;
+    table-layout: fixed; /* Enforce column widths */
+}
+
+.input-table td {
+    padding: 4px;
+}
+
+.input-table input[type="text"] {
+    width: 100%;
+    box-sizing: border-box; 
+}
+
+/* Column 1: Name */
+.input-table td:nth-child(1) {
+    width: 30%; 
+}
+
+/* Column 2: Value (The middle one) */
+.input-table td:nth-child(2) {
+    width: 65%; 
+}
+
+/* Column 3: Delete Button (The last one) */
+.input-table td:nth-child(3) {
+    width: 5%;
+    text-align: center;
+}

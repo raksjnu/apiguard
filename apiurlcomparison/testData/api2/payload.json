@@ -1,10 +1,8 @@
 {
-  "account": "1479",
-  "myaccounvalue": 987,
-  "name": "Rakesh",
-  "age": 30,
-  "isStudent": false,
-  "raksuuid": "testid",
-  "param1eter": false,
-  "AccountNumber": "9846252"
+  "customerName": "John Doe",
+  "customerEmail": "john.doe@example.com",
+  "orderDate": "2026-01-18",
+  "productName": "Widget Pro",
+  "quantity": 5,
+  "totalAmount": 249.99
 }
