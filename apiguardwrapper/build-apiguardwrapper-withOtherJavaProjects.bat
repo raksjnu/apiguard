@@ -121,10 +121,16 @@ if exist "%SCRIPT_DIR%..\apiforge" (
         echo [WARN] apiforge JAR not found in target
     )
 
-    REM Sync Config and Test Data to apiforge
+    REM Sync Web Resources to apiguardwrapper
     echo.
-    echo [INFO] Synchronizing Configuration and Test Data...
+    echo [INFO] Synchronizing API Forge Web Resources...
     if not exist "%SCRIPT_DIR%src\main\resources\web\apiforge" mkdir "%SCRIPT_DIR%src\main\resources\web\apiforge"
+    
+    if exist "%SCRIPT_DIR%..\apiforge\src\main\resources\public" (
+        xcopy /Y /S /E "%SCRIPT_DIR%..\apiforge\src\main\resources\public\*" "%SCRIPT_DIR%src\main\resources\web\apiforge\" >nul
+    )
+    
+    REM Sync Config and Test Data
     copy /Y "%SCRIPT_DIR%..\apiforge\src\main\resources\config.yaml" "%SCRIPT_DIR%src\main\resources\web\apiforge\" >nul
     if not exist "%SCRIPT_DIR%src\main\resources\web\apiforge\testData" mkdir "%SCRIPT_DIR%src\main\resources\web\apiforge\testData"
     xcopy /Y /S /E "%SCRIPT_DIR%..\apiforge\src\main\resources\testData\*" "%SCRIPT_DIR%src\main\resources\web\apiforge\testData\" >nul
@@ -195,7 +201,9 @@ if exist "%SCRIPT_DIR%..\aegis" (
 
     REM Copy Web Resources
     if exist "%SCRIPT_DIR%..\aegis\src\main\resources\web\aegis" (
+        if not exist "%SCRIPT_DIR%src\main\resources\web\aegis" mkdir "%SCRIPT_DIR%src\main\resources\web\aegis"
         xcopy /E /Y /I /Q "%SCRIPT_DIR%..\aegis\src\main\resources\web\aegis" "%SCRIPT_DIR%src\main\resources\web\aegis" >nul 2>&1
+        echo [INFO] Aegis Web Resources synchronized successfully.
     )
 ) else (
     echo [ERROR] Aegis project not found at ..\aegis

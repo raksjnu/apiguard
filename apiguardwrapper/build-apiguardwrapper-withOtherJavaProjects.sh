@@ -28,7 +28,7 @@ if [ -n "$JAVA_HOME" ]; then
     export PATH="$JAVA_HOME/bin:$PATH"
     echo "[INFO] Using JAVA_HOME: $JAVA_HOME"
 else
-    echo "[INFO] JAVA_HOME not set. Using java from system PATH."
+    echo "[INFO] JAVA_HOME not set. Using java from system PATH.
 fi
 
 echo ""
@@ -56,11 +56,6 @@ if [ -d "$SCRIPT_DIR/../raksanalyzer" ]; then
     RAKS_JAR="$HOME/.m2/repository/com/raks/raksanalyzer/1.0.0/raksanalyzer-1.0.0.jar"
     if [ -f "$RAKS_JAR" ]; then
         cp "$RAKS_JAR" "$SCRIPT_DIR/lib/raksanalyzer-1.0.0.jar"
-        if [ $? -eq 0 ]; then
-            echo "[INFO] raksanalyzer-1.0.0.jar copied successfully"
-        else
-            echo "[WARN] Failed to copy raksanalyzer JAR"
-        fi
     else
         echo "[WARN] raksanalyzer JAR not found in .m2 repository"
     fi
@@ -89,8 +84,6 @@ if [ -d "$SCRIPT_DIR/../apidiscovery" ]; then
     APIDISC_JAR="$HOME/.m2/repository/com/raks/apidiscovery/1.0.0/apidiscovery-1.0.0.jar"
     if [ -f "$APIDISC_JAR" ]; then
         cp "$APIDISC_JAR" "$SCRIPT_DIR/lib/apidiscovery-1.0.0.jar"
-    else
-        echo "[WARN] apidiscovery JAR not found in .m2"
     fi
 else
     echo "[ERROR] ApiDiscovery project not found at ../apidiscovery"
@@ -117,14 +110,18 @@ if [ -d "$SCRIPT_DIR/../apiforge" ]; then
     APIFORGE_JAR="$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0-jar-with-raks.jar"
     if [ -f "$APIFORGE_JAR" ]; then
         cp "$APIFORGE_JAR" "$SCRIPT_DIR/lib/apiforge-1.0.0.jar"
-    else
-        echo "[WARN] apiforge JAR not found"
     fi
 
-    # Sync Config and Test Data
+    # Sync Web Resources
+    echo "[INFO] Synchronizing API Forge Resources..."
+    mkdir -p "$SCRIPT_DIR/src/main/resources/web/apiforge"
+    if [ -d "$SCRIPT_DIR/../apiforge/src/main/resources/public" ]; then
+        cp -r "$SCRIPT_DIR/../apiforge/src/main/resources/public/"* "$SCRIPT_DIR/src/main/resources/web/apiforge/"
+    fi
     cp "$SCRIPT_DIR/../apiforge/src/main/resources/config.yaml" "$SCRIPT_DIR/src/main/resources/web/apiforge/"
     mkdir -p "$SCRIPT_DIR/src/main/resources/web/apiforge/testData"
     cp -r "$SCRIPT_DIR/../apiforge/src/main/resources/testData/"* "$SCRIPT_DIR/src/main/resources/web/apiforge/testData/"
+    echo "[INFO] API Forge resources synchronized successfully."
 else
     echo "[ERROR] API Forge project not found"
     exit 1
@@ -151,7 +148,9 @@ if [ -d "$SCRIPT_DIR/../aegis" ]; then
     mvn clean install -DskipTests
     if [ $? -eq 0 ]; then
         cp "$SCRIPT_DIR/../aegis/target/aegis-1.0.0-jar-with-raks.jar" "$SCRIPT_DIR/lib/aegis-1.0.0.jar"
-        cp -r "$SCRIPT_DIR/../aegis/src/main/resources/web/aegis" "$SCRIPT_DIR/src/main/resources/web/"
+        echo "[INFO] Synchronizing Aegis Web Resources..."
+        mkdir -p "$SCRIPT_DIR/src/main/resources/web/aegis"
+        cp -r "$SCRIPT_DIR/../aegis/src/main/resources/web/aegis/"* "$SCRIPT_DIR/src/main/resources/web/aegis/"
     fi
 fi
 
