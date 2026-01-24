@@ -47,7 +47,7 @@
 						</sharedLibrary>
 						<sharedLibrary>
 							<groupId>com.raks</groupId>
-							<artifactId>apiurlcomparison</artifactId>
+							<artifactId>apiforge</artifactId>
 						</sharedLibrary>
 						<sharedLibrary>
 							<groupId>com.raks</groupId>
@@ -221,10 +221,10 @@
 		</dependency>
 		<dependency>
 			<groupId>com.raks</groupId>
-			<artifactId>apiurlcomparison</artifactId>
+			<artifactId>apiforge</artifactId>
 			<version>1.0.0</version>
 			<scope>system</scope>
-			<systemPath>${project.basedir}/lib/apiurlcomparison-1.0.0.jar</systemPath>
+			<systemPath>${project.basedir}/lib/apiforge-1.0.0.jar</systemPath>
 		</dependency>
 		<dependency>
 			<groupId>com.raks</groupId>

@@ -1,9 +1,9 @@
 #!/bin/bash
 # ===================================================================
-# ApiGuard Wrapper - Build Script with ApiUrlComparison Only
+# ApiGuard Wrapper - Build Script with apiforge Only
 # ===================================================================
 # This script:
-# 1. Builds and Installs ApiUrlComparison (Dependency)
+# 1. Builds and Installs apiforge (Dependency)
 # 2. Builds the ApiGuardWrapper Mule application
 # ===================================================================
 
@@ -28,42 +28,42 @@ cd "$SCRIPT_DIR"
 
 echo ""
 echo "============================================================"
-echo "  ApiGuard Wrapper - Build with ApiUrlComparison Only"
+echo "  ApiGuard Wrapper - Build with apiforge Only"
 echo "============================================================"
 echo ""
 
-# Step 1: Build & Install ApiUrlComparison
-echo "[1/2] Building & Installing ApiUrlComparison..."
+# Step 1: Build & Install apiforge
+echo "[1/2] Building & Installing apiforge..."
 echo "============================================================"
-if [ -d "$SCRIPT_DIR/../apiurlcomparison" ]; then
-    cd "$SCRIPT_DIR/../apiurlcomparison"
+if [ -d "$SCRIPT_DIR/../apiforge" ]; then
+    cd "$SCRIPT_DIR/../apiforge"
     mvn clean install -DskipTests
     
     if [ $? -ne 0 ]; then
         echo ""
-        echo "[ERROR] ApiUrlComparison build failed!"
+        echo "[ERROR] apiforge build failed!"
         exit 1
     fi
     
-    # Copy apiurlcomparison JAR to apiguardwrapper/lib
+    # Copy apiforge JAR to apiguardwrapper/lib
     echo ""
-    echo "[INFO] Copying apiurlcomparison JAR to lib folder..."
-    if [ -f "$SCRIPT_DIR/../apiurlcomparison/target/apiurlcomparison-1.0.0-jar-with-raks.jar" ]; then
-        cp "$SCRIPT_DIR/../apiurlcomparison/target/apiurlcomparison-1.0.0-jar-with-raks.jar" "$SCRIPT_DIR/lib/apiurlcomparison-1.0.0.jar"
-        echo "[INFO] apiurlcomparison JAR copied successfully"
+    echo "[INFO] Copying apiforge JAR to lib folder..."
+    if [ -f "$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0-jar-with-raks.jar" ]; then
+        cp "$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0-jar-with-raks.jar" "$SCRIPT_DIR/lib/apiforge-1.0.0.jar"
+        echo "[INFO] apiforge JAR copied successfully"
     else
-        echo "[WARN] apiurlcomparison JAR not found in target"
+        echo "[WARN] apiforge JAR not found in target"
     fi
     
     # Sync Config and Test Data
     echo "[INFO] Synchronizing Configuration and Test Data..."
-    cp "$SCRIPT_DIR/../apiurlcomparison/src/main/resources/config.yaml" "$SCRIPT_DIR/src/main/resources/web/apiforge/"
+    cp "$SCRIPT_DIR/../apiforge/src/main/resources/config.yaml" "$SCRIPT_DIR/src/main/resources/web/apiforge/"
     mkdir -p "$SCRIPT_DIR/src/main/resources/web/apiforge/testData"
-    cp -r "$SCRIPT_DIR/../apiurlcomparison/src/main/resources/testData/"* "$SCRIPT_DIR/src/main/resources/web/apiforge/testData/"
+    cp -r "$SCRIPT_DIR/../apiforge/src/main/resources/testData/"* "$SCRIPT_DIR/src/main/resources/web/apiforge/testData/"
     echo "[INFO] Resources, Config, and Test Data synchronized successfully."
 
 else
-    echo "[ERROR] ApiUrlComparison project not found at ../apiurlcomparison"
+    echo "[ERROR] apiforge project not found at ../apiforge"
     exit 1
 fi
 

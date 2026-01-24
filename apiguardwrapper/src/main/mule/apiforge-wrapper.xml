@@ -11,14 +11,14 @@ http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/jav
 
 
 	<!-- Flow 0: Redirect Root to Index -->
-    <flow name="apiurlcomparison-root-flow">
-        <http:listener path="/apiurlcomparison" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
+    <flow name="apiforge-root-flow">
+        <http:listener path="/apiforge" config-ref="HTTP_Listener_config" allowedMethods="GET"/>
         <set-variable variableName="redirectLocation" value="/apiguard/apiforge/index.html"/>
         <set-payload value="#['&lt;html&gt;&lt;head&gt;&lt;meta http-equiv=&quot;refresh&quot; content=&quot;0;url=' ++ vars.redirectLocation ++ '&quot;&gt;&lt;/head&gt;&lt;body&gt;Redirecting...&lt;/body&gt;&lt;/html&gt;']" mimeType="text/html"/>
     </flow>
 
     <!-- Startup Flow: Initialize Mock Server State to Stopped -->
-    <flow name="apiurlcomparison-init-flow" initialState="started">
+    <flow name="apiforge-init-flow" initialState="started">
         <scheduler>
             <scheduling-strategy>
                 <fixed-frequency frequency="999999999"/>  <!-- Run once, then never again -->
@@ -30,7 +30,7 @@ http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/jav
         </os:store>
     </flow>
 
-	<!-- Flow to serve ApiUrlComparison UI (index/guide/assets) -->
+	<!-- Flow to serve apiforge UI (index/guide/assets) -->
 	<flow name="apiforge-ui-flow" doc:id="apiforge-ui-flow-id">
 		<http:listener doc:name="Listener" config-ref="HTTP_Listener_config" path="/apiforge/*">
 			<http:response >
@@ -98,7 +98,7 @@ http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/jav
         <choice doc:name="Route Request">
             <!-- CONFIG ENDPOINT -->
             <when expression="#[vars.apiPath == 'config' and attributes.method == 'GET']">
-                <java:invoke-static doc:name="Get Config" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="getConfig()"/>
+                <java:invoke-static doc:name="Get Config" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="getConfig()"/>
                 <set-payload value="#[payload]" mimeType="application/json"/>
             </when>
             
@@ -117,7 +117,7 @@ payload]]></ee:set-payload>
                  <!-- Extract working directory from payload if provided -->
                  <set-variable variableName="workDir" value="#[if (payload.baseline != null and payload.baseline.storageDir != null and payload.baseline.storageDir != '') payload.baseline.storageDir else p('apiforge.work.dir')]"/>
                  <logger level="INFO" message="#['Using working directory: ' ++ vars.workDir]"/>
-                 <java:invoke-static doc:name="Invoke ApiUrlComparison" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="compare(java.util.Map, java.lang.String)">
+                 <java:invoke-static doc:name="Invoke apiforge" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="compare(java.util.Map, java.lang.String)">
                     <java:args><![CDATA[#[{
 						arg0: payload,
 						arg1: vars.workDir
@@ -164,7 +164,7 @@ output application/json
             <!-- /api/baselines/services -->
             <when expression="#[vars.apiPath == 'baselines/services' and attributes.method == 'GET']">
                  <set-variable variableName="workDir" value="#[if (isEmpty(attributes.queryParams.workDir)) p('apiforge.work.dir') else attributes.queryParams.workDir]"/>
-                 <java:invoke-static doc:name="List Services" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineServices(java.lang.String)">
+                 <java:invoke-static doc:name="List Services" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="listBaselineServices(java.lang.String)">
                     <java:args><![CDATA[#[{ arg0: vars.workDir }]]]></java:args>
                  </java:invoke-static>
                  <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
@@ -177,7 +177,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
             <when expression="#[(vars.apiPath startsWith 'baselines/dates/') and attributes.method == 'GET']">
                  <set-variable variableName="serviceName" value="#[vars.apiPath replace 'baselines/dates/' with '']" />
                  <set-variable variableName="workDir" value="#[if (isEmpty(attributes.queryParams.workDir)) p('apiforge.work.dir') else attributes.queryParams.workDir]"/>
-                 <java:invoke-static doc:name="List Dates" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineDates(java.lang.String, java.lang.String)">
+                 <java:invoke-static doc:name="List Dates" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="listBaselineDates(java.lang.String, java.lang.String)">
                     <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName }]]]></java:args>
                  </java:invoke-static>
                  <ee:transform><ee:message><ee:set-payload><![CDATA[%dw 2.0
@@ -195,7 +195,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                  <set-variable variableName="runId" value="#[vars.parts[4]]" />
                  <set-variable variableName="workDir" value="#[if (isEmpty(attributes.queryParams.workDir)) p('apiforge.work.dir') else attributes.queryParams.workDir]"/>
                  
-                 <java:invoke-static doc:name="Get Run Details" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="getRunDetails(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+                 <java:invoke-static doc:name="Get Run Details" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="getRunDetails(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
                     <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName, arg2: vars.date, arg3: vars.runId }]]]></java:args>
                  </java:invoke-static>
                  
@@ -211,7 +211,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                  <set-variable variableName="runId" value="#[vars.parts[4]]" />
                  <set-variable variableName="workDir" value="#[if (isEmpty(attributes.queryParams.workDir)) p('apiforge.work.dir') else attributes.queryParams.workDir]"/>
                  
-                 <java:invoke-static doc:name="Get Endpoint" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="getRunEndpoint(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
+                 <java:invoke-static doc:name="Get Endpoint" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="getRunEndpoint(java.lang.String, java.lang.String, java.lang.String, java.lang.String)">
                     <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName, arg2: vars.date, arg3: vars.runId }]]]></java:args>
                  </java:invoke-static>
                  
@@ -226,7 +226,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                  <set-variable variableName="date" value="#[vars.parts[3]]" />
                  <set-variable variableName="workDir" value="#[if (isEmpty(attributes.queryParams.workDir)) p('apiforge.work.dir') else attributes.queryParams.workDir]"/>
                  
-                 <java:invoke-static doc:name="List Runs" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="listBaselineRuns(java.lang.String, java.lang.String, java.lang.String)">
+                 <java:invoke-static doc:name="List Runs" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="listBaselineRuns(java.lang.String, java.lang.String, java.lang.String)">
                     <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.serviceName, arg2: vars.date }]]]></java:args>
                  </java:invoke-static>
                  
@@ -238,7 +238,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
             <!-- /api/utils/ping -->
             <when expression="#[(vars.apiPath startsWith 'utils/ping') and attributes.method == 'GET']">
                  <set-variable variableName="url" value="#[attributes.queryParams.url]"/>
-                 <java:invoke-static doc:name="Ping" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="ping(java.lang.String)">
+                 <java:invoke-static doc:name="Ping" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="ping(java.lang.String)">
                     <java:args><![CDATA[#[{ arg0: vars.url }]]]></java:args>
                  </java:invoke-static>
                  <set-payload value="#[payload]" mimeType="application/json"/>
@@ -247,7 +247,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
             <!-- /api/utils/wsdl -->
             <when expression="#[(vars.apiPath startsWith 'utils/wsdl') and attributes.method == 'GET']">
                  <set-variable variableName="url" value="#[attributes.queryParams.url]"/>
-                 <java:invoke-static doc:name="Fetch WSDL" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="fetchWsdl(java.lang.String)">
+                 <java:invoke-static doc:name="Fetch WSDL" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="fetchWsdl(java.lang.String)">
                     <java:args><![CDATA[#[{ arg0: vars.url }]]]></java:args>
                  </java:invoke-static>
                  <!-- Return raw text/xml content -->
@@ -259,7 +259,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                  <set-variable variableName="service" value="#[attributes.queryParams.service]"/>
                  <set-variable variableName="workDir" value="#[if (isEmpty(attributes.queryParams.workDir)) p('apiforge.work.dir') else attributes.queryParams.workDir]"/>
                  
-                 <java:invoke-static doc:name="Export Baselines" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="exportBaselines(java.lang.String, java.lang.String)">
+                 <java:invoke-static doc:name="Export Baselines" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="exportBaselines(java.lang.String, java.lang.String)">
                     <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.service }]]]></java:args>
                  </java:invoke-static>
                  
@@ -282,7 +282,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                  
                  <choice>
                     <when expression="#[vars.overwrite == false]">
-                        <java:invoke-static doc:name="Check Conflicts" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="detectConflictsFromFile(java.lang.String, java.lang.String)">
+                        <java:invoke-static doc:name="Check Conflicts" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="detectConflictsFromFile(java.lang.String, java.lang.String)">
                              <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.tempZipPath }]]]></java:args>
                         </java:invoke-static>
                         <choice>
@@ -294,7 +294,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                             </when>
                             <otherwise>
                                 <!-- No conflicts, proceed to import -->
-                                <java:invoke-static doc:name="Import Baselines" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="importBaselinesFromFile(java.lang.String, java.lang.String)">
+                                <java:invoke-static doc:name="Import Baselines" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="importBaselinesFromFile(java.lang.String, java.lang.String)">
                                      <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.tempZipPath }]]]></java:args>
                                 </java:invoke-static>
                                 <set-payload value="#[payload]" mimeType="application/json"/>
@@ -304,7 +304,7 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                     </when>
                     <otherwise>
                         <!-- Overwrite true, just import -->
-                        <java:invoke-static doc:name="Import Baselines Force" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="importBaselinesFromFile(java.lang.String, java.lang.String)">
+                        <java:invoke-static doc:name="Import Baselines Force" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="importBaselinesFromFile(java.lang.String, java.lang.String)">
                              <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.tempZipPath }]]]></java:args>
                         </java:invoke-static>
                         <set-payload value="#[payload]" mimeType="application/json"/>
@@ -397,7 +397,7 @@ output application/json
             </scheduling-strategy>
         </scheduler>
         <logger level="INFO" message="Running API Forge Workspace Cleanup"/>
-        <java:invoke-static doc:name="Run Cleanup" class="com.raks.muleguard.wrapper.ApiUrlComparisonInvoker" method="cleanup(java.lang.String, int)">
+        <java:invoke-static doc:name="Run Cleanup" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="cleanup(java.lang.String, int)">
             <java:args><![CDATA[#[{ arg0: p('apiforge.work.dir'), arg1: p('apiforge.cleanup.retention.hours') as Number }]]]></java:args>
         </java:invoke-static>
         <logger level="INFO" message="Cleanup Complete: #[payload]"/>

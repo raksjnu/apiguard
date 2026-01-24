@@ -1032,9 +1032,9 @@ file comparators, endian transformation classes, and much more.</description>
       <licenses/>
       <purl>pkg:maven/com.raks/apidiscovery@1.0.0?type=jar</purl>
     </component>
-    <component type="library" bom-ref="pkg:maven/com.raks/apiurlcomparison@1.0.0?type=jar">
+    <component type="library" bom-ref="pkg:maven/com.raks/apiforge@1.0.0?type=jar">
       <group>com.raks</group>
-      <name>apiurlcomparison</name>
+      <name>apiforge</name>
       <version>1.0.0</version>
       <scope>required</scope>
       <hashes>
@@ -1048,7 +1048,7 @@ file comparators, endian transformation classes, and much more.</description>
         <hash alg="SHA3-512">3acf15c6a0e2cd0b9e2fe5f6e18feafcd80385cde8f23ba27fcd9b9e746b0f495a911cdbd26be56a220a97985f524f966783c8ce761d0c40dc5af364e1db00ac</hash>
       </hashes>
       <licenses/>
-      <purl>pkg:maven/com.raks/apiurlcomparison@1.0.0?type=jar</purl>
+      <purl>pkg:maven/com.raks/apiforge@1.0.0?type=jar</purl>
     </component>
     <component type="library" bom-ref="pkg:maven/com.raks/gitanalyzer@1.0.0?type=jar">
       <group>com.raks</group>
@@ -1263,7 +1263,7 @@ file comparators, endian transformation classes, and much more.</description>
       <dependency ref="pkg:maven/com.raks/raksanalyzer@1.0.0?type=jar"/>
       <dependency ref="pkg:maven/com.raks/muleguard@1.0.0?type=jar"/>
       <dependency ref="pkg:maven/com.raks/apidiscovery@1.0.0?type=jar"/>
-      <dependency ref="pkg:maven/com.raks/apiurlcomparison@1.0.0?type=jar"/>
+      <dependency ref="pkg:maven/com.raks/apiforge@1.0.0?type=jar"/>
       <dependency ref="pkg:maven/com.raks/gitanalyzer@1.0.0?type=jar"/>
       <dependency ref="pkg:maven/com.raks/filesync@1.0.0?type=jar"/>
       <dependency ref="pkg:maven/org.eclipse.jgit/org.eclipse.jgit@6.6.1.202309021850-r?type=jar"/>
@@ -1386,7 +1386,7 @@ file comparators, endian transformation classes, and much more.</description>
     <dependency ref="pkg:maven/com.raks/raksanalyzer@1.0.0?type=jar"/>
     <dependency ref="pkg:maven/com.raks/muleguard@1.0.0?type=jar"/>
     <dependency ref="pkg:maven/com.raks/apidiscovery@1.0.0?type=jar"/>
-    <dependency ref="pkg:maven/com.raks/apiurlcomparison@1.0.0?type=jar"/>
+    <dependency ref="pkg:maven/com.raks/apiforge@1.0.0?type=jar"/>
     <dependency ref="pkg:maven/com.raks/gitanalyzer@1.0.0?type=jar"/>
     <dependency ref="pkg:maven/com.raks/filesync@1.0.0?type=jar"/>
     <dependency ref="pkg:maven/org.eclipse.jgit/org.eclipse.jgit@6.6.1.202309021850-r?type=jar">
