@@ -5,10 +5,11 @@
 # ===================================================================
 # This script:
 # 1. Builds and Installs RaksAnalyzer (Dependency)
-# 2. Builds and Installs MuleGuard (Dependency)
-# 3. Builds and Installs ApiDiscovery (Dependency)
-# 4. Builds and Installs apiforge (Dependency)
-# 5. Builds the ApiGuardWrapper Mule application
+# 2. Builds and Installs ApiDiscovery (Dependency)
+# 3. Builds and Installs API Forge (Dependency)
+# 4. Builds and Installs GitAnalyzer (Dependency)
+# 5. Builds and Installs Aegis (Dependency)
+# 6. Builds the ApiGuardWrapper Mule application
 # ===================================================================
 
 # Resolve script directory
@@ -37,7 +38,7 @@ echo "============================================================"
 echo ""
 
 # Step 1: Build & Install RaksAnalyzer
-echo "[1/5] Building & Installing RaksAnalyzer..."
+echo "[1/6] Building & Installing RaksAnalyzer..."
 echo "============================================================"
 if [ -d "$SCRIPT_DIR/../raksanalyzer" ]; then
     cd "$SCRIPT_DIR/../raksanalyzer"
@@ -68,42 +69,37 @@ else
     exit 1
 fi
 
-# Step 2: Build & Install MuleGuard
+# Step 2: Build & Install ApiDiscovery
 echo ""
-echo "[2/5] Building & Installing MuleGuard..."
+echo "[2/6] Building & Installing ApiDiscovery..."
 echo "============================================================"
-if [ -d "$SCRIPT_DIR/../muleguard" ]; then
-    cd "$SCRIPT_DIR/../muleguard"
+if [ -d "$SCRIPT_DIR/../apidiscovery" ]; then
+    cd "$SCRIPT_DIR/../apidiscovery"
     mvn clean install -DskipTests
     
     if [ $? -ne 0 ]; then
         echo ""
-        echo "[ERROR] MuleGuard build failed!"
+        echo "[ERROR] ApiDiscovery build failed!"
         exit 1
     fi
     
-    # Copy muleguard JAR to apiguardwrapper/lib
+    # Copy JAR to apiguardwrapper/lib
     echo ""
-    echo "[INFO] Copying muleguard JAR to lib folder..."
-    MULEGUARD_JAR="$HOME/.m2/repository/com/raks/muleguard/1.0.0/muleguard-1.0.0.jar"
-    if [ -f "$MULEGUARD_JAR" ]; then
-        cp "$MULEGUARD_JAR" "$SCRIPT_DIR/lib/muleguard-1.0.0.jar"
-        if [ $? -eq 0 ]; then
-            echo "[INFO] muleguard-1.0.0.jar copied successfully"
-        else
-            echo "[WARN] Failed to copy muleguard JAR"
-        fi
+    echo "[INFO] Copying apidiscovery JAR to lib folder..."
+    APIDISC_JAR="$HOME/.m2/repository/com/raks/apidiscovery/1.0.0/apidiscovery-1.0.0.jar"
+    if [ -f "$APIDISC_JAR" ]; then
+        cp "$APIDISC_JAR" "$SCRIPT_DIR/lib/apidiscovery-1.0.0.jar"
     else
-        echo "[WARN] muleguard JAR not found in .m2 repository"
+        echo "[WARN] apidiscovery JAR not found in .m2"
     fi
 else
-    echo "[ERROR] MuleGuard project not found at ../muleguard"
+    echo "[ERROR] ApiDiscovery project not found at ../apidiscovery"
     exit 1
 fi
 
-# Step 4: Build & Install API Forge (formerly apiforge)
+# Step 3: Build & Install API Forge
 echo ""
-echo "[4/5] Building & Installing API Forge..."
+echo "[3/6] Building & Installing API Forge..."
 echo "============================================================"
 if [ -d "$SCRIPT_DIR/../apiforge" ]; then
     cd "$SCRIPT_DIR/../apiforge"
@@ -115,60 +111,48 @@ if [ -d "$SCRIPT_DIR/../apiforge" ]; then
         exit 1
     fi
     
-    # Copy apiforge JAR to apiguardwrapper/lib
+    # Copy JAR to apiguardwrapper/lib
     echo ""
     echo "[INFO] Copying apiforge JAR to lib folder..."
-    APIURL_JAR="$HOME/.m2/repository/com/raks/apiforge/1.0.0/apiforge-1.0.0.jar"
-    # Fallback to target if not in m2 (sanity check)
-    if [ ! -f "$APIURL_JAR" ]; then
-         APIURL_JAR="$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0-jar-with-raks.jar"
-    fi
-
-    if [ -f "$APIURL_JAR" ]; then
-        cp "$APIURL_JAR" "$SCRIPT_DIR/lib/apiforge-1.0.0.jar"
-        if [ $? -eq 0 ]; then
-            echo "[INFO] apiforge JAR copied successfully"
-        else
-            echo "[WARN] Failed to copy apiforge JAR"
-        fi
+    APIFORGE_JAR="$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0-jar-with-raks.jar"
+    if [ -f "$APIFORGE_JAR" ]; then
+        cp "$APIFORGE_JAR" "$SCRIPT_DIR/lib/apiforge-1.0.0.jar"
     else
         echo "[WARN] apiforge JAR not found"
     fi
 
-    # Sync Config and Test Data to apiforge
-    echo ""
-    echo "[INFO] Synchronizing Configuration and Test Data..."
+    # Sync Config and Test Data
     cp "$SCRIPT_DIR/../apiforge/src/main/resources/config.yaml" "$SCRIPT_DIR/src/main/resources/web/apiforge/"
     mkdir -p "$SCRIPT_DIR/src/main/resources/web/apiforge/testData"
     cp -r "$SCRIPT_DIR/../apiforge/src/main/resources/testData/"* "$SCRIPT_DIR/src/main/resources/web/apiforge/testData/"
-    echo "[INFO] Resources, Config, and Test Data synchronized successfully."
-
 else
-    echo "[ERROR] API Forge project not found at ../apiforge"
+    echo "[ERROR] API Forge project not found"
     exit 1
 fi
 
-# Step 5: Build & Install GitAnalyzer
+# Step 4: Build & Install GitAnalyzer
 echo ""
-echo "[5/6] Building & Installing GitAnalyzer..."
+echo "[4/6] Building & Installing GitAnalyzer..."
 echo "============================================================"
 if [ -d "$SCRIPT_DIR/../gitanalyzer" ]; then
     cd "$SCRIPT_DIR/../gitanalyzer"
     mvn clean install -DskipTests
-    
-    if [ $? -ne 0 ]; then
-        echo ""
-        echo "[ERROR] GitAnalyzer build failed!"
-        exit 1
+    if [ $? -eq 0 ]; then
+        cp "$SCRIPT_DIR/../gitanalyzer/target/gitanalyzer-1.0.0.jar" "$SCRIPT_DIR/lib/gitanalyzer-1.0.0.jar"
     fi
-    
-    # Copy JAR to apiguardwrapper/lib
-    echo ""
-    echo "[INFO] Copying gitanalyzer JAR to lib folder..."
-    cp "$SCRIPT_DIR/../gitanalyzer/target/gitanalyzer-1.0.0.jar" "$SCRIPT_DIR/lib/gitanalyzer-1.0.0.jar"
-else
-    echo "[ERROR] GitAnalyzer project not found at ../gitanalyzer"
-    exit 1
+fi
+
+# Step 5: Build & Install Aegis
+echo ""
+echo "[5/6] Building & Installing Aegis..."
+echo "============================================================"
+if [ -d "$SCRIPT_DIR/../aegis" ]; then
+    cd "$SCRIPT_DIR/../aegis"
+    mvn clean install -DskipTests
+    if [ $? -eq 0 ]; then
+        cp "$SCRIPT_DIR/../aegis/target/aegis-1.0.0-jar-with-raks.jar" "$SCRIPT_DIR/lib/aegis-1.0.0.jar"
+        cp -r "$SCRIPT_DIR/../aegis/src/main/resources/web/aegis" "$SCRIPT_DIR/src/main/resources/web/"
+    fi
 fi
 
 # Step 6: Build ApiGuardWrapper

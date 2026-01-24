@@ -60,7 +60,7 @@ http://www.mulesoft.org/schema/mule/secure-properties http://www.mulesoft.org/sc
 	<flow name="common-send-registration-notification-flow">
 		<logger level="INFO" message="Sending registration notification email (Common Flow)"/>
 		<!-- Retrieve session data if passed or from vars -->
-		<!-- Logic reused from muleguardwrapper but made generic -->
+		<!-- Generic notification logic -->
 		
 		<ee:transform doc:name="Prepare Reg Email Body">
 			<ee:message >

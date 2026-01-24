@@ -1,18 +1,11 @@
 # ApiGuard Wrapper
 
-Mule 4 wrapper application for ApiGuard portal, MuleGuard validator, and RaksAnalyzer document generator.
-
-## Components
-
-- **ApiGuard Portal**: User registration and tool access portal
-- **MuleGuard**: Mule configuration validator and analyzer
-  - **Multiple Input Modes**: ZIP upload, JAR upload (Local folder in standalone)
+- **Aegis**: Universal Applications Code & Configuration Validation Tool
+  - **Multiple Input Modes**: ZIP upload, JAR upload, Git Integration
   - **Download Reports**: Download validation reports as ZIP file
-  - **Email Notifications**: Receive reports via email (wrapper only)
-  - **Smart Conditional Checks**: Enhanced "Rule Config" display showing full logical hierarchy
-  - **Git Integration**: **[NEW]** Connect to GitLab/GitHub. Supports Public/Private repos & Discovery mode.
-  - **Manual Git URL**: Direct clone from any HTTPS Git URL.
-  - **Enterprise Clean Artifacts**: Downloadable ZIPs are optimized, excluding redundant help files
+  - **Email Notifications**: Receive reports via email
+  - **Git Integration**: Connect to GitLab/GitHub. Supports Public/Private repos & Discovery mode.
+  - **Rule Engine**: Policy-driven validation using YAML rules.
 - **RaksAnalyzer**: Universal document generation framework for Mule, TIBCO, and other projects
 - **API Forge**: Universal API response comparison and strategic baseline testing engine
 - **GitAnalyzer**: Semantic code analysis tool for validating migrations and configuration changes
@@ -74,7 +67,7 @@ Key configuration files:
 - `mule-app.properties`: Application-wide settings
 - `apiguard-common.xml`: Shared configurations (HTTP, File, Email)
 - `apiguard-portal.xml`: Portal flows
-- `muleguard-wrapper.xml`: MuleGuard integration
+- `aegis-wrapper.xml`: Aegis integration
 - `raksanalyzer-wrapper.xml`: RaksAnalyzer integration
 
 ## Important Notes

@@ -18,8 +18,7 @@ http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/
 http://www.mulesoft.org/schema/mule/java http://www.mulesoft.org/schema/mule/java/current/mule-java.xsd
 http://www.mulesoft.org/schema/mule/compression http://www.mulesoft.org/schema/mule/compression/current/mule-compression.xsd">
 
-    <!-- Global Error Handler Configuration (Reusing globalErrorHandler from muleguard-wrapper) -->
-    <!-- <configuration defaultErrorHandler-ref="globalErrorHandler"/> -->
+
 
     <!-- Flow 0 & 3: Consolidated Landing Page & Redirect Handler -->
     <flow name="aegis-landing-flow">
@@ -756,7 +755,7 @@ output application/json
          <set-variable variableName="emailAttachments" value="#[{ 'logo.svg': readUrl('classpath://web/aegis/logo.svg', 'image/svg+xml') }]"/>
          <set-variable variableName="totalAttachmentSize" value="#[0]"/>
         
-        <!-- Logic to attach ZIPs similar to muleguard (simplified for brevity or copied logic) -->
+        <!-- Logic to attach ZIPs -->
         <set-variable variableName="reportsZipPath" value="#[vars.workDir ++ '/' ++ vars.reportDirName ++ '.zip']"/>
         
         <choice>

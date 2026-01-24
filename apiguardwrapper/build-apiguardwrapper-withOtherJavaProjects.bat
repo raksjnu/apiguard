@@ -4,9 +4,11 @@ REM ApiGuard Wrapper - Complete Dependency Build Script
 REM ===================================================================
 REM This script:
 REM 1. Builds and Installs RaksAnalyzer (Dependency)
-REM 2. Builds and Installs MuleGuard (Dependency)
-REM 3. Builds and Installs ApiDiscovery (Dependency)
-REM 4. Builds the ApiGuardWrapper Mule application
+REM 2. Builds and Installs ApiDiscovery (Dependency)
+REM 3. Builds and Installs API Forge (Dependency)
+REM 4. Builds and Installs GitAnalyzer (Dependency)
+REM 5. Builds and Installs Aegis (Dependency)
+REM 6. Builds the ApiGuardWrapper Mule application
 REM ===================================================================
 
 setlocal
@@ -36,7 +38,7 @@ echo ============================================================
 echo.
 
 REM Step 1: Build & Install RaksAnalyzer
-echo [1/7] Building ^& Installing RaksAnalyzer...
+echo [1/6] Building ^& Installing RaksAnalyzer...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\raksanalyzer" (
     cd /d "%SCRIPT_DIR%..\raksanalyzer"
@@ -52,41 +54,21 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
     REM Copy raksanalyzer JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying raksanalyzer JAR to lib folder...
-    cmd /c "if exist "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" (xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1 && echo [INFO] raksanalyzer-1.0.0.jar copied successfully || echo [WARN] Failed to copy raksanalyzer JAR) else (echo [WARN] raksanalyzer JAR not found in .m2 repository)"
+    if exist "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" (
+        xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1
+        echo [INFO] raksanalyzer-1.0.0.jar copied successfully
+    ) else (
+        echo [WARN] raksanalyzer JAR not found in .m2 repository
+    )
 ) else (
     echo [ERROR] RaksAnalyzer project not found at ..\raksanalyzer
     pause
     exit /b 1
 )
 
-REM Step 2: Build & Install MuleGuard
+REM Step 2: Build & Install ApiDiscovery
 echo.
-echo [2/7] Building ^& Installing MuleGuard...
-echo ============================================================
-if exist "%SCRIPT_DIR%..\muleguard" (
-    cd /d "%SCRIPT_DIR%..\muleguard"
-    call mvn clean install -DskipTests
-    
-    if errorlevel 1 (
-        echo.
-        echo [ERROR] MuleGuard build failed!
-        pause
-        exit /b 1
-    )
-    
-    REM Copy muleguard JAR to apiguardwrapper/lib
-    echo.
-    echo [INFO] Copying muleguard JAR to lib folder...
-    cmd /c "if exist "%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar" (xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\muleguard\1.0.0\muleguard-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1 && echo [INFO] muleguard-1.0.0.jar copied successfully || echo [WARN] Failed to copy muleguard JAR) else (echo [WARN] muleguard JAR not found in .m2 repository)"
-) else (
-    echo [ERROR] MuleGuard project not found at ..\muleguard
-    pause
-    exit /b 1
-)
-
-REM Step 3: Build & Install ApiDiscovery
-echo.
-echo [3/7] Building ^& Installing ApiDiscovery...
+echo [2/6] Building ^& Installing ApiDiscovery...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\apidiscovery" (
     cd /d "%SCRIPT_DIR%..\apidiscovery"
@@ -102,16 +84,21 @@ if exist "%SCRIPT_DIR%..\apidiscovery" (
     REM Copy apidiscovery JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying apidiscovery JAR to lib folder...
-    cmd /c "if exist "%USERPROFILE%\.m2\repository\com\raks\apidiscovery\1.0.0\apidiscovery-1.0.0.jar" (xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\apidiscovery\1.0.0\apidiscovery-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1 && echo [INFO] apidiscovery-1.0.0.jar copied successfully || echo [WARN] Failed to copy apidiscovery JAR) else (echo [WARN] apidiscovery JAR not found in .m2 repository)"
+    if exist "%USERPROFILE%\.m2\repository\com\raks\apidiscovery\1.0.0\apidiscovery-1.0.0.jar" (
+        xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\apidiscovery\1.0.0\apidiscovery-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1
+        echo [INFO] apidiscovery-1.0.0.jar copied successfully
+    ) else (
+        echo [WARN] apidiscovery JAR not found in .m2 repository
+    )
 ) else (
     echo [ERROR] ApiDiscovery project not found at ..\apidiscovery
     pause
     exit /b 1
 )
 
-REM Step 4: Build & Install API Forge (formerly apiforge)
+REM Step 3: Build & Install API Forge
 echo.
-echo [4/7] Building ^& Installing API Forge...
+echo [3/6] Building ^& Installing API Forge...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\apiforge" (
     cd /d "%SCRIPT_DIR%..\apiforge"
@@ -127,11 +114,17 @@ if exist "%SCRIPT_DIR%..\apiforge" (
     REM Copy apiforge JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying apiforge JAR to lib folder...
-    cmd /c "if exist "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0-jar-with-raks.jar" (copy /Y "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\apiforge-1.0.0.jar" >nul && echo [INFO] apiforge JAR copied successfully || echo [WARN] Failed to copy apiforge JAR) else (echo [WARN] apiforge JAR not found in target)"
+    if exist "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0-jar-with-raks.jar" (
+        copy /Y "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\apiforge-1.0.0.jar" >nul
+        echo [INFO] apiforge JAR copied successfully
+    ) else (
+        echo [WARN] apiforge JAR not found in target
+    )
 
     REM Sync Config and Test Data to apiforge
     echo.
     echo [INFO] Synchronizing Configuration and Test Data...
+    if not exist "%SCRIPT_DIR%src\main\resources\web\apiforge" mkdir "%SCRIPT_DIR%src\main\resources\web\apiforge"
     copy /Y "%SCRIPT_DIR%..\apiforge\src\main\resources\config.yaml" "%SCRIPT_DIR%src\main\resources\web\apiforge\" >nul
     if not exist "%SCRIPT_DIR%src\main\resources\web\apiforge\testData" mkdir "%SCRIPT_DIR%src\main\resources\web\apiforge\testData"
     xcopy /Y /S /E "%SCRIPT_DIR%..\apiforge\src\main\resources\testData\*" "%SCRIPT_DIR%src\main\resources\web\apiforge\testData\" >nul
@@ -142,9 +135,9 @@ if exist "%SCRIPT_DIR%..\apiforge" (
     exit /b 1
 )
 
-REM Step 5: Build & Install GitAnalyzer
+REM Step 4: Build & Install GitAnalyzer
 echo.
-echo [5/7] Building ^& Installing GitAnalyzer...
+echo [4/6] Building ^& Installing GitAnalyzer...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\gitanalyzer" (
     cd /d "%SCRIPT_DIR%..\gitanalyzer"
@@ -160,16 +153,21 @@ if exist "%SCRIPT_DIR%..\gitanalyzer" (
     REM Copy gitanalyzer JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying gitanalyzer JAR to lib folder...
-    cmd /c "if exist "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" (copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\gitanalyzer-1.0.0.jar" >nul && echo [INFO] gitanalyzer-1.0.0.jar copied successfully || echo [WARN] Failed to copy gitanalyzer JAR) else (echo [WARN] gitanalyzer JAR not found in target)"
+    if exist "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\gitanalyzer-1.0.0.jar" >nul
+        echo [INFO] gitanalyzer-1.0.0.jar copied successfully
+    ) else (
+        echo [WARN] gitanalyzer JAR not found in target
+    )
 ) else (
     echo [ERROR] GitAnalyzer project not found at ..\gitanalyzer
     pause
     exit /b 1
 )
 
-REM Step 6: Build & Install Aegis
+REM Step 5: Build & Install Aegis
 echo.
-echo [6/7] Building ^& Installing Aegis...
+echo [5/6] Building ^& Installing Aegis...
 echo ============================================================
 if exist "%SCRIPT_DIR%..\aegis" (
     cd /d "%SCRIPT_DIR%..\aegis"
@@ -185,9 +183,17 @@ if exist "%SCRIPT_DIR%..\aegis" (
     REM Copy aegis JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying aegis JAR to lib folder...
-    cmd /c "if exist "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0-jar-with-raks.jar" (xcopy /Y /Q "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\aegis-1.0.0.jar*" >nul 2>&1 && echo [INFO] aegis-1.0.0.jar copied successfully || echo [WARN] Failed to copy aegis JAR) else (cmd /c "if exist "%USERPROFILE%\.m2\repository\com\raks\aegis\1.0.0\aegis-1.0.0.jar" (xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\aegis\1.0.0\aegis-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1 && echo [INFO] aegis-1.0.0.jar copied successfully || echo [WARN] Failed to copy aegis JAR) else (echo [WARN] aegis JAR not found in .m2 repository)")"
+    if exist "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0-jar-with-raks.jar" (
+        copy /Y "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\aegis-1.0.0.jar" >nul
+        echo [INFO] aegis-1.0.0.jar copied successfully
+    ) else if exist "%USERPROFILE%\.m2\repository\com\raks\aegis\1.0.0\aegis-1.0.0.jar" (
+        xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\aegis\1.0.0\aegis-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1
+        echo [INFO] aegis-1.0.0.jar copied successfully
+    ) else (
+        echo [WARN] Aegis JAR not found
+    )
 
-    REM Copy Web Resources (Optional but good for consistency)
+    REM Copy Web Resources
     if exist "%SCRIPT_DIR%..\aegis\src\main\resources\web\aegis" (
         xcopy /E /Y /I /Q "%SCRIPT_DIR%..\aegis\src\main\resources\web\aegis" "%SCRIPT_DIR%src\main\resources\web\aegis" >nul 2>&1
     )
@@ -197,9 +203,9 @@ if exist "%SCRIPT_DIR%..\aegis" (
     exit /b 1
 )
 
-REM Step 7: Build ApiGuardWrapper
+REM Step 6: Build ApiGuardWrapper
 echo.
-echo [7/7] Building ApiGuardWrapper...
+echo [6/6] Building ApiGuardWrapper...
 echo ============================================================
 cd /d "%SCRIPT_DIR%"
 call mvn clean package -DskipTests

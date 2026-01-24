@@ -8,7 +8,7 @@
 
 ## Executive Summary
 
-The **ApiGuard Wrapper** is a unified Mule 4 Application that packages multiple enterprise tools into a single deployable artifact. It serves as the hosting container for **ApiGuard Portal**, **MuleGuard**, **RaksAnalyzer**, and the newly integrated **FileSync Tool**. This document provides technical details for enterprise security review, deployment, and onboarding.
+The **ApiGuard Wrapper** is a unified Mule 4 Application that packages multiple enterprise tools into a single deployable artifact. It serves as the hosting container for **ApiGuard Portal**, **Aegis**, **RaksAnalyzer**, and **API Forge**. This document provides technical details for enterprise security review, deployment, and onboarding.
 
 ---
 
@@ -26,7 +26,7 @@ The **ApiGuard Wrapper** is a unified Mule 4 Application that packages multiple 
 
 | Tool | Purpose | Status |
 |------|---------|--------|
-| **MuleGuard** | MuleSoft project validation and policy enforcement | Active |
+| **Aegis** | Universal Applications automated code & config validation | Active |
 | **RaksAnalyzer - MuleDocgen** | Automated documentation for MuleSoft projects | Active |
 | **RaksAnalyzer - TibcoDocgen** | Automated documentation for TIBCO BusinessWorks | Active |
 | **TibcoGuard** | TIBCO code analysis and validation | Inactive |
@@ -52,7 +52,7 @@ graph TB
         end
         
         subgraph "Backend Services (Java)"
-            MG[MuleGuard Engine]
+            AG[Aegis Engine]
             RA[RaksAnalyzer Engine]
             TG[TibcoGuard Engine]
             AUC[API Forge Engine]
@@ -66,7 +66,7 @@ graph TB
         end
     end
     
-    Portal --> MG
+    Portal --> AG
     Portal --> RA
     Portal --> TG
     Portal --> AUC
