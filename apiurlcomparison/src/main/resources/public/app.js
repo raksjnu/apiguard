@@ -52,7 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('api/config');
                 if (response.ok) {
                     loadedConfig = await response.json();
-                    populateFormFields(document.getElementById('testType').value);
+                    // Determine type from UI state (more reliable than hidden input during transitions)
+                    const isSoap = document.getElementById('typeSoap').classList.contains('active');
+                    const currentType = isSoap ? 'SOAP' : 'REST';
+                    console.log('Populating Mock Data for:', currentType);
+                    populateFormFields(currentType);
                     btn.innerText = '✅ Data Loaded!';
                     setTimeout(() => {
                         document.querySelector('[data-view="mainView"]').click();
@@ -698,8 +702,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Ensure default Capture is set
             opCapture.click();
             handleBaselineUI('BASELINE');
-            // Basic restore of type
-            document.getElementById('testType').value = currentType;
+            
+            // Force Re-sync type and UI after a minimal delay to override any race conditions
+            setTimeout(() => {
+                document.getElementById('testType').value = currentType;
+                if (currentType === 'REST') {
+                    document.getElementById('typeRest').classList.add('active');
+                    document.getElementById('typeSoap').classList.remove('active');
+                } else {
+                    document.getElementById('typeSoap').classList.add('active');
+                    document.getElementById('typeRest').classList.remove('active');
+                }
+            }, 50);
         });
     }
 

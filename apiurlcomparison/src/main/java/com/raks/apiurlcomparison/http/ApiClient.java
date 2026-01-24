@@ -85,7 +85,11 @@ public class ApiClient {
                 requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, authHeader);
             }
             if (body != null && !body.isEmpty()) {
-                requestBuilder.setEntity(new StringEntity(body, "UTF-8"));
+                String contentType = headers.getOrDefault(HttpHeaders.CONTENT_TYPE, headers.getOrDefault("Content-Type", "text/plain"));
+                // Create entity with specific content type to avoid conflicting headers being sent
+                // StringEntity by default might set text/plain if not specified, which confuses some strict servers
+                org.apache.http.entity.ContentType type = org.apache.http.entity.ContentType.parse(contentType);
+                requestBuilder.setEntity(new StringEntity(body, type));
             }
             HttpUriRequest request = requestBuilder.build();
             logger.debug("Executing request: {}", request);
