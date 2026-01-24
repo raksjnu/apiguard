@@ -219,6 +219,37 @@ public class ApiUrlComparisonWeb {
             return new ObjectMapper().writeValueAsString(pingRes);
         });
 
+        get("/api/utils/wsdl", (req, res) -> {
+            String targetUrl = req.queryParams("url");
+            if (targetUrl == null || targetUrl.isEmpty()) return "{\"error\": \"URL is required\"}";
+            
+            try {
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(targetUrl).openConnection();
+                conn.setRequestMethod("GET");
+                conn.setConnectTimeout(8000);
+                conn.setReadTimeout(8000);
+                
+                int code = conn.getResponseCode();
+                if (code >= 200 && code < 400) {
+                    try (java.io.BufferedReader br = new java.io.BufferedReader(new java.io.InputStreamReader(conn.getInputStream()))) {
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = br.readLine()) != null) {
+                            sb.append(line).append("\n");
+                        }
+                        res.type("text/xml");
+                        return sb.toString();
+                    }
+                } else {
+                    res.status(code);
+                    return "Error fetching WSDL: HTTP " + code;
+                }
+            } catch (Exception e) {
+                res.status(500);
+                return "Error fetching WSDL: " + e.getMessage();
+            }
+        });
+
         get("/api/baselines/export", (req, res) -> {
             String service = req.queryParams("service");
             if (service == null) service = "ALL";

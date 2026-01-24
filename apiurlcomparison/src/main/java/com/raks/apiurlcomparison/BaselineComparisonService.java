@@ -270,6 +270,7 @@ public class BaselineComparisonService {
         baselineApi.setStatusCode((Integer) baseline.getResponseMetadata().get("statusCode"));
         baselineApi.setMethod(baseline.getRequestMetadata().getMethod());
         baselineApi.setRequestPayload(baseline.getRequestPayload());
+        baselineApi.setRequestHeaders(baseline.getRequestHeaders());
         baselineApi.setResponsePayload(baseline.getResponsePayload());
         baselineApi.setResponseHeaders(baseline.getResponseHeaders());
         Object durationObj = baseline.getResponseMetadata().get("duration");

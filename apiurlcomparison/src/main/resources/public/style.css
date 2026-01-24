@@ -542,3 +542,30 @@ body.resizing .resize-handle::before {
         grid-template-columns: 1fr !important;
     }
 }
+
+/* Activity Log Console Enhancement */
+#activityLog::-webkit-scrollbar {
+    width: 6px;
+}
+#activityLog::-webkit-scrollbar-track {
+    background: #1a202c;
+}
+#activityLog::-webkit-scrollbar-thumb {
+    background: #4a5568;
+    border-radius: 3px;
+}
+#activityLog::-webkit-scrollbar-thumb:hover {
+    background: #718096;
+}
+
+.log-entry {
+    margin-bottom: 4px;
+    border-left: 2px solid transparent;
+    padding-left: 8px;
+}
+.log-info { color: #a0aec0; }
+.log-success { color: #68d391; border-left-color: #68d391; }
+.log-error { color: #f56565; border-left-color: #f56565; }
+.log-debug { color: #63b3ed; }
+.log-timestamp { color: #4a5568; font-size: 0.65rem; margin-right: 8px; }
+

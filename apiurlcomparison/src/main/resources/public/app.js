@@ -102,6 +102,23 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e) { console.error('Failed to load export services', e); }
     };
 
+    // --- UI Activity Logging ---
+    const logActivity = (msg, type = 'info') => {
+        const log = document.getElementById('activityLog');
+        if (!log) return;
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        const ts = new Date().toLocaleTimeString();
+        entry.innerHTML = `<span class="log-timestamp">[${ts}]</span> ${msg}`;
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+    };
+
+    document.getElementById('clearLogBtn').onclick = () => {
+        document.getElementById('activityLog').innerHTML = '[Log Cleared]\n';
+        logActivity('Waiting for utility interaction...');
+    };
+
     // --- Settings Persistence ---
     const wdInput = document.getElementById('workingDirectory');
     if (wdInput) {
@@ -972,7 +989,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const modeCompare = document.getElementById('modeCompare');
     const modeBaseline = document.getElementById('modeBaseline');
 
-    if (opCapture && opCompare) {
         opCapture.onclick = () => {
             const currentType = document.getElementById('testType').value;
             opCapture.classList.add('active');
@@ -981,15 +997,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('captureFields').style.display = 'block';
             document.getElementById('compareFields').style.display = 'none';
             handleBaselineUI('BASELINE');
-            // Preserve the specific type the user was on
-            document.getElementById('testType').value = currentType;
-            if (currentType === 'REST') {
-                document.getElementById('typeRest').classList.add('active');
-                document.getElementById('typeSoap').classList.remove('active');
-            } else {
-                document.getElementById('typeSoap').classList.add('active');
-                document.getElementById('typeRest').classList.remove('active');
-            }
+            // Sync UI type buttons
+            updateTypeToggle(currentType);
         };
         opCompare.onclick = () => {
             const currentType = document.getElementById('testType').value;
@@ -999,41 +1008,37 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('captureFields').style.display = 'none';
             document.getElementById('compareFields').style.display = 'block';
             handleBaselineUI('BASELINE');
-            // Populate services when switching to compare
             loadBaselineServices();
-            // Preserve type and sync UI
-            document.getElementById('testType').value = currentType;
-            if (currentType === 'REST') {
-                document.getElementById('typeRest').classList.add('active');
-                document.getElementById('typeSoap').classList.remove('active');
-            } else {
-                document.getElementById('typeSoap').classList.add('active');
-                document.getElementById('typeRest').classList.remove('active');
-            }
+            updateTypeToggle(currentType);
         };
-    }
+
 
     if (modeCompare && modeBaseline) {
-        modeCompare.addEventListener('click', () => handleBaselineUI('LIVE'));
+        modeCompare.addEventListener('click', () => {
+            modeCompare.classList.add('active');
+            modeBaseline.classList.remove('active');
+            document.getElementById('baselineControls').style.display = 'none';
+            document.getElementById('url2Group').style.display = 'block';
+            document.getElementById('comparisonMode').value = 'LIVE';
+            handleBaselineUI('LIVE');
+        });
         modeBaseline.addEventListener('click', () => {
             const currentType = document.getElementById('testType').value;
-            // Ensure default Capture is set
+            modeBaseline.classList.add('active');
+            modeCompare.classList.remove('active');
+            document.getElementById('baselineControls').style.display = 'block';
+            document.getElementById('url2Group').style.display = 'none';
+            document.getElementById('comparisonMode').value = 'BASELINE';
             opCapture.click();
-            handleBaselineUI('BASELINE');
-            
-            // Force Re-sync type and UI after a minimal delay to override any race conditions
-            setTimeout(() => {
-                document.getElementById('testType').value = currentType;
-                if (currentType === 'REST') {
-                    document.getElementById('typeRest').classList.add('active');
-                    document.getElementById('typeSoap').classList.remove('active');
-                } else {
-                    document.getElementById('typeSoap').classList.add('active');
-                    document.getElementById('typeRest').classList.remove('active');
-                }
-            }, 50);
         });
     }
+
+    const updateTypeToggle = (type) => {
+        document.getElementById('testType').value = type;
+        const isRest = (type === 'REST');
+        document.getElementById('typeRest').classList.toggle('active', isRest);
+        document.getElementById('typeSoap').classList.toggle('active', !isRest);
+    };
 
     // Export internal logic for mode switches
     window.handleBaselineUI = (mode) => {
@@ -1086,62 +1091,114 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState();
     });
 
+    // --- UI Interaction Core ---
+    
+    // Accordions
+    document.querySelectorAll('.accordion-header').forEach(h => {
+        h.addEventListener('click', () => {
+            const content = h.nextElementSibling;
+            const isOpen = content.classList.contains('open');
+            content.classList.toggle('open');
+            h.querySelector('.icon').innerText = isOpen ? '▼' : '▲';
+        });
+    });
+
+    // Type Toggle (REST/SOAP)
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const typeValue = btn.dataset.type;
+            document.getElementById('testType').value = typeValue;
+            // Trigger change event to sync dependencies
+            document.getElementById('testType').dispatchEvent(new Event('change'));
+            saveState();
+        });
+    });
+
     // --- Utilities Hub: Toolkit Logic ---
     
     // Connectivity
     document.getElementById('pingBtn').addEventListener('click', async () => {
         const url = document.getElementById('utilUrl').value.trim();
         if (!url) { alert('URL required'); return; }
-        const statusDiv = document.getElementById('utilStatus');
-        statusDiv.innerHTML = '⏳ Pinging...';
+        logActivity(`Starting Connectivity Test for: ${url}`, 'debug');
+        
         try {
             const resp = await fetch(`api/utils/ping?url=${encodeURIComponent(url)}`);
             const data = await resp.json();
-            statusDiv.innerHTML = `<div style="color:${data.success ? 'var(--success-color)' : 'var(--error-color)'}">
-                <strong>${data.success ? 'ALIVE' : 'FAILED'}</strong><br>
-                Status: ${data.statusCode}<br>
-                Latency: ${data.latency}ms
-            </div>`;
-        } catch(e) { statusDiv.innerHTML = '<div style="color:var(--error-color)">Connection Error</div>'; }
+            if (data.success) {
+                logActivity(`PING SUCCESS: ${url} (Status: ${data.statusCode}, Latency: ${data.latency}ms)`, 'success');
+            } else {
+                logActivity(`PING FAILED: ${url} (Error: ${data.error || 'N/A'}, Status: ${data.statusCode})`, 'error');
+            }
+        } catch(e) { logActivity(`Connection Error during Ping: ${e.message}`, 'error'); }
     });
 
     document.getElementById('fetchWsdlBtn').addEventListener('click', async () => {
         const url = document.getElementById('utilUrl').value.trim();
         if (!url) { alert('URL required'); return; }
-        const statusDiv = document.getElementById('utilStatus');
-        statusDiv.innerHTML = '⏳ Discovering WSDL...';
+        logActivity(`Attempting WSDL Discovery at: ${url}`, 'debug');
+        
         try {
-            const pingUrl = url.includes('?') ? url : url + '?wsdl';
-            const resp = await fetch(`api/utils/ping?url=${encodeURIComponent(pingUrl)}`);
-            const data = await resp.json();
-            if (data.success) {
-                statusDiv.innerHTML = `<div style="color:var(--success-color)">✅ WSDL match found at location.</div>`;
+            const wsdlUrl = url.includes('?') ? url : url + '?wsdl';
+            const resp = await fetch(`api/utils/wsdl?url=${encodeURIComponent(wsdlUrl)}`);
+            if (resp.ok) {
+                const wsdlContent = await resp.text();
+                logActivity(`WSDL DISCOVERY SUCCESS: Found source at ${wsdlUrl}`, 'success');
+                logActivity(`CONTENT PREVIEW:\n${wsdlContent.substring(0, 1000)}...`, 'info');
+                // Auto-copy or just notify
+                navigator.clipboard.writeText(wsdlContent);
+                logActivity(`Full WSDL content has been copied to clipboard for your workspace.`, 'debug');
             } else {
-                statusDiv.innerHTML = `<div style="color:var(--error-color)">❌ No WSDL found at this endpoint.</div>`;
+                logActivity(`WSDL DISCOVERY FAILED: Endpoint returned code ${resp.status}`, 'error');
             }
-        } catch(e) { statusDiv.innerHTML = 'Discovery Failed'; }
+        } catch(e) { logActivity(`Discovery Error: ${e.message}`, 'error'); }
     });
 
     // Auth Studio
     document.getElementById('decodeJwtBtn').addEventListener('click', () => {
         const jwt = document.getElementById('jwtInput').value.trim();
-        const res = document.getElementById('jwtResult');
-        if (!jwt) { res.innerText = 'No token provided'; return; }
+        if (!jwt) { logActivity('JWT Inspection failed: No token provided', 'error'); return; }
+        logActivity('Inspecting JWT Claims...', 'debug');
         try {
-            const base64Url = jwt.split('.')[1];
-            if (!base64Url) throw new Error('Invalid JWT format');
+            const parts = jwt.split('.');
+            if (parts.length !== 3) throw new Error('Malformed JWT structure');
+            const base64Url = parts[1];
             const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
             const jsonPayload = decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
-            res.innerHTML = `<pre style="font-size:0.7rem; margin:0;">${JSON.stringify(JSON.parse(jsonPayload), null, 2)}</pre>`;
-        } catch(e) { res.innerHTML = `<span style="color:var(--error-color)">Invalid JWT Token</span>`; }
+            logActivity(`JWT CLAIMS:\n${JSON.stringify(JSON.parse(jsonPayload), null, 2)}`, 'success');
+        } catch(e) { logActivity(`JWT DECODE ERROR: ${e.message}`, 'error'); }
     });
 
     // Data Foundry
     const workpad = document.getElementById('dataWorkpad');
-    document.getElementById('minifyBtn').onclick = () => { try { workpad.value = JSON.stringify(JSON.parse(workpad.value)); } catch(e) { alert('Invalid JSON'); } };
-    document.getElementById('prettyBtn').onclick = () => { workpad.value = formatData(workpad.value); };
-    document.getElementById('b64EncBtn').onclick = () => { try { workpad.value = btoa(workpad.value); } catch(e) { alert('Encoding failed'); } };
-    document.getElementById('b64DecBtn').onclick = () => { try { workpad.value = atob(workpad.value); } catch(e) { alert('Invalid Base64'); } };
+    document.getElementById('minifyBtn').onclick = () => { 
+        logActivity('Minifying JSON...', 'debug');
+        try { 
+            workpad.value = JSON.stringify(JSON.parse(workpad.value)); 
+            logActivity('JSON Minified.', 'success');
+        } catch(e) { logActivity('JSON Parse Error: Invalid structure', 'error'); } 
+    };
+    document.getElementById('prettyBtn').onclick = () => { 
+        logActivity('Formatting Data...', 'debug');
+        workpad.value = formatData(workpad.value); 
+        logActivity('Data Formatted.', 'success');
+    };
+    document.getElementById('b64EncBtn').onclick = () => { 
+        logActivity('Encoding to Base64...', 'debug');
+        try { 
+            workpad.value = btoa(workpad.value); 
+            logActivity('Base64 Encoded.', 'success');
+        } catch(e) { logActivity('Encoding Error.', 'error'); } 
+    };
+    document.getElementById('b64DecBtn').onclick = () => { 
+        logActivity('Decoding from Base64...', 'debug');
+        try { 
+            workpad.value = atob(workpad.value); 
+            logActivity('Base64 Decoded.', 'success');
+        } catch(e) { logActivity('Decoding Error: Invalid Base64.', 'error'); } 
+    };
 
     // Baseline Portability
     document.getElementById('exportBtn').onclick = async () => {
