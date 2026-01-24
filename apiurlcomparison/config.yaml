@@ -15,7 +15,6 @@ rest:
         methods: ["POST"]
         headers:
           Content-Type: "application/json"
-        payloadTemplatePath: "testData/api1/payload.json"
       - name: "getOrder"
         path: "/api/orders/{{orderNumber}}"
         methods: ["GET"]
@@ -32,7 +31,6 @@ rest:
         methods: ["POST"]
         headers:
           Content-Type: "application/json"
-        payloadTemplatePath: "testData/api2/payload.json"
       - name: "getOrder"
         path: "/api/orders/{{orderNumber}}"
         methods: ["GET"]
@@ -51,13 +49,11 @@ soap:
         headers:
           Content-Type: "text/xml"
           SOAPAction: "http://raks.com/orderservice/CreateOrder"
-        payloadTemplatePath: "testData/api1/payload.xml"
       - name: "getOrder"
         methods: ["POST"]
         headers:
           Content-Type: "text/xml"
           SOAPAction: "http://raks.com/orderservice/GetOrder"
-        payloadTemplatePath: "testData/api1/get_order_payload.xml"
       
   api2:
     baseUrl: "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice"
@@ -69,13 +65,11 @@ soap:
         headers:
           Content-Type: "text/xml"
           SOAPAction: "http://raks.com/orderservice/CreateOrder"
-        payloadTemplatePath: "testData/api2/payload.xml"
       - name: "getOrder"
         methods: ["POST"]
         headers:
           Content-Type: "text/xml"
           SOAPAction: "http://raks.com/orderservice/GetOrder"
-        payloadTemplatePath: "testData/api2/get_order_payload.xml"
       
 # Set the maximum number of iterations to run, as a safeguard.
 maxIterations: 100

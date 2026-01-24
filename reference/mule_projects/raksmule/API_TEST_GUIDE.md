@@ -2,7 +2,7 @@
 
 ## Quick Reference
 
-**Base URL**: `http://localhost:8082`
+**Base URL**: `https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io`
 **Authentication**: None (optional - not implemented)
 **Credentials**: N/A (authentication disabled for simplicity)
 
@@ -12,7 +12,7 @@
 
 ### 1. Create Order (POST)
 
-**Endpoint**: `POST http://localhost:8082/api/orders`
+**Endpoint**: `POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders`
 
 **Headers**:
 ```
@@ -44,12 +44,12 @@ Content-Type: application/json
 ```powershell
 $headers = @{"Content-Type" = "application/json"}
 $body = '{"customerName":"John Doe","customerEmail":"john.doe@example.com","orderDate":"2026-01-18","productName":"Widget Pro","quantity":5,"totalAmount":249.99}'
-Invoke-WebRequest -Uri "http://localhost:8082/api/orders" -Method POST -Headers $headers -Body $body
+Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders" -Method POST -Headers $headers -Body $body
 ```
 
 **cURL Test**:
 ```bash
-curl -X POST http://localhost:8082/api/orders \
+curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders \
   -H "Content-Type: application/json" \
   -d '{"customerName":"John Doe","customerEmail":"john.doe@example.com","orderDate":"2026-01-18","productName":"Widget Pro","quantity":5,"totalAmount":249.99}'
 ```
@@ -58,9 +58,9 @@ curl -X POST http://localhost:8082/api/orders \
 
 ### 2. Get Order (GET)
 
-**Endpoint**: `GET http://localhost:8082/api/orders/{orderNumber}`
+**Endpoint**: `GET https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders/{orderNumber}`
 
-**Example**: `GET http://localhost:8082/api/orders/ORD-20260118-001`
+**Example**: `GET https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders/ORD-20260118-001`
 
 **Headers**: None required
 
@@ -80,12 +80,12 @@ curl -X POST http://localhost:8082/api/orders \
 
 **PowerShell Test**:
 ```powershell
-Invoke-WebRequest -Uri "http://localhost:8082/api/orders/ORD-20260118-001" -Method GET
+Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders/ORD-20260118-001" -Method GET
 ```
 
 **cURL Test**:
 ```bash
-curl http://localhost:8082/api/orders/ORD-20260118-001
+curl https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders/ORD-20260118-001
 ```
 
 ---
@@ -94,18 +94,18 @@ curl http://localhost:8082/api/orders/ORD-20260118-001
 
 ### WSDL
 
-**Endpoint**: `GET http://localhost:8082/soap/orderservice?wsdl`
+**Endpoint**: `GET https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice?wsdl`
 
 **PowerShell Test**:
 ```powershell
-Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice?wsdl" -Method GET
+Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice?wsdl" -Method GET
 ```
 
 ---
 
 ### 1. CreateOrder Operation
 
-**Endpoint**: `POST http://localhost:8082/soap/orderservice`
+**Endpoint**: `POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice`
 
 **Headers**:
 ```
@@ -159,12 +159,12 @@ $body = @"
   </soap:Body>
 </soap:Envelope>
 "@
-Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice" -Method POST -Headers $headers -Body $body
+Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice" -Method POST -Headers $headers -Body $body
 ```
 
 **cURL Test**:
 ```bash
-curl -X POST http://localhost:8082/soap/orderservice \
+curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice \
   -H "Content-Type: text/xml" \
   -H "SOAPAction: http://raks.com/orderservice/CreateOrder" \
   -d '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice"><soap:Body><tns:CreateOrderRequest><customerName>John Doe</customerName><customerEmail>john.doe@example.com</customerEmail><orderDate>2026-01-18</orderDate><productName>Widget Pro</productName><quantity>5</quantity><totalAmount>249.99</totalAmount></tns:CreateOrderRequest></soap:Body></soap:Envelope>'
@@ -174,7 +174,7 @@ curl -X POST http://localhost:8082/soap/orderservice \
 
 ### 2. GetOrder Operation
 
-**Endpoint**: `POST http://localhost:8082/soap/orderservice`
+**Endpoint**: `POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice`
 
 **Headers**:
 ```
@@ -223,12 +223,12 @@ $body = @"
   </soap:Body>
 </soap:Envelope>
 "@
-Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice" -Method POST -Headers $headers -Body $body
+Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice" -Method POST -Headers $headers -Body $body
 ```
 
 **cURL Test**:
 ```bash
-curl -X POST http://localhost:8082/soap/orderservice \
+curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice \
   -H "Content-Type: text/xml" \
   -H "SOAPAction: http://raks.com/orderservice/GetOrder" \
   -d '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice"><soap:Body><tns:GetOrderRequest><orderNumber>ORD-20260118-001</orderNumber></tns:GetOrderRequest></soap:Body></soap:Envelope>'

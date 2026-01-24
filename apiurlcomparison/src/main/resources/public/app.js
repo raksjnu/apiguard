@@ -319,8 +319,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const mismatches = results.filter(r => r.status === 'MISMATCH').length;
         const errors = results.filter(r => r.status === 'ERROR').length;
 
+        const isBaselineCapture = document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'CAPTURE';
+        const titleText = isBaselineCapture ? '📊 Baseline Captured Result Summary' : '📊 Comparison Result Summary';
+
         summary.innerHTML = `
-            <div style="font-weight:800; color:var(--primary-color); font-size:1.1rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📊 Comparison Result Summary</div>
+            <div style="font-weight:800; color:var(--primary-color); font-size:1.1rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${titleText}</div>
             <div style="display:flex; gap:30px; align-items:center;">
                 <div style="text-align:center;">
                     <div style="font-size:0.8rem; color:#666; margin-bottom:5px; font-weight:700;">TOTAL</div>
@@ -466,8 +469,8 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Request Section -->
             <div style="padding:10px; background:#f7fafc; border-radius:8px; border:1px solid #edf2f7; margin-bottom:15px;">
                 <div style="font-size:0.75rem; font-weight:800; color:#4a5568; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Input Request</div>
-                ${renderComponent(a1.requestHeaders, a2.requestHeaders, 'Headers', 'request', true)}
-                ${renderComponent(a1.requestPayload, a2.requestPayload, 'Payload', 'request', false)}
+                ${renderComponent(a1.requestHeaders || {}, a2.requestHeaders || {}, 'Headers', 'request', true)}
+                ${renderComponent(a1.requestPayload || '', a2.requestPayload || '', 'Payload', 'request', false)}
             </div>
 
             <!-- Response Section -->
@@ -616,21 +619,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (details.metadata && details.metadata.operation) document.getElementById('operationName').value = details.metadata.operation;
             if (details.payload) document.getElementById('payload').value = details.payload;
             
-            // Sync Test Type (REST/SOAP)
-            if (details.metadata && details.metadata.testType) {
-                const type = details.metadata.testType.toUpperCase();
-                document.getElementById('testType').value = type;
-                // Update toggle buttons visually
-                const restBtn = document.getElementById('typeRest');
-                const soapBtn = document.getElementById('typeSoap');
-                if (type === 'REST') {
-                    restBtn.classList.add('active');
-                    soapBtn.classList.remove('active');
-                } else {
-                    soapBtn.classList.add('active');
-                    restBtn.classList.remove('active');
-                }
-            }
+            // DO NOT sync Test Type - preserve user's current selection
+            // The baseline metadata testType is informational only
 
             // Populate Headers
             headersTable.innerHTML = '';
@@ -653,14 +643,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (opCapture && opCompare) {
         opCapture.onclick = () => {
+            const currentType = document.getElementById('testType').value;
             opCapture.classList.add('active');
             opCompare.classList.remove('active');
             document.getElementById('baselineOperation').value = 'CAPTURE';
             document.getElementById('captureFields').style.display = 'block';
             document.getElementById('compareFields').style.display = 'none';
             handleBaselineUI('BASELINE');
+            // Preserve the specific type the user was on
+            document.getElementById('testType').value = currentType;
+            if (currentType === 'REST') {
+                document.getElementById('typeRest').classList.add('active');
+                document.getElementById('typeSoap').classList.remove('active');
+            } else {
+                document.getElementById('typeSoap').classList.add('active');
+                document.getElementById('typeRest').classList.remove('active');
+            }
         };
         opCompare.onclick = () => {
+            const currentType = document.getElementById('testType').value;
             opCompare.classList.add('active');
             opCapture.classList.remove('active');
             document.getElementById('baselineOperation').value = 'COMPARE';
@@ -669,15 +670,20 @@ document.addEventListener('DOMContentLoaded', () => {
             handleBaselineUI('BASELINE');
             // Populate services when switching to compare
             loadBaselineServices();
+            // Preserve type
+            document.getElementById('testType').value = currentType;
         };
     }
 
     if (modeCompare && modeBaseline) {
         modeCompare.addEventListener('click', () => handleBaselineUI('LIVE'));
         modeBaseline.addEventListener('click', () => {
+            const currentType = document.getElementById('testType').value;
             // Ensure default Capture is set
             opCapture.click();
             handleBaselineUI('BASELINE');
+            // Re-sync type after click triggers might have reset it
+            document.getElementById('testType').value = currentType;
         });
     }
 
