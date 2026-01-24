@@ -63,8 +63,9 @@ public class BaselineComparisonService {
             logger.info("Capturing iteration {}: {}{}", iterationNumber, currentTokens,
                     isOriginal ? " (Original Input Payload)" : "");
             try {
+                // CAPTURE mode: No forced data, process templates normally
                 ComparisonResult result = executeApiCall(
-                        apiConfig, currentTokens, config.getTestType(), iterationNumber, isOriginal);
+                        apiConfig, currentTokens, config.getTestType(), iterationNumber, isOriginal, null, null);
                 
                 // USER REQUEST CHECK: If status code is error, mark as ERROR
                 if (result.getApi1().getStatusCode() >= 400) {
@@ -135,8 +136,13 @@ public class BaselineComparisonService {
             
             logger.info("Comparing iteration {}: {}", iterNum, tokens);
             try {
+                // HISTORICAL INTEGRITY FIX: Use exact request data from baseline for replay
+                Map<String, String> historicalHeaders = baselineIter.getRequestHeaders();
+                String historicalPayload = baselineIter.getRequestPayload();
+                
                 ComparisonResult result = executeApiCall(
-                        apiConfig, tokens, config.getTestType(), iterNum, iterNum == 1);
+                        apiConfig, tokens, config.getTestType(), iterNum, iterNum == 1, 
+                        historicalPayload, historicalHeaders);
                 result.setBaselineServiceName(serviceName);
                 result.setBaselineDate(date);
                 result.setBaselineRunId(runId);
@@ -164,7 +170,8 @@ public class BaselineComparisonService {
         return results;
     }
     private ComparisonResult executeApiCall(ApiConfig apiConfig, Map<String, Object> tokens,
-            String testType, int iterationNumber, boolean isOriginal) throws Exception {
+            String testType, int iterationNumber, boolean isOriginal,
+            String forcedPayload, Map<String, String> forcedHeaders) throws Exception {
         Operation operation = apiConfig.getOperations().get(0);
         String method = operation.getMethods().get(0);
         ComparisonResult result = new ComparisonResult();
@@ -180,13 +187,21 @@ public class BaselineComparisonService {
         result.setApi1(apiCallResult);
         String path = operation.getPath() != null ? operation.getPath() : "";
         String url = constructUrl(apiConfig.getBaseUrl(), path, testType);
-        String payload = null;
-        if (operation.getPayloadTemplatePath() != null && !operation.getPayloadTemplatePath().isEmpty()) {
+        
+        String payload = forcedPayload;
+        Map<String, String> headers = forcedHeaders;
+
+        if (payload == null && operation.getPayloadTemplatePath() != null && !operation.getPayloadTemplatePath().isEmpty()) {
             PayloadProcessor processor = new PayloadProcessor(operation.getPayloadTemplatePath(), testType);
             payload = processor.process(tokens);
         }
+        
+        if (headers == null) {
+            headers = operation.getHeaders();
+        }
+        
         long start = System.currentTimeMillis();
-        com.raks.apiurlcomparison.http.HttpResponse httpResponse = client.sendRequest(url, method, operation.getHeaders(), payload);
+        com.raks.apiurlcomparison.http.HttpResponse httpResponse = client.sendRequest(url, method, headers, payload);
         apiCallResult.setDuration(System.currentTimeMillis() - start);
         
 

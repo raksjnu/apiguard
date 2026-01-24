@@ -1040,6 +1040,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const ignoreHeaders = document.getElementById('ignoreHeaders');
         const compareBtn = document.getElementById('compareBtn');
         const op = document.getElementById('baselineOperation').value;
+        const accordions = document.querySelectorAll('.accordion');
+        const isCompareOp = (mode === 'BASELINE' && op === 'COMPARE');
         
         if (mode === 'BASELINE') {
             compareBtn.innerText = (op === 'CAPTURE') ? '📸 Capture Baseline' : '🔍 Compare Baseline';
@@ -1055,6 +1057,13 @@ document.addEventListener('DOMContentLoaded', () => {
             compareBtn.innerText = '▶ Run Comparison';
             if (ignoreHeaders) ignoreHeaders.disabled = false;
         }
+
+        // Accordion Management: Hide Endpoint, Request, Headers, Tokens during Compare mode
+        accordions.forEach((acc, idx) => {
+            if (idx < 4) { // First four accordions
+                acc.style.display = isCompareOp ? 'none' : 'block';
+            }
+        });
     };
 
     // --- Field Toggles ---
