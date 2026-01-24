@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button type="button" class="copy-btn" title="Copy ${label}">Copy</button>
                         ${isHeader ? 
                             `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
-                            `<pre class="sync-p" style="margin:0;">${formatData(val)}</pre>`
+                            `<pre class="sync-p" style="margin:0;">${escapeHtml(formatData(val))}</pre>`
                         }
                     </div>
                 </div>
@@ -681,12 +681,7 @@ document.addEventListener('DOMContentLoaded', () => {
             formatted += padding + node + '\r\n';
             pad += indent;
         });
-        // Escape HTML for display
-        return formatted.replace(/&/g, '&amp;')
-               .replace(/</g, '&lt;')
-               .replace(/>/g, '&gt;')
-               .replace(/"/g, '&quot;')
-               .replace(/'/g, '&#039;');
+        return formatted;
     };
 
     const setupSync = (body) => {
