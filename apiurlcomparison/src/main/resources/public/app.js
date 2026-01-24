@@ -1,1399 +1,578 @@
 document.addEventListener('DOMContentLoaded', () => {
-    console.log('[APP] DOMContentLoaded event fired - Starting initialization...');
+    console.log('[APP] Initializing API Comparison Tool...');
     
-    // Variable declarations
+    // --- State & Core Elements ---
     let loadedConfig = null;
-    
     const compareBtn = document.getElementById('compareBtn');
     const resultsContainer = document.getElementById('resultsContainer');
     const statusIndicator = document.getElementById('statusIndicator');
-
-    const addHeaderBtn = document.getElementById('addHeaderBtn');
     const headersTable = document.getElementById('headersTable').querySelector('tbody');
-    const addTokenBtn = document.getElementById('addTokenBtn');
     const tokensTable = document.getElementById('tokensTable').querySelector('tbody');
 
-    console.log('[APP] Core elements found:', {
-        compareBtn: !!compareBtn,
-        resultsContainer: !!resultsContainer,
-        headersTable: !!headersTable,
-        tokensTable: !!tokensTable
-    });
+    // --- Dynamic Rows ---
+    const addRow = (tbody, placeholders, values = []) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td><input type="text" placeholder="${placeholders[0]}" class="key-input" value="${values[0] || ''}"></td>
+            <td><input type="text" placeholder="${placeholders[1]}" class="value-input" value="${values[1] || ''}"></td>
+            <td><button type="button" class="btn-remove" style="background:none; border:none; cursor:pointer; color:#dc3545; font-size:1.2rem;" onclick="this.closest('tr').remove()">×</button></td>
+        `;
+        tbody.appendChild(tr);
+        return tr;
+    };
 
-    // -- Dynamic Rows Logic --
-    if (addHeaderBtn && headersTable) {
-        addHeaderBtn.addEventListener('click', () => addRow(headersTable, ['Header Name', 'Value']));
-    }
-    if (addTokenBtn && tokensTable) {
-        addTokenBtn.addEventListener('click', () => addRow(tokensTable, ['Token Name', 'Values (semicolon separated)']));
-    }
+    document.getElementById('addHeaderBtn').addEventListener('click', () => addRow(headersTable, ['Header Name', 'Value']));
+    document.getElementById('addTokenBtn').addEventListener('click', () => addRow(tokensTable, ['Token Name', 'Value']));
 
-    // -- Resize Handle Logic --
-    console.log('[APP] Initializing resize handle...');
-    initResizeHandle();
-
-    // Load defaults on startup
-    console.log('[APP] Loading defaults from config...');
-    loadDefaults();
-
-    // Initialize baseline controls
-    console.log('[APP] Initializing baseline controls...');
-    initBaselineControls();
-
-    // -- Clear Form Button Logic --
-    const clearFormBtn = document.getElementById('clearFormBtn');
-    console.log('[APP] Clear Form button found:', !!clearFormBtn);
-    if (clearFormBtn) {
-        clearFormBtn.addEventListener('click', () => {
-            console.log('[APP] Clear Form button clicked');
-            if (confirm('This will clear all form fields to minimal defaults. Continue?')) {
-                clearForm();
-            }
+    // --- Navigation (SPA) ---
+    document.querySelectorAll('.nav-tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+            const target = tab.dataset.view;
+            document.querySelectorAll('.nav-tab').forEach(t => t.style.borderBottom = 'none');
+            tab.style.borderBottom = '3px solid var(--primary-color)';
+            document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+            document.getElementById(target).classList.add('active');
         });
-    }
-
-
-    // -- Mock Server Logic --
-    const mockStatusText = document.getElementById('mockStatusText');
-    const toggleMockBtn = document.getElementById('toggleMockBtn');
-
-    console.log('[APP] Mock Server elements found:', {
-        mockStatusText: !!mockStatusText,
-        toggleMockBtn: !!toggleMockBtn
     });
 
-    if (mockStatusText && toggleMockBtn) {
-        console.log('[APP] Checking mock server status...');
-        checkMockStatus();
+    // --- Settings Persistence ---
+    const wdInput = document.getElementById('workingDirectory');
+    if (wdInput) {
+        wdInput.value = localStorage.getItem('apiUrlComparison_wd') || '';
+        wdInput.addEventListener('input', () => localStorage.setItem('apiUrlComparison_wd', wdInput.value.trim()));
+    }
 
-        toggleMockBtn.addEventListener('click', async () => {
-            const isRunning = toggleMockBtn.dataset.running === 'true';
-            toggleMockBtn.disabled = true;
-            toggleMockBtn.textContent = 'Processing...';
-            
+    // --- Data Management (Load Mock) ---
+    document.getElementById('loadMockTestDataBtn').addEventListener('click', async () => {
+        if (confirm('Populate the form with real Mule service test data? Existing data will be replaced.')) {
+            const btn = document.getElementById('loadMockTestDataBtn');
+            const originalText = btn.innerText;
+            btn.innerText = '⏳ Loading...';
             try {
-                const endpoint = isRunning ? 'api/mock/stop' : 'api/mock/start';
-                const response = await fetch(endpoint, { method: 'POST' });
+                const response = await fetch('api/config');
                 if (response.ok) {
-                    await checkMockStatus();
-                } else {
-                    const err = await response.json();
-                    alert('Error: ' + (err.error || 'Unknown error'));
+                    loadedConfig = await response.json();
+                    populateFormFields(document.getElementById('testType').value);
+                    btn.innerText = '✅ Data Loaded!';
+                    setTimeout(() => {
+                        document.querySelector('[data-view="mainView"]').click();
+                        btn.innerText = originalText;
+                    }, 800);
                 }
             } catch (e) {
-                console.error('Mock Toggle Error:', e);
-                alert('Failed to toggle mock server');
-            } finally {
-                toggleMockBtn.disabled = false;
+                console.error(e);
+                alert('Error loading configuration.');
+                btn.innerText = originalText;
             }
-        });
-    }
-
-    async function checkMockStatus() {
-        try {
-            const response = await fetch('api/mock/status');
-            const data = await response.json();
-            const isRunning = data.status === 'running';
-
-            toggleMockBtn.dataset.running = isRunning;
-            if (isRunning) {
-                mockStatusText.textContent = 'Mock Server: RUNNING';
-                mockStatusText.style.color = '#28a745'; // Green
-                toggleMockBtn.textContent = 'Stop Server';
-                toggleMockBtn.className = 'btn-secondary';
-                toggleMockBtn.style.backgroundColor = '#28a745'; // Green button
-                toggleMockBtn.style.borderColor = '#28a745';
-                toggleMockBtn.style.color = '#fff';
-            } else {
-                mockStatusText.textContent = 'Mock Server: STOPPED';
-                mockStatusText.style.color = '#dc3545'; // Red
-                toggleMockBtn.textContent = 'Start Server';
-                toggleMockBtn.className = 'btn-secondary';
-                toggleMockBtn.style.backgroundColor = '#dc3545'; // Red button
-                toggleMockBtn.style.borderColor = '#dc3545';
-                toggleMockBtn.style.color = '#fff';
-            }
-            
-            // Enable the button after status is loaded
-            toggleMockBtn.disabled = false;
-        } catch (e) {
-            console.error('Mock Status Error:', e);
-            mockStatusText.textContent = 'Mock Server: UNKNOWN';
-            mockStatusText.style.color = '#666';
-            toggleMockBtn.textContent = 'Check Status'; // Reset button text so it doesn't get stuck
-             // Reset style to default
-            toggleMockBtn.className = 'btn-secondary';
-            toggleMockBtn.style.backgroundColor = '';
-            toggleMockBtn.style.borderColor = '';
-            toggleMockBtn.style.color = '';
         }
-    }
+    });
 
-    async function loadDefaults() {
-        try {
-            const response = await fetch('api/config');
-            if (!response.ok) return; // Silent fail if no config api or file
-            loadedConfig = await response.json();
-            if (!loadedConfig) return;
-
-            // 1. Basic Fields
-            if (loadedConfig.testType) document.getElementById('testType').value = loadedConfig.testType;
-            if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
-            if (loadedConfig.maxIterations) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
-            if (loadedConfig.ignoredFields && Array.isArray(loadedConfig.ignoredFields) && loadedConfig.ignoredFields.length > 0) {
-                document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
-            } else {
-                document.getElementById('ignoredFields').value = 'timestamp, X-Dynamic-Header';
-            }
-            if (loadedConfig.ignoreHeaders !== undefined) {
-                 const ignoreHeaderBox = document.getElementById('ignoreHeaders');
-                 if(ignoreHeaderBox) ignoreHeaderBox.checked = loadedConfig.ignoreHeaders;
-            }
-
-            // Populate initially based on loaded config
-            populateFormFields(loadedConfig.testType);
-
-        } catch (e) {
-            console.error("Failed to load defaults", e);
-        }
-    }
-
-    // Listener for Type change to reload defaults
-    const testTypeSelect = document.getElementById('testType');
-    if (testTypeSelect) {
-        testTypeSelect.addEventListener('change', () => {
-            if (loadedConfig) {
-                populateFormFields(testTypeSelect.value);
-            }
-        });
-    }
-
-    function populateFormFields(type) {
-        if (!loadedConfig) return;
+    // --- Form Population & Defaults ---
+    const resetFormToStandard = (type, shouldPopulate = true) => {
+        document.getElementById('operationName').value = '';
+        document.getElementById('url1').value = '';
+        document.getElementById('url2').value = '';
+        document.getElementById('payload').value = '';
+        headersTable.innerHTML = '';
+        tokensTable.innerHTML = ''; 
         
-        // 2. Determine which API config to use (REST or SOAP)
-        const activeApis = (type === 'SOAP') ? loadedConfig.soap : loadedConfig.rest;
-
-        if (activeApis && activeApis.api1 && activeApis.api2) {
-            document.getElementById('url1').value = activeApis.api1.baseUrl || '';
-            document.getElementById('url2').value = activeApis.api2.baseUrl || '';
-
-            // Extract Auth from api1 (assume symmetric)
-            const enableAuth = document.getElementById('enableAuth');
-            const clientId = document.getElementById('clientId');
-            const clientSecret = document.getElementById('clientSecret');
-
-            if (activeApis.api1.authentication) {
-                if(enableAuth) enableAuth.checked = true;
-                if(clientId) {
-                    clientId.value = activeApis.api1.authentication.clientId || '';
-                    clientId.disabled = false;
-                }
-                if(clientSecret) {
-                    clientSecret.value = activeApis.api1.authentication.clientSecret || '';
-                    clientSecret.disabled = false;
-                }
-            } else {
-                if(enableAuth) enableAuth.checked = false;
-                if(clientId) clientId.disabled = true;
-                if(clientSecret) clientSecret.disabled = true;
-            }
-
-            // Extract Operation Details from api1 (assume 1st operation is main)
-            if (activeApis.api1.operations && activeApis.api1.operations.length > 0) {
-                const op = activeApis.api1.operations[0];
-                if (op.name) document.getElementById('operationName').value = op.name;
-                // Updated: Ensure payload is cleared if null, or set if present
-                document.getElementById('payload').value = op.payloadTemplatePath || ''; 
-                
-                // Populate Method
-                if (op.methods && op.methods.length > 0) {
-                    const methodVal = op.methods[0];
-                    const methodSelect = document.getElementById('method');
-                    // Ensure value exists in select options
-                    if ([...methodSelect.options].some(o => o.value === methodVal)) {
-                        methodSelect.value = methodVal;
-                    }
-                }
-
-                // Populate Headers
-                if (headersTable) {
-                    headersTable.innerHTML = ''; // Clear existing
+        // Add default Content-Type
+        addRow(headersTable, ['Header Name', 'Value'], ['Content-Type', (type === 'SOAP' ? 'text/xml' : 'application/json')]);
+        
+        // AUTO-POPULATE from loadedConfig if available (Ensures real Mule data is shown)
+        // Only do this during type switches, NOT during manual clear
+        if (shouldPopulate && loadedConfig) {
+            const activeApis = (type === 'SOAP') ? loadedConfig.soap : loadedConfig.rest;
+            if (activeApis && activeApis.api1) {
+                document.getElementById('url1').value = activeApis.api1.baseUrl || '';
+                document.getElementById('url2').value = activeApis.api2?.baseUrl || '';
+                const op = activeApis.api1.operations?.[0];
+                if (op) {
+                    document.getElementById('operationName').value = op.name || '';
+                    document.getElementById('payload').value = op.payloadTemplatePath || '';
+                    document.getElementById('method').value = op.methods?.[0] || 'POST';
                     if (op.headers) {
                         Object.entries(op.headers).forEach(([k, v]) => {
-                            addRow(headersTable, ['Header Name', 'Value']);
-                            const lastRow = headersTable.lastElementChild;
-                            if (lastRow) {
-                                lastRow.querySelector('.key-input').value = k;
-                                lastRow.querySelector('.value-input').value = v;
-                            }
+                            if (k !== 'Content-Type') addRow(headersTable, ['Header Name', 'Value'], [k, v]);
                         });
                     }
                 }
             }
         }
 
-        // 3. Populate Tokens (Global, not per type usually, but refreshing cleanly)
-        if (loadedConfig.tokens && tokensTable) {
-            tokensTable.innerHTML = ''; // Clear existing
-            Object.entries(loadedConfig.tokens).forEach(([k, list]) => {
-                if (Array.isArray(list)) {
-                    const valStr = list.join('; ');
-                    addRow(tokensTable, ['Token Name', 'Values (semicolon separated)']);
-                    const lastRow = tokensTable.lastElementChild;
-                    if (lastRow) {
-                        lastRow.querySelector('.key-input').value = k;
-                        lastRow.querySelector('.value-input').value = valStr;
-                    }
-                }
-            });
+        const authCheck = document.getElementById('enableAuth');
+        if (authCheck) {
+            authCheck.checked = false;
+            document.getElementById('clientId').disabled = true;
+            document.getElementById('clientSecret').disabled = true;
         }
-    }
+    };
 
-    function clearForm() {
-        const testType = document.getElementById('testType').value;
-        
-        // Clear basic fields
-        document.getElementById('operationName').value = '';
-        document.getElementById('url1').value = '';
-        document.getElementById('url2').value = '';
-        document.getElementById('payload').value = '';
-        document.getElementById('ignoredFields').value = '';
-        
-        // Clear auth
-        document.getElementById('enableAuth').checked = false;
-        document.getElementById('clientId').value = '';
-        document.getElementById('clientSecret').value = '';
-        document.getElementById('clientId').disabled = true;
-        document.getElementById('clientSecret').disabled = true;
-        
-        // Clear tokens
-        if (tokensTable) {
-            tokensTable.innerHTML = '';
-        }
-        
-        // Clear headers and add only Content-Type based on test type
-        if (headersTable) {
+    const populateFormFields = (type) => {
+        if (!loadedConfig) return;
+        const activeApis = (type === 'SOAP') ? loadedConfig.soap : loadedConfig.rest;
+        if (!activeApis) return;
+
+        document.getElementById('url1').value = activeApis.api1?.baseUrl || '';
+        document.getElementById('url2').value = activeApis.api2?.baseUrl || '';
+
+        const op = activeApis.api1?.operations?.[0];
+        if (op) {
+            document.getElementById('operationName').value = op.name || '';
+            document.getElementById('payload').value = op.payloadTemplatePath || '';
+            document.getElementById('method').value = op.methods?.[0] || 'POST';
+            
             headersTable.innerHTML = '';
-            addRow(headersTable, ['Header Name', 'Value']);
-            const lastRow = headersTable.lastElementChild;
-            if (lastRow) {
-                lastRow.querySelector('.key-input').value = 'Content-Type';
-                if (testType === 'SOAP') {
-                    lastRow.querySelector('.value-input').value = 'text/xml';
-                } else {
-                    lastRow.querySelector('.value-input').value = 'application/json';
-                }
+            if (op.headers) {
+                Object.entries(op.headers).forEach(([k, v]) => addRow(headersTable, ['Header Name', 'Value'], [k, v]));
             }
         }
-        
-        // Reset iteration settings to defaults
-        document.getElementById('iterationController').value = 'ONE_BY_ONE';
-        document.getElementById('maxIterations').value = '100';
-        document.getElementById('ignoreHeaders').checked = false;
-        document.getElementById('ignoreHeaders').disabled = false; // Ensure it's enabled
-        
-        // Clear other fields
-        if(document.getElementById('workingDirectory')) document.getElementById('workingDirectory').value = '';
-        if(document.getElementById('baselineServiceName')) document.getElementById('baselineServiceName').value = '';
-        if(document.getElementById('baselineDescription')) document.getElementById('baselineDescription').value = '';
-        if(document.getElementById('baselineTags')) document.getElementById('baselineTags').value = '';
-        if(document.getElementById('method')) document.getElementById('method').value = 'POST';
-    }
 
+        // Only populate tokens during explicit "Load Mock" action
+        tokensTable.innerHTML = '';
+        if (loadedConfig.tokens) {
+            Object.entries(loadedConfig.tokens).forEach(([k, list]) => {
+                addRow(tokensTable, ['Token Name', 'Value'], [k, list.join('; ')]);
+            });
+        }
+    };
 
-    function addRow(tbody, placeholders) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td><input type="text" placeholder="${placeholders[0]}" class="key-input"></td>
-            <td><input type="text" placeholder="${placeholders[1]}" class="value-input"></td>
-            <td><button type="button" class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
-        `;
-        tbody.appendChild(tr);
-    }
+    const loadDefaults = async () => {
+        try {
+            const response = await fetch('api/config');
+            if (!response.ok) return;
+            loadedConfig = await response.json();
+            
+            const initialType = loadedConfig.testType || 'REST';
+            document.getElementById('testType').value = initialType;
+            
+            // Set global settings
+            if (loadedConfig.maxIterations) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
+            if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
+            if (loadedConfig.ignoredFields) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
 
-    // -- Main Comparison Logic --
+            resetFormToStandard(initialType);
+        } catch (e) { console.error('Defaults error:', e); }
+    };
+
+    document.getElementById('testType').addEventListener('change', (e) => resetFormToStandard(e.target.value, true));
+
+    // --- Comparison Logic ---
+    const buildConfig = () => {
+        const h = {};
+        headersTable.querySelectorAll('tr').forEach(tr => {
+            const k = tr.querySelector('.key-input').value.trim();
+            const v = tr.querySelector('.value-input').value.trim();
+            if (k) h[k] = v;
+        });
+
+        const t = {};
+        tokensTable.querySelectorAll('tr').forEach(tr => {
+            const k = tr.querySelector('.key-input').value.trim();
+            const v = tr.querySelector('.value-input').value.trim();
+            if (k) {
+                // Support both ; and , as separators
+                t[k] = v.split(/[;,]/).map(i => i.trim()).filter(i => i.length > 0);
+            }
+        });
+
+        const op = {
+            name: document.getElementById('operationName').value || 'operation',
+            methods: [document.getElementById('method').value],
+            headers: h,
+            payloadTemplatePath: document.getElementById('payload').value || null
+        };
+
+        return {
+            testType: document.getElementById('testType').value,
+            maxIterations: parseInt(document.getElementById('maxIterations').value) || 100,
+            iterationController: document.getElementById('iterationController').value,
+            tokens: t,
+            rest: { api1: { baseUrl: document.getElementById('url1').value, operations: [op] }, 
+                  api2: { baseUrl: document.getElementById('url2').value, operations: [op] } },
+            soap: { api1: { baseUrl: document.getElementById('url1').value, operations: [op] }, 
+                  api2: { baseUrl: document.getElementById('url2').value, operations: [op] } },
+            ignoredFields: document.getElementById('ignoredFields').value.split(',').map(s=>s.trim()).filter(s=>s),
+            ignoreHeaders: document.getElementById('ignoreHeaders').checked,
+            comparisonMode: document.getElementById('comparisonMode').value
+        };
+    };
+
     compareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-
-        // 1. Gather Data
         const config = buildConfig();
-        if (!validateConfig(config)) return;
+        if (!config.rest.api1.baseUrl && !config.soap.api1.baseUrl) { alert('URL 1 is required'); return; }
 
-        // 2. Update UI State
-        setLoading(true);
+        const syncBtnText = () => {
+            const mode = document.getElementById('comparisonMode').value;
+            const op = document.getElementById('baselineOperation').value;
+            const btn = document.getElementById('compareBtn');
+            if (mode === 'BASELINE') {
+                btn.innerText = (op === 'CAPTURE') ? '📸 Capture Baseline' : '🔍 Compare Baseline';
+                btn.style.fontWeight = '800';
+            } else {
+                btn.innerText = '▶ Run Comparison';
+                btn.style.fontWeight = '800';
+            }
+        };
+
+        const handleBaselineUI = (mode) => {
+            const ignoreHeaders = document.getElementById('ignoreHeaders');
+            if (mode === 'BASELINE') {
+                const op = document.getElementById('baselineOperation').value;
+                if (op === 'CAPTURE') {
+                    if (ignoreHeaders) {
+                        ignoreHeaders.checked = false;
+                        ignoreHeaders.disabled = true;
+                    }
+                } else {
+                    if (ignoreHeaders) ignoreHeaders.disabled = false;
+                }
+            } else {
+                if (ignoreHeaders) ignoreHeaders.disabled = false;
+            }
+            syncBtnText();
+        };
+
+        statusIndicator.classList.remove('hidden');
+        compareBtn.disabled = true;
+        resultsContainer.innerHTML = '<div class="empty-state">Running comparison...</div>';
 
         try {
-            // 3. Check if baseline mode
-            const comparisonMode = document.getElementById('comparisonMode').value;
-
-            if (comparisonMode === 'BASELINE') {
-                // Handle baseline mode
-                await handleBaselineComparison();
+            if (config.comparisonMode === 'BASELINE') {
+                await handleBaselineComparison(config);
             } else {
-                // Handle normal LIVE comparison
                 const response = await fetch('api/compare', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(config)
                 });
-
-                if (!response.ok) throw new Error('Network response was not ok');
-
-                const results = await response.json();
-
-                // 4. Render Results
-                renderResults(results);
+                if (!response.ok) throw new Error('Execution failed');
+                renderResults(await response.json());
             }
-        } catch (error) {
-            console.error('Error:', error);
-            resultsContainer.innerHTML = `<div class="error-msg">Error executing comparison: ${error.message}</div>`;
+        } catch (err) {
+            resultsContainer.innerHTML = `<div class="error-msg">Error: ${err.message}</div>`;
         } finally {
-            setLoading(false);
+            statusIndicator.classList.add('hidden');
+            compareBtn.disabled = false;
         }
     });
 
-    // Handle baseline comparison (capture or compare)
-    async function handleBaselineComparison() {
-        const operation = document.getElementById('baselineOperation').value;
-
-        if (operation === 'CAPTURE') {
-            // Capture baseline
-            const serviceName = document.getElementById('baselineServiceName').value.trim();
-            const description = document.getElementById('baselineDescription').value.trim();
-            const tagsStr = document.getElementById('baselineTags').value.trim();
-            const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()) : [];
-
-            if (!serviceName) {
-                alert('Please enter a service name for baseline capture');
-                return;
-            }
-
-            // Build config for baseline capture
-            const config = buildConfig();
-            config.comparisonMode = 'BASELINE';
-            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+    // --- Baseline Logic ---
+    const handleBaselineComparison = async (config) => {
+        const op = document.getElementById('baselineOperation').value;
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        
+        if (op === 'CAPTURE') {
+            const svc = document.getElementById('baselineServiceName').value.trim();
+            if (!svc) { alert('Service Name required for capture'); return; }
             config.baseline = {
                 operation: 'CAPTURE',
-                serviceName: serviceName,
-                description: description,
-                tags: tags,
+                serviceName: svc,
+                description: document.getElementById('baselineDescription').value,
+                tags: document.getElementById('baselineTags').value.split(',').map(t=>t.trim()),
                 storageDir: workDir || null
             };
-
-            const response = await fetch('api/compare', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config)
-            });
-
-            if (!response.ok) throw new Error('Baseline capture failed');
-
-            const results = await response.json();
-            renderResults(results);
-
         } else {
-            // Compare with baseline
-            const serviceName = document.getElementById('baselineServiceSelect').value;
+            const svc = document.getElementById('baselineServiceSelect').value;
             const date = document.getElementById('baselineDateSelect').value;
-            const runId = document.getElementById('baselineRunSelect').value;
-
-            if (!serviceName || !date || !runId) {
-                alert('Please select service, date, and run for baseline comparison');
-                return;
-            }
-
-            // Build config for baseline comparison
-            const config = buildConfig();
-            config.comparisonMode = 'BASELINE';
-            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
+            const run = document.getElementById('baselineRunSelect').value;
+            if (!svc || !date || !run) { alert('Select service, date, and run'); return; }
             config.baseline = {
                 operation: 'COMPARE',
-                serviceName: serviceName,
+                serviceName: svc,
                 compareDate: date,
-                compareRunId: runId,
+                compareRunId: run,
                 storageDir: workDir || null
             };
-
-            const response = await fetch('api/compare', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(config)
-            });
-
-            if (!response.ok) throw new Error('Baseline comparison failed');
-
-            const results = await response.json();
-            renderResults(results);
-        }
-    }
-
-
-    function buildConfig() {
-        const testType = document.getElementById('testType').value;
-        const opName = document.getElementById('operationName').value || 'web-operation';
-        const method = document.getElementById('method').value || 'POST';
-        const url1 = document.getElementById('url1').value;
-        const url2 = document.getElementById('url2').value;
-        const payloadTemplate = document.getElementById('payload').value;
-        const iterationType = document.getElementById('iterationController').value;
-        const maxIterations = parseInt(document.getElementById('maxIterations').value) || 100;
-        
-        const ignoredFieldsStr = document.getElementById('ignoredFields').value;
-        const ignoredFields = ignoredFieldsStr ? ignoredFieldsStr.split(',').map(s => s.trim()).filter(s => s.length > 0) : [];
-
-        const clientId = document.getElementById('clientId').value;
-        const clientSecret = document.getElementById('clientSecret').value;
-
-        // Parse Headers
-        const headers = {};
-        if (headersTable) {
-            headersTable.querySelectorAll('tr').forEach(tr => {
-                const keyInput = tr.querySelector('.key-input');
-                const valInput = tr.querySelector('.value-input');
-                if (keyInput && valInput) {
-                    const key = keyInput.value.trim();
-                    const val = valInput.value.trim();
-                    if (key) headers[key] = val;
-                }
-            });
         }
 
-        // Parse Tokens
-        const tokens = {};
-        if (tokensTable) {
-            tokensTable.querySelectorAll('tr').forEach(tr => {
-                const keyInput = tr.querySelector('.key-input');
-                const valInput = tr.querySelector('.value-input');
-                if (keyInput && valInput) {
-                    const key = keyInput.value.trim();
-                    const valStr = valInput.value;
-                    if (key) {
-                        // Split by semicolon, trimming whitespace
-                        let items = valStr.split(';').map(v => v.trim());
+        const response = await fetch('api/compare', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(config)
+        });
+        if (!response.ok) throw new Error('Baseline op failed');
+        renderResults(await response.json());
+    };
 
-                        // Remove last item if it is empty (trailing semicolon effect)
-                        if (items.length > 0 && items[items.length - 1] === '') {
-                            items.pop();
-                        }
-
-                        // Convert to numbers where appropriate (DISABLED: Keep as strings to match CLI/YAML behavior)
-                        const finalItems = items.map(v => v);
-
-                        if (finalItems.length > 0) tokens[key] = finalItems;
-                    }
-                }
-            });
-        }
-
-        const isAuthEnabled = document.getElementById('enableAuth').checked;
-        const auth = isAuthEnabled ? {
-            tokenUrl: null, // Basic auth doesn't strictly need this for simple username/password
-            clientId: clientId || null,
-            clientSecret: clientSecret || null
-        } : null;
-
-        const opConfig = {
-            name: opName,
-            methods: [method], // Use selected method
-            headers: headers,
-            payloadTemplatePath: payloadTemplate || null
-        };
-
-        const apiConfig1 = {
-            baseUrl: url1, // Full URL now
-            authentication: auth,
-            operations: [{ ...opConfig }]
-        };
-
-        const apiConfig2 = {
-            baseUrl: url2,
-            authentication: auth,
-            operations: [{ ...opConfig }]
-        };
-
-        const config = {
-            testType: testType,
-            maxIterations: maxIterations,
-            iterationController: iterationType,
-            tokens: tokens,
-            rest: { api1: apiConfig1, api2: apiConfig2 },
-            soap: { api1: apiConfig1, api2: apiConfig2 },
-            ignoredFields: ignoredFields,
-            ignoreHeaders: document.getElementById('ignoreHeaders')?.checked || false
-        };
-
-        return config;
-    }
-
-    function validateConfig(config) {
-        if (!document.getElementById('url1').value) {
-            alert("URL 1 is required");
-            return false;
-        }
-        return true;
-    }
-
-    function setLoading(isLoading) {
-        if (isLoading) {
-            compareBtn.disabled = true;
-            compareBtn.innerText = "Running...";
-            resultsContainer.innerHTML = '<div class="empty-state"><p>Processing...</p></div>';
-        } else {
-            compareBtn.disabled = false;
-            compareBtn.innerText = "Run Comparison";
-        }
-    }
-
-    function renderResults(results) {
+    // --- Rendering Results ---
+    const renderResults = (results) => {
         resultsContainer.innerHTML = '';
-
-        if (results.length === 0) {
-            resultsContainer.innerHTML = '<div class="empty-state">No results returned.</div>';
+        if (!results || results.length === 0) {
+            resultsContainer.innerHTML = '<div class="empty-state">No results to show.</div>';
             return;
         }
 
-        // --- Summary Section ---
-        const total = results.length;
+        const summary = document.createElement('div');
+        summary.className = 'card';
+        summary.style.margin = '0 0 20px 0';
+        summary.style.borderLeft = '8px solid var(--primary-color)';
+        summary.style.padding = '20px';
+        
         const matches = results.filter(r => r.status === 'MATCH').length;
         const mismatches = results.filter(r => r.status === 'MISMATCH').length;
         const errors = results.filter(r => r.status === 'ERROR').length;
-        const totalDuration = results.reduce((acc, r) => acc + (r.api1?.duration || 0) + (r.api2?.duration || 0), 0);
 
-        // Generate timestamp with timezone
-        const now = new Date();
-        const timestamp = now.toLocaleString('en-US', {
-            year: 'numeric',
-            month: '2-digit',
-            day: '2-digit',
-            hour: '2-digit',
-            minute: '2-digit',
-            second: '2-digit',
-            hour12: false,
-            timeZoneName: 'short'
-        });
-
-        // Check if this is a baseline operation
-        const isBaselineMode = results.length > 0 && results[0].baselinePath;
-        const baselinePath = isBaselineMode ? results[0].baselinePath : null;
-        // Determine exact mode: 'Baseline Used' (Compare) or 'Baseline Captured' (Capture)
-        const baselineOperation = isBaselineMode ? (results[0].api2 ? 'Baseline Used' : 'Baseline Captured') : null;
-        const isCaptureMode = baselineOperation === 'Baseline Captured';
-
-        const summaryContainer = document.createElement('div');
-        summaryContainer.style.marginBottom = '20px';
-
-        // Build execution summary HTML
-        let execSummaryHtml = `
-            <div><strong>Total Iterations:</strong> ${total}</div>
-            <div><strong>Total Duration:</strong> ${totalDuration} ms</div>`;
-
-        // Add baseline path if present
-        if (baselinePath && baselineOperation) {
-            execSummaryHtml += `<div><strong>${baselineOperation}:</strong> ${escapeHtml(baselinePath)}</div>`;
-        }
-
-        execSummaryHtml += `<div><strong>Report Generated:</strong> ${timestamp}</div>`;
-
-        let comparisonSummaryContent = '';
-                if (isCaptureMode) {
-                     comparisonSummaryContent = `
-                        <div><span class="status-MATCH" style="background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;">Captured: ${matches}</span></div>
-                        <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
-                     `;
-                } else {
-                     comparisonSummaryContent = `
-                        <div><span class="status-MATCH">Matches: ${matches}</span></div>
-                        <div style="margin-top:5px;"><span class="status-MISMATCH">Mismatches: ${mismatches}</span></div>
-                        <div style="margin-top:5px;"><span class="status-ERROR">Errors: ${errors}</span></div>
-                     `;
-                }
-
-        summaryContainer.innerHTML = `
-            <div class="comparison-grid" style="gap: 10px;">
-                <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #27173e;">
-                    <h3 style="margin-bottom: 10px; font-size: 1rem; color: #27173e;">Execution Summary</h3>
-                    <div style="font-size: 0.9rem; line-height: 1.6;">
-                        ${execSummaryHtml}
-                    </div>
+        summary.innerHTML = `
+            <div style="font-weight:800; color:var(--primary-color); font-size:1.1rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📊 Comparison Result Summary</div>
+            <div style="display:flex; gap:30px; align-items:center;">
+                <div style="text-align:center;">
+                    <div style="font-size:0.8rem; color:#666; margin-bottom:5px; font-weight:700;">TOTAL</div>
+                    <div style="font-size:1.5rem; font-weight:800; color:var(--primary-color);">${results.length}</div>
                 </div>
-                <div class="card" style="padding: 15px; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 5px solid #27173e;">
-                    <h3 style="margin-bottom: 10px; font-size: 1rem; color: #27173e;">${isCaptureMode ? 'Capture Summary' : 'Comparison Summary'}</h3>
-                    <div style="font-size: 0.9rem; line-height: 1.6;">
-                        ${comparisonSummaryContent}
-                    </div>
+                <div style="height:40px; width:1px; background:#ddd;"></div>
+                <div style="text-align:center;">
+                    <div style="font-size:0.8rem; color:var(--success-color); margin-bottom:5px; font-weight:700;">MATCHES</div>
+                    <div style="font-size:1.5rem; font-weight:800; color:var(--success-color);">${matches}</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:0.8rem; color:var(--error-color); margin-bottom:5px; font-weight:700;">MISMATCHES</div>
+                    <div style="font-size:1.5rem; font-weight:800; color:var(--error-color);">${mismatches}</div>
+                </div>
+                <div style="text-align:center;">
+                    <div style="font-size:0.8rem; color:#f6ad55; margin-bottom:5px; font-weight:700;">ERRORS</div>
+                    <div style="font-size:1.5rem; font-weight:800; color:#f6ad55;">${errors}</div>
                 </div>
             </div>
         `;
-        resultsContainer.appendChild(summaryContainer);
-        // -----------------------
+        resultsContainer.appendChild(summary);
 
-        results.forEach((res, index) => {
-            const isMatch = res.status === 'MATCH';
-            let statusClass = isMatch ? 'status-MATCH' : (res.status === 'MISMATCH' ? 'status-MISMATCH' : 'status-ERROR');
-            let statusLabel = res.status;
-
-            if (isCaptureMode && isMatch) {
-                statusLabel = "CAPTURED";
-            }
-
-            // Format tokens string: "account=123; id=456"
-            let tokenStr = '';
-            if (res.iterationTokens) {
-                tokenStr = Object.entries(res.iterationTokens)
-                    .map(([k, v]) => `${k}=${v}`)
-                    .join('; ');
-            }
-            const tokenDisplay = tokenStr ? `<br><small style="color:#666; font-weight:normal;">Tokens: ${tokenStr}</small>` : '';
-
-            // Helper for formatted timestamp
-            const fmtTime = (ts) => {
-                if (!ts) return 'Now';
-                // Check if it looks like a date string
-                if (typeof ts === 'string' && ts.length > 5) {
-                    try {
-                        return new Date(ts).toLocaleString('en-US', { 
-                            year: 'numeric', month: '2-digit', day: '2-digit', 
-                            hour: '2-digit', minute: '2-digit', second: '2-digit', 
-                            timeZoneName: 'short' 
-                        });
-                    } catch (e) { return ts; }
-                }
-                return ts;
-            };
-
-            // Timestamp Logic
-            let timeDisplay = '';
-            if (res.baselineCaptureTimestamp) {
-                // Dual timestamp for baseline comparison
-                timeDisplay = `
-                    <div style="text-align:right; font-size:0.75rem; color:#666;">
-                        <div>Baseline: ${fmtTime(res.baselineCaptureTimestamp)}</div>
-                        <div>Current: ${fmtTime(res.timestamp)}</div>
-                    </div>`;
-            } else {
-                // Single timestamp for live comparison
-                timeDisplay = res.timestamp ? `<span style="font-size:0.75rem; color:#999; margin-left: 10px;">${fmtTime(res.timestamp)}</span>` : '';
-            }
-
-            const card = document.createElement('div');
-            card.className = `result-item`;
-
-            // Adjust badge style for CAPTURED if desired
-            const badgeStyle = (isCaptureMode && isMatch) ? 'background-color: #e3f2fd; color: #1565c0; border: 1px solid #bbdefb;' : '';
-
-            // API URL Display Logic
-            const url1 = res.api1 && res.api1.url ? res.api1.url : '';
-            const url2 = res.api2 && res.api2.url ? res.api2.url : '';
+        results.forEach((res, i) => {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.style.marginBottom = '12px';
             
-            let urlDisplay = '';
-            if (url1 && url2) {
-                if (url1 === url2) {
-                     urlDisplay = `<div style="font-size:0.75rem; color:#555; margin-top:4px;"><strong>Endpoint:</strong> ${escapeHtml(url1)}</div>`;
-                } else {
-                     urlDisplay = `
-                        <div style="font-size:0.75rem; color:#555; margin-top:4px;">
-                            <div><strong>API 1:</strong> ${escapeHtml(url1)}</div>
-                            <div><strong>API 2:</strong> ${escapeHtml(url2)}</div>
-                        </div>`;
-                }
-            } else if (url1) {
-                 urlDisplay = `<div style="font-size:0.75rem; color:#555; margin-top:4px;"><strong>Endpoint:</strong> ${escapeHtml(url1)}</div>`;
+            const isMatch = res.status === 'MATCH';
+            const statusClass = `status-${res.status}`;
+            
+            let tokens = '';
+            if (res.iterationTokens && Object.keys(res.iterationTokens).length > 0) {
+                tokens = `<div style="font-size:0.7rem; color:#666;">Tokens: ${Object.entries(res.iterationTokens).map(([k,v])=>`${k}=${v}`).join('; ')}</div>`;
+            } else if (i === 0) {
+                tokens = `<div style="font-size:0.7rem; color:#666;">Tokens: N/A</div>`;
             }
 
-            const header = document.createElement('div');
-            header.className = 'result-header';
-            header.innerHTML = `
-                <div>
-                    <span>Iteration #${index + 1} - ${res.operationName}</span>
-                    ${urlDisplay}
-                    ${tokenDisplay}
+            item.innerHTML = `
+                <div class="result-header" style="cursor:pointer; padding:12px; display:flex; justify-content:space-between; align-items:center;">
+                    <div>
+                        <div style="font-weight:700; font-size:0.9rem;">#${i+1} - ${res.operationName}</div>
+                        ${tokens}
+                    </div>
+                    <span class="${statusClass}" style="padding:2px 10px; border-radius:10px; font-weight:700; font-size:0.7rem;">${res.status}</span>
                 </div>
-                <div>
-                   ${timeDisplay}
-                   <span class="${statusClass}" style="margin-left:10px; ${badgeStyle}">${statusLabel}</span>
+                <div class="result-body" style="display:none; padding:15px; border-top:1px solid #eee; background:#fafafa;">
+                    ${renderPayloadContent(res, i)}
                 </div>
             `;
-            header.onclick = () => card.classList.toggle('expanded');
-
-            const body = document.createElement('div');
-            body.className = 'result-body';
-
-            if (res.errorMessage) {
-                body.innerHTML = `<p class="error-text">${res.errorMessage}</p>`;
-            } else {
-                let diffHtml = '';
-                if (res.status === 'MISMATCH' && res.differences && res.differences.length > 0) {
-                    diffHtml = `
-                        <div class="diff-list">
-                            <h5>Differences Found</h5>
-                            <ul>
-                                ${res.differences.map(d => `<li>${escapeHtml(d)}</li>`).join('')}
-                            </ul>
-                        </div>
-                     `;
-                }
-
-                // Helper to render payload safely with sync class
-                const renderPayload = (payload, syncGroup) => {
-                    const content = (payload === null || payload === undefined) ? '<span style="color:#999; font-style:italic;">[Null Response]</span>' :
-                                    (payload === '') ? '<span style="color:#999; font-style:italic;">[Empty Response]</span>' :
-                                    `<pre class="sync-payload" data-sync-group="${syncGroup}">${formatJson(payload)}</pre>`;
-                    return content;
-                };
-
-                // Helper to render headers with sync class
-                const renderHeaders = (headers, syncGroup) => {
-                    if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
-                    let html = `<div class="sync-header" data-sync-group="${syncGroup}" style="max-height:150px; overflow-y:auto; border:1px solid #eee; padding:5px; background:#fafafa;">`;
-                    html += '<table style="width:100%; font-size:0.8rem; border-collapse:collapse;">';
-                    Object.entries(headers).forEach(([k, v]) => {
-                        html += `<tr style="border-bottom:1px solid #f0f0f0;"><td style="padding:2px 5px; font-weight:600; color:#444; width:30%; vertical-align:top;">${escapeHtml(k)}:</td><td style="padding:2px 5px; color:#333; word-break:break-all;">${escapeHtml(v)}</td></tr>`;
+            
+            item.querySelector('.result-header').addEventListener('click', () => {
+                const header = item.querySelector('.result-header');
+                const body = item.querySelector('.result-body');
+                const isOpen = body.style.display === 'block';
+                body.style.display = isOpen ? 'none' : 'block';
+                header.classList.toggle('open', !isOpen);
+                
+                if (!isOpen) { 
+                    setupSync(body);
+                    // Attach copy events
+                    body.querySelectorAll('.copy-btn').forEach(btn => {
+                        btn.onclick = (e) => {
+                            e.stopPropagation();
+                            const target = btn.nextElementSibling;
+                            copyToClipboard(target.innerText, btn);
+                        };
                     });
-                    html += '</table></div>';
-                    return html;
-                };
-
-                // Request Payload (Common)
-                const reqPayload = res.api1 && res.api1.requestPayload ? res.api1.requestPayload : '';
-                const reqDisplay = reqPayload ? `
-                    <div class="request-box" style="margin-bottom: 20px;">
-                        <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: #27173e; font-weight: 600;">Request Payload (Original)</h4>
-                        <pre>${formatJson(reqPayload)}</pre>
-                    </div>` : '';
-
-                if (isMatch) {
-                    const successTitle = isCaptureMode ? 'Response Received' : 'Response (Identical)';
-                    const titleColor = isCaptureMode ? '#27173e' : '#2e7d32'; // Purple for capture, Green for match
-
-                    body.innerHTML = `
-                        ${diffHtml}
-                        ${reqDisplay}
-                        <div class="single-view">
-                            <h4 style="margin-bottom: 10px; font-size: 0.9rem; color: ${titleColor}; font-weight: 600;">${successTitle}</h4>
-                            
-                            <div style="margin-bottom:10px;">
-                                <strong style="font-size:0.8rem;">Headers:</strong>
-                                ${renderHeaders(res.api1.responseHeaders, `headers-${index}`)}
-                            </div>
-
-                            <strong style="font-size:0.8rem;">Payload:</strong>
-                            ${renderPayload(res.api1.responsePayload, `payloads-${index}`)}
-                            <p><small>Duration: ${res.api1.duration}ms</small></p>
-                        </div>
-                    `;
-                } else {
-                    // Determine labels based on baseline mode
-                    const isBaselineComparison = res.baselineServiceName != null;
-                    const api1Label = isBaselineComparison ? 'API Current' : 'API 1';
-                    const api2Label = isBaselineComparison ? 'API Baseline' : 'API 2';
-
-                    body.innerHTML = `
-                        ${diffHtml}
-                        ${reqDisplay}
-                        <div class="comparison-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                            <div class="payload-box">
-                                <h4>${api1Label} Response (${res.api1.duration}ms)</h4>
-                                <div style="margin-bottom:10px;">
-                                    <strong style="font-size:0.8rem;">Headers:</strong>
-                                    ${renderHeaders(res.api1.responseHeaders, `headers-${index}`)}
-                                </div>
-                                <strong style="font-size:0.8rem;">Payload:</strong>
-                                ${renderPayload(res.api1.responsePayload, `payloads-${index}`)}
-                            </div>
-                            <div class="payload-box">
-                                <h4>${api2Label} Response (${res.api2.duration}ms)</h4>
-                                <div style="margin-bottom:10px;">
-                                    <strong style="font-size:0.8rem;">Headers:</strong>
-                                    ${renderHeaders(res.api2.responseHeaders, `headers-${index}`)}
-                                </div>
-                                <strong style="font-size:0.8rem;">Payload:</strong>
-                                ${renderPayload(res.api2.responsePayload, `payloads-${index}`)}
-                            </div>
-                        </div>
-                    `;
                 }
-            }
-
-            card.appendChild(header);
-            card.appendChild(body);
-            resultsContainer.appendChild(card);
+            });
+            resultsContainer.appendChild(item);
         });
-        
-        // Enable synchronized scrolling
-        enableSyncScroll();
-    }
-    
-    function enableSyncScroll() {
-        // Sync Headers
-        const headerGroups = {};
-        document.querySelectorAll('.sync-header').forEach(el => {
-            const group = el.dataset.syncGroup;
-            if (!headerGroups[group]) headerGroups[group] = [];
-            headerGroups[group].push(el);
-        });
+    };
 
-        Object.values(headerGroups).forEach(group => {
-            if (group.length > 1) {
-                group.forEach(el => {
-                    el.addEventListener('scroll', (e) => {
-                        if (el.dataset.isScrolling) return; // Prevent loop
-                        group.forEach(other => {
-                            if (other !== el) {
-                                other.dataset.isScrolling = 'true';
-                                other.scrollTop = el.scrollTop;
-                                other.scrollLeft = el.scrollLeft;
-                                setTimeout(() => other.removeAttribute('data-is-scrolling'), 50);
-                            }
-                        });
-                    });
-                });
-            }
-        });
+    const renderPayloadContent = (res, idx) => {
+        if (res.errorMessage) return `<div style="color:var(--error-color); font-size:0.85rem; padding:10px; background:#fff5f5; border-radius:6px; border:1px solid #feb2b2;"><strong>HTTP ERROR DETECTED:</strong> ${res.errorMessage}</div>`;
+        const a1 = res.api1 || {};
+        const a2 = res.api2 || {};
 
-        // Sync Payloads
-        const payloadGroups = {};
-        document.querySelectorAll('.sync-payload').forEach(el => {
-            const group = el.dataset.syncGroup;
-            if (!payloadGroups[group]) payloadGroups[group] = [];
-            payloadGroups[group].push(el);
-        });
+        const renderHeaders = (headers) => {
+            if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
+            return Object.entries(headers).map(([k,v])=>`<div><strong>${k}:</strong> ${v}</div>`).join('');
+        };
 
-        Object.values(payloadGroups).forEach(group => {
-            if (group.length > 1) {
-                group.forEach(el => {
-                    el.addEventListener('scroll', (e) => {
-                        if (el.dataset.isScrolling) return; // Prevent loop
-                        group.forEach(other => {
-                            if (other !== el) {
-                                other.dataset.isScrolling = 'true';
-                                other.scrollTop = el.scrollTop;
-                                other.scrollLeft = el.scrollLeft;
-                                setTimeout(() => other.removeAttribute('data-is-scrolling'), 50);
-                            }
-                        });
-                    });
-                });
-            }
-        });
-    }
+        const copyToClipboard = (text, btn) => {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = btn.innerText;
+                btn.innerText = '✅';
+                setTimeout(() => btn.innerText = originalText, 1000);
+            }).catch(err => {
+                console.error('Could not copy text: ', err);
+            });
+        };
 
-    function escapeHtml(text) {
-        if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
-    }
+        const renderBox = (data, label, type, contentKey) => {
+            const content = contentKey === 'request' ? (data.requestPayload || '') : (data.responsePayload || '');
+            const headers = contentKey === 'request' ? (data.requestHeaders || {}) : (data.responseHeaders || {});
+            const headersText = Object.entries(headers).map(([k,v])=>`${k}: ${v}`).join('\n');
 
-    function formatXml(xml) {
-        const PADDING = '  '; // 2 spaces for indentation
-        const reg = /(>)(<)(\/*)/g;
-        let formatted = '';
-        let pad = 0;
+            return `
+            <div class="${type}-box" style="flex:1; min-width:0; position:relative;">
+                <h5 style="margin:0 0 8px 0; font-size:0.8rem; color:var(--primary-color); display:flex; justify-content:space-between;">
+                    <span>${label}</span>
+                    ${data.duration ? `<span style="font-weight:normal; color:#666;">${data.duration}ms</span>` : ''}
+                </h5>
+                <div style="margin-bottom:10px; position:relative;">
+                    <div style="font-size:0.7rem; font-weight:700; color:#555; margin-bottom:3px;">Headers:</div>
+                    <button type="button" class="copy-btn" title="Copy Headers">Copy</button>
+                    <div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:80px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">
+                        ${renderHeaders(headers)}
+                    </div>
+                </div>
+                <div class="sync-p-wrapper" style="position:relative;">
+                    <div style="font-size:0.7rem; font-weight:700; color:#555; margin-bottom:3px;">Payload:</div>
+                    <button type="button" class="copy-btn" title="Copy Payload" style="top:20px;">Copy</button>
+                    <pre class="sync-p">${formatData(content)}</pre>
+                </div>
+            </div>
+        `;
+        };
 
-        xml = xml.replace(reg, '$1\n$2$3');
-        const lines = xml.split('\n');
-
-        lines.forEach((line) => {
-            let indent = 0;
-            if (line.match(/.+<\/\w[^>]*>$/)) {
-                indent = 0;
-            } else if (line.match(/^<\/\w/)) {
-                if (pad !== 0) {
-                    pad -= 1;
-                }
-
-            } else if (line.match(/^<\w([^>]*[^\/])?>.*$/)) {
-                indent = 1;
-            } else {
-                indent = 0;
-            }
-
-            formatted += PADDING.repeat(pad) + line + '\n';
-            pad += indent;
-        });
-
-        return formatted.trim();
-    }
-
-    function formatJson(str) {
-        if (!str) return '';
-
-        // If it's a string, check if it's JSON or XML
-        if (typeof str === 'string') {
-            // Try JSON first
-            try {
-                const parsed = JSON.parse(str);
-                return escapeHtml(JSON.stringify(parsed, null, 2));
-            } catch (e) {
-                // Not JSON, check if it's XML and format it
-                if (str.trim().startsWith('<')) {
-                    try {
-                        return escapeHtml(formatXml(str));
-                    } catch (xmlError) {
-                        // If XML formatting fails, return escaped as-is
-                        return escapeHtml(str);
-                    }
-                }
-                // Not JSON or XML, return HTML-escaped
-                return escapeHtml(str);
-            }
+        let diffs = '';
+        if (res.status === 'MISMATCH' && res.differences) {
+            diffs = `<div style="background:#fff5f5; border:1px solid #feb2b2; padding:12px; border-radius:8px; margin-bottom:15px; font-size:0.85rem;">
+                        <strong style="color:#c53030;">Mismatch Details:</strong>
+                        <ul style="margin:8px 0 0 0; padding-left:20px; color:#2d3748;">${res.differences.map(d=>`<li>${d}</li>`).join('')}</ul>
+                     </div>`;
         }
 
-        // If it's already an object, stringify it
-        try {
-            return escapeHtml(JSON.stringify(str, null, 2));
-        } catch (e) {
-            return escapeHtml(String(str));
-        }
-    }
+        return `
+            ${diffs}
+            <!-- Request Section -->
+            <div style="padding:10px; background:#f7fafc; border-radius:8px; border:1px solid #edf2f7; margin-bottom:15px;">
+                <div style="font-size:0.75rem; font-weight:800; color:#4a5568; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Input Request</div>
+                <div style="display:flex; gap:12px;">
+                    ${renderBox(a1, 'Outgoing Request', 'request', 'request')}
+                </div>
+            </div>
 
-    function initResizeHandle() {
-        const resizeHandle = document.getElementById('resizeHandle');
-        // Target the sidebar column directly, not the internal panel
-        const sidebarCol = document.querySelector('.sidebar-col'); 
-        const mainGrid = document.querySelector('.main-grid');
+            <!-- Response Section -->
+            <div style="padding:10px; background:#f0fff4; border-radius:8px; border:1px solid #c6f6d5;">
+                <div style="font-size:0.75rem; font-weight:800; color:#22543d; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">API Responses</div>
+                <div style="display:flex; gap:12px;">
+                    ${renderBox(a1, 'API 1 / Current Response', 'response', 'response')}
+                    ${!res.baselineCaptureTimestamp && (res.api2 || resultsContainer.dataset.mode === 'BASELINE') ? renderBox(a2 || {}, 'API 2 / Baseline Response', 'response', 'response') : ''}
+                </div>
+            </div>
+        `;
+    };
 
-        if (!resizeHandle || !sidebarCol || !mainGrid) return;
+    const formatData = (d) => {
+        if (!d) return '[Empty]';
+        try { return JSON.stringify(typeof d === 'string' ? JSON.parse(d) : d, null, 2); } catch(e) { return String(d); }
+    };
 
-        let isResizing = false;
+    const setupSync = (body) => {
+        const hs = body.querySelectorAll('.sync-h');
+        const ps = body.querySelectorAll('.sync-p');
+        const sync = (els) => els.forEach(e => e.onscroll = () => els.forEach(o => { if(o!==e) o.scrollTop = e.scrollTop; }));
+        if(hs.length > 1) sync(hs);
+        if(ps.length > 1) sync(ps);
+    };
 
-        resizeHandle.addEventListener('mousedown', (e) => {
-            isResizing = true;
-            document.body.classList.add('resizing');
-            e.preventDefault(); // Prevent text selection
-        });
-
+    // --- Resizing ---
+    const initResize = () => {
+        const handle = document.getElementById('resizeHandle');
+        const grid = document.querySelector('.main-grid');
+        if (!handle || !grid) return;
+        let resizing = false;
+        handle.addEventListener('mousedown', (e) => { resizing = true; document.body.classList.add('resizing'); e.preventDefault(); });
         document.addEventListener('mousemove', (e) => {
-            if (!isResizing) return;
-
-            // Calculate width based on mouse position relative to container left edge
-            // This is more robust than delta + startWidth
-            const gridRect = mainGrid.getBoundingClientRect();
-            const newWidth = e.clientX - gridRect.left;
-
-            // Set min and max width constraints
-            const minWidth = 250;
-            const maxWidth = window.innerWidth * 0.6; // Max 60% of window width
-
-            if (newWidth >= minWidth && newWidth <= maxWidth) {
-                mainGrid.style.setProperty('--config-width', `${newWidth}px`);
-                // Ensure sidebar doesn't constrain it
-                sidebarCol.style.width = '100%'; 
-            }
+            if (!resizing) return;
+            const w = e.clientX - grid.getBoundingClientRect().left;
+            if (w > 250 && w < 900) grid.style.setProperty('--config-width', `${w}px`);
         });
+        document.addEventListener('mouseup', () => { resizing = false; document.body.classList.remove('resizing'); });
+    };
 
-        document.addEventListener('mouseup', () => {
-            if (isResizing) {
-                isResizing = false;
-                document.body.classList.remove('resizing');
-            }
-        });
+    // --- Initialization ---
+    // --- Baseline UI Events ---
+    const opCapture = document.getElementById('opCapture');
+    const opCompare = document.getElementById('opCompare');
+    const modeCompare = document.getElementById('modeCompare');
+    const modeBaseline = document.getElementById('modeBaseline');
+
+    if (opCapture && opCompare) {
+        opCapture.onclick = () => {
+            opCapture.classList.add('active');
+            opCompare.classList.remove('active');
+            document.getElementById('baselineOperation').value = 'CAPTURE';
+            document.getElementById('captureFields').style.display = 'block';
+            document.getElementById('compareFields').style.display = 'none';
+            // Trigger UI update logic
+            const fakeEvent = { target: { value: 'BASELINE' } };
+            // Since we don't have a clean central handler, let's just call the logic
+            handleBaselineUI('BASELINE');
+        };
+        opCompare.onclick = () => {
+            opCompare.classList.add('active');
+            opCapture.classList.remove('active');
+            document.getElementById('baselineOperation').value = 'COMPARE';
+            document.getElementById('captureFields').style.display = 'none';
+            document.getElementById('compareFields').style.display = 'block';
+            handleBaselineUI('BASELINE');
+        };
     }
 
-    // ============================================
-    // BASELINE TESTING FUNCTIONALITY
-    // ============================================
-
-    // Initialize baseline controls
-    function initBaselineControls() {
-        const comparisonMode = document.getElementById('comparisonMode');
-        const baselineControls = document.getElementById('baselineControls');
-        const baselineOperation = document.getElementById('baselineOperation');
-        const captureFields = document.getElementById('captureFields');
-        const compareFields = document.getElementById('compareFields');
-        const baselineServiceSelect = document.getElementById('baselineServiceSelect');
-        const baselineDateSelect = document.getElementById('baselineDateSelect');
-        const baselineRunSelect = document.getElementById('baselineRunSelect');
-
-        if (!comparisonMode || !baselineControls) return;
-
-        // Update button label based on mode and operation
-        function updateButtonLabel() {
-            const mode = comparisonMode.value;
-            const operation = baselineOperation ? baselineOperation.value : 'CAPTURE';
-
-            if (mode === 'BASELINE') {
-                if (operation === 'CAPTURE') {
-                    compareBtn.innerText = 'Capture Baseline';
-                } else {
-                    compareBtn.innerText = 'Compare with Baseline';
-                }
-            } else {
-                compareBtn.innerText = 'Run Comparison';
-            }
-        }
-
-        // Toggle baseline controls visibility
-        comparisonMode.addEventListener('change', function () {
-            const url2Group = document.getElementById('url2Group');
-            const url1Label = document.querySelector('#urlRow .input-group:first-child label');
-            const tokensContainer = document.getElementById('tokensContainer');
-
-            if (this.value === 'BASELINE') {
-                baselineControls.style.display = 'block';
-                if (url2Group) url2Group.style.display = 'none';
-                if (url1Label) url1Label.textContent = 'API Endpoint URL';
-                // Disable tokens in baseline mode (uses stored payloads)
-                if (tokensContainer) {
-                    tokensContainer.style.opacity = '0.5';
-                    tokensContainer.querySelectorAll('input, textarea').forEach(el => el.disabled = true);
-                }
-                loadBaselineServices();
-                updateButtonLabel();
-            } else {
-                baselineControls.style.display = 'none';
-                if (url2Group) url2Group.style.display = 'block';
-                if (url1Label) url1Label.textContent = 'Endpoint 1 URL';
-                // Re-enable tokens in live mode
-                if (tokensContainer) {
-                    tokensContainer.style.opacity = '1';
-                    tokensContainer.querySelectorAll('input, textarea').forEach(el => el.disabled = false);
-                }
-                compareBtn.innerText = 'Run Comparison';
-                
-                // Re-enable ignoreHeaders for live mode (in case it was disabled by capture)
-                const ignoreHeaderBox = document.getElementById('ignoreHeaders');
-                if(ignoreHeaderBox) {
-                    ignoreHeaderBox.disabled = false;
-                }
-            }
-        });
-
-        // Toggle between capture and compare fields
-        if (baselineOperation) {
-            baselineOperation.addEventListener('change', function () {
-                if (this.value === 'CAPTURE') {
-                    captureFields.style.display = 'block';
-                    compareFields.style.display = 'none';
-                    // Auto-disable ignoreHeaders for capture
-                    const ignoreHeaderBox = document.getElementById('ignoreHeaders');
-                    if(ignoreHeaderBox) {
-                        ignoreHeaderBox.checked = false;
-                        ignoreHeaderBox.disabled = true;
-                    }
-                } else {
-                    captureFields.style.display = 'none';
-                    compareFields.style.display = 'block';
-                    loadBaselineServices();
-                     // Re-enable ignoreHeaders for compare
-                     const ignoreHeaderBox = document.getElementById('ignoreHeaders');
-                     if(ignoreHeaderBox) {
-                         ignoreHeaderBox.disabled = false;
-                     }
-                }
-                updateButtonLabel();
-            });
-
-            // Trigger change event to set initial state
-            baselineOperation.dispatchEvent(new Event('change'));
-        }
-
-        // Load dates when service is selected
-        if (baselineServiceSelect) {
-            baselineServiceSelect.addEventListener('change', function () {
-                if (this.value) {
-                    loadBaselineDates(this.value);
-                } else {
-                    baselineDateSelect.innerHTML = '<option value="">-- Select Date --</option>';
-                    baselineDateSelect.disabled = true;
-                    baselineRunSelect.innerHTML = '<option value="">-- Select Run --</option>';
-                    baselineRunSelect.disabled = true;
-                }
-            });
-        }
-
-        // Load runs when date is selected
-        if (baselineDateSelect) {
-            baselineDateSelect.addEventListener('change', function () {
-                const service = baselineServiceSelect.value;
-                if (service && this.value) {
-                    loadBaselineRuns(service, this.value);
-                } else {
-                    baselineRunSelect.innerHTML = '<option value="">-- Select Run --</option>';
-                    baselineRunSelect.disabled = true;
-                }
-            });
-        }
-
-        // Fetch endpoint when run is selected
-        if (baselineRunSelect) {
-            baselineRunSelect.addEventListener('change', function() {
-                const service = baselineServiceSelect.value;
-                const date = baselineDateSelect.value;
-                if (service && date && this.value) {
-                    fetchBaselineEndpoint(service, date, this.value);
-                }
-            });
-        }
-    }
-
-    // Load available baseline services
-    async function loadBaselineServices() {
-        try {
-            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
-            const url = workDir ? `api/baselines/services?workDir=${encodeURIComponent(workDir)}` : 'api/baselines/services';
-            const response = await fetch(url);
-            const services = await response.json();
-
-            const select = document.getElementById('baselineServiceSelect');
-            if (!select) return;
-
-            select.innerHTML = '<option value="">-- Select Service --</option>';
-
-            services.forEach(service => {
-                const option = document.createElement('option');
-                option.value = service;
-                option.textContent = service;
-                select.appendChild(option);
-            });
-
-            select.disabled = false;
-
-            // Auto-select latest (last) service
-            if (services.length > 0) {
-                const latestService = services[services.length - 1];
-                select.value = latestService;
-                loadBaselineDates(latestService);
-            }
-        } catch (error) {
-            console.error('Error loading baseline services:', error);
-        }
-    }
-
-    // Load dates for selected service
-    async function loadBaselineDates(serviceName) {
-        try {
-            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
-            const url = workDir 
-                ? `api/baselines/dates/${serviceName}?workDir=${encodeURIComponent(workDir)}` 
-                : `api/baselines/dates/${serviceName}`;
-            const response = await fetch(url);
-            const dates = await response.json();
-
-            const select = document.getElementById('baselineDateSelect');
-            if (!select) return;
-
-            select.innerHTML = '<option value="">-- Select Date --</option>';
-
-            dates.forEach(date => {
-                const option = document.createElement('option');
-                option.value = date;
-                option.textContent = date;
-                select.appendChild(option);
-            });
-
-            select.disabled = false;
-            
-            // Auto-select latest (last) date
-            if (dates.length > 0) {
-                const latestDate = dates[dates.length - 1];
-                select.value = latestDate;
-                loadBaselineRuns(serviceName, latestDate);
-            }
-        } catch (error) {
-            console.error('Error loading baseline dates:', error);
-        }
-    }
-
-    // Load runs for selected service and date
-    async function loadBaselineRuns(serviceName, date) {
-        try {
-            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
-            const url = workDir 
-                ? `api/baselines/runs/${serviceName}/${date}?workDir=${encodeURIComponent(workDir)}` 
-                : `api/baselines/runs/${serviceName}/${date}`;
-            const response = await fetch(url);
-            const runs = await response.json();
-
-            const select = document.getElementById('baselineRunSelect');
-            if (!select) return;
-
-            select.innerHTML = '<option value="">-- Select Run --</option>';
-
-            runs.forEach(run => {
-                const option = document.createElement('option');
-                option.value = run.runId;
-                const formattedTags = (run.tags && run.tags.length > 0) ? ` [${run.tags.join(', ')}]` : '';
-                const label = `${run.runId} - ${run.description || 'No description'}${formattedTags} (${run.totalIterations} iterations)`;
-                option.textContent = label;
-                select.appendChild(option);
-            });
-
-            select.disabled = false;
-            
-            // Auto-select latest (last) run
-            if (runs.length > 0) {
-                const latestRunId = runs[runs.length - 1].runId;
-                select.value = latestRunId;
-                fetchBaselineEndpoint(serviceName, date, latestRunId);
-            }
-
-            // Insert "View Details" button if not exists
-            let viewDetailsBtn = document.getElementById('viewBaselineDetailsBtn');
-            if (!viewDetailsBtn) {
-                viewDetailsBtn = document.createElement('button');
-                viewDetailsBtn.id = 'viewBaselineDetailsBtn';
-                viewDetailsBtn.className = 'btn-secondary';
-                viewDetailsBtn.type = 'button';
-                viewDetailsBtn.textContent = 'View Details';
-                viewDetailsBtn.style.marginLeft = '10px';
-                viewDetailsBtn.style.padding = '4px 8px';
-                viewDetailsBtn.style.fontSize = '0.8rem';
-                
-                // Append after select
-                select.parentNode.appendChild(viewDetailsBtn);
-                
-                viewDetailsBtn.addEventListener('click', async () => {
-                     const sVal = document.getElementById('baselineServiceSelect').value;
-                     const dVal = document.getElementById('baselineDateSelect').value;
-                     const rVal = document.getElementById('baselineRunSelect').value;
-                     
-                     if(sVal && dVal && rVal) {
-                         try {
-                              // Visual feedback
-                              viewDetailsBtn.innerText = 'Loading...';
-                              viewDetailsBtn.disabled = true;
-
-                              const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
-                              const enc = encodeURIComponent;
-                              const url = workDir 
-                                ? `api/baselines/runs/${enc(sVal)}/${enc(dVal)}/${enc(rVal)}/details?workDir=${enc(workDir)}` 
-                                : `api/baselines/runs/${enc(sVal)}/${enc(dVal)}/${enc(rVal)}/details`;
-                              
-                              const resp = await fetch(url);
-                              if(!resp.ok) throw new Error("Failed to fetch details");
-                              const results = await resp.json();
-                              
-                              renderResults(results);
-                         } catch(e) {
-                             console.error(e);
-                             alert("Error loading details: " + e.message);
-                         } finally {
-                             viewDetailsBtn.innerText = 'View Details';
-                             viewDetailsBtn.disabled = false;
-                         }
-                     } else {
-                         alert('Please select a valid run first.');
-                     }
-                });
-            }
-
-        } catch (error) {
-            console.error('Error loading baseline runs:', error);
-        }
-    }
-
-    async function fetchBaselineEndpoint(service, date, runId) {
-        try {
-            const workDir = document.getElementById('workingDirectory')?.value?.trim() || '';
-            const enc = encodeURIComponent;
-            const url = workDir 
-                ? `api/baselines/runs/${enc(service)}/${enc(date)}/${enc(runId)}/endpoint?workDir=${enc(workDir)}` 
-                : `api/baselines/runs/${enc(service)}/${enc(date)}/${enc(runId)}/endpoint`;
-            
-            const response = await fetch(url);
-            const data = await response.json();
-            
-            // 1. Endpoint
-            if (data && data.endpoint) {
-                const url1Input = document.getElementById('url1');
-                if (url1Input) {
-                    url1Input.value = data.endpoint;
-                    // Visual feedback
-                    url1Input.style.backgroundColor = '#e8f5e9';
-                    setTimeout(() => url1Input.style.backgroundColor = '', 1000);
-                }
-            } else {
-                 // Warning if no endpoint found? Or just log
-                 console.log("No endpoint found for this run");
-            }
-
-            // 2. Payload
-            if (data && data.payload) {
-                const payloadInput = document.getElementById('payload');
-                if (payloadInput) {
-                    payloadInput.value = data.payload;
-                    // Visual feedback
-                    payloadInput.style.backgroundColor = '#e8f5e9';
-                    setTimeout(() => payloadInput.style.backgroundColor = '', 1000);
-                }
-            }
-
-            // 3. Headers (New Feature)
-            if (data && data.headers && headersTable) {
-                headersTable.innerHTML = ''; // Clear existing
-                Object.entries(data.headers).forEach(([k, v]) => {
-                    addRow(headersTable, ['Header Name', 'Value']);
-                    const lastRow = headersTable.lastElementChild;
-                    if (lastRow) {
-                        lastRow.querySelector('.key-input').value = k;
-                        lastRow.querySelector('.value-input').value = v;
-                    }
-                });
-            }
-
-        } catch (error) {
-            console.error('Error fetching baseline endpoint:', error);
-        }
-    }
-
-    // --- NEW: Auth Toggle Logic ---
-    const enableAuth = document.getElementById('enableAuth');
-    const clientIdInput = document.getElementById('clientId');
-    const clientSecretInput = document.getElementById('clientSecret');
-
-    if (enableAuth) {
-        enableAuth.addEventListener('change', () => {
-            const isEnabled = enableAuth.checked;
-            if (clientIdInput) clientIdInput.disabled = !isEnabled;
-            if (clientSecretInput) clientSecretInput.disabled = !isEnabled;
+    if (modeCompare && modeBaseline) {
+        modeCompare.addEventListener('click', () => handleBaselineUI('LIVE'));
+        modeBaseline.addEventListener('click', () => {
+            // Ensure default Capture is set
+            opCapture.click();
+            handleBaselineUI('BASELINE');
         });
     }
 
-    // --- NEW: Ignored Fields Logic ---
-    function updateIgnoredFieldsState() {
-        const comparisonMode = document.getElementById('comparisonMode');
-        const baselineOperation = document.getElementById('baselineOperation');
+    // Export internal logic for mode switches
+    window.handleBaselineUI = (mode) => {
+        const ignoreHeaders = document.getElementById('ignoreHeaders');
+        const compareBtn = document.getElementById('compareBtn');
+        const op = document.getElementById('baselineOperation').value;
         
-        const mode = comparisonMode ? comparisonMode.value : 'LIVE';
-        const operation = baselineOperation ? baselineOperation.value : 'CAPTURE';
-        const ignoredFieldsInput = document.getElementById('ignoredFields');
-        
-        if (ignoredFieldsInput) {
-            // Logic Update:
-            // ENABLED for LIVE mode
-            // ENABLED for BASELINE COMPARE mode
-            // DISABLED for BASELINE CAPTURE mode
-            
-            let shouldEnable = true;
-            if (mode === 'BASELINE' && operation === 'CAPTURE') {
-                shouldEnable = false;
-            }
-
-            if (shouldEnable) {
-                ignoredFieldsInput.disabled = false;
-                ignoredFieldsInput.style.opacity = '1';
-                ignoredFieldsInput.closest('.input-group').style.opacity = '1';
+        if (mode === 'BASELINE') {
+            compareBtn.innerText = (op === 'CAPTURE') ? '📸 Capture Baseline' : '🔍 Compare Baseline';
+            if (op === 'CAPTURE') {
+                if (ignoreHeaders) {
+                    ignoreHeaders.checked = false;
+                    ignoreHeaders.disabled = true;
+                }
             } else {
-                ignoredFieldsInput.disabled = true;
-                ignoredFieldsInput.style.opacity = '0.6';
-                ignoredFieldsInput.closest('.input-group').style.opacity = '0.6';
+                if (ignoreHeaders) ignoreHeaders.disabled = false;
             }
+        } else {
+            compareBtn.innerText = '▶ Run Comparison';
+            if (ignoreHeaders) ignoreHeaders.disabled = false;
         }
-    }
+    };
 
-    // Hook up listeners for Ignored Fields
-    const comparisonMode = document.getElementById('comparisonMode');
-    const baselineOperation = document.getElementById('baselineOperation');
+    // --- Field Toggles ---
+    document.getElementById('enableAuth').addEventListener('change', (e) => {
+        document.getElementById('clientId').disabled = !e.target.checked;
+        document.getElementById('clientSecret').disabled = !e.target.checked;
+    });
 
-    if (comparisonMode) {
-        comparisonMode.addEventListener('change', updateIgnoredFieldsState);
-    }
-    if (baselineOperation) {
-        baselineOperation.addEventListener('change', updateIgnoredFieldsState);
-    }
-    
-    // Initial call
-    updateIgnoredFieldsState();
+    document.getElementById('clearFormBtn').addEventListener('click', () => {
+        if (confirm('Clear all fields?')) {
+            // PASS false to shouldPopulate to prevent auto-fill
+            resetFormToStandard(document.getElementById('testType').value, false);
+            resultsContainer.innerHTML = '<div class="empty-state">Form cleared.</div>';
+        }
+    });
+
+    // --- Auto Format ---
+    document.getElementById('autoFormatBtn').addEventListener('click', () => {
+        const p = document.getElementById('payload');
+        try { p.value = JSON.stringify(JSON.parse(p.value), null, 2); } catch(e) {}
+    });
+
+    initResize();
+    loadDefaults();
 });

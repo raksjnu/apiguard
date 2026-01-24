@@ -1,277 +1,379 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ApiUrlComparison - APITestingGuard</title>
+    <title>API Forge | Truist API Comparison</title>
     <link rel="stylesheet" href="style.css">
-    <!-- Google Fonts for premium typography -->
-    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Mulish:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        .mode-tabs {
+            display: flex;
+            background: #f0f0f0;
+            padding: 4px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+        .mode-tab {
+            flex: 1;
+            padding: 8px;
+            text-align: center;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            font-weight: 600;
+            border-radius: 6px;
+            transition: all 0.2s;
+            font-family: inherit;
+        }
+        .mode-tab.active {
+            background: var(--primary-color);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        .accordion {
+            margin-bottom: 12px;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            overflow: hidden;
+            background: white;
+            border-left: 6px solid var(--primary-color); /* Added left curve */
+        }
+        .accordion-header {
+            background: #f1e6f9; /* Persistent light purple for frame headlines */
+            padding: 12px 15px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--primary-color);
+            transition: all 0.2s;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .accordion-header:hover, .accordion-header.open {
+            background: #e9d5f7; /* Slightly darker purple on hover/open */
+        }
+        .accordion-header span.icon {
+            font-size: 0.8rem;
+            transition: transform 0.3s;
+        }
+        .accordion-content {
+            padding: 15px;
+            display: none;
+            border-top: 1px solid #eee;
+        }
+        .accordion-content.open {
+            display: block;
+        }
+        .header-tabs {
+            display: flex;
+            gap: 10px;
+        }
+        .toggle-container {
+            display: flex;
+            background: #f0f0f0;
+            padding: 2px;
+            border-radius: 6px;
+            align-items: center;
+        }
+        .toggle-btn {
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .toggle-btn.active {
+            background: var(--primary-color);
+            color: white;
+        }
+    </style>
 </head>
-
 <body>
     <div class="app-container">
-        <!-- Header -->
-        <header class="header">
-            <h1 class="logo">
-                <img src="logo.svg" alt="RAKS Logo" style="height: 40px; vertical-align: middle; margin-right: 15px;">
-                ApiUrlComparison - <span class="highlight">APITestingGuard</span>
+        <header class="header" style="height: 70px; margin-bottom: 0;">
+            <h1 class="logo" style="display: flex; align-items: center;">
+                <img src="raks.svg" alt="RAKS Logo" style="height: 40px; margin-right: 15px;">
+                API Forge
             </h1>
             
-            <div style="display: flex; gap: 10px; align-items: center;">
-                <a href="guide.html" target="_blank" class="btn-primary" style="text-decoration: none; display: flex; align-items: center; gap: 8px; margin-bottom: 0; width: auto; padding: 10px 20px; font-size: 16px;">
-                    <span>📘</span> Guide / Help
-                </a>
-                <button id="clearFormBtn" type="button" class="btn-secondary" style="display: flex; align-items: center; gap: 8px; margin-bottom: 0; padding: 10px 20px; font-size: 16px; white-space: nowrap;">
-                    <span>🗑️</span> Clear Form
-                </button>
+            <div style="display: flex; align-items: center; gap: 30px;">
+                <nav class="header-tabs">
+                    <a class="nav-tab active" data-view="mainView" style="text-decoration: none; border-bottom: 3px solid var(--primary-color);">⚖️ Main</a>
+                    <a class="nav-tab" data-view="settingsView" style="text-decoration: none;">⚙️ Settings</a>
+                </nav>
+                <div style="display: flex; gap: 10px;">
+                    <button id="clearFormBtn" type="button" class="btn-secondary" style="padding: 8px 16px;">
+                        <span>🗑️</span> Clear
+                    </button>
+                </div>
             </div>
-
-            <p class="subtitle">Comparison & Validation Suite</p>
         </header>
 
-        <!-- Main Content Grid -->
-        <main class="main-grid">
-            <!-- Sidebar Column (Mock + Config) -->
-            <div class="sidebar-col" style="display: flex; flex-direction: column; min-height: 0; padding-right: 5px;">
-                <!-- Mock Server Status Panel -->
-                <section class="card mock-panel" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #27173e; flex-direction: row; justify-content: space-between; align-items: center; flex: 0 0 auto;">
-                    <div style="font-weight: 600; color: #27173e;">Mock Server Control</div>
-                    <div class="mock-control" style="display: flex; align-items: center; gap: 15px;">
-                        <span id="mockStatusText" style="font-size: 0.9rem; font-weight: 600; color: #666;">Status: Initializing...</span>
-                        <button id="toggleMockBtn" type="button" class="btn-secondary" style="margin-bottom: 0; padding: 6px 14px; border-radius: 20px;" disabled>Please Wait...</button>
+        <div id="mainView" class="view-container active">
+            <main class="main-grid">
+                <div class="sidebar-col" style="display: flex; flex-direction: column; min-height: 0; padding: 15px;">
+                    <section class="card config-panel" style="flex: 1; min-height: 0; overflow-y: auto; padding: 15px; border-radius: 12px;">
+                        <div class="card-header" style="border:none; margin-bottom:15px; padding:0;">
+                            <h2 style="font-size: 1.1rem; color: var(--primary-color); display: flex; align-items: center; gap: 8px;">
+                                ⚙️ Configuration
+                                <span style="font-size: 0.7rem; color: #666; font-weight: normal; margin-left: 10px;">Type:</span>
+                                <div class="toggle-container">
+                                    <button type="button" class="toggle-btn" id="typeRest" data-type="REST">REST</button>
+                                    <button type="button" class="toggle-btn active" id="typeSoap" data-type="SOAP">SOAP</button>
+                                </div>
+                            </h2>
+                            <input type="hidden" id="testType" value="SOAP">
+                        </div>
+                        
+                        <!-- Internal Mode Tabs -->
+                        <div class="mode-tabs">
+                            <button type="button" class="mode-tab active" id="modeCompare">⚖️ Compare</button>
+                            <button type="button" class="mode-tab" id="modeBaseline">📊 Baseline</button>
+                        </div>
+                        <input type="hidden" id="comparisonMode" value="LIVE">
+
+                        <!-- Baseline Controls (Visible only in Baseline mode) -->
+                        <div id="baselineControls" style="display:none; margin-bottom: 15px; padding: 12px; background: #f0f7ff; border-radius: 10px; border-left: 4px solid var(--primary-color);">
+                            <label style="font-size: 0.8rem; font-weight: 700; margin-bottom: 8px; display: block;">Baseline Operation</label>
+                            <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+                                <button type="button" class="mode-tab active" id="opCapture" style="flex:1; font-size: 0.75rem; padding: 8px; font-weight:700;">📸 Capture Baseline</button>
+                                <button type="button" class="mode-tab" id="opCompare" style="flex:1; font-size: 0.75rem; padding: 8px; font-weight:700;">🔍 Compare Baseline</button>
+                            </div>
+                            <input type="hidden" id="baselineOperation" value="CAPTURE">
+                            
+                            <div id="captureFields">
+                                <input type="text" id="baselineServiceName" placeholder="Service Name" style="margin-bottom: 8px;">
+                                <input type="text" id="baselineDescription" placeholder="Description" style="margin-bottom: 8px;">
+                                <input type="text" id="baselineTags" placeholder="Tags (comma separated)">
+                            </div>
+                            <div id="compareFields" style="display:none;">
+                                <select id="baselineServiceSelect" style="margin-bottom: 8px;"><option value="">-- Select Service --</option></select>
+                                <select id="baselineDateSelect" style="margin-bottom: 8px;" disabled><option value="">-- Select Date --</option></select>
+                                <select id="baselineRunSelect" disabled><option value="">-- Select Run --</option></select>
+                            </div>
+                        </div>
+
+                        <form id="configForm">
+                            <div class="accordion">
+                                <div class="accordion-header">
+                                    <span>🌐 Endpoint</span>
+                                    <span class="icon">▲</span>
+                                </div>
+                                <div class="accordion-content open">
+                                    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 10px; margin-bottom: 12px;">
+                                        <div>
+                                            <label style="font-size: 0.75rem; font-weight: 700;">Method</label>
+                                            <select id="method">
+                                                <option value="POST">POST</option>
+                                                <option value="GET">GET</option>
+                                                <option value="PUT">PUT</option>
+                                                <option value="DELETE">DELETE</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="font-size: 0.75rem; font-weight: 700;">Operation Name</label>
+                                            <input type="text" id="operationName" placeholder="e.g., createResource">
+                                        </div>
+                                    </div>
+                                    <div style="margin-bottom: 10px;">
+                                        <label style="font-size: 0.75rem; font-weight: 700;">Endpoint 1 URL</label>
+                                        <textarea id="url1" rows="2" placeholder="https://api1..."></textarea>
+                                    </div>
+                                    <div id="url2Group">
+                                        <label style="font-size: 0.75rem; font-weight: 700;">Endpoint 2 URL</label>
+                                        <textarea id="url2" rows="2" placeholder="https://api2..."></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion">
+                                <div class="accordion-header">
+                                    <span>📝 Request</span>
+                                    <span class="icon">▲</span>
+                                </div>
+                                <div class="accordion-content open">
+                                    <label style="font-size: 0.75rem; font-weight: 700;">Payload (JSON/XML)</label>
+                                    <textarea id="payload" style="min-height: 150px;" placeholder='{ "id": "{{id}}" }'></textarea>
+                                    <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                                        <button type="button" class="btn-secondary" id="autoFormatBtn" style="font-size: 0.7rem; padding: 4px 10px;">✨ Auto-Format</button>
+                                        <small style="color: #666;">Use {{token}} for variables</small>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion">
+                                <div class="accordion-header">
+                                    <span>📨 Headers</span>
+                                    <span class="icon">▼</span>
+                                </div>
+                                <div class="accordion-content">
+                                    <table id="headersTable" class="input-table" style="font-size: 0.8rem;">
+                                        <tbody></tbody>
+                                    </table>
+                                    <button type="button" class="btn-secondary" id="addHeaderBtn" style="margin-top: 10px; width: 100%;">+ Add Header</button>
+                                </div>
+                            </div>
+
+                            <div class="accordion">
+                                <div class="accordion-header">
+                                    <span>🔄 Iteration Tokens</span>
+                                    <span class="icon">▼</span>
+                                </div>
+                                <div class="accordion-content">
+                                    <table id="tokensTable" class="input-table" style="font-size: 0.8rem;">
+                                        <tbody></tbody>
+                                    </table>
+                                    <button type="button" class="btn-secondary" id="addTokenBtn" style="margin-top: 10px; width: 100%;">+ Add Token</button>
+                                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                                        <div style="flex:1;">
+                                            <label style="font-size: 0.7rem; font-weight: 700;">Strategy</label>
+                                            <select id="iterationController" style="font-size: 0.8rem;"><option value="ONE_BY_ONE">One-By-One</option><option value="ALL_COMBINATIONS">All Combinations</option></select>
+                                        </div>
+                                        <div style="flex:1;">
+                                            <label style="font-size: 0.7rem; font-weight: 700;">Max Iterations</label>
+                                            <input type="number" id="maxIterations" value="100" style="font-size: 0.8rem;">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="accordion">
+                                <div class="accordion-header">
+                                    <span>⚙️ Advanced</span>
+                                    <span class="icon">▼</span>
+                                </div>
+                                <div class="accordion-content">
+                                    <div style="margin-bottom: 12px;">
+                                        <label style="font-size: 0.75rem; font-weight: 700;">Ignored Fields</label>
+                                        <input type="text" id="ignoredFields" placeholder="timestamp" value="timestamp">
+                                    </div>
+                                    <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                        <input type="checkbox" id="ignoreHeaders" style="width: auto;">
+                                        <span style="font-size: 0.85rem;">Disable Header Comparison</span>
+                                    </label>
+                                    <label style="display: flex; align-items: center; gap: 10px;">
+                                        <input type="checkbox" id="enableAuth" style="width: auto;">
+                                        <span style="font-size: 0.85rem;">Enable Authentication</span>
+                                    </label>
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px;">
+                                        <input type="text" id="clientId" placeholder="Client ID" disabled>
+                                        <input type="password" id="clientSecret" placeholder="Client Secret" disabled>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn-primary" id="compareBtn" style="margin-top: 10px; font-size: 1.1rem; padding: 15px; border-radius: 10px; font-weight:800;">▶ Run Comparison</button>
+                        </form>
+                    </section>
+                </div>
+
+                <div class="resize-handle" id="resizeHandle"></div>
+
+                <section class="card results-panel" style="flex: 1; min-height: 0; padding: 0; background: transparent; border: none; box-shadow: none;">
+                    <div class="card" style="margin: 15px; flex: 1; min-height: 0; border-radius: 12px;">
+                        <div class="card-header">
+                            <h2 style="margin: 0;">📊 Results</h2>
+                            <div id="statusIndicator" class="status-badge hidden">Running...</div>
+                        </div>
+                        <div id="resultsContainer" class="results-container">
+                            <div class="empty-state">
+                                <p style="font-size: 1.1rem; color: #999;">Configure and click "Run Comparison" to start</p>
+                            </div>
+                        </div>
                     </div>
                 </section>
+            </main>
+        </div>
 
-                <!-- Working Directory Panel -->
-                <section class="card mock-panel" style="margin-bottom: 20px; padding: 15px; border-left: 5px solid #27173e; flex: 0 0 auto;">
-                    <div style="font-weight: 600; color: #27173e; margin-bottom: 10px;">Working Directory</div>
-                    <div style="display: flex; flex-direction: column; gap: 8px;">
-                        <input type="text" id="workingDirectory" placeholder="${app.home}/work/apiurlcomparison" 
-                               style="flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;">
-                        <small style="color: #666; font-size: 0.8rem;">Leave empty to use default location. Specify custom path to browse older runs from different locations.</small>
-                    </div>
-                </section>
-
-                <!-- Configuration Panel -->
-                <section class="card config-panel" id="configPanel" style="flex: 1; min-height: 0; border-left: 5px solid #27173e;">
-                    <div class="card-header">
-                        <h2>Configuration</h2>
-                        <div class="toggle-group">
-                            <label>Type:</label>
-                            <select id="testType">
-                                <option value="REST">REST</option>
-                                <option value="SOAP" selected>SOAP</option>
-                            </select>
-                        </div>
-                        <div class="toggle-group">
-                            <label>Mode:</label>
-                            <select id="comparisonMode">
-                                <option value="LIVE" selected>Live (API1 vs API2)</option>
-                                <option value="BASELINE">Baseline Testing</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <!-- Baseline Controls (shown when BASELINE mode selected) -->
-                    <div id="baselineControls" class="baseline-controls" style="display:none;">
-                        <div class="baseline-header">
-                            <span class="baseline-badge">📊 Baseline Mode</span>
-                        </div>
-    
-                        <div class="input-group">
-                            <label>Operation:</label>
-                            <select id="baselineOperation">
-                                <option value="CAPTURE">Capture Baseline</option>
-                                <option value="COMPARE">Compare with Baseline</option>
-                            </select>
-                        </div>
-    
-                        <!-- Capture Mode Fields -->
-                        <div id="captureFields" class="baseline-section">
-                            <div class="input-group">
-                                <label>Service Name:</label>
-                                <input type="text" id="baselineServiceName" placeholder="e.g., AccountService">
-                            </div>
-                            <div class="input-group">
-                                <label>Operation / Description:</label>
-                                <input type="text" id="baselineDescription" placeholder="e.g., Pre-upgrade baseline v1.0.0">
-                            </div>
-                            <div class="input-group">
-                                <label>Tags (comma-separated):</label>
-                                <input type="text" id="baselineTags" placeholder="e.g., v1.0.0, pre-upgrade">
-                            </div>
-                        </div>
-    
-                        <!-- Compare Mode Fields -->
-                        <div id="compareFields" class="baseline-section" style="display:none;">
-                            <div class="input-group">
-                                <label>Select Service:</label>
-                                <select id="baselineServiceSelect">
-                                    <option value="">-- Select Service --</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Select Date:</label>
-                                <select id="baselineDateSelect" disabled>
-                                    <option value="">-- Select Date --</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Select Run:</label>
-                                <select id="baselineRunSelect" disabled>
-                                    <option value="">-- Select Run --</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-    
-                    <form id="configForm">
-                        <div class="row">
-                            <div class="input-group">
-                                <label>Operation Name</label>
-                                <input type="text" id="operationName" placeholder="e.g., createResource" required>
-                            </div>
-                            <div class="input-group" style="flex: 0 0 120px;">
-                                <label>Method</label>
-                                <select id="method">
-                                    <option value="POST">POST</option>
-                                    <option value="GET">GET</option>
-                                    <option value="PUT">PUT</option>
-                                    <option value="DELETE">DELETE</option>
-                                    <option value="PATCH">PATCH</option>
-                                </select>
-                            </div>
-                        </div>
-    
-                        <div class="row" id="urlRow">
-                            <div class="input-group">
-                                <label>Endpoint 1 URL</label>
-                                <input type="text" id="url1" placeholder="http://api1.example.com/resource" required>
-                            </div>
-                            <div class="input-group" id="url2Group">
-                                <label>Endpoint 2 URL</label>
-                                <input type="text" id="url2" placeholder="http://api2.example.com/resource" required>
-                            </div>
-                        </div>
-    
-                        <div class="input-group full-width">
-                            <label>Payload (JSON/XML Template)</label>
-                            <textarea id="payload" placeholder="{ 'id': '{{id}}' }" rows="6"></textarea>
-                            <small>Use {{token}} syntax for variable injection from tokens below.</small>
-                        </div>
-
-                        <div class="input-group full-width">
-                            <label>Ignored Fields (Comparison)</label>
-                            <input type="text" id="ignoredFields" placeholder="e.g. timestamp, duration, token" value="timestamp, X-Dynamic-Header">
-                            <small>Comma-separated list of JSON/XML fields to ignore during response comparison.</small>
-                        </div>
-
-                        <div class="input-group" style="margin-bottom: 5px;">
-                            <label style="display:flex; align-items:center; font-weight:normal;">
-                                <input type="checkbox" id="ignoreHeaders" style="width:auto; margin-right:8px;"> Disable Header Comparison
-                            </label>
-                             <small style="margin-left: 24px;">If checked, header mismatches will be ignored.</small>
-                        </div>
-    
-                        <!-- Dynamic Headers Section -->
-                        <div class="divider"><span>Request Headers</span></div>
-                        <div class="dynamic-section">
-                            <table id="headersTable" class="input-table">
-                                <thead>
-                                    <tr>
-                                        <th>Header Name</th>
-                                        <th>Value</th>
-                                        <th width="50px"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Rows added dynamically -->
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn-secondary" id="addHeaderBtn">+ Add Header</button>
-                        </div>
-    
-                        <!-- Dynamic Tokens Section -->
-                        <div class="divider"><span>Iteration Tokens</span></div>
-                        <div class="input-group">
-                            <small>Define variables to iterate over. Multiple values separated by semicolon (;).</small>
-                        </div>
-                        <div class="dynamic-section">
-                            <table id="tokensTable" class="input-table">
-                                <thead>
-                                    <tr>
-                                        <th>Token Name</th>
-                                        <th>Values (semicolon separated)</th>
-                                        <th width="50px"></th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <!-- Rows added dynamically -->
-                                </tbody>
-                            </table>
-                            <button type="button" class="btn-secondary" id="addTokenBtn">+ Add Token</button>
-                        </div>
-    
-                        <div class="row">
-                            <div class="input-group">
-                                <label>Iteration Strategy</label>
-                                <select id="iterationController">
-                                    <option value="ONE_BY_ONE">One-By-One (Efficient)</option>
-                                    <option value="ALL_COMBINATIONS">All Combinations (Exhaustive)</option>
-                                </select>
-                            </div>
-                            <div class="input-group">
-                                <label>Max Iterations</label>
-                                <input type="number" id="maxIterations" value="100">
-                            </div>
-                        </div>
-    
-                        <!-- Auth Section -->
-                        <div class="divider"><span>Authentication (Basic)</span></div>
-                        <div class="input-group" style="margin-bottom: 5px;">
-                            <label style="display:flex; align-items:center; font-weight:normal;">
-                                <input type="checkbox" id="enableAuth" checked style="width:auto; margin-right:8px;"> Enable Authentication
-                            </label>
-                        </div>
-                        <div class="row">
-                            <div class="input-group">
-                                <label>Client ID</label>
-                                <input type="text" id="clientId">
-                            </div>
-                            <div class="input-group">
-                                <label>Client Secret</label>
-                                <input type="password" id="clientSecret">
-                            </div>
-                        </div>
-    
-                        <button type="submit" class="btn-primary" id="compareBtn">Run Comparison</button>
-                    </form>
-                </section>
+        <div id="settingsView" class="view-container">
+            <div class="settings-card">
+                <h2>⚙️ Application Settings</h2>
+                <div class="settings-group">
+                    <label for="workingDirectory">Working Directory</label>
+                    <input type="text" id="workingDirectory" placeholder="C:\raks\baselines...">
+                    <p style="font-size: 0.8rem; color: #666; margin-top: 8px;">Path where baseline data and logs will be stored.</p>
+                </div>
+                <div class="settings-group">
+                    <label>Data Management</label>
+                    <p style="font-size: 0.9rem; margin-bottom: 15px;">Populate form with predefined Truist API test data from configuration.</p>
+                    <button type="button" id="loadMockTestDataBtn" class="btn-primary" style="width: auto; padding: 12px 24px;">🚀 Load Mock Test Data</button>
+                </div>
             </div>
-
-            <!-- Resize Handle -->
-            <div class="resize-handle" id="resizeHandle"></div>
-
-            <!-- Dashboard / Results Panel -->
-            <section class="card results-panel">
-                <div class="card-header">
-                    <h2>Execution Dashboard</h2>
-                    <div id="statusIndicator" class="status-badge hidden">Running...</div>
-                </div>
-
-                <div id="resultsContainer" class="results-container">
-                    <div class="empty-state">
-                        <img src="https://via.placeholder.com/150/f0f0f0/cccccc?text=Waiting" alt="Waiting">
-                        <p>Enter configuration and click "Run Comparison" to start.</p>
-                    </div>
-                </div>
-            </section>
-        </main>
+        </div>
     </div>
 
-    <script src="app.js?v=2.0"></script>
-</body>
+    <script src="app.js"></script>
+    <script>
+        // UI Interaction for Accordions
+        document.querySelectorAll('.accordion-header').forEach(h => {
+            h.addEventListener('click', () => {
+                const content = h.nextElementSibling;
+                const isOpen = content.classList.contains('open');
+                content.classList.toggle('open');
+                h.querySelector('.icon').innerText = isOpen ? '▼' : '▲';
+            });
+        });
 
+        // Type Toggle UI
+        const typeBtns = document.querySelectorAll('.toggle-btn');
+        typeBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                typeBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.getElementById('testType').value = btn.dataset.type;
+                // Dispatch change event manually so app.js sees it
+                document.getElementById('testType').dispatchEvent(new Event('change'));
+            });
+        });
+
+        // Internal Mode Tabs UI
+        const modeCompare = document.getElementById('modeCompare');
+        const modeBaseline = document.getElementById('modeBaseline');
+        const baselineControls = document.getElementById('baselineControls');
+        const url2Group = document.getElementById('url2Group');
+
+        modeCompare.addEventListener('click', () => {
+            modeCompare.classList.add('active');
+            modeBaseline.classList.remove('active');
+            baselineControls.style.display = 'none';
+            url2Group.style.display = 'block';
+            document.getElementById('comparisonMode').value = 'LIVE';
+        });
+
+        modeBaseline.addEventListener('click', () => {
+            modeBaseline.classList.add('active');
+            modeCompare.classList.remove('active');
+            baselineControls.style.display = 'block';
+            url2Group.style.display = 'none';
+            document.getElementById('comparisonMode').value = 'BASELINE';
+        });
+
+        // Baseline Operation Toggle UI
+        const opCapture = document.getElementById('opCapture');
+        const opCompare = document.getElementById('opCompare');
+        const captureFields = document.getElementById('captureFields');
+        const compareFields = document.getElementById('compareFields');
+
+        opCapture.addEventListener('click', () => {
+            opCapture.classList.add('active');
+            opCompare.classList.remove('active');
+            captureFields.style.display = 'block';
+            compareFields.style.display = 'none';
+            document.getElementById('baselineOperation').value = 'CAPTURE';
+        });
+
+        opCompare.addEventListener('click', () => {
+            opCompare.classList.add('active');
+            opCapture.classList.remove('active');
+            captureFields.style.display = 'none';
+            compareFields.style.display = 'block';
+            document.getElementById('baselineOperation').value = 'COMPARE';
+        });
+    </script>
+</body>
 </html>

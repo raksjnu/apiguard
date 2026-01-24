@@ -1,0 +1,17 @@
+{
+  "runId" : "run-001",
+  "serviceName" : "order",
+  "captureDate" : "20260123",
+  "captureTimestamp" : "2026-01-23T15:59:00.4792721-06:00",
+  "testType" : "REST",
+  "endpoint" : "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders",
+  "operation" : "createResource",
+  "totalIterations" : 1,
+  "description" : "",
+  "tags" : [ ],
+  "configUsed" : {
+    "maxIterations" : 100,
+    "iterationController" : "ONE_BY_ONE",
+    "testType" : "REST"
+  }
+}

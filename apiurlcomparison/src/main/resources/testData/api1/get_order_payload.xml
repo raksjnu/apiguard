@@ -1,0 +1,7 @@
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice">
+  <soap:Body>
+    <tns:GetOrderRequest>
+      <orderNumber>ORD-20260118-001</orderNumber>
+    </tns:GetOrderRequest>
+  </soap:Body>
+</soap:Envelope>
