@@ -1,0 +1,13 @@
+"You called the function 'contains' with these arguments: 
+  1: Object (do {ns soap http://schemas.xmlsoap.org/soap/envelope/---{soap#Envelope: {soap...)
+  2: String ("CreateOrderRequest")
+
+But it expects one of these combinations:
+  (Array, Any)
+  (String, String)
+  (String, Regex)
+
+1| payload contains 'CreateOrderRequest'
+           ^^^^^^^^
+Trace:
+  at main (line: 1, column: 9)" evaluating expression: "payload contains 'CreateOrderRequest'".

@@ -1,0 +1,8 @@
+{
+  "Strict-Transport-Security" : "max-age=31536000; includeSubdomains",
+  "Connection" : "Keep-Alive",
+  "x-correlation-id" : "b674f52d-2f79-4c5d-9b6c-336339011de4",
+  "Content-Length" : "448",
+  "Date" : "Sat, 24 Jan 2026 02:13:24 GMT",
+  "Content-Type" : "text/plain; charset=UTF-8"
+}

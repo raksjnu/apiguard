@@ -484,7 +484,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formatData = (d) => {
         if (!d) return '[Empty]';
-        try { return JSON.stringify(typeof d === 'string' ? JSON.parse(d) : d, null, 2); } catch(e) { return String(d); }
+        try { 
+            return JSON.stringify(typeof d === 'string' ? JSON.parse(d) : d, null, 2); 
+        } catch(e) { 
+            // Escape HTML for XML display
+            return String(d).replace(/&/g, "&amp;")
+                            .replace(/</g, "&lt;")
+                            .replace(/>/g, "&gt;")
+                            .replace(/"/g, "&quot;")
+                            .replace(/'/g, "&#039;");
+        }
     };
 
     const setupSync = (body) => {
@@ -686,31 +695,11 @@ document.addEventListener('DOMContentLoaded', () => {
         modeCompare.addEventListener('click', () => handleBaselineUI('LIVE'));
         modeBaseline.addEventListener('click', () => {
             const currentType = document.getElementById('testType').value;
-            console.log('DEBUG: ModeBaseline Clicked. Captured Type:', currentType);
-            
-            // Manual OpCapture activation
-            opCapture.classList.add('active');
-            if (typeof opCompare !== 'undefined' && opCompare) opCompare.classList.remove('active');
-            document.getElementById('baselineOperation').value = 'CAPTURE';
-            const capFields = document.getElementById('captureFields');
-            const compFields = document.getElementById('compareFields');
-            if (capFields) capFields.style.display = 'block';
-            if (compFields) compFields.style.display = 'none';
-
+            // Ensure default Capture is set
+            opCapture.click();
             handleBaselineUI('BASELINE');
-
-            // Force Re-sync type and UI after a minimal delay to override any race conditions
-            setTimeout(() => {
-                console.log('DEBUG: Restoring Type to:', currentType);
-                document.getElementById('testType').value = currentType;
-                if (currentType === 'REST') {
-                    document.getElementById('typeRest').classList.add('active');
-                    document.getElementById('typeSoap').classList.remove('active');
-                } else {
-                    document.getElementById('typeSoap').classList.add('active');
-                    document.getElementById('typeRest').classList.remove('active');
-                }
-            }, 10);
+            // Basic restore of type
+            document.getElementById('testType').value = currentType;
         });
     }
 
