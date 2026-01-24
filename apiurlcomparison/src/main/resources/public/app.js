@@ -1,4 +1,46 @@
-document.addEventListener('DOMContentLoaded', () => {
+    // Inject Styles for Settings Panel
+    const style = document.createElement('style');
+    style.innerHTML = `
+        .settings-card {
+            max-width: 600px;
+            margin: 40px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 10px 15px rgba(0,0,0,0.1);
+        }
+        .settings-card h2 {
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            color: var(--primary-color);
+            font-size: 1.5rem;
+        }
+        .settings-group {
+            margin-bottom: 25px;
+        }
+        .settings-group label {
+            display: block;
+            font-weight: 700;
+            margin-bottom: 8px;
+            color: #2d3748;
+        }
+        .settings-group input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            transition: border-color 0.2s;
+        }
+        .settings-group input[type="text"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
+        }
+    `;
+    document.head.appendChild(style);
+
     // console.log('[APP] Check statusIndicator removal...'); 
     // User requested removal of "Running..." indicator. We'll ensure it's hidden or removed.
     const statusIndicator = document.getElementById('statusIndicator');
@@ -224,7 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             modal.innerHTML = `
                 <div style="background:white; padding:30px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2); width:400px; text-align:center;">
-                    <div style="font-size:1.2rem; font-weight:800; color:var(--primary-color); margin-bottom:15px;">${msg}</div>
+                    <div class="modal-msg" style="font-size:1.2rem; font-weight:800; color:var(--primary-color); margin-bottom:15px;">${msg}</div>
                     <div style="background:#edf2f7; height:10px; border-radius:5px; overflow:hidden; position:relative;">
                         <div class="progress-bar-anim" style="background:var(--primary-color); height:100%; width:30%; position:absolute; left:0; border-radius:5px;"></div>
                     </div>
@@ -237,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             document.body.appendChild(modal);
         } else {
-            modal.querySelector('div > div').innerText = msg;
+            modal.querySelector('.modal-msg').innerText = msg;
             modal.style.display = 'flex';
         }
     };
@@ -250,14 +292,18 @@ document.addEventListener('DOMContentLoaded', () => {
     compareBtn.addEventListener('click', async (e) => {
         e.preventDefault();
         const config = buildConfig();
+        const isBaseline = config.comparisonMode === 'BASELINE';
+        const isCapture = isBaseline && document.getElementById('baselineOperation').value === 'CAPTURE';
+        const btnText = isCapture ? 'Capturing Baseline...' : (isBaseline ? 'Comparing Baseline...' : 'Running Comparison...');
+
         if (!config.rest.api1.baseUrl && !config.soap.api1.baseUrl) { alert('URL 1 is required'); return; }
 
-        showProgressModal('Running Comparison...');
+        showProgressModal(btnText);
         compareBtn.disabled = true;
-        resultsContainer.innerHTML = ''; // Clear previous results immediately
+        resultsContainer.innerHTML = ''; 
 
         try {
-            if (config.comparisonMode === 'BASELINE') {
+            if (isBaseline) {
                 await handleBaselineComparison(config);
             } else {
                 const response = await fetch('api/compare', {
@@ -455,10 +501,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Compute line-by-line highlights if mismatch and dual pane
             if (!isMatch && hasAPI2) {
-                // For headers, they are text lines. For payload, formatData returns string.
-                // We split by newline and compare.
-                const lines1 = c1.split(/\r?\n/);
-                const lines2 = c2.split(/\r?\n/);
+                // Ensure text is comparable by splitting and standardizing
+                const lines1 = String(c1).split(/\r?\n/);
+                const lines2 = String(c2).split(/\r?\n/);
                 const max = Math.max(lines1.length, lines2.length);
                 
                 let out1 = '';
@@ -467,11 +512,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 0; i < max; i++) {
                     const l1 = lines1[i] || '';
                     const l2 = lines2[i] || '';
+                    // Semantic trim to avoid whitespace diffs appearing as full line diffs
                     const isDiff = l1.trim() !== l2.trim();
                     const style = isDiff ? 'background-color:#ffe6e6; font-weight:bold; color:#c53030; display:inline-block; width:100%; border-radius:2px;' : '';
                     
-                    out1 += `<div style="${style}">${l1 || '&nbsp;'}</div>`;
-                    out2 += `<div style="${style}">${l2 || '&nbsp;'}</div>`;
+                    // Preserve indentation for display but highlight based on trim
+                    out1 += `<div style="${style}">${l1.replace(/ /g, '&nbsp;') || '&nbsp;'}</div>`;
+                    out2 += `<div style="${style}">${l2.replace(/ /g, '&nbsp;') || '&nbsp;'}</div>`;
                 }
                 c1 = out1;
                 c2 = out2;
@@ -728,8 +775,41 @@ document.addEventListener('DOMContentLoaded', () => {
             if (runs.length > 0) {
                 baselineRunSelect.disabled = false;
                 baselineRunSelect.value = runs[runs.length - 1].runId;
-                // Trigger detail population for the auto-selected run
                 baselineRunSelect.dispatchEvent(new Event('change'));
+                
+                // --- Add/Update "View Baseline" Button ---
+                let viewBtn = document.getElementById('viewBaselineBtn');
+                if (!viewBtn) {
+                     viewBtn = document.createElement('button');
+                     viewBtn.id = 'viewBaselineBtn';
+                     viewBtn.type = 'button';
+                     viewBtn.className = 'btn-secondary';
+                     viewBtn.style.cssText = 'width:100%; margin-top:10px; padding:8px; font-weight:700; background:#edf2f7; color:#4a5568;';
+                     viewBtn.innerHTML = '👁️ View Saved Baseline (History)';
+                     document.getElementById('compareFields').appendChild(viewBtn);
+                     
+                     viewBtn.onclick = async () => {
+                         const svc = baselineServiceSelect.value;
+                         const dt = baselineDateSelect.value;
+                         const rn = baselineRunSelect.value;
+                         const wd = document.getElementById('workingDirectory').value.trim();
+                         if (!svc || !dt || !rn) return;
+                         
+                         showProgressModal('Loading Baseline History...');
+                         try {
+                             // Use existing /details endpoint which returns List<ComparisonResult>
+                             const url = `api/baselines/runs/${encodeURIComponent(svc)}/${encodeURIComponent(dt)}/${encodeURIComponent(rn)}/details${wd ? '?workDir=' + encodeURIComponent(wd) : ''}`;
+                             const res = await fetch(url);
+                             if(res.ok) {
+                                 const results = await res.json();
+                                 renderResults(results);
+                             } else {
+                                 alert('Could not load saved results.');
+                             }
+                         } catch(e) { console.error(e); alert('Failed to load history'); }
+                         finally { hideProgressModal(); }
+                     };
+                }
             }
         } catch (e) { console.error('Error loading runs:', e); }
     });
