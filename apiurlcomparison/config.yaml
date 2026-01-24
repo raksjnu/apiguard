@@ -82,9 +82,10 @@ maxIterations: 100
 
 # Define tokens and the values to iterate over.
 tokens:
-  orderNumber:
-    - "ORD-20260118-001"
-    - "ORD-20260118-002"
+  account:
+    - "1729"
+    - "2016"
+    - "2018"
 
 # Iteration Strategy: "ALL_COMBINATIONS" (default) or "ONE_BY_ONE"
 iterationController: "ONE_BY_ONE"

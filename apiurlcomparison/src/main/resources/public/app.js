@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Form Population & Defaults ---
-    const resetFormToStandard = (type, shouldPopulate = true) => {
+    const resetFormToStandard = (type) => {
         document.getElementById('operationName').value = '';
         document.getElementById('url1').value = '';
         document.getElementById('url2').value = '';
@@ -76,29 +76,11 @@ document.addEventListener('DOMContentLoaded', () => {
         headersTable.innerHTML = '';
         tokensTable.innerHTML = ''; 
         
-        // Add default Content-Type
+        // Add ONLY the default Content-Type as per the standard (REST/SOAP)
         addRow(headersTable, ['Header Name', 'Value'], ['Content-Type', (type === 'SOAP' ? 'text/xml' : 'application/json')]);
         
-        // AUTO-POPULATE from loadedConfig if available (Ensures real Mule data is shown)
-        // Only do this during type switches, NOT during manual clear
-        if (shouldPopulate && loadedConfig) {
-            const activeApis = (type === 'SOAP') ? loadedConfig.soap : loadedConfig.rest;
-            if (activeApis && activeApis.api1) {
-                document.getElementById('url1').value = activeApis.api1.baseUrl || '';
-                document.getElementById('url2').value = activeApis.api2?.baseUrl || '';
-                const op = activeApis.api1.operations?.[0];
-                if (op) {
-                    document.getElementById('operationName').value = op.name || '';
-                    document.getElementById('payload').value = op.payloadTemplatePath || '';
-                    document.getElementById('method').value = op.methods?.[0] || 'POST';
-                    if (op.headers) {
-                        Object.entries(op.headers).forEach(([k, v]) => {
-                            if (k !== 'Content-Type') addRow(headersTable, ['Header Name', 'Value'], [k, v]);
-                        });
-                    }
-                }
-            }
-        }
+        // Removed auto-population logic entirely from here as requested.
+        // Data will ONLY be populated via the "Load Mock Test Data" button in Settings.
 
         const authCheck = document.getElementById('enableAuth');
         if (authCheck) {
@@ -155,7 +137,30 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) { console.error('Defaults error:', e); }
     };
 
-    document.getElementById('testType').addEventListener('change', (e) => resetFormToStandard(e.target.value, true));
+    document.getElementById('testType').addEventListener('change', (e) => resetFormToStandard(e.target.value));
+
+    // --- Global Utility: Copy to Clipboard ---
+    const copyToClipboard = (text, btn) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = btn.innerText;
+            btn.innerText = '✅';
+            setTimeout(() => btn.innerText = originalText, 1000);
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            // Fallback for non-secure contexts
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                btn.innerText = '✅';
+                setTimeout(() => btn.innerText = originalText, 1000);
+            } catch (e) {}
+            document.body.removeChild(textArea);
+        });
+    };
 
     // --- Comparison Logic ---
     const buildConfig = () => {
@@ -380,7 +385,9 @@ document.addEventListener('DOMContentLoaded', () => {
                         btn.onclick = (e) => {
                             e.stopPropagation();
                             const target = btn.nextElementSibling;
-                            copyToClipboard(target.innerText, btn);
+                            if (target) {
+                                copyToClipboard(target.innerText, btn);
+                            }
                         };
                     });
                 }
@@ -394,46 +401,56 @@ document.addEventListener('DOMContentLoaded', () => {
         const a1 = res.api1 || {};
         const a2 = res.api2 || {};
 
+        const areHeadersMatch = (h1, h2) => {
+            if (!h1 || !h2) return h1 === h2;
+            const entries1 = Object.entries(h1).sort();
+            const entries2 = Object.entries(h2).sort();
+            return JSON.stringify(entries1) === JSON.stringify(entries2);
+        };
+
+        const arePayloadsMatch = (p1, p2) => {
+            if (!p1 || !p2) return p1 === p2;
+            try {
+                const j1 = typeof p1 === 'string' ? JSON.parse(p1) : p1;
+                const j2 = typeof p2 === 'string' ? JSON.parse(p2) : p2;
+                return JSON.stringify(j1) === JSON.stringify(j2);
+            } catch (e) {
+                return String(p1).trim() === String(p2).trim();
+            }
+        };
+
         const renderHeaders = (headers) => {
             if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
             return Object.entries(headers).map(([k,v])=>`<div><strong>${k}:</strong> ${v}</div>`).join('');
         };
 
-        const copyToClipboard = (text, btn) => {
-            navigator.clipboard.writeText(text).then(() => {
-                const originalText = btn.innerText;
-                btn.innerText = '✅';
-                setTimeout(() => btn.innerText = originalText, 1000);
-            }).catch(err => {
-                console.error('Could not copy text: ', err);
-            });
-        };
+        const renderComponent = (v1, v2, label, type, isHeader) => {
+            const hasAPI2 = !!res.api2;
+            const isMatch = isHeader ? areHeadersMatch(v1, v2) : arePayloadsMatch(v1, v2);
 
-        const renderBox = (data, label, type, contentKey) => {
-            const content = contentKey === 'request' ? (data.requestPayload || '') : (data.responsePayload || '');
-            const headers = contentKey === 'request' ? (data.requestHeaders || {}) : (data.responseHeaders || {});
-            const headersText = Object.entries(headers).map(([k,v])=>`${k}: ${v}`).join('\n');
-
-            return `
-            <div class="${type}-box" style="flex:1; min-width:0; position:relative;">
-                <h5 style="margin:0 0 8px 0; font-size:0.8rem; color:var(--primary-color); display:flex; justify-content:space-between;">
-                    <span>${label}</span>
-                    ${data.duration ? `<span style="font-weight:normal; color:#666;">${data.duration}ms</span>` : ''}
-                </h5>
-                <div style="margin-bottom:10px; position:relative;">
-                    <div style="font-size:0.7rem; font-weight:700; color:#555; margin-bottom:3px;">Headers:</div>
-                    <button type="button" class="copy-btn" title="Copy Headers">Copy</button>
-                    <div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:80px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">
-                        ${renderHeaders(headers)}
+            const renderSingleBox = (val, title, flex = 1) => `
+                <div class="${type}-box" style="flex:${flex}; min-width:0; position:relative;">
+                    <div style="font-size:0.7rem; font-weight:700; color:var(--primary-color); margin-bottom:5px; text-transform:uppercase;">${title}</div>
+                    <div style="position:relative;">
+                        <button type="button" class="copy-btn" title="Copy ${label}">${isHeader ? 'Copy' : 'Copy'}</button>
+                        ${isHeader ? 
+                            `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:80px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
+                            `<pre class="sync-p" style="margin:0;">${formatData(val)}</pre>`
+                        }
                     </div>
                 </div>
-                <div class="sync-p-wrapper" style="position:relative;">
-                    <div style="font-size:0.7rem; font-weight:700; color:#555; margin-bottom:3px;">Payload:</div>
-                    <button type="button" class="copy-btn" title="Copy Payload" style="top:20px;">Copy</button>
-                    <pre class="sync-p">${formatData(content)}</pre>
-                </div>
-            </div>
-        `;
+            `;
+
+            if (!hasAPI2 || isMatch) {
+                return `<div style="display:flex; margin-bottom:10px;">${renderSingleBox(v1, `${label} ${isMatch && hasAPI2 ? '(Match)' : ''}`)}</div>`;
+            } else {
+                return `
+                    <div style="display:flex; gap:12px; margin-bottom:10px;">
+                        ${renderSingleBox(v1, `Current ${label}`)}
+                        ${renderSingleBox(v2, `Target/Baseline ${label}`)}
+                    </div>
+                `;
+            }
         };
 
         let diffs = '';
@@ -449,18 +466,15 @@ document.addEventListener('DOMContentLoaded', () => {
             <!-- Request Section -->
             <div style="padding:10px; background:#f7fafc; border-radius:8px; border:1px solid #edf2f7; margin-bottom:15px;">
                 <div style="font-size:0.75rem; font-weight:800; color:#4a5568; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Input Request</div>
-                <div style="display:flex; gap:12px;">
-                    ${renderBox(a1, 'Outgoing Request', 'request', 'request')}
-                </div>
+                ${renderComponent(a1.requestHeaders, a2.requestHeaders, 'Headers', 'request', true)}
+                ${renderComponent(a1.requestPayload, a2.requestPayload, 'Payload', 'request', false)}
             </div>
 
             <!-- Response Section -->
             <div style="padding:10px; background:#f0fff4; border-radius:8px; border:1px solid #c6f6d5;">
                 <div style="font-size:0.75rem; font-weight:800; color:#22543d; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">API Responses</div>
-                <div style="display:flex; gap:12px;">
-                    ${renderBox(a1, 'API 1 / Current Response', 'response', 'response')}
-                    ${!res.baselineCaptureTimestamp && (res.api2 || resultsContainer.dataset.mode === 'BASELINE') ? renderBox(a2 || {}, 'API 2 / Baseline Response', 'response', 'response') : ''}
-                </div>
+                ${renderComponent(a1.responseHeaders, a2.responseHeaders, 'Headers', 'response', true)}
+                ${renderComponent(a1.responsePayload, a2.responsePayload, 'Payload', 'response', false)}
             </div>
         `;
     };
@@ -493,6 +507,143 @@ document.addEventListener('DOMContentLoaded', () => {
         document.addEventListener('mouseup', () => { resizing = false; document.body.classList.remove('resizing'); });
     };
 
+    // --- Baseline Metadata Loading ---
+    const baselineServiceSelect = document.getElementById('baselineServiceSelect');
+    const baselineDateSelect = document.getElementById('baselineDateSelect');
+    const baselineRunSelect = document.getElementById('baselineRunSelect');
+
+    const loadBaselineServices = async () => {
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        try {
+            const url = `api/baselines/services${workDir ? '?workDir=' + encodeURIComponent(workDir) : ''}`;
+            const response = await fetch(url);
+            if (!response.ok) return;
+            const services = await response.json();
+            
+            baselineServiceSelect.innerHTML = '<option value="">-- Select Service --</option>';
+            services.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s;
+                opt.textContent = s;
+                baselineServiceSelect.appendChild(opt);
+            });
+            
+            if (services.length > 0) {
+                baselineServiceSelect.value = services[0];
+                baselineServiceSelect.dispatchEvent(new Event('change'));
+            }
+        } catch (e) { console.error('Error loading services:', e); }
+    };
+
+    baselineServiceSelect.addEventListener('change', async () => {
+        const service = baselineServiceSelect.value;
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        baselineDateSelect.innerHTML = '<option value="">-- Select Date --</option>';
+        baselineRunSelect.innerHTML = '<option value="">-- Select Run --</option>';
+        baselineDateSelect.disabled = true;
+        baselineRunSelect.disabled = true;
+
+        if (!service) return;
+
+        try {
+            const url = `api/baselines/dates/${encodeURIComponent(service)}${workDir ? '?workDir=' + encodeURIComponent(workDir) : ''}`;
+            const response = await fetch(url);
+            const dates = await response.json();
+            
+            dates.forEach(d => {
+                const opt = document.createElement('option');
+                opt.value = d;
+                opt.textContent = d;
+                baselineDateSelect.appendChild(opt);
+            });
+            
+            if (dates.length > 0) {
+                baselineDateSelect.disabled = false;
+                baselineDateSelect.value = dates[0];
+                baselineDateSelect.dispatchEvent(new Event('change'));
+            }
+        } catch (e) { console.error('Error loading dates:', e); }
+    });
+
+    baselineDateSelect.addEventListener('change', async () => {
+        const service = baselineServiceSelect.value;
+        const date = baselineDateSelect.value;
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        baselineRunSelect.innerHTML = '<option value="">-- Select Run --</option>';
+        baselineRunSelect.disabled = true;
+
+        if (!service || !date) return;
+
+        try {
+            const url = `api/baselines/runs/${encodeURIComponent(service)}/${encodeURIComponent(date)}${workDir ? '?workDir=' + encodeURIComponent(workDir) : ''}`;
+            const response = await fetch(url);
+            const runs = await response.json();
+            
+            runs.forEach(r => {
+                const opt = document.createElement('option');
+                opt.value = r.runId;
+                // Enhanced label with Description and Tags
+                const desc = r.description ? ` - ${r.description}` : '';
+                const tags = (r.tags && r.tags.length > 0) ? ` [${r.tags.join(', ')}]` : '';
+                opt.textContent = `${r.runId}${desc}${tags} (${r.timestamp})`;
+                baselineRunSelect.appendChild(opt);
+            });
+            
+            if (runs.length > 0) {
+                baselineRunSelect.disabled = false;
+                baselineRunSelect.value = runs[runs.length - 1].runId;
+                // Trigger detail population for the auto-selected run
+                baselineRunSelect.dispatchEvent(new Event('change'));
+            }
+        } catch (e) { console.error('Error loading runs:', e); }
+    });
+
+    baselineRunSelect.addEventListener('change', async () => {
+        const service = baselineServiceSelect.value;
+        const date = baselineDateSelect.value;
+        const runId = baselineRunSelect.value;
+        const workDir = document.getElementById('workingDirectory').value.trim();
+
+        if (!service || !date || !runId) return;
+
+        try {
+            const url = `api/baselines/runs/${encodeURIComponent(service)}/${encodeURIComponent(date)}/${encodeURIComponent(runId)}/endpoint${workDir ? '?workDir=' + encodeURIComponent(workDir) : ''}`;
+            const response = await fetch(url);
+            if (!response.ok) return;
+            const details = await response.json();
+
+            if (details.endpoint) document.getElementById('url1').value = details.endpoint;
+            if (details.metadata && details.metadata.operation) document.getElementById('operationName').value = details.metadata.operation;
+            if (details.payload) document.getElementById('payload').value = details.payload;
+            
+            // Sync Test Type (REST/SOAP)
+            if (details.metadata && details.metadata.testType) {
+                const type = details.metadata.testType.toUpperCase();
+                document.getElementById('testType').value = type;
+                // Update toggle buttons visually
+                const restBtn = document.getElementById('typeRest');
+                const soapBtn = document.getElementById('typeSoap');
+                if (type === 'REST') {
+                    restBtn.classList.add('active');
+                    soapBtn.classList.remove('active');
+                } else {
+                    soapBtn.classList.add('active');
+                    restBtn.classList.remove('active');
+                }
+            }
+
+            // Populate Headers
+            headersTable.innerHTML = '';
+            if (details.headers) {
+                Object.entries(details.headers).forEach(([k, v]) => {
+                    addRow(headersTable, ['Header Name', 'Value'], [k, v]);
+                });
+            }
+        } catch (e) {
+            console.error('Error fetching baseline details:', e);
+        }
+    });
+
     // --- Initialization ---
     // --- Baseline UI Events ---
     const opCapture = document.getElementById('opCapture');
@@ -507,9 +658,6 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('baselineOperation').value = 'CAPTURE';
             document.getElementById('captureFields').style.display = 'block';
             document.getElementById('compareFields').style.display = 'none';
-            // Trigger UI update logic
-            const fakeEvent = { target: { value: 'BASELINE' } };
-            // Since we don't have a clean central handler, let's just call the logic
             handleBaselineUI('BASELINE');
         };
         opCompare.onclick = () => {
@@ -519,6 +667,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('captureFields').style.display = 'none';
             document.getElementById('compareFields').style.display = 'block';
             handleBaselineUI('BASELINE');
+            // Populate services when switching to compare
+            loadBaselineServices();
         };
     }
 
@@ -561,8 +711,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('clearFormBtn').addEventListener('click', () => {
         if (confirm('Clear all fields?')) {
-            // PASS false to shouldPopulate to prevent auto-fill
-            resetFormToStandard(document.getElementById('testType').value, false);
+            resetFormToStandard(document.getElementById('testType').value);
             resultsContainer.innerHTML = '<div class="empty-state">Form cleared.</div>';
         }
     });
