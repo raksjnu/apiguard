@@ -190,6 +190,92 @@ public class ApiUrlComparisonWeb {
                 return "{\"error\": \"" + e.getMessage() + "\"}";
             }
         });
+        
+        get("/api/utils/ping", (req, res) -> {
+            res.type("application/json");
+            String targetUrl = req.queryParams("url");
+            if (targetUrl == null || targetUrl.isEmpty()) return "{\"error\": \"URL is required\"}";
+            
+            long start = System.currentTimeMillis();
+            java.util.Map<String, Object> pingRes = new java.util.HashMap<>();
+            try {
+                java.net.HttpURLConnection conn = (java.net.HttpURLConnection) new java.net.URL(targetUrl).openConnection();
+                conn.setRequestMethod("GET"); // HEAD might be blocked by some servers, GET is more reliable for health checks
+                conn.setConnectTimeout(5000);
+                conn.setReadTimeout(5000);
+                int code = conn.getResponseCode();
+                long end = System.currentTimeMillis();
+                
+                pingRes.put("success", code >= 200 && code < 400);
+                pingRes.put("statusCode", code);
+                pingRes.put("latency", end - start);
+                
+            } catch (Exception e) {
+                pingRes.put("success", false);
+                pingRes.put("statusCode", 0);
+                pingRes.put("error", e.getMessage());
+                pingRes.put("latency", System.currentTimeMillis() - start);
+            }
+            return new ObjectMapper().writeValueAsString(pingRes);
+        });
+
+        get("/api/baselines/export", (req, res) -> {
+            String service = req.queryParams("service");
+            if (service == null) service = "ALL";
+            
+            String queryWorkDir = req.queryParams("workDir");
+            String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
+            
+            UtilityService utilService = new UtilityService();
+            java.io.File zipFile = utilService.exportBaselines(storageDir, service);
+            
+            res.header("Content-Disposition", "attachment; filename=" + zipFile.getName());
+            res.type("application/zip");
+            
+            try (java.io.InputStream is = new java.io.FileInputStream(zipFile)) {
+                javax.servlet.ServletOutputStream os = res.raw().getOutputStream();
+                byte[] buffer = new byte[1024];
+                int len;
+                while ((len = is.read(buffer)) > 0) {
+                    os.write(buffer, 0, len);
+                }
+                os.flush();
+            } finally {
+                zipFile.delete();
+            }
+            return res.raw();
+        });
+
+        post("/api/baselines/import", (req, res) -> {
+            boolean overwrite = "true".equalsIgnoreCase(req.queryParams("overwrite"));
+            String queryWorkDir = req.queryParams("workDir");
+            String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
+
+            UtilityService utilService = new UtilityService();
+            // Using raw input stream for the zip file
+            byte[] bytes = req.bodyAsBytes();
+            try (java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(bytes)) {
+                if (!overwrite) {
+                    List<String> conflicts = utilService.detectConflicts(storageDir, bais);
+                    if (!conflicts.isEmpty()) {
+                        res.status(409); // Conflict
+                        return new ObjectMapper().writeValueAsString(conflicts);
+                    }
+                    // Reset stream if no conflicts
+                    bais.reset(); 
+                }
+                
+                // Re-read or just use the stream if no conflicts
+                try (java.io.ByteArrayInputStream importStream = new java.io.ByteArrayInputStream(bytes)) {
+                    utilService.importBaselines(storageDir, importStream);
+                }
+                return "{\"success\": true}";
+            } catch (Exception e) {
+                logger.error("Import failed", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
         awaitInitialization();
         logger.info("Server started. Access at http://localhost:{}", port);
         try {

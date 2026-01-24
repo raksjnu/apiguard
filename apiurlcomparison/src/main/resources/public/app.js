@@ -78,8 +78,29 @@ document.addEventListener('DOMContentLoaded', () => {
             tab.style.borderBottom = '3px solid var(--primary-color)';
             document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
             document.getElementById(target).classList.add('active');
+            if (target === 'utilitiesView') {
+                loadExportServices();
+            }
         });
     });
+
+    const loadExportServices = async () => {
+        const select = document.getElementById('exportService');
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        try {
+            const resp = await fetch(`api/baselines/services?workDir=${encodeURIComponent(workDir)}`);
+            if (resp.ok) {
+                const services = await resp.json();
+                select.innerHTML = '<option value="ALL">-- All Services --</option>';
+                services.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.innerText = s;
+                    select.appendChild(opt);
+                });
+            }
+        } catch(e) { console.error('Failed to load export services', e); }
+    };
 
     // --- Settings Persistence ---
     const wdInput = document.getElementById('workingDirectory');
@@ -90,32 +111,87 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Data Management (Load Mock) ---
     document.getElementById('loadMockTestDataBtn').addEventListener('click', async () => {
-        if (confirm('Populate the form with real Mule service test data? Existing data will be replaced.')) {
+        if (confirm('Populate the form with API test templates? This will overwrite your current configuration.')) {
             const btn = document.getElementById('loadMockTestDataBtn');
-            const originalText = btn.innerText;
-            btn.innerText = '⏳ Loading...';
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '⏳ Loading...';
             try {
                 const response = await fetch('api/config');
                 if (response.ok) {
                     loadedConfig = await response.json();
-                    // Determine type from UI state (more reliable than hidden input during transitions)
                     const isSoap = document.getElementById('typeSoap').classList.contains('active');
                     const currentType = isSoap ? 'SOAP' : 'REST';
-                    console.log('Populating Mock Data for:', currentType);
                     populateFormFields(currentType);
-                    btn.innerText = '✅ Data Loaded!';
+                    btn.innerHTML = '✅ Templates Loaded!';
                     setTimeout(() => {
                         document.querySelector('[data-view="mainView"]').click();
-                        btn.innerText = originalText;
+                        btn.innerHTML = originalText;
                     }, 800);
                 }
             } catch (e) {
                 console.error(e);
                 alert('Error loading configuration.');
-                btn.innerText = originalText;
+                btn.innerHTML = originalText;
             }
         }
     });
+
+    // --- Browser State Persistence ---
+    const CACHE_KEY = 'api_forge_form_state';
+    const saveState = () => {
+        const state = {
+            testType: document.getElementById('testType').value,
+            method: document.getElementById('method').value,
+            opName: document.getElementById('operationName').value,
+            url1: document.getElementById('url1').value,
+            url2: document.getElementById('url2').value,
+            payload: document.getElementById('payload').value,
+            ignoredFields: document.getElementById('ignoredFields').value,
+            maxIter: document.getElementById('maxIterations').value,
+            strategy: document.getElementById('iterationController').value,
+            headers: Array.from(headersTable.querySelectorAll('tr')).map(tr => ({
+                k: tr.querySelector('.key-input')?.value,
+                v: tr.querySelector('.value-input')?.value
+            })),
+            tokens: Array.from(tokensTable.querySelectorAll('tr')).map(tr => ({
+                k: tr.querySelector('.key-input')?.value,
+                v: tr.querySelector('.value-input')?.value
+            }))
+        };
+        localStorage.setItem(CACHE_KEY, JSON.stringify(state));
+    };
+
+    const loadState = () => {
+        const saved = localStorage.getItem(CACHE_KEY);
+        if (!saved) return false;
+        try {
+            const s = JSON.parse(saved);
+            document.getElementById('operationName').value = s.opName || '';
+            document.getElementById('url1').value = s.url1 || '';
+            document.getElementById('url2').value = s.url2 || '';
+            document.getElementById('payload').value = s.payload || '';
+            document.getElementById('ignoredFields').value = s.ignoredFields || 'timestamp';
+            document.getElementById('maxIterations').value = s.maxIter || '100';
+            document.getElementById('method').value = s.method || 'POST';
+            document.getElementById('iterationController').value = s.strategy || 'ONE_BY_ONE';
+
+            headersTable.innerHTML = '';
+            s.headers?.forEach(h => addRow(headersTable, ['Header Name', 'Value'], [h.k, h.v]));
+            
+            tokensTable.innerHTML = '';
+            s.tokens?.forEach(t => addRow(tokensTable, ['Token Name', 'Value'], [t.k, t.v]));
+
+            return true;
+        } catch(e) { return false; }
+    };
+
+    // Attach listeners for auto-save
+    ['method','operationName','url1','url2','payload','ignoredFields','maxIterations','iterationController'].forEach(id => {
+        document.getElementById(id).addEventListener('input', saveState);
+        document.getElementById(id).addEventListener('change', saveState);
+    });
+    headersTable.addEventListener('input', saveState);
+    tokensTable.addEventListener('input', saveState);
 
     // --- Form Population & Defaults ---
     const resetFormToStandard = (type) => {
@@ -183,7 +259,9 @@ document.addEventListener('DOMContentLoaded', () => {
             if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
             if (loadedConfig.ignoredFields) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
 
-            resetFormToStandard(initialType);
+            if (!loadState()) {
+                resetFormToStandard(initialType);
+            }
         } catch (e) { console.error('Defaults error:', e); }
     };
 
@@ -995,8 +1073,129 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Auto Format ---
     document.getElementById('autoFormatBtn').addEventListener('click', () => {
         const p = document.getElementById('payload');
-        try { p.value = JSON.stringify(JSON.parse(p.value), null, 2); } catch(e) {}
+        p.value = formatData(p.value);
+        saveState();
     });
+
+    // --- Utilities Hub: Toolkit Logic ---
+    
+    // Connectivity
+    document.getElementById('pingBtn').addEventListener('click', async () => {
+        const url = document.getElementById('utilUrl').value.trim();
+        if (!url) { alert('URL required'); return; }
+        const statusDiv = document.getElementById('utilStatus');
+        statusDiv.innerHTML = '⏳ Pinging...';
+        try {
+            const resp = await fetch(`api/utils/ping?url=${encodeURIComponent(url)}`);
+            const data = await resp.json();
+            statusDiv.innerHTML = `<div style="color:${data.success ? 'var(--success-color)' : 'var(--error-color)'}">
+                <strong>${data.success ? 'ALIVE' : 'FAILED'}</strong><br>
+                Status: ${data.statusCode}<br>
+                Latency: ${data.latency}ms
+            </div>`;
+        } catch(e) { statusDiv.innerHTML = '<div style="color:var(--error-color)">Connection Error</div>'; }
+    });
+
+    document.getElementById('fetchWsdlBtn').addEventListener('click', async () => {
+        const url = document.getElementById('utilUrl').value.trim();
+        if (!url) { alert('URL required'); return; }
+        const statusDiv = document.getElementById('utilStatus');
+        statusDiv.innerHTML = '⏳ Discovering WSDL...';
+        try {
+            const pingUrl = url.includes('?') ? url : url + '?wsdl';
+            const resp = await fetch(`api/utils/ping?url=${encodeURIComponent(pingUrl)}`);
+            const data = await resp.json();
+            if (data.success) {
+                statusDiv.innerHTML = `<div style="color:var(--success-color)">✅ WSDL match found at location.</div>`;
+            } else {
+                statusDiv.innerHTML = `<div style="color:var(--error-color)">❌ No WSDL found at this endpoint.</div>`;
+            }
+        } catch(e) { statusDiv.innerHTML = 'Discovery Failed'; }
+    });
+
+    // Auth Studio
+    document.getElementById('decodeJwtBtn').addEventListener('click', () => {
+        const jwt = document.getElementById('jwtInput').value.trim();
+        const res = document.getElementById('jwtResult');
+        if (!jwt) { res.innerText = 'No token provided'; return; }
+        try {
+            const base64Url = jwt.split('.')[1];
+            if (!base64Url) throw new Error('Invalid JWT format');
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+            res.innerHTML = `<pre style="font-size:0.7rem; margin:0;">${JSON.stringify(JSON.parse(jsonPayload), null, 2)}</pre>`;
+        } catch(e) { res.innerHTML = `<span style="color:var(--error-color)">Invalid JWT Token</span>`; }
+    });
+
+    // Data Foundry
+    const workpad = document.getElementById('dataWorkpad');
+    document.getElementById('minifyBtn').onclick = () => { try { workpad.value = JSON.stringify(JSON.parse(workpad.value)); } catch(e) { alert('Invalid JSON'); } };
+    document.getElementById('prettyBtn').onclick = () => { workpad.value = formatData(workpad.value); };
+    document.getElementById('b64EncBtn').onclick = () => { try { workpad.value = btoa(workpad.value); } catch(e) { alert('Encoding failed'); } };
+    document.getElementById('b64DecBtn').onclick = () => { try { workpad.value = atob(workpad.value); } catch(e) { alert('Invalid Base64'); } };
+
+    // Baseline Portability
+    document.getElementById('exportBtn').onclick = async () => {
+        const svc = document.getElementById('exportService').value;
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        const url = `api/baselines/export?service=${encodeURIComponent(svc)}&workDir=${encodeURIComponent(workDir)}`;
+        
+        const btn = document.getElementById('exportBtn');
+        const orig = btn.innerText;
+        btn.innerText = '⏳ Zipping...';
+        
+        try {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error('Export failed');
+            const blob = await resp.blob();
+            const downloadUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = downloadUrl;
+            a.download = `baselines_export_${svc}_${new Date().toISOString().slice(0,10)}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            btn.innerText = '✅ Exported!';
+            setTimeout(() => btn.innerText = orig, 2000);
+        } catch(e) { 
+            alert('Export failed: ' + e.message); 
+            btn.innerText = orig;
+        }
+    };
+
+    const handleImport = async (file, overwrite = false) => {
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        const status = document.getElementById('importStatus');
+        status.innerText = '⏳ Uploading & Importing...';
+        
+        try {
+            const resp = await fetch(`api/baselines/import?workDir=${encodeURIComponent(workDir)}&overwrite=${overwrite}`, {
+                method: 'POST',
+                body: await file.arrayBuffer()
+            });
+            
+            if (resp.status === 409) {
+                const conflicts = await resp.json();
+                if (confirm(`Conflicts detected for: ${conflicts.join(', ')}. Overwrite existing data?`)) {
+                    await handleImport(file, true);
+                } else {
+                    status.innerText = 'Import cancelled by user.';
+                }
+            } else if (resp.ok) {
+                status.innerText = '✅ Import Successful!';
+                loadExportServices(); // Refresh list
+            } else {
+                const err = await resp.json();
+                status.innerText = '❌ Import failed: ' + (err.error || 'Unknown error');
+            }
+        } catch(e) { status.innerText = '❌ Connection Error'; }
+    };
+
+    document.getElementById('importFile').onchange = (e) => { 
+        const file = e.target.files[0];
+        if (file) handleImport(file);
+    };
+
 
     initResize();
     loadDefaults();

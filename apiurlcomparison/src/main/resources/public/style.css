@@ -481,3 +481,64 @@ body.resizing .resize-handle::before {
     width: 5%;
     text-align: center;
 }
+
+/* Utilities Toolkit Grid Styles */
+.toolkit-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 25px;
+    align-items: start;
+}
+
+.utility-tile {
+    background: rgba(255, 255, 255, 0.7);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
+    transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+    border-left: 8px solid var(--primary-color) !important;
+}
+
+.utility-tile:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.12);
+    border-color: var(--primary-color);
+}
+
+.utility-tile .card-header {
+    border-radius: 12px 12px 0 0;
+    border-left: none !important; /* Managed by card itself or specific suite color */
+    margin: -15px -15px 15px -15px; 
+}
+
+/* Custom Scrollbar for Utilities */
+#utilitiesView::-webkit-scrollbar {
+    width: 8px;
+}
+
+#utilitiesView::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#utilitiesView::-webkit-scrollbar-thumb {
+    background: rgba(94, 39, 139, 0.2);
+    border-radius: 10px;
+}
+
+#utilitiesView::-webkit-scrollbar-thumb:hover {
+    background: rgba(94, 39, 139, 0.4);
+}
+
+/* Responsive Grid Adjustment */
+@media (max-width: 1400px) {
+    .toolkit-grid {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
+@media (max-width: 900px) {
+    .toolkit-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
