@@ -350,13 +350,28 @@ public class ApiUrlComparisonInvoker {
 
     public static String importBaselines(String workDir, InputStream zipStream) {
           try {
-            logger.info("Importing Baselines to WorkDir: " + workDir);
+            // Resolve canonical path to debug property resolution
+            File workDirFile = new File(workDir);
+            String canonicalPath = workDirFile.getCanonicalPath();
+            
+            logger.info("Importing Baselines to WorkDir (Input): {}", workDir);
+            logger.info("Importing Baselines to WorkDir (Canonical): {}", canonicalPath);
+            
             if (workDir == null) throw new IllegalArgumentException("Working Directory required");
+            
+            // Ensure directory exists
+            if (!workDirFile.exists()) {
+                workDirFile.mkdirs();
+            }
+
             com.raks.apiurlcomparison.UtilityService util = new com.raks.apiurlcomparison.UtilityService();
-            List<String> imported = util.importBaselines(workDir, zipStream);
+            // Pass the canonical path to utility service to be sure
+            List<String> imported = util.importBaselines(canonicalPath, zipStream);
+            
             Map<String, Object> result = new HashMap<>();
             result.put("success", true);
             result.put("imported", imported);
+            result.put("targetDirectory", canonicalPath); // Return path to UI
             return objectMapper.writeValueAsString(result);
         } catch (Exception e) {
             logger.error("Error importing baselines", e);
