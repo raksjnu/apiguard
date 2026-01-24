@@ -686,9 +686,9 @@ document.addEventListener('DOMContentLoaded', () => {
         modeCompare.addEventListener('click', () => handleBaselineUI('LIVE'));
         modeBaseline.addEventListener('click', () => {
             const currentType = document.getElementById('testType').value;
-            console.log('DEBUG: ModeBaseline Clicked. Current Type:', currentType);
+            console.log('DEBUG: ModeBaseline Clicked. Captured Type:', currentType);
             
-            // Manual OpCapture activation (bypass click handler to prevent side effects)
+            // Manual OpCapture activation
             opCapture.classList.add('active');
             if (typeof opCompare !== 'undefined' && opCompare) opCompare.classList.remove('active');
             document.getElementById('baselineOperation').value = 'CAPTURE';
@@ -699,15 +699,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
             handleBaselineUI('BASELINE');
 
-            // Re-sync type and UI
-            document.getElementById('testType').value = currentType;
-            if (currentType === 'REST') {
-                document.getElementById('typeRest').classList.add('active');
-                document.getElementById('typeSoap').classList.remove('active');
-            } else {
-                document.getElementById('typeSoap').classList.add('active');
-                document.getElementById('typeRest').classList.remove('active');
-            }
+            // Force Re-sync type and UI after a minimal delay to override any race conditions
+            setTimeout(() => {
+                console.log('DEBUG: Restoring Type to:', currentType);
+                document.getElementById('testType').value = currentType;
+                if (currentType === 'REST') {
+                    document.getElementById('typeRest').classList.add('active');
+                    document.getElementById('typeSoap').classList.remove('active');
+                } else {
+                    document.getElementById('typeSoap').classList.add('active');
+                    document.getElementById('typeRest').classList.remove('active');
+                }
+            }, 10);
         });
     }
 
