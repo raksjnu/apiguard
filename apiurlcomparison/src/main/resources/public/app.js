@@ -446,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="position:relative;">
                         <button type="button" class="copy-btn" title="Copy ${label}">${isHeader ? 'Copy' : 'Copy'}</button>
                         ${isHeader ? 
-                            `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:80px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
+                            `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
                             `<pre class="sync-p" style="margin:0;">${formatData(val)}</pre>`
                         }
                     </div>
@@ -479,14 +479,14 @@ document.addEventListener('DOMContentLoaded', () => {
         return `
             ${diffs}
             <!-- Request Section -->
-            <div style="padding:10px; background:#f7fafc; border-radius:8px; border:1px solid #edf2f7; margin-bottom:15px;">
+            <div style="padding:10px; background:#f7fafc; border-radius:8px; border:2px solid #cbd5e0; margin-bottom:15px;">
                 <div style="font-size:0.75rem; font-weight:800; color:#4a5568; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Input Request</div>
                 ${renderComponent(a1.requestHeaders || {}, a2.requestHeaders || {}, 'Headers', 'request', true)}
                 ${renderComponent(a1.requestPayload || '', a2.requestPayload || '', 'Payload', 'request', false)}
             </div>
 
             <!-- Response Section -->
-            <div style="padding:10px; background:#f0fff4; border-radius:8px; border:1px solid #c6f6d5;">
+            <div style="padding:10px; background:#f0fff4; border-radius:8px; border:2px solid #5ab078;">
                 <div style="font-size:0.75rem; font-weight:800; color:#22543d; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">API Responses</div>
                 ${renderComponent(a1.responseHeaders, a2.responseHeaders, 'Headers', 'response', true)}
                 ${renderComponent(a1.responsePayload, a2.responsePayload, 'Payload', 'response', false)}
