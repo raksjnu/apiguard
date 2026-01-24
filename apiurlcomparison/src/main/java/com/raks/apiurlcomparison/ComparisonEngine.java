@@ -40,17 +40,21 @@ public class ComparisonEngine {
         int status1 = api1Result.getStatusCode();
         int status2 = api2Result.getStatusCode();
         if (status1 >= 400 || status2 >= 400) {
+            // If both fail with the same error, it's technically a match in behavior but usually undesirable.
+            // However, the user explicitly asked for "Error" when invocation fails.
+            
             result.setStatus(ComparisonResult.Status.ERROR);
-            StringBuilder errorMsg = new StringBuilder("HTTP ERROR DETECTED: ");
+            StringBuilder errorMsg = new StringBuilder("HTTP ERROR: ");
             if (status1 >= 400 && status2 >= 400) {
-                errorMsg.append("Both endpoints failed - API1: ").append(status1).append(", API2: ").append(status2);
+                 errorMsg.append("Both APIs failed (API1: ").append(status1).append(", API2: ").append(status2).append(")");
             } else if (status1 >= 400) {
-                errorMsg.append("API1 failed with HTTP ").append(status1);
+                 errorMsg.append("API1 failed (").append(status1).append(")");
             } else {
-                errorMsg.append("API2 failed with HTTP ").append(status2);
+                 errorMsg.append("API2 failed (").append(status2).append(")");
             }
+            // Even if we error, we want to see the diffs if possible? No, user wants Error status.
             result.setErrorMessage(errorMsg.toString());
-            result.setDifferences(Collections.singletonList(errorMsg.toString()));
+            // Pass through the differences if any, for debugging
             return;
         }
 

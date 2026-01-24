@@ -45,7 +45,14 @@ public class BaselineComparisonService {
             try {
                 ComparisonResult result = executeApiCall(
                         apiConfig, currentTokens, config.getTestType(), iterationNumber, isOriginal);
-                result.setStatus(ComparisonResult.Status.MATCH); 
+                
+                // USER REQUEST CHECK: If status code is error, mark as ERROR
+                if (result.getApi1().getStatusCode() >= 400) {
+                     result.setStatus(ComparisonResult.Status.ERROR);
+                     result.setErrorMessage("HTTP Error " + result.getApi1().getStatusCode());
+                } else {
+                     result.setStatus(ComparisonResult.Status.MATCH);
+                } 
                 result.setBaselineServiceName(serviceName);
                 result.setBaselineDate(date);
                 result.setBaselineRunId(runId);
