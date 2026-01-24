@@ -1,14 +1,14 @@
 # Enterprise Onboarding Guide
-## API Response Comparison Tool
+## API Forge - Universal Semantic Compliance Engine
 
 **Version:** 1.0.0  
-**Last Updated:** December 2025
+**Last Updated:** January 2026
 
 ---
 
 ## Executive Summary
 
-The API Response Comparison Tool is a Java-based testing utility designed to validate API migrations, compare REST/SOAP responses, and perform baseline testing. This document provides technical details for enterprise security review, deployment, and onboarding.
+**API Forge** is an enterprise-grade semantic analysis engine. Unlike traditional testing tools, it focuses on **Semantic compliance**—ensuring that structural and business logic remains consistent across migrations, deployments, and massive data permutations. It is designed for high-stakes environments where even minor metadata shifts can cause significant downstream business impact.
 
 ---
 
@@ -18,96 +18,37 @@ The API Response Comparison Tool is a Java-based testing utility designed to val
 
 | Component | Technology | Version | Purpose |
 |-----------|-----------|---------|---------|
-| **Runtime** | Java (JDK) | 17+ | Application runtime environment |
-| **Build Tool** | Apache Maven | 3.x | Dependency management and build automation |
-| **Packaging** | Maven Shade Plugin | 3.5.1 | Creates self-contained executable JAR (uber-jar) |
-| **Language** | Java | 17 | Primary programming language |
+| **Runtime** | Java (JDK) | 17 (LTS) | Enterprise application runtime |
+| **Build Tool** | Apache Maven | 3.8+ | Dependency management |
+| **Packaging** | Maven Shade Plugin | 3.5+ | Uber-JAR distribution |
+| **Web Server** | Spark Java | 2.9.4 | Embedded GUI server |
 
 ### 1.2 Core Dependencies
 
-All dependencies are from trusted, widely-used open-source projects:
-
-#### Configuration & Data Processing
-- **SnakeYAML** `2.2` - YAML configuration file parsing
-- **Jackson Databind** `2.15.2` - JSON processing and serialization
-- **Jackson YAML** `2.15.2` - YAML to Java object mapping
-
-#### Comparison & Validation
-- **XMLUnit Core** `2.9.1` - XML/SOAP response comparison
-- **JSON Patch** `1.9` - JSON difference detection and reporting
-
-#### HTTP Communication
-- **Apache HttpClient** `4.5.14` - HTTP/HTTPS API calls with authentication support
-
-#### Web Interface
-- **Spark Java** `2.9.4` - Lightweight embedded web server for GUI
-- **JMustache** `1.15` - HTML templating for report generation
-
-#### CLI & Logging
-- **Picocli** `4.7.5` - Command-line interface framework
-- **SLF4J API** `2.0.9` - Logging facade
-- **SLF4J Simple** `2.0.9` - Lightweight logging implementation
-
-#### Testing (Development Only)
-- **JUnit Jupiter** `5.10.0` - Unit testing framework (not included in production JAR)
-- **Mockito** `5.5.0` - Mocking framework (not included in production JAR)
+- **Jackson & SnakeYAML**: Robust configuration and payload processing.
+- **XMLUnit & JSON Patch**: Precision structural diffing for XML/SOAP and JSON.
+- **Apache HttpClient**: Stable, enterprise-standard communication.
+- **JMustache**: Professional report generation.
 
 ---
 
 ## 2. Architecture & Design
 
-### 2.1 Application Architecture
-
-```mermaid
-graph TB
-    subgraph "User Interface Layer"
-        GUI[Web GUI<br/>Spark Java Server]
-        CLI[Command Line Interface<br/>Picocli]
-    end
-    
-    subgraph "Business Logic Layer"
-        CS[Comparison Service]
-        BCS[Baseline Comparison Service]
-        CE[Comparison Engine]
-        TDG[Test Data Generator]
-    end
-    
-    subgraph "Integration Layer"
-        AC[API Client<br/>HTTP/HTTPS]
-        PP[Payload Processor]
-        BSS[Baseline Storage Service]
-    end
-    
-    subgraph "External Systems"
-        API1[API Endpoint 1]
-        API2[API Endpoint 2]
-        FS[File System<br/>Baseline Storage]
-    end
-    
-    GUI --> CS
-    CLI --> CS
-    CS --> CE
-    CS --> TDG
-    CS --> AC
-    BCS --> AC
-    BCS --> BSS
-    AC --> API1
-    AC --> API2
-    BSS --> FS
-    PP --> AC
-    GUI --> BCS
-```
+### 2.1 Technical Toolkit
+API Forge includes a specialized **Utilities Hub** for engineering teams:
+- **JWT Auth Studio**: Inspect and decode JWT claims instantly to verify security context.
+- **Data Foundry**: Perform rapid Base64, XML, and JSON transformations directly in the tool.
+- **Strategic Baseline Service**: Hierarchical storage for "Golden Baselines" in any workspace.
 
 ### 2.2 Key Components
 
-| Component | Responsibility | Lines of Code |
-|-----------|---------------|---------------|
-| `ComparisonEngine.java` | Core comparison logic for JSON/XML | ~140 |
-| `ComparisonService.java` | Orchestrates API calls and comparisons | ~300 |
-| `BaselineComparisonService.java` | Baseline capture and comparison | ~360 |
-| `ApiClient.java` | HTTP client with authentication | ~200 |
-| `ApiUrlComparisonWeb.java` | Web GUI server and REST endpoints | ~206 |
-| `HtmlReportGenerator.java` | Report generation | ~400 |
+| Component | Responsibility |
+|-----------|---------------|
+| `ComparisonEngine.java` | Precision field-level diffing for JSON and XML payloads. |
+| `ComparisonService.java` | Management of live A/B and Iteration testing logic. |
+| `BaselineComparisonService.java` | Orchestrates the capture and semantic validation of stored truth. |
+| `ApiClient.java` | Handles secure HTTP/HTTPS communication with auth support. |
+| `ApiUrlComparisonWeb.java` | Powers the reactive GUI and Toolkit API endpoints. |
 
 **Total Application Code:** ~2,000 lines (excluding tests and configuration)
 

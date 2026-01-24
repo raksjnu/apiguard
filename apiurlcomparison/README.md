@@ -1,104 +1,31 @@
-  - `ALL_COMBINATIONS`: Tests all possible token combinations (exhaustive)
-- **Original Payload Testing**: Always executes the original payload as-is before token replacements
-- **Detailed Comparison Reports**: 
-  - JSON format for programmatic processing
-  - HTML format for visual review
-  - GUI dashboard with real-time results
-- **Token-Based Testing**: Dynamic payload generation with variable substitution
-- **Authentication Support**: Basic authentication for secured endpoints
-- **Mock API Server**: Built-in mock server for testing and development
+# API Forge - Universal Semantic Compliance Engine
 
-## Prerequisites
+**API Forge** is a strategic analysis engine designed for **Universal API Compliance**. It allows engineering and ops teams to validate migrations, perform massive structural testing, and manage post-deployment health using deep semantic inspection.
 
-- Java 17 or higher
-- Maven 3.6 or higher
+## Key Features
 
-## Installation
+- **Semantic A/B Comparison**: Deep structural comparison of JSON and XML responses.
+- **Strategic Baseline Guard**: Capture "Golden States" and verify future releases against saved truth.
+- **Massive Matrix Testing**: Use **Iteration Tokens** to verify hundreds of permutations in a single run.
+- **JWT Auth Studio**: Built-in inspector for decoding JWT claims and verifying security headers.
+- **Data Foundry**: Utility suite for Minify, Pretty-print, and Base64 transformations.
+- **Response Header Guard**: Automated comparison of critical HTTP headers.
+- **Smart Cleanup**: Tool starts clean and empty every time, ensuring no stale test data is used.
 
-1. Clone or download the project
-2. Navigate to the project directory
-3. Build the project:
-   ```bash
-   mvn clean package
-   ```
+## Strategic Enterprise Scenarios
 
-## Usage
+API Forge provides unique capabilities that go beyond traditional professional tools:
 
-### Option 1: Command-Line Interface (CLI)
+### 1. 🚀 Zero-Day Release Guard (Ops/SRE)
+Capture a stable "Golden Baseline" of your services before a production release. Immediately after deployment, run a comparison against the baseline to detect semantic shifts before users report issues. Transition from **Reactive** to **Proactive** incident management.
 
-Run comparisons from the command line and generate reports:
+### 2. 🧪 Universal Compliance (Dev/QA)
+Verify semantic consistency across massive data permutations. Use **Iteration Tokens** to run matrix tests that ensure your API behaves correctly across all business rules, preventing regression in complex logic.
 
-```bash
-java -jar target/apiurlcomparison-1.0.0-jar-with-raks.jar --output ./reports
-```
+### 3. 🏗️ Bit-Perfect Core Parity (Architecture)
+During cloud migrations or legacy modernizations, use API Forge as the ultimate source of truth. Compare legacy output against the new cloud-native service to ensure bit-perfect semantic parity during critical transitions.
 
-**CLI Arguments:**
-- `--config`: Path to the YAML configuration file (optional, defaults to bundled config)
-- `--output`: Directory where reports will be generated (optional, defaults to `results.json`)
-- `--gui` / `-g`: Launch the interactive web GUI
-
-**Generated Reports:**
-- `results.json`: Machine-readable JSON report
-- `results.html`: Human-readable HTML report with detailed comparison
-
-### Option 2: Web-Based GUI
-
-Launch the interactive web interface:
-
-```bash
-java -jar target/apiurlcomparison-1.0.0-jar-with-raks.jar --gui
-# Or with a custom config:
-java -jar target/apiurlcomparison-1.0.0-jar-with-raks.jar --gui --config my-config.yaml
-```
-
-The GUI will automatically open in your default browser at `http://localhost:4567`
-
-**Quick Start Scripts:**
-- **Windows**: Double-click `start-apiurlcomparison-gui.bat`
-- **macOS/Linux**: Run `./start-apiurlcomparison-gui.sh` (make executable first: `chmod +x start-apiurlcomparison-gui.sh`)
-
-**GUI Features:**
-- Interactive configuration form with default SOAP type
-- Real-time execution dashboard with **Response Header Comparison**
-- Visual comparison results with professional purple theme
-- **Ignored Fields**: Exclude dynamic fields (e.g., timestamp, token) from comparison
-- **Disable Header Comparison**: Toggle to ignore all header mismatches for focus on payload adjustments
-- **Authentication Control**: Toggle Basic Auth support easily
-- Expandable iteration details with horizontal scrolling
-- XML/SOAP pretty-printing for better readability
-- **Clear Form Control**: One-click reset to restore default configurations
-- **Baseline Request Headers**: Automatically loads original request headers when selecting a baseline run
-- **View Baseline Details**: Inspect full baseline metadata, endpoint, payload, and headers before running a comparison
-- **Endpoint Display in Results**: Clearly identifies which API endpoint corresponds to each response in the execution results
-- Full-width responsive layout
-
-## Production Verification Workflow
-
-This tool is designed to support checking production deployments for regressions using the **Baseline Testing** feature.
-
-### 1. Pre-Deployment (Capture Baseline)
-Capture the state of your current production environment before deploying changes.
-1. Select **Baseline Testing** mode > **Capture Baseline**.
-2. Point API 1 to your **current** production URL.
-3. Set a **Service Name** (e.g., `OrderService`) and Description (`Pre-Deploy v1.0`).
-4. (Optional) Set a custom **Working Directory** to store these baselines (e.g., `C:/baselines/release_2023_05`).
-5. Run the comparison. The tool saves 500 successful checks as "golden" records.
-
-### 2. Post-Deployment (Verify)
-After deploying your new version, verify it matches the previous state (or only changes where expected).
-1. Select **Baseline Testing** mode > **Compare with Baseline**.
-2. Select the **Service**, **Date**, and **Run ID** you just captured.
-3. Point API 2 to your **new** production URL.
-4. Run the comparison.
-5. The tool compares `Saved Baseline` vs `Live API 2`. Any mismatches will be highlighted.
-
-### Option 3: Mock API Server (For Testing)
-
-Run the built-in mock server to simulate API responses:
-
-```bash
-mvn compile exec:java -Dexec.mainClass="com.raks.apiurlcomparison.MockApiServer"
-```
+## Installation & Setup
 
 **Quick Start Scripts:**
 - **Windows**: Double-click `start-mock-server.bat` or run from command prompt
