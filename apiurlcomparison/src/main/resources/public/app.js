@@ -383,7 +383,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const titleText = isBaselineCapture ? '📊 Baseline Captured Result Summary' : '📊 Comparison Result Summary';
 
         summary.innerHTML = `
-            <div style="font-weight:800; color:var(--primary-color); font-size:1.1rem; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">${titleText}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <div style="font-weight:800; color:var(--primary-color); font-size:1.1rem;">${titleText}</div>
+                <div style="display:flex; gap:10px;">
+                    <button id="expandAllBtn" class="btn-secondary" style="padding:4px 8px; font-size:0.7rem;">↕ Expand All</button>
+                    <button id="collapseAllBtn" class="btn-secondary" style="padding:4px 8px; font-size:0.7rem;">↑ Collapse All</button>
+                </div>
+            </div>
             <div style="display:flex; gap:30px; align-items:center;">
                 <div style="text-align:center;">
                     <div style="font-size:0.8rem; color:#666; margin-bottom:5px; font-weight:700;">TOTAL</div>
@@ -405,6 +411,15 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
         `;
         resultsContainer.appendChild(summary);
+
+        document.getElementById('expandAllBtn').addEventListener('click', () => {
+            document.querySelectorAll('.result-body').forEach(b => b.style.display = 'block');
+            document.querySelectorAll('.result-header').forEach(h => h.classList.add('open'));
+        });
+        document.getElementById('collapseAllBtn').addEventListener('click', () => {
+            document.querySelectorAll('.result-body').forEach(b => b.style.display = 'none');
+            document.querySelectorAll('.result-header').forEach(h => h.classList.remove('open'));
+        });
 
         results.forEach((res, i) => {
             const item = document.createElement('div');
@@ -431,21 +446,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                     <span class="${statusClass}" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem; color: #fff; background-color: ${res.status === 'MISMATCH' ? '#fc8181' : (res.status === 'MATCH' ? 'var(--success-color)' : (res.status === 'ERROR' ? 'var(--error-color)' : '#cbd5e0'))};">${res.status}</span>
                 </div>
-                <div class="result-body" style="display:none; padding:15px; border-top:1px solid #eee; background:#fafafa;">
+                <div class="result-body" style="display:none; padding:15px; border-top:1px solid #eee; background:#fafafa; border-radius: 0 0 12px 12px;">
                     ${renderPayloadContent(res, i)}
                 </div>
             `;
             
-            item.querySelector('.result-header').addEventListener('click', () => {
-                const header = item.querySelector('.result-header');
+            item.querySelector('.result-header').addEventListener('click', (e) => {
+                // Ignore clicks on copy buttons if any were in header (though they aren't currently)
+                if (e.target.tagName === 'BUTTON') return;
+
                 const body = item.querySelector('.result-body');
-                const isOpen = body.style.display === 'block';
-                body.style.display = isOpen ? 'none' : 'block';
-                header.classList.toggle('open', !isOpen);
+                const isCurrentlyNone = body.style.display === 'none' || body.style.display === '';
+                body.style.display = isCurrentlyNone ? 'block' : 'none';
+                item.querySelector('.result-header').classList.toggle('open', isCurrentlyNone);
                 
-                if (!isOpen) { 
+                if (isCurrentlyNone) { 
                     setupSync(body);
-                    // Attach copy events
+                    // Attach copy events once visible
                     body.querySelectorAll('.copy-btn').forEach(btn => {
                         btn.onclick = (e) => {
                             e.stopPropagation();
@@ -459,6 +476,16 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             resultsContainer.appendChild(item);
         });
+    };
+
+    const escapeHtml = (text) => {
+        if (!text) return '';
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
     };
 
     const renderPayloadContent = (res, idx) => {
@@ -514,13 +541,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 for (let i = 0; i < max; i++) {
                     const l1 = lines1[i] || '';
                     const l2 = lines2[i] || '';
-                    // Semantic trim to avoid whitespace diffs appearing as full line diffs
                     const isDiff = l1.trim() !== l2.trim();
                     const style = isDiff ? 'background-color:#ffe6e6; font-weight:bold; color:#c53030; display:inline-block; width:100%; border-radius:2px;' : '';
                     
-                    // Preserve indentation for display but highlight based on trim
-                    out1 += `<div style="${style}">${l1.replace(/ /g, '&nbsp;') || '&nbsp;'}</div>`;
-                    out2 += `<div style="${style}">${l2.replace(/ /g, '&nbsp;') || '&nbsp;'}</div>`;
+                    // Escape content to prevent structure breaking while preserving our div wrapper
+                    const el1 = escapeHtml(l1).replace(/ /g, '&nbsp;');
+                    const el2 = escapeHtml(l2).replace(/ /g, '&nbsp;');
+                    
+                    out1 += `<div style="${style}">${el1 || '&nbsp;'}</div>`;
+                    out2 += `<div style="${style}">${el2 || '&nbsp;'}</div>`;
                 }
                 c1 = out1;
                 c2 = out2;
@@ -563,7 +592,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         <button type="button" class="copy-btn" title="Copy ${label}">Copy</button>
                         ${isHeader ? 
                             `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
-                            `<pre class="sync-p" style="margin:0;">${formatData(val)}</pre>`
+                            `<pre class="sync-p" style="margin:0;">${escapeHtml(formatData(val))}</pre>`
                         }
                     </div>
                 </div>
