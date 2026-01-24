@@ -686,18 +686,21 @@ document.addEventListener('DOMContentLoaded', () => {
         modeCompare.addEventListener('click', () => handleBaselineUI('LIVE'));
         modeBaseline.addEventListener('click', () => {
             const currentType = document.getElementById('testType').value;
-            // Ensure default Capture is set
-            opCapture.click();
+            console.log('DEBUG: ModeBaseline Clicked. Current Type:', currentType);
+            
+            // Manual OpCapture activation (bypass click handler to prevent side effects)
+            opCapture.classList.add('active');
+            if (typeof opCompare !== 'undefined' && opCompare) opCompare.classList.remove('active');
+            document.getElementById('baselineOperation').value = 'CAPTURE';
+            const capFields = document.getElementById('captureFields');
+            const compFields = document.getElementById('compareFields');
+            if (capFields) capFields.style.display = 'block';
+            if (compFields) compFields.style.display = 'none';
+
             handleBaselineUI('BASELINE');
-            // Re-sync type and UI after click triggers might have reset it
+
+            // Re-sync type and UI
             document.getElementById('testType').value = currentType;
-            if (currentType === 'REST') {
-                document.getElementById('typeRest').classList.add('active');
-                document.getElementById('typeSoap').classList.remove('active');
-            } else {
-                document.getElementById('typeSoap').classList.add('active');
-                document.getElementById('typeRest').classList.remove('active');
-            }
             if (currentType === 'REST') {
                 document.getElementById('typeRest').classList.add('active');
                 document.getElementById('typeSoap').classList.remove('active');
