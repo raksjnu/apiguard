@@ -129,10 +129,21 @@ public class SearchService {
         if (text == null || patterns == null || patterns.isEmpty()) return false;
         String normalized = text.replace("\\", "/");
         for (Pattern p : patterns) {
-            // Use find() for more flexible matching (e.g. matching a folder name anywhere in path)
-            if (p.matcher(normalized).find()) return true;
+            // Check if the pattern matches a full path segment
+            // e.g. "test" should match "src/test" or "test/foo" but maybe not "atest" (depending on intent)
+            // For now, let's stick to simple find() but print debug if it matches
+            if (p.matcher(normalized).find()) {
+                // System.out.println("DEBUG: Ignored '" + normalized + "' due to pattern '" + p.pattern() + "'");
+                return true;
+            }
         }
         return false;
+    }
+
+    private List<String> extractContext(List<String> lines, int matchIndex, int contextSize) {
+        int start = Math.max(0, matchIndex - contextSize);
+        int end = Math.min(lines.size(), matchIndex + contextSize + 1);
+        return new ArrayList<>(lines.subList(start, end));
     }
 
     private Pattern compilePattern(SearchParams params) {
@@ -161,11 +172,7 @@ public class SearchService {
         return false;
     }
 
-    private List<String> extractContext(List<String> lines, int index, int contextCount) {
-        int start = Math.max(0, index - contextCount);
-        int end = Math.min(lines.size(), index + contextCount + 1);
-        return new ArrayList<>(lines.subList(start, end));
-    }
+
 
     public static class SearchResult {
         public String filePath;
@@ -204,7 +211,7 @@ public class SearchService {
                     gitProvider.cloneRepository(cleanRepo, repoDir, null); // Clone default branch
                     
                     if (repoDir.exists() && repoDir.list() != null && repoDir.list().length > 0) {
-                        System.out.println("[SearchService] Successfully cloned. Starting local search in: " + repoDir.getName());
+                        System.out.println("[SearchService] Successfully cloned. Searching in server clone of: " + repoDir.getName());
                         List<SearchResult> repoResults = searchLocal(params, repoDir);
                         for (SearchResult r : repoResults) {
                             r.filePath = cleanRepo + "/" + r.filePath;

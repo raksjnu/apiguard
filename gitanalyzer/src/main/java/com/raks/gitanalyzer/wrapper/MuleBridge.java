@@ -57,16 +57,17 @@ public class MuleBridge {
             String sourceBranch = (String) params.get("sourceBranch");
             String targetBranch = (String) params.get("targetBranch");
             String ignorePatternsStr = (String) params.get("ignorePatterns");
-            String contentPatternsStr = (String) params.get("contentPatterns");
+            String contentPatternsStr = (String) params.get("contentIgnorePatterns");
+            if (contentPatternsStr == null) contentPatternsStr = (String) params.get("contentPatterns");
             String apiName = (String) params.getOrDefault("apiName", "Unknown API");
             String configSourceBranch = (String) params.get("configSourceBranch");
             String configTargetBranch = (String) params.get("configTargetBranch");
             boolean ignoreAttributeOrder = Boolean.TRUE.equals(params.get("ignoreAttributeOrder"));
 
             // Extract Token and Provider
-            String token = (String) params.get("token");
+            String token = (String) params.get("gitToken");
             if (token == null || token.isBlank()) {
-                token = (String) params.get("gitToken");
+                token = (String) params.get("token"); // Fallback for old standalone behavior
             }
             String providerType = (String) params.get("gitProvider");
 
@@ -197,32 +198,41 @@ public class MuleBridge {
     /**
      * Bridges /api/search
      */
-    public static List<Map<String, Object>> invokeSearch(Map<String, String> params) {
+    public static List<Map<String, Object>> invokeSearch(Map<String, Object> params) {
         try {
-            String mode = params.get("mode");
-            String token = params.get("token");
-            String path = params.get("path");
+            String gitToken = (String) params.get("gitToken");
+            String gitProvider = (String) params.get("gitProvider");
+            String path = (String) params.get("path");
             
-            if (token == null) token = params.get("gitToken");
+            // The search 'token' (keyword) should come from the 'token' key in params
+            String searchKeyword = (String) params.get("token");
 
-            GitProvider provider = getProvider(token, null);
+            GitProvider provider = getProvider(gitToken, gitProvider);
             com.raks.gitanalyzer.core.SearchService service = new com.raks.gitanalyzer.core.SearchService(provider);
             List<com.raks.gitanalyzer.core.SearchService.SearchResult> serviceResults;
 
+            String mode = (String) params.get("mode");
             if ("remote".equalsIgnoreCase(mode)) {
                 List<String> repos = List.of(path.split("\\s*,\\s*"));
                 com.raks.gitanalyzer.core.SearchService.SearchParams searchParams = new com.raks.gitanalyzer.core.SearchService.SearchParams();
-                searchParams.token = params.get("token");
-                searchParams.caseSensitive = Boolean.parseBoolean(params.get("caseSensitive"));
-                searchParams.searchType = params.getOrDefault("searchType", "substring");
-                searchParams.ignoreComments = Boolean.parseBoolean(params.getOrDefault("ignoreComments", "true"));
+                searchParams.token = searchKeyword; 
+                searchParams.caseSensitive = Boolean.parseBoolean(String.valueOf(params.get("caseSensitive")));
+                searchParams.searchType = (String) params.getOrDefault("searchType", "substring");
+                searchParams.ignoreComments = Boolean.parseBoolean(String.valueOf(params.getOrDefault("ignoreComments", "true")));
+                
+                // Parse Filters
+                searchParams.includeFolders = getListParam(params, "includeFolders");
+                searchParams.includeFiles = getListParam(params, "includeFiles");
+                searchParams.ignoreFolders = getListParam(params, "ignoreFolders");
+                searchParams.ignoreFiles = getListParam(params, "ignoreFiles");
+
                 serviceResults = service.searchRemote(searchParams, repos); 
             } else {
                 com.raks.gitanalyzer.core.SearchService.SearchParams searchParams = new com.raks.gitanalyzer.core.SearchService.SearchParams();
-                searchParams.token = params.get("token");
-                searchParams.caseSensitive = Boolean.parseBoolean(params.get("caseSensitive"));
-                searchParams.searchType = params.getOrDefault("searchType", "substring");
-                searchParams.ignoreComments = Boolean.parseBoolean(params.getOrDefault("ignoreComments", "true"));
+                searchParams.token = searchKeyword; // Use renamed keyword
+                searchParams.caseSensitive = Boolean.parseBoolean(String.valueOf(params.get("caseSensitive")));
+                searchParams.searchType = (String) params.getOrDefault("searchType", "substring");
+                searchParams.ignoreComments = Boolean.parseBoolean(String.valueOf(params.getOrDefault("ignoreComments", "true")));
                 
                 serviceResults = service.searchLocal(searchParams, new File(path));
             }
@@ -233,6 +243,8 @@ public class MuleBridge {
                 row.put("filePath", r.filePath);
                 row.put("lineNumber", r.lineNumber);
                 row.put("content", r.content);
+                row.put("context", r.context);
+                row.put("absolutePath", r.absolutePath);
                 results.add(row);
             }
             return results;
@@ -243,13 +255,46 @@ public class MuleBridge {
         }
     }
 
+    @SuppressWarnings("unchecked")
+    private static List<String> getListParam(Map<String, Object> params, String key) {
+        Object val = params.get(key);
+        if (val instanceof List) {
+            return (List<String>) val;
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Bridges /api/search/open
+     */
+    public static Map<String, String> invokeOpenFile(Map<String, String> params) {
+        try {
+            String path = params.get("path");
+            if (path == null) return Map.of("error", "Path is required");
+            File file = new File(path);
+            if (file.exists()) {
+                if (java.awt.Desktop.isDesktopSupported()) {
+                    java.awt.Desktop.getDesktop().open(file);
+                    return Map.of("status", "success");
+                } else {
+                    return Map.of("error", "Desktop opening not supported on server");
+                }
+            } else {
+                return Map.of("error", "File not found");
+            }
+        } catch (Exception e) {
+            return Map.of("error", e.getMessage());
+        }
+    }
+
     /**
      * Bridges /api/download (Bulk Download)
      */
     public static Map<String, Object> invokeBulkDownload(Map<String, Object> request) {
         try {
-            String token = (String) request.get("token");
-            if (token == null) token = (String) request.get("gitToken");
+            String gitToken = (String) request.get("gitToken");
+            String gitProvider = (String) request.get("gitProvider");
+            if (gitToken == null) gitToken = (String) request.get("token");
 
             // "repos" parsing
             Object reposObj = request.get("repos");
@@ -293,7 +338,7 @@ public class MuleBridge {
             }
             if (!bulkDir.exists()) bulkDir.mkdirs();
 
-            GitProvider provider = getProvider(token, null);
+            GitProvider provider = getProvider(gitToken, gitProvider);
             List<Map<String, String>> results = new ArrayList<>();
             int successCount = 0;
             boolean multiBranch = branches.size() > 1;
@@ -430,5 +475,27 @@ public class MuleBridge {
         
         System.err.println("Failed to delete permanently: " + file.getAbsolutePath());
         return false;
+    }
+
+    /**
+     * Bridges /api/git/validate
+     */
+    public static Map<String, Object> invokeValidation(Map<String, String> request) {
+        try {
+            String providerType = request.get("provider");
+            String token = request.get("token");
+            
+            if (token == null || token.isBlank()) {
+                return Map.of("status", "error", "message", "Token is required");
+            }
+
+            GitProvider provider = getProvider(token, providerType);
+            provider.validateCredentials();
+            
+            return Map.of("status", "success", "message", "Credentials are valid.");
+        } catch (Exception e) {
+            e.printStackTrace();
+            return Map.of("status", "error", "message", e.getMessage() != null ? e.getMessage() : e.toString());
+        }
     }
 }

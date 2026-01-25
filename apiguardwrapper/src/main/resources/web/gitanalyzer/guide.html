@@ -65,7 +65,7 @@
                             <div class="col-md-4">
                                 <div class="p-3 border rounded bg-light h-100">
                                     <h6 class="fw-bold text-dark"><i class="bi bi-magic text-purple me-2"></i>Smart Semantics</h6>
-                                    <p class="small mb-0">Compares XML logically. <code>&lt;tag a="1" b="2"/&gt;</code> equals <code>&lt;tag b="2" a="1"/&gt;</code>. Zero false positives from attribute reordering.</p>
+                                    <p class="small mb-0">Compares XML logically for <code>.xml</code>, <code>.policy</code>, and <code>.mflow</code> files. Attributes order is ignored to eliminate noise.</p>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -125,18 +125,38 @@
                                                 <td class="text-muted">Matches lines starting with `//` (Comments).</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Wildcard Regex</strong></td>
+                                                <td width="120"><strong>Wildcard Regex</strong></td>
                                                 <td><code>regex:.*guid.*</code></td>
                                                 <td class="text-muted">Matches any line containing "guid". Note the `.*` to match the full line.</td>
+                                            </tr>
+                                            <!-- New Examples requested by User -->
+                                            <tr class="table-light border-top border-bottom">
+                                                <td colspan="3" class="fw-bold text-purple pt-3 pb-2"><i class="bi bi-lightbulb me-2"></i>Advanced Strict Regex Scenarios</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Ignore Log Lines</strong></td>
+                                                <td><code>regex:^\s*logger\.(info|debug|error).*</code></td>
+                                                <td class="text-muted">Matches lines starting with logger calls (e.g., <code>logger.info("Test");</code>).</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Exclude Class</strong></td>
+                                                <td><code>regex:public class Test.*</code></td>
+                                                <td class="text-muted">Matches definition of test classes to ignore specific structural changes.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Mask Secrets</strong></td>
+                                                <td><code>regex:(?i).*(password|secret|key)\s*=.*</code></td>
+                                                <td class="text-muted">Matches any line assigning values to sensitive variables (case-insensitive).</td>
                                             </tr>
                                         </table>
                                     </div>
                                 </div>
 
-                                <div class="card border-0 bg-light">
+                                 <div class="card border-0 bg-light">
                                     <div class="card-body">
                                         <h6 class="fw-bold text-purple"><i class="bi bi-code-square me-2"></i>Mode C: Smart XML Compare</h6>
-                                        <p class="small mb-0">Unlike text diffs, this mode parses XML structure. It recognizes that <code>attributeOrder="irrelevant"</code>. Enable this to eliminate thousands of false flags in Mule/Spring XMLs.</p>
+                                        <p class="small mb-1">Unlike text diffs, this mode parses XML structure. It recognizes that <code>attributeOrder="irrelevant"</code>.</p>
+                                        <p class="x-small text-muted mb-0"><strong>Supported:</strong> Mule Flow (`.mflow`), Policy (`.policy`), and standard `.xml`/`.xapi` files.</p>
                                     </div>
                                 </div>
                             </div>
@@ -181,8 +201,8 @@
                                             <dt class="col-sm-4"><i class="bi bi-eye text-primary"></i> Live Preview</dt>
                                             <dd class="col-sm-8">Hover over the <strong>View</strong> button to see a quick diff snippet without leaving the page.</dd>
                                             
-                                            <dt class="col-sm-4"><i class="bi bi-funnel text-warning"></i> Filter Badges</dt>
-                                            <dd class="col-sm-8">The "Filters" column shows exactly <em>why</em> content was ignored (e.g., <span class="badge" style="background-color: #6f42c1; font-size: 0.7em;">Smart XML</span>), giving you confidence in the filtering.</dd>
+                                             <dt class="col-sm-4"><i class="bi bi-funnel text-warning"></i> Filter Badges</dt>
+                                            <dd class="col-sm-8">Displays exactly <em>why</em> content was ignored. Supports simultaneous filters: <span class="badge" style="background-color: #6f42c1; font-size: 0.7em;">Smart XML</span> + <span class="badge bg-secondary" style="font-size: 0.7em;">Content Filter</span>.</dd>
                                             
                                             <dt class="col-sm-4"><i class="bi bi-search text-secondary"></i> Unified Diff</dt>
                                             <dd class="col-sm-8">Click <strong>View</strong> to open the full side-by-side Unified Diff, preserving context while highlighting changes.</dd>
@@ -198,7 +218,11 @@
                        <div class="row">
                            <div class="col-md-6">
                                <h4 class="text-purple mb-3"><i class="bi bi-search me-2"></i>Git Search</h4>
-                               <p class="small">Perform regex-based forensic searches across your entire repository landscape. Supports <strong>Local</strong> (downloaded) and <strong>Remote</strong> (API-based) search modes.</p>
+                               <p class="small">Perform regex-based forensic searches across your entire landscape.</p>
+                               <ul class="list-unstyled x-small">
+                                   <li class="mb-1 text-muted"><i class="bi bi-bookmark-check me-2"></i><strong>Session Stickiness:</strong> Remembers your last search, layout, and filters.</li>
+                                   <li class="mb-1 text-muted"><i class="bi bi-link-45deg me-2"></i><strong>Git Links:</strong> Accurate "View on Git" support for nested GitHub/GitLab paths.</li>
+                               </ul>
                            </div>
                            <div class="col-md-6 border-start">
                                <h4 class="text-purple mb-3"><i class="bi bi-cloud-download me-2"></i>Bulk Download</h4>
@@ -207,6 +231,13 @@
                        </div>
                     </section>
     
+                    <br><hr>
+                    <h2 id="contact">📧 Contact</h2>
+                    <div style="border-left: 5px solid #663399; padding-left: 20px; background: #f9f9f9; padding-top: 15px; padding-bottom: 15px; margin-top: 20px; border-radius: 0 5px 5px 0; border-bottom: 1px solid #eee; border-right: 1px solid #eee; border-top: 1px solid #eee;">
+                        <p style="margin: 0; font-weight: bold; color: #333; font-size: 1.1em;">For further information, support, or questions:</p>
+                        <p style="margin: 10px 0 5px 0; color: #555;">Reach out to <strong>Rakesh Kumar (Raks)</strong></p>
+                        <p style="margin: 0; color: #555;">Email: <a href="mailto:rakesh.kumar@ibm.com" style="color: #663399; font-weight: bold; text-decoration: none;">rakesh.kumar@ibm.com</a></p>
+                    </div>
                 </div>
             </div>
         </div>

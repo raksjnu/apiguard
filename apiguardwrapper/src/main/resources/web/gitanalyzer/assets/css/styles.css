@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
 
+:root {
+    --raks-purple: #663399;
+    --raks-purple-light: #8e44ad;
+    --raks-purple-dark: #552b80;
+    --raks-purple-bg: #faf5ff;
+}
+
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
     background-color: #f0f0f0; /* Match portal bg */
@@ -12,7 +19,7 @@ body {
 /* Header Styling */
 .brand-header {
     background: white;
-    border-bottom: 4px solid #663399; /* Strong Purple Line */
+    border-bottom: 4px solid var(--raks-purple); /* Strong Purple Line */
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -26,35 +33,58 @@ body {
 }
 
 .text-purple {
-    color: #663399 !important;
+    color: var(--raks-purple) !important;
 }
 
 .btn-purple {
-    background-color: #663399;
-    border-color: #663399;
+    background-color: var(--raks-purple);
+    border-color: var(--raks-purple);
     color: white !important; /* Fix text color */
     font-weight: 500;
 }
 
 .btn-purple:hover {
-    background-color: #552b80;
-    border-color: #552b80;
+    background-color: var(--raks-purple-dark);
+    border-color: var(--raks-purple-dark);
     color: white !important;
 }
 
 /* Ghost Button adapted for White Header (Purple Outline) */
 .ghost-btn {
-    border: 1px solid #663399 !important;
+    border: 1px solid var(--raks-purple) !important;
     background: transparent !important;
-    color: #663399 !important;
+    color: var(--raks-purple) !important;
     transition: all 0.3s ease;
     font-weight: 500;
 }
 
 .ghost-btn:hover {
-    background-color: #663399 !important;
+    background-color: var(--raks-purple) !important;
     color: white !important;
-    border: 1px solid #663399 !important;
+    border: 1px solid var(--raks-purple) !important;
+}
+
+/* Button Outline Purple Custom */
+.btn-outline-purple {
+    color: var(--raks-purple);
+    border-color: var(--raks-purple);
+    background: transparent;
+    transition: all 0.2s ease;
+}
+.btn-outline-purple:hover {
+    background-color: var(--raks-purple);
+    color: white !important;
+}
+/* Checked state for toggle buttons */
+.btn-check:checked + .btn-outline-purple {
+    background-color: var(--raks-purple) !important;
+    color: white !important;
+    border-color: var(--raks-purple) !important;
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
+}
+
+.border-purple-subtle {
+    border-color: #d1c4e9 !important;
 }
 
 .raks-frame {
@@ -160,14 +190,109 @@ body.guide-body {
     box-shadow: 0 6px 16px rgba(102, 51, 153, 0.12);
 }
 
-/* Sub-frame for inner sections */
-.sub-frame {
-    border: 1px solid #e0e0e0;
-    border-left: 4px solid #663399;
+/* Custom Table Styling for Results */
+#resultsTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#resultsTable th, #resultsTable td {
+    border: 1px solid #dee2e6;
+}
+
+#resultsTable thead th {
+    border-top: none;
+}
+
+#resultsTable tr:last-child td {
+    border-bottom: none;
+}
+
+/* Stats Overlay */
+.search-stats-bar {
+    background-color: #faf5ff;
+    border-left: 4px solid var(--raks-purple);
     border-radius: 8px;
-    background-color: #ffffff;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--raks-purple);
+    display: flex;
+    gap: 20px;
+}
+
+/* Context Preview Panel Refinement */
+#previewPanel {
+    background-color: #f6f8ff !important; /* Very light blue/purple */
+    border-left: 2px solid #e0dcec !important;
+    transition: width 0.1s ease;
+    border-radius: 0; /* Keep edge flat for side panel */
+}
+
+#previewPanel .preview-actions {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+#previewContainer {
+    background-color: #fdfdfd !important; /* Light bg for code if light mode */
+    color: #333 !important;
+    border: 1px solid #e0e0e0;
+    line-height: 1.5;
+}
+
+#previewContainer .bg-purple-subtle-dark {
+    background-color: #efe7ff !important;
+    border-left: 3px solid var(--raks-purple);
+    font-weight: 600;
+}
+
+#previewContainer b.text-warning {
+    color: #d97706 !important; /* Darker orange for visibility on light bg */
+    background: #fef3c7;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* Resizer Handle (Shared) */
+.resizer {
+    width: 6px;
+    cursor: col-resize;
+    background-color: #f1f1f1;
+    position: relative;
+    z-index: 100;
+    flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+
+.resizer:hover, .resizer.resizing {
+    background-color: var(--raks-purple-light);
+}
+
+/* Sidebar Specific Styles */
+.split-left {
+    min-width: 250px;
+    max-width: 500px;
+    border-right: none !important; /* Handled by resizer */
+}
+
+/* Smooth Rounded Inputs/Buttons */
+.form-control, .form-select, .btn {
+    border-radius: 8px !important;
+}
+
+.btn-check + .btn {
+    border-radius: 8px !important;
+    margin: 0 2px;
+}
+
+.card, .sub-frame {
+    border-radius: 12px !important;
 }
 
 /* Dashboard Stats Cards */
@@ -248,9 +373,103 @@ body.guide-body {
     border-color: #663399;
 }
 
-.btn-sub-action:active, .btn-sub-action:focus {
-    background-color: #663399;
+/* Result Panel Adjustments */
+.split-right.stacked-mode {
+    flex-direction: column !important;
+    display: flex !important;
+}
+
+.stacked-mode #resultsColumn {
+    flex: 1 1 auto !important;
+    height: 50% !important;
+    max-height: 100% !important;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0 !important;
+}
+
+.stacked-mode #previewPanel {
+    flex: 1 1 auto !important;
+    height: 50% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border-left: none !important;
+    border-top: 4px solid #f1f1f1;
+}
+
+.stacked-mode .resizer#resizerPreview {
+    cursor: row-resize;
+    width: 100%;
+    height: 8px;
+    margin-left: 0;
+    margin-top: -4px;
+}
+
+.text-wrap-break {
+    word-break: break-all;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+}
+
+.results-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* Sidebar Collapse */
+.split-left.collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    border-right: none !important;
+}
+
+#sidebarToggle {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    background: white;
+    border: 1px solid var(--raks-purple);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--raks-purple);
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+#sidebarToggle:hover {
+    background: var(--raks-purple);
     color: white;
+}
+
+/* Repo Selection List */
+.repo-selection-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fdfdfd;
+}
+
+.repo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 0.85rem;
+}
+
+.repo-item:last-child {
+    border-bottom: none;
 }
 
 /* Split Pane Layout */
@@ -444,13 +663,212 @@ body.guide-body {
     max-height: 400px;
     background: white; 
     border: 1px solid #ccc;
-    border-left: 4px solid #663399; /* Purple Border */
+    border-left: 4px solid var(--raks-purple); /* Purple Border */
     box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
     padding: 1rem; 
     border-radius: 8px;
     overflow-y: auto;
     font-family: 'Courier New', monospace;
     font-size: 0.85rem;
+}
+
+/* Innovative Table Header Gradient - Global */
+.table thead th {
+    background: linear-gradient(135deg, var(--raks-purple), var(--raks-purple-light)) !important;
+    color: white !important;
+    border-bottom: 2px solid var(--raks-purple-dark) !important;
+    padding: 12px 10px !important;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table thead th:first-child {
+    border-top-left-radius: 10px !important;
+    border-bottom-left-radius: 10px !important;
+}
+
+.table thead th:last-child {
+    border-top-right-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+}
+
+/* Custom Tooltip Styling (White Theme) */
+.tooltip {
+    opacity: 1 !important; /* Force Full Visibility */
+}
+
+.tooltip-inner {
+    background-color: white !important;
+    color: var(--raks-purple) !important;
+    border: 1px solid var(--raks-purple);
+    box-shadow: 0 4px 15px rgba(102, 51, 153, 0.2);
+    font-family: 'Segoe UI', sans-serif;
+    max-width: 350px !important; /* Larger width */
+    text-align: left !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem;
+    opacity: 1 !important; /* Ensure content is opaque */
+}
+
+.bs-tooltip-top .tooltip-arrow::before, .bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before {
+    border-top-color: var(--raks-purple) !important;
+}
+.bs-tooltip-end .tooltip-arrow::before, .bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before {
+    border-right-color: var(--raks-purple) !important;
+}
+.bs-tooltip-bottom .tooltip-arrow::before, .bs-tooltip-auto[data-popper-placement^=bottom] .tooltip-arrow::before {
+    border-bottom-color: var(--raks-purple) !important;
+}
+.bs-tooltip-start .tooltip-arrow::before, .bs-tooltip-auto[data-popper-placement^=left] .tooltip-arrow::before {
+    border-left-color: var(--raks-purple) !important;
+}
+
+.dashboard-card-sm h3, h4.text-purple, h5.text-purple {
+    color: var(--raks-purple) !important;
+}
+
+/* --- Git Connection Card (Centralized) --- */
+.connection-card {
+    background-color: white;
+    border: 5px solid var(--raks-purple); /* Default Solid Purple Border */
+    border-radius: 20px; /* High curvature for "tile" look */
+    padding: 20px 25px; /* Ample padding */
+    box-shadow: 0 8px 24px rgba(102, 51, 153, 0.12); /* Soft shadow */
+    transition: all 0.3s ease;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.connection-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(102, 51, 153, 0.18);
+}
+
+/* GitLab Theme (Orange) */
+.connection-card.gitlab-theme {
+    border-color: #fc6d26 !important; /* GitLab Orange */
+}
+
+.connection-card.gitlab-theme .btn-purple, 
+.connection-card.gitlab-theme .text-purple,
+.connection-card.gitlab-theme .input-group-text,
+.connection-card.gitlab-theme .form-control, 
+.connection-card.gitlab-theme .form-select {
+    border-color: #fc6d26 !important;
+}
+
+.connection-card.gitlab-theme .text-purple {
+    color: #fc6d26 !important;
+}
+
+.connection-card.gitlab-theme .btn-purple {
+    background-color: #fc6d26 !important;
+    border-color: #fc6d26 !important;
+}
+
+.connection-card.gitlab-theme .btn-purple:hover {
+    background-color: #e24329 !important;
+    border-color: #e24329 !important;
+}
+
+/* GitHub Theme (Blue) */
+.connection-card.github-theme {
+    border-color: #0d6efd !important; /* GitHub Blue */
+}
+
+.connection-card.github-theme .btn-purple, 
+.connection-card.github-theme .text-purple,
+.connection-card.github-theme .input-group-text,
+.connection-card.github-theme .form-control, 
+.connection-card.github-theme .form-select {
+    border-color: #0d6efd !important;
+}
+
+.connection-card.github-theme .text-purple {
+    color: #0d6efd !important;
+}
+
+.connection-card.github-theme .btn-purple {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+.connection-card.github-theme .btn-purple:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0b5ed7 !important;
+}
+
+.connection-card .input-group .form-control:focus, 
+.connection-card .input-group .form-select:focus {
+    box-shadow: none; /* Clean look */
+}
+
+/* Status Pulse Animation */
+.status-pulse {
+    width: 12px;
+    height: 12px;
+    background-color: #ccc;
+    border-radius: 50%;
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+.status-pulse.active {
+    background-color: #2ecc71;
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+    animation: pulse 1.5s infinite;
+}
+
+.status-pulse.validating {
+    background-color: #f1c40f;
+    animation: pulse-yellow 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+}
+
+@keyframes pulse-yellow {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(241, 196, 15, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
+}
+
+
+/* --- Targeted Fix for Analysis Page Sidebar --- */
+.split-left .connection-card {
+    border: 3px solid var(--raks-purple); /* Slightly thinner border for compact spaces */
+    padding: 18px 20px !important; /* Increased padding */
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: 80px; /* Increased min-height */
+    overflow: visible !important; 
+    display: flex; /* Ensure flex behavior */
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Ensure dynamic themes still work in compact mode */
+.split-left .connection-card.gitlab-theme {
+    border-color: #fc6d26 !important;
+}
+
+.split-left .connection-card.github-theme {
+    border-color: #0d6efd !important;
+}
+
+/* Fix flex wrapping issues in narrow sidebar */
+.split-left .connection-card .d-flex {
+    flex-wrap: nowrap;
 }
 
 

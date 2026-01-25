@@ -66,31 +66,31 @@ echo ============================================================
     )
 
     REM Step 1.5: Sync Web Assets to Wrapper
-    echo.
     echo [1.5/2] Syncing GitAnalyzer Web Assets...
     echo ============================================================
     
-    REM We use direct paths here because %VAR% expansion inside an IF block 
-    REM refers to the value AT THE START of the block (which is empty).
-    
-    echo [INFO] Sync Source: "%SCRIPT_DIR%..\gitanalyzer\src\main\resources\web"
-    echo [INFO] Sync Target: "%SCRIPT_DIR%src\main\resources\web\gitanalyzer"
-    
+    if not exist "%SCRIPT_DIR%..\gitanalyzer\src\main\resources\web" (
+        echo [ERROR] GitAnalyzer web resources not found at: "%SCRIPT_DIR%..\gitanalyzer\src\main\resources\web"
+        pause
+        exit /b 1
+    )
+
     if not exist "%SCRIPT_DIR%src\main\resources\web\gitanalyzer" (
         mkdir "%SCRIPT_DIR%src\main\resources\web\gitanalyzer"
     )
     
-    REM Run robocopy and show files being copied (/V)
+    echo [INFO] Syncing files...
     robocopy "%SCRIPT_DIR%..\gitanalyzer\src\main\resources\web" "%SCRIPT_DIR%src\main\resources\web\gitanalyzer" /MIR /V /NP
     
-    REM Robocopy exit codes: 0=no changes, 1-7=files copied/merged. 8+=error.
+    REM Robocopy exit codes: 
+    REM 0=No changes, 1=Files copied, 2-7=Success with minor differences
+    REM GEQ 8 = Fatal Error
     if %ERRORLEVEL% GEQ 8 (
         echo.
-        echo [ERROR] Failed to sync web assets (Robocopy Exit Code: %ERRORLEVEL%)
+        echo [ERROR] Robocopy failed with Exit Code: %ERRORLEVEL%
         pause
         exit /b 1
     )
-    echo.
     echo [INFO] Web assets synchronized successfully.
 
 ) else (

@@ -35,7 +35,7 @@
                     <a href="guide.html" class="btn btn-purple d-flex align-items-center" target="_blank">
                         <span class="me-2">📘</span> Guide
                     </a>
-                    <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
+                    <a href="index.html" class="btn btn-outline-light ghost-btn">Dashboard</a>
                 </div>
             </div>
         </nav>
@@ -378,6 +378,17 @@
             return headers;
         }
 
+        // Helper to get base path (works in both standalone and wrapper modes)
+        function getBasePath() {
+            const path = window.location.pathname;
+            // If path contains /apiguard/gitanalyzer, we're in wrapper mode
+            if (path.includes('/apiguard/gitanalyzer')) {
+                return '/apiguard/gitanalyzer';
+            }
+            // Otherwise, standalone mode - no prefix
+            return '';
+        }
+
         // Fetch Repos
         document.getElementById('fetchReposBtn').onclick = async () => {
             const group = document.getElementById('repoGroup').value;
@@ -391,7 +402,7 @@
                 if (group) params.append('group', group);
                 if (filter) params.append('filter', filter);
                 
-                const res = await fetch(`/api/search/repos?${params.toString()}`, {
+                const res = await fetch(getBasePath() + `/api/search/repos?${params.toString()}`, {
                     headers: getGitHeaders()
                 });
                 const repos = await res.json();
@@ -455,7 +466,7 @@
             closePreview();
 
             try {
-                const res = await fetch('/api/search', {
+                const res = await fetch(getBasePath() + '/api/search', {
                     method: 'POST',
                     headers: getGitHeaders(),
                     body: JSON.stringify({ mode: searchMode, token, path, searchType, caseSensitive, ignoreComments, includeFolders, includeFiles, ignoreFolders, ignoreFiles })
@@ -504,6 +515,16 @@
                 searchBtn.innerHTML = '<i class="bi bi-search me-1"></i> Start Search';
             }
         });
+        
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
         function renderResults(results) {
             resultsBody.innerHTML = results.length === 0 ? '<tr><td colspan="4" class="text-center py-5 text-muted">No matches found.</td></tr>' : '';
@@ -519,7 +540,7 @@
                     <td class="text-muted small">${index + 1}</td>
                     <td class="font-monospace small text-wrap-break">${row.filePath}</td>
                     <td class="fw-bold text-muted small">${row.lineNumber}</td>
-                    <td class="font-monospace small text-muted text-truncate" style="max-width: 400px;">${row.content}</td>
+                    <td class="font-monospace small text-muted text-truncate" style="max-width: 400px;">${escapeHtml(row.content)}</td>
                 `;
                 resultsBody.appendChild(tr);
             });
@@ -627,7 +648,7 @@
 
         async function openLocalFile(path) {
             try {
-                const res = await fetch('/api/search/open', {
+                const res = await fetch(getBasePath() + '/api/search/open', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ path })
@@ -707,6 +728,22 @@
                 el.addEventListener('change', saveSettings);
                 el.addEventListener('input', saveSettings);
             });
+
+            // Disable Local Mode if in Wrapper
+            if (window.location.pathname.includes('/apiguard/gitanalyzer')) {
+                const localRadio = document.getElementById('modeLocal');
+                if (localRadio) {
+                    localRadio.disabled = true;
+                    // Force Remote Git if local is disabled
+                    const remoteRadio = document.getElementById('modeRemote');
+                    if (remoteRadio) {
+                        remoteRadio.checked = true;
+                        remoteRadio.dispatchEvent(new Event('change'));
+                        document.getElementById('cloudhubNotice').classList.remove('d-none');
+                        document.getElementById('cloudhubNotice').innerHTML = '<i class="bi bi-info-circle me-1"></i> Local mode only available in standalone tool';
+                    }
+                }
+            }
 
             // Tooltips initialization
             [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(el => new bootstrap.Tooltip(el));

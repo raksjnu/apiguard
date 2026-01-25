@@ -24,53 +24,141 @@
                     <h5 class="fw-bold text-purple mb-0">Git Search</h5>
                 </div>
 
-                <div class="d-flex ms-auto">
-                    <a href="guide.html" class="btn btn-purple me-2 d-flex align-items-center" target="_blank">
-                        <span class="me-2">📘</span> Guide / Help
+                <div class="d-flex ms-auto align-items-center gap-3">
+                    <!-- Layout Toggle -->
+                    <div class="btn-group btn-group-sm" role="group">
+                        <input type="radio" class="btn-check" name="layoutMode" id="layoutCols" value="cols" checked>
+                        <label class="btn btn-outline-light" for="layoutCols" title="Side-by-Side"><i class="bi bi-columns-ms"></i></label>
+                        <input type="radio" class="btn-check" name="layoutMode" id="layoutStack" value="stack">
+                        <label class="btn btn-outline-light" for="layoutStack" title="Stacked"><i class="bi bi-layout-split"></i></label>
+                    </div>
+                    <a href="guide.html" class="btn btn-purple d-flex align-items-center" target="_blank">
+                        <span class="me-2">📘</span> Guide
                     </a>
-                    <a href="/" class="btn btn-outline-light ghost-btn">Dashboard</a>
+                    <a href="index.html" class="btn btn-outline-light ghost-btn">Dashboard</a>
                 </div>
             </div>
         </nav>
 
         <!-- Split Layout -->
-        <div class="split-container">
+        <div class="split-container position-relative">
+            <!-- Sidebar Toggle Button (Floating) -->
+            <div id="sidebarToggle" title="Toggle Search Config">
+                <i class="bi bi-chevron-left" id="sidebarToggleIcon"></i>
+            </div>
+
             <!-- Left Panel: Configuration -->
             <div class="split-left" id="leftPanel">
-                <h5 class="fw-bold text-purple mb-3">Search Config</h5>
+                <h5 class="mb-3 fw-bold text-purple pt-2">Search Config</h5>
                 
                 <form id="searchForm">
-                    <div class="sub-frame mb-3">
-                         <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">1. Search Mode</h6>
-                         <div class="mb-2">
-                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="searchMode" id="modeLocal" value="local" checked>
-                                <label class="form-check-label small fw-bold" for="modeLocal">Local Directory</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="searchMode" id="modeRemote" value="remote">
-                                <label class="form-check-label small fw-bold" for="modeRemote">Remote (GitLab)</label>
-                            </div>
-                         </div>
+                    <!-- Git Connection Info -->
+                    <div class="connection-card mb-3 position-relative" id="gitConnectionCard" style="padding: 12px; height: 60px;">
+                        <a href="/" class="position-absolute top-0 end-0 m-2 text-decoration-none text-muted opacity-50 hover-opacity-100" data-bs-toggle="tooltip" title="Manage on Dashboard" style="z-index: 10;">
+                            <i class="bi bi-gear-fill"></i>
+                        </a>
+                        <div class="d-flex justify-content-between align-items-center h-100">
+                             <div style="min-width: 0;">
+                                  <span class="small fw-bold text-uppercase opacity-75 d-block text-truncate" style="letter-spacing: 0.5px; font-size: 0.65rem;">Source</span>
+                                  <span class="small fw-bold text-purple" id="currentProviderDisplay">...</span>
+                             </div>
+                             <div class="d-flex align-items-center gap-2">
+                                 <span class="status-pulse active"></span> 
+                                 <span class="small fw-bold text-success" style="font-size: 0.7rem;">Active</span>
+                             </div>
+                        </div>
                     </div>
 
                     <div class="sub-frame mb-3">
-                        <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">2. Parameters</h6>
-                        <div class="mb-3">
-                             <label for="searchToken" class="form-label small fw-bold">Search Token (Regex)</label>
-                             <input type="text" class="form-control form-control-sm" id="searchToken" placeholder="e.g. secureProperties" required>
+                         <h6 class="text-purple fw-bold mb-3 border-bottom pb-1 x-small text-uppercase">1. Search Mode</h6>
+                         <div class="d-flex gap-2 mb-2">
+                             <input type="radio" class="btn-check" name="searchMode" id="modeLocal" value="local" checked>
+                             <label class="btn btn-outline-purple btn-sm fw-bold flex-grow-1" for="modeLocal">Local</label>
+                             <input type="radio" class="btn-check" name="searchMode" id="modeRemote" value="remote">
+                             <label class="btn btn-outline-purple btn-sm fw-bold flex-grow-1" for="modeRemote" id="modeRemoteLabel">Remote</label>
+                         </div>
+                         <div id="cloudhubNotice" class="x-small text-danger d-none mt-1"><i class="bi bi-cloud-slash me-1"></i>Local mode disabled on CloudHub</div>
+                    </div>
+
+                    <div class="sub-frame mb-3">
+                        <h6 class="text-purple fw-bold mb-3 border-bottom pb-1 x-small text-uppercase">2. Parameters</h6>
+                        <div class="mb-2">
+                             <label for="searchToken" class="form-label x-small fw-bold mb-1">Search Token</label>
+                              <input type="text" class="form-control form-control-sm border-purple-subtle" id="searchToken" placeholder="Regex or Keyword" required style="border-radius: 8px;">
                         </div>
-                        <div class="mb-3">
-                            <label for="targetPath" class="form-label small fw-bold" id="pathLabel">Target Directory</label>
+
+                        <div class="mb-3 btn-group w-100 btn-group-sm rounded-pill border p-1 bg-light shadow-sm">
+                            <input type="radio" class="btn-check" name="searchType" id="typeSubstring" value="substring" checked>
+                            <label class="btn btn-outline-purple rounded-pill border-0 flex-fill fw-bold" for="typeSubstring">Sub</label>
+                            <input type="radio" class="btn-check" name="searchType" id="typeExact" value="exact">
+                            <label class="btn btn-outline-purple rounded-pill border-0 flex-fill fw-bold" for="typeExact">Exact</label>
+                            <input type="radio" class="btn-check" name="searchType" id="typeRegex" value="regex">
+                            <label class="btn btn-outline-purple rounded-pill border-0 flex-fill fw-bold" for="typeRegex">Regex</label>
+                        </div>
+
+                        <!-- Target Path / Repo Input -->
+                        <div class="mb-3" id="localPathGroup">
+                            <label for="targetPath" class="form-label x-small fw-bold mb-1" id="pathLabel">Target Directory</label>
                              <div class="input-group input-group-sm">
                                 <input type="text" class="form-control" id="targetPath" value="C:/raks/apiguard/gitanalyzer/temp">
                                 <button class="btn btn-outline-secondary" type="button" disabled>...</button>
                             </div>
-                             <div class="form-text x-small" id="pathHelp">For Local: Absolute system path.</div>
+                        </div>
+
+                        <div class="mb-3 d-none" id="remoteRepoGroup">
+                            <h6 class="text-purple fw-bold mb-3 border-bottom pb-1 x-small text-uppercase">Remote Discovery</h6>
+                            <div class="mb-2">
+                                <label for="repoGroup" class="form-label x-small fw-bold mb-1">Group / Organization</label>
+                                <input type="text" class="form-control form-control-sm" id="repoGroup" placeholder="e.g. raks-group">
+                            </div>
+                            <div class="mb-2">
+                                <label for="repoQuery" class="form-label x-small fw-bold mb-1">Filter (Repo Name/Regex)</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" class="form-control" id="repoQuery" placeholder="e.g. aegis">
+                                    <button class="btn btn-purple btn-sm px-3 rounded-pill fw-bold" type="button" id="fetchReposBtn" style="margin-left: -50px; z-index: 10;">Fetch</button>
+                                </div>
+                            </div>
+                            <div id="repoSelectionArea" class="repo-selection-list d-none mt-2">
+                                <div class="text-center py-3 text-muted x-small">No repos fetched yet</div>
+                            </div>
+                        </div>
+
+                        <div class="accordion accordion-flush mb-3" id="filterAccordion">
+                            <div class="accordion-item bg-transparent">
+                                <h2 class="accordion-header">
+                                    <button class="accordion-button collapsed px-0 py-2 bg-transparent x-small fw-bold text-purple" type="button" data-bs-toggle="collapse" data-bs-target="#filtersPanel">
+                                        Advanced Filters (Include/Ignore)
+                                    </button>
+                                </h2>
+                                <div id="filtersPanel" class="accordion-collapse collapse" data-bs-parent="#filterAccordion">
+                                    <div class="accordion-body px-0 pt-2 border-0">
+                                        <div class="mb-2">
+                                            <label class="x-small fw-bold opacity-75">Include Folders/Files</label>
+                                            <input type="text" class="form-control form-control-sm mb-1" id="includeFolders" placeholder="Folders (e.g. src/main, config)">
+                                            <input type="text" class="form-control form-control-sm" id="includeFiles" placeholder="Files (e.g. *.yaml, *.xml)">
+                                        </div>
+                                        <div class="mb-2">
+                                            <label class="x-small fw-bold opacity-75">Ignore Folders/Files</label>
+                                            <input type="text" class="form-control form-control-sm mb-1" id="ignoreFolders" placeholder="Folders (e.g. target, docs)">
+                                            <input type="text" class="form-control form-control-sm" id="ignoreFiles" placeholder="Files (e.g. *.jar, *.exe)">
+                                        </div>
+                                        <div class="form-check form-switch x-small mb-1">
+                                            <input class="form-check-input" type="checkbox" id="caseSensitive">
+                                            <label class="form-check-label fw-bold" for="caseSensitive">Match Case</label>
+                                        </div>
+                                        <div class="form-check form-switch x-small">
+                                            <input class="form-check-input" type="checkbox" id="ignoreComments" checked>
+                                            <label class="form-check-label fw-bold" for="ignoreComments">Ignore Comments</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <button type="submit" class="btn btn-purple text-white w-100 py-2 shadow-sm" id="searchBtn">Detailed Search</button>
+                    <button type="submit" class="btn btn-purple text-white w-100 py-2 shadow-sm fw-bold" id="searchBtn">
+                         <i class="bi bi-search me-1"></i> Start Search
+                    </button>
                     <div class="mt-3 text-center">
                         <div id="loadingSpinner" class="spinner-border text-purple d-none" role="status">
                             <span class="visually-hidden">Loading...</span>
@@ -83,29 +171,77 @@
             <div class="resizer" id="dragMe"></div>
 
             <!-- Right Panel: Results -->
-            <div class="split-right" id="rightPanel">
-                <h5 class="text-purple fw-bold mb-3">Search Results</h5>
-                 <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body p-0 d-flex flex-column h-100">
-                        <div class="table-responsive flex-grow-1">
-                            <table class="table table-striped table-hover mb-0 align-middle" id="resultsId">
-                                <thead class="table-light sticky-top">
-                                    <tr>
-                                        <th>Location</th>
-                                        <th style="width: 80px;">Line</th>
-                                        <th>Content</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="resultsBody">
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted py-5">
-                                             <i class="bi bi-search display-4 opacity-25"></i>
-                                            <p class="mt-2 text-muted small">Enter criteria and search to see results.</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+            <div class="split-right d-flex p-0" id="rightPanel">
+                <!-- Main Search Results Column -->
+                <div class="flex-grow-1 d-flex flex-column p-4 h-100" id="resultsColumn">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div class="d-flex align-items-center gap-3">
+                            <h5 class="text-purple fw-bold mb-0">Search Results</h5>
+                            <div id="activeCriteria" class="x-small text-muted d-none border-start ps-3" style="font-style: italic;">
+                                <!-- Criteria will be injected here -->
+                            </div>
                         </div>
+                        <button class="btn btn-sm btn-success d-none" id="exportBtn">
+                            <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
+                        </button>
+                    </div>
+
+                    <!-- Stats Bar -->
+                    <div id="statsBar" class="search-stats-bar mb-3 d-none">
+                        <span id="statMatches">Total Matches: 0</span>
+                        <span id="statFiles">Total Files: 0</span>
+                    </div>
+                    
+                    <div class="card shadow-sm border-0 flex-grow-1 overflow-hidden" style="border: 1px solid #dee2e6 !important;">
+                        <div class="card-body p-0 d-flex flex-column h-100">
+                             <div class="table-responsive flex-grow-1">
+                                <table class="table table-striped table-hover mb-0 align-middle results-table" id="resultsTable">
+                                    <thead>
+                                        <tr>
+                                            <th style="width: 50px;">#</th>
+                                            <th>Location</th>
+                                            <th style="width: 80px;">Line</th>
+                                            <th>Content</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resultsBody">
+                                        <tr>
+                                            <td colspan="4" class="text-center text-muted py-5">
+                                                 <i class="bi bi-search display-4 opacity-25"></i>
+                                                <p class="mt-2 text-muted small">Enter criteria and search to see results.</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resizer Preview -->
+                <div class="resizer d-none" id="resizerPreview"></div>
+
+                <!-- Context Preview Panel (Hidden by default, fixed width) -->
+                <div class="bg-white d-none flex-column p-4 h-100 shadow-lg" id="previewPanel" style="width: 450px; min-width: 450px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-purple mb-0">Context Preview</h6>
+                        <button class="btn-close btn-sm" onclick="closePreview()"></button>
+                    </div>
+                    <div class="preview-actions mb-3 pt-2 border-top">
+                        <div id="localActions" class="d-none">
+                            <button class="btn btn-sm btn-purple w-100 mb-2" id="openFileBtn">
+                                <i class="bi bi-pencil-square me-1"></i> Open in Editor
+                            </button>
+                            <div class="small text-muted mb-1 text-truncate" id="previewFilePath" style="direction: rtl;">...</div>
+                        </div>
+                        <div id="remoteActions" class="d-none">
+                             <a href="#" class="btn btn-sm btn-purple w-100 mb-2" id="viewOnGitBtn" target="_blank">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> View on Git
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 overflow-auto bg-dark rounded p-2 text-white x-small font-monospace" id="previewContainer">
+                        <!-- Code lines go here -->
                     </div>
                 </div>
             </div>
@@ -121,122 +257,497 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // --- Resizer Logic ---
-        const resizer = document.getElementById('dragMe');
-        const leftPanel = document.getElementById('leftPanel');
-        let x = 0;
-        let leftWidth = 0;
+        let currentResults = [];
+        let searchMode = 'local';
+        let layoutMode = 'cols';
+        let sidebarCollapsed = false;
+        // State Management & Persistence
+        const STORAGE_PREFIX = 'gitanalyzer_search_';
+        const SETTINGS_KEY = 'gitanalyzer_search_settings';
 
-        const mouseDownHandler = function (e) {
-            x = e.clientX;
-            leftWidth = leftPanel.getBoundingClientRect().width;
-            resizer.classList.add('resizing');
-            document.addEventListener('mousemove', mouseMoveHandler);
-            document.addEventListener('mouseup', mouseUpHandler);
-            document.body.style.userSelect = 'none';
-        };
+        function saveSettings() {
+            try {
+                const modeEl = document.querySelector('input[name="searchMode"]:checked');
+                const typeEl = document.querySelector('input[name="searchType"]:checked');
+                const layoutEl = document.querySelector('input[name="layoutMode"]:checked');
 
-        const mouseMoveHandler = function (e) {
-            const dx = e.clientX - x;
-            const newLeftWidth = leftWidth + dx;
-            if (newLeftWidth > 250 && newLeftWidth < 800) {
-                 leftPanel.style.width = `${newLeftWidth}px`;
+                const settings = {
+                    searchMode: modeEl ? modeEl.value : 'local',
+                    searchType: typeEl ? typeEl.value : 'substring',
+                    layoutMode: layoutEl ? layoutEl.value : 'cols',
+                    caseSensitive: document.getElementById('caseSensitive').checked,
+                    ignoreComments: document.getElementById('ignoreComments').checked,
+                    searchToken: document.getElementById('searchToken').value,
+                    targetPath: document.getElementById('targetPath').value,
+                    repoGroup: document.getElementById('repoGroup').value,
+                    repoQuery: document.getElementById('repoQuery').value,
+                    includeFolders: document.getElementById('includeFolders').value,
+                    includeFiles: document.getElementById('includeFiles').value,
+                    ignoreFolders: document.getElementById('ignoreFolders').value,
+                    ignoreFiles: document.getElementById('ignoreFiles').value
+                };
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            } catch (e) {
+                console.warn('Could not save settings', e);
             }
-        };
+        }
 
-        const mouseUpHandler = function () {
-            resizer.classList.remove('resizing');
-            document.removeEventListener('mousemove', mouseMoveHandler);
-            document.removeEventListener('mouseup', mouseUpHandler);
-            document.body.style.removeProperty('user-select');
-        };
+        function loadSettings() {
+            const saved = localStorage.getItem(SETTINGS_KEY);
+            if (!saved) return;
+            try {
+                const s = JSON.parse(saved);
+                
+                // Mode
+                if (s.searchMode) {
+                    const el = document.getElementById('mode' + s.searchMode.charAt(0).toUpperCase() + s.searchMode.slice(1));
+                    if (el) { el.checked = true; el.dispatchEvent(new Event('change')); }
+                }
+                
+                // Type
+                if (s.searchType) {
+                    const el = document.getElementById('type' + s.searchType.charAt(0).toUpperCase() + s.searchType.slice(1));
+                    if (el) el.checked = true;
+                }
+                
+                // Layout
+                if (s.layoutMode) {
+                    const el = document.getElementById('layout' + (s.layoutMode === 'cols' ? 'Cols' : 'Stack'));
+                    if (el) { el.checked = true; el.dispatchEvent(new Event('change')); }
+                }
 
-        resizer.addEventListener('mousedown', mouseDownHandler);
+                if (s.caseSensitive !== undefined) document.getElementById('caseSensitive').checked = s.caseSensitive;
+                if (s.ignoreComments !== undefined) document.getElementById('ignoreComments').checked = s.ignoreComments;
+                
+                if (s.searchToken) document.getElementById('searchToken').value = s.searchToken;
+                if (s.targetPath) document.getElementById('targetPath').value = s.targetPath;
+                if (s.repoGroup) document.getElementById('repoGroup').value = s.repoGroup;
+                if (s.repoQuery) document.getElementById('repoQuery').value = s.repoQuery;
+                
+                if (s.includeFolders) document.getElementById('includeFolders').value = s.includeFolders;
+                if (s.includeFiles) document.getElementById('includeFiles').value = s.includeFiles;
+                if (s.ignoreFolders) document.getElementById('ignoreFolders').value = s.ignoreFolders;
+                if (s.ignoreFiles) document.getElementById('ignoreFiles').value = s.ignoreFiles;
 
-        // --- Existing Search Logic ---
-    </script>
-    <script>
-        // Load UI Config
-        fetch('/api/config/ui').then(r=>r.json()).then(c=>{
-            if(c['ui.footer.text']) document.getElementById('footerText').innerText=c['ui.footer.text'];
-        });
+            } catch (e) { console.error('Failed to load settings', e); }
+        }
 
+        // UI Elements
         const form = document.getElementById('searchForm');
-        const modeRadios = document.getElementsByName('searchMode');
-        const pathLabel = document.getElementById('pathLabel');
         const pathInput = document.getElementById('targetPath');
         const resultsBody = document.getElementById('resultsBody');
+        const resultsTable = document.getElementById('resultsTable');
+        const previewPanel = document.getElementById('previewPanel');
+        const exportBtn = document.getElementById('exportBtn');
+        const resizerPreview = document.getElementById('resizerPreview');
+        const leftPanel = document.getElementById('leftPanel');
+        const rightPanel = document.getElementById('rightPanel');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
 
-        modeRadios.forEach(radio => radio.addEventListener('change', (e) => {
-            if (e.target.value === 'remote') {
-                pathLabel.textContent = 'Repositories (comma-sep):';
-                pathInput.placeholder = 'repo1, repo2...';
-            } else {
-                pathLabel.textContent = 'Target Directory:';
-                pathInput.value = 'C:/raks/apiguard/gitanalyzer/temp';
-            }
+        // Sidebar Toggle
+        sidebarToggle.onclick = () => {
+            sidebarCollapsed = !sidebarCollapsed;
+            leftPanel.classList.toggle('collapsed', sidebarCollapsed);
+            sidebarToggleIcon.className = sidebarCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
+            sidebarToggle.style.left = sidebarCollapsed ? '0' : (leftPanel.offsetWidth - 12) + 'px';
+        };
+
+        // Layout Toggle
+        document.getElementsByName('layoutMode').forEach(radio => radio.addEventListener('change', (e) => {
+            layoutMode = e.target.value;
+            rightPanel.classList.toggle('stacked-mode', layoutMode === 'stack');
+            closePreview();
+            saveSettings();
         }));
 
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const mode = document.querySelector('input[name="searchMode"]:checked').value;
-            const token = document.getElementById('searchToken').value;
-            const path = document.getElementById('targetPath').value;
+        // Mode Switching
+        document.getElementsByName('searchMode').forEach(radio => radio.addEventListener('change', (e) => {
+            searchMode = e.target.value;
+            document.getElementById('localPathGroup').classList.toggle('d-none', searchMode === 'remote');
+            document.getElementById('remoteRepoGroup').classList.toggle('d-none', searchMode === 'local');
+            saveSettings();
+        }));
 
-            // Show loading
-            document.getElementById('searchBtn').disabled = true;
-            document.getElementById('searchBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...';
-            resultsBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Searching...</td></tr>';
+        // Helper to get Headers
+        function getGitHeaders() {
+            const provider = localStorage.getItem('git_analyzer_provider') || 'gitlab';
+            let token = localStorage.getItem(`git_analyzer_${provider}_token`) || localStorage.getItem('git_analyzer_token');
+            const headers = { 'Content-Type': 'application/json', 'X-Git-Provider': provider };
+            if (token) headers['X-Git-Token'] = token;
+            return headers;
+        }
+
+        // Helper to get base path (works in both standalone and wrapper modes)
+        function getBasePath() {
+            const path = window.location.pathname;
+            // If path contains /apiguard/gitanalyzer, we're in wrapper mode
+            if (path.includes('/apiguard/gitanalyzer')) {
+                return '/apiguard/gitanalyzer';
+            }
+            // Otherwise, standalone mode - no prefix
+            return '';
+        }
+
+        // Fetch Repos
+        document.getElementById('fetchReposBtn').onclick = async () => {
+            const group = document.getElementById('repoGroup').value;
+            const filter = document.getElementById('repoQuery').value;
+            const area = document.getElementById('repoSelectionArea');
+            area.innerHTML = '<div class="text-center py-3"><span class="spinner-border spinner-border-sm"></span> Fetching...</div>';
+            area.classList.remove('d-none');
 
             try {
-                const response = await fetch('/api/search', {
+                const params = new URLSearchParams();
+                if (group) params.append('group', group);
+                if (filter) params.append('filter', filter);
+                
+                const res = await fetch(getBasePath() + `/api/search/repos?${params.toString()}`, {
+                    headers: getGitHeaders()
+                });
+                const repos = await res.json();
+                
+                if (repos.error) throw new Error(repos.error);
+                
+                if (repos.length > 0) {
+                    area.innerHTML = `
+                        <div class="repo-item border-bottom pb-2 mb-2">
+                            <input type="checkbox" class="form-check-input me-2" id="selectAllRepos">
+                            <label class="form-check-label fw-bold x-small" for="selectAllRepos">Select All (${repos.length})</label>
+                        </div>
+                    ` + repos.map(r => `
+                        <div class="repo-item">
+                            <input type="checkbox" class="form-check-input me-2 repo-checkbox" value="${r}" id="repo_${r}">
+                            <label class="form-check-label x-small text-truncate" for="repo_${r}">${r}</label>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('selectAllRepos').onchange = (e) => {
+                        area.querySelectorAll('.repo-checkbox').forEach(cb => cb.checked = e.target.checked);
+                    };
+                } else {
+                    area.innerHTML = '<div class="text-center py-3 text-muted x-small">No repos found</div>';
+                }
+            } catch (e) {
+                area.innerHTML = `<div class="text-center py-3 text-danger x-small">Error: ${e.message}</div>`;
+            }
+        };
+
+        // Search Form Submission
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const token = document.getElementById('searchToken').value; // search text
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            const caseSensitive = document.getElementById('caseSensitive').checked;
+            const ignoreComments = document.getElementById('ignoreComments').checked;
+            
+            // Advanced Filters
+            const includeFolders = document.getElementById('includeFolders').value.split(',').map(s => s.trim()).filter(s => s);
+            const includeFiles = document.getElementById('includeFiles').value.split(',').map(s => s.trim()).filter(s => s);
+            const ignoreFolders = document.getElementById('ignoreFolders').value.split(',').map(s => s.trim()).filter(s => s);
+            const ignoreFiles = document.getElementById('ignoreFiles').value.split(',').map(s => s.trim()).filter(s => s);
+
+            let path = "";
+            if (searchMode === 'local') {
+                path = pathInput.value;
+                // Use SETTINGS_KEY instead of deleted global
+                saveSettings();
+            } else {
+                const selected = Array.from(document.querySelectorAll('.repo-checkbox:checked')).map(i => i.value);
+                if (selected.length === 0) { alert('Please select at least one repo'); return; }
+                path = selected.join(',');
+            }
+
+            // UI Feedback
+            const searchBtn = document.getElementById('searchBtn');
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Searching...';
+            resultsBody.innerHTML = '<tr><td colspan="4" class="text-center py-5"><span class="spinner-border text-purple"></span><br><br>Scanning repositories...</td></tr>';
+            closePreview();
+
+            try {
+                const res = await fetch(getBasePath() + '/api/search', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode, token, path })
+                    headers: getGitHeaders(),
+                    body: JSON.stringify({ mode: searchMode, token, path, searchType, caseSensitive, ignoreComments, includeFolders, includeFiles, ignoreFolders, ignoreFiles })
                 });
                 
-                if (!response.ok) throw new Error('Search failed');
-                
-                const results = await response.json();
-                
-                resultsBody.innerHTML = '';
-                if (results.length === 0) {
-                    resultsBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No matches found.</td></tr>';
-                } else {
-                    results.forEach(row => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="font-monospace small">${row.location}</td>
-                            <td>${row.line}</td>
-                            <td class="font-monospace small text-muted">${row.content}</td>
-                        `;
-                        resultsBody.appendChild(tr);
-                    });
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    throw new Error(errorData.error || 'Search failed');
                 }
+                
+                currentResults = await res.json();
+                
+                // Update header criteria
+                const criteriaEl = document.getElementById('activeCriteria');
+                const modeLabel = searchMode === 'local' ? 'Local' : 'Remote';
+                const typeLabel = searchType.charAt(0).toUpperCase() + searchType.slice(1);
+                
+                let advancedInfo = [];
+                if (caseSensitive) advancedInfo.push('Case');
+                if (ignoreComments) advancedInfo.push('NoComments');
+                if (includeFolders.length || includeFiles.length) advancedInfo.push('Includes');
+                if (ignoreFolders.length || ignoreFiles.length) advancedInfo.push('Ignores');
+                
+                const advStr = advancedInfo.length > 0 ? ` &nbsp; <span class="badge bg-light text-muted border">${advancedInfo.join('|')}</span>` : '';
+                
+                criteriaEl.innerHTML = `Searching for <b class="text-purple">"${token}"</b> &nbsp; [${modeLabel}] &nbsp; [${typeLabel}]${advStr}`;
+                criteriaEl.classList.remove('d-none');
 
+                renderResults(currentResults);
+                if (currentResults.length > 0) {
+                    exportBtn.classList.remove('d-none');
+                    showStats(currentResults);
+                    // auto-collapse if many results
+                    if (currentResults.length > 50 && !sidebarCollapsed) sidebarToggle.click();
+                } else {
+                    document.getElementById('statsBar').classList.add('d-none');
+                    exportBtn.classList.add('d-none');
+                }
             } catch (err) {
-                console.error(err);
-                resultsBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+                resultsBody.innerHTML = `<tr><td colspan="4" class="text-center text-danger py-5">
+                    <i class="bi bi-exclamation-triangle display-4 opacity-50 d-block mb-3"></i>
+                    <b>Error:</b> ${err.message}
+                </td></tr>`;
             } finally {
-                document.getElementById('searchBtn').textContent = 'Detailed Search';
+                searchBtn.disabled = false;
+                searchBtn.innerHTML = '<i class="bi bi-search me-1"></i> Start Search';
             }
         });
+        
+        function escapeHtml(text) {
+            if (!text) return text;
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
 
-        // Fetch UI Config (Footer & Header)
-        fetch('/api/config/ui')
-            .then(r => r.json())
-            .then(c => {
-                if (c['ui.footer.text']) {
-                    const f = document.querySelector('.raks-footer .container');
-                     if(f) f.innerHTML = c['ui.footer.text'];
+        function renderResults(results) {
+            resultsBody.innerHTML = results.length === 0 ? '<tr><td colspan="4" class="text-center py-5 text-muted">No matches found.</td></tr>' : '';
+            results.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.onclick = () => {
+                    document.querySelectorAll('#resultsTable tbody tr').forEach(r => r.classList.remove('table-active'));
+                    tr.classList.add('table-active');
+                    showPreview(row);
+                };
+                tr.style.cursor = 'pointer';
+                tr.innerHTML = `
+                    <td class="text-muted small">${index + 1}</td>
+                    <td class="font-monospace small text-wrap-break">${row.filePath}</td>
+                    <td class="fw-bold text-muted small">${row.lineNumber}</td>
+                    <td class="font-monospace small text-muted text-truncate" style="max-width: 400px;">${escapeHtml(row.content)}</td>
+                `;
+                resultsBody.appendChild(tr);
+            });
+        }
+
+        function showStats(results) {
+            const matches = results.length;
+            const uniqueFiles = new Set(results.map(r => r.filePath)).size;
+            document.getElementById('statMatches').innerText = `Total Matches: ${matches}`;
+            document.getElementById('statFiles').innerText = `Total Files: ${uniqueFiles}`;
+            document.getElementById('statsBar').classList.remove('d-none');
+        }
+
+        function showPreview(row) {
+            previewPanel.classList.remove('d-none');
+            previewPanel.classList.add('d-flex');
+            resizerPreview.classList.remove('d-none');
+            
+            document.getElementById('localActions').classList.toggle('d-none', searchMode !== 'local');
+            document.getElementById('remoteActions').classList.toggle('d-none', searchMode === 'local');
+
+            if (searchMode === 'local') {
+                document.getElementById('previewFilePath').innerText = row.absolutePath;
+                document.getElementById('openFileBtn').onclick = () => openLocalFile(row.absolutePath);
+            } else {
+                updateRemoteGitLink(row);
+            }
+
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = '';
+            row.context.forEach((line, i) => {
+                const div = document.createElement('div');
+                div.className = 'd-flex';
+                // Find relative index of the match within context
+                // row.lineNumber is the real line. we don't know start line of context here but we can guess it's contextLines before.
+                // Simplified: context usually has the matched line in the middle.
+                if (line.trim() === row.content.trim()) div.style.backgroundColor = 'rgba(102, 51, 153, 0.4)';
+                const highlighted = highlightToken(line, document.getElementById('searchToken').value);
+                div.innerHTML = `<span class="opacity-50 me-2" style="min-width: 30px; text-align: right;">${i+1}</span> <span class="text-nowrap">${highlighted}</span>`;
+                container.appendChild(div);
+            });
+        }
+
+        function updateRemoteGitLink(row) {
+            const provider = localStorage.getItem('git_analyzer_provider') || 'gitlab';
+            const viewBtn = document.getElementById('viewOnGitBtn');
+            
+            let repo = "";
+            let filePath = "";
+            
+            // Marker-based splitting is more robust for nested projects
+            const markers = ['/src/', '/lib/', '/webapp/', '/pom.xml', '/package.json', '/README', '/.git', '/app/'];
+            let splitIndex = -1;
+            
+            for (let m of markers) {
+                const idx = row.filePath.indexOf(m);
+                if (idx !== -1 && (splitIndex === -1 || idx < splitIndex)) {
+                    splitIndex = idx;
                 }
-                if (c['ui.header.search']) {
-                    const headerTitle = document.querySelector('.position-absolute h5');
-                    if(headerTitle) headerTitle.textContent = c['ui.header.search'];
+            }
+
+            if (splitIndex !== -1) {
+                repo = row.filePath.substring(0, splitIndex);
+                filePath = row.filePath.substring(splitIndex + 1);
+            } else {
+                // Fallback to heuristic
+                const parts = row.filePath.split('/');
+                if (provider === 'github') {
+                    repo = parts.slice(0, 2).join('/');
+                    filePath = parts.slice(2).join('/');
+                } else {
+                    repo = parts.slice(0, 3).join('/'); 
+                    filePath = parts.slice(3).join('/');
                 }
+            }
+
+            let url = "";
+            if (provider === 'github') {
+                url = `https://github.com/${repo}/blob/HEAD/${filePath}#L${row.lineNumber}`;
+            } else {
+                const gitlabUrl = localStorage.getItem('git_analyzer_gitlab_url') || 'https://gitlab.com';
+                url = `${gitlabUrl.replace(/\/$/, '')}/${repo}/-/blob/HEAD/${filePath}#L${row.lineNumber}`;
+            }
+            
+            viewBtn.href = url;
+        }
+        
+
+        function highlightToken(text, token) {
+            if (!token) return escapeHtml(text);
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            const caseSensitive = document.getElementById('caseSensitive').checked;
+            let regexStr = (searchType === 'exact') ? `\\b${escapeRegex(token)}\\b` : (searchType === 'substring' ? escapeRegex(token) : token);
+            try {
+                const regex = new RegExp(regexStr, caseSensitive ? 'g' : 'gi');
+                return escapeHtml(text).replace(regex, m => `<b class="text-warning">${m}</b>`);
+            } catch (e) { return escapeHtml(text); }
+        }
+
+        function closePreview() {
+            previewPanel.classList.add('d-none');
+            previewPanel.classList.remove('d-flex');
+            resizerPreview.classList.add('d-none');
+        }
+
+        async function openLocalFile(path) {
+            try {
+                const res = await fetch(getBasePath() + '/api/search/open', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path })
+                });
+                if (!res.ok) alert('Error: ' + (await res.json()).error);
+            } catch (e) { alert('System Error: ' + e.message); }
+        }
+
+        // CSV Export Logic - Improved Repo Name Detection
+        exportBtn.onclick = () => {
+            if (currentResults.length === 0) return;
+            let csv = 'Repo/Folder,File Name,Full File Path,Line Number,Content\n';
+            currentResults.forEach(r => {
+                // Better repo name logic: skip 'main', 'release' if at start
+                const parts = r.filePath.split(/[\\/]/);
+                let repo = parts[0];
+                if ((repo.toLowerCase() === 'main' || repo.toLowerCase() === 'release' || repo.toLowerCase() === 'master') && parts.length > 1) {
+                    repo = parts[1];
+                }
+                const fileName = parts[parts.length - 1];
+                const safeContent = `"${r.content.replace(/"/g, '""')}"`;
+                csv += `"${repo}","${fileName}","${r.filePath}","${r.lineNumber}",${safeContent}\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url;
+            a.download = `GitSearch_Results_${new Date().getTime()}.csv`;
+            a.click();
+        };
+
+        function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+        function escapeRegex(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }
+
+        // Resizing Logic
+        let isResizingLeft = false, isResizingRight = false;
+        document.getElementById('dragMe').onmousedown = () => isResizingLeft = true;
+        document.getElementById('resizerPreview').onmousedown = () => isResizingRight = true;
+        document.addEventListener('mousemove', (e) => {
+            if (isResizingLeft) {
+                const w = e.clientX - leftPanel.getBoundingClientRect().left;
+                if (w > 200 && w < 600) leftPanel.style.width = w + 'px';
+            }
+            if (isResizingRight) {
+                if (layoutMode === 'cols') {
+                    const w = rightPanel.getBoundingClientRect().right - e.clientX;
+                    if (w > 300 && w < (rightPanel.offsetWidth * 0.7)) {
+                        previewPanel.style.width = w + 'px';
+                        previewPanel.style.minWidth = w + 'px';
+                    }
+                } else {
+                    const h = rightPanel.getBoundingClientRect().bottom - e.clientY;
+                    if (h > 150 && h < (rightPanel.offsetHeight * 0.8)) {
+                        previewPanel.style.height = h + 'px';
+                        const resColumn = document.getElementById('resultsColumn');
+                        resColumn.style.height = `calc(100% - ${h}px)`;
+                    }
+                }
+            }
+        });
+        document.addEventListener('mouseup', () => { isResizingLeft = isResizingRight = false; });
+
+        // Connection Status Sync
+        const connectedProvider = localStorage.getItem('git_analyzer_provider') || 'gitlab';
+        const displayNames = { 'github': 'GitHub', 'gitlab': 'GitLab' };
+        document.getElementById('currentProviderDisplay').innerText = displayNames[connectedProvider] || 'Unknown';
+        document.getElementById('modeRemoteLabel').innerText = `Remote Git`;
+        document.getElementById('gitConnectionCard').className = `connection-card mb-3 ${connectedProvider}-theme`;
+
+        // Tooltips cleanup
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+             // Load sticky settings
+            loadSettings();
+            
+            // Save on any change (automatic persistence)
+            form.querySelectorAll('input, select, textarea').forEach(el => {
+                el.addEventListener('change', saveSettings);
+                el.addEventListener('input', saveSettings);
             });
 
-    </script>
+            // Disable Local Mode if in Wrapper
+            if (window.location.pathname.includes('/apiguard/gitanalyzer')) {
+                const localRadio = document.getElementById('modeLocal');
+                if (localRadio) {
+                    localRadio.disabled = true;
+                    // Force Remote Git if local is disabled
+                    const remoteRadio = document.getElementById('modeRemote');
+                    if (remoteRadio) {
+                        remoteRadio.checked = true;
+                        remoteRadio.dispatchEvent(new Event('change'));
+                        document.getElementById('cloudhubNotice').classList.remove('d-none');
+                        document.getElementById('cloudhubNotice').innerHTML = '<i class="bi bi-info-circle me-1"></i> Local mode only available in standalone tool';
+                    }
+                }
+            }
 
+            // Tooltips initialization
+            [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(el => new bootstrap.Tooltip(el));
+        });
+    </script>
 </body>
 </html>

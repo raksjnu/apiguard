@@ -196,6 +196,16 @@
             }
 
             // 3. Helper Functions
+            function getBasePath() {
+                const path = window.location.pathname;
+                // If path contains /apiguard/gitanalyzer, we're in wrapper mode
+                if (path.includes('/apiguard/gitanalyzer')) {
+                    return '/apiguard/gitanalyzer';
+                }
+                // Otherwise, standalone mode - no prefix
+                return '';
+            }
+
             function updateTheme(provider) {
                 if (connectionCard) {
                     // Start fresh
@@ -233,10 +243,6 @@
 
                 setStatus('loading');
 
-                const getBasePath = () => {
-                   return window.location.origin;
-                };
-
                 const payload = {
                     token: token,
                     provider: provider
@@ -272,7 +278,13 @@
         });
 
         // Fetch UI Config
-        fetch('/api/config/ui')
+        // Use the same helper or a simplified one here since we're outside the DOMContentLoaded scope for validate
+        const getBasePath = () => {
+            const path = window.location.pathname;
+            return path.includes('/apiguard/gitanalyzer') ? '/apiguard/gitanalyzer' : '';
+        };
+
+        fetch(getBasePath() + '/api/config/ui')
             .then(response => response.json())
             .then(config => {
                 if (config['ui.index.bulk.title']) document.getElementById('bulkTitle').innerText = config['ui.index.bulk.title'];

@@ -50,7 +50,7 @@
                         <div class="d-flex align-items-center gap-2 flex-shrink-0">
                             <span class="status-pulse active"></span> 
                             <span class="small fw-bold text-success" style="font-size: 0.75rem;">Connected</span>
-                             <a href="/" class="btn btn-sm btn-outline-secondary p-0 px-1 border-0" data-bs-toggle="tooltip" title="Manage on Dashboard">
+                             <a href="index.html" class="btn btn-sm btn-outline-secondary p-0 px-1 border-0" data-bs-toggle="tooltip" title="Manage on Dashboard">
                                  <i class="bi bi-gear"></i>
                              </a>
                         </div>
@@ -591,8 +591,20 @@
                     throw new Error(errData.error || 'Failed to start download');
                 }
 
-                const { taskId } = await response.json();
-                console.log("[DEBUG] Received Task ID:", taskId);
+                const data = await response.json();
+                console.log("[DEBUG] Received Response:", data);
+
+                if (data.details) {
+                    // Synchronous Response (Wrapper Mode)
+                    updateUIWithFinishedStatus(data);
+                    setTimeout(() => {
+                         downloadingModal.hide();
+                         renderResults(data);
+                    }, 1500);
+                    return;
+                }
+
+                const taskId = data.taskId;
 
                 // Polling Logic
                 const pollInterval = setInterval(async () => {
@@ -685,6 +697,27 @@
                 // ALWAYS show the section
                 document.getElementById('resultsSection').classList.remove('d-none');
             }
+        }
+
+        function updateUIWithFinishedStatus(data) {
+             const progress = 100;
+             const bar = document.getElementById('downloadProgressBar');
+             if (bar) {
+                bar.style.width = progress + '%';
+                bar.innerText = progress + '%';
+                bar.setAttribute('aria-valuenow', progress);
+             }
+             
+             const label = document.getElementById('currentDownloadLabel');
+             if (label) label.innerText = 'Finalizing...';
+             
+             const countLabel = document.getElementById('progressCountLabel');
+             if (countLabel) countLabel.innerText = `${data.success} / ${data.total} completed`;
+             
+             const downloadingBody = document.getElementById('downloadingBody');
+             const successBody = document.getElementById('downloadSuccessBody');
+             if (downloadingBody) downloadingBody.classList.add('d-none');
+             if (successBody) successBody.classList.remove('d-none');
         }
 
         // Fetch UI Config
