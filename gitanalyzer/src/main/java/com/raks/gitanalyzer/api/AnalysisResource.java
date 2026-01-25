@@ -10,6 +10,8 @@ import com.raks.gitanalyzer.provider.GitLabProvider;
 import jakarta.ws.rs.*;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.Context;
+import jakarta.ws.rs.core.HttpHeaders;
 import java.util.List;
 import java.util.Map;
 import java.util.Arrays;
@@ -21,7 +23,30 @@ import java.util.Collections;
 public class AnalysisResource {
 
     @POST
-    public Response analyze(Map<String, Object> request) {
+    @Path("/validate")
+    public Response validate(Map<String, String> request) {
+        try {
+            String providerType = request.get("provider");
+            String token = request.get("token");
+            
+            GitProvider provider;
+            if ("github".equalsIgnoreCase(providerType)) {
+                provider = new GitHubProvider(token);
+            } else {
+                provider = new GitLabProvider(token);
+            }
+            
+            provider.validateCredentials();
+            return Response.ok(Map.of("status", "VALID", "message", "Credentials are valid.")).build();
+        } catch (Exception e) {
+            return Response.status(Response.Status.UNAUTHORIZED)
+                           .entity(Map.of("status", "INVALID", "error", e.getMessage()))
+                           .build();
+        }
+    }
+
+    @POST
+    public Response analyze(Map<String, Object> request, @Context HttpHeaders headers) {
         try {
             String codeRepo = (String) request.get("codeRepo");
             String configRepo = (String) request.get("configRepo");
@@ -30,6 +55,10 @@ public class AnalysisResource {
             String ignoreText = (String) request.get("ignorePatterns"); 
             String contentIgnoreText = (String) request.get("contentIgnorePatterns");
             String apiName = (String) request.getOrDefault("apiName", "Unknown API");
+
+            // Extract Auth Context from Headers
+            String headerProvider = headers.getHeaderString("X-Git-Provider");
+            String headerToken = headers.getHeaderString("X-Git-Token");
 
             List<String> filePatterns = Collections.emptyList();
             if (ignoreText != null && !ignoreText.isBlank()) {
@@ -44,29 +73,28 @@ public class AnalysisResource {
             }
 
             String defaultGroup = "";
-            String providerType = ConfigManager.get("git.provider");
-            // ... (existing logic for defaultGroup)
+            String providerType = (headerProvider != null && !headerProvider.isBlank()) ? headerProvider : ConfigManager.get("git.provider");
             
             if ("github".equalsIgnoreCase(providerType)) {
                 defaultGroup = ConfigManager.get("github.owner");
             } else {
                 String fullGroup = ConfigManager.get("gitlab.group");
-                if(fullGroup.contains("/")) defaultGroup = fullGroup.substring(fullGroup.lastIndexOf("/") + 1);
+                if(fullGroup != null && fullGroup.contains("/")) defaultGroup = fullGroup.substring(fullGroup.lastIndexOf("/") + 1);
                 else defaultGroup = fullGroup;
             }
 
-            if (codeRepo != null && !codeRepo.contains("/") && !defaultGroup.isBlank()) {
+            if (codeRepo != null && !codeRepo.contains("/") && defaultGroup != null && !defaultGroup.isBlank()) {
                 codeRepo = defaultGroup + "/" + codeRepo;
             }
-            if (configRepo != null && !configRepo.isBlank() && !configRepo.contains("/") && !defaultGroup.isBlank()) {
+            if (configRepo != null && !configRepo.isBlank() && !configRepo.contains("/") && defaultGroup != null && !defaultGroup.isBlank()) {
                 configRepo = defaultGroup + "/" + configRepo;
             }
 
             GitProvider provider;
             if ("github".equalsIgnoreCase(providerType)) {
-                provider = new GitHubProvider();
+                provider = new GitHubProvider(headerToken);
             } else {
-                provider = new GitLabProvider();
+                provider = new GitLabProvider(headerToken);
             }
 
             String configSourceBranch = (String) request.get("configSourceBranch");

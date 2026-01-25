@@ -46,7 +46,7 @@ public class AnalyzerService {
                     String configDiffJson = gitProvider.compareBranches(configRepo, cSource, cTarget);
                     Map<String, Object> configDiff = objectMapper.readValue(configDiffJson, Map.class);
                     List<Map<String, Object>> configDiffs = (List<Map<String, Object>>) configDiff.get("diffs");
-                    processConfigDiffs(configDiffs, result, filePatterns);
+                    processConfigDiffs(configDiffs, result, filePatterns, contentPatterns, ignoreAttributeOrder);
                 } catch (Exception e) {
                     // Suppress stack trace for Config failures (e.g. 404 Ref Not Found)
                     System.out.println("Warning: Config Repo analysis failed: " + e.getMessage() + ". Proceeding with Code Repo analysis only.");
@@ -117,12 +117,13 @@ public class AnalyzerService {
         }
     }
 
-    private void processConfigDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns) {
+    private void processConfigDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns, List<String> contentPatterns, boolean ignoreAttributeOrder) {
         if (diffs == null) return;
-        // For simplicity, let's just loop and add basic changes, marking as CONFIG.
          for (Map<String, Object> diff : diffs) {
             String newPath = (String) diff.get("new_path");
-            if (shouldIgnore(newPath, filePatterns)) {
+            String oldPath = (String) diff.get("old_path");
+            
+            if (shouldIgnore(newPath, filePatterns) || (oldPath != null && shouldIgnore(oldPath, filePatterns))) {
                 result.addIgnoredFile(newPath); 
                 continue;
             }
@@ -130,8 +131,31 @@ public class AnalyzerService {
             FileChange change = new FileChange();
             change.setPath(newPath);
             change.setType("CONFIG");
-            // ... (fill other fields if needed, but mostly we care about count)
-            result.addFileChange(change); // This increments Total and Config stats in AnalysisResult
+            
+            boolean isNew = (boolean) diff.get("new_file");
+            boolean isDeleted = (boolean) diff.get("deleted_file");
+            change.setNewFile(isNew);
+            change.setDeletedFile(isDeleted);
+
+            String diffContent = (String) diff.get("diff");
+            if (diffContent != null && !diffContent.isEmpty()) {
+                StringBuilder fullDiff = new StringBuilder();
+                String oldPathStr = (oldPath != null && !oldPath.isEmpty()) ? oldPath : newPath;
+                fullDiff.append("diff --git a/").append(oldPathStr).append(" b/").append(newPath).append("\n");
+                
+                if (isNew) {
+                    fullDiff.append("new file mode 100644\n--- /dev/null\n+++ b/").append(newPath).append("\n");
+                } else if (isDeleted) {
+                    fullDiff.append("deleted file mode 100644\n--- a/").append(oldPath).append("\n+++ /dev/null\n");
+                } else {
+                    fullDiff.append("--- a/").append(oldPathStr).append("\n+++ b/").append(newPath).append("\n");
+                }
+                fullDiff.append(diffContent);
+                change.setDiffContent(fullDiff.toString());
+            }
+
+            calculateLines(change, diffContent, contentPatterns, ignoreAttributeOrder);
+            result.addFileChange(change);
          }
     }
     

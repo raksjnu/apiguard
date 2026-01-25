@@ -5,31 +5,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Comparison Branch Analysis - GitAnalyzer</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="assets/css/styles.css" rel="stylesheet">
+    <link href="assets/css/styles.css?v=3" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        .border-purple { border-color: #6f42c1 !important; }
-        .text-purple { color: #6f42c1 !important; }
-        .btn-outline-purple {
-            color: #6f42c1;
-            border-color: #6f42c1;
+        /* Internal styles cleaned up to favor styles.css */
+
+        .validate-btn {
+            background: linear-gradient(135deg, #6f42c1, #a166ab);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 4px 12px;
+            font-size: 0.8rem;
+            transition: all 0.3s;
+            position: relative;
+            height: 31px; /* Match input-sm height */
         }
-        .btn-outline-purple:hover {
-            color: #fff;
-            background-color: #6f42c1;
-            border-color: #6f42c1;
+        .validate-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3);
+            color: white;
         }
+        .validate-btn.valid { background: #28a745 !important; }
+        .validate-btn.invalid { background: #dc3545 !important; }
+        
+        .status-pulse {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #ccc;
+        }
+        .status-pulse.valid { background: #28a745; box-shadow: 0 0 8px #28a745; animation: pulse 2s infinite; }
+        .status-pulse.invalid { background: #dc3545; box-shadow: 0 0 8px #dc3545; }
+        .status-pulse.validating { background: #ffc107; box-shadow: 0 0 8px #ffc107; animation: pulse 1s infinite; }
+        
+        .x-small { font-size: 0.7rem; }
+        
+        @keyframes pulse {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            70% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+
         .form-control, .form-select {
             border-color: #6f42c1 !important;
-            /* font-weight: normal; Default is normal */
         }
-        .form-label {
-            font-weight: bold;
-        }
-        .btn {
-            font-weight: bold;
-        }
+        .form-label { font-weight: bold; }
+        .btn { font-weight: bold; }
         .form-control:focus, .form-select:focus {
             box-shadow: 0 0 0 0.25rem rgba(111, 66, 193, 0.25);
             border-color: #6f42c1;
@@ -69,16 +93,23 @@
         <div class="split-container">
             <!-- Left Panel: Configuration -->
             <div class="split-left" id="leftPanel">
-                <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0 fw-bold text-purple">Analysis Config</h5>
-                    <!-- Provider & Token Compact -->
-                    <div class="input-group input-group-sm w-auto shadow-sm">
-                        <span class="input-group-text bg-white text-purple"><i class="bi bi-shield-lock-fill"></i></span>
-                        <select class="form-select border-start-0" id="gitProviderSelect" style="max-width: 100px;">
-                             <option value="gitlab">GitLab</option>
-                             <option value="github">GitHub</option>
-                        </select>
-                        <input type="password" class="form-control" id="gitTokenInput" placeholder="Token Optional" style="max-width: 120px;">
+                <h5 class="mb-3 fw-bold text-purple pt-2">Analysis Config</h5>
+                <!-- Read-Only Connection Status -->
+                <!-- Read-Only Connection Status -->
+                <div class="connection-card mb-3 position-relative" id="gitConnectionCard">
+                    <a href="/" class="position-absolute top-0 end-0 m-2 text-decoration-none text-muted opacity-50 hover-opacity-100" data-bs-toggle="tooltip" title="Manage on Dashboard" style="z-index: 10;">
+                        <i class="bi bi-gear-fill"></i>
+                    </a>
+                    
+                    <div class="d-flex align-items-center justify-content-between pe-3">
+                        <div style="min-width: 0; padding-right: 10px;"> 
+                             <span class="small fw-bold text-uppercase opacity-75 d-block text-truncate" style="letter-spacing: 0.5px; font-size: 0.65rem;">Git Connection</span>
+                             <span class="fw-bold text-purple text-truncate d-block" id="currentProviderDisplay" style="font-size: 0.9rem;">...</span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2 flex-shrink-0 border px-2 py-1 rounded-pill bg-light">
+                            <span class="status-pulse active" style="width: 8px; height: 8px;"></span> 
+                            <span class="fw-bold text-success" style="font-size: 0.7rem;">Connected</span>
+                        </div>
                     </div>
                 </div>
 
@@ -164,8 +195,13 @@
                             <textarea class="form-control form-control-sm font-monospace" id="ignorePatterns" rows="2" placeholder=".gitignore patterns..."></textarea>
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold">Content Ignore (Regex)</label>
-                            <textarea class="form-control form-control-sm" id="contentPatterns" rows="2" placeholder="e.g. regex:DEBUG_LOG"></textarea>
+                            <label class="form-label small fw-bold d-flex align-items-center">
+                                Content Ignore (Regex or Text)
+                                <span class="ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="<div class='text-start fw-normal'><strong>1. Plain Text:</strong> Matches lines containing the text.<br>Example: <code>DEBUG_LOG</code><br><br><strong>2. Strict Regex:</strong> Use <code>regex:</code> prefix.<br>Example: <code>regex:^//.*</code> (Starts with //)<br>Example: <code>regex:password=.*</code> (Masks secrets)<br>Example: <code>regex:^\s*logger\..*</code> (Log lines)</div>">
+                                    <i class="bi bi-info-circle text-muted" style="cursor:help;"></i>
+                                </span>
+                            </label>
+                            <textarea class="form-control form-control-sm font-monospace" id="contentPatterns" rows="2" placeholder="e.g. regex:DEBUG_LOG"></textarea>
                         </div>
                         
 
@@ -192,7 +228,7 @@
                 <!-- Initial Placeholder -->
                 <div id="resultsPlaceholder" class="text-center mt-5 text-muted">
                     <img src="assets/images/logo.png" height="100" class="mb-3">
-                    <h4>Ready to Analyze</h4>
+                    <h4 class="text-purple fw-bold">Ready to Analyze</h4>
                     <p>Configure repository details on the left and click "Run Analysis".</p>
                 </div>
 
@@ -238,17 +274,17 @@
                         </div>
                     </div>
         
-                    <!-- Detailed Changes -->
-                    <div class="card shadow-sm mb-5 border-purple">
+                    <!-- Significant Changes -->
+                    <div class="card shadow-sm mb-4 border-purple" style="border-left: 6px solid #663399 !important;">
                         <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
-                            <h5 class="mb-0 fw-bold">Detailed File Changes</h5>
+                            <h5 class="mb-0 fw-bold text-purple"><i class="bi bi-file-earmark-diff me-2"></i>Significant File Changes</h5>
                             <button class="btn btn-sub-action" onclick="exportToCSV()">Export CSV</button>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive">
                                 <table class="table table-hover mb-0 align-middle">
-                                    <thead class="bg-light">
-                                        <tr class="text-purple small fw-bold text-uppercase">
+                                    <thead>
+                                        <tr>
                                             <th>Type</th>
                                             <th>File Path</th>
                                             <th>Diff</th>
@@ -266,12 +302,58 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Innovative Filtered Noise Section -->
+                    <div id="filteredSection" class="d-none mt-4">
+                        <div class="filtered-noise-container p-4 rounded-3" style="background: rgba(248, 249, 250, 0.6); backdrop-filter: blur(8px); border: 1px dashed #ddd; border-left: 5px solid #663399; border-top-left-radius: 15px !important; border-bottom-left-radius: 15px !important; transition: all 0.3s ease;">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="filter-icon-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px; background: #e9ecef; border-radius: 50%;">
+                                        <i class="bi bi-funnel text-muted"></i>
+                                    </div>
+                                    <div>
+                                        <h6 class="mb-0 fw-bold text-purple">Smart Filtered & Minor Changes</h6>
+                                        <p class="x-small text-muted mb-0 fw-bold">Changes identified as semantically irrelevant or masked by filters</p>
+                                    </div>
+                                    <span class="badge rounded-pill bg-light text-muted border ms-3" id="filteredCount">0</span>
+                                </div>
+                                <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" type="button" data-bs-toggle="collapse" data-bs-target="#filteredCollapse">
+                                    <span id="toggleText">Show Details</span> <i class="bi bi-chevron-down ms-1"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="collapse" id="filteredCollapse">
+                                 <div class="table-responsive">
+                                    <table class="table table-hover align-middle mb-0" style="opacity: 0.85;">
+                                        <thead>
+                                            <tr>
+                                                <th>Type</th>
+                                                <th>File Path</th>
+                                                <th>Diff</th>
+                                                <th>Status</th>
+                                                <th>Valid Lines</th>
+                                                <th>Ignored Lines</th>
+                                                <th>Filters</th>
+                                                <th>Severity</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="filteredTableBody" class="small">
+                                            <!-- Filtered noise will be injected here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-2">
+                            <small class="text-muted"><i class="bi bi-info-circle me-1"></i> These files were de-emphasized because they contain no significant logic changes.</small>
+                        </div>
+                    </div>
                     </div>
 
                     <!-- Blocked Files Section (Moved Inside Results) -->
-                    <div id="blockedFilesSection" class="card shadow-sm mb-5 d-none" style="border-color: #663399;">
-                        <div class="card-header text-white py-2" style="background-color: #663399;">
-                            <h6 class="mb-0 fw-bold"><i class="bi bi-slash-circle me-2"></i>Files Blocked by Glob Ignore Pattern</h6>
+                    <div id="blockedFilesSection" class="card shadow-sm mb-5 d-none" style="border-color: #663399; border-left: 6px solid #663399 !important; border-top-left-radius: 15px !important; border-bottom-left-radius: 15px !important;">
+                        <div class="card-header text-white py-2" style="background-color: #663399; border-top-left-radius: 10px; border-top-right-radius: 10px;">
+                            <h6 class="mb-0 fw-bold text-white"><i class="bi bi-slash-circle me-2"></i>Files Blocked by Glob Ignore Pattern</h6>
                         </div>
                         <div class="card-body p-0">
                             <div class="table-responsive" style="max-height: 300px; overflow-y: auto;">
@@ -434,36 +516,19 @@
     <script src="https://cdn.jsdelivr.net/npm/diff2html/bundles/js/diff2html-ui.min.js"></script>
 
     <script>
-        // --- Persistence Logic ---
+        // --- Persistence & Theme Logic ---
         const STORE_KEY_PROVIDER = 'git_analyzer_provider';
-        const STORE_KEY_TOKEN = 'git_analyzer_token';
+        const STORE_KEY_GITHUB_TOKEN = 'git_analyzer_github_token';
+        const STORE_KEY_GITLAB_TOKEN = 'git_analyzer_gitlab_token';
 
-        const providerSelect = document.getElementById('gitProviderSelect');
-        const tokenInput = document.getElementById('gitTokenInput');
-
-        // --- UI Config Loading ---
-        document.addEventListener('DOMContentLoaded', () => {
-             fetch('/apiguard/gitanalyzer/api/config/ui')
-                .then(response => response.json())
-                .then(config => {
-                    if (config['ui.footer.text']) {
-                        const footerEl = document.getElementById('footerText');
-                        if (footerEl) footerEl.innerHTML = config['ui.footer.text'];
-                    }
-                })
-                .catch(err => console.warn('Failed to load UI config:', err));
-        });
-
-        // Restore Provider/Token
-        if (providerSelect && tokenInput) {
-             const savedProvider = localStorage.getItem(STORE_KEY_PROVIDER);
-             if (savedProvider) providerSelect.value = savedProvider;
-    
-             const savedToken = localStorage.getItem(STORE_KEY_TOKEN);
-             if (savedToken) tokenInput.value = savedToken;
-    
-             providerSelect.addEventListener('change', () => localStorage.setItem(STORE_KEY_PROVIDER, providerSelect.value));
-             tokenInput.addEventListener('input', () => localStorage.setItem(STORE_KEY_TOKEN, tokenInput.value));
+        // Update the connection card display
+        const currentProviderDisplay = document.getElementById('currentProviderDisplay');
+        if (currentProviderDisplay) {
+            const provider = localStorage.getItem(STORE_KEY_PROVIDER) || 'gitlab';
+            currentProviderDisplay.textContent = provider.charAt(0).toUpperCase() + provider.slice(1);
+            const connectionCard = document.getElementById('gitConnectionCard');
+            connectionCard.classList.remove('github-theme', 'gitlab-theme'); // Remove old themes
+            connectionCard.classList.add(provider + '-theme'); // Add current theme
         }
 
         // Restore Form Fields
@@ -505,13 +570,36 @@
             return '';
         }
         
-        // Helper to get Headers
+        // Helper to get Git Headers (Centralized)
+        // Helper to get Git Headers (Centralized)
         function getGitHeaders() {
-            const headers = {
-                'Content-Type': 'application/json'
+            const provider = localStorage.getItem('git_analyzer_provider') || 'gitlab';
+            let token;
+
+            if (provider === 'github') {
+                token = localStorage.getItem('git_analyzer_github_token');
+            } else {
+                token = localStorage.getItem('git_analyzer_gitlab_token');
+            }
+
+            // Fallback for migration (if needed, but relying on correct keys is safer)
+            if (!token) {
+                 token = localStorage.getItem('git_analyzer_token');
+            }
+            
+            if (!token) {
+                 alert('Git Token not found. Please configure it on the Dashboard.');
+                 window.location.href = '/';
+                 return null;
+            }
+            
+            // Use standardized headers expected by backend
+            const headers = { 
+                'Content-Type': 'application/json',
+                'X-Git-Provider': provider,
+                'X-Git-Token': token
             };
-            if (providerSelect) headers['X-Git-Provider'] = providerSelect.value;
-            if (tokenInput && tokenInput.value.trim()) headers['X-Git-Token'] = tokenInput.value.trim();
+
             return headers;
         }
 
@@ -533,7 +621,10 @@
                 if (group) params.append('group', group);
                 if (filter) params.append('filter', filter);
                 
-                const response = await fetch(url + '?' + params.toString(), { headers: getGitHeaders() });
+                const headers = getGitHeaders();
+                if (!headers) return; // Stop if token is missing
+
+                const response = await fetch(url + '?' + params.toString(), { headers: headers });
                 const data = await response.json();
 
                 if (!response.ok) {
@@ -612,8 +703,11 @@
             btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Fetching...';
             
             try {
+                const headers = getGitHeaders();
+                if (!headers) return; // Stop if token is missing
+
                 const response = await fetch(getBasePath() + '/api/download/branches?repo=' + encodeURIComponent(repo), {
-                    headers: getGitHeaders()
+                    headers: headers
                 });
                 const branches = await response.json(); // API returns List<String>
                 
@@ -704,8 +798,13 @@
             btn.disabled = true;
 
             try {
+                const headers = getGitHeaders();
+                if (!headers) return; // Stop if token is missing
+
                 const url = getBasePath() + `/api/download/branches?repo=${encodeURIComponent(repo)}`;
-                const response = await fetch(url);
+                const response = await fetch(url, {
+                    headers: headers
+                });
                 if (!response.ok) throw new Error('Status ' + response.status);
                 
                 const branches = await response.json();
@@ -870,26 +969,25 @@
             
             // Render table
             // Render table
+            // Render Significant and Filtered Results
             const tbody = document.getElementById('filesTableBody');
-            tbody.innerHTML = '';
+            const filteredTbody = document.getElementById('filteredTableBody');
+            const filteredSection = document.getElementById('filteredSection');
+            const filteredCountBadge = document.getElementById('filteredCount');
             
-            // Note: Header is updated via static HTML now to avoid sync issues.
-            // Expected Order: Type | Path | View | Status | Valid | Ignored | Filters | Severity
+            tbody.innerHTML = '';
+            filteredTbody.innerHTML = '';
+            
+            let filteredCount = 0;
 
             currentAnalysisResults.forEach((change, index) => {
+                const totalLines = (change.additions || 0) + (change.deletions || 0) + (change.validChangedLines || 0);
+                const isFiltered = totalLines === 0 && (change.ignoredLines > 0 || (change.matchTypes && change.matchTypes.length > 0));
+
                 const row = document.createElement('tr');
-                
-                // Highlight row if ignored lines exist (e.g. Smart XML) or filters applied
-                if ((change.ignoredLines && change.ignoredLines > 0) || (change.matchTypes && change.matchTypes.length > 0)) {
-                    row.style.backgroundColor = '#fff9c4'; // Light Yellow Highlight
-                }
-                
                 const statusBadge = change.status || (change.isNewFile ? 'ADDED' : change.isDeletedFile ? 'DELETED' : 'MODIFIED');
-                
-                // Truncate path if too long
                 const displayPath = change.path.length > 80 ? '...' + change.path.substring(change.path.length - 80) : change.path;
                 
-                // Format Filters Badges
                 let filtersHtml = '-';
                 if (change.matchTypes && change.matchTypes.length > 0) {
                     filtersHtml = change.matchTypes.map(t => {
@@ -899,28 +997,47 @@
                     }).join(' ');
                 }
                 
-                // Ignored Lines Highlight
-                const ignoredClass = (change.ignoredLines > 0) ? 'bg-warning-subtle text-dark fw-bold' : '';
-
-                row.innerHTML = `
-                    <td><span class="badge ${change.type === 'CODE' ? 'bg-secondary' : 'bg-info'}">${change.type || 'CODE'}</span></td>
-                    <td class="font-monospace small" title="${change.path}">${displayPath}</td>
+                const ignoredClass = (change.ignoredLines > 0) ? 'bg-warning-subtle text-dark' : '';
+                
+                const rowHtml = `
+                    <td><span class="badge ${change.type === 'CODE' ? 'bg-secondary' : 'bg-info'}" style="${isFiltered ? 'opacity: 0.6;' : ''}">${change.type || 'CODE'}</span></td>
+                    <td class="font-monospace small ${isFiltered ? 'text-muted' : ''}" title="${change.path}">${displayPath}</td>
                     <td>
-                        <button class="btn btn-sm btn-outline-purple diff-view-btn" 
+                        <button class="btn btn-sm ${isFiltered ? 'btn-link text-muted p-0' : 'btn-outline-purple'} diff-view-btn" 
                                 onclick="showDiff(${index})"
                                 onmouseenter="showDiffPreview(this, ${index})" 
                                 onmouseleave="hideDiffPreview()">
-                            <i class="bi bi-search"></i> View
+                            <i class="bi bi-search"></i> ${isFiltered ? 'View' : 'View'}
                         </button>
                     </td>
-                    <td><span class="badge bg-${statusBadge === 'MODIFIED' ? 'warning' : statusBadge === 'ADDED' ? 'success' : 'danger'}">${statusBadge}</span></td>
-                    <td>${formatLineChanges(change)}</td>
-                    <td class="${ignoredClass}">${change.ignoredLines || 0}</td>
+                    <td><span class="badge bg-${statusBadge === 'MODIFIED' ? 'warning' : statusBadge === 'ADDED' ? 'success' : 'danger'}" style="${isFiltered ? 'opacity: 0.6;' : ''}">${statusBadge}</span></td>
+                    <td class="${isFiltered ? 'text-muted' : ''}">${formatLineChanges(change)}</td>
+                    <td class="${ignoredClass} ${isFiltered ? 'opacity-75' : ''}">${change.ignoredLines || 0}</td>
                     <td>${filtersHtml}</td>
-                    <td><span class="badge bg-${change.severity === 'HIGH' ? 'danger' : change.severity === 'MEDIUM' ? 'warning' : change.severity === 'LOW' ? 'success' : 'secondary'}">${change.severity || 'LOW'}</span></td>
+                    <td><span class="badge bg-${change.severity === 'HIGH' ? 'danger' : change.severity === 'MEDIUM' ? 'warning' : change.severity === 'LOW' ? 'success' : 'secondary'}" style="${isFiltered ? 'opacity: 0.6;' : ''}">${isFiltered ? 'NONE' : (change.severity || 'LOW')}</span></td>
                 `;
-                tbody.appendChild(row);
+
+                row.innerHTML = rowHtml;
+
+                if (isFiltered) {
+                    filteredCount++;
+                    filteredTbody.appendChild(row);
+                } else {
+                    // Highlight row if ignored lines exist to show something was filtered but valid remains
+                    if ((change.ignoredLines && change.ignoredLines > 0)) {
+                        row.style.backgroundColor = '#fffdee'; // Very faint yellow
+                    }
+                    tbody.appendChild(row);
+                }
             });
+            
+            // Toggle Filtered Section
+            if (filteredCount > 0) {
+                filteredSection.classList.remove('d-none');
+                filteredCountBadge.textContent = filteredCount;
+            } else {
+                filteredSection.classList.add('d-none');
+            }
             
             // Render Ignored/Blocked Files Section
             const blockedSection = document.getElementById('blockedFilesSection');
@@ -1224,24 +1341,30 @@
         // --- Export to CSV Function ---
         function exportToCSV() {
             const tbody = document.getElementById('filesTableBody');
-            if (!tbody || tbody.children.length === 0) {
+            const filteredTbody = document.getElementById('filteredTableBody');
+            
+            if ((!tbody || tbody.children.length === 0) && (!filteredTbody || filteredTbody.children.length === 0)) {
                 alert('No data to export');
                 return;
             }
             
-            let csv = 'Type,File Path,Status,Valid Lines,Ignored Lines,Severity\n';
-            Array.from(tbody.children).forEach(row => {
+            let csv = 'Type,File Path,Status,Valid Lines,Ignored Lines,Filters,Severity\n';
+            
+            const extractData = (row) => {
                 const cells = row.querySelectorAll('td');
-                // Adjust indices based on new columns
-                // 0: Type (Icon), 1: Path, 2: Status, 3: Valid (Formatted), 4: Ignored, 5: Severity, 6: Action
-                const type = cells[0].textContent.trim() || 'CODE'; // Fallback
-                const path = cells[1].textContent.trim();
-                const status = cells[2].textContent.trim();
-                const validLines = cells[3].textContent.trim().replace(/\s+/g, ' '); // Clean formatting
-                const ignoredLines = cells[4].textContent.trim();
-                const severity = cells[5].textContent.trim();
-                csv += `"${type}","${path}","${status}","${validLines}","${ignoredLines}","${severity}"\n`;
-            });
+                // Unified Mapping: 0: Type, 1: Path, 2: View, 3: Status, 4: Valid, 5: Ignored, 6: Filters, 7: Severity
+                const type = cells[0].textContent.trim() || 'CODE';
+                const path = cells[1].getAttribute('title') || cells[1].textContent.trim();
+                const status = cells[3].textContent.trim();
+                const validLines = cells[4].textContent.trim().replace(/\s+/g, ' '); 
+                const ignoredLines = cells[5].textContent.trim();
+                const filters = cells[6].textContent.trim() === '-' ? '' : cells[6].textContent.trim().replace(/\s+/g, ',');
+                const severity = cells[7].textContent.trim();
+                return `"${type}","${path}","${status}","${validLines}","${ignoredLines}","${filters}","${severity}"\n`;
+            };
+
+            Array.from(tbody.children).forEach(row => csv += extractData(row));
+            Array.from(filteredTbody.children).forEach(row => csv += extractData(row));
             
             const blob = new Blob([csv], { type: 'text/csv' });
             const url = window.URL.createObjectURL(blob);
@@ -1251,6 +1374,30 @@
             a.click();
             window.URL.revokeObjectURL(url);
         }
+
+        // Initialize all Bootstrap tooltips
+        document.addEventListener('DOMContentLoaded', function () {
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl)
+            });
+
+            // --- Standardized Git Connection (Read Mode) ---
+            const STORE_KEY_PROVIDER = 'git_analyzer_provider';
+            const connectedProvider = localStorage.getItem(STORE_KEY_PROVIDER) || 'gitlab';
+            const connectionCard = document.getElementById('gitConnectionCard');
+            const providerDisplay = document.getElementById('currentProviderDisplay');
+
+            if (providerDisplay) {
+                const displayNames = { 'github': 'GitHub', 'gitlab': 'GitLab' };
+                providerDisplay.innerText = displayNames[connectedProvider] || 'Unknown';
+            }
+
+            if (connectionCard) {
+                connectionCard.classList.remove('github-theme', 'gitlab-theme'); // Clear prior
+                connectionCard.classList.add(connectedProvider + '-theme');
+            }
+        });
     </script>
 </body>
 </html>

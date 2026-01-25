@@ -7,19 +7,28 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.eclipse.jgit.api.Git;
+import java.util.List;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Map;
+import java.util.HashMap;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.JsonNode;
 
 public class GitHubProvider implements GitProvider {
     
     private final String baseUrl;
     private final String token;
     private final String owner;
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public GitHubProvider() {
         this(null);
     }
 
     public GitHubProvider(String userToken) {
-        this.baseUrl = ConfigManager.get("github.url");
+        String url = ConfigManager.get("github.url");
+        this.baseUrl = (url != null && !url.isBlank()) ? url : "https://api.github.com";
         this.owner = ConfigManager.get("github.owner");
         
         if (userToken != null && !userToken.isBlank()) {
@@ -29,19 +38,60 @@ public class GitHubProvider implements GitProvider {
         }
     }
 
+    private String cleanRepoName(String repoName) {
+        String clean = repoName.trim();
+        if (clean.endsWith(".git")) {
+            clean = clean.substring(0, clean.length() - 4);
+        }
+        if (clean.startsWith("http://") || clean.startsWith("https://")) {
+            try {
+                URI uri = URI.create(clean);
+                String path = uri.getPath();
+                if (path.startsWith("/")) path = path.substring(1);
+                // For GitHub, path is "owner/repo"
+                return path;
+            } catch (Exception e) {
+                return clean;
+            }
+        }
+        return clean;
+    }
+
+    private HttpResponse<String> sendWithAuthFallback(HttpClient client, String url) throws Exception {
+        HttpRequest.Builder builder = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Accept", "application/vnd.github.v3+json")
+                .GET();
+
+        if (token == null || token.isBlank()) {
+            return client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
+        }
+
+        // Try "token" prefix (PAT)
+        HttpRequest request = builder.copy().header("Authorization", "token " + token).build();
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        // Fallback to "Bearer" (OAuth) if unauthorized
+        if (response.statusCode() == 401) {
+            request = builder.copy().header("Authorization", "Bearer " + token).build();
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        }
+
+        return response;
+    }
+
     @Override
     public void cloneRepository(String repoName, File destination, String branch) throws Exception {
+        String fullPath = cleanRepoName(repoName);
         String cloneUrl;
-        if (repoName.contains("/")) {
-            // "owner/repo" specified
-            cloneUrl = "https://github.com/" + repoName + ".git";
+        
+        if (fullPath.contains("/")) {
+            cloneUrl = "https://github.com/" + fullPath + ".git";
         } else {
-            // default to config owner
-            cloneUrl = "https://github.com/" + owner + "/" + repoName + ".git";
+            cloneUrl = "https://github.com/" + owner + "/" + fullPath + ".git";
         }
 
         if (token != null && !token.isEmpty()) {
-            // GitHub Token Auth in URL: https://TOKEN@github.com/...
             cloneUrl = cloneUrl.replace("https://", "https://" + token + "@");
         }
 
@@ -51,13 +101,10 @@ public class GitHubProvider implements GitProvider {
 
         if (branch != null && !branch.isBlank()) {
             command.setBranch(branch);
-            command.setBranchesToClone(java.util.Collections.singletonList("refs/heads/" + branch));
+            command.setBranchesToClone(Collections.singletonList("refs/heads/" + branch));
         }
 
-
         try (Git git = command.call()) {
-            // Explicitly close repository to release all file handles
-            // This is critical on Windows to allow directory deletion
             if (git != null && git.getRepository() != null) {
                 git.getRepository().close();
             }
@@ -65,38 +112,18 @@ public class GitHubProvider implements GitProvider {
     }
 
     @Override
-    public java.util.List<String> listBranches(String repoName) throws Exception {
-        // GET /repos/:owner/:repo/branches
-        String apiUrl = baseUrl + "/repos/" + repoName + "/branches";
+    public List<String> listBranches(String repoName) throws Exception {
+        String fullPath = cleanRepoName(repoName);
+        String apiUrl = baseUrl + "/repos/" + fullPath + "/branches";
         
         HttpClient client = HttpClient.newHttpClient();
+        HttpResponse<String> response = sendWithAuthFallback(client, apiUrl);
         
-        // Try with "token" prefix first (for Personal Access Tokens - PATs)
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Authorization", "token " + token)
-                .GET()
-                .build();
-        
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        
-        // If 401 Unauthorized, try with "Bearer" prefix (for OAuth tokens)
-        if (response.statusCode() == 401) {
-            request = HttpRequest.newBuilder()
-                    .uri(URI.create(apiUrl))
-                    .header("Authorization", "Bearer " + token)
-                    .GET()
-                    .build();
-            response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        }
-        
-         if (response.statusCode() == 200) {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response.body());
-            
-            java.util.List<String> branches = new java.util.ArrayList<>();
+        if (response.statusCode() == 200) {
+            JsonNode root = mapper.readTree(response.body());
+            List<String> branches = new ArrayList<>();
             if (root.isArray()) {
-                for (com.fasterxml.jackson.databind.JsonNode node : root) {
+                for (JsonNode node : root) {
                     if (node.has("name")) {
                         branches.add(node.get("name").asText());
                     }
@@ -104,151 +131,111 @@ public class GitHubProvider implements GitProvider {
             }
             return branches;
         } else {
-             throw new RuntimeException("Failed to fetch branches. Status: " + response.statusCode());
+             throw new RuntimeException("Failed to fetch branches for " + fullPath + ". Status: " + response.statusCode());
         }
     }
 
     @Override
-    public java.util.List<String> listRepositories(String groupName) throws Exception {
-        // GitHub API: GET /orgs/:org/repos or /users/:user/repos
-        // We'll start with Orgs. 
-        // URL: /orgs/:org/repos?per_page=100
-        
-        String apiUrl = baseUrl + "/orgs/" + groupName + "/repos?per_page=100";
-        
+    public void validateCredentials() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
+        String url = baseUrl + "/user";
+        HttpResponse<String> response = sendWithAuthFallback(client, url);
         
-        // Try with "token" prefix first (for Personal Access Tokens)
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Accept", "application/vnd.github.v3+json")
-                .GET();
-        
-        if (token != null && !token.isBlank()) {
-            requestBuilder.header("Authorization", "token " + token);
+        if (response.statusCode() == 200) {
+            return;
+        } else {
+             throw new RuntimeException("Invalid credentials for GitHub. Status: " + response.statusCode());
         }
+    }
+
+    @Override
+    public List<String> listRepositories(String groupName) throws Exception {
+        HttpClient client = HttpClient.newHttpClient();
+        List<String> allRepos = new ArrayList<>();
         
-        HttpRequest request = requestBuilder.build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        // 1. Try Organization
+        String orgUrl = baseUrl + "/orgs/" + groupName + "/repos?per_page=100";
+        HttpResponse<String> response = sendWithAuthFallback(client, orgUrl);
         
-        // If 401, try with Bearer
-        if (response.statusCode() == 401 && token != null && !token.isBlank()) {
-            requestBuilder = HttpRequest.newBuilder()
-                    .uri(URI.create(apiUrl))
-                    .header("Authorization", "Bearer " + token)
-                    .header("Accept", "application/vnd.github.v3+json")
-                    .GET();
-            response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-        }
-        
-        // If 404, try Users
+        // 2. Fallback to User if 404
         if (response.statusCode() == 404) {
-             apiUrl = baseUrl + "/users/" + groupName + "/repos?per_page=100";
-             requestBuilder = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Accept", "application/vnd.github.v3+json")
-                .GET();
-             
-             if (token != null && !token.isBlank()) {
-                 requestBuilder.header("Authorization", "token " + token);
-             }
-             
-             response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-             
-             // If still 401, try Bearer for users endpoint
-             if (response.statusCode() == 401 && token != null && !token.isBlank()) {
-                 requestBuilder = HttpRequest.newBuilder()
-                        .uri(URI.create(apiUrl))
-                        .header("Authorization", "Bearer " + token)
-                        .header("Accept", "application/vnd.github.v3+json")
-                        .GET();
-                 response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-             }
+            String userUrl = baseUrl + "/users/" + groupName + "/repos?per_page=100";
+            response = sendWithAuthFallback(client, userUrl);
+        }
+        
+        // 3. Fallback to authenticated user's repos if groupName is empty OR if still 404 and we have a token
+        if ((groupName == null || groupName.isBlank() || response.statusCode() == 404) && token != null && !token.isBlank()) {
+            String meUrl = baseUrl + "/user/repos?per_page=100";
+            response = sendWithAuthFallback(client, meUrl);
         }
 
         if (response.statusCode() == 200) {
-            com.fasterxml.jackson.databind.ObjectMapper mapper = new com.fasterxml.jackson.databind.ObjectMapper();
-            com.fasterxml.jackson.databind.JsonNode root = mapper.readTree(response.body());
-            
-            java.util.List<String> content = new java.util.ArrayList<>();
+            JsonNode root = mapper.readTree(response.body());
             if (root.isArray()) {
-                for (com.fasterxml.jackson.databind.JsonNode node : root) {
+                for (JsonNode node : root) {
                     if (node.has("full_name")) {
-                        content.add(node.get("full_name").asText());
+                        allRepos.add(node.get("full_name").asText());
                     }
                 }
             }
-            return content;
+            return allRepos;
         } else {
-             throw new RuntimeException("Failed to fetch repositories. Status: " + response.statusCode());
+             throw new RuntimeException("Failed to fetch repositories for " + groupName + ". Status: " + response.statusCode());
         }
     }
 
     @Override
     public String compareBranches(String repoName, String sourceBranch, String targetBranch) throws Exception {
-        // GitHub API: GET /repos/{owner}/{repo}/compare/{base}...{head}
-        // repoName can be "owner/repo" format, need to parse it
-        String ownerName = this.owner;
-        String repoOnly = repoName;
-        
-        if (repoName.contains("/")) {
-            String[] parts = repoName.split("/", 2);
-            ownerName = parts[0];
-            repoOnly = parts[1];
-        }
-        
-        String apiUrl = baseUrl + "/repos/" + ownerName + "/" + repoOnly + "/compare/" + targetBranch + "..." + sourceBranch;
+        String fullPath = cleanRepoName(repoName);
+        // GitHub uses base...head. sourceBranch is Base, targetBranch is Feature (head)
+        String apiUrl = baseUrl + "/repos/" + fullPath + "/compare/" + sourceBranch + "..." + targetBranch;
         
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Accept", "application/vnd.github.v3+json")
-                .GET();
-        
-        if (token != null && !token.isBlank()) {
-            requestBuilder.header("Authorization", "token " + token);
-        }
-        
-        HttpRequest request = requestBuilder.build();
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-        
-        // If 401, try with Bearer
-        if (response.statusCode() == 401 && token != null && !token.isBlank()) {
-            requestBuilder = HttpRequest.newBuilder()
-                    .uri(URI.create(apiUrl))
-                    .header("Authorization", "Bearer " + token)
-                    .header("Accept", "application/vnd.github.v3+json")
-                    .GET();
-            response = client.send(requestBuilder.build(), HttpResponse.BodyHandlers.ofString());
-        }
+        HttpResponse<String> response = sendWithAuthFallback(client, apiUrl);
         
         if (response.statusCode() == 200) {
-            return response.body();
+            JsonNode root = mapper.readTree(response.body());
+            
+            // Normalize to format expected by AnalyzerService: { "diffs": [ { "new_path": "...", "old_path": "...", "diff": "...", ... } ] }
+            Map<String, Object> normalized = new HashMap<>();
+            List<Map<String, Object>> diffList = new ArrayList<>();
+            normalized.put("diffs", diffList);
+            
+            if (root.has("files") && root.get("files").isArray()) {
+                for (JsonNode file : root.get("files")) {
+                    Map<String, Object> d = new HashMap<>();
+                    String status = file.get("status").asText();
+                    String filename = file.get("filename").asText();
+                    
+                    d.put("new_path", filename);
+                    d.put("old_path", file.has("previous_filename") ? file.get("previous_filename").asText() : filename);
+                    d.put("new_file", "added".equals(status));
+                    d.put("deleted_file", "removed".equals(status));
+                    // GitHub uses 'patch' for the diff content
+                    d.put("diff", file.has("patch") ? file.get("patch").asText() : "");
+                    
+                    diffList.add(d);
+                }
+            }
+            return mapper.writeValueAsString(normalized);
         } else {
-            throw new RuntimeException("Failed to compare branches. Status: " + response.statusCode());
+            throw new RuntimeException("Failed to compare branches for " + fullPath + ". Status: " + response.statusCode());
         }
     }
 
     @Override
     public String searchRepository(String repoName, String query) throws Exception {
-        // GitHub Search Code API: GET /search/code?q={query}+repo:{owner}/{repo}
-        String q = java.net.URLEncoder.encode(query + " repo:" + owner + "/" + repoName, java.nio.charset.StandardCharsets.UTF_8);
+        String fullPath = cleanRepoName(repoName);
+        String q = java.net.URLEncoder.encode(query + " repo:" + fullPath, java.nio.charset.StandardCharsets.UTF_8);
         String apiUrl = baseUrl + "/search/code?q=" + q;
 
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(apiUrl))
-                .header("Authorization", "token " + token)
-                .header("Accept", "application/vnd.github.v3+json")
-                .GET()
-                .build();
-
-        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        HttpResponse<String> response = sendWithAuthFallback(client, apiUrl);
         
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new RuntimeException("Failed to search repository. Status: " + response.statusCode());
+            throw new RuntimeException("Failed to search repository " + fullPath + ". Status: " + response.statusCode());
         }
     }
 }

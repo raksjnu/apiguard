@@ -1,5 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap');
 
+:root {
+    --raks-purple: #663399;
+    --raks-purple-light: #8e44ad;
+    --raks-purple-dark: #552b80;
+    --raks-purple-bg: #faf5ff;
+}
+
 body {
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
     background-color: #f0f0f0; /* Match portal bg */
@@ -12,7 +19,7 @@ body {
 /* Header Styling */
 .brand-header {
     background: white;
-    border-bottom: 4px solid #663399; /* Strong Purple Line */
+    border-bottom: 4px solid var(--raks-purple); /* Strong Purple Line */
     padding-top: 0.5rem;
     padding-bottom: 0.5rem;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
@@ -26,35 +33,35 @@ body {
 }
 
 .text-purple {
-    color: #663399 !important;
+    color: var(--raks-purple) !important;
 }
 
 .btn-purple {
-    background-color: #663399;
-    border-color: #663399;
+    background-color: var(--raks-purple);
+    border-color: var(--raks-purple);
     color: white !important; /* Fix text color */
     font-weight: 500;
 }
 
 .btn-purple:hover {
-    background-color: #552b80;
-    border-color: #552b80;
+    background-color: var(--raks-purple-dark);
+    border-color: var(--raks-purple-dark);
     color: white !important;
 }
 
 /* Ghost Button adapted for White Header (Purple Outline) */
 .ghost-btn {
-    border: 1px solid #663399 !important;
+    border: 1px solid var(--raks-purple) !important;
     background: transparent !important;
-    color: #663399 !important;
+    color: var(--raks-purple) !important;
     transition: all 0.3s ease;
     font-weight: 500;
 }
 
 .ghost-btn:hover {
-    background-color: #663399 !important;
+    background-color: var(--raks-purple) !important;
     color: white !important;
-    border: 1px solid #663399 !important;
+    border: 1px solid var(--raks-purple) !important;
 }
 
 .raks-frame {
@@ -444,13 +451,212 @@ body.guide-body {
     max-height: 400px;
     background: white; 
     border: 1px solid #ccc;
-    border-left: 4px solid #663399; /* Purple Border */
+    border-left: 4px solid var(--raks-purple); /* Purple Border */
     box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
     padding: 1rem; 
     border-radius: 8px;
     overflow-y: auto;
     font-family: 'Courier New', monospace;
     font-size: 0.85rem;
+}
+
+/* Innovative Table Header Gradient - Global */
+.table thead th {
+    background: linear-gradient(135deg, var(--raks-purple), var(--raks-purple-light)) !important;
+    color: white !important;
+    border-bottom: 2px solid var(--raks-purple-dark) !important;
+    padding: 12px 10px !important;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.table thead th:first-child {
+    border-top-left-radius: 10px !important;
+    border-bottom-left-radius: 10px !important;
+}
+
+.table thead th:last-child {
+    border-top-right-radius: 10px !important;
+    border-bottom-right-radius: 10px !important;
+}
+
+/* Custom Tooltip Styling (White Theme) */
+.tooltip {
+    opacity: 1 !important; /* Force Full Visibility */
+}
+
+.tooltip-inner {
+    background-color: white !important;
+    color: var(--raks-purple) !important;
+    border: 1px solid var(--raks-purple);
+    box-shadow: 0 4px 15px rgba(102, 51, 153, 0.2);
+    font-family: 'Segoe UI', sans-serif;
+    max-width: 350px !important; /* Larger width */
+    text-align: left !important;
+    padding: 12px 16px !important;
+    border-radius: 8px !important;
+    font-size: 0.85rem;
+    opacity: 1 !important; /* Ensure content is opaque */
+}
+
+.bs-tooltip-top .tooltip-arrow::before, .bs-tooltip-auto[data-popper-placement^=top] .tooltip-arrow::before {
+    border-top-color: var(--raks-purple) !important;
+}
+.bs-tooltip-end .tooltip-arrow::before, .bs-tooltip-auto[data-popper-placement^=right] .tooltip-arrow::before {
+    border-right-color: var(--raks-purple) !important;
+}
+.bs-tooltip-bottom .tooltip-arrow::before, .bs-tooltip-auto[data-popper-placement^=bottom] .tooltip-arrow::before {
+    border-bottom-color: var(--raks-purple) !important;
+}
+.bs-tooltip-start .tooltip-arrow::before, .bs-tooltip-auto[data-popper-placement^=left] .tooltip-arrow::before {
+    border-left-color: var(--raks-purple) !important;
+}
+
+.dashboard-card-sm h3, h4.text-purple, h5.text-purple {
+    color: var(--raks-purple) !important;
+}
+
+/* --- Git Connection Card (Centralized) --- */
+.connection-card {
+    background-color: white;
+    border: 5px solid var(--raks-purple); /* Default Solid Purple Border */
+    border-radius: 20px; /* High curvature for "tile" look */
+    padding: 20px 25px; /* Ample padding */
+    box-shadow: 0 8px 24px rgba(102, 51, 153, 0.12); /* Soft shadow */
+    transition: all 0.3s ease;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.connection-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(102, 51, 153, 0.18);
+}
+
+/* GitLab Theme (Orange) */
+.connection-card.gitlab-theme {
+    border-color: #fc6d26 !important; /* GitLab Orange */
+}
+
+.connection-card.gitlab-theme .btn-purple, 
+.connection-card.gitlab-theme .text-purple,
+.connection-card.gitlab-theme .input-group-text,
+.connection-card.gitlab-theme .form-control, 
+.connection-card.gitlab-theme .form-select {
+    border-color: #fc6d26 !important;
+}
+
+.connection-card.gitlab-theme .text-purple {
+    color: #fc6d26 !important;
+}
+
+.connection-card.gitlab-theme .btn-purple {
+    background-color: #fc6d26 !important;
+    border-color: #fc6d26 !important;
+}
+
+.connection-card.gitlab-theme .btn-purple:hover {
+    background-color: #e24329 !important;
+    border-color: #e24329 !important;
+}
+
+/* GitHub Theme (Blue) */
+.connection-card.github-theme {
+    border-color: #0d6efd !important; /* GitHub Blue */
+}
+
+.connection-card.github-theme .btn-purple, 
+.connection-card.github-theme .text-purple,
+.connection-card.github-theme .input-group-text,
+.connection-card.github-theme .form-control, 
+.connection-card.github-theme .form-select {
+    border-color: #0d6efd !important;
+}
+
+.connection-card.github-theme .text-purple {
+    color: #0d6efd !important;
+}
+
+.connection-card.github-theme .btn-purple {
+    background-color: #0d6efd !important;
+    border-color: #0d6efd !important;
+}
+
+.connection-card.github-theme .btn-purple:hover {
+    background-color: #0b5ed7 !important;
+    border-color: #0b5ed7 !important;
+}
+
+.connection-card .input-group .form-control:focus, 
+.connection-card .input-group .form-select:focus {
+    box-shadow: none; /* Clean look */
+}
+
+/* Status Pulse Animation */
+.status-pulse {
+    width: 12px;
+    height: 12px;
+    background-color: #ccc;
+    border-radius: 50%;
+    display: inline-block;
+    transition: all 0.3s;
+}
+
+.status-pulse.active {
+    background-color: #2ecc71;
+    box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7);
+    animation: pulse 1.5s infinite;
+}
+
+.status-pulse.validating {
+    background-color: #f1c40f;
+    animation: pulse-yellow 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(46, 204, 113, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(46, 204, 113, 0); }
+}
+
+@keyframes pulse-yellow {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(241, 196, 15, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(241, 196, 15, 0); }
+}
+
+
+/* --- Targeted Fix for Analysis Page Sidebar --- */
+.split-left .connection-card {
+    border: 3px solid var(--raks-purple); /* Slightly thinner border for compact spaces */
+    padding: 18px 20px !important; /* Increased padding */
+    margin-right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: 80px; /* Increased min-height */
+    overflow: visible !important; 
+    display: flex; /* Ensure flex behavior */
+    flex-direction: column;
+    justify-content: center;
+}
+
+/* Ensure dynamic themes still work in compact mode */
+.split-left .connection-card.gitlab-theme {
+    border-color: #fc6d26 !important;
+}
+
+.split-left .connection-card.github-theme {
+    border-color: #0d6efd !important;
+}
+
+/* Fix flex wrapping issues in narrow sidebar */
+.split-left .connection-card .d-flex {
+    flex-wrap: nowrap;
 }
 
 

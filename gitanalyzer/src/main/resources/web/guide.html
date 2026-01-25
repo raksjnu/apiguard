@@ -125,9 +125,28 @@
                                                 <td class="text-muted">Matches lines starting with `//` (Comments).</td>
                                             </tr>
                                             <tr>
-                                                <td><strong>Wildcard Regex</strong></td>
+                                                <td width="120"><strong>Wildcard Regex</strong></td>
                                                 <td><code>regex:.*guid.*</code></td>
                                                 <td class="text-muted">Matches any line containing "guid". Note the `.*` to match the full line.</td>
+                                            </tr>
+                                            <!-- New Examples requested by User -->
+                                            <tr class="table-light border-top border-bottom">
+                                                <td colspan="3" class="fw-bold text-purple pt-3 pb-2"><i class="bi bi-lightbulb me-2"></i>Advanced Strict Regex Scenarios</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Ignore Log Lines</strong></td>
+                                                <td><code>regex:^\s*logger\.(info|debug|error).*</code></td>
+                                                <td class="text-muted">Matches lines starting with logger calls (e.g., <code>logger.info("Test");</code>).</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Exclude Class</strong></td>
+                                                <td><code>regex:public class Test.*</code></td>
+                                                <td class="text-muted">Matches definition of test classes to ignore specific structural changes.</td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Mask Secrets</strong></td>
+                                                <td><code>regex:(?i).*(password|secret|key)\s*=.*</code></td>
+                                                <td class="text-muted">Matches any line assigning values to sensitive variables (case-insensitive).</td>
                                             </tr>
                                         </table>
                                     </div>

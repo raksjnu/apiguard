@@ -19,6 +19,9 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Consumes(MediaType.APPLICATION_JSON)
 public class BulkDownloadResource {
 
+    private static final Map<String, DownloadStatus> activeTasks = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final java.util.concurrent.ExecutorService executor = java.util.concurrent.Executors.newFixedThreadPool(4);
+
     @GET
     @Path("/list")
     public Response listRepos(@QueryParam("group") String groupName, @QueryParam("filter") String filterPattern, @Context jakarta.ws.rs.core.HttpHeaders headers) {
@@ -26,7 +29,6 @@ public class BulkDownloadResource {
             GitProvider provider = getProvider(headers);
 
             if (groupName == null || groupName.isBlank()) {
-                // Determine default group based on provider type if not provided
                 if (provider instanceof GitHubProvider) {
                      groupName = ConfigManager.get("github.owner");
                 } else {
@@ -38,7 +40,6 @@ public class BulkDownloadResource {
                     }
                 }
             } else {
-                // Sanitize input
                 groupName = groupName.trim();
                 while(groupName.endsWith("/")) groupName = groupName.substring(0, groupName.length() - 1);
                 if (groupName.contains("/")) {
@@ -48,7 +49,6 @@ public class BulkDownloadResource {
             
             List<String> repos = provider.listRepositories(groupName);
             
-            // Apply Regex Filter if provided
             if (filterPattern != null && !filterPattern.isBlank()) {
                 try {
                     java.util.regex.Pattern pattern = java.util.regex.Pattern.compile(filterPattern, java.util.regex.Pattern.CASE_INSENSITIVE);
@@ -86,44 +86,43 @@ public class BulkDownloadResource {
 
     @POST
     public Response downloadRepos(Map<String, Object> request, @Context jakarta.ws.rs.core.HttpHeaders headers) {
+        String taskId = UUID.randomUUID().toString();
+        DownloadStatus status = new DownloadStatus();
+        
         try {
-            // "repos" is now a JSON array or list from the frontend
             Object reposObj = request.get("repos");
             List<String> repos = new ArrayList<>();
             if (reposObj instanceof List) {
                 repos = (List<String>) reposObj;
             } else if (reposObj instanceof String) {
-                // Fallback for legacy text input
                 repos = Arrays.asList(((String) reposObj).split("\\n"));
             }
             repos.replaceAll(String::trim);
             repos.removeIf(String::isBlank);
 
-            // "branches" is now an array from the frontend checklist
             Object branchesObj = request.get("branches"); 
             List<String> branches = new ArrayList<>();
-             if (branchesObj instanceof List) {
+            if (branchesObj instanceof List) {
                 branches = (List<String>) branchesObj;
             } else if (branchesObj instanceof String) {
-                 String branchesInput = (String) branchesObj;
-                 if (!branchesInput.isBlank()) {
+                String branchesInput = (String) branchesObj;
+                if (!branchesInput.isBlank()) {
                     branches = Arrays.asList(branchesInput.split(","));
-                 }
+                }
             }
             branches.replaceAll(String::trim);
             branches.removeIf(String::isBlank);
-            
-            // If no branch specified, use default (null) but we will try to find the actual name later if needed? 
-            // Actually, for "Default" we just pass null to cloneRepository.
-            if (branches.isEmpty()) {
-                branches.add(null);
-            }
+            if (branches.isEmpty()) branches.add(null);
 
             if (repos.isEmpty()) {
                  return Response.status(Response.Status.BAD_REQUEST).entity(Map.of("error", "No repositories specified")).build();
             }
 
-            // Target Directory Logic...
+            status.setTotal(repos.size() * branches.size());
+            
+            final List<String> reposFinal = repos;
+            final List<String> branchesFinal = branches;
+
             String customPath = (String) request.get("outputDir");
             File bulkDir;
             if (customPath != null && !customPath.isBlank()) {
@@ -132,90 +131,99 @@ public class BulkDownloadResource {
                bulkDir = new File(ConfigManager.getTempDir(), "bulk_" + ConfigManager.getCurrentTimestamp().replace(" ", "_").replace(":", "-"));
             }
             if (!bulkDir.exists()) bulkDir.mkdirs();
+            status.setOutputDir(bulkDir.getAbsolutePath());
 
-            GitProvider provider = getProvider(headers);
+            String providerType = headers.getHeaderString("X-Git-Provider");
+            String headerToken = headers.getHeaderString("X-Git-Token");
 
-            List<Map<String, String>> results = new ArrayList<>();
-            AtomicInteger successCount = new AtomicInteger(0);
-            boolean multiBranch = branches.size() > 1;
+            activeTasks.put(taskId, status);
 
-            for (String repoName : repos) {
-                String baseFolderName = repoName.replace("/", "_");
-                
-                for (String branch : branches) {
-                    Map<String, String> result = new HashMap<>();
-                    result.put("repo", repoName);
-                    
-                    // Show actual branch name in status, or "Default" if null
-                    String displayBranch = (branch == null) ? "Default" : branch;
-                    result.put("branch", displayBranch);
-
-                    try {
-                        File targetDir;
-                        // NEW LOGIC: OutputDir / Branch / Repo
-                        String branchFolder = (branch == null) ? "default_branch" : branch.replace("/", "_");
-                        // We always nest by branch now as requested
-                        targetDir = new File(new File(bulkDir, branchFolder), baseFolderName);
-
-                        // Overwrite Logic
-                        Object ovr = request.get("overwrite");
-                        boolean overwrite = Boolean.TRUE.equals(ovr) || "true".equalsIgnoreCase(String.valueOf(ovr));
-                        
-                        if (targetDir.exists()) {
-                            if (overwrite) {
-                                deleteRecursively(targetDir);
-                                if (targetDir.exists()) {
-                                    throw new java.io.IOException("Failed to delete existing directory: " + targetDir.getAbsolutePath());
-                                }
-                            } else {
-                                // Check if empty, otherwise JGit throws standard exception which is caught below
-                                if (targetDir.list() != null && targetDir.list().length > 0) {
-                                     throw new RuntimeException("Destination path \"" + targetDir.getName() + "\" already exists and is not empty. Use overwrite option.");
-                                }
-                            }
-                        }
-
-                        provider.cloneRepository(repoName, targetDir, branch);
-                        
-                        result.put("status", "SUCCESS");
-                        result.put("path", targetDir.getAbsolutePath());
-                        successCount.incrementAndGet();
-                    } catch (Exception e) {
-                        result.put("status", "FAILURE");
-                        result.put("error", e.getMessage());
-                        // e.printStackTrace(); // Optional: reduce noise
+            executor.submit(() -> {
+                try {
+                    GitProvider provider;
+                    if ("github".equalsIgnoreCase(providerType)) {
+                        provider = new GitHubProvider(headerToken);
+                    } else {
+                        provider = new GitLabProvider(headerToken);
                     }
-                    results.add(result);
+
+                    int successfulCount = 0;
+                    for (String repoName : reposFinal) {
+                        String baseFolderName = repoName.replace("/", "_");
+                        for (String branch : branchesFinal) {
+                            status.setCurrentRepo(repoName + (branch == null ? "" : " [" + branch + "]"));
+                            
+                            Map<String, String> result = new HashMap<>();
+                            result.put("repo", repoName);
+                            result.put("branch", (branch == null) ? "Default" : branch);
+
+                            try {
+                                String branchFolder = (branch == null) ? "default_branch" : branch.replace("/", "_");
+                                File targetDir = new File(new File(bulkDir, branchFolder), baseFolderName);
+
+                                Object ovr = request.get("overwrite");
+                                boolean overwrite = Boolean.TRUE.equals(ovr) || "true".equalsIgnoreCase(String.valueOf(ovr));
+                                
+                                if (targetDir.exists()) {
+                                    if (overwrite) {
+                                        deleteRecursively(targetDir);
+                                    } else if (targetDir.list() != null && targetDir.list().length > 0) {
+                                             throw new RuntimeException("Destination path already exists and is not empty.");
+                                    }
+                                }
+
+                                provider.cloneRepository(repoName, targetDir, branch);
+                                
+                                result.put("status", "SUCCESS");
+                                result.put("path", targetDir.getAbsolutePath());
+                                successfulCount++;
+                            } catch (Exception e) {
+                                result.put("status", "FAILURE");
+                                result.put("error", e.getMessage());
+                            }
+                            status.addDetail(result);
+                            status.setSuccess(successfulCount);
+                        }
+                    }
+                } catch (Exception e) {
+                    status.setError(e.getMessage());
+                    e.printStackTrace();
+                } finally {
+                    status.setFinished(true);
+                    status.setCurrentRepo("Finished");
                 }
-            }
+            });
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("total", repos.size() * branches.size());
-            response.put("successful", successCount.get());
-            response.put("downloadDir", bulkDir.getAbsolutePath());
-            response.put("details", results);
-
-            return Response.ok(response).build();
+            return Response.ok(Map.of("taskId", taskId)).build();
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().entity(Map.of("error", e.getMessage())).build();
         }
     }
 
+    @GET
+    @Path("/status/{taskId}")
+    public Response getDownloadStatus(@PathParam("taskId") String taskId) {
+        DownloadStatus status = activeTasks.get(taskId);
+        if (status == null) {
+            return Response.status(Response.Status.NOT_FOUND).build();
+        }
+        return Response.ok(status).build();
+    }
+
     private void deleteRecursively(File file) throws java.io.IOException {
         if (file.isDirectory()) {
-            for (File c : file.listFiles()) {
-                deleteRecursively(c);
+            File[] children = file.listFiles();
+            if (children != null) {
+                for (File c : children) {
+                    deleteRecursively(c);
+                }
             }
         }
-        if (!file.delete()) {
-             // throw new java.io.IOException("Failed to delete file: " + file.getAbsolutePath()); 
-             // Windows sometimes lags, so we don't throw immediately, but the caller checks existence.
-        }
+        file.delete();
     }
 
     private GitProvider getProvider(jakarta.ws.rs.core.HttpHeaders headers) {
-        // Check Headers for override
         String providerType = headers.getHeaderString("X-Git-Provider");
         String headerToken = headers.getHeaderString("X-Git-Token");
         

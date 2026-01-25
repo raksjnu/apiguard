@@ -18,4 +18,7 @@ public interface GitProvider {
 
     // Lists branches for a repository
     List<String> listBranches(String repoName) throws Exception;
+
+    // Validates credentials
+    void validateCredentials() throws Exception;
 }

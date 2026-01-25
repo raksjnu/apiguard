@@ -31,6 +31,34 @@
 
             <!-- Main Content -->
             <div class="container flex-grow-1"> <!-- Flex grow to push footer down -->
+                
+                <!-- Centralized Git Connection Configuration -->
+                <div class="row justify-content-center mb-5">
+                    <div class="col-md-6">
+                         <div class="connection-card gitlab-theme shadow" id="gitConnectionCard">
+                            <div class="d-flex justify-content-between align-items-center mb-3">
+                                <span class="small fw-bold text-uppercase opacity-75" id="providerLabel" style="letter-spacing: 0.5px;">Git Connection Setup</span>
+                                <div class="d-flex align-items-center gap-2">
+                                    <span class="status-pulse" id="connectionStatus"></span>
+                                    <span class="small fw-bold" id="statusMessage">Disconnected</span>
+                                </div>
+                            </div>
+                            <div class="input-group">
+                                <span class="input-group-text bg-transparent border-purple text-purple"><i class="bi bi-git"></i></span>
+                                <select class="form-select border-purple" id="gitProviderSelect" style="max-width: 120px;">
+                                     <option value="gitlab">GitLab</option>
+                                     <option value="github">GitHub</option>
+                                </select>
+                                <input type="password" class="form-control border-purple" id="gitTokenInput" placeholder="Enter Personal Access Token">
+                                <button class="btn btn-purple" type="button" id="validateTokenBtn">Validate & Save</button>
+                            </div>
+                            <div class="form-text text-end mt-1 text-muted fst-italic" style="font-size: 0.75rem;">
+                                Credentials are securely saved locally and used across all tools.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="row g-4 justify-content-center"> <!-- Center the tiles -->
                     
                     <!-- Bulk Download Tile -->
@@ -80,6 +108,169 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // --- Centralized Git Connection Logic ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const providerSelect = document.getElementById('gitProviderSelect');
+            const tokenInput = document.getElementById('gitTokenInput');
+            const connectionCard = document.getElementById('gitConnectionCard');
+            const validateBtn = document.getElementById('validateTokenBtn');
+            const statusPulse = document.getElementById('connectionStatus');
+            const statusMsg = document.getElementById('statusMessage');
+
+            const STORE_KEY_PROVIDER = 'git_analyzer_provider';
+            const STORE_KEY_TOKEN = 'git_analyzer_token'; // Legacy/Current Active
+            
+            // Provider-specific keys
+            const KEYS = {
+                'gitlab': 'git_analyzer_gitlab_token',
+                'github': 'git_analyzer_github_token'
+            };
+
+            // 1. Load Saved Values
+            const savedProvider = localStorage.getItem(STORE_KEY_PROVIDER) || 'gitlab';
+            let initialToken = localStorage.getItem(KEYS[savedProvider]) || '';
+            
+            // Fallback for first migration: if specific token missing, check generic
+            if (!initialToken && localStorage.getItem(STORE_KEY_TOKEN)) {
+                 initialToken = localStorage.getItem(STORE_KEY_TOKEN);
+            }
+
+            if (providerSelect) providerSelect.value = savedProvider;
+            if (tokenInput) tokenInput.value = initialToken;
+            updateTheme(savedProvider);
+            
+            // Validate immediately if we have a token
+            if (initialToken) {
+                // validation happens below
+            }
+
+            // 2. Event Listeners
+            
+            // Provider Change: Swap inputs
+            providerSelect.addEventListener('focus', function() {
+                // Store previous value to know what we are switching FROM
+                this.dataset.previous = this.value;
+            });
+            
+            providerSelect.addEventListener('change', (e) => {
+                const newProvider = e.target.value;
+                const oldProvider = e.target.dataset.previous || savedProvider; // fallback
+                
+                // Save the token of the old provider before switching
+                const currentTypedToken = tokenInput.value;
+                if(oldProvider) {
+                    localStorage.setItem(KEYS[oldProvider], currentTypedToken);
+                }
+
+                // Switch Theme
+                localStorage.setItem(STORE_KEY_PROVIDER, newProvider);
+                updateTheme(newProvider);
+                
+                // Load token for new provider
+                const storedToken = localStorage.getItem(KEYS[newProvider]) || '';
+                tokenInput.value = storedToken;
+                
+                // Reset status visuals since we switched context
+                setStatus('disconnected'); 
+                
+                // Update previous tracker
+                e.target.dataset.previous = newProvider;
+            });
+
+            tokenInput.addEventListener('input', (e) => {
+                 // We don't auto-save to localStorage on every keystroke anymore to avoid overwriting 
+                 // the "active" generic token with partial data. We only save specific on validate or switch.
+                 // But for UX, we can save to the specific key so it's not lost on reload.
+                 const currentProvider = providerSelect.value;
+                 localStorage.setItem(KEYS[currentProvider], e.target.value);
+                 setStatus('disconnected'); 
+            });
+
+            validateBtn.addEventListener('click', () => {
+                validateToken();
+            });
+
+            // Auto-validate (using the logic directly)
+            if (initialToken) {
+                validateToken();
+            }
+
+            // 3. Helper Functions
+            function updateTheme(provider) {
+                if (connectionCard) {
+                    // Start fresh
+                    connectionCard.classList.remove('github-theme', 'gitlab-theme');
+                    connectionCard.classList.add(provider + '-theme');
+                }
+            }
+
+            function setStatus(status) { 
+                if (!statusPulse) return;
+                statusPulse.className = 'status-pulse'; // reset
+                
+                if (status === 'loading') {
+                    statusPulse.classList.add('bg-warning'); // .validating class style
+                    statusMsg.innerText = 'Validating...';
+                    statusMsg.className = 'small fw-bold text-warning';
+                } else if (status === 'connected') {
+                    statusPulse.classList.add('active'); 
+                    statusMsg.innerText = 'Connected';
+                    statusMsg.className = 'small fw-bold text-success';
+                } else {
+                    statusMsg.innerText = 'Disconnected';
+                    statusMsg.className = 'small fw-bold text-muted';
+                }
+            }
+
+            function validateToken() {
+                const token = tokenInput.value;
+                const provider = providerSelect.value;
+                
+                if (!token) {
+                    alert('Please enter a token');
+                    return;
+                }
+
+                setStatus('loading');
+
+                const getBasePath = () => {
+                   return window.location.origin;
+                };
+
+                const payload = {
+                    token: token,
+                    provider: provider
+                };
+
+                fetch(getBasePath() + '/api/git/validate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                         setStatus('connected');
+                         // Save to Specific Key
+                         localStorage.setItem(KEYS[provider], token);
+                         // Save to Active Context for other tools
+                         localStorage.setItem(STORE_KEY_PROVIDER, provider);
+                         localStorage.setItem(STORE_KEY_TOKEN, token);
+                    } else {
+                        setStatus('disconnected');
+                        alert('Validation Failed: ' + (data.message || 'Invalid Token'));
+                    }
+                })
+                .catch(err => {
+                    console.error('Validation error:', err);
+                    setStatus('disconnected');
+                    alert('Network Error during validation');
+                });
+            }
+        });
+
         // Fetch UI Config
         fetch('/api/config/ui')
             .then(response => response.json())
