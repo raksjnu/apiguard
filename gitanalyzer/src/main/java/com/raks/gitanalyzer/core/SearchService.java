@@ -43,7 +43,7 @@ public class SearchService {
             Files.walkFileTree(directory.toPath(), new SimpleFileVisitor<Path>() {
                 @Override
                 public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-                    String relDir = directory.toPath().relativize(dir).toString();
+                    String relDir = directory.toPath().relativize(dir).toString().replace("\\", "/");
                     if (relDir.isEmpty()) return FileVisitResult.CONTINUE;
 
                     // Skip if specifically ignored
@@ -60,7 +60,7 @@ public class SearchService {
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (!Files.isRegularFile(file)) return FileVisitResult.CONTINUE;
                     
-                    String relFile = directory.toPath().relativize(file).toString();
+                    String relFile = directory.toPath().relativize(file).toString().replace("\\", "/");
                     String fileName = file.getFileName().toString();
 
                     // Exclusion Logic
@@ -126,8 +126,11 @@ public class SearchService {
     }
 
     private boolean matchesAny(String text, List<Pattern> patterns) {
+        if (text == null || patterns == null || patterns.isEmpty()) return false;
+        String normalized = text.replace("\\", "/");
         for (Pattern p : patterns) {
-            if (p.matcher(text).matches()) return true;
+            // Use find() for more flexible matching (e.g. matching a folder name anywhere in path)
+            if (p.matcher(normalized).find()) return true;
         }
         return false;
     }

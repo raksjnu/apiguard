@@ -64,6 +64,29 @@ body {
     border: 1px solid var(--raks-purple) !important;
 }
 
+/* Button Outline Purple Custom */
+.btn-outline-purple {
+    color: var(--raks-purple);
+    border-color: var(--raks-purple);
+    background: transparent;
+    transition: all 0.2s ease;
+}
+.btn-outline-purple:hover {
+    background-color: var(--raks-purple);
+    color: white !important;
+}
+/* Checked state for toggle buttons */
+.btn-check:checked + .btn-outline-purple {
+    background-color: var(--raks-purple) !important;
+    color: white !important;
+    border-color: var(--raks-purple) !important;
+    box-shadow: inset 0 3px 5px rgba(0,0,0,0.125);
+}
+
+.border-purple-subtle {
+    border-color: #d1c4e9 !important;
+}
+
 .raks-frame {
     background-color: white;
     border: 5px solid #663399;

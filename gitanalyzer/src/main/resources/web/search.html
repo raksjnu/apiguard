@@ -53,8 +53,11 @@
                 
                 <form id="searchForm">
                     <!-- Git Connection Info -->
-                    <div class="connection-card mb-3" id="gitConnectionCard" style="padding: 12px;">
-                        <div class="d-flex justify-content-between align-items-center">
+                    <div class="connection-card mb-3 position-relative" id="gitConnectionCard" style="padding: 12px; height: 60px;">
+                        <a href="/" class="position-absolute top-0 end-0 m-2 text-decoration-none text-muted opacity-50 hover-opacity-100" data-bs-toggle="tooltip" title="Manage on Dashboard" style="z-index: 10;">
+                            <i class="bi bi-gear-fill"></i>
+                        </a>
+                        <div class="d-flex justify-content-between align-items-center h-100">
                              <div style="min-width: 0;">
                                   <span class="small fw-bold text-uppercase opacity-75 d-block text-truncate" style="letter-spacing: 0.5px; font-size: 0.65rem;">Source</span>
                                   <span class="small fw-bold text-purple" id="currentProviderDisplay">...</span>
@@ -81,16 +84,16 @@
                         <h6 class="text-purple fw-bold mb-3 border-bottom pb-1 x-small text-uppercase">2. Parameters</h6>
                         <div class="mb-2">
                              <label for="searchToken" class="form-label x-small fw-bold mb-1">Search Token</label>
-                             <input type="text" class="form-control form-control-sm" id="searchToken" placeholder="Regex or Keyword" required>
+                              <input type="text" class="form-control form-control-sm border-purple-subtle" id="searchToken" placeholder="Regex or Keyword" required style="border-radius: 8px;">
                         </div>
 
-                        <div class="mb-3 btn-group w-100 btn-group-sm">
+                        <div class="mb-3 btn-group w-100 btn-group-sm rounded-pill border p-1 bg-light shadow-sm">
                             <input type="radio" class="btn-check" name="searchType" id="typeSubstring" value="substring" checked>
-                            <label class="btn btn-outline-secondary" for="typeSubstring">Sub</label>
+                            <label class="btn btn-outline-purple rounded-pill border-0 flex-fill fw-bold" for="typeSubstring">Sub</label>
                             <input type="radio" class="btn-check" name="searchType" id="typeExact" value="exact">
-                            <label class="btn btn-outline-secondary" for="typeExact">Exact</label>
+                            <label class="btn btn-outline-purple rounded-pill border-0 flex-fill fw-bold" for="typeExact">Exact</label>
                             <input type="radio" class="btn-check" name="searchType" id="typeRegex" value="regex">
-                            <label class="btn btn-outline-secondary" for="typeRegex">Regex</label>
+                            <label class="btn btn-outline-purple rounded-pill border-0 flex-fill fw-bold" for="typeRegex">Regex</label>
                         </div>
 
                         <!-- Target Path / Repo Input -->
@@ -112,7 +115,7 @@
                                 <label for="repoQuery" class="form-label x-small fw-bold mb-1">Filter (Repo Name/Regex)</label>
                                 <div class="input-group input-group-sm">
                                     <input type="text" class="form-control" id="repoQuery" placeholder="e.g. aegis">
-                                    <button class="btn btn-outline-purple" type="button" id="fetchReposBtn">Fetch</button>
+                                    <button class="btn btn-purple btn-sm px-3 rounded-pill fw-bold" type="button" id="fetchReposBtn" style="margin-left: -50px; z-index: 10;">Fetch</button>
                                 </div>
                             </div>
                             <div id="repoSelectionArea" class="repo-selection-list d-none mt-2">
@@ -172,7 +175,12 @@
                 <!-- Main Search Results Column -->
                 <div class="flex-grow-1 d-flex flex-column p-4 h-100" id="resultsColumn">
                     <div class="d-flex justify-content-between align-items-center mb-2">
-                        <h5 class="text-purple fw-bold mb-0">Search Results</h5>
+                        <div class="d-flex align-items-center gap-3">
+                            <h5 class="text-purple fw-bold mb-0">Search Results</h5>
+                            <div id="activeCriteria" class="x-small text-muted d-none border-start ps-3" style="font-style: italic;">
+                                <!-- Criteria will be injected here -->
+                            </div>
+                        </div>
                         <button class="btn btn-sm btn-success d-none" id="exportBtn">
                             <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
                         </button>
@@ -253,7 +261,76 @@
         let searchMode = 'local';
         let layoutMode = 'cols';
         let sidebarCollapsed = false;
-        const STORAGE_KEY_LAST_PATH = 'gitanalyzer_last_search_path';
+        // State Management & Persistence
+        const STORAGE_PREFIX = 'gitanalyzer_search_';
+        const SETTINGS_KEY = 'gitanalyzer_search_settings';
+
+        function saveSettings() {
+            try {
+                const modeEl = document.querySelector('input[name="searchMode"]:checked');
+                const typeEl = document.querySelector('input[name="searchType"]:checked');
+                const layoutEl = document.querySelector('input[name="layoutMode"]:checked');
+
+                const settings = {
+                    searchMode: modeEl ? modeEl.value : 'local',
+                    searchType: typeEl ? typeEl.value : 'substring',
+                    layoutMode: layoutEl ? layoutEl.value : 'cols',
+                    caseSensitive: document.getElementById('caseSensitive').checked,
+                    ignoreComments: document.getElementById('ignoreComments').checked,
+                    searchToken: document.getElementById('searchToken').value,
+                    targetPath: document.getElementById('targetPath').value,
+                    repoGroup: document.getElementById('repoGroup').value,
+                    repoQuery: document.getElementById('repoQuery').value,
+                    includeFolders: document.getElementById('includeFolders').value,
+                    includeFiles: document.getElementById('includeFiles').value,
+                    ignoreFolders: document.getElementById('ignoreFolders').value,
+                    ignoreFiles: document.getElementById('ignoreFiles').value
+                };
+                localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+            } catch (e) {
+                console.warn('Could not save settings', e);
+            }
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem(SETTINGS_KEY);
+            if (!saved) return;
+            try {
+                const s = JSON.parse(saved);
+                
+                // Mode
+                if (s.searchMode) {
+                    const el = document.getElementById('mode' + s.searchMode.charAt(0).toUpperCase() + s.searchMode.slice(1));
+                    if (el) { el.checked = true; el.dispatchEvent(new Event('change')); }
+                }
+                
+                // Type
+                if (s.searchType) {
+                    const el = document.getElementById('type' + s.searchType.charAt(0).toUpperCase() + s.searchType.slice(1));
+                    if (el) el.checked = true;
+                }
+                
+                // Layout
+                if (s.layoutMode) {
+                    const el = document.getElementById('layout' + (s.layoutMode === 'cols' ? 'Cols' : 'Stack'));
+                    if (el) { el.checked = true; el.dispatchEvent(new Event('change')); }
+                }
+
+                if (s.caseSensitive !== undefined) document.getElementById('caseSensitive').checked = s.caseSensitive;
+                if (s.ignoreComments !== undefined) document.getElementById('ignoreComments').checked = s.ignoreComments;
+                
+                if (s.searchToken) document.getElementById('searchToken').value = s.searchToken;
+                if (s.targetPath) document.getElementById('targetPath').value = s.targetPath;
+                if (s.repoGroup) document.getElementById('repoGroup').value = s.repoGroup;
+                if (s.repoQuery) document.getElementById('repoQuery').value = s.repoQuery;
+                
+                if (s.includeFolders) document.getElementById('includeFolders').value = s.includeFolders;
+                if (s.includeFiles) document.getElementById('includeFiles').value = s.includeFiles;
+                if (s.ignoreFolders) document.getElementById('ignoreFolders').value = s.ignoreFolders;
+                if (s.ignoreFiles) document.getElementById('ignoreFiles').value = s.ignoreFiles;
+
+            } catch (e) { console.error('Failed to load settings', e); }
+        }
 
         // UI Elements
         const form = document.getElementById('searchForm');
@@ -268,9 +345,6 @@
         const sidebarToggle = document.getElementById('sidebarToggle');
         const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
 
-        // Restore State
-        if (localStorage.getItem(STORAGE_KEY_LAST_PATH)) pathInput.value = localStorage.getItem(STORAGE_KEY_LAST_PATH);
-
         // Sidebar Toggle
         sidebarToggle.onclick = () => {
             sidebarCollapsed = !sidebarCollapsed;
@@ -284,6 +358,7 @@
             layoutMode = e.target.value;
             rightPanel.classList.toggle('stacked-mode', layoutMode === 'stack');
             closePreview();
+            saveSettings();
         }));
 
         // Mode Switching
@@ -291,6 +366,7 @@
             searchMode = e.target.value;
             document.getElementById('localPathGroup').classList.toggle('d-none', searchMode === 'remote');
             document.getElementById('remoteRepoGroup').classList.toggle('d-none', searchMode === 'local');
+            saveSettings();
         }));
 
         // Helper to get Headers
@@ -322,12 +398,25 @@
                 
                 if (repos.error) throw new Error(repos.error);
                 
-                area.innerHTML = repos.map(r => `
-                    <div class="repo-item">
-                        <input type="checkbox" class="form-check-input me-2" value="${r}" id="repo_${r}">
-                        <label class="form-check-label x-small text-truncate" for="repo_${r}">${r}</label>
-                    </div>
-                `).join('') || '<div class="text-center py-3 text-muted x-small">No repos found</div>';
+                if (repos.length > 0) {
+                    area.innerHTML = `
+                        <div class="repo-item border-bottom pb-2 mb-2">
+                            <input type="checkbox" class="form-check-input me-2" id="selectAllRepos">
+                            <label class="form-check-label fw-bold x-small" for="selectAllRepos">Select All (${repos.length})</label>
+                        </div>
+                    ` + repos.map(r => `
+                        <div class="repo-item">
+                            <input type="checkbox" class="form-check-input me-2 repo-checkbox" value="${r}" id="repo_${r}">
+                            <label class="form-check-label x-small text-truncate" for="repo_${r}">${r}</label>
+                        </div>
+                    `).join('');
+
+                    document.getElementById('selectAllRepos').onchange = (e) => {
+                        area.querySelectorAll('.repo-checkbox').forEach(cb => cb.checked = e.target.checked);
+                    };
+                } else {
+                    area.innerHTML = '<div class="text-center py-3 text-muted x-small">No repos found</div>';
+                }
             } catch (e) {
                 area.innerHTML = `<div class="text-center py-3 text-danger x-small">Error: ${e.message}</div>`;
             }
@@ -350,7 +439,8 @@
             let path = "";
             if (searchMode === 'local') {
                 path = pathInput.value;
-                localStorage.setItem(STORAGE_KEY_LAST_PATH, path);
+                // Use SETTINGS_KEY instead of deleted global
+                saveSettings();
             } else {
                 const selected = Array.from(document.querySelectorAll('#repoSelectionArea input:checked')).map(i => i.value);
                 if (selected.length === 0) { alert('Please select at least one repo'); return; }
@@ -377,6 +467,23 @@
                 }
                 
                 currentResults = await res.json();
+                
+                // Update header criteria
+                const criteriaEl = document.getElementById('activeCriteria');
+                const modeLabel = searchMode === 'local' ? 'Local' : 'Remote';
+                const typeLabel = searchType.charAt(0).toUpperCase() + searchType.slice(1);
+                
+                let advancedInfo = [];
+                if (caseSensitive) advancedInfo.push('Case');
+                if (ignoreComments) advancedInfo.push('NoComments');
+                if (includeFolders.length || includeFiles.length) advancedInfo.push('Includes');
+                if (ignoreFolders.length || ignoreFiles.length) advancedInfo.push('Ignores');
+                
+                const advStr = advancedInfo.length > 0 ? ` &nbsp; <span class="badge bg-light text-muted border">${advancedInfo.join('|')}</span>` : '';
+                
+                criteriaEl.innerHTML = `Searching for <b class="text-purple">"${token}"</b> &nbsp; [${modeLabel}] &nbsp; [${typeLabel}]${advStr}`;
+                criteriaEl.classList.remove('d-none');
+
                 renderResults(currentResults);
                 if (currentResults.length > 0) {
                     exportBtn.classList.remove('d-none');
@@ -437,6 +544,8 @@
             if (searchMode === 'local') {
                 document.getElementById('previewFilePath').innerText = row.absolutePath;
                 document.getElementById('openFileBtn').onclick = () => openLocalFile(row.absolutePath);
+            } else {
+                updateRemoteGitLink(row);
             }
 
             const container = document.getElementById('previewContainer');
@@ -444,12 +553,60 @@
             row.context.forEach((line, i) => {
                 const div = document.createElement('div');
                 div.className = 'd-flex';
+                // Find relative index of the match within context
+                // row.lineNumber is the real line. we don't know start line of context here but we can guess it's contextLines before.
+                // Simplified: context usually has the matched line in the middle.
                 if (line.trim() === row.content.trim()) div.style.backgroundColor = 'rgba(102, 51, 153, 0.4)';
                 const highlighted = highlightToken(line, document.getElementById('searchToken').value);
                 div.innerHTML = `<span class="opacity-50 me-2" style="min-width: 30px; text-align: right;">${i+1}</span> <span class="text-nowrap">${highlighted}</span>`;
                 container.appendChild(div);
             });
         }
+
+        function updateRemoteGitLink(row) {
+            const provider = localStorage.getItem('git_analyzer_provider') || 'gitlab';
+            const viewBtn = document.getElementById('viewOnGitBtn');
+            
+            let repo = "";
+            let filePath = "";
+            
+            // Marker-based splitting is more robust for nested projects
+            const markers = ['/src/', '/lib/', '/webapp/', '/pom.xml', '/package.json', '/README', '/.git', '/app/'];
+            let splitIndex = -1;
+            
+            for (let m of markers) {
+                const idx = row.filePath.indexOf(m);
+                if (idx !== -1 && (splitIndex === -1 || idx < splitIndex)) {
+                    splitIndex = idx;
+                }
+            }
+
+            if (splitIndex !== -1) {
+                repo = row.filePath.substring(0, splitIndex);
+                filePath = row.filePath.substring(splitIndex + 1);
+            } else {
+                // Fallback to heuristic
+                const parts = row.filePath.split('/');
+                if (provider === 'github') {
+                    repo = parts.slice(0, 2).join('/');
+                    filePath = parts.slice(2).join('/');
+                } else {
+                    repo = parts.slice(0, 3).join('/'); 
+                    filePath = parts.slice(3).join('/');
+                }
+            }
+
+            let url = "";
+            if (provider === 'github') {
+                url = `https://github.com/${repo}/blob/HEAD/${filePath}#L${row.lineNumber}`;
+            } else {
+                const gitlabUrl = localStorage.getItem('git_analyzer_gitlab_url') || 'https://gitlab.com';
+                url = `${gitlabUrl.replace(/\/$/, '')}/${repo}/-/blob/HEAD/${filePath}#L${row.lineNumber}`;
+            }
+            
+            viewBtn.href = url;
+        }
+        
 
         function highlightToken(text, token) {
             if (!token) return escapeHtml(text);
@@ -540,10 +697,20 @@
         document.getElementById('gitConnectionCard').className = `connection-card mb-3 ${connectedProvider}-theme`;
 
         // Tooltips cleanup
+        // Initialize
         document.addEventListener('DOMContentLoaded', () => {
+             // Load sticky settings
+            loadSettings();
+            
+            // Save on any change (automatic persistence)
+            form.querySelectorAll('input, select, textarea').forEach(el => {
+                el.addEventListener('change', saveSettings);
+                el.addEventListener('input', saveSettings);
+            });
+
+            // Tooltips initialization
             [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(el => new bootstrap.Tooltip(el));
         });
-    </script>
     </script>
 </body>
 </html>

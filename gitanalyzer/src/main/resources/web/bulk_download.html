@@ -398,9 +398,22 @@
                 container.innerHTML = ''; // clear
 
                 if (data.repositories && data.repositories.length > 0) {
+                    // Header for select all
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'repo-item border-bottom pb-2 mb-2';
+                    headerDiv.innerHTML = `
+                        <input type="checkbox" class="form-check-input me-2" id="selectAllCheckbox">
+                        <label class="form-check-label fw-bold x-small" for="selectAllCheckbox">Select All (${data.repositories.length})</label>
+                    `;
+                    container.appendChild(headerDiv);
+                    
                     data.repositories.forEach(repo => {
                         container.appendChild(createCheckbox(repo, true));
                     });
+
+                    document.getElementById('selectAllCheckbox').onchange = (e) => {
+                        container.querySelectorAll('.repo-checkbox').forEach(cb => cb.checked = e.target.checked);
+                    };
                     
                     if (!groupInput && data.group) {
                          document.getElementById('groupName').value = data.group;

@@ -65,7 +65,7 @@
                             <div class="col-md-4">
                                 <div class="p-3 border rounded bg-light h-100">
                                     <h6 class="fw-bold text-dark"><i class="bi bi-magic text-purple me-2"></i>Smart Semantics</h6>
-                                    <p class="small mb-0">Compares XML logically. <code>&lt;tag a="1" b="2"/&gt;</code> equals <code>&lt;tag b="2" a="1"/&gt;</code>. Zero false positives from attribute reordering.</p>
+                                    <p class="small mb-0">Compares XML logically for <code>.xml</code>, <code>.policy</code>, and <code>.mflow</code> files. Attributes order is ignored to eliminate noise.</p>
                                 </div>
                             </div>
                             <div class="col-md-4">
@@ -152,10 +152,11 @@
                                     </div>
                                 </div>
 
-                                <div class="card border-0 bg-light">
+                                 <div class="card border-0 bg-light">
                                     <div class="card-body">
                                         <h6 class="fw-bold text-purple"><i class="bi bi-code-square me-2"></i>Mode C: Smart XML Compare</h6>
-                                        <p class="small mb-0">Unlike text diffs, this mode parses XML structure. It recognizes that <code>attributeOrder="irrelevant"</code>. Enable this to eliminate thousands of false flags in Mule/Spring XMLs.</p>
+                                        <p class="small mb-1">Unlike text diffs, this mode parses XML structure. It recognizes that <code>attributeOrder="irrelevant"</code>.</p>
+                                        <p class="x-small text-muted mb-0"><strong>Supported:</strong> Mule Flow (`.mflow`), Policy (`.policy`), and standard `.xml`/`.xapi` files.</p>
                                     </div>
                                 </div>
                             </div>
@@ -200,8 +201,8 @@
                                             <dt class="col-sm-4"><i class="bi bi-eye text-primary"></i> Live Preview</dt>
                                             <dd class="col-sm-8">Hover over the <strong>View</strong> button to see a quick diff snippet without leaving the page.</dd>
                                             
-                                            <dt class="col-sm-4"><i class="bi bi-funnel text-warning"></i> Filter Badges</dt>
-                                            <dd class="col-sm-8">The "Filters" column shows exactly <em>why</em> content was ignored (e.g., <span class="badge" style="background-color: #6f42c1; font-size: 0.7em;">Smart XML</span>), giving you confidence in the filtering.</dd>
+                                             <dt class="col-sm-4"><i class="bi bi-funnel text-warning"></i> Filter Badges</dt>
+                                            <dd class="col-sm-8">Displays exactly <em>why</em> content was ignored. Supports simultaneous filters: <span class="badge" style="background-color: #6f42c1; font-size: 0.7em;">Smart XML</span> + <span class="badge bg-secondary" style="font-size: 0.7em;">Content Filter</span>.</dd>
                                             
                                             <dt class="col-sm-4"><i class="bi bi-search text-secondary"></i> Unified Diff</dt>
                                             <dd class="col-sm-8">Click <strong>View</strong> to open the full side-by-side Unified Diff, preserving context while highlighting changes.</dd>
@@ -217,7 +218,11 @@
                        <div class="row">
                            <div class="col-md-6">
                                <h4 class="text-purple mb-3"><i class="bi bi-search me-2"></i>Git Search</h4>
-                               <p class="small">Perform regex-based forensic searches across your entire repository landscape. Supports <strong>Local</strong> (downloaded) and <strong>Remote</strong> (API-based) search modes.</p>
+                               <p class="small">Perform regex-based forensic searches across your entire landscape.</p>
+                               <ul class="list-unstyled x-small">
+                                   <li class="mb-1 text-muted"><i class="bi bi-bookmark-check me-2"></i><strong>Session Stickiness:</strong> Remembers your last search, layout, and filters.</li>
+                                   <li class="mb-1 text-muted"><i class="bi bi-link-45deg me-2"></i><strong>Git Links:</strong> Accurate "View on Git" support for nested GitHub/GitLab paths.</li>
+                               </ul>
                            </div>
                            <div class="col-md-6 border-start">
                                <h4 class="text-purple mb-3"><i class="bi bi-cloud-download me-2"></i>Bulk Download</h4>

@@ -125,7 +125,7 @@
                              <label class="form-label small fw-bold">Filter (Regex)</label>
                              <div class="input-group input-group-sm">
                                 <input type="text" class="form-control" id="repoFilter" placeholder="e.g. .*service.*">
-                                <button type="button" class="btn btn-sub-action" id="fetchReposBtn">Fetch</button>
+                                <button type="button" class="btn btn-purple btn-sm px-3 rounded-pill fw-bold" id="fetchReposBtn" style="margin-left: -50px; z-index: 10;">Fetch</button>
                              </div>
                         </div>
                         
@@ -639,6 +639,9 @@
                 container.classList.remove('d-none');
 
                 if (availableRepositories.length > 0) {
+                    // Add Select All for consistency (even if radio is used, we can offer selection)
+                    // Actually, Analysis is single repo comparison. Select All doesn't make sense for radio.
+                    // But for Bulk Download it does. I'll skip Analysis for now as it's a radio list.
                     availableRepositories.forEach((repo, index) => {
                         const div = document.createElement('div');
                         div.className = 'form-check';
@@ -982,7 +985,8 @@
 
             currentAnalysisResults.forEach((change, index) => {
                 const totalLines = (change.additions || 0) + (change.deletions || 0) + (change.validChangedLines || 0);
-                const isFiltered = totalLines === 0 && (change.ignoredLines > 0 || (change.matchTypes && change.matchTypes.length > 0));
+                // IF any filter is applied, move to minor section as per user request
+                const isFiltered = (totalLines === 0 && change.ignoredLines > 0) || (change.matchTypes && change.matchTypes.length > 0);
 
                 const row = document.createElement('tr');
                 const statusBadge = change.status || (change.isNewFile ? 'ADDED' : change.isDeletedFile ? 'DELETED' : 'MODIFIED');

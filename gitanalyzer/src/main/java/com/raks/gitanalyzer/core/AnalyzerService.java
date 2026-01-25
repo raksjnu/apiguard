@@ -33,9 +33,12 @@ public class AnalyzerService {
             String diffJson = gitProvider.compareBranches(codeRepo, sourceBranch, targetBranch);
             Map<String, Object> diffMap = objectMapper.readValue(diffJson, Map.class);
             
-            // 2. Process Diffs
-            List<Map<String, Object>> diffs = (List<Map<String, Object>>) diffMap.get("diffs");
-            processDiffs(diffs, result, filePatterns, contentPatterns, ignoreAttributeOrder);
+            // 2. Process Diffs (Handle GitHub "files" vs GitLab "diffs")
+            List<Map<String, Object>> diffList = (List<Map<String, Object>>) diffMap.get("diffs");
+            if (diffList == null) {
+                diffList = (List<Map<String, Object>>) diffMap.get("files");
+            }
+            processDiffs(diffList, result, filePatterns, contentPatterns, ignoreAttributeOrder);
 
             // 3. Config Repo Analysis (Optional)
             if (configRepo != null && !configRepo.isEmpty()) {
@@ -45,8 +48,12 @@ public class AnalyzerService {
                     
                     String configDiffJson = gitProvider.compareBranches(configRepo, cSource, cTarget);
                     Map<String, Object> configDiff = objectMapper.readValue(configDiffJson, Map.class);
-                    List<Map<String, Object>> configDiffs = (List<Map<String, Object>>) configDiff.get("diffs");
-                    processConfigDiffs(configDiffs, result, filePatterns, contentPatterns, ignoreAttributeOrder);
+                    
+                    List<Map<String, Object>> configDiffList = (List<Map<String, Object>>) configDiff.get("diffs");
+                    if (configDiffList == null) {
+                        configDiffList = (List<Map<String, Object>>) configDiff.get("files");
+                    }
+                    processConfigDiffs(configDiffList, result, filePatterns, contentPatterns, ignoreAttributeOrder);
                 } catch (Exception e) {
                     // Suppress stack trace for Config failures (e.g. 404 Ref Not Found)
                     System.out.println("Warning: Config Repo analysis failed: " + e.getMessage() + ". Proceeding with Code Repo analysis only.");
@@ -65,63 +72,68 @@ public class AnalyzerService {
         if (diffs == null) return;
 
         for (Map<String, Object> diff : diffs) {
-            String newPath = (String) diff.get("new_path");
-            String oldPath = (String) diff.get("old_path");
+            // Normalize GitHub vs GitLab keys
+            String newPath = (String) diff.getOrDefault("new_path", diff.get("filename"));
+            String oldPath = (String) diff.getOrDefault("old_path", diff.get("previous_filename"));
+            String diffContent = (String) diff.getOrDefault("diff", diff.get("patch"));
             
             // Check File Patterns (Exclusion)
-            // Check File Patterns (Exclusion)
             if (shouldIgnore(newPath, filePatterns) || (oldPath != null && shouldIgnore(oldPath, filePatterns))) {
-                result.addIgnoredFile(newPath); // EXPLICITLY TRACK IGNORED FILES
-                continue; // Skip this file entirely from Analysis but allow UI to show it
+                result.addIgnoredFile(newPath);
+                continue;
             }
 
             FileChange change = new FileChange();
             change.setPath(newPath);
             
-            boolean isNew = (boolean) diff.get("new_file");
-            boolean isDeleted = (boolean) diff.get("deleted_file");
+            // Normalize Status
+            boolean isNew = false;
+            boolean isDeleted = false;
+            
+            if (diff.containsKey("new_file")) {
+                isNew = (boolean) diff.get("new_file");
+                isDeleted = (boolean) diff.get("deleted_file");
+            } else if (diff.containsKey("status")) {
+                String status = (String) diff.get("status");
+                isNew = "added".equals(status);
+                isDeleted = "removed".equals(status);
+            }
 
             change.setNewFile(isNew);
             change.setDeletedFile(isDeleted);
-            
-            change.setType("CODE"); // Default to CODE
+            change.setType("CODE");
 
-            // Reconstruct Git Diff Header
-            String diffContent = (String) diff.get("diff");
-             if (diffContent != null && !diffContent.isEmpty()) {
+            // Reconstruct Git Diff Header if it's missing (GitHub provides patch without header often)
+            if (diffContent != null && !diffContent.isEmpty()) {
                 StringBuilder fullDiff = new StringBuilder();
-                // Replace StringUtils.isNotEmpty with standard check
                 String oldPathStr = (oldPath != null && !oldPath.isEmpty()) ? oldPath : newPath;
                 
-                fullDiff.append("diff --git a/").append(oldPathStr)
-                        .append(" b/").append(newPath).append("\n");
-                if (isNew) {
-                    fullDiff.append("new file mode 100644\n");
-                    fullDiff.append("--- /dev/null\n");
-                    fullDiff.append("+++ b/").append(newPath).append("\n");
-                } else if (isDeleted) {
-                    fullDiff.append("deleted file mode 100644\n");
-                    fullDiff.append("--- a/").append(oldPath).append("\n");
-                    fullDiff.append("+++ /dev/null\n");
-                } else {
-                    fullDiff.append("--- a/").append(oldPathStr).append("\n");
-                    fullDiff.append("+++ b/").append(newPath).append("\n");
+                // If it doesn't look like a full diff header, add it
+                if (!diffContent.startsWith("diff --git")) {
+                    fullDiff.append("diff --git a/").append(oldPathStr).append(" b/").append(newPath).append("\n");
+                    if (isNew) {
+                        fullDiff.append("new file mode 100644\n--- /dev/null\n+++ b/").append(newPath).append("\n");
+                    } else if (isDeleted) {
+                        fullDiff.append("deleted file mode 100644\n--- a/").append(oldPath).append("\n+++ /dev/null\n");
+                    } else {
+                        fullDiff.append("--- a/").append(oldPathStr).append("\n+++ b/").append(newPath).append("\n");
+                    }
                 }
                 fullDiff.append(diffContent);
                 change.setDiffContent(fullDiff.toString());
             }
 
             calculateLines(change, diffContent, contentPatterns, ignoreAttributeOrder);
-            
             result.addFileChange(change);
         }
     }
 
     private void processConfigDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns, List<String> contentPatterns, boolean ignoreAttributeOrder) {
         if (diffs == null) return;
-         for (Map<String, Object> diff : diffs) {
-            String newPath = (String) diff.get("new_path");
-            String oldPath = (String) diff.get("old_path");
+        for (Map<String, Object> diff : diffs) {
+            String newPath = (String) diff.getOrDefault("new_path", diff.get("filename"));
+            String oldPath = (String) diff.getOrDefault("old_path", diff.get("previous_filename"));
+            String diffContent = (String) diff.getOrDefault("diff", diff.get("patch"));
             
             if (shouldIgnore(newPath, filePatterns) || (oldPath != null && shouldIgnore(oldPath, filePatterns))) {
                 result.addIgnoredFile(newPath); 
@@ -132,23 +144,33 @@ public class AnalyzerService {
             change.setPath(newPath);
             change.setType("CONFIG");
             
-            boolean isNew = (boolean) diff.get("new_file");
-            boolean isDeleted = (boolean) diff.get("deleted_file");
+            boolean isNew = false;
+            boolean isDeleted = false;
+            if (diff.containsKey("new_file")) {
+                isNew = (boolean) diff.get("new_file");
+                isDeleted = (boolean) diff.get("deleted_file");
+            } else if (diff.containsKey("status")) {
+                String status = (String) diff.get("status");
+                isNew = "added".equals(status);
+                isDeleted = "removed".equals(status);
+            }
+
             change.setNewFile(isNew);
             change.setDeletedFile(isDeleted);
 
-            String diffContent = (String) diff.get("diff");
             if (diffContent != null && !diffContent.isEmpty()) {
                 StringBuilder fullDiff = new StringBuilder();
                 String oldPathStr = (oldPath != null && !oldPath.isEmpty()) ? oldPath : newPath;
-                fullDiff.append("diff --git a/").append(oldPathStr).append(" b/").append(newPath).append("\n");
                 
-                if (isNew) {
-                    fullDiff.append("new file mode 100644\n--- /dev/null\n+++ b/").append(newPath).append("\n");
-                } else if (isDeleted) {
-                    fullDiff.append("deleted file mode 100644\n--- a/").append(oldPath).append("\n+++ /dev/null\n");
-                } else {
-                    fullDiff.append("--- a/").append(oldPathStr).append("\n+++ b/").append(newPath).append("\n");
+                if (!diffContent.startsWith("diff --git")) {
+                    fullDiff.append("diff --git a/").append(oldPathStr).append(" b/").append(newPath).append("\n");
+                    if (isNew) {
+                        fullDiff.append("new file mode 100644\n--- /dev/null\n+++ b/").append(newPath).append("\n");
+                    } else if (isDeleted) {
+                        fullDiff.append("deleted file mode 100644\n--- a/").append(oldPath).append("\n+++ /dev/null\n");
+                    } else {
+                        fullDiff.append("--- a/").append(oldPathStr).append("\n+++ b/").append(newPath).append("\n");
+                    }
                 }
                 fullDiff.append(diffContent);
                 change.setDiffContent(fullDiff.toString());
@@ -159,7 +181,7 @@ public class AnalyzerService {
          }
     }
     
-    // Updated calculateLines with XML Canonicalization logic
+    // Updated calculateLines with XML Canonicalization logic and multi-filter support
     private void calculateLines(FileChange change, String diffContent, List<String> patterns, boolean ignoreAttributeOrder) {
         if (diffContent == null || diffContent.isEmpty()) {
             return;
@@ -168,21 +190,18 @@ public class AnalyzerService {
         // 1. Parse Diff into Minus and Plus buckets
         List<String> minusLines = new ArrayList<>();
         List<String> plusLines = new ArrayList<>();
-        List<String> rawDiffLines = new ArrayList<>(); // Store raw lines to map back
         
         String[] lines = diffContent.split("\n");
         for (String line : lines) {
             // Ignore headers
-            if (line.startsWith("+++") || line.startsWith("---") || line.startsWith("diff --git") || line.startsWith("index ")) {
+            if (line.startsWith("+++") || line.startsWith("---") || line.startsWith("diff --git") || line.startsWith("index ") || line.startsWith("@@")) {
                 continue;
             }
             
             if (line.startsWith("-")) {
                 minusLines.add(line.substring(1).trim());
-                rawDiffLines.add(line);
             } else if (line.startsWith("+")) {
                 plusLines.add(line.substring(1).trim());
-                rawDiffLines.add(line);
             }
         }
         
@@ -191,14 +210,18 @@ public class AnalyzerService {
         int additions = 0;
         int deletions = 0;
         
-        // 2. Semantic Ignore Logic (XML)
+        // 2. Semantic Ignore Logic (XML) - Expand extensions to .policy, .mflow, etc.
+        boolean isXmlLike = false;
+        if (change.getPath() != null) {
+            String p = change.getPath().toLowerCase();
+            isXmlLike = p.endsWith(".xml") || p.endsWith(".policy") || p.endsWith(".mflow") || p.endsWith(".xapi");
+        }
+
         List<String> semanticallyIgnoredPlus = new ArrayList<>();
-        
-        // Only run if Feature Enabled AND is XML
-        if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
-            // Bag matching: Count occurrences of Canonical Strings
+        Map<String, Integer> plusCanonCountsForMinus = new HashMap<>();
+
+        if (ignoreAttributeOrder && isXmlLike) {
             Map<String, Integer> minusCounts = new HashMap<>();
-            
             for (String m : minusLines) {
                 String canon = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(m);
                 minusCounts.put(canon, minusCounts.getOrDefault(canon, 0) + 1);
@@ -207,92 +230,55 @@ public class AnalyzerService {
             for (String p : plusLines) {
                 String canon = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p);
                 if (minusCounts.containsKey(canon) && minusCounts.get(canon) > 0) {
-                     // Found a semantic match! It's a reordering or format change.
                      semanticallyIgnoredPlus.add(p);
-                     // Decrement match count (remove one instance)
                      minusCounts.put(canon, minusCounts.get(canon) - 1);
+                     // Also track for minus matching
+                     plusCanonCountsForMinus.put(canon, plusCanonCountsForMinus.getOrDefault(canon, 0) + 1);
                 }
             }
         }
         
-        // 3. Final Reconstruct & Count logic
-        
-        // Strategy: 
-        // Iterate Plus Lines: If in semanticallyIgnoredPlus -> Ignored (add to ignored buffer). Else -> Valid (add to valid buffer).
-        // Iterate Minus Lines: If matched -> Ignored buffer. Else -> Valid buffer.
-        
-        List<String> validDiffLines = new ArrayList<>();
-        List<String> ignoredDiffLines = new ArrayList<>();
+        // 3. Counting Logic
         
         // Use a Bag for matched items to consume.
         List<String> matchPool = new ArrayList<>(semanticallyIgnoredPlus);
         
         // Count Plus
         for (String p : plusLines) {
-            String canon = (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) 
-                           ? com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p) : null;
-            
-            boolean semanticMatch = false;
-             if (canon != null) {
-                 if (matchPool.remove(p)) { 
-                     semanticMatch = true;
-                 }
-             }
+            boolean isSmartXml = matchPool.remove(p);
+            boolean isContentFiltered = isIgnored(p, patterns);
 
-            if (semanticMatch) {
+            if (isSmartXml || isContentFiltered) {
                 ignored++;
-                ignoredDiffLines.add("+" + p);
-                change.addMatchType("Smart XML"); // Track filter type
+                if (isSmartXml) change.addMatchType("Smart XML");
+                if (isContentFiltered) change.addMatchType("Content Filter");
             } else {
-                if (isIgnored(p, patterns)) {
-                    ignored++;
-                    ignoredDiffLines.add("+" + p);
-                    change.addMatchType("Content Filter"); // Track filter type
-                } else {
-                    valid++;
-                    additions++;
-                    validDiffLines.add("+" + p);
-                }
+                valid++;
+                additions++;
             }
         }
         
         // Count Minus
-        Map<String, Integer> plusCanonCounts = new HashMap<>();
-        if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
-             for (String p : semanticallyIgnoredPlus) { 
-                 String c = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(p);
-                 plusCanonCounts.put(c, plusCanonCounts.getOrDefault(c, 0) + 1);
-             }
-        }
-        
         for (String m : minusLines) {
-             boolean semanticMatch = false;
-             if (ignoreAttributeOrder && change.getPath() != null && change.getPath().toLowerCase().endsWith(".xml")) {
-                 String c = com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(m);
-                 if (plusCanonCounts.containsKey(c) && plusCanonCounts.get(c) > 0) {
-                     semanticMatch = true;
-                     plusCanonCounts.put(c, plusCanonCounts.get(c) - 1);
-                 }
+             String canon = (ignoreAttributeOrder && isXmlLike) ? com.raks.gitanalyzer.util.XmlCanonicalizer.canonicalize(m) : null;
+             boolean isSmartXml = false;
+             if (canon != null && plusCanonCountsForMinus.containsKey(canon) && plusCanonCountsForMinus.get(canon) > 0) {
+                 isSmartXml = true;
+                 plusCanonCountsForMinus.put(canon, plusCanonCountsForMinus.get(canon) - 1);
              }
              
-             if (semanticMatch) {
+             boolean isContentFiltered = isIgnored(m, patterns);
+
+             if (isSmartXml || isContentFiltered) {
                  ignored++;
-                 ignoredDiffLines.add("-" + m);
-                 change.addMatchType("Smart XML"); // Track filter type
+                 if (isSmartXml) change.addMatchType("Smart XML");
+                 if (isContentFiltered) change.addMatchType("Content Filter");
              } else {
-                 if (isIgnored(m, patterns)) {
-                     ignored++;
-                     ignoredDiffLines.add("-" + m);
-                     change.addMatchType("Content Filter"); // Track filter type
-                 } else {
-                     valid++;
-                     deletions++;
-                     validDiffLines.add("-" + m);
-                 }
+                 valid++;
+                 deletions++;
              }
         }
         
-
         change.setValidChangedLines(valid);
         change.setIgnoredLines(ignored);
         change.setAdditions(additions);
