@@ -59,12 +59,27 @@ if exist "%SCRIPT_DIR%..\\gitanalyzer" (
             exit /b 1
         )
         echo [INFO] gitanalyzer-1.0.0.jar copied successfully
-        echo [INFO] Web assets are included in the JAR - no separate copy needed
     ) else (
         echo [ERROR] gitanalyzer JAR not found in target
         pause
         exit /b 1
     )
+
+    REM Step 1.5: Sync Web Assets to Wrapper
+    echo.
+    echo [1.5/2] Syncing GitAnalyzer Web Assets...
+    echo ============================================================
+    set "DEST_WEB_DIR=%SCRIPT_DIR%src\main\resources\web\gitanalyzer"
+    if not exist "%DEST_WEB_DIR%" mkdir "%DEST_WEB_DIR%"
+    
+    REM Use robocopy to sync assets from gitanalyzer source to wrapper resources
+    robocopy "%SCRIPT_DIR%..\\gitanalyzer\\src\\main\\resources\\web" "%DEST_WEB_DIR%" /MIR /NJH /NJS >nul
+    if %ERRORLEVEL% GEQ 8 (
+        echo [ERROR] Failed to sync web assets (Robocopy error: %ERRORLEVEL%)
+        pause
+        exit /b 1
+    )
+    echo [INFO] Web assets synchronized successfully to wrapper resources.
 
 ) else (
     echo [ERROR] GitAnalyzer project not found at ..\\gitanalyzer
