@@ -330,7 +330,17 @@ public class ApiDiscoveryTool {
     }
     private static void runAsyncScan(String source, String token, String scanId) {
         System.out.println("Starting Async Scan: " + scanId);
+
+        // --- Register Scan Progress for UI Polling ---
+        // Ensure the folder name matches scanId if not set otherwise
+        setScanFolder(scanId);
+        ApiDiscoveryService.registerScan(scanId, scanId);
+        ApiDiscoveryService.ScanProgress progress = ApiDiscoveryService.getProgress(scanId);
+        // ----------------------------------------------
+
         updateProgress("Initializing scan...", 0);
+        if (progress != null) { progress.setMessage("Initializing scan..."); progress.setPercent(0); }
+
         try {
             List<DiscoveryReport> reports = new ArrayList<>();
             Gson gson = new Gson();
@@ -353,17 +363,13 @@ public class ApiDiscoveryTool {
                 final int currentIdx = i;
                 final int totalSources = sources.size();
                 
-                // --- Register Scan Progress for UI Polling ---
-                ApiDiscoveryService.registerScan(scanId, getScanFolderName());
-                ApiDiscoveryService.ScanProgress progress = ApiDiscoveryService.getProgress(scanId);
-                // ----------------------------------------------
-                
                 File localFile = new File(s);
                 if (localFile.exists() && localFile.isDirectory()) {
                     System.out.println("Detected Local Directory: " + s);
-                    progress.setMessage("[" + (i+1) + "/" + totalSources + "] Scanning local directory...");
-                    progress.setPercent(basePct + 5);
-                    // updateProgress("[" + (i+1) + "/" + totalSources + "] Scanning local directory...", basePct + 5);
+                    if (progress != null) {
+                        progress.setMessage("[" + (i+1) + "/" + totalSources + "] Scanning local directory...");
+                        progress.setPercent(basePct + 5);
+                    }
                     reports.add(engine.scanRepository(localFile));
                     File[] subs = localFile.listFiles(File::isDirectory);
                     if (subs != null) {
@@ -383,18 +389,19 @@ public class ApiDiscoveryTool {
                     if (cleanGroup.contains("#")) cleanGroup = cleanGroup.substring(0, cleanGroup.indexOf("#"));
                     
                     GitLabConnector connector = new GitLabConnector();
-                    setScanFolder(scanId); 
+                    
                     List<DiscoveryReport> groupResults = connector.scanGroup(cleanGroup, token, scanId, getTempDir(), (msg, pct) -> {
                         int scaledPct = basePct + (pct * (nextBasePct - basePct) / 100);
-                        progress.setMessage("[" + (currentIdx+1) + "/" + totalSources + "] " + msg);
-                        progress.setPercent(scaledPct);
-                        // updateProgress("[" + (currentIdx+1) + "/" + totalSources + "] " + msg, scaledPct);
+                        if (progress != null) {
+                            progress.setMessage("[" + (currentIdx+1) + "/" + totalSources + "] " + msg);
+                            progress.setPercent(scaledPct);
+                        }
                     });
                     reports.addAll(groupResults);
                 }
             }
             try {
-                String folderName = getScanFolderName();
+                String folderName = scanId; // Use scanId as folder name
                 File tempDir = getTempDir();
                 if (!tempDir.exists()) tempDir.mkdirs();
                 File scanDir = new File(tempDir, folderName);
@@ -421,7 +428,10 @@ public class ApiDiscoveryTool {
                 System.err.println("Failed to save scan results: " + e.getMessage());
                 e.printStackTrace();
             }
+            
             updateProgress("Finalizing results...", 95);
+            if (progress != null) { progress.setMessage("Finalizing results..."); progress.setPercent(95); }
+            
             try {
                 org.eclipse.jgit.lib.RepositoryCache.clear();
             } catch (Exception e) {
@@ -431,24 +441,19 @@ public class ApiDiscoveryTool {
                  File tempDir = getTempDir();
                  File scanDir = new File(tempDir, scanId);
                      // Preserving repositories for Traffic Correlation feature
-                     /*
-                     File[] files = scanDir.listFiles();
-                     if (files != null) {
-                         for (File file : files) {
-                             if (file.isDirectory()) {
-                                 deleteDirectory(file);
-                             }
-                         }
-                     }
-                     */
-
             } catch (Exception e) {
                 System.err.println("Cleanup failed: " + e.getMessage());
             }
             updateProgress("Scan complete!", 100);
+            if (progress != null) { 
+                progress.setMessage("Scan complete!"); 
+                progress.setPercent(100); 
+                progress.setComplete(true);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             updateProgress("Error: " + e.getMessage(), 0);
+            if (progress != null) { progress.setError(e.getMessage()); }
         }
     }
     private static String loadConfig(String key) {
