@@ -2,5 +2,10 @@
     "minMuleVersion": "4.9.1",
     "javaSpecificationVersions": [
         "17"
-    ]
+    ],
+    "bundleDescriptor": {
+        "exportedResources": [
+            "beans.xml"
+        ]
+    }
 }

@@ -208,20 +208,9 @@ public class BaselineComparisonService {
         apiCallResult.setDuration(System.currentTimeMillis() - start);
         
 
-        Map<String, String> actualHeaders = new HashMap<>(headers);
-        if (client.getAccessToken() != null) {
-            actualHeaders.put("Authorization", "Bearer " + client.getAccessToken());
-        } else if (apiConfig.getAuthentication() != null 
-                && apiConfig.getAuthentication().getClientId() != null 
-                && apiConfig.getAuthentication().getClientSecret() != null) {
-            String auth = apiConfig.getAuthentication().getClientId() + ":" + apiConfig.getAuthentication().getClientSecret();
-            String encodedAuth = Base64.getEncoder().encodeToString(auth.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            actualHeaders.put("Authorization", "Basic " + encodedAuth);
-        }
-
         apiCallResult.setUrl(url);
         apiCallResult.setMethod(method);
-        apiCallResult.setRequestHeaders(actualHeaders);
+        apiCallResult.setRequestHeaders(httpResponse.getRequestHeaders());
         apiCallResult.setRequestPayload(payload);
 
         apiCallResult.setStatusCode(httpResponse.getStatusCode());

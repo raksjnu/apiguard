@@ -2,12 +2,26 @@
 <mule xmlns="http://www.mulesoft.org/schema/mule/core"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway"
+      xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+      xmlns:spring="http://www.mulesoft.org/schema/mule/spring"
       xsi:schemaLocation="
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
-        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+        http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+        http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd">
 
     <!-- Configuration Properties -->
     <configuration-properties file="mule-app.properties"/>
+
+    <!-- Spring Configuration -->
+    <spring:config name="Spring_Config" files="beans.xml" />
+    <spring:security-manager>
+        <spring:delegate-security-provider name="memory-provider" delegate-ref="authenticationManager" />
+    </spring:security-manager>
+
+    <!-- API Autodiscovery Configuration (Disabled in favor of Spring Security) -->
+    <!-- <api-gateway:autodiscovery apiId="${api.id}" flowRef="rest-create-order" ignoreBasePath="true" doc:name="API Autodiscovery" /> -->
 
     <!-- HTTP Listener Configuration -->
     <http:listener-config name="HTTP_Listener_config">
@@ -21,6 +35,7 @@
     <!-- REST: POST /api/orders (Create Order) -->
     <flow name="rest-create-order">
         <http:listener config-ref="HTTP_Listener_config" path="/api/orders" allowedMethods="POST"/>
+        <http:basic-security-filter realm="mule-realm" />
         <logger level="INFO" message="REST CreateOrder called"/>
         <set-payload value="#[output application/json --- {orderNumber:'ORD-20260118-001',status:'SUCCESS',message:'Order created successfully',timestamp:now()}]" mimeType="application/json"/>
     </flow>
@@ -28,6 +43,7 @@
     <!-- REST: GET /api/orders/{orderNumber} (Get Order) -->
     <flow name="rest-get-order">
         <http:listener config-ref="HTTP_Listener_config" path="/api/orders/*" allowedMethods="GET"/>
+        <http:basic-security-filter realm="mule-realm" />
         <logger level="INFO" message="REST GetOrder called"/>
         <set-payload value="#[output application/json --- {orderNumber:'ORD-20260118-001',customerName:'John Doe',customerEmail:'john.doe@example.com',orderDate:'2026-01-18',productName:'Widget Pro',quantity:5,totalAmount:249.99,status:'CONFIRMED',timestamp:now()}]" mimeType="application/json"/>
     </flow>
@@ -39,6 +55,7 @@
     <!-- SOAP: Main Endpoint -->
     <flow name="soap-orderservice-main">
         <http:listener config-ref="HTTP_Listener_config" path="/soap/orderservice" allowedMethods="POST"/>
+        <http:basic-security-filter realm="mule-realm" />
         <logger level="INFO" message="SOAP request received"/>
         <choice>
             <!-- Check presence of XML element safely -->

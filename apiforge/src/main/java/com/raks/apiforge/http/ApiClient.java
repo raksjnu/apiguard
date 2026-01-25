@@ -1,4 +1,5 @@
 package com.raks.apiforge.http;
+
 import com.raks.apiforge.Authentication;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,17 +17,20 @@ import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
+
 public class ApiClient {
     private static final Logger logger = LoggerFactory.getLogger(ApiClient.class);
     private final Authentication authentication;
     private String accessToken;
     private final ObjectMapper objectMapper = new ObjectMapper();
+
     public ApiClient(Authentication authentication) {
         this.authentication = authentication;
     }
@@ -34,6 +38,7 @@ public class ApiClient {
     public String getAccessToken() {
         return accessToken;
     }
+
     private void obtainAccessToken() throws IOException {
         if (authentication == null || authentication.getTokenUrl() == null) {
             return; 
@@ -67,30 +72,43 @@ public class ApiClient {
             }
         }
     }
+
     public HttpResponse sendRequest(String url, String method, Map<String, String> headers, String body) throws IOException {
         if (accessToken == null && authentication != null && authentication.getTokenUrl() != null) {
             obtainAccessToken();
         }
-        try (CloseableHttpClient client = HttpClients.createDefault()) {
-            RequestBuilder requestBuilder = RequestBuilder.create(method.toUpperCase()).setUri(url);
+        
+        RequestBuilder requestBuilder = RequestBuilder.create(method.toUpperCase()).setUri(url);
+        if (headers != null) {
             headers.forEach(requestBuilder::addHeader);
-            if (accessToken != null) {
-                requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
-            }
-            else if (authentication != null && authentication.getClientId() != null
-                    && authentication.getClientSecret() != null) {
-                String auth = authentication.getClientId() + ":" + authentication.getClientSecret();
-                byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
-                String authHeader = "Basic " + new String(encodedAuth);
-                requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, authHeader);
-            }
-            if (body != null && !body.isEmpty()) {
-                String contentType = headers.getOrDefault(HttpHeaders.CONTENT_TYPE, headers.getOrDefault("Content-Type", "text/plain"));
-                // Create entity with specific content type to avoid conflicting headers being sent
-                // StringEntity by default might set text/plain if not specified, which confuses some strict servers
-                org.apache.http.entity.ContentType type = org.apache.http.entity.ContentType.parse(contentType);
-                requestBuilder.setEntity(new StringEntity(body, type));
-            }
+        }
+        if (accessToken != null) {
+            requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
+        }
+        else if (authentication != null && authentication.getClientId() != null) {
+            String clientSecret = authentication.getClientSecret() != null ? authentication.getClientSecret() : "";
+            String auth = authentication.getClientId() + ":" + clientSecret;
+            byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
+            String authHeader = "Basic " + new String(encodedAuth);
+            requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, authHeader);
+        }
+        
+        if (body != null && !body.isEmpty()) {
+            String contentType = headers != null ? headers.getOrDefault(HttpHeaders.CONTENT_TYPE, headers.getOrDefault("Content-Type", "text/plain")) : "text/plain";
+            org.apache.http.entity.ContentType type = org.apache.http.entity.ContentType.parse(contentType);
+            requestBuilder.setEntity(new StringEntity(body, type));
+        }
+
+        final Map<String, String> finalRequestHeaders = new java.util.HashMap<>();
+        
+        try (CloseableHttpClient client = HttpClients.custom()
+                .addInterceptorFirst((org.apache.http.HttpRequestInterceptor) (request, context) -> {
+                    for (org.apache.http.Header header : request.getAllHeaders()) {
+                        finalRequestHeaders.put(header.getName(), header.getValue());
+                    }
+                })
+                .build()) {
+            
             HttpUriRequest request = requestBuilder.build();
             logger.debug("Executing request: {}", request);
             try (CloseableHttpResponse response = client.execute(request)) {
@@ -100,7 +118,7 @@ public class ApiClient {
                 for (org.apache.http.Header header : response.getAllHeaders()) {
                     respHeaders.put(header.getName(), header.getValue());
                 }
-                return new HttpResponse(statusCode, responseBody, respHeaders);
+                return new HttpResponse(statusCode, responseBody, respHeaders, finalRequestHeaders);
             }
         }
     }

@@ -2,9 +2,9 @@
 
 ## Quick Reference
 
-**Base URL**: `https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io`
-**Authentication**: None (optional - not implemented)
-**Credentials**: N/A (authentication disabled for simplicity)
+**Base URL**: `https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io` (or `http://localhost:8082` for local)
+**Authentication**: Basic Authentication
+**Credentials**: `raks` / `admin`
 
 ---
 
@@ -43,7 +43,10 @@ Content-Type: application/json
 
 **PowerShell Test**:
 ```powershell
-$headers = @{"Content-Type" = "application/json"}
+$headers = @{
+    "Content-Type" = "application/json"
+    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("raks:admin"))
+}
 $body = '{"customerName":"John Doe","customerEmail":"john.doe@example.com","orderDate":"2026-01-18","productName":"Widget Pro","quantity":5,"totalAmount":249.99}'
 Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders" -Method POST -Headers $headers -Body $body
 ```
@@ -51,6 +54,7 @@ Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/
 **cURL Test**:
 ```bash
 curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders \
+  -u raks:admin \
   -H "Content-Type: application/json" \
   -d '{"customerName":"John Doe","customerEmail":"john.doe@example.com","orderDate":"2026-01-18","productName":"Widget Pro","quantity":5,"totalAmount":249.99}'
 ```
@@ -82,12 +86,15 @@ curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders \
 
 **PowerShell Test**:
 ```powershell
-Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders/ORD-20260118-001" -Method GET
+$headers = @{
+    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("raks:admin"))
+}
+Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders/ORD-20260118-001" -Method GET -Headers $headers
 ```
 
 **cURL Test**:
 ```bash
-curl https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders/ORD-20260118-001
+curl -u raks:admin https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders/ORD-20260118-001
 ```
 
 ---
@@ -147,7 +154,11 @@ SOAPAction: http://raks.com/orderservice/CreateOrder
 
 **PowerShell Test**:
 ```powershell
-$headers = @{"Content-Type" = "text/xml"; "SOAPAction" = "http://raks.com/orderservice/CreateOrder"}
+$headers = @{
+    "Content-Type" = "text/xml"
+    "SOAPAction" = "http://raks.com/orderservice/CreateOrder"
+    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("raks:admin"))
+}
 $body = @"
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice">
   <soap:Body>
@@ -168,6 +179,7 @@ Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap
 **cURL Test**:
 ```bash
 curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice \
+  -u raks:admin \
   -H "Content-Type: text/xml" \
   -H "SOAPAction: http://raks.com/orderservice/CreateOrder" \
   -d '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice"><soap:Body><tns:CreateOrderRequest><customerName>John Doe</customerName><customerEmail>john.doe@example.com</customerEmail><orderDate>2026-01-18</orderDate><productName>Widget Pro</productName><quantity>5</quantity><totalAmount>249.99</totalAmount></tns:CreateOrderRequest></soap:Body></soap:Envelope>'
@@ -217,7 +229,11 @@ SOAPAction: http://raks.com/orderservice/GetOrder
 
 **PowerShell Test**:
 ```powershell
-$headers = @{"Content-Type" = "text/xml"; "SOAPAction" = "http://raks.com/orderservice/GetOrder"}
+$headers = @{
+    "Content-Type" = "text/xml"
+    "SOAPAction" = "http://raks.com/orderservice/GetOrder"
+    "Authorization" = "Basic " + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes("raks:admin"))
+}
 $body = @"
 <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice">
   <soap:Body>
@@ -233,6 +249,7 @@ Invoke-WebRequest -Uri "https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap
 **cURL Test**:
 ```bash
 curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice \
+  -u raks:admin \
   -H "Content-Type: text/xml" \
   -H "SOAPAction: http://raks.com/orderservice/GetOrder" \
   -d '<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:tns="http://raks.com/orderservice"><soap:Body><tns:GetOrderRequest><orderNumber>ORD-20260118-001</orderNumber></tns:GetOrderRequest></soap:Body></soap:Envelope>'
@@ -252,7 +269,7 @@ curl -X POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservi
 ## Notes
 
 - All endpoints run on port **8082**
-- No authentication required (simplified for testing)
+- **Basic Authentication required** (user: `raks`, password: `admin`)
 - Responses are static/mock data
 - SOAP operations require proper XML envelope structure
 - SOAP operations are distinguished by the request body content (CreateOrderRequest vs GetOrderRequest)

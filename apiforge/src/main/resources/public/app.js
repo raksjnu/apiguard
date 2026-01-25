@@ -248,7 +248,10 @@ document.addEventListener('DOMContentLoaded', () => {
             tokens: Array.from(tokensTable.querySelectorAll('tr')).map(tr => ({
                 k: tr.querySelector('.key-input')?.value,
                 v: tr.querySelector('.value-input')?.value
-            }))
+            })),
+            enableAuth: document.getElementById('enableAuth').checked,
+            clientId: document.getElementById('clientId').value,
+            clientSecret: document.getElementById('clientSecret').value
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(state));
     };
@@ -272,6 +275,14 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('method').value = s.method || 'POST';
             document.getElementById('iterationController').value = s.strategy || 'ONE_BY_ONE';
 
+            if (s.enableAuth !== undefined) {
+                document.getElementById('enableAuth').checked = s.enableAuth;
+                document.getElementById('clientId').disabled = !s.enableAuth;
+                document.getElementById('clientSecret').disabled = !s.enableAuth;
+            }
+            if (s.clientId) document.getElementById('clientId').value = s.clientId;
+            if (s.clientSecret) document.getElementById('clientSecret').value = s.clientSecret;
+
             headersTable.innerHTML = '';
             s.headers?.forEach(h => addRow(headersTable, ['Header Name', 'Value'], [h.k, h.v]));
             
@@ -283,7 +294,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Attach listeners for auto-save
-    ['method','operationName','url1','url2','payload','ignoredFields','maxIterations','iterationController'].forEach(id => {
+    ['method','operationName','url1','url2','payload','ignoredFields','maxIterations','iterationController', 'enableAuth', 'clientId', 'clientSecret'].forEach(id => {
         document.getElementById(id).addEventListener('input', saveState);
         document.getElementById(id).addEventListener('change', saveState);
     });
@@ -427,6 +438,14 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        let auth = null;
+        if (document.getElementById('enableAuth').checked) {
+            auth = {
+                clientId: document.getElementById('clientId').value.trim(),
+                clientSecret: document.getElementById('clientSecret').value.trim()
+            };
+        }
+
         const op = {
             name: document.getElementById('operationName').value || 'operation',
             methods: [document.getElementById('method').value],
@@ -439,10 +458,14 @@ document.addEventListener('DOMContentLoaded', () => {
             maxIterations: parseInt(document.getElementById('maxIterations').value) || 100,
             iterationController: document.getElementById('iterationController').value,
             tokens: t,
-            rest: { api1: { baseUrl: document.getElementById('url1').value, operations: [op] }, 
-                  api2: { baseUrl: document.getElementById('url2').value, operations: [op] } },
-            soap: { api1: { baseUrl: document.getElementById('url1').value, operations: [op] }, 
-                  api2: { baseUrl: document.getElementById('url2').value, operations: [op] } },
+            rest: { 
+                api1: { baseUrl: document.getElementById('url1').value, authentication: auth, operations: [op] }, 
+                api2: { baseUrl: document.getElementById('url2').value, authentication: auth, operations: [op] } 
+            },
+            soap: { 
+                api1: { baseUrl: document.getElementById('url1').value, authentication: auth, operations: [op] }, 
+                api2: { baseUrl: document.getElementById('url2').value, authentication: auth, operations: [op] } 
+            },
             ignoredFields: document.getElementById('ignoredFields').value.split(',').map(s=>s.trim()).filter(s=>s),
             ignoreHeaders: document.getElementById('ignoreHeaders').checked,
             comparisonMode: document.getElementById('comparisonMode').value
