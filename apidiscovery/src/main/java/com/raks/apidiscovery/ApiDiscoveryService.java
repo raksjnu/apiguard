@@ -322,7 +322,7 @@ public class ApiDiscoveryService {
     }
     public static class ScanProgress {
         private final String scanId;
-        private final String scanFolder;
+        private String scanFolder;
         private String message = "";
         private int percent = 0;
         private boolean complete = false;
@@ -350,6 +350,7 @@ public class ApiDiscoveryService {
             this.reports = reports;
         }
         public synchronized void setScanFolder(String scanFolder) {
+            this.scanFolder = scanFolder;
         }
         public String getScanId() { return scanId; }
         public String getScanFolder() { return scanFolder; }

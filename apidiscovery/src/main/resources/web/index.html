@@ -17,17 +17,18 @@
         body { font-family: 'Roboto', sans-serif; margin: 0; padding: 0; background-color: var(--bg-color); color: var(--text-color); }
         header { background-color: var(--header-bg); color: white; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         .brand { font-size: 1.5rem; font-weight: 700; display: flex; align-items: center; gap: 10px; }
-        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .container { max-width: 95%; margin: 2rem auto; padding: 0 2rem; }
         
         .tabs { display: flex; gap: 1rem; margin-bottom: 20px; }
-        .tab { padding: 10px 20px; background: #e0e0e0; cursor: pointer; border-radius: 4px; font-weight: 500; transition: all 0.2s; }
-        .tab.active { background: var(--primary-color); color: white; }
+        .tab { padding: 10px 20px; background: #ddd; cursor: pointer; border-radius: 8px 8px 0 0; margin-right: 5px; font-weight: bold; transition: all 0.2s ease; border: 2px solid #ddd; }
+        .tab:hover:not(.active) { background: #e0e0e0; transform: translateY(-2px); border-color: var(--primary-color); }
+        .tab.active { background: var(--primary-color); color: white; transform: translateY(0); border: 2px solid var(--primary-color); border-bottom: none; }
 
-        .card { background: var(--card-bg); border-radius: 8px; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; border: 2px solid var(--primary-color); }
+        .card { background: var(--card-bg); border-radius: 12px; padding: 2rem; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 2rem; border: 2px solid var(--primary-color); }
         .card h2 { margin-top: 0; color: var(--primary-color); border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         
         /* Breadcrumbs */
-        .breadcrumbs { background: #f0f0f0; padding: 10px 15px; border-radius: 4px; margin-bottom: 20px; font-size: 0.9rem; border-left: 4px solid var(--primary-color); }
+        .breadcrumbs { background: #f0f0f0; padding: 10px 15px; border-radius: 8px; margin-bottom: 20px; font-size: 0.9rem; border-left: 4px solid var(--primary-color); }
         .breadcrumbs strong { color: var(--primary-color); }
         .breadcrumbs span { color: #666; margin: 0 5px; }
 
@@ -38,39 +39,41 @@
 
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: inherit; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px; border: 2px solid var(--primary-color); border-radius: 8px; box-sizing: border-box; font-family: inherit; transition: border-color 0.2s; color: var(--primary-color); font-weight: 500; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: #552b80; box-shadow: 0 0 0 3px rgba(102, 51, 153, 0.1); }
         
-        button { background-color: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 1rem; transition: background 0.3s; }
-        button:hover { background-color: #4a148c; }
-        button.secondary { background-color: #757575; }
+        button { background: var(--primary-color); color: white; border: 2px solid var(--primary-color); padding: 10px 20px; border-radius: 8px; cursor: pointer; font-size: 1rem; transition: all 0.2s ease; }
+        button:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(102, 51, 153, 0.3); background-color: #552b80; border-color: #552b80; }
+        button:active { transform: translateY(-1px); box-shadow: 0 2px 5px rgba(102, 51, 153, 0.3); }
+        button.secondary { background-color: #757575; border-color: #757575; }
         button.small { padding: 5px 10px; font-size: 0.8rem; }
         
         /* Grid/List View */
-        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; max-height: 400px; overflow-y: auto; padding: 5px; }
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; max-height: 70vh; overflow-y: auto; padding: 5px; }
         .grid-container.list-view { grid-template-columns: 1fr; }
         
-        .grid-item { background: #fff; border: 1px solid #ddd; padding: 15px; border-radius: 6px; cursor: pointer; transition: all 0.2s; position: relative; }
+        .grid-item { background: #fff; border: 2px solid var(--primary-color); padding: 15px; border-radius: 10px; cursor: pointer; transition: all 0.2s; position: relative; }
         .list-view .grid-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; }
         
-        .grid-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); border-color: var(--primary-color); }
+        .grid-item:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(102, 51, 153, 0.2); border-color: #552b80; }
         .list-view .grid-item:hover { transform: none; background-color: #f9f9f9; }
         
-        .grid-item.selected { background-color: #f3e5f5; border-color: var(--primary-color); border-width: 2px; }
+        .grid-item.selected { background-color: #f3e5f5; border-color: var(--primary-color); border-width: 3px; }
         
         .grid-item h3 { margin: 0 0 5px 0; font-size: 1.1rem; }
         .grid-item p { margin: 0; font-size: 0.9rem; color: #666; word-break: break-all; }
         
         /* Tables & Lists */
-        table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; margin-top: 1rem; border: 2px solid var(--primary-color); border-radius: 8px; overflow: hidden; }
         th, td { text-align: left; padding: 12px; border-bottom: 1px solid #eee; }
-        th { background-color: #f9f9f9; color: #555; }
+        th { background-color: #f9f9f9; color: var(--primary-color); border-bottom: 2px solid var(--primary-color); }
         
-        .progress-bar-container { width: 100%; background-color: #ddd; border-radius: 4px; margin-top: 10px; height: 10px; overflow: hidden; display: none; }
+        .progress-bar-container { width: 100%; background-color: #ddd; border-radius: 8px; margin-top: 10px; height: 10px; overflow: hidden; display: none; border: 1px solid var(--primary-color); }
         .progress-bar { height: 100%; background-color: var(--secondary-color); width: 0%; transition: width 0.3s; }
 
         /* Modal */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.5); z-index: 1000; justify-content: center; align-items: center; }
-        .modal-content { background-color: white; padding: 2rem; border-radius: 8px; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto; position: relative; }
+        .modal-content { background-color: white; padding: 2rem; border-radius: 12px; width: 90%; max-width: 800px; max-height: 80vh; overflow-y: auto; position: relative; border: 3px solid var(--primary-color); }
         .close-btn { position: absolute; top: 10px; right: 15px; font-size: 1.5rem; cursor: pointer; font-weight: bold; color: #666; }
         
         .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.8rem; margin-right: 5px; color: white; }
@@ -80,17 +83,61 @@
         .badge.tibco { background-color: #ce000c; }
         
         .view-controls { display: flex; gap: 5px; align-items: center; }
+        
+        .ignore-btn {
+            background-color: #d32f2f !important;
+            color: white;
+            border-radius: 20px;
+            padding: 5px 12px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ignore-btn:hover { background-color: #b71c1c !important; }
+
+        /* Loading Overlay */
+        #loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 2000;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+        /* Spinner & Progress */
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .progress-container { width: 100%; background-color: #fff; border: 2px solid var(--primary-color) !important; border-radius: 4px; margin-top: 10px; height: 12px; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--primary-color); width: 0%; transition: width 0.3s ease; }
+        
+        .loading-content {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            border: 2px solid var(--primary-color) !important;
+            max-width: 500px;
+            width: 90%;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
 <header>
     <div class="brand">
-        <img src="assets/logo.svg" alt="Raks Logo" style="height: 30px;">
+        <!-- Base64 Logo for robustness -->
+        <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI4MCIgaGVpZ2h0PSI4MCIgdmlld0JveD0iMCAwIDgwIDgwIj4KICA8cGF0aCBkPSJNIDE1IDIwIEwgNDAgMTAgTCA2NSAyMCBMIDY1IDQ1IFEgNjUgNjAgNDAgNzUgUSAxNSA2MCAxNSA0NSBaIiBmaWxsPSIjNjYzMzk5IiBzdHJva2U9IiM2NjMzOTkiIHN0cm9rZS13aWR0aD0iMiIvPgogIDx0ZXh0IHg9IjQwIiB5PSI1MCIgZm9udC1mYW1pbHk9IkFyaWFsLCBzYW5zLXNlcmlmIiBmb250LXNpemU9IjE4IiBmb250LXdlaWdodD0iYm9sZCIgZmlsbD0id2hpdGUiIHRleHQtYW5jaG9yPSJtaWRkbGUiPlJBS1M8L3RleHQ+Cjwvc3ZnPg==" alt="Raks Logo" style="height: 40px; background: white; padding: 5px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
         Raks API Discovery
     </div>
     <div>
-        <a href="guide.html" target="_blank" style="color: white; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 5px; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">
+        <a href="javascript:void(0)" onclick="showGuide(); return false;" style="color: white; text-decoration: none; font-weight: 500; display: flex; align-items: center; gap: 5px; border: 1px solid white; padding: 5px 10px; border-radius: 4px;">
             📘 Guide / Help
         </a>
     </div>
@@ -99,30 +146,24 @@
 <div class="container">
     
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('discovery')">🔍 API Discovery</div>
+        <div class="tab active" onclick="switchTab('quick')">⚡ Quick Scan</div>
+        <div class="tab" onclick="switchTab('discovery')">🔍 API Discovery</div>
         <div class="tab" onclick="switchTab('correlation')">🔗 Traffic Correlation</div>
         <div class="tab" onclick="switchTab('history')">📜 Scan History</div>
+        <div class="tab" onclick="switchTab('settings')">⚙️ Settings</div>
     </div>
 
     <!-- TAB: DISCOVERY (WIZARD) -->
-    <div id="tab-discovery" class="tab-content">
+    <div id="tab-discovery" class="tab-content" style="display:none;">
         <div class="card">
             
             <!-- Step 1: Connect -->
             <div id="step-1" class="wizard-step active">
-                <h2>Step 1: Connect to GitLab</h2>
-                <div class="form-group">
-                    <label>GitLab URL</label>
-                    <input type="text" id="gitlabUrl" value="https://gitlab.com">
+                <h3>Step 1: Connect to GitLab</h3>
+                <p>Ensure your credentials are configured in the <strong>Settings</strong> tab.</p>
+                <div class="info-box">
+                     <p>Target: <strong id="disp-gitlab-url">Loading...</strong></p>
                 </div>
-                <div class="form-group">
-                    <label>Access Token (Private Token)</label>
-                    <!-- Pre-populated token as requested -->
-                    <input type="password" id="gitlabToken" value="glpat-8xWKilsBixw-i6hMcR1FvW86MQp1OmplYXcwCw.01.120yhiotd">
-                </div>
-                <p style="font-size: 0.9rem; color: #666; margin-top: -10px; margin-bottom: 15px;">
-                    <em>Note: To scan your personal projects, you can enter your Username as the "Group" in the next steps (or just fetch groups normally if available).</em>
-                </p>
                 <button onclick="fetchGroups()">Fetch Groups &rarr;</button>
             </div>
 
@@ -160,7 +201,7 @@
                     <button class="secondary" onclick="deselectAllProjects()">Deselect All</button>
                 </div>
                 
-                <div id="projects-grid" class="grid-container"></div>
+                <div id="projects-grid" class="grid-container list-view"></div>
                 
                 <br>
                 <button onclick="nextStep(4)">Configure Scan &rarr;</button>
@@ -183,6 +224,7 @@
                 
                 <div id="scan-review">
                     <p><strong>Selected Target:</strong> <span id="review-target-count">0</span> Projects</p>
+                    <div id="review-project-list" style="max-height: 150px; overflow-y: auto; background: #fff; border: 1px solid #eee; padding: 10px; margin-bottom: 20px; font-size: 0.9rem; border-radius: 4px;"></div>
                 </div>
 
                 <button onclick="startWizardScan()">🚀 Start Scan</button>
@@ -192,6 +234,74 @@
                 </div>
                 <div id="scan-status-text" style="margin-top: 10px; font-style: italic;"></div>
             </div>
+
+            <!-- Step 5: Results -->
+            <div id="step-5" class="wizard-step">
+                <h2>Step 5: Scan Results</h2>
+                <div class="breadcrumbs" id="bc-step-5">GitLab <span>&gt;</span> Group <span>&gt;</span> Projects <span>&gt;</span> Configure <span>&gt;</span> <strong>Results</strong></div>
+                
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h3 style="color: var(--primary-color);">🎉 Scanning Complete!</h3>
+                    <p>Here are the immediate results from your selected projects.</p>
+                </div>
+                
+                <div id="results-container">
+                    <!-- Results injected here -->
+                </div>
+                
+                <div style="margin-top: 30px; text-align: center;">
+                    <button onclick="switchTab('history')">View Full History</button>
+                    <button class="secondary" onclick="location.reload()">Start New Scan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: QUICK SCAN -->
+    <div id="tab-quick" class="tab-content">
+        <div class="card">
+            <h2>⚡ Quick Scan</h2>
+            <p>Directly scan a single repository without browsing groups.</p>
+            
+            <div class="form-group">
+                <label>GitLab URL or Local Path</label>
+                <input type="text" id="quickSource" placeholder="https://gitlab.com/group/project.git or C:/work/repo">
+            </div>
+            
+            <div class="form-group" style="display:flex; gap:20px;">
+                <div style="flex:1;">
+                     <label>Scan Mode</label>
+                     <select id="quickMode">
+                         <option value="full">Full Analysis</option>
+                         <option value="metadata">Metadata Only</option>
+                     </select>
+                </div>
+            </div>
+            
+            <button onclick="startQuickScan()">🚀 Start Discovery</button>
+            
+            <div id="quick-results-container" style="margin-top: 30px;"></div>
+        </div>
+    </div>
+
+    <!-- TAB: SETTINGS -->
+    <div id="tab-settings" class="tab-content" style="display:none;">
+        <div class="card">
+            <h2>⚙️ Configuration</h2>
+            <p>Configure your global GitLab credentials here. These will be used for all scans.</p>
+            
+            <div class="form-group">
+                <label>GitLab Base URL</label>
+                <input type="text" id="setting-url" placeholder="https://gitlab.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Personal Access Token</label>
+                <input type="password" id="setting-token" placeholder="glpat-...">
+            </div>
+            
+            <button onclick="saveSettings()">💾 Save Configuration</button>
+            <span id="save-msg" style="margin-left:10px; color:green; display:none;">Saved!</span>
         </div>
     </div>
 
@@ -210,37 +320,60 @@
 
     <!-- TAB: HISTORY -->
     <div id="tab-history" class="tab-content" style="display:none;">
-        <div class="card">
-            <h2>Scan History</h2>
-            
-             <div class="stats-container" style="display:flex; gap:20px; align-items:center; margin-bottom: 20px;">
-                <div class="stat-card" style="background:#eee; padding:10px; border-radius:4px;">
-                    <div class="value" id="total-scans" style="font-weight:bold;font-size:1.2rem;">0</div>
-                    <div class="label" style="font-size:0.8rem;">Total Scans</div>
+        <!-- List View -->
+        <div id="history-view-list">
+            <div class="card">
+                <h2>Scan History</h2>
+                
+                 <div class="stats-container" style="display:flex; gap:20px; margin-bottom: 20px;">
+                    <div class="stat-card" style="background:white; padding:15px; border-radius:8px; border:1px solid #ddd; min-width: 150px; text-align: center;">
+                        <div class="value" id="total-scans" style="font-weight:bold;font-size:1.5rem; color:var(--primary-color);">0</div>
+                        <div class="label" style="font-size:0.9rem; color:#666;">Total Scans</div>
+                    </div>
+                    <div class="stat-card" style="background:white; padding:15px; border-radius:8px; border:1px solid #ddd; min-width: 150px; text-align: center;">
+                        <div class="value" id="ignored-count" style="font-weight:bold;font-size:1.5rem; color:var(--primary-color);">0</div>
+                        <div class="label" style="font-size:0.9rem; color:#666;">Ignored Items</div>
+                    </div>
                 </div>
-                <div class="stat-card" style="background:#eee; padding:10px; border-radius:4px;">
-                    <div class="value" id="ignored-count" style="font-weight:bold;font-size:1.2rem;">0</div>
-                    <div class="label" style="font-size:0.8rem;">Ignored Items</div>
+
+                <div style="margin: 20px 0; display: flex; gap: 10px; justify-content: flex-end;">
+                    <button class="secondary" onclick="exportWorkspace()">💾 Export Workspace</button>
+                    <button class="secondary" onclick="document.getElementById('import-file').click()">📂 Import Workspace</button>
+                    <input type="file" id="import-file" style="display: none;" onchange="importWorkspace(this)">
                 </div>
-            </div>
 
-            <div style="margin: 20px 0; display: flex; gap: 10px; justify-content: flex-end;">
-                <button class="secondary" onclick="exportWorkspace()">💾 Export Workspace</button>
-                <button class="secondary" onclick="document.getElementById('import-file').click()">📂 Import Workspace</button>
-                <input type="file" id="import-file" style="display: none;" onchange="importWorkspace(this)">
+                <button onclick="loadHistory()">🔄 Refresh List</button>
+                <table id="history-table" style="width:100%; border-collapse:separate; border-spacing:0; margin-top:1rem; border:2px solid #663399; border-radius:8px; overflow:hidden;">
+                    <thead>
+                        <tr style="background:#f9f9f9; border-bottom:2px solid #663399;">
+                            <th style="padding:12px; text-align:left; color:#663399;">SCAN ID</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">TYPE</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">SOURCE</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">DATE</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">RESULTS</th>
+                            <th style="padding:12px; text-align:left; color:#663399;">ACTIONS</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
             </div>
-
-            <button onclick="loadHistory()">Refresh List</button>
-            <table id="history-table">
-                <thead><tr><th>Scan ID</th><th>Date</th><th>Action</th></tr></thead>
-                <tbody></tbody>
-            </table>
+        </div>
+        
+        <!-- Results View (Hidden by default) -->
+        <div id="history-view-results" style="display:none;">
+            <div class="card">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f0f0f0; padding-bottom:10px; margin-bottom:20px;">
+                    <h2 style="margin:0; border:none; color:#663399;">Scan Results</h2>
+                    <button onclick="closeHistoryResults()" class="secondary" style="border:2px solid #757575;">← Back to History</button>
+                </div>
+                <div id="history-results-container"></div>
+            </div>
         </div>
     </div>
  
  </div>
  
- <!-- RESULTS MODAL -->
+ <!-- Modals -->
  <div id="resultsModal" class="modal">
      <div class="modal-content">
          <span class="close-btn" onclick="document.getElementById('resultsModal').style.display='none'">&times;</span>
@@ -249,20 +382,48 @@
          <button onclick="document.getElementById('resultsModal').style.display='none'" style="margin-top:20px;">Close</button>
      </div>
  </div>
+
+ <div id="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <h2 style="color: var(--primary-color);">Processing...</h2>
+        <p id="loading-text" style="color: #666;">Please wait...</p>
+    </div>
+ </div>
  
  <script>
      let currentStep = 1;
      let selectedGroup = null;
      let selectedProjects = [];
-     let gitlabToken = '';
      
      // --- UI Controls ---
      function switchTab(tabName) {
+         hideLoading(); 
+         if(window.scanInterval) {
+             clearInterval(window.scanInterval);
+             window.scanInterval = null;
+         }
+
          document.querySelectorAll('.tab-content').forEach(d => d.style.display = 'none');
          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
          document.getElementById('tab-' + tabName).style.display = 'block';
-         event.currentTarget.classList.add('active');
+         
+         const tabs = document.querySelectorAll('.tab');
+         tabs.forEach(tab => {
+             if(tab.textContent.toLowerCase().includes(tabName.replace('quick', 'quick scan').replace('discovery', 'api discovery').replace('correlation', 'traffic correlation').replace('history', 'scan history').replace('settings', 'settings'))) {
+                 tab.classList.add('active');
+             }
+         });
+         
          if(tabName === 'history') loadHistory();
+         
+         if(tabName === 'discovery') {
+            document.getElementById('disp-gitlab-url').innerText = localStorage.getItem('apiguard_url') || 'https://gitlab.com';
+         }
+         if(tabName === 'settings') {
+            document.getElementById('setting-url').value = localStorage.getItem('apiguard_url') || 'https://gitlab.com';
+            document.getElementById('setting-token').value = localStorage.getItem('apiguard_token') || '';
+         }
      }
 
      function setViewMode(mode) {
@@ -276,8 +437,24 @@
          document.getElementById('step-' + step).classList.add('active');
          currentStep = step;
      }
-     function nextStep(step) { showStep(step); }
+     function nextStep(step) { 
+         if(step === 4) populateReviewList();
+         showStep(step); 
+     }
      function prevStep(step) { showStep(step); }
+     
+     function populateReviewList() {
+        const container = document.getElementById('review-project-list');
+        if(!container) return;
+        container.innerHTML = '';
+        selectedProjects.forEach(p => {
+             const div = document.createElement('div');
+             div.style.padding = '4px 0';
+             div.style.borderBottom = '1px solid #f9f9f9';
+             div.innerText = '• ' + p.name;
+             container.appendChild(div);
+        });
+     }
 
      // --- API Utils ---
      function getApiPath(endpoint) {
@@ -285,13 +462,35 @@
             ? '/apiguard/apidiscovery/api' + endpoint 
             : '/api' + endpoint; // local fallback
      }
+     
+     // --- Settings Logic ---
+     function saveSettings() {
+        const url = document.getElementById('setting-url').value;
+        const token = document.getElementById('setting-token').value;
+        localStorage.setItem('apiguard_url', url);
+        localStorage.setItem('apiguard_token', token);
+        
+        const msg = document.getElementById('save-msg');
+        msg.style.display = 'inline';
+        setTimeout(() => msg.style.display = 'none', 2000);
+     }
+     
+     function getSettings() {
+        const url = localStorage.getItem('apiguard_url') || 'https://gitlab.com';
+        const token = localStorage.getItem('apiguard_token');
+        if(!token) {
+            alert("Please configure your Access Token in the Settings tab first.");
+            switchTab('settings');
+            throw new Error("Missing Token"); // Stop execution
+        }
+        return { url, token };
+     }
 
      // --- Wizard Flow ---
      async function fetchGroups() {
-         const token = document.getElementById('gitlabToken').value;
-         const url = document.getElementById('gitlabUrl').value;
-         if(!token) return alert("Please enter a GitLab Token");
-         gitlabToken = token;
+         const { url, token } = getSettings();
+
+         showLoading("Connecting to GitLab...");
 
          try {
              const res = await fetch(`${getApiPath('/gitlab/groups')}?token=${encodeURIComponent(token)}&baseUrl=${encodeURIComponent(url)}`);
@@ -300,10 +499,22 @@
              
              const grid = document.getElementById('groups-grid');
              grid.innerHTML = '';
+             
+             if(groups.length === 0) grid.innerHTML = '<p>No groups found.</p>';
+
              groups.forEach(g => {
                  const div = document.createElement('div');
                  div.className = 'grid-item';
-                 div.innerHTML = `<h3>${g.name}</h3><p>${g.full_path}</p>`;
+                 div.style.borderLeft = '4px solid var(--primary-color)';
+                 div.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <h3 style="margin:0; color:var(--primary-color);">📁 ${g.name}</h3>
+                            <p style="margin:5px 0 0 0; font-size:0.85rem; color:#666;">${g.full_path}</p>
+                        </div>
+                        <span style="font-size:1.5rem; color:#ccc;">&rsaquo;</span>
+                    </div>
+                 `;
                  div.onclick = () => selectGroup(g);
                  grid.appendChild(div);
              });
@@ -311,6 +522,8 @@
          } catch(e) {
              console.error(e);
              alert("Error: " + e.message);
+         } finally {
+             hideLoading();
          }
      }
 
@@ -320,43 +533,92 @@
          selectGroup({ id: groupName, name: groupName, full_path: groupName });
      }
  
-     async function selectGroup(group) {
-         selectedGroup = group;
-         // Update Breadcrumbs
-         document.getElementById('bc-group-name').innerText = group.name;
-         document.getElementById('bc-group-name-4').innerText = group.name;
-         
-         const token = document.getElementById('gitlabToken').value;
-         try {
-             const res = await fetch(`${getApiPath('/gitlab/projects')}?token=${encodeURIComponent(token)}&groupId=${group.id}`);
-             const projects = await res.json();
-             
-             const grid = document.getElementById('projects-grid');
-             grid.innerHTML = '';
-             selectedProjects = [];
-             
-             if(projects.length === 0) grid.innerHTML = '<p>No projects found.</p>';
+      async function selectGroup(group) {
+          selectedGroup = group;
+          const { url, token } = getSettings();
 
-             projects.forEach(p => {
-                 const div = document.createElement('div');
-                 div.className = 'grid-item';
-                 div.innerHTML = `
-                     <div>
-                        <h3>${p.name}</h3>
-                        <p>${p.path_with_namespace || p.web_url}</p>
-                     </div>
-                     <button class="secondary small" onclick="event.stopPropagation(); ignoreItem('${p.http_url_to_repo}', this)">🚫 Ignore</button>
-                 `;
-                 div.dataset.id = p.id;
-                 div.onclick = () => toggleProjectSelection(div, p);
-                 grid.appendChild(div);
-             });
-             nextStep(3);
-         } catch(e) {
-             alert("Error fetching projects: " + e.message);
-         }
-     }
- 
+          showLoading(`Exploring ${group.name}...`);
+
+          try {
+              const [subRes, projRes] = await Promise.all([
+                  fetch(`${getApiPath('/gitlab/subgroups')}?token=${encodeURIComponent(token)}&baseUrl=${encodeURIComponent(url)}&groupId=${group.id}`),
+                  fetch(`${getApiPath('/gitlab/projects')}?token=${encodeURIComponent(token)}&baseUrl=${encodeURIComponent(url)}&groupId=${group.id}`)
+              ]);
+
+              const subgroups = await subRes.json();
+              const projects = await projRes.json();
+              
+              const groupGrid = document.getElementById('groups-grid');
+              const projectGrid = document.getElementById('projects-grid');
+              
+              document.getElementById('bc-group-name').innerText = group.name;
+              document.getElementById('bc-group-name-4').innerText = group.name;
+              
+              projectGrid.innerHTML = '';
+              selectedProjects = [];
+              
+              if(subgroups.length === 0 && projects.length === 0) {
+                  projectGrid.innerHTML = '<p style="text-align:center; color:#999; padding:20px;">This group is empty.</p>';
+              }
+
+              if(subgroups.length > 0) {
+                  const subHeader = document.createElement('h3');
+                  subHeader.innerText = "Sub-groups";
+                  subHeader.style.gridColumn = "1/-1";
+                  subHeader.style.margin = "10px 0";
+                  projectGrid.appendChild(subHeader);
+
+                  subgroups.forEach(sg => {
+                      const div = document.createElement('div');
+                      div.className = 'grid-item';
+                      div.style.background = '#f9f9f9';
+                      div.innerHTML = `<h3>📁 ${sg.name}</h3><p>${sg.full_path}</p>`;
+                      div.onclick = () => selectGroup(sg);
+                      projectGrid.appendChild(div);
+                  });
+              }
+
+              if(projects.length > 0) {
+                  const projHeader = document.createElement('h3');
+                  projHeader.innerText = "Projects / Repositories";
+                  projHeader.style.gridColumn = "1/-1";
+                  projHeader.style.margin = "20px 0 10px 0";
+                  projectGrid.appendChild(projHeader);
+
+                  projects.forEach(p => {
+                      const div = document.createElement('div');
+                      div.className = 'grid-item project-list-item';
+                      div.style.display = 'flex';
+                      div.style.justifyContent = 'space-between';
+                      div.style.alignItems = 'center';
+                      div.style.padding = '10px 20px';
+                      div.style.marginBottom = '8px';
+                      div.style.borderLeft = '4px solid #ddd';
+
+                      div.innerHTML = `
+                          <div style="display:flex; align-items:center; gap:15px; flex:1;">
+                             <h3 style="margin:0; font-size:1.05rem; min-width:200px;">${p.name}</h3>
+                             <p style="margin:0; font-size:0.85rem; color:#888; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${p.path_with_namespace || p.web_url}</p>
+                          </div>
+                          <div style="display:flex; align-items:center; gap:15px;">
+                             <button class="ignore-btn" style="margin:0;" onclick="event.stopPropagation(); ignoreItem('${p.http_url_to_repo}', this)">🚫 Ignore</button>
+                             <div class="selection-indicator"></div>
+                          </div>
+                      `;
+                      div.dataset.id = p.id;
+                      div.onclick = () => toggleProjectSelection(div, p);
+                      projectGrid.appendChild(div);
+                  });
+              }
+              
+              nextStep(3);
+          } catch(e) {
+              console.error(e);
+              alert("Error fetching group details: " + e.message);
+          } finally {
+              hideLoading();
+          }
+      }
      function toggleProjectSelection(el, project) {
          if(el.classList.contains('selected')) {
              el.classList.remove('selected');
@@ -366,7 +628,6 @@
              selectedProjects.push(project);
          }
          
-         // Update selected count display if needed (added a badge logic or bottom bar could be cool)
          document.getElementById('review-target-count').innerText = selectedProjects.length;
      }
      
@@ -382,77 +643,627 @@
          });
      }
  
-     async function startWizardScan() {
-         if(selectedProjects.length === 0) return alert("No projects selected!");
-         const token = document.getElementById('gitlabToken').value;
-         const scanMode = document.getElementById('scanMode').value;
+      async function startWizardScan() {
+          if(selectedProjects.length === 0) return alert("No projects selected!");
+          const { token } = getSettings();
+          const scanMode = document.getElementById('scanMode').value;
+          
+          showLoading("Initiating consolidated scan for " + selectedProjects.length + " projects...");
+          const resultsContainer = document.getElementById('results-container');
+          resultsContainer.innerHTML = '';
+          
+          try {
+              const res = await fetch(getApiPath('/scan'), {
+                  method: 'POST',
+                  body: JSON.stringify({ 
+                      source: JSON.stringify(selectedProjects.map(p => p.http_url_to_repo)), 
+                      token: token,
+                      group: (selectedGroup ? selectedGroup.name : "Discovery"),
+                      mode: scanMode
+                  })
+              });
+              const data = await res.json();
+              if(data.error) throw new Error(data.error);
+              if(!data.scanId) throw new Error("No Scan ID returned");
+
+              const results = await pollScanProgress(data.scanId, "Selected Projects");
+              const resultsArray = Array.isArray(results) ? results : [results];
+              
+              const progressRes = await fetch(getApiPath(`/progress?scanId=${data.scanId}`));
+              const finalProgress = await progressRes.json();
+              if(finalProgress.scanFolder) {
+                  resultsArray.forEach(r => r.scanFolder = finalProgress.scanFolder);
+              }
+
+              window.lastScanResults = resultsArray;
+              renderWizardResults(resultsArray);
+              
+              hideLoading();
+              nextStep(5);
+          } catch(e) {
+              hideLoading();
+              alert("Batch Scan Error: " + e.message);
+          }
+      }
+
+      function renderWizardResults(allResults) {
+          const resultsContainer = document.getElementById('results-container');
+          const total = allResults.length;
+          const identified = allResults.filter(r => (r.classification && r.classification === 'API Service') || (r.technology && r.technology.toLowerCase().includes('mule'))).length;
+          const avgConf = Math.round(allResults.reduce((acc, r) => acc + (r.confidenceScore||0), 0) / (total||1));
+          
+          allResults.sort((a, b) => {
+              const scoreA = parseFloat(a.confidenceScore || (a.governanceScore ? a.governanceScore : 0));
+              const scoreB = parseFloat(b.confidenceScore || (b.governanceScore ? b.governanceScore : 0));
+              const diff = scoreB - scoreA;
+              if (diff !== 0) return diff;
+              const tA = (a.technology || '').toLowerCase();
+              const tB = (b.technology || '').toLowerCase();
+              return tA.localeCompare(tB);
+          });
+
+          resultsContainer.innerHTML = `
+             <div class="summary-cards" style="display:flex; gap:20px; margin-bottom:20px;">
+                <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                     <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${total}</div>
+                     <div style="font-size:0.9rem; color:#666;">Total Repositories</div>
+                </div>
+                <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                     <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${identified}</div>
+                     <div style="font-size:0.9rem; color:#666;">Identified APIs</div>
+                </div>
+                <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                     <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${avgConf}%</div>
+                     <div style="font-size:0.9rem; color:#666;">Avg Confidence</div>
+                </div>
+            </div>
+            <h3 style="margin:25px 0 15px 0; color:var(--primary-color); border-bottom: 2px solid #663399; padding-bottom: 5px;">
+                📊 Discovery Results (${total} Projects):
+            </h3>
+          `;
+
+          let tableHtml = `
+            <table class="results-table" style="width:100%; border-collapse: separate; background:white; border-radius:8px; overflow:hidden; border: 2px solid #663399 !important; border-spacing: 0;">
+                <tr style="background:#f9f9f9; text-transform:uppercase; font-size:0.85rem; color:#663399; border-bottom: 2px solid #663399 !important; font-weight: bold;">
+                    <th style="padding:15px; text-align:left; color:#663399;">Repository</th>
+                    <th style="text-align:left; color:#663399;">Technology</th>
+                    <th style="text-align:left; color:#663399;">Classification</th>
+                    <th style="text-align:left; color:#663399;">Confidence</th>
+                    <th style="text-align:left; color:#663399;">Actions</th>
+                </tr>
+          `;
+
+          allResults.forEach((r, i) => {
+              const tech = r.technology || 'Unknown';
+              const isMule = tech.toLowerCase().includes('mule');
+              const score = r.confidenceScore || (r.governanceScore ? r.governanceScore : 0);
+              const cls = r.classification || (isMule ? 'API Service' : 'Standalone / Library');
+              
+              let classStyle = 'background:#f5f5f5; color:#616161;';
+              if(cls === 'API Service') classStyle = 'background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;';
+              else if(cls.includes('Standalone') || cls.includes('Library')) classStyle = 'background:#fff3e0; color:#ef6c00; border:1px solid #ffe0b2;';
+
+              let techStyle = 'background:#f5f5f5; color:#757575; border:1px solid #e0e0e0; font-weight:normal;';
+              const tLower = tech.toLowerCase();
+              if(tLower.includes('mule')) techStyle = 'background:#00a1df; color:white;';
+              else if(tLower.includes('spring') || tLower.includes('java')) techStyle = 'background:#6db33f; color:white;';
+              else if(tLower.includes('tibco')) techStyle = 'background:#f57c00; color:white;';
+              else if(tLower.includes('python')) techStyle = 'background:#fbc02d; color:#333;';
+              else if(tech !== 'Unknown' && tech !== 'Unknown / Generic') techStyle = 'background:#607d8b; color:white;';
+
+              tableHtml += `
+                 <tr style="border-bottom:1px solid #eee;">
+                     <td style="padding:15px;">
+                        <div style="font-weight:600; font-size: 1rem;">${r.repoName}</div>
+                        ${r.url ? `<a href="${r.url}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px;"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> View on GitLab</a>` : ''}
+                     </td>
+                     <td><span class="badge" style="${techStyle}">${tech}</span></td>
+                     <td><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
+                     <td style="color:green; font-weight:bold;">${score}</td>
+                     <td>
+                         <button class="small" style="background:var(--primary-color);" onclick="toggleResultDetails(this)">Details</button>
+                     </td>
+                 </tr>
+                 <tr class="details-row" style="display:none;">
+                     <td colspan="5" style="padding:20px; background:#fafafa; border-bottom:1px solid #ddd;">
+                         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                             <div class="detail-section">
+                                 <h4 style="margin:0 0 10px 0; font-size:1rem; color:var(--primary-color); display:flex; align-items:center; gap:8px;">
+                                    🔍 Identification & Capabilities
+                                 </h4>
+                                 <div style="background:white; padding:15px; border-radius:6px; border:1px solid #eee;">
+                                     <strong>Evidence:</strong>
+                                     <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                         ${(r.evidence||[]).map(e => `<li>${e}</li>`).join('') || '<li>No specific evidence detected</li>'}
+                                     </ul>
+                                     <strong style="margin-top:1rem; display:block;">Capabilities:</strong>
+                                     <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                         ${(r.indicators||[]).map(ind => `<li>${ind}</li>`).join('') || '<li>No API signatures found</li>'}
+                                     </ul>
+                                 </div>
+                             </div>
+                             <div class="detail-section">
+                                 <h4 style="margin:0 0 10px 0; font-size:1rem; color:var(--primary-color); display:flex; align-items:center; gap:8px;">
+                                    📊 Governance Standards
+                                 </h4>
+                                 <div style="background:white; padding:15px; border-radius:6px; border:1px solid #eee;">
+                                     ${renderGovernanceCheck(r.metadata, 'Governance: Standards', 'RESTful Architecture')}
+                                     ${renderGovernanceCheck(r.metadata, 'Governance: Documentation', 'API Documentation')}
+                                     ${renderGovernanceCheck(r.metadata, 'Governance: Gateway', 'API Gateway Managed')}
+                                     ${renderGovernanceCheck(r.metadata, 'Governance: Security', 'Security Enforcement')}
+                                     ${renderGovernanceCheck(r.metadata, 'Governance: Versioning', 'Semantic Versioning')}
+                                     ${renderGovernanceCheck(r.metadata, 'Governance: Logging', 'Centralized Logging')}
+                                 </div>
+                             </div>
+                             <div class="detail-section">
+                                 <h4 style="margin:0 0 10px 0; font-size:1rem; color:var(--primary-color); display:flex; align-items:center; gap:8px;">
+                                    🔥 Risk & Settings
+                                 </h4>
+                                 <div style="background:white; padding:15px; border-radius:6px; border:1px solid #eee;">
+                                     ${renderOtherMetadata(r.metadata)}
+                                 </div>
+                             </div>
+                         </div>
+                     </td>
+                 </tr>
+              `;
+          });
+
+          tableHtml += '</table>';
+          resultsContainer.innerHTML += tableHtml;
+      }
+     
+     async function startQuickScan() {
+         const source = document.getElementById('quickSource').value;
+         const { token } = getSettings(); // Uses global token
+         const mode = document.getElementById('quickMode').value;
          
-         document.getElementById('scan-progress-container').style.display = 'block';
-         const progressBar = document.getElementById('scan-progress-bar');
-         const statusText = document.getElementById('scan-status-text');
- 
-         let completed = 0;
-         statusText.innerText = `Starting scan for ${selectedProjects.length} projects...`;
- 
-         for(const proj of selectedProjects) {
-             statusText.innerText = `Scanning ${proj.name} (${scanMode})...`;
-             try {
-                 await fetch(getApiPath('/scan'), {
-                     method: 'POST',
-                     body: JSON.stringify({ 
-                         source: proj.http_url_to_repo, 
-                         token: token,
-                         group: selectedGroup.name,
-                         mode: scanMode // Backend needs to support this
-                     })
-                 });
-                 completed++;
-                 progressBar.style.width = ((completed / selectedProjects.length) * 100) + '%';
-             } catch(e) {
-                 console.error(e);
-                 statusText.innerText += ` Failed: ${proj.name}`;
-             }
-         }
+         if(!source) return alert("Please enter a URL or Path");
          
-         statusText.innerText = "All scans initiated! Check Scan History tab.";
-         // Force reload history
-         setTimeout(() => switchTab('history'), 2000);
-     }
- 
-     // --- Correlation & History ---
-     async function runCorrelation() {
-         const input = document.getElementById('trafficInput').value;
-         if(!input.trim()) return alert("Enter some traffic data");
+         showLoading("Starting Quick Scan...");
+         const container = document.getElementById('quick-results-container');
+         container.innerHTML = '';
          
          try {
-             const res = await fetch(getApiPath('/correlate'), { method: 'POST', body: input });
-             const results = await res.json();
-             
-             const container = document.getElementById('correlation-results');
-             if(results.length === 0) {
-                 container.innerHTML = "<h3>No matches found in scanned repositories.</h3>";
-                 return;
-             }
-             
-             let html = "<h3>Correlation Matches:</h3><table><tr><th>Traffic Item</th><th>Matched Repo</th><th>Confidence</th></tr>";
-             results.forEach(r => {
-                 html += `<tr><td>${r.traffic_item}</td><td><b>${r.matched_repo}</b></td><td>${r.confidence}</td></tr>`;
+             // 1. Start Scan
+             const res = await fetch(getApiPath('/scan'), {
+                 method: 'POST',
+                 body: JSON.stringify({ 
+                     source: source, 
+                     token: token,
+                     group: "QuickScan",
+                     mode: mode
+                 })
              });
-             html += "</table>";
-             container.innerHTML = html;
-         } catch (e) { alert("Correlation error: " + e); }
+             const data = await res.json();
+             if(data.error) throw new Error(data.error);
+             if(!data.scanId) throw new Error("No Scan ID returned");
+             
+             // 2. Poll
+             const results = await pollScanProgress(data.scanId, source);
+             const resultsArray = Array.isArray(results) ? results : [results]; // Ensure array
+             
+             // CRITICAL: Inject scanFolder from backend response into each result
+             const progressRes = await fetch(getApiPath(`/progress?scanId=${data.scanId}`));
+             const finalProgress = await progressRes.json();
+             if(finalProgress.scanFolder) {
+                 resultsArray.forEach(r => r.scanFolder = finalProgress.scanFolder);
+             }
+
+             // 3. Render
+             window.lastScanResults = resultsArray;
+             const total = resultsArray.length;
+             resultsArray.sort((a, b) => {
+                 const diff = (b.confidenceScore || 0) - (a.confidenceScore || 0);
+                 if (diff !== 0) return diff;
+                 const tA = (a.technology || '').toLowerCase();
+                 const tB = (b.technology || '').toLowerCase();
+                 return tA.localeCompare(tB);
+             });
+
+             const identified = resultsArray.filter(r => (r.classification && r.classification === 'API Service') || (r.technology && r.technology.toLowerCase().includes('mule'))).length;
+             const avgConf = Math.round(resultsArray.reduce((acc, r) => acc + (r.confidenceScore||0), 0) / (total||1));
+             
+             container.innerHTML = `
+                <h3 style="color:#663399; margin-top:0;">📊 Scan: ${resultsArray.scanFolder || data.scanId} <span style="font-weight:normal; font-size:1rem; color:#666; margin-left:10px;">: ${source}</span></h3>
+                
+                <div style="display:flex; gap:20px; margin-bottom:20px;">
+                    <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${total}</div>
+                         <div style="font-size:0.9rem; color:#666;">Total Repositories</div>
+                    </div>
+                    <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${identified}</div>
+                         <div style="font-size:0.9rem; color:#666;">Identified APIs</div>
+                    </div>
+                    <div class="card" style="flex:1; text-align:center; padding:15px; border:2px solid var(--primary-color); margin:0;">
+                         <div style="font-size:2rem; font-weight:bold; color:var(--primary-color);">${avgConf}%</div>
+                         <div style="font-size:0.9rem; color:#666;">Avg Confidence</div>
+                    </div>
+                </div>
+
+                <h3 style="color:var(--primary-color)">Discovery Results (${total} Projects):</h3>
+             `;
+             
+             let tableHtml = `
+                <table style="width:100%; background:white; border-radius:8px; overflow:hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); border: 2px solid #663399 !important;">
+                    <tr style="background:#f9f9f9; text-transform:uppercase; font-size:0.85rem; color:var(--primary-color); border-bottom: 2px solid var(--primary-color) !important; font-weight:bold;">
+                        <th style="padding:15px; color:var(--primary-color);">Repository</th>
+                        <th style="color:var(--primary-color);">Technology</th>
+                        <th style="color:var(--primary-color);">Classification</th>
+                        <th style="color:var(--primary-color);">Confidence</th>
+                        <th style="color:var(--primary-color);">Actions</th>
+                    </tr>
+             `;
+             
+             resultsArray.forEach((r, i) => {
+                 const tech = r.technology || 'Unknown';
+                 const isMule = tech.toLowerCase().includes('mule');
+                 const score = r.confidenceScore || (r.governanceScore ? '100%' : '0%');
+                 
+                 let classStyle = 'background:#f5f5f5; color:#616161;';
+                 const cls = r.classification || (isMule ? 'API Service' : 'Standalone / Library');
+                 
+                 if(cls === 'API Service') classStyle = 'background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;';
+                 else if(cls.includes('Standalone') || cls.includes('Library')) classStyle = 'background:#fff3e0; color:#ef6c00; border:1px solid #ffe0b2;';
+                 else if(cls.includes('Potential')) classStyle = 'background:#e3f2fd; color:#1565c0; border:1px solid #bbdefb;';
+                 
+                 let techStyle = 'background:#f5f5f5; color:#757575; border:1px solid #e0e0e0; font-weight:normal;';
+                 const tLower = tech.toLowerCase();
+                 
+                 if(tLower.includes('mule')) {
+                     techStyle = 'background:#00a1df; color:white;';
+                 } else if(tLower.includes('spring') || tLower.includes('java')) {
+                     techStyle = 'background:#6db33f; color:white;';
+                 } else if(tLower.includes('tibco')) {
+                    techStyle = 'background:#f57c00; color:white;';
+                 } else if(tLower.includes('python')) {
+                    techStyle = 'background:#fbc02d; color:#333;';
+                 } else if(tech !== 'Unknown' && tech !== 'Unknown / Generic') {
+                    techStyle = 'background:#607d8b; color:white;';
+                 }
+
+                 const scanId = r.scanId || r.scanFolder || data.scanId;
+                 const evidence = r.evidence || [];
+                 const indicators = r.indicators || [];
+                 const metadata = r.metadata || {};
+                 
+                 tableHtml += `
+                    <tr id="row-${i}" style="border-bottom:1px solid #eee;">
+                        <td style="padding:15px;">
+                            <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
+                            ${r.url ? `<a href="${r.url}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px;" title="${r.url}"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> View on GitLab</a>` : `<span style="color:#999; font-size:0.85rem;">Local Repository</span>`}
+                        </td>
+                        <td><span class="badge" style="${techStyle}">${tech}</span></td>
+                        <td><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
+                        <td style="color:green; font-weight:bold;">${score}</td>
+                        <td>
+                            <button class="small" onclick="toggleDetails(${i})" style="background:var(--primary-color);">Details</button>
+                        </td>
+                    </tr>
+                    <tr id="detail-${i}" style="display:none;">
+                        <td colspan="5" style="padding:0; background:#f9f9f9;">
+                            <div style="padding:20px; border-left:4px solid var(--primary-color);">
+                                <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                                    <div>
+                                        <h4 style="margin-top:0; color: var(--primary-color);">🔍 Identification & Capabilities</h4>
+                                        <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                            <strong>Evidence:</strong>
+                                            <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                ${evidence.length > 0 ? evidence.map(e => `<li>${e}</li>`).join('') : '<li style="color:#999;">No evidence files detected</li>'}
+                                            </ul>
+                                            <strong style="margin-top:1rem; display:block;">Capabilities:</strong>
+                                            <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                ${indicators.length > 0 ? indicators.map(ind => `<li>${ind}</li>`).join('') : '<li style="color:#999;">No API signatures found</li>'}
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin-top:0; color: var(--primary-color);">📊 Governance Standards</h4>
+                                        <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                            ${renderGovernanceCheck(metadata, 'Governance: Standards', 'RESTful Architecture')}
+                                            ${renderGovernanceCheck(metadata, 'Governance: Documentation', 'API Documentation')}
+                                            ${renderGovernanceCheck(metadata, 'Governance: Gateway', 'API Gateway Managed')}
+                                            ${renderGovernanceCheck(metadata, 'Governance: Security', 'Security Enforcement')}
+                                            ${renderGovernanceCheck(metadata, 'Governance: Versioning', 'Semantic Versioning')}
+                                            ${renderGovernanceCheck(metadata, 'Governance: Logging', 'Centralized Logging')}
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <h4 style="margin-top:0; color: var(--primary-color);">🔥 Risk & Settings</h4>
+                                        <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                            ${renderOtherMetadata(metadata)}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                 `;
+             });
+             
+             tableHtml += '</table>';
+             container.innerHTML += tableHtml;
+             
+         } catch(e) {
+             alert("Quick Scan Failed: " + e.message);
+         } finally {
+             hideLoading();
+         }
+     }
+
+     async function pollScanProgress(scanId, projName) {
+         const overlayContent = document.querySelector('#loading-overlay .loading-content');
+         
+          return new Promise((resolve) => {
+              if(window.scanInterval) clearInterval(window.scanInterval);
+              window.scanInterval = setInterval(async () => {
+                  try {
+                      const res = await fetch(getApiPath(`/progress?scanId=${scanId}`));
+                      const progress = await res.json();
+                      
+                      const percent = progress.complete ? 100 : (progress.percent || 0);
+                      const status = progress.message || 'Processing...';
+                      
+                      overlayContent.innerHTML = `
+                         <div class="spinner"></div>
+                         <h3 style="color:var(--primary-color)">Scanning ${projName}...</h3>
+                         <div class="progress-container">
+                             <div class="progress-bar" style="width: ${percent}%"></div>
+                         </div>
+                         <p style="margin-top:5px; color:#666;">${status} (${percent}%)</p>
+                      `;
+                      
+                      if (progress.complete) {
+                          clearInterval(window.scanInterval);
+                          window.scanInterval = null;
+                          try {
+                              const vRes = await fetch(`${getApiPath('/scans/view')}?scanName=${progress.scanFolder}`);
+                              let reports = await vRes.json();
+                              if (!Array.isArray(reports)) reports = [reports];
+                              reports.forEach(r => r.scanFolder = progress.scanFolder);
+                              resolve(reports); 
+                          } catch(e) {
+                              resolve([{ repoName: projName, error: "Failed to load report: " + e.message, scanFolder: progress.scanFolder }]);
+                          }
+                      }
+                  } catch (e) {
+                      console.error("Poll error", e);
+                  }
+              }, 1000); 
+          });
      }
  
+     function toggleDetails(arg) {
+         let id;
+         if (typeof arg === 'number' || (typeof arg === 'string' && !isNaN(arg))) {
+             id = 'detail-' + arg;
+         } else {
+             id = arg;
+         }
+         const row = document.getElementById(id);
+         if(row) row.style.display = (row.style.display === 'none' || row.style.display === '') ? 'table-row' : 'none';
+     }
+
+     function toggleResultDetails(btn) {
+         const tr = btn.closest('tr');
+         if(tr) {
+             const nextTr = tr.nextElementSibling;
+             if(nextTr) {
+                 nextTr.style.display = (nextTr.style.display === 'none' || nextTr.style.display === '') ? 'table-row' : 'none';
+             }
+         }
+     }
+
+     function renderGovernanceCheck(metadata, key, label) {
+         const exists = metadata && metadata[key];
+         const statusIcon = exists ? '✓' : '✗';
+         const statusColor = exists ? '#28a745' : '#dc3545';
+         const statusText = exists ? metadata[key] : 'Not Detected';
+         return `
+             <div style="display:flex; justify-content:space-between; padding:0.5rem 0; border-bottom:1px solid #f0f0f0;">
+                 <span style="font-weight:600; color:#555;">${label}</span>
+                 <div style="font-size:0.85rem; color:${statusColor};">${statusIcon} ${statusText}</div>
+             </div>
+         `;
+     }
+     
+     function renderOtherMetadata(metadata) {
+         if(!metadata) return '<div style="color:#999">No additional settings.</div>';
+         if (!metadata) return '<p style="color:#999;">No additional metadata available</p>';
+         
+         let html = '<ul style="margin:0; padding-left:1.2rem; list-style:none;">';
+         for (const [key, value] of Object.entries(metadata)) {
+             if (key.startsWith('Governance:')) continue;
+             
+             let color = '#333';
+             if (key.includes('Risk') && !value.includes('Safe')) color = '#dc3545';
+             if (value.includes('Safe') || value.includes('Best Practice')) color = '#28a745';
+             
+             html += `<li style="margin-bottom:0.5rem;"><strong>${key}:</strong> <span style="color:${color}">${value}</span></li>`;
+         }
+         html += '</ul>';
+         return html;
+     }
+
+     async function toggleHistoryScan(scanName) {
+         const rowId = `expand-${scanName}`;
+         const row = document.getElementById(rowId);
+         if (!row) return;
+
+         if (row.style.display !== 'none') {
+             row.style.display = 'none';
+             return;
+         }
+         row.style.display = 'table-row';
+
+         const container = document.getElementById(`content-${scanName}`);
+         if (container.innerHTML.trim() !== '') return;
+
+         try {
+             container.innerHTML = '<div style="text-align:center; padding:20px; color:#666;">Loading details... <div class="spinner" style="width:20px; height:20px; border-width:2px; display:inline-block; vertical-align:middle; margin:0 0 0 10px;"></div></div>';
+             
+             const res = await fetch(getApiPath(`/scans/view?scanName=${scanName}`));
+             const reports = await res.json();
+             const arr = Array.isArray(reports) ? reports : [reports];
+             
+             arr.sort((a, b) => {
+                 const diff = (b.confidenceScore || 0) - (a.confidenceScore || 0);
+                 if (diff !== 0) return diff;
+                 const tA = (a.technology || '').toLowerCase();
+                 const tB = (b.technology || '').toLowerCase();
+                 return tA.localeCompare(tB);
+             });
+
+             let html = `
+                 <div style="background:#fff; border:1px solid #ddd; padding:15px; border-radius:8px; margin:10px 0;">
+                     <h4 style="margin:0 0 10px 0; color:#663399;">Scan Results (${arr.length} Repositories)</h4>
+                     <table style="width:100%; border-collapse:separate; border-spacing:0; border:1px solid #eee;">
+                         <thead>
+                             <tr style="background:#f5f5f5;">
+                                 <th style="padding:12px; text-align:left; color:#663399;">REPOSITORY</th>
+                                 <th style="padding:12px; text-align:left; color:#663399;">TECHNOLOGY</th>
+                                 <th style="padding:12px; text-align:left; color:#663399;">CLASSIFICATION</th>
+                                 <th style="padding:12px; text-align:left; color:#663399;">CONFIDENCE</th>
+                                 <th style="padding:12px; text-align:left; color:#663399;">ACTIONS</th>
+                             </tr>
+                         </thead>
+                         <tbody>
+             `;
+
+             arr.forEach((r, i) => {
+                 const detailId = `detail-${scanName}-${i}`;
+                 const tech = r.technology || 'Unknown';
+                 const isMule = tech.toLowerCase().includes('mule');
+                 const score = r.confidenceScore || r.governanceScore || 0;
+                 const cls = r.classification || (isMule ? 'API Service' : 'Standalone / Library');
+                 
+                 let techStyle = 'background:#f5f5f5; color:#757575; border:1px solid #e0e0e0; font-weight:normal;';
+                 const tLower = tech.toLowerCase();
+
+                 if(tLower.includes('mule')) techStyle = 'background:#00a1df; color:white;';
+                 else if(tLower.includes('spring') || tLower.includes('java')) techStyle = 'background:#6db33f; color:white;';
+                 else if(tLower.includes('tibco')) techStyle = 'background:#f57c00; color:white;';
+                 else if(tLower.includes('python')) techStyle = 'background:#fbc02d; color:#333;';
+                 else if(tech !== 'Unknown' && tech !== 'Unknown / Generic') techStyle = 'background:#607d8b; color:white;';
+
+                 let classStyle = 'background:#f5f5f5; color:#616161;';
+                 if(cls === 'API Service') classStyle = 'background:#e8f5e9; color:#2e7d32; border:1px solid #c8e6c9;';
+                 else if(cls.includes('Standalone') || cls.includes('Library')) classStyle = 'background:#fff3e0; color:#ef6c00; border:1px solid #ffe0b2;';
+
+                 const evidence = r.evidence || [];
+                 const indicators = r.indicators || [];
+                 const metadata = r.metadata || {};
+
+                 html += `
+                     <tr style="border-bottom:1px solid #eee;">
+                         <td style="padding:15px;">
+                             <strong style="font-size:1rem; display:block; margin-bottom:4px;">${r.repoName}</strong>
+                             ${r.url ? `<a href="${r.url}" target="_blank" style="color:#999; text-decoration:none; font-size:0.85rem; display:inline-flex; align-items:center; gap:4px;"><svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg> View on GitLab</a>` : ''}
+                         </td>
+                         <td style="padding:8px;"><span class="badge" style="${techStyle}">${tech}</span></td>
+                         <td style="padding:8px;"><span style="padding:4px 8px; border-radius:4px; font-size:0.85rem; font-weight:500; ${classStyle}">${cls}</span></td>
+                         <td style="padding:8px; color:green; font-weight:bold;">${score}</td>
+                         <td style="padding:8px;">
+                             <button class="small" onclick="toggleResultDetails(this)" style="background:var(--primary-color);">Details</button>
+                         </td>
+                     </tr>
+                     <tr style="display:none;">
+                          <td colspan="5" style="padding:0; background:#f9f9f9;">
+                              <div style="padding:20px; border-left:4px solid var(--primary-color);">
+                                  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;">
+                                      <div>
+                                          <h4 style="margin-top:0; color: var(--primary-color);">🔍 Identification & Capabilities</h4>
+                                          <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                              <strong>Evidence:</strong>
+                                              <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                  ${evidence.length ? evidence.map(e=>`<li>${e}</li>`).join('') : '<li>None</li>'}
+                                              </ul>
+                                              <strong style="margin-top:1rem; display:block;">Capabilities:</strong>
+                                              <ul style="margin-top:0.5rem; padding-left:1.2rem;">
+                                                  ${indicators.length > 0 ? indicators.map(ind => `<li>${ind}</li>`).join('') : '<li style="color:#999;">No API signatures found</li>'}
+                                              </ul>
+                                          </div>
+                                      </div>
+                                      <div>
+                                           <h4 style="margin-top:0; color: var(--primary-color);">📊 Governance Standards</h4>
+                                           <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                              ${renderGovernanceCheck(metadata, 'Governance: Standards', 'RESTful Architecture')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Documentation', 'API Documentation')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Gateway', 'API Gateway Managed')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Security', 'Security Enforcement')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Versioning', 'Semantic Versioning')}
+                                              ${renderGovernanceCheck(metadata, 'Governance: Logging', 'Centralized Logging')}
+                                           </div>
+                                      </div>
+                                      <div>
+                                           <h4 style="margin-top:0; color: var(--primary-color);">🔥 Risk & Settings</h4>
+                                           <div style="background:white; padding:1rem; border-radius:8px; border:1px solid #eee;">
+                                               ${renderOtherMetadata(metadata)}
+                                           </div>
+                                      </div>
+                                  </div>
+                              </div>
+                          </td>
+                     </tr>
+                 `;
+             });
+
+             html += `</tbody></table></div>`;
+             container.innerHTML = html;
+
+         } catch(e) {
+             container.innerHTML = `<div style="color:red; padding:20px;">Error loading details: ${e.message}</div>`;
+         }
+     }
+     // --- Correlation & History ---
+     async function runCorrelation() {
+          const input = document.getElementById('trafficInput').value;
+          if(!input.trim()) return alert("Enter some traffic data");
+          
+          try {
+              showLoading("Analyzing Traffic...");
+              const res = await fetch(getApiPath('/correlate'), { method: 'POST', body: input });
+              const results = await res.json();
+              hideLoading();
+              
+              const container = document.getElementById('correlation-results');
+              if(results.length === 0) {
+                  container.innerHTML = "<h3>No matches found in scanned repositories.</h3>";
+                  return;
+              }
+              
+              let html = "<h3>Correlation Matches:</h3>";
+              results.forEach(r => {
+                  const filesHtml = r.files && r.files.length > 0 
+                      ? `<ul style="font-size:0.9rem; color:#555;">${r.files.map(f => `<li>${f}</li>`).join('')}</ul>`
+                      : '<p>No specific file matches.</p>';
+                      
+                  html += `<div class="card" style="margin-bottom:10px;">
+                      <p><strong>Item:</strong> <code>${r.traffic_item}</code></p>
+                      <p><strong>Repo:</strong> ${r.matched_repo} (${r.scan_id})</p>
+                      <p><strong>Confidence:</strong> ${r.confidence}</p>
+                      <div style="background:#eee; padding:10px; border-radius:4px;">
+                          <strong>Matching Files:</strong>
+                          ${filesHtml}
+                      </div>
+                  </div>`;
+              });
+              container.innerHTML = html;
+          } catch (e) { 
+              hideLoading();
+              alert("Correlation error: " + e); 
+          }
+      }
+
      async function ignoreItem(url, btnElement) {
          if(!confirm("Ignore this item?")) return;
          await fetch(getApiPath('/ignore'), { method: 'POST', body: url });
-         // Visual removal
          if(btnElement) {
            const card = btnElement.closest('.grid-item');
            if(card) {
                card.style.opacity = '0.5';
                card.style.pointerEvents = 'none';
-               // If selected, deselect
                if(card.classList.contains('selected')) card.click();
            }
          }
@@ -460,6 +1271,7 @@
  
      async function loadHistory() {
          try {
+             showLoading("Loading History...");
              const res = await fetch(getApiPath('/scans/list'));
              if(!res.ok) throw new Error("API Error");
              const list = await res.json();
@@ -468,81 +1280,272 @@
              tbody.innerHTML = '';
              
              if(list.length === 0) {
-                 tbody.innerHTML = '<tr><td colspan="3">No scans found.</td></tr>';
+                 tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#999;">No scans found. Run a scan to get started.</td></tr>';
+                 document.getElementById('total-scans').innerText = '0';
+                 hideLoading();
+                 return;
              }
-
-             list.forEach(item => {
+ 
+             list.sort((a, b) => b.lastModified - a.lastModified);
+             
+             for (const item of list) {
+                 const scanInfo = await getScanInfo(item.name);
+                 const date = new Date(item.lastModified).toLocaleString('en-US', { timeZoneName: 'short' });
+                 
                  const tr = document.createElement('tr');
+                 tr.style.borderBottom = '1px solid #eee';
                  tr.innerHTML = `
-                     <td>${item.name}</td>
-                     <td>${new Date(item.lastModified).toLocaleString()}</td>
-                     <td><button onclick="viewScan('${item.name}')">View Report</button></td>
+                     <td><strong>${item.name}</strong></td>
+                     <td><span class="badge" style="background:${scanInfo.typeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:0.8rem;">${scanInfo.type}</span></td>
+                     <td style="max-width:300px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${scanInfo.source}">${scanInfo.source}</td>
+                     <td>${date}</td>
+                     <td><strong>${scanInfo.count}</strong> repositories</td>
+                     <td>
+                         <button class="small" onclick="toggleHistoryScan('${item.name}')" style="background:var(--primary-color); margin-right:5px;">View Results</button>
+                         <button class="small" onclick="deleteScan('${item.name}')" style="background:#d32f2f;">Delete</button>
+                     </td>
                  `;
                  tbody.appendChild(tr);
-             });
+                 
+                 const trExp = document.createElement('tr');
+                 trExp.id = `expand-${item.name}`;
+                 trExp.style.display = 'none';
+                 trExp.innerHTML = `<td colspan="6" style="padding:0;"><div id="content-${item.name}"></div></td>`;
+                 tbody.appendChild(trExp);
+             }
  
              document.getElementById('total-scans').innerText = list.length;
              
-             // Ignored stats
-             const iRes = await fetch(getApiPath('/ignore'));
-             const ignored = await iRes.json();
-             document.getElementById('ignored-count').innerText = ignored.length || 0;
+             try {
+                 const iRes = await fetch(getApiPath('/ignore'));
+                 const ignored = await iRes.json();
+                 document.getElementById('ignored-count').innerText = ignored.length || 0;
+             } catch(e) {
+                 document.getElementById('ignored-count').innerText = '0';
+             }
          } catch(e) {
              console.error("Load History Failed", e);
-             document.querySelector('#history-table tbody').innerHTML = '<tr><td colspan="3">Error loading history. Ensure backend is running.</td></tr>';
+             document.querySelector('#history-table tbody').innerHTML = '<tr><td colspan="6" style="text-align:center; color:#d32f2f;">Error loading history. Ensure backend is running.</td></tr>';
+         } finally {
+            hideLoading();
          }
      }
  
-     async function viewScan(scanName) {
-         const res = await fetch(`${getApiPath('/scans/view')}?scanName=${scanName}`);
-         const reports = await res.json();
-         
-         const modal = document.getElementById('resultsModal');
-         const body = document.getElementById('modalBody');
-         body.innerHTML = '';
-         
-         reports.forEach(r => {
-            let techBadge = `<span class="badge ${r.technology.toLowerCase().includes('mule') ? 'mule' : 'spring'}">${r.technology}</span>`;
-            body.innerHTML += `<div class="card" style="margin-bottom:10px; padding:10px; border:1px solid #ddd;">
-                 <h3>${techBadge} ${r.repoName || 'Unknown Repo'}</h3>
-                 <p><strong>Score:</strong> ${r.governanceScore}/100</p>
-                 ${r.metadata ? '<p><strong>Metadata:</strong> <pre style="background:#eee;padding:5px;">' + JSON.stringify(r.metadata, null, 2) + '</pre></p>' : ''}
-            </div>`;
-         });
-         
-         modal.style.display = 'flex';
-     }
- 
-     // Export/Import
-     async function exportWorkspace() {
-         const res = await fetch(getApiPath('/state'));
-         const json = await res.json();
-         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json, null, 2));
-         const anchor = document.createElement('a');
-         anchor.href = dataStr;
-         anchor.download = "apidiscovery_workspace.json";
-         document.body.appendChild(anchor);
-         anchor.click();
-         anchor.remove();
-     }
-     
-     async function importWorkspace(input) {
-         const file = input.files[0];
-         if(!file) return;
-         const reader = new FileReader();
-         reader.onload = async function(e) {
-             const json = e.target.result;
-             await fetch(getApiPath('/state'), { method: 'POST', body: json });
-             location.reload();
-         };
-         reader.readAsText(file);
-     }
-     
-     window.onclick = function(event) {
-          if (event.target == document.getElementById('resultsModal')) {
-              document.getElementById('resultsModal').style.display = "none";
+      async function getScanInfo(scanName) {
+          try {
+              try {
+                  const metaRes = await fetch(getApiPath(`/scans/view?scanName=${scanName}&fileName=scan_metadata.json`));
+                  if (metaRes.ok) {
+                      const meta = await metaRes.json();
+                      if (meta.source) {
+                          return {
+                              type: meta.type || (meta.count > 1 ? 'API Discovery' : 'Quick Scan'),
+                              typeColor: (meta.count > 1) ? '#663399' : '#00a1df',
+                              source: meta.source,
+                              count: meta.count
+                          };
+                      }
+                  }
+              } catch (e) { }
+
+              const res = await fetch(getApiPath(`/scans/view?scanName=${scanName}`));
+              const reports = await res.json();
+              const arr = Array.isArray(reports) ? reports : [reports];
+              const isMulti = arr.length > 1;
+
+              let source = 'Unknown Source';
+              if (arr.length > 0) {
+                  const urls = arr.map(r => r.url || r.repoPath || '').filter(u => u);
+                  if (urls.length > 0) source = findCommonPrefix(urls);
+              }
+
+              return {
+                  type: isMulti ? 'API Discovery' : 'Quick Scan',
+                  typeColor: isMulti ? '#663399' : '#00a1df',
+                  source: source,
+                  count: arr.length
+              };
+          } catch (e) {
+              return { type: 'Error', typeColor: '#999', source: 'N/A', count: 0 };
           }
       }
+
+      function findCommonPrefix(urls) {
+          if (!urls || urls.length === 0) return 'Multiple repositories';
+          if (urls.length === 1) return urls[0];
+
+          if (urls[0].includes('gitlab.com')) {
+              const splitUrls = urls.map(u => u.split('/'));
+              const minLen = Math.min(...splitUrls.map(u => u.length));
+              let common = [];
+              for (let i = 0; i < minLen; i++) {
+                  const seg = splitUrls[0][i];
+                  if (splitUrls.every(u => u[i] === seg)) {
+                      common.push(seg);
+                  } else {
+                      break;
+                  }
+              }
+              let res = common.join('/');
+              if (res.endsWith('/') && res.length > 8) res = res.slice(0, -1);
+              return res;
+          }
+
+          const sorted = urls.slice().sort();
+          const first = sorted[0];
+          const last = sorted[sorted.length - 1];
+          let i = 0;
+          while (i < first.length && first[i] === last[i]) i++;
+          return first.substring(0, i).replace(/[/\\]$/, '') || 'Multiple repositories';
+      }
+     
+     async function viewHistroyScanResults(scanName) { 
+        // Logic already handled in toggleHistoryScan, this is just a placeholder if needed
+     }
+
+     function closeHistoryResults() {
+         document.getElementById('history-view-results').style.display = 'none';
+         document.getElementById('history-view-list').style.display = 'block';
+     }
+     
+      async function deleteScan(scanName) {
+          if (!confirm(`Are you sure you want to delete scan "${scanName}"?`)) return;
+          try {
+              showLoading('Deleting scan...');
+              const res = await fetch(getApiPath(`/scans/delete`), {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ folders: [scanName] })
+              });
+              
+              const data = await res.json();
+              hideLoading();
+
+              if (res.ok && (data.deleted?.includes(scanName) || data.status === 'success')) {
+                  alert('Scan deleted successfully');
+                  if (window.lastScanResults && window.lastScanResults[0]?.scanFolder === scanName) {
+                      window.lastScanResults = null;
+                  }
+                  setTimeout(() => loadHistory(), 300);
+              } else {
+                  alert('Delete failed. The folder might be locked by the system or already deleted.');
+                  loadHistory();
+              }
+          } catch (e) {
+              hideLoading();
+              alert('Delete failed: ' + e.message);
+          }
+      }
+      
+      async function viewScan(scanName, filterRepoName) {
+          showLoading("Loading Report...");
+          try {
+              const res = await fetch(`${getApiPath('/scans/view')}?scanName=${scanName}`);
+              let reports = await res.json();
+              
+              if (reports && !Array.isArray(reports)) {
+                  if (reports.error) throw new Error(reports.error);
+                  reports = [reports]; 
+              }
+              if (!reports) reports = [];
+              
+              const modal = document.getElementById('resultsModal');
+              const body = document.getElementById('modalBody');
+              body.innerHTML = '';
+              
+              const displayReports = filterRepoName ? reports.filter(r => r.repoName === filterRepoName) : reports;
+              const targetReports = displayReports.length > 0 ? displayReports : reports;
+
+              targetReports.forEach(r => {
+                 let techBadge = `<span class="badge ${r.technology.toLowerCase().includes('mule') ? 'mule' : 'spring'}">${r.technology}</span>`;
+                 body.innerHTML += `<div class="card" style="margin-bottom:10px; padding:10px; border:1px solid #ddd;">
+                      <h3>${techBadge} ${r.repoName || 'Unknown Repo'}</h3>
+                      <p><strong>Score:</strong> ${r.governanceScore}/100</p>
+                      ${r.metadata ? '<p><strong>Metadata:</strong> <pre style="background:#eee;padding:5px;overflow:auto;">' + JSON.stringify(r.metadata, null, 2) + '</pre></p>' : ''}
+                 </div>`;
+              });
+              
+              modal.style.display = 'flex';
+          } catch(e) {
+              alert("Load failed: " + e);
+          } finally {
+              hideLoading();
+          }
+      }
+ 
+      async function exportWorkspace() {
+          const res = await fetch(getApiPath('/state'));
+          const json = await res.json();
+          const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(json, null, 2));
+          const anchor = document.createElement('a');
+          anchor.href = dataStr;
+          anchor.download = "apidiscovery_workspace.json";
+          document.body.appendChild(anchor);
+          anchor.click();
+          anchor.remove();
+      }
+      
+      async function importWorkspace(input) {
+          const file = input.files[0];
+          if(!file) return;
+          const reader = new FileReader();
+          reader.onload = async function(e) {
+              const json = e.target.result;
+              await fetch(getApiPath('/state'), { method: 'POST', body: json });
+              location.reload();
+          };
+          reader.readAsText(file);
+      }
+      
+      window.onclick = function(event) {
+           if (event.target == document.getElementById('resultsModal')) {
+               document.getElementById('resultsModal').style.display = "none";
+           }
+       }
+
+       function showLoading(msg) {
+          const el = document.getElementById('loading-text');
+          if(el) el.innerText = msg;
+          const ov = document.getElementById('loading-overlay');
+          if(ov) ov.style.display = 'flex';
+       }
+       function hideLoading() {
+          const ov = document.getElementById('loading-overlay');
+          if(ov) ov.style.display = 'none';
+          if(window.scanInterval) {
+              clearInterval(window.scanInterval);
+              window.scanInterval = null;
+          }
+       }
+       function showGuide() { document.getElementById('guide-modal').style.display='flex'; }
  </script>
+
+ <div id="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <div id="loading-text" style="font-size:1.2rem; color:#555;">Processing...</div>
+        <div class="progress-container">
+            <div id="global-progress-bar" class="progress-bar"></div>
+        </div>
+    </div>
+</div>
+
+ <!-- Guide Modal -->
+ <div id="guide-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="document.getElementById('guide-modal').style.display='none'">&times;</span>
+        <h2 style="color:var(--primary-color)">📘 User Guide</h2>
+        <div style="line-height:1.6; color:#444;">
+            <h3>Quick Scan</h3>
+            <p>Directly analyze a single repository by URL or local path. Supports "Full Analysis" for deep inspection.</p>
+            <h3>API Discovery</h3>
+            <p>Connect to GitLab to browse Groups and Projects. Select multiple projects to scan in bulk.</p>
+            <h3>Traffic Correlation</h3>
+            <p>Upload access logs to correlate discovered APIs with actual usage traffic, identifying unused endpoints.</p>
+            <h3>Scan History</h3>
+            <p>View past results, track trends, and export your workspace state. Click "View Results" to see full details.</p>
+        </div>
+    </div>
+ </div>
  </body>
  </html>
