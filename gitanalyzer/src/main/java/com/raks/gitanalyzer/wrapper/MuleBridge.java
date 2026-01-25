@@ -6,8 +6,6 @@ import com.raks.gitanalyzer.model.AnalysisResult;
 import com.raks.gitanalyzer.provider.GitProvider;
 import com.raks.gitanalyzer.provider.GitHubProvider;
 import com.raks.gitanalyzer.provider.GitLabProvider;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.*;
 import java.io.File;
 import org.eclipse.jgit.storage.file.WindowCacheConfig;
@@ -213,9 +211,20 @@ public class MuleBridge {
 
             if ("remote".equalsIgnoreCase(mode)) {
                 List<String> repos = List.of(path.split("\\s*,\\s*"));
-                serviceResults = service.searchRemote(token, repos); 
+                com.raks.gitanalyzer.core.SearchService.SearchParams searchParams = new com.raks.gitanalyzer.core.SearchService.SearchParams();
+                searchParams.token = params.get("token");
+                searchParams.caseSensitive = Boolean.parseBoolean(params.get("caseSensitive"));
+                searchParams.searchType = params.getOrDefault("searchType", "substring");
+                searchParams.ignoreComments = Boolean.parseBoolean(params.getOrDefault("ignoreComments", "true"));
+                serviceResults = service.searchRemote(searchParams, repos); 
             } else {
-                serviceResults = service.searchLocal(token, new File(path));
+                com.raks.gitanalyzer.core.SearchService.SearchParams searchParams = new com.raks.gitanalyzer.core.SearchService.SearchParams();
+                searchParams.token = params.get("token");
+                searchParams.caseSensitive = Boolean.parseBoolean(params.get("caseSensitive"));
+                searchParams.searchType = params.getOrDefault("searchType", "substring");
+                searchParams.ignoreComments = Boolean.parseBoolean(params.getOrDefault("ignoreComments", "true"));
+                
+                serviceResults = service.searchLocal(searchParams, new File(path));
             }
 
             List<Map<String, Object>> results = new ArrayList<>();

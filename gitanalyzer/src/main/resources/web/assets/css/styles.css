@@ -167,14 +167,109 @@ body.guide-body {
     box-shadow: 0 6px 16px rgba(102, 51, 153, 0.12);
 }
 
-/* Sub-frame for inner sections */
-.sub-frame {
-    border: 1px solid #e0e0e0;
-    border-left: 4px solid #663399;
+/* Custom Table Styling for Results */
+#resultsTable {
+    border-collapse: separate;
+    border-spacing: 0;
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+#resultsTable th, #resultsTable td {
+    border: 1px solid #dee2e6;
+}
+
+#resultsTable thead th {
+    border-top: none;
+}
+
+#resultsTable tr:last-child td {
+    border-bottom: none;
+}
+
+/* Stats Overlay */
+.search-stats-bar {
+    background-color: #faf5ff;
+    border-left: 4px solid var(--raks-purple);
     border-radius: 8px;
-    background-color: #ffffff;
-    padding: 1.5rem;
-    margin-bottom: 1rem;
+    padding: 8px 15px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--raks-purple);
+    display: flex;
+    gap: 20px;
+}
+
+/* Context Preview Panel Refinement */
+#previewPanel {
+    background-color: #f6f8ff !important; /* Very light blue/purple */
+    border-left: 2px solid #e0dcec !important;
+    transition: width 0.1s ease;
+    border-radius: 0; /* Keep edge flat for side panel */
+}
+
+#previewPanel .preview-actions {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+#previewContainer {
+    background-color: #fdfdfd !important; /* Light bg for code if light mode */
+    color: #333 !important;
+    border: 1px solid #e0e0e0;
+    line-height: 1.5;
+}
+
+#previewContainer .bg-purple-subtle-dark {
+    background-color: #efe7ff !important;
+    border-left: 3px solid var(--raks-purple);
+    font-weight: 600;
+}
+
+#previewContainer b.text-warning {
+    color: #d97706 !important; /* Darker orange for visibility on light bg */
+    background: #fef3c7;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* Resizer Handle (Shared) */
+.resizer {
+    width: 6px;
+    cursor: col-resize;
+    background-color: #f1f1f1;
+    position: relative;
+    z-index: 100;
+    flex-shrink: 0;
+    transition: background-color 0.2s;
+}
+
+.resizer:hover, .resizer.resizing {
+    background-color: var(--raks-purple-light);
+}
+
+/* Sidebar Specific Styles */
+.split-left {
+    min-width: 250px;
+    max-width: 500px;
+    border-right: none !important; /* Handled by resizer */
+}
+
+/* Smooth Rounded Inputs/Buttons */
+.form-control, .form-select, .btn {
+    border-radius: 8px !important;
+}
+
+.btn-check + .btn {
+    border-radius: 8px !important;
+    margin: 0 2px;
+}
+
+.card, .sub-frame {
+    border-radius: 12px !important;
 }
 
 /* Dashboard Stats Cards */
@@ -255,9 +350,103 @@ body.guide-body {
     border-color: #663399;
 }
 
-.btn-sub-action:active, .btn-sub-action:focus {
-    background-color: #663399;
+/* Result Panel Adjustments */
+.split-right.stacked-mode {
+    flex-direction: column !important;
+    display: flex !important;
+}
+
+.stacked-mode #resultsColumn {
+    flex: 1 1 auto !important;
+    height: 50% !important;
+    max-height: 100% !important;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0 !important;
+}
+
+.stacked-mode #previewPanel {
+    flex: 1 1 auto !important;
+    height: 50% !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    border-left: none !important;
+    border-top: 4px solid #f1f1f1;
+}
+
+.stacked-mode .resizer#resizerPreview {
+    cursor: row-resize;
+    width: 100%;
+    height: 8px;
+    margin-left: 0;
+    margin-top: -4px;
+}
+
+.text-wrap-break {
+    word-break: break-all;
+    white-space: normal !important;
+    overflow-wrap: anywhere;
+}
+
+.results-table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+/* Sidebar Collapse */
+.split-left.collapsed {
+    width: 0 !important;
+    min-width: 0 !important;
+    padding: 0 !important;
+    overflow: hidden;
+    border-right: none !important;
+}
+
+#sidebarToggle {
+    position: absolute;
+    left: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    background: white;
+    border: 1px solid var(--raks-purple);
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--raks-purple);
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+}
+
+#sidebarToggle:hover {
+    background: var(--raks-purple);
     color: white;
+}
+
+/* Repo Selection List */
+.repo-selection-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 10px;
+    background: #fdfdfd;
+}
+
+.repo-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 5px;
+    border-bottom: 1px solid #f1f1f1;
+    font-size: 0.85rem;
+}
+
+.repo-item:last-child {
+    border-bottom: none;
 }
 
 /* Split Pane Layout */

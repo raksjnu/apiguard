@@ -7,6 +7,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,7 +49,6 @@ public class GitHubProvider implements GitProvider {
                 URI uri = URI.create(clean);
                 String path = uri.getPath();
                 if (path.startsWith("/")) path = path.substring(1);
-                // For GitHub, path is "owner/repo"
                 return path;
             } catch (Exception e) {
                 return clean;
@@ -67,11 +67,9 @@ public class GitHubProvider implements GitProvider {
             return client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
         }
 
-        // Try "token" prefix (PAT)
         HttpRequest request = builder.copy().header("Authorization", "token " + token).build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        // Fallback to "Bearer" (OAuth) if unauthorized
         if (response.statusCode() == 401) {
             request = builder.copy().header("Authorization", "Bearer " + token).build();
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -91,13 +89,13 @@ public class GitHubProvider implements GitProvider {
             cloneUrl = "https://github.com/" + owner + "/" + fullPath + ".git";
         }
 
-        if (token != null && !token.isEmpty()) {
-            cloneUrl = cloneUrl.replace("https://", "https://" + token + "@");
-        }
-
         org.eclipse.jgit.api.CloneCommand command = Git.cloneRepository()
             .setURI(cloneUrl)
             .setDirectory(destination);
+
+        if (token != null && !token.isEmpty()) {
+            command.setCredentialsProvider(new UsernamePasswordCredentialsProvider(token, ""));
+        }
 
         if (branch != null && !branch.isBlank()) {
             command.setBranch(branch);
@@ -105,9 +103,7 @@ public class GitHubProvider implements GitProvider {
         }
 
         try (Git git = command.call()) {
-            if (git != null && git.getRepository() != null) {
-                git.getRepository().close();
-            }
+            // Success
         }
     }
 
@@ -131,19 +127,15 @@ public class GitHubProvider implements GitProvider {
             }
             return branches;
         } else {
-             throw new RuntimeException("Failed to fetch branches for " + fullPath + ". Status: " + response.statusCode());
+             throw new RuntimeException("Failed to fetch branches. Status: " + response.statusCode());
         }
     }
 
     @Override
     public void validateCredentials() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
-        String url = baseUrl + "/user";
-        HttpResponse<String> response = sendWithAuthFallback(client, url);
-        
-        if (response.statusCode() == 200) {
-            return;
-        } else {
+        HttpResponse<String> response = sendWithAuthFallback(client, baseUrl + "/user");
+        if (response.statusCode() != 200) {
              throw new RuntimeException("Invalid credentials for GitHub. Status: " + response.statusCode());
         }
     }
@@ -153,73 +145,37 @@ public class GitHubProvider implements GitProvider {
         HttpClient client = HttpClient.newHttpClient();
         List<String> allRepos = new ArrayList<>();
         
-        // 1. Try Organization
-        String orgUrl = baseUrl + "/orgs/" + groupName + "/repos?per_page=100";
-        HttpResponse<String> response = sendWithAuthFallback(client, orgUrl);
+        String url = (groupName == null || groupName.isBlank()) ? (baseUrl + "/user/repos?per_page=100") : (baseUrl + "/orgs/" + groupName + "/repos?per_page=100");
+        HttpResponse<String> response = sendWithAuthFallback(client, url);
         
-        // 2. Fallback to User if 404
-        if (response.statusCode() == 404) {
-            String userUrl = baseUrl + "/users/" + groupName + "/repos?per_page=100";
-            response = sendWithAuthFallback(client, userUrl);
-        }
-        
-        // 3. Fallback to authenticated user's repos if groupName is empty OR if still 404 and we have a token
-        if ((groupName == null || groupName.isBlank() || response.statusCode() == 404) && token != null && !token.isBlank()) {
-            String meUrl = baseUrl + "/user/repos?per_page=100";
-            response = sendWithAuthFallback(client, meUrl);
+        if (response.statusCode() == 404 && groupName != null) {
+            response = sendWithAuthFallback(client, baseUrl + "/users/" + groupName + "/repos?per_page=100");
         }
 
         if (response.statusCode() == 200) {
             JsonNode root = mapper.readTree(response.body());
             if (root.isArray()) {
                 for (JsonNode node : root) {
-                    if (node.has("full_name")) {
-                        allRepos.add(node.get("full_name").asText());
-                    }
+                    if (node.has("full_name")) allRepos.add(node.get("full_name").asText());
                 }
             }
             return allRepos;
-        } else {
-             throw new RuntimeException("Failed to fetch repositories for " + groupName + ". Status: " + response.statusCode());
         }
+        return Collections.emptyList();
     }
 
     @Override
     public String compareBranches(String repoName, String sourceBranch, String targetBranch) throws Exception {
         String fullPath = cleanRepoName(repoName);
-        // GitHub uses base...head. sourceBranch is Base, targetBranch is Feature (head)
         String apiUrl = baseUrl + "/repos/" + fullPath + "/compare/" + sourceBranch + "..." + targetBranch;
         
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> response = sendWithAuthFallback(client, apiUrl);
         
         if (response.statusCode() == 200) {
-            JsonNode root = mapper.readTree(response.body());
-            
-            // Normalize to format expected by AnalyzerService: { "diffs": [ { "new_path": "...", "old_path": "...", "diff": "...", ... } ] }
-            Map<String, Object> normalized = new HashMap<>();
-            List<Map<String, Object>> diffList = new ArrayList<>();
-            normalized.put("diffs", diffList);
-            
-            if (root.has("files") && root.get("files").isArray()) {
-                for (JsonNode file : root.get("files")) {
-                    Map<String, Object> d = new HashMap<>();
-                    String status = file.get("status").asText();
-                    String filename = file.get("filename").asText();
-                    
-                    d.put("new_path", filename);
-                    d.put("old_path", file.has("previous_filename") ? file.get("previous_filename").asText() : filename);
-                    d.put("new_file", "added".equals(status));
-                    d.put("deleted_file", "removed".equals(status));
-                    // GitHub uses 'patch' for the diff content
-                    d.put("diff", file.has("patch") ? file.get("patch").asText() : "");
-                    
-                    diffList.add(d);
-                }
-            }
-            return mapper.writeValueAsString(normalized);
+            return response.body();
         } else {
-            throw new RuntimeException("Failed to compare branches for " + fullPath + ". Status: " + response.statusCode());
+            throw new RuntimeException("Failed to compare branches. Status: " + response.statusCode());
         }
     }
 
@@ -235,7 +191,7 @@ public class GitHubProvider implements GitProvider {
         if (response.statusCode() == 200) {
             return response.body();
         } else {
-            throw new RuntimeException("Failed to search repository " + fullPath + ". Status: " + response.statusCode());
+            throw new RuntimeException("Failed to search repository. Status: " + response.statusCode());
         }
     }
 }

@@ -6,6 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import org.eclipse.jgit.api.Git;
+import org.eclipse.jgit.transport.UsernamePasswordCredentialsProvider;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -68,11 +69,9 @@ public class GitLabProvider implements GitProvider {
             return client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
         }
 
-        // Try PRIVATE-TOKEN (PAT)
         HttpRequest request = builder.copy().header("PRIVATE-TOKEN", token).build();
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
-        // Fallback to Bearer (OAuth2) if unauthorized
         if (response.statusCode() == 401) {
             request = builder.copy().header("Authorization", "Bearer " + token).build();
             response = client.send(request, HttpResponse.BodyHandlers.ofString());
@@ -98,15 +97,14 @@ public class GitLabProvider implements GitProvider {
              }
         }
 
-        if (token != null && !token.isEmpty()) {
-            if (cloneUrl.startsWith("https://")) {
-                 cloneUrl = cloneUrl.replace("https://", "https://oauth2:" + token + "@");
-            }
-        }
-
         org.eclipse.jgit.api.CloneCommand command = Git.cloneRepository()
             .setURI(cloneUrl)
             .setDirectory(destination);
+
+        if (token != null && !token.isEmpty()) {
+            // GitLab uses "oauth2" as username for PAT/OAuth tokens in JGit
+            command.setCredentialsProvider(new UsernamePasswordCredentialsProvider("oauth2", token));
+        }
             
         if (branch != null && !branch.isBlank()) {
             command.setBranch(branch);
@@ -114,42 +112,21 @@ public class GitLabProvider implements GitProvider {
         }
         
         try (Git git = command.call()) {
-            if (git != null && git.getRepository() != null) {
-                git.getRepository().close();
-            }
+            // Success
         }
     }
 
     @Override
     public List<String> listRepositories(String groupName) throws Exception {
         if (groupName == null || groupName.isBlank()) {
-             // If no group, try fetching user's projects or visible projects
-             return listVisibleProjects();
+             return listVisibleProjects(null);
         }
         
         HttpClient client = HttpClient.newHttpClient();
         String encodedGroup = java.net.URLEncoder.encode(groupName, java.nio.charset.StandardCharsets.UTF_8);
-        
-        // 1. Try Group Lookup
         String groupApiUrl = baseUrl + "/api/v4/groups/" + encodedGroup + "/projects?include_subgroups=true&per_page=100";
         HttpResponse<String> response = sendWithAuthFallback(client, groupApiUrl);
         
-        // 2. Fallback to User Lookup if 404
-        if (response.statusCode() == 404) {
-            String userLookupUrl = baseUrl + "/api/v4/users?username=" + encodedGroup;
-            HttpResponse<String> userResp = sendWithAuthFallback(client, userLookupUrl);
-            
-            if (userResp.statusCode() == 200) {
-                JsonNode userRoot = mapper.readTree(userResp.body());
-                if (userRoot.isArray() && userRoot.size() > 0) {
-                    String userId = userRoot.get(0).get("id").asText();
-                    String userProjUrl = baseUrl + "/api/v4/users/" + userId + "/projects?per_page=100";
-                    response = sendWithAuthFallback(client, userProjUrl);
-                }
-            }
-        }
-        
-        // 3. Final Fallback: Visible Projects search
         if (response.statusCode() == 404) {
              return listVisibleProjects(groupName);
         }
@@ -159,24 +136,17 @@ public class GitLabProvider implements GitProvider {
             List<String> content = new ArrayList<>();
             if (root.isArray()) {
                 for (JsonNode node : root) {
-                    if (node.has("path_with_namespace")) {
-                        content.add(node.get("path_with_namespace").asText());
-                    }
+                    if (node.has("path_with_namespace")) content.add(node.get("path_with_namespace").asText());
                 }
             }
             return content;
-        } else {
-             throw new RuntimeException("Failed to fetch GitLab repositories for " + groupName + ". Status: " + response.statusCode());
         }
-    }
-
-    private List<String> listVisibleProjects() throws Exception {
-        return listVisibleProjects(null);
+        return Collections.emptyList();
     }
 
     private List<String> listVisibleProjects(String query) throws Exception {
         HttpClient client = HttpClient.newHttpClient();
-        String url = baseUrl + "/api/v4/projects?per_page=100&membership=true"; // membership=true shows projects where user is a member
+        String url = baseUrl + "/api/v4/projects?per_page=100&membership=true";
         if (query != null && !query.isBlank()) {
             url += "&search=" + java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8);
         }
@@ -210,38 +180,14 @@ public class GitLabProvider implements GitProvider {
              projectIdCache.put(searchName, id);
              return id;
         }
-        
-        // Search Fallback
-        String projectName = searchName.contains("/") ? searchName.substring(searchName.lastIndexOf("/") + 1) : searchName;
-        String searchUrl = baseUrl + "/api/v4/projects?search=" + java.net.URLEncoder.encode(projectName, java.nio.charset.StandardCharsets.UTF_8) + "&simple=true&per_page=100";
-        
-        response = sendWithAuthFallback(client, searchUrl);
-        if (response.statusCode() == 200) {
-             JsonNode root = mapper.readTree(response.body());
-             if (root.isArray()) {
-                 for (JsonNode node : root) {
-                      String path = node.get("path_with_namespace").asText();
-                      if (path.equalsIgnoreCase(searchName)) {
-                           String id = String.valueOf(node.get("id").asInt());
-                           projectIdCache.put(searchName, id);
-                           return id;
-                      }
-                 }
-             }
-        }
-        
         throw new RuntimeException("GitLab Project not found: " + searchName);
     }
 
     @Override
     public void validateCredentials() throws Exception {
         HttpClient client = HttpClient.newHttpClient();
-        String url = baseUrl + "/api/v4/user";
-        HttpResponse<String> response = sendWithAuthFallback(client, url);
-        
-        if (response.statusCode() == 200) {
-            return;
-        } else {
+        HttpResponse<String> response = sendWithAuthFallback(client, baseUrl + "/api/v4/user");
+        if (response.statusCode() != 200) {
              throw new RuntimeException("Invalid credentials for GitLab. Status: " + response.statusCode());
         }
     }
@@ -250,39 +196,29 @@ public class GitLabProvider implements GitProvider {
     public List<String> listBranches(String repoName) throws Exception {
         String projectId = resolveProjectId(repoName);
         String apiUrl = baseUrl + "/api/v4/projects/" + projectId + "/repository/branches";
-        
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> response = sendWithAuthFallback(client, apiUrl);
-        
         if (response.statusCode() == 200) {
             JsonNode root = mapper.readTree(response.body());
             List<String> branches = new ArrayList<>();
             if (root.isArray()) {
                 for (JsonNode node : root) {
-                    if (node.has("name")) {
-                        branches.add(node.get("name").asText());
-                    }
+                    if (node.has("name")) branches.add(node.get("name").asText());
                 }
             }
             return branches;
-        } else {
-             throw new RuntimeException("Failed to fetch GitLab branches. Status: " + response.statusCode());
         }
+        return Collections.emptyList();
     }
 
     @Override
     public String compareBranches(String repoName, String sourceBranch, String targetBranch) throws Exception {
         String projectId = resolveProjectId(repoName);
         String apiUrl = baseUrl + "/api/v4/projects/" + projectId + "/repository/compare?from=" + sourceBranch + "&to=" + targetBranch;
-
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> response = sendWithAuthFallback(client, apiUrl);
-        
-        if (response.statusCode() == 200) {
-            return response.body();
-        } else {
-            throw new RuntimeException("Failed to compare GitLab branches. Status: " + response.statusCode());
-        }
+        if (response.statusCode() == 200) return response.body();
+        throw new RuntimeException("Failed to compare GitLab branches. Status: " + response.statusCode());
     }
 
     @Override
@@ -290,14 +226,9 @@ public class GitLabProvider implements GitProvider {
         String projectId = resolveProjectId(repoName);
         String encodedQuery = java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8);
         String apiUrl = baseUrl + "/api/v4/projects/" + projectId + "/search?scope=blobs&search=" + encodedQuery;
-
         HttpClient client = HttpClient.newHttpClient();
         HttpResponse<String> response = sendWithAuthFallback(client, apiUrl);
-        
-        if (response.statusCode() == 200) {
-            return response.body();
-        } else {
-            throw new RuntimeException("Failed to search GitLab repository. Status: " + response.statusCode());
-        }
+        if (response.statusCode() == 200) return response.body();
+        throw new RuntimeException("Failed to search GitLab repository. Status: " + response.statusCode());
     }
 }

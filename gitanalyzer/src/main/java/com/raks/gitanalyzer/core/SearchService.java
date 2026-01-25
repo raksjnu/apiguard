@@ -23,6 +23,10 @@ public class SearchService {
         public String searchType; // "substring", "exact", "regex"
         public boolean ignoreComments;
         public int contextLines = 10;
+        public List<String> ignoreFolders = new ArrayList<>();
+        public List<String> ignoreFiles = new ArrayList<>();
+        public List<String> includeFolders = new ArrayList<>();
+        public List<String> includeFiles = new ArrayList<>();
     }
 
     public List<SearchResult> searchLocal(SearchParams params, File directory) {
@@ -30,13 +34,53 @@ public class SearchService {
         if (!directory.exists() || !directory.isDirectory()) return results;
 
         Pattern searchPattern = compilePattern(params);
+        List<Pattern> folderIgnorePatterns = compileAntPatterns(params.ignoreFolders);
+        List<Pattern> fileIgnorePatterns = compileAntPatterns(params.ignoreFiles);
+        List<Pattern> folderIncludePatterns = compileAntPatterns(params.includeFolders);
+        List<Pattern> fileIncludePatterns = compileAntPatterns(params.includeFiles);
 
         try {
             Files.walkFileTree(directory.toPath(), new SimpleFileVisitor<Path>() {
                 @Override
+                public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
+                    String relDir = directory.toPath().relativize(dir).toString();
+                    if (relDir.isEmpty()) return FileVisitResult.CONTINUE;
+
+                    // Skip if specifically ignored
+                    if (matchesAny(relDir, folderIgnorePatterns)) {
+                        return FileVisitResult.SKIP_SUBTREE;
+                    }
+
+                    // If includes are specified, and this dir doesn't match an include (or isn't a parent of one), 
+                    // we could skip. But simple logic: filter at file level is safer unless we do complex path matching.
+                    return FileVisitResult.CONTINUE;
+                }
+
+                @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                     if (!Files.isRegularFile(file)) return FileVisitResult.CONTINUE;
                     
+                    String relFile = directory.toPath().relativize(file).toString();
+                    String fileName = file.getFileName().toString();
+
+                    // Exclusion Logic
+                    if (matchesAny(fileName, fileIgnorePatterns) || matchesAny(relFile, fileIgnorePatterns)) {
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    // Inclusion Logic (if filters are set)
+                    if (!params.includeFolders.isEmpty()) {
+                        String parentRelPath = directory.toPath().relativize(file.getParent()).toString();
+                        if (!matchesAny(parentRelPath, folderIncludePatterns)) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                    }
+                    if (!params.includeFiles.isEmpty()) {
+                        if (!matchesAny(fileName, fileIncludePatterns) && !matchesAny(relFile, fileIncludePatterns)) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                    }
+
                     try {
                         List<String> lines = Files.readAllLines(file);
                         for (int i = 0; i < lines.size(); i++) {
@@ -48,11 +92,11 @@ public class SearchService {
 
                             if (searchPattern.matcher(line).find()) {
                                 results.add(new SearchResult(
-                                    directory.toPath().relativize(file).toString(), 
+                                    relFile, 
                                     i + 1, 
                                     line.trim(),
                                     extractContext(lines, i, params.contextLines),
-                                    file.getAbsolutePath()
+                                    file.toAbsolutePath().toString()
                                 ));
                             }
                         }
@@ -64,6 +108,28 @@ public class SearchService {
             e.printStackTrace();
         }
         return results;
+    }
+
+    private List<Pattern> compileAntPatterns(List<String> patterns) {
+        List<Pattern> compiled = new ArrayList<>();
+        if (patterns == null) return compiled;
+        for (String p : patterns) {
+            if (p == null || p.isBlank()) continue;
+            // Simple glob-to-regex conversion: * -> .*, ? -> .
+            String regex = p.trim()
+                .replace(".", "\\.")
+                .replace("*", ".*")
+                .replace("?", ".");
+            compiled.add(Pattern.compile(regex, Pattern.CASE_INSENSITIVE));
+        }
+        return compiled;
+    }
+
+    private boolean matchesAny(String text, List<Pattern> patterns) {
+        for (Pattern p : patterns) {
+            if (p.matcher(text).matches()) return true;
+        }
+        return false;
     }
 
     private Pattern compilePattern(SearchParams params) {
@@ -115,9 +181,49 @@ public class SearchService {
     }
 
     // Simplified for now, will enhance in next step
-    public List<SearchResult> searchRemote(String token, List<String> repos) {
+    public List<SearchResult> searchRemote(SearchParams params, List<String> repos) {
         List<SearchResult> results = new ArrayList<>();
-        // Implementation for remote API search to be enhanced later
+        File remoteTemp = new File(ConfigManager.getTempDir(), "remote_search_" + System.currentTimeMillis());
+        if (!remoteTemp.exists()) remoteTemp.mkdirs();
+
+        try {
+            for (String repo : repos) {
+                File repoDir = new File(remoteTemp, repo.replace("/", "_"));
+                try {
+                    System.out.println("[SearchService] Cloning remote repo: " + repo + " to " + repoDir.getAbsolutePath());
+                    gitProvider.cloneRepository(repo, repoDir, null); // Clone default branch
+                    
+                    if (repoDir.exists() && repoDir.list() != null && repoDir.list().length > 0) {
+                        System.out.println("[SearchService] Successfully cloned. Starting local search in: " + repoDir.getName());
+                        List<SearchResult> repoResults = searchLocal(params, repoDir);
+                        for (SearchResult r : repoResults) {
+                            r.filePath = repo + "/" + r.filePath;
+                        }
+                        results.addAll(repoResults);
+                    } else {
+                        System.err.println("[SearchService] Clone target directory is empty or missing: " + repo);
+                    }
+                } catch (Exception e) {
+                    System.err.println("[SearchService] Failed to clone/search repo: " + repo + " - " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        } finally {
+            // Cleanup: Optional, maybe keep for a few minutes? 
+            // For now, let's delete to save space
+            deleteDirectory(remoteTemp);
+        }
         return results;
+    }
+
+    private void deleteDirectory(File dir) {
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                if (f.isDirectory()) deleteDirectory(f);
+                else f.delete();
+            }
+        }
+        dir.delete();
     }
 }
