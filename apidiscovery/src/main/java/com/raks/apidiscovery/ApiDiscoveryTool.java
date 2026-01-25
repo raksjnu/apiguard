@@ -353,10 +353,17 @@ public class ApiDiscoveryTool {
                 final int currentIdx = i;
                 final int totalSources = sources.size();
                 
+                // --- Register Scan Progress for UI Polling ---
+                ApiDiscoveryService.registerScan(scanId, getScanFolderName());
+                ApiDiscoveryService.ScanProgress progress = ApiDiscoveryService.getProgress(scanId);
+                // ----------------------------------------------
+                
                 File localFile = new File(s);
                 if (localFile.exists() && localFile.isDirectory()) {
                     System.out.println("Detected Local Directory: " + s);
-                    updateProgress("[" + (i+1) + "/" + totalSources + "] Scanning local directory...", basePct + 5);
+                    progress.setMessage("[" + (i+1) + "/" + totalSources + "] Scanning local directory...");
+                    progress.setPercent(basePct + 5);
+                    // updateProgress("[" + (i+1) + "/" + totalSources + "] Scanning local directory...", basePct + 5);
                     reports.add(engine.scanRepository(localFile));
                     File[] subs = localFile.listFiles(File::isDirectory);
                     if (subs != null) {
@@ -379,7 +386,9 @@ public class ApiDiscoveryTool {
                     setScanFolder(scanId); 
                     List<DiscoveryReport> groupResults = connector.scanGroup(cleanGroup, token, scanId, getTempDir(), (msg, pct) -> {
                         int scaledPct = basePct + (pct * (nextBasePct - basePct) / 100);
-                        updateProgress("[" + (currentIdx+1) + "/" + totalSources + "] " + msg, scaledPct);
+                        progress.setMessage("[" + (currentIdx+1) + "/" + totalSources + "] " + msg);
+                        progress.setPercent(scaledPct);
+                        // updateProgress("[" + (currentIdx+1) + "/" + totalSources + "] " + msg, scaledPct);
                     });
                     reports.addAll(groupResults);
                 }
@@ -633,10 +642,37 @@ public class ApiDiscoveryTool {
         @Override
         public void handle(HttpExchange t) throws IOException {
             if ("GET".equalsIgnoreCase(t.getRequestMethod())) {
+                String query = t.getRequestURI().getQuery();
+                String scanId = null;
+                if (query != null && query.contains("scanId=")) {
+                    for (String param : query.split("&")) {
+                        if (param.startsWith("scanId=")) {
+                            scanId = param.substring(7);
+                            break;
+                        }
+                    }
+                }
+                
                 Map<String, Object> progress = new java.util.HashMap<>();
-                progress.put("message", currentProgress);
-                progress.put("percent", progressPercent);
-                progress.put("complete", progressPercent >= 100);
+                if (scanId != null) {
+                    ApiDiscoveryService.ScanProgress p = ApiDiscoveryService.getProgress(scanId);
+                    if (p != null) {
+                        progress.put("message", p.getMessage());
+                        progress.put("percent", p.getPercent());
+                        progress.put("complete", p.isComplete());
+                        progress.put("scanFolder", p.getScanFolder());
+                    } else {
+                        progress.put("message", "Scan not found");
+                        progress.put("percent", 0);
+                        progress.put("complete", false);
+                    }
+                } else {
+                    // Fallback to global for legacy or CLI
+                    progress.put("message", currentProgress);
+                    progress.put("percent", progressPercent);
+                    progress.put("complete", progressPercent >= 100);
+                }
+                
                 Gson gson = new Gson();
                 String jsonResponse = gson.toJson(progress);
                 t.getResponseHeaders().set("Content-Type", "application/json");

@@ -35,6 +35,12 @@ public class ApiDiscoveryService {
     public static ScanProgress getProgress(String scanId) {
         return activeScans.get(scanId);
     }
+
+    public static void registerScan(String scanId, String scanFolder) {
+        if (!activeScans.containsKey(scanId)) {
+            activeScans.put(scanId, new ScanProgress(scanId, scanFolder));
+        }
+    }
     
     // --- New Static Wrappers for Mule ---
     public static String fetchGroups(String baseUrl, String token) throws Exception {
