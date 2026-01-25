@@ -17,8 +17,9 @@ public class ConfigResource {
     public Response getUIConfig() {
         try {
             // Fetch all properties starting with "ui."
-            Map<String, String> uiProps = ConfigManager.getPropertiesByPrefix("ui.");
-            return Response.ok(uiProps).build();
+            Map<String, Object> responseData = new java.util.HashMap<>(ConfigManager.getPropertiesByPrefix("ui."));
+            responseData.put("env.isCloudHub", ConfigManager.isCloudHub());
+            return Response.ok(responseData).build();
         } catch (Exception e) {
             e.printStackTrace();
             return Response.serverError().entity("{\"error\":\"" + e.getMessage() + "\"}").build();

@@ -59,29 +59,48 @@
 
                     <div class="sub-frame mb-3">
                          <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">1. Search Mode</h6>
-                         <div class="mb-2">
-                             <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="searchMode" id="modeLocal" value="local" checked>
-                                <label class="form-check-label small fw-bold" for="modeLocal">Local Directory</label>
-                            </div>
-                            <div class="form-check form-check-inline">
-                                <input class="form-check-input" type="radio" name="searchMode" id="modeRemote" value="remote">
-                                <label class="form-check-label small fw-bold" for="modeRemote">Remote (GitLab)</label>
-                            </div>
+                         <div class="d-flex gap-2 mb-2">
+                             <input type="radio" class="btn-check" name="searchMode" id="modeLocal" value="local" checked>
+                             <label class="btn btn-outline-purple btn-sm fw-bold flex-grow-1" for="modeLocal">Local System</label>
+
+                             <input type="radio" class="btn-check" name="searchMode" id="modeRemote" value="remote">
+                             <label class="btn btn-outline-purple btn-sm fw-bold flex-grow-1" for="modeRemote" id="modeRemoteLabel">Remote Git</label>
                          </div>
+                         <div id="cloudhubNotice" class="x-small text-danger d-none mt-1"><i class="bi bi-cloud-slash me-1"></i>Local mode disabled on CloudHub</div>
                     </div>
 
                     <div class="sub-frame mb-3">
                         <h6 class="text-purple fw-bold mb-3 border-bottom pb-2">2. Parameters</h6>
                         <div class="mb-3">
-                             <label for="searchToken" class="form-label small fw-bold d-flex align-items-center">
-                                 Search Token (Regex)
-                                 <span class="ms-1" data-bs-toggle="tooltip" data-bs-html="true" title="Regex Examples:<br><code>secureProperties</code><br><code>password=.*</code><br><code>(?i)mule</code> (case-insensitive)">
-                                     <i class="bi bi-info-circle text-muted" style="cursor:help;"></i>
-                                 </span>
-                             </label>
-                             <input type="text" class="form-control form-control-sm" id="searchToken" placeholder="e.g. secureProperties" required>
+                             <label for="searchToken" class="form-label small fw-bold">Search Token (Value/Regex)</label>
+                             <input type="text" class="form-control form-control-sm" id="searchToken" placeholder="e.g. password" required>
                         </div>
+
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold d-block mb-2">Search Type</label>
+                            <div class="btn-group w-100 btn-group-sm" role="group">
+                                <input type="radio" class="btn-check" name="searchType" id="typeSubstring" value="substring" checked>
+                                <label class="btn btn-outline-secondary" for="typeSubstring">Substring</label>
+
+                                <input type="radio" class="btn-check" name="searchType" id="typeExact" value="exact">
+                                <label class="btn btn-outline-secondary" for="typeExact">Exact</label>
+
+                                <input type="radio" class="btn-check" name="searchType" id="typeRegex" value="regex">
+                                <label class="btn btn-outline-secondary" for="typeRegex">Regex</label>
+                            </div>
+                        </div>
+
+                        <div class="mb-3 d-flex flex-wrap gap-2">
+                            <div class="form-check form-switch small">
+                                <input class="form-check-input" type="checkbox" id="caseSensitive">
+                                <label class="form-check-label fw-bold" for="caseSensitive">Match Case</label>
+                            </div>
+                            <div class="form-check form-switch small">
+                                <input class="form-check-input" type="checkbox" id="ignoreComments" checked>
+                                <label class="form-check-label fw-bold" for="ignoreComments">Ignore Comments</label>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="targetPath" class="form-label small fw-bold" id="pathLabel">Target Directory</label>
                              <div class="input-group input-group-sm">
@@ -105,29 +124,62 @@
             <div class="resizer" id="dragMe"></div>
 
             <!-- Right Panel: Results -->
-            <div class="split-right" id="rightPanel">
-                <h5 class="text-purple fw-bold mb-3">Search Results</h5>
-                 <div class="card shadow-sm border-0 h-100">
-                    <div class="card-body p-0 d-flex flex-column h-100">
-                        <div class="table-responsive flex-grow-1">
-                            <table class="table table-striped table-hover mb-0 align-middle" id="resultsId">
-                                <thead>
-                                    <tr>
-                                        <th>Location</th>
-                                        <th style="width: 80px;">Line</th>
-                                        <th>Content</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="resultsBody">
-                                    <tr>
-                                        <td colspan="3" class="text-center text-muted py-5">
-                                             <i class="bi bi-search display-4 opacity-25"></i>
-                                            <p class="mt-2 text-muted small">Enter criteria and search to see results.</p>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+            <div class="split-right d-flex p-0" id="rightPanel">
+                <!-- Main Search Results Column -->
+                <div class="flex-grow-1 d-flex flex-column p-4 border-end h-100" id="resultsColumn">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5 class="text-purple fw-bold mb-0">Search Results</h5>
+                        <button class="btn btn-sm btn-success d-none" id="exportBtn">
+                            <i class="bi bi-file-earmark-excel me-1"></i> Export to Excel
+                        </button>
+                    </div>
+                    
+                    <div class="card shadow-sm border-0 flex-grow-1 overflow-hidden">
+                        <div class="card-body p-0 d-flex flex-column h-100">
+                             <div class="table-responsive flex-grow-1">
+                                <table class="table table-striped table-hover mb-0 align-middle" id="resultsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Location</th>
+                                            <th style="width: 80px;">Line</th>
+                                            <th>Content</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resultsBody">
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted py-5">
+                                                 <i class="bi bi-search display-4 opacity-25"></i>
+                                                <p class="mt-2 text-muted small">Enter criteria and search to see results.</p>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Context Preview Panel (Hidden by default, fixed width) -->
+                <div class="bg-white d-none flex-column p-4 h-100 shadow-lg" id="previewPanel" style="width: 450px; min-width: 450px;">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold text-purple mb-0">Context Preview</h6>
+                        <button class="btn-close btn-sm" onclick="closePreview()"></button>
+                    </div>
+                    <div class="preview-actions mb-3 pt-2 border-top">
+                        <div id="localActions" class="d-none">
+                            <button class="btn btn-sm btn-purple w-100 mb-2" id="openFileBtn">
+                                <i class="bi bi-pencil-square me-1"></i> Open in Editor
+                            </button>
+                            <div class="small text-muted mb-1 text-truncate" id="previewFilePath" style="direction: rtl;">...</div>
+                        </div>
+                        <div id="remoteActions" class="d-none">
+                             <a href="#" class="btn btn-sm btn-purple w-100 mb-2" id="viewOnGitBtn" target="_blank">
+                                <i class="bi bi-box-arrow-up-right me-1"></i> View on Git
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex-grow-1 overflow-auto bg-dark rounded p-2 text-white x-small font-monospace" id="previewContainer">
+                        <!-- Code lines go here -->
                     </div>
                 </div>
             </div>
@@ -143,239 +195,205 @@
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        // --- Resizer Logic ---
-        const resizer = document.getElementById('dragMe');
-        const leftPanel = document.getElementById('leftPanel');
-        let x = 0;
-        let leftWidth = 0;
+        let currentResults = []; // Store results globally for export and preview
+        let searchMode = 'local';
 
-        const mouseDownHandler = function (e) {
-            x = e.clientX;
-            leftWidth = leftPanel.getBoundingClientRect().width;
-            resizer.classList.add('resizing');
-            document.addEventListener('mousemove', mouseMoveHandler);
-            document.addEventListener('mouseup', mouseUpHandler);
-            document.body.style.userSelect = 'none';
-        };
-
-        const mouseMoveHandler = function (e) {
-            const dx = e.clientX - x;
-            const newLeftWidth = leftWidth + dx;
-            if (newLeftWidth > 250 && newLeftWidth < 800) {
-                 leftPanel.style.width = `${newLeftWidth}px`;
-            }
-        };
-
-        const mouseUpHandler = function () {
-            resizer.classList.remove('resizing');
-            document.removeEventListener('mousemove', mouseMoveHandler);
-            document.removeEventListener('mouseup', mouseUpHandler);
-            document.body.style.removeProperty('user-select');
-        };
-
-        resizer.addEventListener('mousedown', mouseDownHandler);
-
-        // --- Existing Search Logic ---
-    </script>
-    <script>
-        // Load UI Config
+        // Load UI Config & Environment Presence
         fetch('/api/config/ui').then(r=>r.json()).then(c=>{
             if(c['ui.footer.text']) document.getElementById('footerText').innerText=c['ui.footer.text'];
+            
+            // CloudHub Environment Sync
+            if (c['env.isCloudHub']) {
+                document.getElementById('modeLocal').disabled = true;
+                document.getElementById('modeRemote').checked = true;
+                document.getElementById('cloudhubNotice').classList.remove('d-none');
+                updatePathLabel('remote');
+            }
         });
 
         const form = document.getElementById('searchForm');
-        const modeRadios = document.getElementsByName('searchMode');
         const pathLabel = document.getElementById('pathLabel');
         const pathInput = document.getElementById('targetPath');
         const resultsBody = document.getElementById('resultsBody');
+        const resultsTable = document.getElementById('resultsTable');
+        const previewPanel = document.getElementById('previewPanel');
+        const exportBtn = document.getElementById('exportBtn');
 
-        modeRadios.forEach(radio => radio.addEventListener('change', (e) => {
-            if (e.target.value === 'remote') {
+        // Mode Switching
+        document.getElementsByName('searchMode').forEach(radio => radio.addEventListener('change', (e) => {
+            searchMode = e.target.value;
+            updatePathLabel(searchMode);
+        }));
+
+        function updatePathLabel(mode) {
+            if (mode === 'remote') {
                 pathLabel.textContent = 'Repositories (comma-sep):';
                 pathInput.placeholder = 'repo1, repo2...';
+                pathInput.value = ''; 
             } else {
                 pathLabel.textContent = 'Target Directory:';
                 pathInput.value = 'C:/raks/apiguard/gitanalyzer/temp';
             }
-        }));
+        }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const mode = document.querySelector('input[name="searchMode"]:checked').value;
             const token = document.getElementById('searchToken').value;
-            const path = document.getElementById('targetPath').value;
+            const path = pathInput.value;
+            const searchType = document.querySelector('input[name="searchType"]:checked').value;
+            const caseSensitive = document.getElementById('caseSensitive').checked;
+            const ignoreComments = document.getElementById('ignoreComments').checked;
 
             // Show loading
-            document.getElementById('searchBtn').disabled = true;
-            document.getElementById('searchBtn').innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Searching...';
+            const searchBtn = document.getElementById('searchBtn');
+            searchBtn.disabled = true;
+            searchBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Searching...';
             resultsBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">Searching...</td></tr>';
+            closePreview();
+            exportBtn.classList.add('d-none');
 
             try {
                 const response = await fetch('/api/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ mode, token, path })
+                    body: JSON.stringify({ mode, token, path, searchType, caseSensitive, ignoreComments })
                 });
                 
                 if (!response.ok) throw new Error('Search failed');
                 
-                const results = await response.json();
+                currentResults = await response.json();
                 
-                resultsBody.innerHTML = '';
-                if (results.length === 0) {
-                    resultsBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No matches found.</td></tr>';
-                } else {
-                    results.forEach(row => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="font-monospace small">${row.location}</td>
-                            <td>${row.line}</td>
-                            <td class="font-monospace small text-muted">${row.content}</td>
-                        `;
-                        resultsBody.appendChild(tr);
-                    });
-                }
+                renderResults(currentResults);
+                if (currentResults.length > 0) exportBtn.classList.remove('d-none');
 
             } catch (err) {
                 console.error(err);
                 resultsBody.innerHTML = `<tr><td colspan="3" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
             } finally {
-                document.getElementById('searchBtn').textContent = 'Detailed Search';
+                searchBtn.disabled = false;
+                searchBtn.textContent = 'Detailed Search';
             }
         });
 
-        // Fetch UI Config (Footer & Header)
-        fetch('/api/config/ui')
-            .then(r => r.json())
-            .then(c => {
-                if (c['ui.footer.text']) {
-                    const f = document.querySelector('.raks-footer .container');
-                     if(f) f.innerHTML = c['ui.footer.text'];
+        function renderResults(results) {
+            resultsBody.innerHTML = '';
+            if (results.length === 0) {
+                resultsBody.innerHTML = '<tr><td colspan="3" class="text-center py-4">No matches found.</td></tr>';
+                return;
+            }
+
+            results.forEach((row, index) => {
+                const tr = document.createElement('tr');
+                tr.style.cursor = 'pointer';
+                tr.onclick = () => showPreview(row);
+                tr.innerHTML = `
+                    <td class="font-monospace small text-truncate" style="max-width: 300px;">${row.filePath}</td>
+                    <td class="fw-bold text-muted" style="font-size: 0.8rem;">${row.lineNumber}</td>
+                    <td class="font-monospace small text-muted text-truncate" style="max-width: 400px;">${row.content}</td>
+                `;
+                resultsBody.appendChild(tr);
+            });
+        }
+
+        function showPreview(row) {
+            previewPanel.classList.remove('d-none');
+            previewPanel.classList.add('d-flex');
+            
+            // Actions
+            const localActions = document.getElementById('localActions');
+            const remoteActions = document.getElementById('remoteActions');
+            
+            if (searchMode === 'local') {
+                localActions.classList.remove('d-none');
+                remoteActions.classList.add('d-none');
+                document.getElementById('previewFilePath').innerText = row.absolutePath;
+                document.getElementById('openFileBtn').onclick = () => openLocalFile(row.absolutePath);
+            } else {
+                localActions.classList.add('d-none');
+                remoteActions.classList.remove('d-none');
+                // View on Git logic (placeholder for now)
+                document.getElementById('viewOnGitBtn').href = '#'; 
+            }
+
+            // Code
+            const container = document.getElementById('previewContainer');
+            container.innerHTML = '';
+            
+            row.context.forEach((line, i) => {
+                const div = document.createElement('div');
+                div.className = 'd-flex';
+                // Highlight hit line
+                if (line.includes(row.content)) div.classList.add('bg-purple-subtle-dark'); 
+                
+                div.innerHTML = `<span class="opacity-50 me-2" style="min-width: 30px; text-align: right;">${i+1}</span> <span>${escapeHtml(line)}</span>`;
+                container.appendChild(div);
+            });
+        }
+
+        function closePreview() {
+            previewPanel.classList.add('d-none');
+            previewPanel.classList.remove('d-flex');
+        }
+
+        async function openLocalFile(path) {
+            try {
+                const res = await fetch('/api/search/open', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ path })
+                });
+                if (!res.ok) {
+                    const data = await res.json();
+                    alert('Error: ' + (data.error || 'Failed to open file'));
                 }
-                if (c['ui.header.search']) {
-                    const headerTitle = document.querySelector('.position-absolute h5');
-                    if(headerTitle) headerTitle.textContent = c['ui.header.search'];
-                }
+            } catch (e) { alert('System Error: ' + e.message); }
+        }
+
+        // CSV Export Logic
+        exportBtn.onclick = () => {
+            if (currentResults.length === 0) return;
+            
+            let csv = 'File Path,Line Number,Content\n';
+            currentResults.forEach(r => {
+                const safeContent = `"${r.content.replace(/"/g, '""')}"`;
+                csv += `${r.filePath},${r.lineNumber},${safeContent}\n`;
             });
 
-        // Initialize all Bootstrap tooltips
-        document.addEventListener('DOMContentLoaded', function () {
-            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
-            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-                return new bootstrap.Tooltip(tooltipTriggerEl)
-            });
-        });
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.setAttribute('href', url);
+            a.setAttribute('download', `GitSearch_Results_${new Date().getTime()}.csv`);
+            a.click();
+        };
 
-        // --- Standardized Git Connection Logic ---
-        const connectionCard = document.getElementById('gitConnectionCard');
-        const providerSelect = document.getElementById('gitProviderSelect');
-        const tokenInput = document.getElementById('gitTokenInput');
-        const validateBtn = document.getElementById('validateTokenBtn');
-        const statusPulse = document.getElementById('connectionStatus');
-        const statusMsg = document.getElementById('statusMessage');
-        // --- Standardized Git Connection (Read Mode) ---
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
         const STORE_KEY_PROVIDER = 'git_analyzer_provider';
         const connectedProvider = localStorage.getItem(STORE_KEY_PROVIDER) || 'gitlab';
-        // const connectionCard = document.getElementById('gitConnectionCard'); // Already defined above
         const providerDisplay = document.getElementById('currentProviderDisplay');
+        const connectionCard = document.getElementById('gitConnectionCard');
 
         if (providerDisplay) {
             const displayNames = { 'github': 'GitHub', 'gitlab': 'GitLab' };
             providerDisplay.innerText = displayNames[connectedProvider] || 'Unknown';
+            document.getElementById('modeRemoteLabel').innerText = `Remote (${displayNames[connectedProvider]})`;
         }
 
         if (connectionCard) {
-            connectionCard.classList.remove('github-theme', 'gitlab-theme');
             connectionCard.classList.add(connectedProvider + '-theme');
         }
 
-        // Helper to get Git Headers (Centralized)
-        const STORE_KEY_TOKEN = 'git_analyzer_token';
-
-        // Load Persistence
-        // const savedProvider = localStorage.getItem(STORE_KEY_PROVIDER) || 'gitlab'; // Replaced by connectedProvider
-        const savedToken = localStorage.getItem(STORE_KEY_TOKEN) || '';
-        
-        // if(providerSelect) providerSelect.value = savedProvider; // Removed as provider is now displayed, not selected
-        if(tokenInput) tokenInput.value = savedToken;
-        // updateCardTheme(savedProvider); // Replaced by direct class manipulation using connectedProvider
-
-        if(providerSelect) { // This block is now effectively for the *old* select, but kept for context if it's still in HTML
-            providerSelect.addEventListener('change', (e) => {
-                const p = e.target.value;
-                localStorage.setItem(STORE_KEY_PROVIDER, p);
-                // updateCardTheme(p); // Removed as theme is set directly by connectedProvider
-                // Updates label text if needed
-            });
-        }
-
-        if(tokenInput) {
-            tokenInput.addEventListener('input', (e) => {
-                localStorage.setItem(STORE_KEY_TOKEN, e.target.value);
-                resetValidation();
-            });
-        }
-
-        function updateCardTheme(provider) {
-            connectionCard.classList.remove('github-theme', 'gitlab-theme');
-            connectionCard.classList.add(provider + '-theme');
-            // If remote mode radio label logic exists, update it contextually?
-            // Existing search logic handles specific text updates separately.
-        }
-
-        function resetValidation() {
-            if(validateBtn) {
-                validateBtn.classList.remove('valid', 'invalid');
-                validateBtn.textContent = 'Validate';
-                validateBtn.disabled = false;
-            }
-            if(statusPulse) {
-                statusPulse.className = 'status-pulse';
-                statusMsg.textContent = 'Disconnected';
-            }
-        }
-
-        if(validateBtn) {
-            validateBtn.addEventListener('click', async () => {
-                const provider = providerSelect.value;
-                const token = tokenInput.value;
-                
-                if (!token) {
-                    alert('Please enter a token.');
-                    return;
-                }
-
-                // UI Loading State
-                validateBtn.disabled = true;
-                validateBtn.textContent = '...';
-                statusPulse.className = 'status-pulse validating';
-                statusMsg.textContent = 'Validating...';
-
-                try {
-                    const response = await fetch('/api/analyze/validate', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ provider, token }) 
-                    });
-
-                    if (response.ok) {
-                        validateBtn.classList.add('valid');
-                        validateBtn.textContent = 'Valid';
-                        statusPulse.className = 'status-pulse valid';
-                        statusMsg.textContent = 'Connected';
-                    } else {
-                        throw new Error('Invalid Credentials');
-                    }
-                } catch (error) {
-                    validateBtn.classList.add('invalid');
-                    validateBtn.textContent = 'Invalid';
-                    statusPulse.className = 'status-pulse invalid';
-                    statusMsg.textContent = 'Auth Failed';
-                } finally {
-                    validateBtn.disabled = false;
-                }
-            });
-        }
+        // Initialize tooltips
+        document.addEventListener('DOMContentLoaded', () => {
+            [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]')).map(el => new bootstrap.Tooltip(el));
+        });
+    </script>
     </script>
 </body>
 </html>

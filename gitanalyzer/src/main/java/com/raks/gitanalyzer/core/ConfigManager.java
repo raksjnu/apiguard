@@ -91,4 +91,11 @@ public class ConfigManager {
             });
         }
     }
+
+    public static boolean isCloudHub() {
+        // Common CloudHub indicators
+        return System.getenv("CLOUDHUB_APP_NAME") != null || 
+               System.getProperty("mule.env") != null ||
+               "cloudhub".equalsIgnoreCase(System.getProperty("app.target"));
+    }
 }
