@@ -190,9 +190,26 @@
                             </div>
                         </div>
 
-                        <div class="mb-2">
-                            <label class="form-label small fw-bold">File Ignore (Glob)</label>
-                            <textarea class="form-control form-control-sm font-monospace" id="ignorePatterns" rows="2" placeholder=".gitignore patterns..."></textarea>
+                        <!-- Advanced Filters -->
+                        <div class="mb-3 border rounded p-2 bg-white">
+                            <div class="d-flex justify-content-between align-items-center cursor-pointer" data-bs-toggle="collapse" data-bs-target="#advancedFiltersCollapse" aria-expanded="false">
+                                <label class="form-label small fw-bold text-purple mb-0"><i class="bi bi-funnel-fill me-1"></i> Advanced Filters (Include/Ignore)</label>
+                                <i class="bi bi-chevron-down small text-muted"></i>
+                            </div>
+                            <div class="collapse mt-2" id="advancedFiltersCollapse">
+                                <div class="mb-2">
+                                     <label class="form-label x-small text-muted fw-bold">Include Folders/Files</label>
+                                     <input type="text" class="form-control form-control-sm mb-1" id="includeFolders" placeholder="Folders (e.g. src/main, config)">
+                                     <input type="text" class="form-control form-control-sm" id="includeFiles" placeholder="Files (e.g. *.yaml, *.xml)">
+                                </div>
+                                <div class="mb-1">
+                                     <label class="form-label x-small text-muted fw-bold">Ignore Folders/Files</label>
+                                     <input type="text" class="form-control form-control-sm mb-1" id="ignoreFolders" placeholder="Folders (e.g. src/test, target)">
+                                     <input type="text" class="form-control form-control-sm" id="ignoreFiles" placeholder="Files (e.g. *.class, *.log)">
+                                     <!-- Hidden legacy field for compatibility if needed, or we just map ignoreFiles to it -->
+                                     <textarea class="d-none" id="ignorePatterns"></textarea> 
+                                </div>
+                            </div>
                         </div>
                         <div class="mb-3">
                             <label class="form-label small fw-bold d-flex align-items-center">
@@ -533,7 +550,9 @@
 
         // Restore Form Fields
         // Removed apiName from persistence
-        const FIELDS_TO_PERSIST = ['groupName', 'repoFilter', 'codeRepo', 'configRepo', 'ignorePatterns'];
+        // Restore Form Fields
+        // Added new filter fields to persistence
+        const FIELDS_TO_PERSIST = ['groupName', 'repoFilter', 'codeRepo', 'configRepo', 'includeFolders', 'includeFiles', 'ignoreFolders', 'ignoreFiles'];
         
         FIELDS_TO_PERSIST.forEach(id => {
             const el = document.getElementById(id);
@@ -886,7 +905,14 @@
                 targetBranch: targetBranch,
                 ignorePatterns: document.getElementById('ignorePatterns').value.trim(),
                 contentIgnorePatterns: document.getElementById('contentPatterns').value.trim(),
-                ignoreAttributeOrder: document.getElementById('ignoreAttributeOrder').checked,
+                ignoreAttributeOrder: document.getElementById('ignoreAttributeOrder').checked, // Checkbox
+                
+                // New Filter Fields
+                includeFolders: document.getElementById('includeFolders').value.trim(),
+                includeFiles: document.getElementById('includeFiles').value.trim(),
+                ignoreFolders: document.getElementById('ignoreFolders').value.trim(),
+                ignoreFiles: document.getElementById('ignoreFiles').value.trim(),
+                
                 apiName: codeRepo // Use repo name as API name
             };
             
