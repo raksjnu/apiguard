@@ -217,20 +217,26 @@ public class XmlGenericCheck extends AbstractCheck {
                             }
                         }
                     } else { // NOT_EXISTS / FORBIDDEN
-                        if (nodes.getLength() > 0) { 
-                            for (int i=0; i<nodes.getLength(); i++) {
-                                String rawValue = nodes.item(i).getTextContent().trim();
-                                java.util.Set<String> allValues = resolveAll(rawValue, currentRoot);
-                                for (String actual : allValues) {
-                                    if (forbiddenValue != null && compareValues(actual, forbiddenValue, operator, valueType)) { 
-                                        filePassed = false; 
-                                        fileErrors.add("Forbidden value '" + forbiddenValue + "' found at resolution: '" + actual + "' for XPath: " + xpathExpr); 
-                                    }
-                                    if (forbiddenTokens != null) {
-                                        for (String ft : forbiddenTokens) {
-                                            if (com.raks.aegis.util.CheckHelper.isTokenPresent(actual, ft, wholeWord, false, true)) {
-                                                filePassed = false;
-                                                fileErrors.add("Forbidden token '" + ft + "' found at resolution: '" + actual + "' for XPath: " + xpathExpr);
+                        if (nodes.getLength() > 0) {
+                            // If no specific content/token values are forbidden, then the EXISTENCE of the node itself is forbidden.
+                            if (forbiddenValue == null && forbiddenTokens == null) {
+                                filePassed = false;
+                                fileErrors.add("Forbidden XPath found: " + xpathExpr);
+                            } else {
+                                for (int i=0; i<nodes.getLength(); i++) {
+                                    String rawValue = nodes.item(i).getTextContent().trim();
+                                    java.util.Set<String> allValues = resolveAll(rawValue, currentRoot);
+                                    for (String actual : allValues) {
+                                        if (forbiddenValue != null && compareValues(actual, forbiddenValue, operator, valueType)) {
+                                            filePassed = false;
+                                            fileErrors.add("Forbidden value '" + forbiddenValue + "' found at resolution: '" + actual + "' for XPath: " + xpathExpr);
+                                        }
+                                        if (forbiddenTokens != null) {
+                                            for (String ft : forbiddenTokens) {
+                                                if (com.raks.aegis.util.CheckHelper.isTokenPresent(actual, ft, wholeWord, false, true)) {
+                                                    filePassed = false;
+                                                    fileErrors.add("Forbidden token '" + ft + "' found at resolution: '" + actual + "' for XPath: " + xpathExpr);
+                                                }
                                             }
                                         }
                                     }
@@ -239,7 +245,6 @@ public class XmlGenericCheck extends AbstractCheck {
                         }
                     }
                 }
-
 
             } catch (Exception e) {
                 filePassed = false; fileErrors.add("Error: " + e.getMessage());
