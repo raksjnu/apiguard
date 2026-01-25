@@ -37,8 +37,8 @@ echo.
 REM Step 1: Build & Install GitAnalyzer
 echo [1/2] Building ^& Installing GitAnalyzer...
 echo ============================================================
-if exist "%SCRIPT_DIR%..\\gitanalyzer" (
-    cd /d "%SCRIPT_DIR%..\\gitanalyzer"
+    if exist "%SCRIPT_DIR%..\gitanalyzer" (
+    cd /d "%SCRIPT_DIR%..\gitanalyzer"
     call mvn clean install -DskipTests
     
     if errorlevel 1 (
@@ -51,8 +51,8 @@ if exist "%SCRIPT_DIR%..\\gitanalyzer" (
     REM Copy gitanalyzer JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying gitanalyzer JAR to lib folder...
-    if exist "%SCRIPT_DIR%..\\gitanalyzer\\target\\gitanalyzer-1.0.0.jar" (
-        copy /Y "%SCRIPT_DIR%..\\gitanalyzer\\target\\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\\gitanalyzer-1.0.0.jar" >nul
+    if exist "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\gitanalyzer-1.0.0.jar" >nul
         if errorlevel 1 (
             echo [ERROR] Failed to copy gitanalyzer JAR
             pause
@@ -69,17 +69,29 @@ if exist "%SCRIPT_DIR%..\\gitanalyzer" (
     echo.
     echo [1.5/2] Syncing GitAnalyzer Web Assets...
     echo ============================================================
-    set "DEST_WEB_DIR=%SCRIPT_DIR%src\main\resources\web\gitanalyzer"
-    if not exist "%DEST_WEB_DIR%" mkdir "%DEST_WEB_DIR%"
     
-    REM Use robocopy to sync assets from gitanalyzer source to wrapper resources
-    robocopy "%SCRIPT_DIR%..\\gitanalyzer\\src\\main\\resources\\web" "%DEST_WEB_DIR%" /MIR /NJH /NJS >nul
+    REM We use direct paths here because %VAR% expansion inside an IF block 
+    REM refers to the value AT THE START of the block (which is empty).
+    
+    echo [INFO] Sync Source: "%SCRIPT_DIR%..\gitanalyzer\src\main\resources\web"
+    echo [INFO] Sync Target: "%SCRIPT_DIR%src\main\resources\web\gitanalyzer"
+    
+    if not exist "%SCRIPT_DIR%src\main\resources\web\gitanalyzer" (
+        mkdir "%SCRIPT_DIR%src\main\resources\web\gitanalyzer"
+    )
+    
+    REM Run robocopy and show files being copied (/V)
+    robocopy "%SCRIPT_DIR%..\gitanalyzer\src\main\resources\web" "%SCRIPT_DIR%src\main\resources\web\gitanalyzer" /MIR /V /NP
+    
+    REM Robocopy exit codes: 0=no changes, 1-7=files copied/merged. 8+=error.
     if %ERRORLEVEL% GEQ 8 (
-        echo [ERROR] Failed to sync web assets (Robocopy error: %ERRORLEVEL%)
+        echo.
+        echo [ERROR] Failed to sync web assets (Robocopy Exit Code: %ERRORLEVEL%)
         pause
         exit /b 1
     )
-    echo [INFO] Web assets synchronized successfully to wrapper resources.
+    echo.
+    echo [INFO] Web assets synchronized successfully.
 
 ) else (
     echo [ERROR] GitAnalyzer project not found at ..\\gitanalyzer
