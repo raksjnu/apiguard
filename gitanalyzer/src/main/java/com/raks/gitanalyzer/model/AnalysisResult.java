@@ -21,10 +21,10 @@ public class AnalysisResult {
     public void addFileChange(FileChange change) {
         this.modifiedFiles.add(change);
         
-        // Only increment counters if there are significant changes
         // A change is significant if it's New, Deleted, or has Valid Lines > 0
-        // (If it's just Modified with 0 valid lines, it means all changes were ignored/cosmetic)
-        boolean isSignificant = change.isNewFile() || change.isDeletedFile() || change.getValidChangedLines() > 0;
+        // AND it hasn't been moved to the minor section by a semantic filter
+        boolean hasActiveFilters = change.getMatchTypes() != null && !change.getMatchTypes().isEmpty();
+        boolean isSignificant = (change.isNewFile() || change.isDeletedFile() || change.getValidChangedLines() > 0) && !hasActiveFilters;
         
         if (isSignificant) {
             this.totalFilesChanged++;

@@ -442,7 +442,7 @@
                 // Use SETTINGS_KEY instead of deleted global
                 saveSettings();
             } else {
-                const selected = Array.from(document.querySelectorAll('#repoSelectionArea input:checked')).map(i => i.value);
+                const selected = Array.from(document.querySelectorAll('.repo-checkbox:checked')).map(i => i.value);
                 if (selected.length === 0) { alert('Please select at least one repo'); return; }
                 path = selected.join(',');
             }

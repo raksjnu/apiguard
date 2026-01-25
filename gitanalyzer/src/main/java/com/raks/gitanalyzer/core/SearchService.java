@@ -191,24 +191,31 @@ public class SearchService {
 
         try {
             for (String repo : repos) {
-                File repoDir = new File(remoteTemp, repo.replace("/", "_"));
+                if (repo == null || repo.trim().isEmpty()) {
+                    System.err.println("[SearchService] Skipping empty or null repository URL.");
+                    continue;
+                }
+                
+                String cleanRepo = repo.trim();
+                File repoDir = new File(remoteTemp, cleanRepo.replace("/", "_").replace(":", "_")); // Sanitize for file system
+                
                 try {
-                    System.out.println("[SearchService] Cloning remote repo: " + repo + " to " + repoDir.getAbsolutePath());
-                    gitProvider.cloneRepository(repo, repoDir, null); // Clone default branch
+                    System.out.println("[SearchService] Cloning remote repo: " + cleanRepo + " to " + repoDir.getAbsolutePath());
+                    gitProvider.cloneRepository(cleanRepo, repoDir, null); // Clone default branch
                     
                     if (repoDir.exists() && repoDir.list() != null && repoDir.list().length > 0) {
                         System.out.println("[SearchService] Successfully cloned. Starting local search in: " + repoDir.getName());
                         List<SearchResult> repoResults = searchLocal(params, repoDir);
                         for (SearchResult r : repoResults) {
-                            r.filePath = repo + "/" + r.filePath;
+                            r.filePath = cleanRepo + "/" + r.filePath;
                         }
                         results.addAll(repoResults);
                     } else {
-                        System.err.println("[SearchService] Clone target directory is empty or missing: " + repo);
+                        System.err.println("[SearchService] Clone target directory is empty or missing: " + cleanRepo);
                     }
                 } catch (Exception e) {
-                    System.err.println("[SearchService] Failed to clone/search repo: " + repo + " - " + e.getMessage());
-                    e.printStackTrace();
+                    System.err.println("[SearchService] Failed to clone/search repo: " + cleanRepo + " - " + e.getMessage());
+                    // Continue with next repo
                 }
             }
         } finally {
