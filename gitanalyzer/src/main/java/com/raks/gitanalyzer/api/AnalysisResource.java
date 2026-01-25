@@ -103,7 +103,11 @@ public class AnalysisResource {
             boolean ignoreAttributeOrder = request.containsKey("ignoreAttributeOrder") && Boolean.TRUE.equals(request.get("ignoreAttributeOrder"));
 
             AnalyzerService service = new AnalyzerService(provider);
-            AnalysisResult result = service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, filePatterns, contentPatterns, configSourceBranch, configTargetBranch, ignoreAttributeOrder);
+            // Standalone mode: Pass empty lists for advanced filters (future enhancement if needed)
+            List<String> empty = java.util.Collections.emptyList();
+            AnalysisResult result = service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, 
+                empty, empty, empty, filePatterns, 
+                contentPatterns, configSourceBranch, configTargetBranch, ignoreAttributeOrder);
 
             return Response.ok(result).build();
         } catch (Exception e) {

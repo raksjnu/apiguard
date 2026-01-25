@@ -64,6 +64,20 @@ public class MuleBridge {
             String configTargetBranch = (String) params.get("configTargetBranch");
             boolean ignoreAttributeOrder = Boolean.TRUE.equals(params.get("ignoreAttributeOrder"));
 
+            // Parse new filters
+            List<String> includeFolders = getListParam(params, "includeFolders");
+            List<String> ignoreFolders = getListParam(params, "ignoreFolders");
+            List<String> ignoreFiles = getListParam(params, "ignoreFiles");
+            
+            // "ignorePatterns" from UI might be mapped to ignoreFiles or kept separate.
+            // For now, let's append legacy ignorePatterns to ignoreFiles to support both
+            List<String> legacyIgnore = parsePatterns(ignorePatternsStr);
+            if (ignoreFiles.isEmpty()) { 
+                ignoreFiles = legacyIgnore; 
+            } else {
+                ignoreFiles.addAll(legacyIgnore);
+            }
+
             // Extract Token and Provider
             String token = (String) params.get("gitToken");
             if (token == null || token.isBlank()) {
@@ -72,7 +86,6 @@ public class MuleBridge {
             String providerType = (String) params.get("gitProvider");
 
             // Parse patterns
-            List<String> filePatterns = parsePatterns(ignorePatternsStr);
             List<String> contentPatterns = parsePatterns(contentPatternsStr);
 
             GitProvider provider = getProvider(token, providerType);
@@ -98,7 +111,9 @@ public class MuleBridge {
             }
 
             AnalyzerService service = new AnalyzerService(provider);
-            return service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, filePatterns, contentPatterns, configSourceBranch, configTargetBranch, ignoreAttributeOrder);
+            return service.analyze(apiName, codeRepo, configRepo, sourceBranch, targetBranch, 
+                includeFolders, includeFiles, ignoreFolders, ignoreFiles, 
+                contentPatterns, configSourceBranch, configTargetBranch, ignoreAttributeOrder);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -260,6 +275,14 @@ public class MuleBridge {
         Object val = params.get(key);
         if (val instanceof List) {
             return (List<String>) val;
+        } else if (val instanceof String) {
+            // Handle comma or newline separated strings from UI
+            String s = (String) val;
+            if (s.isBlank()) return new ArrayList<>();
+            return Arrays.stream(s.split("[,\\n]"))
+                .map(String::trim)
+                .filter(str -> !str.isBlank())
+                .collect(java.util.stream.Collectors.toList());
         }
         return new ArrayList<>();
     }

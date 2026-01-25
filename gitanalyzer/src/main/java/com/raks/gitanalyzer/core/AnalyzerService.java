@@ -20,7 +20,9 @@ public class AnalyzerService {
         this.objectMapper = new ObjectMapper();
     }
 
-    public AnalysisResult analyze(String apiName, String codeRepo, String configRepo, String sourceBranch, String targetBranch, List<String> filePatterns, List<String> contentPatterns, String configSourceBranch, String configTargetBranch, boolean ignoreAttributeOrder) {
+    public AnalysisResult analyze(String apiName, String codeRepo, String configRepo, String sourceBranch, String targetBranch, 
+                                  List<String> includeFolders, List<String> includeFiles, List<String> ignoreFolders, List<String> ignoreFiles, 
+                                  List<String> contentPatterns, String configSourceBranch, String configTargetBranch, boolean ignoreAttributeOrder) {
         AnalysisResult result = new AnalysisResult();
         result.setApiName(apiName);
         result.setCodeRepo(codeRepo);
@@ -38,7 +40,14 @@ public class AnalyzerService {
             if (diffList == null) {
                 diffList = (List<Map<String, Object>>) diffMap.get("files");
             }
-            processDiffs(diffList, result, filePatterns, contentPatterns, ignoreAttributeOrder);
+            
+            // Compile patterns once
+            List<java.util.regex.Pattern> includeFolderPatterns = compilePatterns(includeFolders);
+            List<java.util.regex.Pattern> includeFilePatterns = compilePatterns(includeFiles);
+            List<java.util.regex.Pattern> ignoreFolderPatterns = compilePatterns(ignoreFolders);
+            List<java.util.regex.Pattern> ignoreFilePatterns = compilePatterns(ignoreFiles);
+
+            processDiffs(diffList, result, includeFolderPatterns, includeFilePatterns, ignoreFolderPatterns, ignoreFilePatterns, contentPatterns, ignoreAttributeOrder);
 
             // 3. Config Repo Analysis (Optional)
             if (configRepo != null && !configRepo.isEmpty()) {
@@ -53,7 +62,7 @@ public class AnalyzerService {
                     if (configDiffList == null) {
                         configDiffList = (List<Map<String, Object>>) configDiff.get("files");
                     }
-                    processConfigDiffs(configDiffList, result, filePatterns, contentPatterns, ignoreAttributeOrder);
+                    processConfigDiffs(configDiffList, result, includeFolderPatterns, includeFilePatterns, ignoreFolderPatterns, ignoreFilePatterns, contentPatterns, ignoreAttributeOrder);
                 } catch (Exception e) {
                     // Suppress stack trace for Config failures (e.g. 404 Ref Not Found)
                     System.out.println("Warning: Config Repo analysis failed: " + e.getMessage() + ". Proceeding with Code Repo analysis only.");
@@ -68,7 +77,10 @@ public class AnalyzerService {
         return result;
     }
 
-    private void processDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns, List<String> contentPatterns, boolean ignoreAttributeOrder) {
+    private void processDiffs(List<Map<String, Object>> diffs, AnalysisResult result, 
+                             List<java.util.regex.Pattern> includeFolderPatterns, List<java.util.regex.Pattern> includeFilePatterns,
+                             List<java.util.regex.Pattern> ignoreFolderPatterns, List<java.util.regex.Pattern> ignoreFilePatterns,
+                             List<String> contentPatterns, boolean ignoreAttributeOrder) {
         if (diffs == null) return;
 
         for (Map<String, Object> diff : diffs) {
@@ -77,10 +89,26 @@ public class AnalyzerService {
             String oldPath = (String) diff.getOrDefault("old_path", diff.get("previous_filename"));
             String diffContent = (String) diff.getOrDefault("diff", diff.get("patch"));
             
-            // Check File Patterns (Exclusion)
-            if (shouldIgnore(newPath, filePatterns) || (oldPath != null && shouldIgnore(oldPath, filePatterns))) {
-                result.addIgnoredFile(newPath);
+            // 1. Exclusion Logic (Priority)
+            String fileName = new java.io.File(newPath).getName();
+            
+            // If it matches IGNORE folders or files -> Skip (Ignored)
+            if (matchesAny(newPath, ignoreFolderPatterns) || matchesAny(fileName, ignoreFilePatterns)) {
+                result.addIgnoredFile(newPath); // Count as ignored/skipped
                 continue;
+            }
+
+            // 2. Inclusion Logic
+            // If include lists are present, file MUST match at least one
+            boolean hasIncludes = (!includeFolderPatterns.isEmpty() || !includeFilePatterns.isEmpty());
+            if (hasIncludes) {
+                boolean matchesFolder = !includeFolderPatterns.isEmpty() && matchesAny(newPath, includeFolderPatterns);
+                boolean matchesFile = !includeFilePatterns.isEmpty() && matchesAny(fileName, includeFilePatterns);
+                
+                if (!matchesFolder && !matchesFile) {
+                    result.addIgnoredFile(newPath); // Count as ignored/skipped
+                    continue;
+                }
             }
 
             FileChange change = new FileChange();
@@ -128,16 +156,34 @@ public class AnalyzerService {
         }
     }
 
-    private void processConfigDiffs(List<Map<String, Object>> diffs, AnalysisResult result, List<String> filePatterns, List<String> contentPatterns, boolean ignoreAttributeOrder) {
+    private void processConfigDiffs(List<Map<String, Object>> diffs, AnalysisResult result, 
+                                   List<java.util.regex.Pattern> includeFolderPatterns, List<java.util.regex.Pattern> includeFilePatterns,
+                                   List<java.util.regex.Pattern> ignoreFolderPatterns, List<java.util.regex.Pattern> ignoreFilePatterns,
+                                   List<String> contentPatterns, boolean ignoreAttributeOrder) {
         if (diffs == null) return;
         for (Map<String, Object> diff : diffs) {
             String newPath = (String) diff.getOrDefault("new_path", diff.get("filename"));
             String oldPath = (String) diff.getOrDefault("old_path", diff.get("previous_filename"));
             String diffContent = (String) diff.getOrDefault("diff", diff.get("patch"));
             
-            if (shouldIgnore(newPath, filePatterns) || (oldPath != null && shouldIgnore(oldPath, filePatterns))) {
+            // 1. Exclusion Logic (Priority)
+            String fileName = new java.io.File(newPath).getName();
+            
+            if (matchesAny(newPath, ignoreFolderPatterns) || matchesAny(fileName, ignoreFilePatterns)) {
                 result.addIgnoredFile(newPath); 
                 continue;
+            }
+
+            // 2. Inclusion Logic
+            boolean hasIncludes = (!includeFolderPatterns.isEmpty() || !includeFilePatterns.isEmpty());
+            if (hasIncludes) {
+                boolean matchesFolder = !includeFolderPatterns.isEmpty() && matchesAny(newPath, includeFolderPatterns);
+                boolean matchesFile = !includeFilePatterns.isEmpty() && matchesAny(fileName, includeFilePatterns);
+                
+                if (!matchesFolder && !matchesFile) {
+                    result.addIgnoredFile(newPath);
+                    continue;
+                }
             }
             
             FileChange change = new FileChange();
@@ -246,7 +292,7 @@ public class AnalyzerService {
         // Count Plus
         for (String p : plusLines) {
             boolean isSmartXml = matchPool.remove(p);
-            boolean isContentFiltered = isIgnored(p, patterns);
+            boolean isContentFiltered = isContentIgnored(p, patterns);
 
             if (isSmartXml || isContentFiltered) {
                 ignored++;
@@ -267,7 +313,7 @@ public class AnalyzerService {
                  plusCanonCountsForMinus.put(canon, plusCanonCountsForMinus.get(canon) - 1);
              }
              
-             boolean isContentFiltered = isIgnored(m, patterns);
+             boolean isContentFiltered = isContentIgnored(m, patterns);
 
              if (isSmartXml || isContentFiltered) {
                  ignored++;
@@ -286,17 +332,9 @@ public class AnalyzerService {
         change.setSeverity(calculateSeverity(valid));
     }
 
-
-    // Add back shouldIgnore
-    private boolean shouldIgnore(String path, List<String> patterns) {
-         if (path == null) return false;
-         return isIgnored(path, patterns);
-    }
-
-    private boolean isIgnored(String content, List<String> patterns) {
+    private boolean isContentIgnored(String content, List<String> patterns) {
         if (patterns == null || patterns.isEmpty()) return false;
         for (String pattern : patterns) {
-            // Simple contains check or Regex? Let's support regex if it starts with regex:
             if (pattern.startsWith("regex:")) {
                  if (content.matches(pattern.substring(6))) return true;
             } else {
@@ -305,6 +343,8 @@ public class AnalyzerService {
         }
         return false;
     }
+
+
 
     private String calculateSeverity(int lines) {
         if (lines == 0) return "NONE"; // All ignored
@@ -315,5 +355,30 @@ public class AnalyzerService {
         if (lines < lowThreshold) return "LOW";
         if (lines < mediumThreshold) return "MEDIUM";
         return "HIGH";
+    }
+
+    private List<java.util.regex.Pattern> compilePatterns(List<String> patterns) {
+        List<java.util.regex.Pattern> compiled = new ArrayList<>();
+        if (patterns == null) return compiled;
+        for (String p : patterns) {
+            if (p == null || p.isBlank()) continue;
+            // Simple glob-to-regex conversion: * -> .*, ? -> .
+            String regex = p.trim()
+                .replace(".", "\\.")
+                .replace("*", ".*")
+                .replace("?", ".");
+            compiled.add(java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.CASE_INSENSITIVE));
+        }
+        return compiled;
+    }
+
+    private boolean matchesAny(String text, List<java.util.regex.Pattern> patterns) {
+        if (text == null || patterns == null || patterns.isEmpty()) return false;
+        String normalized = text.replace("\\", "/");
+        for (java.util.regex.Pattern p : patterns) {
+            // Check if matches partial path segment
+            if (p.matcher(normalized).find()) return true;
+        }
+        return false;
     }
 }
