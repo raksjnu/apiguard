@@ -61,8 +61,14 @@ if exist "%SCRIPT_DIR%..\aegis" (
     REM Copy aegis JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying aegis FAT JAR to lib folder...
-    if exist "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0-jar-with-raks.jar" (
-        xcopy /Y /Q "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\aegis-1.0.0.jar*" >nul 2>&1
+    REM Copy aegis JAR to apiguardwrapper/lib
+    echo.
+    echo [INFO] Copying aegis FAT JAR to lib folder...
+    if exist "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0.jar" "%SCRIPT_DIR%lib\aegis-1.0.0.jar" >nul
+        echo [INFO] Obfuscated aegis JAR copied successfully
+    ) else if exist "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0.jar" (
+        xcopy /Y /Q "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0.jar" "%SCRIPT_DIR%lib\aegis-1.0.0.jar*" >nul 2>&1
         echo [INFO] aegis fat JAR copied successfully to lib\aegis-1.0.0.jar
     ) else (
         echo [WARN] aegis fat JAR not found in target folder!

@@ -18,12 +18,12 @@ REM --------------------------
 echo Starting API Comparison Tool Web GUI...
 echo.
 
-if not exist "target\apiforge-1.0.0-jar-with-raks.jar" (
+if not exist "target\apiforge-1.0.0.jar" (
     echo [INFO] JAR not found. Building...
     call mvn clean package -DskipTests
 )
 
 echo [INFO] Launching JAR in GUI mode...
-java -jar target\apiforge-1.0.0-jar-with-raks.jar --gui
+java -jar target\apiforge-1.0.0.jar --gui
 
 pause

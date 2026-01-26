@@ -66,6 +66,7 @@ public class MuleBridge {
 
             // Parse new filters
             List<String> includeFolders = getListParam(params, "includeFolders");
+            List<String> includeFiles = getListParam(params, "includeFiles");
             List<String> ignoreFolders = getListParam(params, "ignoreFolders");
             List<String> ignoreFiles = getListParam(params, "ignoreFiles");
             

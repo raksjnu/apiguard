@@ -54,11 +54,11 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
     REM Copy raksanalyzer JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying raksanalyzer JAR to lib folder...
-    if exist "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" (
-        xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1
-        echo [INFO] raksanalyzer-1.0.0.jar copied successfully
+    if exist "%SCRIPT_DIR%..\raksanalyzer\target\raksanalyzer-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\raksanalyzer\target\raksanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul
+        echo [INFO] raksanalyzer JAR copied successfully
     ) else (
-        echo [WARN] raksanalyzer JAR not found in .m2 repository
+        echo [WARN] raksanalyzer JAR not found
     )
 ) else (
     echo [ERROR] RaksAnalyzer project not found at ..\raksanalyzer
@@ -84,11 +84,11 @@ if exist "%SCRIPT_DIR%..\apidiscovery" (
     REM Copy apidiscovery JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying apidiscovery JAR to lib folder...
-    if exist "%USERPROFILE%\.m2\repository\com\raks\apidiscovery\1.0.0\apidiscovery-1.0.0.jar" (
-        xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\apidiscovery\1.0.0\apidiscovery-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1
-        echo [INFO] apidiscovery-1.0.0.jar copied successfully
+    if exist "%SCRIPT_DIR%..\apidiscovery\target\apidiscovery-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\apidiscovery\target\apidiscovery-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul
+        echo [INFO] apidiscovery JAR copied successfully
     ) else (
-        echo [WARN] apidiscovery JAR not found in .m2 repository
+        echo [WARN] apidiscovery JAR not found
     )
 ) else (
     echo [ERROR] ApiDiscovery project not found at ..\apidiscovery
@@ -114,11 +114,11 @@ if exist "%SCRIPT_DIR%..\apiforge" (
     REM Copy apiforge JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying apiforge JAR to lib folder...
-    if exist "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0-jar-with-raks.jar" (
-        copy /Y "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\apiforge-1.0.0.jar" >nul
+    if exist "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul
         echo [INFO] apiforge JAR copied successfully
     ) else (
-        echo [WARN] apiforge JAR not found in target
+        echo [WARN] apiforge JAR not found
     )
 
     REM Sync Web Resources to apiguardwrapper
@@ -133,7 +133,9 @@ if exist "%SCRIPT_DIR%..\apiforge" (
     REM Sync Config and Test Data
     copy /Y "%SCRIPT_DIR%..\apiforge\src\main\resources\config.yaml" "%SCRIPT_DIR%src\main\resources\web\apiforge\" >nul
     if not exist "%SCRIPT_DIR%src\main\resources\web\apiforge\testData" mkdir "%SCRIPT_DIR%src\main\resources\web\apiforge\testData"
-    xcopy /Y /S /E "%SCRIPT_DIR%..\apiforge\src\main\resources\testData\*" "%SCRIPT_DIR%src\main\resources\web\apiforge\testData\" >nul
+    if exist "%SCRIPT_DIR%..\apiforge\src\main\resources\testData\*" (
+        xcopy /Y /S /E "%SCRIPT_DIR%..\apiforge\src\main\resources\testData\*" "%SCRIPT_DIR%src\main\resources\web\apiforge\testData\" >nul
+    )
 
 ) else (
     echo [ERROR] API Forge project not found at ..\apiforge
@@ -160,10 +162,10 @@ if exist "%SCRIPT_DIR%..\gitanalyzer" (
     echo.
     echo [INFO] Copying gitanalyzer JAR to lib folder...
     if exist "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" (
-        copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\gitanalyzer-1.0.0.jar" >nul
-        echo [INFO] gitanalyzer-1.0.0.jar copied successfully
+        copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul
+        echo [INFO] gitanalyzer JAR copied successfully
     ) else (
-        echo [WARN] gitanalyzer JAR not found in target
+        echo [WARN] gitanalyzer JAR not found
     )
 ) else (
     echo [ERROR] GitAnalyzer project not found at ..\gitanalyzer
@@ -189,14 +191,11 @@ if exist "%SCRIPT_DIR%..\aegis" (
     REM Copy aegis JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying aegis JAR to lib folder...
-    if exist "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0-jar-with-raks.jar" (
-        copy /Y "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\aegis-1.0.0.jar" >nul
-        echo [INFO] aegis-1.0.0.jar copied successfully
-    ) else if exist "%USERPROFILE%\.m2\repository\com\raks\aegis\1.0.0\aegis-1.0.0.jar" (
-        xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\aegis\1.0.0\aegis-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1
-        echo [INFO] aegis-1.0.0.jar copied successfully
+    if exist "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\aegis\target\aegis-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul
+        echo [INFO] aegis JAR copied successfully
     ) else (
-        echo [WARN] Aegis JAR not found
+        echo [WARN] aegis JAR not found
     )
 
     REM Copy Web Resources

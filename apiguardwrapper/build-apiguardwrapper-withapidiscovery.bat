@@ -51,15 +51,15 @@ if exist "%SCRIPT_DIR%..\apidiscovery" (
     echo.
     echo [INFO] Copying API Discovery JAR to lib folder...
     
-    if exist "%SCRIPT_DIR%..\apidiscovery\target\apidiscovery-1.0.0-with-raks.jar" (
-        copy /Y "%SCRIPT_DIR%..\apidiscovery\target\apidiscovery-1.0.0-with-raks.jar" "%SCRIPT_DIR%lib\apidiscovery-1.0.0.jar" >nul
+    if exist "%SCRIPT_DIR%..\apidiscovery\target\apidiscovery-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\apidiscovery\target\apidiscovery-1.0.0.jar" "%SCRIPT_DIR%lib\apidiscovery-1.0.0.jar" >nul
         if %ERRORLEVEL% EQU 0 (
             echo [INFO] apidiscovery-1.0.0.jar copied successfully
         ) else (
             echo [WARN] Failed to copy apidiscovery JAR
         )
     ) else (
-        echo [WARN] apidiscovery-1.0.0-with-raks.jar not found in target folder
+        echo [WARN] apidiscovery-1.0.0.jar not found in target folder
     )
 ) else (
     echo [ERROR] API Discovery project not found at ..\apidiscovery

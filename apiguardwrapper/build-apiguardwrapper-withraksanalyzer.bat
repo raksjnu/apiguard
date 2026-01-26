@@ -50,7 +50,15 @@ if exist "%SCRIPT_DIR%..\raksanalyzer" (
     REM Copy raksanalyzer JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying raksanalyzer JAR to lib folder...
-    cmd /c "if exist "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" (xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1 && echo [INFO] raksanalyzer-1.0.0.jar copied successfully || echo [WARN] Failed to copy raksanalyzer JAR) else (echo [WARN] raksanalyzer JAR not found in .m2 repository)"
+    if exist "%SCRIPT_DIR%..\raksanalyzer\target\raksanalyzer-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\raksanalyzer\target\raksanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\raksanalyzer-1.0.0.jar" >nul
+        echo [INFO] Obfuscated raksanalyzer JAR copied successfully
+    ) else if exist "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" (
+        xcopy /Y /Q "%USERPROFILE%\.m2\repository\com\raks\raksanalyzer\1.0.0\raksanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\" >nul 2>&1
+        echo [WARN] Obfuscated JAR not found. Using standard JAR from .m2
+    ) else (
+        echo [WARN] raksanalyzer JAR not found
+    )
 ) else (
     echo [ERROR] RaksAnalyzer project not found at ..\raksanalyzer
     pause

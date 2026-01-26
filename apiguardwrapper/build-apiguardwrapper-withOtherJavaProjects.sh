@@ -53,11 +53,11 @@ if [ -d "$SCRIPT_DIR/../raksanalyzer" ]; then
     # Copy raksanalyzer JAR to apiguardwrapper/lib
     echo ""
     echo "[INFO] Copying raksanalyzer JAR to lib folder..."
-    RAKS_JAR="$HOME/.m2/repository/com/raks/raksanalyzer/1.0.0/raksanalyzer-1.0.0.jar"
-    if [ -f "$RAKS_JAR" ]; then
-        cp "$RAKS_JAR" "$SCRIPT_DIR/lib/raksanalyzer-1.0.0.jar"
+    if [ -f "$SCRIPT_DIR/../raksanalyzer/target/raksanalyzer-1.0.0.jar" ]; then
+        cp "$SCRIPT_DIR/../raksanalyzer/target/raksanalyzer-1.0.0.jar" "$SCRIPT_DIR/lib/"
+        echo "[INFO] raksanalyzer JAR copied successfully"
     else
-        echo "[WARN] raksanalyzer JAR not found in .m2 repository"
+        echo "[WARN] raksanalyzer JAR not found"
     fi
 else
     echo "[ERROR] RaksAnalyzer project not found at ../raksanalyzer"
@@ -81,9 +81,11 @@ if [ -d "$SCRIPT_DIR/../apidiscovery" ]; then
     # Copy JAR to apiguardwrapper/lib
     echo ""
     echo "[INFO] Copying apidiscovery JAR to lib folder..."
-    APIDISC_JAR="$HOME/.m2/repository/com/raks/apidiscovery/1.0.0/apidiscovery-1.0.0.jar"
-    if [ -f "$APIDISC_JAR" ]; then
-        cp "$APIDISC_JAR" "$SCRIPT_DIR/lib/apidiscovery-1.0.0.jar"
+    if [ -f "$SCRIPT_DIR/../apidiscovery/target/apidiscovery-1.0.0.jar" ]; then
+        cp "$SCRIPT_DIR/../apidiscovery/target/apidiscovery-1.0.0.jar" "$SCRIPT_DIR/lib/"
+        echo "[INFO] apidiscovery JAR copied successfully"
+    else
+        echo "[WARN] apidiscovery JAR not found"
     fi
 else
     echo "[ERROR] ApiDiscovery project not found at ../apidiscovery"
@@ -107,9 +109,11 @@ if [ -d "$SCRIPT_DIR/../apiforge" ]; then
     # Copy JAR to apiguardwrapper/lib
     echo ""
     echo "[INFO] Copying apiforge JAR to lib folder..."
-    APIFORGE_JAR="$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0-jar-with-raks.jar"
-    if [ -f "$APIFORGE_JAR" ]; then
-        cp "$APIFORGE_JAR" "$SCRIPT_DIR/lib/apiforge-1.0.0.jar"
+    if [ -f "$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0.jar" ]; then
+        cp "$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0.jar" "$SCRIPT_DIR/lib/"
+        echo "[INFO] apiforge JAR copied successfully"
+    else
+        echo "[WARN] apiforge JAR not found"
     fi
 
     # Sync Web Resources
@@ -147,7 +151,7 @@ if [ -d "$SCRIPT_DIR/../aegis" ]; then
     cd "$SCRIPT_DIR/../aegis"
     mvn clean install -DskipTests
     if [ $? -eq 0 ]; then
-        cp "$SCRIPT_DIR/../aegis/target/aegis-1.0.0-jar-with-raks.jar" "$SCRIPT_DIR/lib/aegis-1.0.0.jar"
+        cp "$SCRIPT_DIR/../aegis/target/aegis-1.0.0.jar" "$SCRIPT_DIR/lib/"
         echo "[INFO] Synchronizing Aegis Web Resources..."
         mkdir -p "$SCRIPT_DIR/src/main/resources/web/aegis"
         cp -r "$SCRIPT_DIR/../aegis/src/main/resources/web/aegis/"* "$SCRIPT_DIR/src/main/resources/web/aegis/"

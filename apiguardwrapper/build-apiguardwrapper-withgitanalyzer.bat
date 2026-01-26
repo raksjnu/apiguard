@@ -51,14 +51,15 @@ echo ============================================================
     REM Copy gitanalyzer JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying gitanalyzer JAR to lib folder...
+    REM Copy gitanalyzer JAR to apiguardwrapper/lib
+    echo.
+    echo [INFO] Copying gitanalyzer JAR to lib folder...
     if exist "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" (
         copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\gitanalyzer-1.0.0.jar" >nul
-        if errorlevel 1 (
-            echo [ERROR] Failed to copy gitanalyzer JAR
-            pause
-            exit /b 1
-        )
-        echo [INFO] gitanalyzer-1.0.0.jar copied successfully
+        echo [INFO] Obfuscated gitanalyzer JAR copied successfully
+    ) else if exist "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" (
+        copy /Y "%SCRIPT_DIR%..\gitanalyzer\target\gitanalyzer-1.0.0.jar" "%SCRIPT_DIR%lib\gitanalyzer-1.0.0.jar" >nul
+        echo [WARN] Obfuscated JAR not found. Using standard JAR.
     ) else (
         echo [ERROR] gitanalyzer JAR not found in target
         pause

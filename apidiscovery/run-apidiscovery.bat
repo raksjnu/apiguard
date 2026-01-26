@@ -25,17 +25,16 @@ REM Wait a moment for port to be released
 timeout /t 2 /nobreak >nul
 
 REM Check if JAR exists
-if not exist "target\apidiscovery-1.0.0-with-raks.jar" (
-    echo [ERROR] JAR file not found. Please run 'mvn clean package' first.
-    pause
-    exit /b 1
+if not exist "target\apidiscovery-1.0.0.jar" (
+    echo [INFO] JAR not found. Building...
+    call mvn clean package -DskipTests
 )
 
 REM Start the application
 echo.
 echo [INFO] Starting API Discovery Tool...
 echo.
-java -jar target\apidiscovery-1.0.0-with-raks.jar
+java -jar target\apidiscovery-1.0.0.jar
 
 REM If the application exits, pause to see any error messages
 if errorlevel 1 (

@@ -43,7 +43,7 @@ if %ERRORLEVEL% NEQ 0 (
 echo Aegis JAR built successfully
 
 echo [3/3] Copying JAR to wrapper and rebuilding...
-copy /Y "target\aegis-1.0.0-jar-with-raks.jar" "..\apiguardwrapper\lib\aegis-1.0.0.jar"
+copy /Y "target\aegis-1.0.0.jar" "..\apiguardwrapper\lib\aegis-1.0.0.jar"
 echo JAR copied to wrapper/lib as aegis-1.0.0.jar
 
 cd ..\apiguardwrapper

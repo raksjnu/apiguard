@@ -43,7 +43,7 @@ else
 fi
 
 # Check if JAR exists
-if [ ! -f "target/apidiscovery-1.0.0-with-raks.jar" ]; then
+if [ ! -f "target/apidiscovery-1.0.0.jar" ]; then
     echo "[ERROR] JAR file not found. Please run 'mvn clean package' first."
     exit 1
 fi
@@ -52,7 +52,7 @@ fi
 echo ""
 echo "[INFO] Starting API Discovery Tool..."
 echo ""
-java -jar "target/apidiscovery-1.0.0-with-raks.jar"
+java -jar "target/apidiscovery-1.0.0.jar"
 
 # Check exit code
 if [ $? -ne 0 ]; then

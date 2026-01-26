@@ -36,7 +36,7 @@ echo "============================================================"
 echo "  BUILD SUCCESSFUL!"
 echo "============================================================"
 echo ""
-echo "Aegis JAR: $SCRIPT_DIR/target/aegis-1.0.0-jar-with-raks.jar"
-cp target/aegis-1.0.0-jar-with-raks.jar aegis.jar
+echo "Aegis JAR: $SCRIPT_DIR/target/aegis-1.0.0.jar"
+cp target/aegis-1.0.0.jar aegis.jar
 echo "Copied to aegis.jar"
 echo ""

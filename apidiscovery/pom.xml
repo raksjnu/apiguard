@@ -86,7 +86,6 @@
                             <mainClass>com.raks.apidiscovery.ApiDiscoveryTool</mainClass>
                         </manifest>
                     </archive>
-                    <finalName>apidiscovery-1.0.0</finalName>
                 </configuration>
             </plugin>
             <!-- Build readable JAR with dependencies for standalone demo -->
@@ -112,7 +111,7 @@
                     <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
                     </descriptorRefs>
-                    <finalName>apidiscovery-1.0.0-with-raks</finalName>
+                    <finalName>apidiscovery-1.0.0</finalName>
                     <appendAssemblyId>false</appendAssemblyId>
                 </configuration>
             </plugin>

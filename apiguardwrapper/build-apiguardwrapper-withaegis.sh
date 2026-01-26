@@ -44,8 +44,8 @@ if [ -d "$SCRIPT_DIR/../aegis" ]; then
     # Copy aegis JAR
     echo
     echo "[INFO] Copying aegis FAT JAR to lib folder..."
-    if [ -f "$SCRIPT_DIR/../aegis/target/aegis-1.0.0-jar-with-raks.jar" ]; then
-        cp -f "$SCRIPT_DIR/../aegis/target/aegis-1.0.0-jar-with-raks.jar" "$SCRIPT_DIR/lib/aegis-1.0.0.jar"
+    if [ -f "$SCRIPT_DIR/../aegis/target/aegis-1.0.0.jar" ]; then
+        cp -f "$SCRIPT_DIR/../aegis/target/aegis-1.0.0.jar" "$SCRIPT_DIR/lib/aegis-1.0.0.jar"
         echo "[INFO] aegis fat JAR copied successfully."
     elif [ -f "$HOME/.m2/repository/com/raks/aegis/1.0.0/aegis-1.0.0.jar" ]; then
         cp -f "$HOME/.m2/repository/com/raks/aegis/1.0.0/aegis-1.0.0.jar" "$SCRIPT_DIR/lib/"

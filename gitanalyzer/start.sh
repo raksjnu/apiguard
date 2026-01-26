@@ -30,12 +30,10 @@ echo "[INFO] Starting GitAnalyzer..."
 echo "[INFO] APP_HOME: $APP_HOME"
 
 JAR_FILE=""
-if [ -f "target/gitanalyzer-1.0.0-shaded.jar" ]; then
-    JAR_FILE="target/gitanalyzer-1.0.0-shaded.jar"
-elif [ -f "target/gitanalyzer-1.0.0.jar" ]; then
+if [ -f "target/gitanalyzer-1.0.0.jar" ]; then
     JAR_FILE="target/gitanalyzer-1.0.0.jar"
 else
-    echo "[ERROR] JAR not found in target/. Please run ./build.sh first."
+    echo -e "${RED}[ERROR] JAR not found. Please run build.sh first.${NC}"
     exit 1
 fi
 

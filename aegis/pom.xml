@@ -195,7 +195,7 @@
             <artifactId>maven-assembly-plugin</artifactId>
             <version>3.6.0</version>
             <configuration>
-                <finalName>${project.artifactId}-${project.version}-jar-with-raks</finalName>
+                <finalName>${project.artifactId}-${project.version}-shaded</finalName>
                 <appendAssemblyId>false</appendAssemblyId>
                 <descriptorRefs>
                     <descriptorRef>jar-with-dependencies</descriptorRef>
@@ -227,25 +227,37 @@
                 </executions>
                 <configuration>
                     <obfuscate>true</obfuscate>
-                    <injar>${project.build.finalName}.jar</injar>
-                    <outjar>${project.build.finalName}-n.jar</outjar>
+                    <injar>${project.artifactId}-${project.version}-shaded.jar</injar>
+                    <outjar>${project.artifactId}-${project.version}.jar</outjar>
                     <outputDirectory>${project.build.directory}</outputDirectory>
                     <options>
                         <option>-allowaccessmodification</option>
+                        <option>-dontoptimize</option>
+                        <option>-ignorewarnings</option>
+                        <!-- BROAD STRATEGY: Keep everything except com.raks package subtree -->
+                        <option>-keep class !com.raks.** { *; }</option>
+
+                        <!-- SPECIFIC RAKS KEEPS: Keep entry points and public members inside com.raks -->
                         <option>-keep public class com.raks.aegis.AegisMain { public static void main(java.lang.String[]); }</option>
-                         <!-- Keep LicenseValidator validate method -->
+                        <option>-keep public class com.raks.aegis.** { *; }</option>
                         <option>-keep class com.raks.aegis.license.LicenseValidator { public static void validate(java.lang.String); }</option>
+
                         <option>-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod</option>
-                        <option>-dontwarn com.fasterxml.jackson.**</option>
-                        <option>-dontwarn org.apache.**</option>
-                        <option>-dontwarn ch.qos.logback.**</option>
-                        <option>-dontwarn javax.annotation.**</option>
+                        <option>-dontwarn **</option>
+                        <option>-dontnote **</option>
                     </options>
                     <libs>
                         <lib>${java.home}/jmods/java.base.jmod</lib>
                         <lib>${java.home}/jmods/java.desktop.jmod</lib>
                         <lib>${java.home}/jmods/java.logging.jmod</lib>
                         <lib>${java.home}/jmods/java.xml.jmod</lib>
+                        <lib>${java.home}/jmods/java.naming.jmod</lib>
+                        <lib>${java.home}/jmods/java.management.jmod</lib>
+                        <lib>${java.home}/jmods/java.security.jgss.jmod</lib>
+                        <lib>${java.home}/jmods/java.instrument.jmod</lib>
+                        <lib>${java.home}/jmods/java.sql.jmod</lib>
+                        <lib>${java.home}/jmods/java.scripting.jmod</lib>
+                        <lib>${java.home}/jmods/java.net.http.jmod</lib>
                     </libs>
                 </configuration>
             </plugin>

@@ -9,7 +9,7 @@ echo "╚═══════════════════════�
 echo ""
 
 # Resolve JAR file path - prioritize fat JAR in target
-IF_TARGET_JAR="target/aegis-1.0.0-jar-with-raks.jar"
+IF_TARGET_JAR="target/aegis-1.0.0.jar"
 IF_ROOT_JAR="aegis.jar"
 
 if [ -f "$IF_TARGET_JAR" ]; then

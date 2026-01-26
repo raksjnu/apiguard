@@ -23,9 +23,7 @@ set "APP_HOME=%~dp0."
 echo [INFO] Starting GitAnalyzer...
 echo [INFO] APP_HOME: %APP_HOME%
 
-if exist "target\gitanalyzer-1.0.0-shaded.jar" (
-    set "JAR_FILE=target\gitanalyzer-1.0.0-shaded.jar"
-) else if exist "target\gitanalyzer-1.0.0.jar" (
+if exist "target\gitanalyzer-1.0.0.jar" (
     set "JAR_FILE=target\gitanalyzer-1.0.0.jar"
 ) else (
     echo [ERROR] JAR not found. Please run build.bat first.

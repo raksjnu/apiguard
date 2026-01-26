@@ -48,8 +48,8 @@ if [ -d "$SCRIPT_DIR/../apiforge" ]; then
     # Copy apiforge JAR to apiguardwrapper/lib
     echo ""
     echo "[INFO] Copying apiforge JAR to lib folder..."
-    if [ -f "$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0-jar-with-raks.jar" ]; then
-        cp "$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0-jar-with-raks.jar" "$SCRIPT_DIR/lib/apiforge-1.0.0.jar"
+    if [ -f "$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0.jar" ]; then
+        cp "$SCRIPT_DIR/../apiforge/target/apiforge-1.0.0.jar" "$SCRIPT_DIR/lib/apiforge-1.0.0.jar"
         echo "[INFO] apiforge JAR copied successfully"
     else
         echo "[WARN] apiforge JAR not found in target"

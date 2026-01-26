@@ -50,7 +50,7 @@ if exist "%SCRIPT_DIR%..\apiforge" (
     REM Copy apiforge JAR to apiguardwrapper/lib
     echo.
     echo [INFO] Copying apiforge JAR to lib folder...
-    cmd /c "if exist "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0-jar-with-raks.jar" (copy /Y "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0-jar-with-raks.jar" "%SCRIPT_DIR%lib\apiforge-1.0.0.jar" >nul && echo [INFO] apiforge JAR copied successfully || echo [WARN] Failed to copy apiforge JAR) else (echo [WARN] apiforge JAR not found in target)"
+    cmd /c "if exist "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0.jar" (copy /Y "%SCRIPT_DIR%..\apiforge\target\apiforge-1.0.0.jar" "%SCRIPT_DIR%lib\apiforge-1.0.0.jar" >nul && echo [INFO] apiforge JAR copied successfully || echo [WARN] Failed to copy apiforge JAR) else (echo [WARN] apiforge JAR not found in target)"
 
     REM Sync Web Resources to apiguardwrapper
     echo.

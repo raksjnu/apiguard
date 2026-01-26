@@ -13,15 +13,15 @@ echo ============================================================
 echo.
 
 REM Check if JAR exists
-if not exist "target\aegis-1.0.0-jar-with-raks.jar" (
-    echo ERROR: JAR file not found: target\aegis-1.0.0-jar-with-raks.jar
+if not exist "target\aegis-1.0.0.jar" (
+    echo ERROR: JAR file not found: target\aegis-1.0.0.jar
     echo Please run: mvn clean install -DskipTests
     echo.
     pause
     exit /b 1
 )
 
-set "JAR_FILE=target\aegis-1.0.0-jar-with-raks.jar"
+set "JAR_FILE=target\aegis-1.0.0.jar"
 
 REM Set default port if not specified
 if "%AEGIS_PORT%"=="" set AEGIS_PORT=8080

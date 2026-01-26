@@ -34,18 +34,39 @@
 
     <!-- REST: POST /api/orders (Create Order) -->
     <flow name="rest-create-order">
-        <http:listener config-ref="HTTP_Listener_config" path="/api/orders" allowedMethods="POST"/>
+        <http:listener config-ref="HTTP_Listener_config" path="/api/orders" allowedMethods="POST">
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+            </http:error-response>
+        </http:listener>
+        <logger level="INFO" message="REST CreateOrder request received. Headers: #[attributes.headers]"/>
         <http:basic-security-filter realm="mule-realm" />
-        <logger level="INFO" message="REST CreateOrder called"/>
+        <logger level="INFO" message="REST CreateOrder authentication successful for user: #[attributes.securityContext.authentication.principal.username default 'unknown']"/>
         <set-payload value="#[output application/json --- {orderNumber:'ORD-20260118-001',status:'SUCCESS',message:'Order created successfully',timestamp:now()}]" mimeType="application/json"/>
+        <error-handler>
+            <on-error-continue type="HTTP:BASIC_AUTHENTICATION" logException="true">
+                <set-variable variableName="httpStatus" value="401"/>
+                <set-payload value="#[output application/json --- {error: 'Authentication Failed', message: error.description}]"/>
+            </on-error-continue>
+        </error-handler>
     </flow>
 
     <!-- REST: GET /api/orders/{orderNumber} (Get Order) -->
     <flow name="rest-get-order">
-        <http:listener config-ref="HTTP_Listener_config" path="/api/orders/*" allowedMethods="GET"/>
+        <http:listener config-ref="HTTP_Listener_config" path="/api/orders/*" allowedMethods="GET">
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+            </http:error-response>
+        </http:listener>
         <http:basic-security-filter realm="mule-realm" />
         <logger level="INFO" message="REST GetOrder called"/>
         <set-payload value="#[output application/json --- {orderNumber:'ORD-20260118-001',customerName:'John Doe',customerEmail:'john.doe@example.com',orderDate:'2026-01-18',productName:'Widget Pro',quantity:5,totalAmount:249.99,status:'CONFIRMED',timestamp:now()}]" mimeType="application/json"/>
+        <error-handler>
+            <on-error-continue type="HTTP:BASIC_AUTHENTICATION" logException="true">
+                <set-variable variableName="httpStatus" value="401"/>
+                <set-payload value="#[output application/json --- {error: 'Authentication Failed', message: error.description}]"/>
+            </on-error-continue>
+        </error-handler>
     </flow>
 
     <!-- ========================================== -->
@@ -54,9 +75,14 @@
 
     <!-- SOAP: Main Endpoint -->
     <flow name="soap-orderservice-main">
-        <http:listener config-ref="HTTP_Listener_config" path="/soap/orderservice" allowedMethods="POST"/>
+        <http:listener config-ref="HTTP_Listener_config" path="/soap/orderservice" allowedMethods="POST">
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+            </http:error-response>
+        </http:listener>
+        <logger level="INFO" message="SOAP POST request received. Headers: #[attributes.headers]"/>
         <http:basic-security-filter realm="mule-realm" />
-        <logger level="INFO" message="SOAP request received"/>
+        <logger level="INFO" message="SOAP authentication successful for user: #[attributes.securityContext.authentication.principal.username default 'unknown']"/>
         <choice>
             <!-- Check presence of XML element safely -->
             <when expression="#[write(payload, 'application/xml') contains 'CreateOrderRequest']">
@@ -71,9 +97,15 @@
                 <set-payload value='&lt;soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"&gt;&lt;soap:Body&gt;&lt;soap:Fault&gt;&lt;faultcode&gt;soap:Client&lt;/faultcode&gt;&lt;faultstring&gt;Unknown Operation&lt;/faultstring&gt;&lt;/soap:Fault&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;' mimeType="text/xml"/>
             </otherwise>
         </choice>
+        <error-handler>
+            <on-error-continue type="HTTP:BASIC_AUTHENTICATION" logException="true">
+                <set-variable variableName="httpStatus" value="401"/>
+                <set-payload value='#[output application/xml --- read("&lt;soap:Envelope xmlns:soap=\"http://schemas.xmlsoap.org/soap/envelope/\"&gt;&lt;soap:Body&gt;&lt;soap:Fault&gt;&lt;faultcode&gt;soap:Server&lt;/faultcode&gt;&lt;faultstring&gt;Authentication Failed: " ++ (error.description default "") ++ "&lt;/faultstring&gt;&lt;/soap:Fault&gt;&lt;/soap:Body&gt;&lt;/soap:Envelope&gt;", "application/xml")]' mimeType="text/xml"/>
+            </on-error-continue>
+        </error-handler>
     </flow>
 
-    <!-- WSDL Endpoint -->
+    <!-- WSDL Endpoint (No Authentication) -->
     <flow name="soap-wsdl">
         <http:listener config-ref="HTTP_Listener_config" path="/soap/orderservice" allowedMethods="GET"/>
         <set-payload value="#[output application/xml --- readUrl('classpath://wsdl/OrderService.wsdl', 'text/xml')]" mimeType="text/xml"/>

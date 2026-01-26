@@ -49,8 +49,8 @@ if [ -d "$SCRIPT_DIR/../apidiscovery" ]; then
     # Copy apidiscovery JAR to apiguardwrapper/lib
     echo ""
     echo "[INFO] Copying apidiscovery JAR to lib folder..."
-    if [ -f "$SCRIPT_DIR/../apidiscovery/target/apidiscovery-1.0.0-with-raks.jar" ]; then
-        cp "$SCRIPT_DIR/../apidiscovery/target/apidiscovery-1.0.0-with-raks.jar" "$SCRIPT_DIR/lib/apidiscovery-1.0.0.jar" && \echo "[INFO] apidiscovery-1.0.0.jar copied successfully" || echo "[WARN] Failed to copy apidiscovery JAR"
+    if [ -f "$SCRIPT_DIR/../apidiscovery/target/apidiscovery-1.0.0.jar" ]; then
+        cp "$SCRIPT_DIR/../apidiscovery/target/apidiscovery-1.0.0.jar" "$SCRIPT_DIR/lib/apidiscovery-1.0.0.jar" && \echo "[INFO] apidiscovery-1.0.0.jar copied successfully" || echo "[WARN] Failed to copy apidiscovery JAR"
     else
         echo "[WARN] apidiscovery JAR not found in target"
     fi

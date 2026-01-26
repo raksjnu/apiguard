@@ -42,7 +42,7 @@ echo ============================================================
 echo   BUILD SUCCESSFUL!
 echo ============================================================
 echo.
-echo Aegis JAR: %SCRIPT_DIR%target\aegis-1.0.0-jar-with-raks.jar
+echo Aegis JAR: %SCRIPT_DIR%target\aegis-1.0.0.jar
 echo.
 echo [INFO] To start the GUI, run: start-aegis-gui.bat
 echo.

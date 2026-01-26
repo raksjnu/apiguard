@@ -29,7 +29,7 @@ fi
 echo "Aegis JAR built successfully"
 
 echo "[2/3] Copying JAR to wrapper..."
-cp -f "target/aegis-1.0.0-jar-with-raks.jar" "apiguardwrapper/lib/aegis-1.0.0-jar-with-raks.jar"
+cp -f "target/aegis-1.0.0.jar" "apiguardwrapper/lib/aegis-1.0.0.jar"
 echo "JAR copied to wrapper/lib"
 
 echo "[3/3] Rebuilding wrapper application..."
