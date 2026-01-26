@@ -128,6 +128,7 @@
                     <release>17</release>
                 </configuration>
             </plugin>
+            <!-- Maven Shade Plugin for Executable JAR (Default behavior) -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -138,74 +139,99 @@
                         <goals>
                             <goal>shade</goal>
                         </goals>
+                        <configuration>
+                            <outputFile>${project.build.directory}/${project.artifactId}-${project.version}.jar</outputFile>
+                            <filters>
+                                <filter>
+                                    <artifact>*:*</artifact>
+                                    <excludes>
+                                        <exclude>META-INF/*.SF</exclude>
+                                        <exclude>META-INF/*.DSA</exclude>
+                                        <exclude>META-INF/*.RSA</exclude>
+                                    </excludes>
+                                </filter>
+                            </filters>
+                            <transformers>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>com.raks.apiforge.ApiForgeMain</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
                     </execution>
                 </executions>
-                    <configuration>
-                        <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar</outputFile>
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>META-INF/*.SF</exclude>
-                                <exclude>META-INF/*.DSA</exclude>
-                                <exclude>META-INF/*.RSA</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
-                    <transformers>
-                        <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                            <mainClass>com.raks.apiforge.ApiForgeMain</mainClass>
-                        </transformer>
-                    </transformers>
-                </configuration>
-            </plugin>
-
-            <plugin>
-                <groupId>com.github.wvengen</groupId>
-                <artifactId>proguard-maven-plugin</artifactId>
-                <version>2.6.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals><goal>proguard</goal></goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <obfuscate>true</obfuscate>
-                    <injar>${project.artifactId}-${project.version}-shaded.jar</injar>
-                    <outjar>${project.artifactId}-${project.version}.jar</outjar>
-                    <outputDirectory>${project.build.directory}</outputDirectory>
-                    <options>
-                        <option>-allowaccessmodification</option>
-                        <option>-dontoptimize</option>
-                        <option>-ignorewarnings</option>
-                        <!-- BROAD STRATEGY: Keep everything except com.raks package subtree -->
-                        <option>-keep class !com.raks.** { *; }</option>
-
-                        <!-- SPECIFIC RAKS KEEPS: Keep entry points and public members inside com.raks -->
-                        <option>-keep public class com.raks.apiforge.ApiForgeMain { public static void main(java.lang.String[]); }</option>
-                        <option>-keep public class com.raks.apiforge.** { *; }</option>
-                        <option>-keep class com.raks.apiforge.license.LicenseValidator { public static void validate(java.lang.String); }</option>
-
-                        <option>-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod</option>
-                        <option>-dontwarn **</option>
-                        <option>-dontnote **</option>
-                    </options>
-                    <libs>
-                        <lib>${java.home}/jmods/java.base.jmod</lib>
-                        <lib>${java.home}/jmods/java.desktop.jmod</lib>
-                        <lib>${java.home}/jmods/java.logging.jmod</lib>
-                        <lib>${java.home}/jmods/java.xml.jmod</lib>
-                        <lib>${java.home}/jmods/java.naming.jmod</lib>
-                        <lib>${java.home}/jmods/java.management.jmod</lib>
-                        <lib>${java.home}/jmods/java.security.jgss.jmod</lib>
-                        <lib>${java.home}/jmods/java.instrument.jmod</lib>
-                        <lib>${java.home}/jmods/java.sql.jmod</lib>
-                        <lib>${java.home}/jmods/java.scripting.jmod</lib>
-                        <lib>${java.home}/jmods/java.net.http.jmod</lib>
-                    </libs>
-                </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>protected-mode</id>
+            <activation>
+                <file>
+                    <exists>PROTECTED_MODE_ENABLED</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- In protected mode, shade plugin outputs to intermediate shaded JAR -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-shade-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <configuration>
+                                    <outputFile>${project.build.directory}/${project.artifactId}-${project.version}-shaded.jar</outputFile>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <!-- Then ProGuard takes that shaded JAR and produces the final protected JAR -->
+                    <plugin>
+                        <groupId>com.github.wvengen</groupId>
+                        <artifactId>proguard-maven-plugin</artifactId>
+                        <version>2.6.0</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>proguard</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <obfuscate>true</obfuscate>
+                            <injar>${project.artifactId}-${project.version}-shaded.jar</injar>
+                            <outjar>${project.artifactId}-${project.version}.jar</outjar>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <options>
+                                <option>-allowaccessmodification</option>
+                                <option>-dontoptimize</option>
+                                <option>-ignorewarnings</option>
+                                <option>-keep class !com.raks.** { *; }</option>
+                                <option>-keep public class com.raks.apiforge.ApiForgeMain { public static void main(java.lang.String[]); }</option>
+                                <option>-keep public class com.raks.apiforge.** { *; }</option>
+                                <option>-keep class com.raks.apiforge.license.LicenseValidator { public static void validate(java.lang.String); }</option>
+                                <option>-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod</option>
+                                <option>-dontwarn **</option>
+                                <option>-dontnote **</option>
+                            </options>
+                            <libs>
+                                <lib>${java.home}/jmods/java.base.jmod</lib>
+                                <lib>${java.home}/jmods/java.desktop.jmod</lib>
+                                <lib>${java.home}/jmods/java.logging.jmod</lib>
+                                <lib>${java.home}/jmods/java.xml.jmod</lib>
+                                <lib>${java.home}/jmods/java.naming.jmod</lib>
+                                <lib>${java.home}/jmods/java.management.jmod</lib>
+                                <lib>${java.home}/jmods/java.security.jgss.jmod</lib>
+                                <lib>${java.home}/jmods/java.instrument.jmod</lib>
+                                <lib>${java.home}/jmods/java.sql.jmod</lib>
+                                <lib>${java.home}/jmods/java.scripting.jmod</lib>
+                                <lib>${java.home}/jmods/java.net.http.jmod</lib>
+                            </libs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

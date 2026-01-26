@@ -9,9 +9,9 @@
 
     <!-- File Appender with Rolling -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>logs/aegis.log</file>
+        <file>logs/apiguardwrapper.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <fileNamePattern>logs/aegis.%d{yyyy-MM-dd}.log</fileNamePattern>
+            <fileNamePattern>logs/apiguardwrapper.%d{yyyy-MM-dd}.log</fileNamePattern>
             <maxHistory>30</maxHistory>
             <totalSizeCap>1GB</totalSizeCap>
         </rollingPolicy>

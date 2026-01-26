@@ -190,77 +190,96 @@
                 </configuration>
             </plugin>
 
-            <!-- Assembly plugin → fat JAR -->
+            <!-- Assembly plugin → produces standard fat JAR by default -->
             <plugin>
-            <artifactId>maven-assembly-plugin</artifactId>
-            <version>3.6.0</version>
-            <configuration>
-                <finalName>${project.artifactId}-${project.version}-shaded</finalName>
-                <appendAssemblyId>false</appendAssemblyId>
-                <descriptorRefs>
-                    <descriptorRef>jar-with-dependencies</descriptorRef>
-                </descriptorRefs>
-                <archive>
-                    <manifest>
-                        <mainClass>com.raks.aegis.AegisMain</mainClass>
-                    </manifest>
-                </archive>
-            </configuration>
-            <executions>
-                <execution>
-                    <id>make-assembly</id>
-                    <phase>package</phase>
-                    <goals><goal>single</goal></goals>
-                </execution>
-            </executions>
-            </plugin>
-            
-            <plugin>
-                <groupId>com.github.wvengen</groupId>
-                <artifactId>proguard-maven-plugin</artifactId>
-                <version>2.6.0</version>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <version>3.6.0</version>
+                <configuration>
+                    <appendAssemblyId>false</appendAssemblyId>
+                    <descriptorRefs>
+                        <descriptorRef>jar-with-dependencies</descriptorRef>
+                    </descriptorRefs>
+                    <archive>
+                        <manifest>
+                            <mainClass>com.raks.aegis.AegisMain</mainClass>
+                        </manifest>
+                    </archive>
+                </configuration>
                 <executions>
                     <execution>
+                        <id>make-assembly</id>
                         <phase>package</phase>
-                        <goals><goal>proguard</goal></goals>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
                     </execution>
                 </executions>
-                <configuration>
-                    <obfuscate>true</obfuscate>
-                    <injar>${project.artifactId}-${project.version}-shaded.jar</injar>
-                    <outjar>${project.artifactId}-${project.version}.jar</outjar>
-                    <outputDirectory>${project.build.directory}</outputDirectory>
-                    <options>
-                        <option>-allowaccessmodification</option>
-                        <option>-dontoptimize</option>
-                        <option>-ignorewarnings</option>
-                        <!-- BROAD STRATEGY: Keep everything except com.raks package subtree -->
-                        <option>-keep class !com.raks.** { *; }</option>
-
-                        <!-- SPECIFIC RAKS KEEPS: Keep entry points and public members inside com.raks -->
-                        <option>-keep public class com.raks.aegis.AegisMain { public static void main(java.lang.String[]); }</option>
-                        <option>-keep public class com.raks.aegis.** { *; }</option>
-                        <option>-keep class com.raks.aegis.license.LicenseValidator { public static void validate(java.lang.String); }</option>
-
-                        <option>-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod</option>
-                        <option>-dontwarn **</option>
-                        <option>-dontnote **</option>
-                    </options>
-                    <libs>
-                        <lib>${java.home}/jmods/java.base.jmod</lib>
-                        <lib>${java.home}/jmods/java.desktop.jmod</lib>
-                        <lib>${java.home}/jmods/java.logging.jmod</lib>
-                        <lib>${java.home}/jmods/java.xml.jmod</lib>
-                        <lib>${java.home}/jmods/java.naming.jmod</lib>
-                        <lib>${java.home}/jmods/java.management.jmod</lib>
-                        <lib>${java.home}/jmods/java.security.jgss.jmod</lib>
-                        <lib>${java.home}/jmods/java.instrument.jmod</lib>
-                        <lib>${java.home}/jmods/java.sql.jmod</lib>
-                        <lib>${java.home}/jmods/java.scripting.jmod</lib>
-                        <lib>${java.home}/jmods/java.net.http.jmod</lib>
-                    </libs>
-                </configuration>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>protected-mode</id>
+            <activation>
+                <file>
+                    <exists>PROTECTED_MODE_ENABLED</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <!-- In protected mode, the assembly creates an intermediate shaded JAR -->
+                    <plugin>
+                        <artifactId>maven-assembly-plugin</artifactId>
+                        <configuration>
+                            <finalName>${project.artifactId}-${project.version}-shaded</finalName>
+                        </configuration>
+                    </plugin>
+                    <!-- Then ProGuard takes that shaded JAR and produces the final protected JAR -->
+                    <plugin>
+                        <groupId>com.github.wvengen</groupId>
+                        <artifactId>proguard-maven-plugin</artifactId>
+                        <version>2.6.0</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>proguard</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                        <configuration>
+                            <obfuscate>true</obfuscate>
+                            <injar>${project.artifactId}-${project.version}-shaded.jar</injar>
+                            <outjar>${project.artifactId}-${project.version}.jar</outjar>
+                            <outputDirectory>${project.build.directory}</outputDirectory>
+                            <options>
+                                <option>-allowaccessmodification</option>
+                                <option>-ignorewarnings</option>
+                                <option>-keep public class com.raks.aegis.AegisMain { public static void main(java.lang.String[]); }</option>
+                                <option>-keep public class com.raks.aegis.** { *; }</option>
+                                <option>-keep class com.raks.aegis.license.LicenseValidator { public static void validate(java.lang.String); }</option>
+                                <option>-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod</option>
+                                <option>-dontwarn **</option>
+                                <option>-dontnote **</option>
+                            </options>
+                            <libs>
+                                <lib>${java.home}/jmods/java.base.jmod</lib>
+                                <lib>${java.home}/jmods/java.desktop.jmod</lib>
+                                <lib>${java.home}/jmods/java.logging.jmod</lib>
+                                <lib>${java.home}/jmods/java.xml.jmod</lib>
+                                <lib>${java.home}/jmods/java.naming.jmod</lib>
+                                <lib>${java.home}/jmods/java.management.jmod</lib>
+                                <lib>${java.home}/jmods/java.security.jgss.jmod</lib>
+                                <lib>${java.home}/jmods/java.instrument.jmod</lib>
+                                <lib>${java.home}/jmods/java.sql.jmod</lib>
+                                <lib>${java.home}/jmods/java.scripting.jmod</lib>
+                                <lib>${java.home}/jmods/java.net.http.jmod</lib>
+                            </libs>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>
