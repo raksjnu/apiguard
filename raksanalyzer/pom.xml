@@ -303,27 +303,8 @@
                                 <option>-keepclassmembers enum * { *; }</option>
                                 <option>-keep interface * extends java.lang.annotation.Annotation { *; }</option>
 
-                                <!-- JAX-RS / Jersey Safeguards -->
-                                <option>-keep @jakarta.ws.rs.Path class * { *; }</option>
-                                <option>-keepclassmembers class * { @jakarta.ws.rs.* *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.api.rest.** { *; }</option>
-                                
-                                <!-- Serialization (Jackson/Gson) -->
-                                <option>-keepclassmembers class com.raks.** { void set*(***); boolean is*(); *** get*(); &lt;init&gt;(); }</option>
-                                <option>-keepclassmembers class * { @com.fasterxml.jackson.annotation.JsonProperty *; }</option>
-
-                                <!-- Application Components -->
-                                <option>-keep public class com.raks.raksanalyzer.Application { *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.license.** { *; }</option>
+                                <option>-keep public class com.raks.raksanalyzer.** { *; }</option>
                                 <option>-keep class com.raks.raksanalyzer.license.LicenseValidator { public static void validate(java.lang.String); }</option>
-                                <option>-keep public class com.raks.raksanalyzer.provider.** { *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.analyzer.** { *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.core.** { *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.generator.** { *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.util.** { *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.model.** { *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.domain.** { *; }</option>
-                                <option>-keep public class com.raks.raksanalyzer.dto.** { *; }</option>
                                 
                                 <option>-keepdirectories</option>
                                 <option>-dontwarn **</option>

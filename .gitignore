@@ -7,6 +7,9 @@ target/
 *.tar.gz
 *.rar
 
+# Generated Wrapper Lib JARs
+apiguardwrapper/lib/*.jar
+
 # IDEs
 .idea/
 *.iml
