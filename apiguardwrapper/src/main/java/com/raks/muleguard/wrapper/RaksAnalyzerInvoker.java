@@ -24,7 +24,20 @@ public class RaksAnalyzerInvoker {
 
     public static Map<String, Object> analyze(String inputPath, String configPath, String outputDir, String workingDir, 
                                                boolean generateExcel, boolean generateWord, boolean generatePdf, String uId,
-                                               String inputSourceType, String gitBranch, String gitToken, String projectTypeStr) {
+                                               String inputSourceType, String gitBranch, String gitToken, String projectTypeStr, String licenseKey) {
+        
+        // 0. Validate License (First thing!)
+        try {
+            com.raks.raksanalyzer.license.LicenseValidator.validate(licenseKey);
+        } catch (Exception e) {
+            logger.error("License Validation Failed: {}", e.getMessage());
+            Map<String, Object> errorResult = new HashMap<>();
+            errorResult.put("status", "FAILED");
+            errorResult.put("message", "License Error: " + e.getMessage());
+            errorResult.put("errorMessage", e.getMessage());
+            return errorResult;
+        }
+
         String uploadId = (uId == null || uId.trim().isEmpty()) ? UUID.randomUUID().toString() : uId;
         
         AnalysisResult initialResult = new AnalysisResult();

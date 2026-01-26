@@ -43,6 +43,19 @@ public class AnalysisResource {
                     logger.info("Used custom configuration from CLI args: {}", sysConfig);
                 }
             }
+
+            // LICENSE VALIDATION FOR STANDALONE
+            try {
+                String licenseKey = loadLicenseKey();
+                com.raks.raksanalyzer.license.LicenseValidator.validate(licenseKey);
+            } catch (Exception e) {
+                logger.error("License Validation Failed: {}", e.getMessage());
+                Map<String, Object> error = new HashMap<>();
+                error.put("status", "FAILED");
+                error.put("message", "License Error: " + e.getMessage());
+                return Response.status(Response.Status.FORBIDDEN).entity(error).build();
+            }
+
             String inputSourceType = request.getInputSourceType();
             String inputPath = request.getInputPath();
             String projectName = "Project_" + analysisId.substring(0, 8); 
@@ -687,5 +700,17 @@ public class AnalysisResource {
             error.put("message", "Cleanup failed: " + e.getMessage());
             return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(error).build();
         }
+    }
+
+    private String loadLicenseKey() {
+        // 1. Try System Property
+        String key = System.getProperty("license.key");
+        if (key != null && !key.trim().isEmpty()) return key;
+
+        // 2. Try Environment Variable
+        key = System.getenv("LICENSE_KEY");
+        if (key != null && !key.trim().isEmpty()) return key;
+        
+        return null; // Validator handles null
     }
 }

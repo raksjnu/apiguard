@@ -290,7 +290,7 @@ payload.uploadId default null]]></ee:set-variable>
                 </ee:transform>
                 
                 <!-- Invoke Analysis with path from JSON payload -->
-                <java:invoke-static doc:name="Invoke RaksAnalyzer" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="analyze(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
+                <java:invoke-static doc:name="Invoke RaksAnalyzer" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="analyze(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
 					<java:args ><![CDATA[#[{
 						arg0: payload.inputPath,
 						arg1: payload.configFilePath,
@@ -303,7 +303,8 @@ payload.uploadId default null]]></ee:set-variable>
 						arg8: payload.inputSourceType,
 						arg9: payload.gitBranch,
 						arg10: payload.gitToken,
-						arg11: payload.projectType
+						arg11: payload.projectType,
+                        arg12: p('license.key')
 					}]]]></java:args>
 				</java:invoke-static>
 				
