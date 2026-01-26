@@ -139,6 +139,41 @@ params:
 # Result: Files without <jce-config> pass silently.
 ```
 
+### Pattern E: Conditional Existence Checks
+Aegis allows you to precisely control rule execution based on the existence of specific elements. This is commonly used in `CONDITIONAL_CHECK` to skip rules when certain "feature flags" (like a batch job) are found.
+
+Using `XML_XPATH_NOT_EXISTS` without a `forbiddenValue` will fail if the element is found in the XML, effectively allowing you to say "Run this check ONLY IF this other element is NOT present."
+
+**Example (Excluding Batch Projects):**
+```yaml
+type: CONDITIONAL_CHECK
+params:
+  preconditions:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        xpath: "//*[local-name()='job']" # Skips if <batch:job> exists
+  # ...
+```
+
+### Pattern F: Enhanced Reporting Context
+Aegis can be configured to provide deep context in failure reports (like showing the exact hardcoded version string) entirely through YAML configuration:
+
+1.  **Direct Pointing**: Set the `xpath` to point directly to the data of interest (e.g., the `<version>` text).
+2.  **Smart Filtering**: Use an XPath predicate to select only the invalid nodes (e.g., `not(contains(., '${'))`).
+3.  **Capture Mode**: Use `XML_ELEMENT_CONTENT_FORBIDDEN` with `forbiddenValue: ".+"`.
+4.  **Automatic Detail**: Because every match is an intentional failure, Aegis captures the matched text and displays it in the **"Items Found"** section, making the issue immediately obvious to the developer.
+
+**Example:**
+```yaml
+type: XML_ELEMENT_CONTENT_FORBIDDEN
+params:
+  xpath: "//*[local-name()='version'][not(contains(., '${'))]"
+  forbiddenValue: ".+"
+  operator: "MATCHES"
+  isRegex: true
+```
+
+
 ---
 
 ## 5. Message Tokens Reference
