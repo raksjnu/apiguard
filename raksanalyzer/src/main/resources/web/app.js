@@ -2,6 +2,7 @@
 
 document.addEventListener('DOMContentLoaded', function() {
     setupEventHandlers();
+    setupGitHandlers(); // New Git connection logic
     loadConfiguration();
     loadDynamicLabels();
 });
@@ -37,28 +38,51 @@ function setupEventHandlers() {
         });
     }
     
+    // Restore input source from localStorage
+    const savedSource = localStorage.getItem('raks_input_source');
+    if (savedSource) {
+        const targetRadio = document.querySelector(`input[name="inputSource"][value="${savedSource}"]`);
+        if (targetRadio) targetRadio.checked = true;
+    }
+
+    // Centralized visibility logic for input sources
+    function updateInputSourceUI() {
+        const selectedRadio = document.querySelector('input[name="inputSource"]:checked');
+        const selectedSource = selectedRadio ? selectedRadio.value : 'folder';
+        
+        // Save to localStorage
+        localStorage.setItem('raks_input_source', selectedSource);
+
+        const zipSection = document.getElementById('zipSection');
+        const jarSection = document.getElementById('jarSection');
+        const folderSection = document.getElementById('folderSection');
+        const gitSection = document.getElementById('gitSection');
+        
+        // Hide all first
+        if (zipSection) zipSection.style.display = 'none';
+        if (jarSection) jarSection.style.display = 'none';
+        if (folderSection) folderSection.style.display = 'none';
+        if (gitSection) gitSection.style.display = 'none';
+        
+        // Show only active
+        if (selectedSource === 'zip') {
+            if (zipSection) zipSection.style.display = 'block';
+        } else if (selectedSource === 'jar') {
+            if (jarSection) jarSection.style.display = 'block';
+        } else if (selectedSource === 'folder') {
+            if (folderSection) folderSection.style.display = 'block';
+        } else if (selectedSource === 'git') {
+            if (gitSection) gitSection.style.display = 'block';
+        }
+    }
+
     // Toggle input source (zip vs jar vs folder vs git)
     inputSourceRadios.forEach(radio => {
-        radio.addEventListener('change', function() {
-            const zipSection = document.getElementById('zipSection');
-            const jarSection = document.getElementById('jarSection');
-            
-            zipSection.style.display = 'none';
-            jarSection.style.display = 'none';
-            folderSection.style.display = 'none';
-            gitSection.style.display = 'none';
-            
-            if (this.value === 'zip') {
-                zipSection.style.display = 'block';
-            } else if (this.value === 'jar') {
-                jarSection.style.display = 'block';
-            } else if (this.value === 'folder') {
-                folderSection.style.display = 'block';
-            } else if (this.value === 'git') {
-                gitSection.style.display = 'block';
-            }
-        });
+        radio.addEventListener('change', updateInputSourceUI);
     });
+    
+    // Initial call to set correct visibility
+    updateInputSourceUI();
     
     // Form submission
     form.addEventListener('submit', async function(e) {
@@ -80,6 +104,25 @@ function setupEventHandlers() {
         document.getElementById('resultsSection').style.display = 'none';
         document.getElementById('analysisForm').style.display = 'block';
         document.getElementById('analysisForm').reset();
+        
+        // Clear dynamically populated Git dropdowns
+        const gitRepoSelect = document.getElementById('gitRepo');
+        const gitBranchSelect = document.getElementById('gitBranch');
+        if (gitRepoSelect) gitRepoSelect.innerHTML = '<option value="">-- Click Fetch to see Repos --</option>';
+        if (gitBranchSelect) gitBranchSelect.innerHTML = '<option value="main">main</option>';
+        
+        // Reset Cit status UI
+        const statusPulse = document.getElementById('connectionStatus');
+        const statusMsg = document.getElementById('statusMessage');
+        if (statusPulse) statusPulse.className = 'status-pulse';
+        if (statusMsg) {
+            statusMsg.textContent = 'Disconnected';
+            statusMsg.style.color = '#888';
+        }
+
+        // Trigger UI update after reset to hide Git section if default is Folder
+        updateInputSourceUI();
+        
         currentAnalysisId = null;
         currentExcelPath = null;
         currentWordPath = null;
@@ -184,6 +227,249 @@ function setupEventHandlers() {
     });
 }
 
+/**
+ * Git Connection and Discovery Logic
+ */
+function setupGitHandlers() {
+    const providerSelect = document.getElementById('gitProviderSelect');
+    const tokenInput = document.getElementById('gitTokenInput');
+    const connectionCard = document.getElementById('gitConnectionCard');
+    const validateBtn = document.getElementById('validateTokenBtn');
+    const statusPulse = document.getElementById('connectionStatus');
+    const statusMsg = document.getElementById('statusMessage');
+    
+    const discoverReposBtn = document.getElementById('discoverReposBtn');
+    const refreshBranchesBtn = document.getElementById('refreshBranchesBtn');
+    const gitRepoSelect = document.getElementById('gitRepo');
+    const gitBranchSelect = document.getElementById('gitBranch');
+    const gitGroupInput = document.getElementById('gitGroup');
+
+    const KEYS = {
+        'gitlab': 'raks_gitlab_token',
+        'github': 'raks_github_token'
+    };
+
+    // 1. Initial Load
+    const savedProvider = localStorage.getItem('raks_git_provider') || 'gitlab';
+    if (providerSelect) providerSelect.value = savedProvider;
+    updateGitTheme(savedProvider);
+    
+    // Restore group and filter
+    if (gitGroupInput) {
+        gitGroupInput.value = localStorage.getItem('raks_git_group') || '';
+        gitGroupInput.addEventListener('input', (e) => localStorage.setItem('raks_git_group', e.target.value));
+    }
+    const filterInput = document.getElementById('gitFilter');
+    if (filterInput) {
+        filterInput.value = localStorage.getItem('raks_git_filter') || '';
+        filterInput.addEventListener('input', (e) => localStorage.setItem('raks_git_filter', e.target.value));
+    }
+
+    // Connection card visibility is now handled by the radio button event listener
+    // but we should check the current selected source on load too
+    const currentSource = document.querySelector('input[name="inputSource"]:checked').value;
+    if (currentSource === 'git') {
+        document.getElementById('gitSection').style.display = 'block';
+    }
+    
+    if (tokenInput) {
+        tokenInput.value = localStorage.getItem(KEYS[savedProvider]) || '';
+        if (tokenInput.value) {
+            validateGitToken(false); // Validate silently on load
+        }
+    }
+
+    // 2. Event Listeners
+    if (providerSelect) {
+        providerSelect.addEventListener('change', (e) => {
+            const newProvider = e.target.value;
+            localStorage.setItem('raks_git_provider', newProvider);
+            updateGitTheme(newProvider);
+            tokenInput.value = localStorage.getItem(KEYS[newProvider]) || '';
+            setGitStatus('disconnected');
+        });
+    }
+
+    if (tokenInput) {
+        tokenInput.addEventListener('input', (e) => {
+            const currentProvider = providerSelect.value;
+            localStorage.setItem(KEYS[currentProvider], e.target.value);
+            setGitStatus('disconnected');
+        });
+    }
+
+    if (validateBtn) {
+        validateBtn.addEventListener('click', () => validateGitToken(true));
+    }
+
+    if (discoverReposBtn) {
+        discoverReposBtn.addEventListener('click', discoverRepositories);
+    }
+
+    if (refreshBranchesBtn) {
+        refreshBranchesBtn.addEventListener('click', refreshBranches);
+    }
+
+    if (gitRepoSelect) {
+        gitRepoSelect.addEventListener('change', refreshBranches);
+    }
+
+    // Helper functions
+    function updateGitTheme(provider) {
+        if (connectionCard) {
+            connectionCard.classList.remove('github-theme', 'gitlab-theme');
+            connectionCard.classList.add(provider + '-theme');
+        }
+    }
+
+    function setGitStatus(status) {
+        if (!statusPulse) return;
+        statusPulse.className = 'status-pulse';
+        if (status === 'loading') {
+            statusPulse.classList.add('loading');
+            statusMsg.innerText = 'Validating...';
+            statusMsg.style.color = '#ffc107';
+        } else if (status === 'connected') {
+            statusPulse.classList.add('active');
+            statusMsg.innerText = 'Connected';
+            statusMsg.style.color = '#28a745';
+        } else {
+            statusMsg.innerText = 'Disconnected';
+            statusMsg.style.color = '#888';
+        }
+    }
+
+    async function validateGitToken(showAlert) {
+        const token = tokenInput.value;
+        const provider = providerSelect.value;
+        if (!token) {
+            if (showAlert) alert('Please enter a token');
+            return;
+        }
+
+        setGitStatus('loading');
+        try {
+            const response = await fetch('/api/git/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ token, provider })
+            });
+            const data = await response.json();
+            if (data.status === 'success') {
+                setGitStatus('connected');
+                if (showAlert) alert('✅ Credentials validated and saved!');
+            } else {
+                setGitStatus('disconnected');
+                if (showAlert) alert('❌ Validation failed: ' + data.message);
+            }
+        } catch (err) {
+            setGitStatus('disconnected');
+            if (showAlert) alert('Connection Error: ' + err.message);
+        }
+    }
+
+    async function discoverRepositories() {
+        const token = tokenInput.value;
+        const provider = providerSelect.value;
+        const group = gitGroupInput.value;
+        const filter = document.getElementById('gitFilter').value.toLowerCase();
+        
+        if (!token) {
+            alert('Please enter and validate your token first');
+            return;
+        }
+
+        discoverReposBtn.disabled = true;
+        discoverReposBtn.innerText = 'Fetching...';
+        gitRepoSelect.innerHTML = '<option value="">Loading repositories...</option>';
+
+        try {
+            const url = `/api/git/repos?provider=${provider}&token=${token}&group=${encodeURIComponent(group)}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch repositories');
+            
+            let repos = await response.json();
+            
+            // Client-side filtering
+            if (filter) {
+                repos = repos.filter(repo => repo.name.toLowerCase().includes(filter));
+            }
+
+            gitRepoSelect.innerHTML = '';
+            
+            if (repos.length === 0) {
+                gitRepoSelect.innerHTML = '<option value="">No repositories found matching filter</option>';
+            } else {
+                repos.forEach(repo => {
+                    const option = document.createElement('option');
+                    // Store clone URL in value, but show full name to user
+                    option.value = repo.cloneUrl || repo.name; 
+                    option.textContent = repo.name;
+                    gitRepoSelect.appendChild(option);
+                });
+                
+                // Update hidden gitUrl when repo changes or initially
+                updateGitUrl();
+                refreshBranches(); 
+            }
+        } catch (err) {
+            alert('Error fetching repos: ' + err.message);
+            gitRepoSelect.innerHTML = '<option value="">Error loading repos</option>';
+        } finally {
+            discoverReposBtn.disabled = false;
+            discoverReposBtn.innerText = 'Fetch';
+        }
+    }
+
+    function updateGitUrl() {
+        const repo = gitRepoSelect.value;
+        if (repo) {
+            // Update the hidden gitUrl field so it can be picked up during submission
+            document.getElementById('gitUrl').value = repo;
+        }
+    }
+
+    if (gitRepoSelect) {
+        gitRepoSelect.addEventListener('change', () => {
+            updateGitUrl();
+            refreshBranches();
+        });
+    }
+
+    async function refreshBranches() {
+        const repo = gitRepoSelect.value;
+        if (!repo) return;
+
+        const token = tokenInput.value;
+        const provider = providerSelect.value;
+        
+        refreshBranchesBtn.disabled = true;
+        gitBranchSelect.innerHTML = '<option value="">Loading...</option>';
+
+        try {
+            const url = `/api/git/branches?provider=${provider}&token=${token}&repo=${encodeURIComponent(repo)}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Failed to fetch branches');
+            
+            const branches = await response.json();
+            gitBranchSelect.innerHTML = '';
+            
+            branches.forEach(branch => {
+                const option = document.createElement('option');
+                option.value = branch;
+                option.textContent = branch;
+                if (branch === 'main' || branch === 'master') option.selected = true;
+                gitBranchSelect.appendChild(option);
+            });
+        } catch (err) {
+            console.warn('Error fetching branches:', err);
+            gitBranchSelect.innerHTML = '<option value="main">main (fallback)</option>';
+        } finally {
+            refreshBranchesBtn.disabled = false;
+        }
+    }
+}
+
 async function openLocalFile(id, type) {
     try {
         const response = await fetch('/api/analyze/open/' + id + '/' + type, { method: 'POST' });
@@ -267,11 +553,20 @@ async function submitAnalysis() {
     const inputSource = formData.get('inputSource');
     let inputPath = '';
     let uploadId = null;
+    let gitToken = null;
     
     if (inputSource === 'folder') {
         inputPath = formData.get('folderPath');
     } else if (inputSource === 'git') {
-        inputPath = formData.get('gitUrl');
+        inputPath = document.getElementById('gitRepo').value;
+        gitToken = document.getElementById('gitTokenInput').value;
+        
+        if (!inputPath) {
+            alert('Please select a repository first');
+            form.style.display = 'block';
+            progressSection.style.display = 'none';
+            return;
+        }
     } else if (inputSource === 'zip' || inputSource === 'jar') {
         // Handle file upload
         const fileInputId = inputSource === 'zip' ? 'zipFile' : 'jarFile';
@@ -341,11 +636,14 @@ async function submitAnalysis() {
     }
     
     if (!inputPath) {
+        console.error('[SUBMIT-ERROR] No input path provided for source:', inputSource);
         alert('Please provide an input path');
         form.style.display = 'block';
         progressSection.style.display = 'none';
         return;
     }
+    
+    console.log('[SUBMIT-DEBUG] Preparing request with inputPath:', inputPath, 'source:', inputSource);
     
     // Prepare request
     const requestData = {
@@ -354,9 +652,8 @@ async function submitAnalysis() {
         environmentAnalysisScope: environments,
         inputSourceType: inputSource,
         inputPath: inputPath,
-        gitBranch: formData.get('gitBranch') || 'main',
-        inputPath: inputPath,
-        gitBranch: formData.get('gitBranch') || 'main',
+        gitToken: gitToken, // Pass the token for private repos
+        gitBranch: inputSource === 'git' ? document.getElementById('gitBranch').value : (formData.get('gitBranch') || 'main'),
         uploadId: uploadId,  // For cleanup of uploaded files
         configFilePath: configFilePath, // Functionality added for TIBCO/Mule config resolution
         // Output format preferences
@@ -366,6 +663,7 @@ async function submitAnalysis() {
     };
     
     try {
+        console.log('[SUBMIT-DEBUG] Sending requestData:', requestData);
         // Submit to REST API
         const response = await fetch('/api/analyze', {
             method: 'POST',
@@ -382,11 +680,10 @@ async function submitAnalysis() {
             currentAnalysisId = result.analysisId;
             
             // Poll for completion instead of fake progress
-            updateProgress('Analysis in progress...', 20);
-            const completed = await pollForCompletion(currentAnalysisId);
+            const pollResult = await pollForCompletion(currentAnalysisId);
             
-            if (!completed) {
-                throw new Error('Analysis timed out or failed');
+            if (pollResult !== true) {
+                throw new Error(pollResult || 'Analysis timed out');
             }
             
             // Show results
@@ -529,12 +826,15 @@ async function pollForCompletion(analysisId) {
                 updateProgress('Analysis completed!', 100);
                 return true;
             } else if (status.status === 'FAILED') {
-                return false;
+                const errorMsg = status.errorMessage || 'Analysis failed';
+                updateProgress('Error: ' + errorMsg, 0);
+                return errorMsg;
             }
             
-            // Update progress based on attempts
-            const progress = 20 + (attempts / maxAttempts * 70);
-            updateProgress('Analyzing project... (' + Math.round(progress) + '%)', progress);
+            // Update progress from backend
+            const msg = status.progressMessage || 'Analyzing project...';
+            const pct = status.progressPercentage || (20 + (attempts / maxAttempts * 70));
+            updateProgress(msg + ' (' + Math.round(pct) + '%)', pct);
             
             // Wait 1 second before next poll
             await new Promise(resolve => setTimeout(resolve, 1000));

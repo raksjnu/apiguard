@@ -259,15 +259,15 @@ public class TibcoPdfGenerator {
         String subTitle = numbering.getSectionNumber() + " Basic Information";
         drawSubSectionHeader(subTitle);
         String projectPath = info.getProjectPath();
-        try {
-            projectPath = Paths.get(projectPath).toAbsolutePath().normalize().toString();
-        } catch (Exception e) {
-            logger.warn("Failed to normalize project path", e);
+        String displayPath = projectPath;
+        if (result.getSourceUrl() != null && !result.getSourceUrl().isEmpty()) {
+            displayPath = result.getSourceUrl();
         }
+        
         List<String[]> basicData = new ArrayList<>();
         basicData.add(new String[]{"Project Name", info.getProjectName()});
         basicData.add(new String[]{"Project Type", "Tibco BusinessWorks 5.x"});
-        basicData.add(new String[]{"Project Path", projectPath});
+        basicData.add(new String[]{"Project Path", displayPath});
         if (info.getTibcoVersion() != null && !info.getTibcoVersion().isEmpty()) {
             basicData.add(new String[]{"TIBCO Version", info.getTibcoVersion()});
         }

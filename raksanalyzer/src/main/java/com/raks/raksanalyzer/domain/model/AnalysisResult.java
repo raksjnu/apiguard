@@ -22,6 +22,10 @@ public class AnalysisResult {
     private String wordDocumentPath;
     private String pdfDocumentPath;
     private String outputDirectory;  
+    private String sourceUrl;
+    private String progressMessage = "Initializing...";
+    private int progressPercentage = 0;
+    private String status;
     private Map<String, Object> metadata = new HashMap<>();  
     public String getAnalysisId() {
         return analysisId;
@@ -142,5 +146,29 @@ public class AnalysisResult {
     }
     public Object getMetadata(String key) {
         return this.metadata.get(key);
+    }
+    public String getSourceUrl() {
+        return sourceUrl;
+    }
+    public void setSourceUrl(String sourceUrl) {
+        this.sourceUrl = sourceUrl;
+    }
+    public String getProgressMessage() {
+        return progressMessage;
+    }
+    public void setProgressMessage(String progressMessage) {
+        this.progressMessage = progressMessage;
+    }
+    public int getProgressPercentage() {
+        return progressPercentage;
+    }
+    public void setProgressPercentage(int progressPercentage) {
+        this.progressPercentage = progressPercentage;
+    }
+    public String getStatus() {
+        return status;
+    }
+    public void setStatus(String status) {
+        this.status = status;
     }
 }

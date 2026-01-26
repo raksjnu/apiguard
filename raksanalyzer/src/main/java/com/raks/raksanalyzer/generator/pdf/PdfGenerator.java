@@ -80,7 +80,7 @@ public class PdfGenerator {
             initializeOutline();
             createCoverPage(result.getProjectInfo());
             org.apache.pdfbox.pdmodel.interactive.documentnavigation.outline.PDOutlineItem projectInfoMark = 
-                createProjectInformation(result.getProjectInfo());
+                createProjectInformation(result);
             createPomDetails(result, projectInfoMark);
             createFlowDiagramSection(result);
             createGlobalConfiguration(result);
@@ -115,6 +115,9 @@ public class PdfGenerator {
                 outputDir = config.getProperty("framework.output.directory", "./output");
             }
             Path outputPath = Path.of(outputDir, fileName);
+            if (outputPath.getParent() != null && !java.nio.file.Files.exists(outputPath.getParent())) {
+                java.nio.file.Files.createDirectories(outputPath.getParent());
+            }
             document.save(outputPath.toFile());
             document.close();
             logger.info("PDF generated successfully: {}", outputPath);
@@ -251,17 +254,24 @@ public class PdfGenerator {
              }
          }
     }
-    private PDOutlineItem createProjectInformation(ProjectInfo projectInfo) throws IOException {
+    private PDOutlineItem createProjectInformation(AnalysisResult result) throws IOException {
+        ProjectInfo projectInfo = result.getProjectInfo();
         newPage();
         PDOutlineItem bookmark = addBookmark("1. Project Information", rootOutline, currentPage);
         currentY = PAGE_HEIGHT - 100;
         drawSectionHeader("1. Project Information");
         addBookmark("1.1 Project Details", bookmark, currentPage);
         drawSubsectionHeader("1.1 Project Details");
+        
+        String displayPath = projectInfo.getProjectPath();
+        if (result.getSourceUrl() != null && !result.getSourceUrl().isEmpty()) {
+            displayPath = result.getSourceUrl();
+        }
+
         String[][] data = {
             {"Project Name", projectInfo.getProjectName()},
             {"Version", projectInfo.getVersion()},
-            {"Project Path", projectInfo.getProjectPath()}
+            {"Project Path", displayPath}
         };
         drawTable(data, new String[]{"Property", "Value"}, new float[]{0.3f, 0.7f});
         closeContentStream();

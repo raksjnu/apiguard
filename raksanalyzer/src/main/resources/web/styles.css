@@ -1,10 +1,68 @@
-/* Page-specific styles for RaksAnalyzer */
-/* Imports the main Raks theme */
+/* Git Connection Card Styles */
+.connection-card {
+    padding: 12px 15px;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    position: relative;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
 
-/* Additional page-specific styles can be added here */
-h3 {
-    color: #663399;
-    margin-top: 2rem;
+.gitlab-theme {
+    background-color: #F8F9FA;
+    border-color: #E24329 !important;
+}
+
+.github-theme {
+    background-color: #F8F9FA;
+    border-color: #24292e !important;
+}
+
+.status-pulse {
+    width: 10px;
+    height: 10px;
+    background-color: #999;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.status-pulse.active {
+    background-color: #28a745;
+    box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    animation: pulse-green 2s infinite;
+}
+
+.status-pulse.loading {
+    background-color: #ffc107;
+    animation: pulse-yellow 2s infinite;
+}
+
+@keyframes pulse-green {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(40, 167, 69, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(40, 167, 69, 0); }
+}
+
+@keyframes pulse-yellow {
+    0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7); }
+    70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(255, 193, 7, 0); }
+    100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 193, 7, 0); }
+}
+
+.git-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.git-input-group select {
+    width: 120px;
+}
+
+.git-input-group input {
+    flex: 1;
 }
 
 /* Email button - change color when email is entered */
@@ -17,3 +75,4 @@ h3 {
 #sendEmail.email-ready:hover {
     background-color: #552288 !important;
 }
+

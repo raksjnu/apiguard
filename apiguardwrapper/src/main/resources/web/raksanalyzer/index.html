@@ -118,10 +118,64 @@
 
                 <!-- Git Repository -->
                 <div id="gitSection" class="form-group" style="display: none;">
-                    <label for="gitUrl">Git Repository URL</label>
-                    <input type="url" id="gitUrl" name="gitUrl" placeholder="https://github.com/user/repo.git">
-                    <label for="gitBranch">Branch (optional)</label>
-                    <input type="text" id="gitBranch" name="gitBranch" placeholder="main">
+                    <!-- Centralized Git Connection Configuration (Relocated) -->
+                    <div class="connection-card gitlab-theme" id="gitConnectionCard">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <span style="font-size: 0.75rem; font-weight: bold; text-transform: uppercase; color: #666;">Git Connection Setup</span>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span class="status-pulse" id="connectionStatus"></span>
+                                <span id="statusMessage" style="font-size: 0.85rem; font-weight: bold; color: #888;">Disconnected</span>
+                            </div>
+                        </div>
+                        <div class="git-input-group">
+                            <select id="gitProviderSelect" style="max-width: 110px; font-size: 0.85rem;">
+                                <option value="gitlab">GitLab</option>
+                                <option value="github">GitHub</option>
+                            </select>
+                            <input type="password" id="gitTokenInput" placeholder="Enter PAT" style="font-size: 0.85rem;">
+                            <button class="btn-small" type="button" id="validateTokenBtn" style="padding: 6px 15px; font-size: 13px;">Validate</button>
+                        </div>
+                        <div style="text-align: right; margin-top: 4px;">
+                            <small style="font-size: 0.7rem; color: #999; font-style: italic;">Saved in local cache</small>
+                        </div>
+                    </div>
+
+                    <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 15px;">
+                        <h4 style="color: #663399; font-size: 1.1rem; margin-bottom: 15px;">Remote Discovery</h4>
+                        
+                        <div class="form-group" style="margin-bottom: 10px;">
+                            <label for="gitGroup" style="font-size: 0.9rem;">Group / Organization</label>
+                            <input type="text" id="gitGroup" placeholder="e.g. raks-group" style="padding: 8px;">
+                        </div>
+
+                        <div style="display: flex; gap: 10px; align-items: flex-end; margin-bottom: 15px;">
+                            <div style="flex: 1;">
+                                <label for="gitFilter" style="font-size: 0.9rem;">Filter (Repo Name/Regex)</label>
+                                <input type="text" id="gitFilter" placeholder="e.g. aegis" style="padding: 8px;">
+                            </div>
+                            <button type="button" id="discoverReposBtn" class="btn-primary" style="padding: 10px 25px; font-size: 14px;">Fetch</button>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="gitRepo" style="font-size: 0.9rem;">Select Repository</label>
+                            <select id="gitRepo" name="gitRepo" style="padding: 8px;">
+                                <option value="">-- Click Fetch to see Repos --</option>
+                            </select>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; align-items: flex-end; margin-top: 10px;">
+                            <div style="flex: 1;">
+                                <label for="gitBranch" style="font-size: 0.9rem;">Select Branch</label>
+                                <select id="gitBranch" name="gitBranch" style="padding: 8px;">
+                                    <option value="main">main</option>
+                                </select>
+                            </div>
+                            <button type="button" id="refreshBranchesBtn" class="btn-secondary" style="padding: 8px 15px; font-size: 13px;">Refresh</button>
+                        </div>
+                        
+                        <!-- Hidden field to store the calculated inputPath for Git -->
+                        <input type="hidden" id="gitUrl" name="gitUrl">
+                    </div>
                 </div>
 
                 <!-- Submit Button -->

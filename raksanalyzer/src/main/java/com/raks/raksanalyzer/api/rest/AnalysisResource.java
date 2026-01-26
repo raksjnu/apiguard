@@ -136,6 +136,8 @@ public class AnalysisResource {
         response.put("excelPath", result.getExcelReportPath());
         response.put("wordPath", result.getWordDocumentPath());
         response.put("pdfPath", result.getPdfDocumentPath());
+        response.put("progressMessage", result.getProgressMessage());
+        response.put("progressPercentage", result.getProgressPercentage());
         if (!result.isSuccess()) {
             response.put("errorMessage", result.getErrorMessage());
         }
@@ -223,7 +225,7 @@ public class AnalysisResource {
         if (projectType != null) {
             request.setProjectTechnologyType(ProjectType.valueOf(projectType));
         } else {
-            request.setProjectTechnologyType(ProjectType.MULE); 
+            throw new IllegalArgumentException("Project Type is required (MULE or TIBCO_BW5 or TIBCO_BW6 or SPRING_BOOT)");
         }
         String executionMode = getString(requestData, "documentGenerationExecutionMode");
         if (executionMode != null) {
@@ -306,11 +308,88 @@ public class AnalysisResource {
     private void executeAnalysis(AnalysisRequest request) {
         try {
             logger.info("Executing analysis: {}", request);
-            Path inputPath = Paths.get(request.getInputPath()).toAbsolutePath().normalize();
+            String inputSourceType = request.getInputSourceType();
+            Path inputPath;
+            String uploadId = request.getUploadId();
+
+            if ("git".equals(inputSourceType)) {
+                if (uploadId == null) {
+                    uploadId = UUID.randomUUID().toString();
+                    request.setUploadId(uploadId);
+                }
+                String tempDir = config.getProperty("framework.temp.directory", "./temp");
+                
+                // Extract repo name from URL to make path more identifiable
+                String repoName = "repo";
+                String url = request.getInputPath();
+                if (url != null && url.contains("/")) {
+                    repoName = url.substring(url.lastIndexOf("/") + 1);
+                    if (repoName.endsWith(".git")) {
+                        repoName = repoName.substring(0, repoName.length() - 4);
+                    }
+                }
+                
+                Path gitClonePath = Paths.get(tempDir).resolve("git").resolve(uploadId).resolve(repoName).toAbsolutePath().normalize();
+                
+                if (!java.nio.file.Files.exists(gitClonePath)) {
+                    java.nio.file.Files.createDirectories(gitClonePath);
+                }
+
+                logger.info("Cloning Git repository: {} (branch: {}) to {}", 
+                            request.getInputPath(), request.getGitBranch(), gitClonePath);
+                
+                String providerType = "github"; // Default or detect from URL
+                if (request.getInputPath().contains("gitlab")) providerType = "gitlab";
+                
+                // For execution mode, we might need a token if it's private. 
+                // We'll assume the URL might have it or it's public for now, 
+                // but the UI will pass the token in the future.
+                // For now, let's use a simple JGit clone if no token provided.
+                
+                com.raks.raksanalyzer.provider.GitProvider provider;
+                String token = request.getGitToken();
+                if (providerType.equals("github")) {
+                    provider = new com.raks.raksanalyzer.provider.GitHubProvider(token);
+                } else {
+                    provider = new com.raks.raksanalyzer.provider.GitLabProvider(token);
+                }
+                
+                provider.cloneRepository(request.getInputPath(), gitClonePath.toFile(), request.getGitBranch());
+                inputPath = gitClonePath;
+            } else {
+                inputPath = Paths.get(request.getInputPath()).toAbsolutePath().normalize();
+            }
+
+            AnalysisResult ar = results.get(request.getAnalysisId());
+            if (ar != null) {
+                ar.setProgressMessage("Discovering projects...");
+                ar.setProgressPercentage(10);
+                ar.setSourceUrl(request.getInputPath());
+            }
+
+            // Ensure output directory is set in ar for generators to use
+            if (ar != null && (ar.getOutputDirectory() == null || ar.getOutputDirectory().isEmpty())) {
+                String outDir = config.getProperty("framework.output.directory", "./output");
+                if ("git".equals(inputSourceType) || "zip".equals(inputSourceType) || "jar".equals(inputSourceType)) {
+                    String tempDir = config.getProperty("framework.temp.directory", "./temp");
+                    outDir = tempDir + "/analysis/" + uploadId;
+                }
+                ar.setOutputDirectory(Paths.get(outDir).toAbsolutePath().normalize().toString());
+                logger.info("Set output directory for analysis {}: {}", request.getAnalysisId(), ar.getOutputDirectory());
+            }
+
             List<com.raks.raksanalyzer.core.discovery.DiscoveredProject> projects = 
                 com.raks.raksanalyzer.core.discovery.ProjectDiscovery.findProjects(inputPath, request.getProjectTechnologyType());
             if (projects.isEmpty()) {
-                logger.error("No {} projects found in: {}", request.getProjectTechnologyType(), inputPath);
+                String errorMsg = "The selected " + ("git".equals(inputSourceType) ? "Git repository" : "path") + 
+                                 " does not contain any " + request.getProjectTechnologyType().getDisplayName() + " project artifacts.";
+                logger.error(errorMsg);
+                ar = results.get(request.getAnalysisId());
+                if (ar != null) {
+                    ar.setSuccess(false);
+                    ar.setErrorMessage(errorMsg);
+                    ar.setEndTime(java.time.LocalDateTime.now());
+                }
                 return;
             }
             logger.info("Found {} {} project(s) to analyze", projects.size(), request.getProjectTechnologyType());
@@ -325,8 +404,15 @@ public class AnalysisResource {
                 projectRequest.setInputPath(project.getProjectPath().toString());
                 projectRequest.setAnalysisId(request.getAnalysisId()); 
                 projectRequest.setConfigFilePath(request.getConfigFilePath()); 
+                
+                if (ar != null) {
+                    ar.setProgressMessage("Analyzing project: " + project.getProjectName());
+                    ar.setProgressPercentage(30);
+                }
+                
                 AnalysisResult result = AnalyzerFactory.analyze(projectRequest);
                 result.setAnalysisId(request.getAnalysisId());
+                result.setSourceUrl(request.getInputPath());
                 ExecutionMode mode = request.getDocumentGenerationExecutionMode();
                 OutputFormatConfig formatConfig = request.getOutputFormatConfig();
                 if (formatConfig == null) {
@@ -344,6 +430,10 @@ public class AnalysisResource {
                         result.setExcelReportPath(excelPath.toString());
                         logger.info("Excel report generated: {}", excelPath);
                     }
+                    if (ar != null) {
+                        ar.setProgressMessage("Excel report generated");
+                        ar.setProgressPercentage(60);
+                    }
                 }
                 if ((mode == ExecutionMode.FULL || mode == ExecutionMode.GENERATE_ONLY) && formatConfig.isPdfEnabled()) {
                     try {
@@ -357,6 +447,10 @@ public class AnalysisResource {
                             Path pdfPath = pdfGen.generate(result);
                             result.setPdfDocumentPath(pdfPath.toString());
                             logger.info("PDF document generated: {}", pdfPath);
+                        }
+                        if (ar != null) {
+                            ar.setProgressMessage("PDF document generated");
+                            ar.setProgressPercentage(80);
                         }
                     } catch (Exception e) {
                         logger.error("Failed to generate PDF", e);
@@ -376,6 +470,10 @@ public class AnalysisResource {
                         result.setWordDocumentPath(wordPath.toString());
                         logger.info("Word document generated: {}", wordPath);
                     }
+                    if (ar != null) {
+                        ar.setProgressMessage("Word document generated");
+                        ar.setProgressPercentage(95);
+                    }
                 }
                 if (result.getEndTime() == null) {
                     result.setEndTime(java.time.LocalDateTime.now());
@@ -386,13 +484,19 @@ public class AnalysisResource {
             logger.info("All {} project(s) analyzed successfully", projects.size());
         } catch (Exception e) {
             logger.error("Analysis failed", e);
+            AnalysisResult ar = results.get(request.getAnalysisId());
+            if (ar != null) {
+                ar.setSuccess(false);
+                ar.setErrorMessage(e.getMessage());
+                ar.setEndTime(java.time.LocalDateTime.now());
+            }
         } finally {
             String inputSourceType = request.getInputSourceType();
-            if ("zip".equals(inputSourceType) || "jar".equals(inputSourceType)) {
+            if ("zip".equals(inputSourceType) || "jar".equals(inputSourceType) || "git".equals(inputSourceType)) {
                 String uploadId = request.getUploadId();
                 if (uploadId != null) {
                     com.raks.raksanalyzer.util.FileExtractionUtil.cleanupTempDirectory(uploadId);
-                    logger.info("Cleaned up temporary files for upload: {}", uploadId);
+                    logger.info("Cleaned up temporary files for {}: {}", inputSourceType, uploadId);
                 }
             }
         }
@@ -433,7 +537,7 @@ public class AnalysisResource {
                 new com.raks.raksanalyzer.service.EmailService();
             boolean success = emailService.sendDocuments(
                 email, 
-                result.getProjectInfo().getProjectName(), 
+                result.getProjectInfo() != null ? result.getProjectInfo().getProjectName() : "Project", 
                 documentPaths
             );
             Map<String, Object> response = new HashMap<>();

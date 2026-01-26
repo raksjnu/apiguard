@@ -12,6 +12,7 @@ public class RestApplication extends Application {
         classes.add(ConfigurationResource.class);
         classes.add(UploadResource.class);
         classes.add(SampleResource.class);
+        classes.add(GitResource.class);
         classes.add(org.glassfish.jersey.jackson.JacksonFeature.class);
         classes.add(org.glassfish.jersey.media.multipart.MultiPartFeature.class);
         return classes;

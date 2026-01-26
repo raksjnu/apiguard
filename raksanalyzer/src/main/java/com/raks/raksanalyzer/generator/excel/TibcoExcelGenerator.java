@@ -159,12 +159,17 @@ public class TibcoExcelGenerator {
         addSummaryRow(sheet, rowNum++, "Project Name", info.getProjectName());
         addSummaryRow(sheet, rowNum++, "Project Type", "TIBCO BusinessWorks 5.x");
         String projectPath = info.getProjectPath();
-        if (projectPath.startsWith(".\\" )) {
-            projectPath = projectPath.substring(2);
-        } else if (projectPath.startsWith("./")) {
-            projectPath = projectPath.substring(2);
+        String displayPath = projectPath;
+        if (result.getSourceUrl() != null && !result.getSourceUrl().isEmpty()) {
+            displayPath = result.getSourceUrl();
+        } else {
+             if (displayPath.startsWith(".\\" )) {
+                 displayPath = displayPath.substring(2);
+             } else if (displayPath.startsWith("./")) {
+                 displayPath = displayPath.substring(2);
+             }
         }
-        addSummaryRow(sheet, rowNum++, "Project Path", projectPath);
+        addSummaryRow(sheet, rowNum++, "Project Path", displayPath);
         if (info.getTibcoVersion() != null && !info.getTibcoVersion().isEmpty()) {
             addSummaryRow(sheet, rowNum++, "TIBCO Version", info.getTibcoVersion());
         }

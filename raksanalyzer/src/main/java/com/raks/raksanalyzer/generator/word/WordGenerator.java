@@ -70,6 +70,9 @@ public class WordGenerator {
             createFooter();
             document.enforceUpdateFields();
             Path outputPath = getOutputPath(result);
+            if (outputPath.getParent() != null && !Files.exists(outputPath.getParent())) {
+                Files.createDirectories(outputPath.getParent());
+            }
             try (FileOutputStream out = new FileOutputStream(outputPath.toFile())) {
                 document.write(out);
             }
@@ -203,7 +206,7 @@ public class WordGenerator {
         if (getBooleanConfig("mule.word.include.project.details", true)) {
             String detailsName = config.getProperty("mule.word.section.project.details", "Project Details");
             createHeading2(detailsName);
-            createProjectDetailsTable(result.getProjectInfo());
+            createProjectDetailsTable(result);
             addParagraphSpace();
         }
         if (getBooleanConfig("mule.word.include.pom.details", true)) {
@@ -661,14 +664,19 @@ public class WordGenerator {
         logger.debug("Found {} properties for file: {}", props.size(), relativePath);
         return props;
     }
-    private void createProjectDetailsTable(ProjectInfo info) {
+    private void createProjectDetailsTable(AnalysisResult result) {
+        ProjectInfo info = result.getProjectInfo();
         if (info == null) return;
         XWPFTable table = createFixedTable(4, 2, new int[]{30, 70});
         fillHeader(table, new String[]{"Property", "Value"});
         int r = 1;
         fillRow(table.getRow(r++), "Project Name", info.getProjectName());
         fillRow(table.getRow(r++), "Version", info.getVersion());
-        fillRow(table.getRow(r++), "Project Path", info.getProjectPath());
+        String displayPath = info.getProjectPath();
+        if (result.getSourceUrl() != null && !result.getSourceUrl().isEmpty()) {
+            displayPath = result.getSourceUrl();
+        }
+        fillRow(table.getRow(r++), "Project Path", displayPath);
     }
     private void createPomBasicInfoTable(PomInfo pomInfo) {
         if (pomInfo == null) return;
@@ -910,9 +918,14 @@ public class WordGenerator {
     }
     private String prettyPrintJson(String json) {
         try {
-            com.google.gson.Gson gson = new com.google.gson.GsonBuilder().setPrettyPrinting().create();
-            Object jsonObject = gson.fromJson(json, Object.class);
-            return gson.toJson(jsonObject);
+            com.google.gson.Gson gson = new com.google.gson.GsonBuilder()
+                .setPrettyPrinting()
+                .disableHtmlEscaping()
+                .create();
+            com.google.gson.JsonElement el = com.google.gson.JsonParser.parseString(json);
+            String pretty = gson.toJson(el);
+            // Handle escaped newlines that might be literal in the string
+            return pretty.replace("\\r\\n", "\n").replace("\\n", "\n");
         } catch (Exception e) {
             return json;
         }

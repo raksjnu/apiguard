@@ -154,12 +154,11 @@ public class TibcoWordGenerator {
         addTableRow(basicTable, "Project Name", info.getProjectName());
         addTableRow(basicTable, "Project Type", "Tibco BusinessWorks 5.x");
         String projectPath = info.getProjectPath();
-        try {
-            projectPath = java.nio.file.Paths.get(projectPath).toAbsolutePath().normalize().toString();
-        } catch (Exception e) {
-            logger.warn("Failed to normalize project path: {}", projectPath, e);
+        String displayPath = projectPath;
+        if (result.getSourceUrl() != null && !result.getSourceUrl().isEmpty()) {
+            displayPath = result.getSourceUrl();
         }
-        addTableRow(basicTable, "Project Path", projectPath);
+        addTableRow(basicTable, "Project Path", displayPath);
         if (info.getTibcoVersion() != null && !info.getTibcoVersion().isEmpty()) {
             addTableRow(basicTable, "TIBCO Version", info.getTibcoVersion());
         }

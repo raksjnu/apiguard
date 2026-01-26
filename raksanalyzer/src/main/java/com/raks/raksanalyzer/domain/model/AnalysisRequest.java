@@ -18,6 +18,15 @@ public class AnalysisRequest {
     private String uploadId;
     private String configFilePath;
     private String outputDirectory;
+    private String gitToken;
+
+    public String getGitToken() {
+        return gitToken;
+    }
+
+    public void setGitToken(String gitToken) {
+        this.gitToken = gitToken;
+    }
     public ProjectType getProjectTechnologyType() {
         return projectTechnologyType;
     }

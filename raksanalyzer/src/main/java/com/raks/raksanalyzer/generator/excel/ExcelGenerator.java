@@ -27,6 +27,9 @@ public class ExcelGenerator {
         createComponentsSheet(result);
         createPropertiesSheet(result);
         Path outputPath = getOutputPath(result);
+        if (outputPath.getParent() != null && !java.nio.file.Files.exists(outputPath.getParent())) {
+            java.nio.file.Files.createDirectories(outputPath.getParent());
+        }
         try (FileOutputStream out = new FileOutputStream(outputPath.toFile())) {
             workbook.write(out);
         }
@@ -74,7 +77,11 @@ public class ExcelGenerator {
         if (projectInfo != null) {
             addLabelValueRow(sheet, rowNum++, "Project Name", projectInfo.getProjectName());
             addLabelValueRow(sheet, rowNum++, "Project Type", projectInfo.getProjectType().getDisplayName());
-            addLabelValueRow(sheet, rowNum++, "Project Path", projectInfo.getProjectPath());
+            String displayPath = projectInfo.getProjectPath();
+            if (result.getSourceUrl() != null && !result.getSourceUrl().isEmpty()) {
+                displayPath = result.getSourceUrl();
+            }
+            addLabelValueRow(sheet, rowNum++, "Project Path", displayPath);
             if (projectInfo.getVersion() != null) {
                 addLabelValueRow(sheet, rowNum++, "Version", projectInfo.getVersion());
             }

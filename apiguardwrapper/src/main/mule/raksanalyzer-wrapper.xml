@@ -206,6 +206,62 @@ payload.parts.file.headers['Content-Disposition'].filename]]></ee:set-variable>
                 }]" mimeType="application/json"/>
             </when>
 
+            <!-- GIT VALIDATE ENDPOINT -->
+            <when expression="#[vars.apiPath == 'git/validate' and attributes.method == 'POST']">
+                <java:invoke-static doc:name="Validate Git Token" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="validateGitToken(java.lang.String,java.lang.String)">
+                    <java:args ><![CDATA[#[{
+                        arg0: payload.provider,
+                        arg1: payload.token
+                    }]]]></java:args>
+                </java:invoke-static>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+
+            <!-- GIT REPOS ENDPOINT -->
+            <when expression="#[vars.apiPath == 'git/repos' and attributes.method == 'GET']">
+                <java:invoke-static doc:name="List Git Repos" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="listGitRepos(java.lang.String,java.lang.String,java.lang.String)">
+                    <java:args ><![CDATA[#[{
+                        arg0: attributes.queryParams.provider,
+                        arg1: attributes.queryParams.token,
+                        arg2: attributes.queryParams.group
+                    }]]]></java:args>
+                </java:invoke-static>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+
+            <!-- GIT BRANCHES ENDPOINT -->
+            <when expression="#[vars.apiPath == 'git/branches' and attributes.method == 'GET']">
+                <java:invoke-static doc:name="List Git Branches" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="listGitBranches(java.lang.String,java.lang.String,java.lang.String)">
+                    <java:args ><![CDATA[#[{
+                        arg0: attributes.queryParams.provider,
+                        arg1: attributes.queryParams.token,
+                        arg2: attributes.queryParams.repo
+                    }]]]></java:args>
+                </java:invoke-static>
+                <ee:transform>
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </when>
+
             <!-- CONFIG ENDPOINT -->
             <when expression="#[vars.apiPath == 'config' and attributes.method == 'GET']">
                 <ee:transform doc:name="Get Config">
@@ -234,7 +290,7 @@ payload.uploadId default null]]></ee:set-variable>
                 </ee:transform>
                 
                 <!-- Invoke Analysis with path from JSON payload -->
-                <java:invoke-static doc:name="Invoke RaksAnalyzer" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="analyze(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,java.lang.String)">
+                <java:invoke-static doc:name="Invoke RaksAnalyzer" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="analyze(java.lang.String,java.lang.String,java.lang.String,java.lang.String,boolean,boolean,boolean,java.lang.String,java.lang.String,java.lang.String,java.lang.String,java.lang.String)">
 					<java:args ><![CDATA[#[{
 						arg0: payload.inputPath,
 						arg1: payload.configFilePath,
@@ -243,7 +299,11 @@ payload.uploadId default null]]></ee:set-variable>
 						arg4: payload.generateExcel default true,
 						arg5: payload.generateWord default true,
 						arg6: payload.generatePdf default true,
-						arg7: vars.uploadId
+						arg7: vars.uploadId,
+						arg8: payload.inputSourceType,
+						arg9: payload.gitBranch,
+						arg10: payload.gitToken,
+						arg11: payload.projectType
 					}]]]></java:args>
 				</java:invoke-static>
 				
@@ -256,6 +316,39 @@ output application/json
 payload]]></ee:set-payload>
 					</ee:message>
 				</ee:transform>
+            </when>
+
+            <!-- STATUS ENDPOINT -->
+            <when expression="#[vars.apiPath startsWith 'analyze/status/']">
+                <set-variable variableName="analysisId" value="#[vars.apiPath replace 'analyze/status/' with '']"/>
+                
+                <java:invoke-static doc:name="Get Analysis Status" class="com.raks.muleguard.wrapper.RaksAnalyzerInvoker" method="getAnalysisStatus(java.lang.String)">
+                    <java:args><![CDATA[#[{
+                        arg0: vars.analysisId
+                    }]]]></java:args>
+                </java:invoke-static>
+                
+                <ee:transform doc:name="Transform Status">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+if (payload != null) {
+    status: payload.status,
+    analysisId: payload.analysisId,
+    progress: payload.progressPercentage,
+    message: payload.progressMessage,
+    errorMessage: payload.errorMessage,
+    reportsPath: payload.outputDirectory,
+    excelPath: if (payload.excelReportPath != null) ("download/" ++ (payload.excelReportPath splitBy '\\')[-1]) else null,
+    wordPath: if (payload.wordDocumentPath != null) ("download/" ++ (payload.wordDocumentPath splitBy '\\')[-1]) else null,
+    pdfPath: if (payload.pdfDocumentPath != null) ("download/" ++ (payload.pdfDocumentPath splitBy '\\')[-1]) else null
+} else {
+    status: "NOT_FOUND",
+    message: "Analysis ID not found"
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
             </when>
             
             <!-- FILE DOWNLOAD ENDPOINT (CloudHub compatible) -->
