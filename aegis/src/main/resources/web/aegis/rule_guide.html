@@ -484,6 +484,36 @@ params:
   filePatterns: ["**/*.xml"]
 # Result: Files without &lt;jce-config&gt; pass silently.
 </code></pre>
+<h3>Pattern E: Conditional Existence Checks</h3>
+Aegis allows you to precisely control rule execution based on the existence of specific elements. This is commonly used in <code class='inline-token'>CONDITIONAL_CHECK</code> to skip rules when certain "feature flags" (like a batch job) are found.
+<br>
+Using <code class='inline-token'>XML_XPATH_NOT_EXISTS</code> without a <code class='inline-token'>forbiddenValue</code> will fail if the element is found in the XML, effectively allowing you to say "Run this check ONLY IF this other element is NOT present."
+<br>
+<strong>Example (Excluding Batch Projects):</strong>
+<pre><code class='language-yaml'>type: CONDITIONAL_CHECK
+params:
+  preconditions:
+    - type: XML_XPATH_NOT_EXISTS
+      params:
+        xpath: "//*[local-name()='job']" # Skips if &lt;batch:job&gt; exists
+  # ...
+</code></pre>
+<h3>Pattern F: Enhanced Reporting Context</h3>
+Aegis can be configured to provide deep context in failure reports (like showing the exact hardcoded version string) entirely through YAML configuration:
+<br>
+1.  <strong>Direct Pointing</strong>: Set the <code class='inline-token'>xpath</code> to point directly to the data of interest (e.g., the <code class='inline-token'>&lt;version&gt;</code> text).
+2.  <strong>Smart Filtering</strong>: Use an XPath predicate to select only the invalid nodes (e.g., <code class='inline-token'>not(contains(., '${'))</code>).
+3.  <strong>Capture Mode</strong>: Use <code class='inline-token'>XML_ELEMENT_CONTENT_FORBIDDEN</code> with <code class='inline-token'>forbiddenValue: ".+"</code>.
+4.  <strong>Automatic Detail</strong>: Because every match is an intentional failure, Aegis captures the matched text and displays it in the <strong>"Items Found"</strong> section, making the issue immediately obvious to the developer.
+<br>
+<strong>Example:</strong>
+<pre><code class='language-yaml'>type: XML_ELEMENT_CONTENT_FORBIDDEN
+params:
+  xpath: "//*[local-name()='version'][not(contains(., '${'))]"
+  forbiddenValue: ".+"
+  operator: "MATCHES"
+  isRegex: true
+</code></pre>
 <hr>
 <br>
 <h2 id="QUICK_REFERENCE_5MessageTokensReference">5. Message Tokens Reference</h2>
