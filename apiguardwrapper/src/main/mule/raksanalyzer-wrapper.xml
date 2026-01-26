@@ -340,9 +340,9 @@ if (payload != null) {
     message: payload.progressMessage,
     errorMessage: payload.errorMessage,
     reportsPath: payload.outputDirectory,
-    excelPath: if (payload.excelReportPath != null) ("download/" ++ (payload.excelReportPath splitBy '\\')[-1]) else null,
-    wordPath: if (payload.wordDocumentPath != null) ("download/" ++ (payload.wordDocumentPath splitBy '\\')[-1]) else null,
-    pdfPath: if (payload.pdfDocumentPath != null) ("download/" ++ (payload.pdfDocumentPath splitBy '\\')[-1]) else null
+    excelPath: if (payload.excelReportPath != null) ("download/" ++ (payload.excelReportPath splitBy /[\\\/]/)[-1]) else null,
+    wordPath: if (payload.wordDocumentPath != null) ("download/" ++ (payload.wordDocumentPath splitBy /[\\\/]/)[-1]) else null,
+    pdfPath: if (payload.pdfDocumentPath != null) ("download/" ++ (payload.pdfDocumentPath splitBy /[\\\/]/)[-1]) else null
 } else {
     status: "NOT_FOUND",
     message: "Analysis ID not found"
