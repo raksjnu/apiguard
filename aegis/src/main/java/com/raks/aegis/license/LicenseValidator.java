@@ -18,8 +18,12 @@ public class LicenseValidator {
 
     public static void validate(String licenseKey) {
         // Check for license protection marker
-        if (!new java.io.File("LICENSE_MODE_ENABLED").exists()) {
-            return; // Bypass validation if marker is missing
+        if (!new java.io.File("LICENSE_MODE_ENABLED").exists() && !new java.io.File("PROTECTED_MODE_ENABLED").exists()) {
+            return; // Bypass validation if both markers are missing
+        }
+
+        if (licenseKey == null || licenseKey.trim().isEmpty()) {
+            licenseKey = loadFromClasspath();
         }
 
         if (licenseKey == null || licenseKey.trim().isEmpty()) {
@@ -61,6 +65,17 @@ public class LicenseValidator {
         } catch (Exception e) {
             throw new SecurityException("License validation error: " + e.getMessage());
         }
+    }
+
+    public static String loadFromClasspath() {
+        try (java.io.InputStream is = LicenseValidator.class.getResourceAsStream("/license.key")) {
+            if (is != null) {
+                return new String(is.readAllBytes(), StandardCharsets.UTF_8).trim();
+            }
+        } catch (Exception e) {
+            // Ignore error, return null
+        }
+        return null;
     }
 
     private static boolean verifySignature(String payloadBase64, String signatureBase64) throws Exception {

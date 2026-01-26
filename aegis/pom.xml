@@ -256,10 +256,41 @@
                             <options>
                                 <option>-allowaccessmodification</option>
                                 <option>-ignorewarnings</option>
-                                <option>-keep public class com.raks.aegis.AegisMain { public static void main(java.lang.String[]); }</option>
-                                <option>-keep public class com.raks.aegis.** { *; }</option>
+                                <!-- Application Main Entry Point - Keep EVERYTHING -->
+                                <option>-keep class com.raks.aegis.AegisMain { *; }</option>
+                                
+                                <!-- Classes invoked by Mule (Must be kept public) -->
+                                <option>-keep class com.raks.aegis.util.GitHelper { public static *** listRepositories(...); public static *** listBranches(...); public static *** cloneRepository(...); }</option>
                                 <option>-keep class com.raks.aegis.license.LicenseValidator { public static void validate(java.lang.String); }</option>
-                                <option>-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod</option>
+
+                                <!-- Keep all Annotations, Enums, and Reflection Metadata -->
+                                <option>-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod,SourceFile,LineNumberTable,Exceptions</option>
+                                <option>-keepclassmembers enum * { *; }</option>
+                                <option>-keep interface * extends java.lang.annotation.Annotation { *; }</option>
+                                
+                                <!-- FRAMEWORK & REFLECTION SAFEGUARDS -->
+                                <!-- Picocli (Package is 'picocli', not 'info.picocli') -->
+                                <option>-keep class picocli.** { *; }</option>
+                                <option>-keep @picocli.CommandLine.Command class * { *; }</option>
+                                <option>-keepclassmembers class * { @picocli.CommandLine.Option *; @picocli.CommandLine.Parameters *; }</option>
+                                
+                                <!-- Serialization (Jackson/Gson/SnakeYAML) -->
+                                <option>-keepclassmembers class com.raks.** { void set*(***); boolean is*(); *** get*(); &lt;init&gt;(); }</option>
+                                <option>-keepclassmembers class * { @com.fasterxml.jackson.annotation.JsonProperty *; }</option>
+
+                                <!-- COMPREHENSIVE LIBRARY KEEP RULES -->
+                                <option>-keep class org.** { *; }</option>
+                                <option>-keep class com.google.** { *; }</option>
+                                <option>-keep class com.fasterxml.** { *; }</option>
+                                <option>-keep class com.github.** { *; }</option>
+                                <option>-keep class com.jayway.** { *; }</option>
+                                <option>-keep class ch.qos.** { *; }</option>
+                                <option>-keep class javax.** { *; }</option>
+                                <option>-keep class java.** { *; }</option>
+                                <option>-keep class jdk.** { *; }</option>
+                                <option>-keep class sun.** { *; }</option>
+                                
+                                <option>-keepdirectories</option>
                                 <option>-dontwarn **</option>
                                 <option>-dontnote **</option>
                             </options>
@@ -275,8 +306,42 @@
                                 <lib>${java.home}/jmods/java.sql.jmod</lib>
                                 <lib>${java.home}/jmods/java.scripting.jmod</lib>
                                 <lib>${java.home}/jmods/java.net.http.jmod</lib>
+                                <lib>${java.home}/jmods/jdk.httpserver.jmod</lib>
+                                <lib>${java.home}/jmods/jdk.charsets.jmod</lib>
+                                <lib>${java.home}/jmods/jdk.crypto.ec.jmod</lib>
+                                <lib>${java.home}/jmods/jdk.unsupported.jmod</lib>
                             </libs>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>license-mode</id>
+            <activation>
+                <file>
+                    <exists>LICENSE_MODE_ENABLED</exists>
+                </file>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>3.1.0</version>
+                        <executions>
+                            <execution>
+                                <phase>generate-resources</phase>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                                <configuration>
+                                    <target>
+                                        <copy file="../rakslicensemanager/generated.license" tofile="${project.build.outputDirectory}/license.key" failonerror="false" />
+                                    </target>
+                                </configuration>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>

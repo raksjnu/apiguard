@@ -298,7 +298,7 @@ public class AegisGUI {
                     } else {
                         sendError(exchange, "Missing project path or file upload");
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     logger.error("Validation error", e);
                     sendError(exchange, "Detailed Error: " + e.getMessage());
                 }
@@ -709,7 +709,7 @@ public class AegisGUI {
                 byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, bytes.length);
                 try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 logger.error("Git discovery (repos) failed", e);
                 String err = "{\"success\":false, \"message\":\"" + e.getMessage().replace("\"", "\\\"") + "\"}";
                 exchange.sendResponseHeaders(500, err.length());
@@ -746,7 +746,7 @@ public class AegisGUI {
                 byte[] bytes = response.getBytes(StandardCharsets.UTF_8);
                 exchange.sendResponseHeaders(200, bytes.length);
                 try (OutputStream os = exchange.getResponseBody()) { os.write(bytes); }
-            } catch (Exception e) {
+            } catch (Throwable e) {
                 logger.error("Git discovery (branches) failed", e);
                 String err = "{\"success\":false, \"message\":\"" + e.getMessage().replace("\"", "\\\"") + "\"}";
                 exchange.sendResponseHeaders(500, err.length());
