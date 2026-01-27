@@ -1,3 +1,4 @@
+// Main Initialization
 document.addEventListener('DOMContentLoaded', () => {
     // Inject Styles for Settings Panel
     const style = document.createElement('style');
@@ -39,8 +40,55 @@ document.addEventListener('DOMContentLoaded', () => {
             outline: none;
             box-shadow: 0 0 0 3px rgba(107, 70, 193, 0.1);
         }
+        /* Toast Notifications */
+        #toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .toast {
+            background: #2d3748;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            font-size: 0.9rem;
+            animation: slideIn 0.3s ease-out;
+            min-width: 250px;
+        }
+        .toast.success { border-left: 4px solid #48bb78; }
+        .toast.error { border-left: 4px solid #f56565; }
+        .toast.warning { border-left: 4px solid #ed8936; }
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        #resultsContainer.jms-mode {
+            background-color: #faf5ff !important;
+            background-image: radial-gradient(circle at 0% 50%, rgba(107, 70, 193, 0.05) 0%, transparent 50%);
+        }
     `;
     document.head.appendChild(style);
+
+    const toastContainer = document.createElement('div');
+    toastContainer.id = 'toast-container';
+    document.body.appendChild(toastContainer);
+
+    window.showToast = (msg, type = 'info') => {
+        const t = document.createElement('div');
+        t.className = `toast ${type}`;
+        t.innerText = msg;
+        toastContainer.appendChild(t);
+        setTimeout(() => {
+            t.style.opacity = '0';
+            t.style.transition = 'opacity 0.5s';
+            setTimeout(() => t.remove(), 500);
+        }, 5000);
+    };
 
     // console.log('[APP] Check statusIndicator removal...'); 
     // User requested removal of "Running..." indicator. We'll ensure it's hidden or removed.
@@ -150,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const logActivity = (msg, type = 'info', contentToCopy = null) => {
+    window.logActivity = (msg, type = 'info', contentToCopy = null) => {
         const log = document.getElementById('activityLog');
         if (!log) return;
         const entry = document.createElement('div');
@@ -184,6 +232,8 @@ document.addEventListener('DOMContentLoaded', () => {
         // Persist
         sessionStorage.setItem(LOG_STORAGE_KEY, log.innerHTML);
     };
+    // internal alias for consistency if needed, though window.logActivity works
+    const logActivity = window.logActivity;
 
     document.getElementById('clearLogBtn').onclick = () => {
         if (confirm('Clear the current session Activity Logs? This will not affect stored data.')) {
@@ -210,8 +260,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 const response = await fetch('api/config');
                 if (response.ok) {
                     loadedConfig = await response.json();
-                    const preservedType = document.getElementById('testType').value;
-                    populateFormFields(preservedType);
+                    
+                    // Intelligent Type Switching:
+                    // If current type is JMS (which has no template support yet), switch to SOAP/REST based on config
+                    let targetType = document.getElementById('testType').value;
+                    if (targetType === 'JMS') {
+                         targetType = loadedConfig.testType || 'SOAP';
+                         document.getElementById('testType').value = targetType;
+                         // Force update buttons visual state immediately
+                         if (typeof syncTypeButtons === 'function') syncTypeButtons();
+                    }
+
+                    populateFormFields(targetType);
                     btn.innerHTML = '✅ Templates Loaded!';
                     setTimeout(() => {
                         document.querySelector('[data-view="mainView"]').click();
@@ -311,11 +371,10 @@ document.addEventListener('DOMContentLoaded', () => {
         tokensTable.innerHTML = ''; 
         
         // Add ONLY the default Content-Type as per the standard (REST/SOAP)
-        addRow(headersTable, ['Header Name', 'Value'], ['Content-Type', (type === 'SOAP' ? 'text/xml' : 'application/json')]);
+        if (type !== 'JMS') {
+             addRow(headersTable, ['Header Name', 'Value'], ['Content-Type', (type === 'SOAP' ? 'text/xml' : 'application/json')]);
+        }
         
-        // Removed auto-population logic entirely from here as requested.
-        // Data will ONLY be populated via the "Load Mock Test Data" button in Settings.
-
         const authCheck = document.getElementById('enableAuth');
         if (authCheck) {
             authCheck.checked = false;
@@ -365,31 +424,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             loadedConfig = await response.json();
             
-            // Only use server defaults if there was no local state
-            if (!stateRestored) {
-                const initialType = loadedConfig.testType || 'REST';
-                document.getElementById('testType').value = initialType;
-                
-                if (loadedConfig.maxIterations) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
-                if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
-                if (loadedConfig.ignoredFields) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
-                
-                // CRITICAL: Ensure form starts clean of test data but has standard headers
-                resetFormToStandard(initialType);
-            } else {
-                // Even if state was restored, if it looks like "Sample Test Data", clear it
-                // Logic: If URL1 or Operation name matches common sample keywords, or just generally clear it anyway?
-                // The user was very specific: "when ui starts it should not have test data".
-                // I will call resetFormToStandard after loading state to ensure it starts clean 
-                // but preserves the TYPE and global settings.
-                resetFormToStandard(document.getElementById('testType').value);
-            }
+            // Priority: Server Config > SOAP (Default) - Ignore localStorage for testType
+            const initialType = loadedConfig.testType || 'SOAP';
+            document.getElementById('testType').value = initialType;
             
-            // Sync specific global settings if server has them but local doesn't (or just always sync them)
-            if (loadedConfig.workingDirectory && !document.getElementById('workingDirectory').value) {
-                document.getElementById('workingDirectory').value = loadedConfig.workingDirectory;
-            }
-
+            if (loadedConfig.maxIterations) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
+            if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
+            if (loadedConfig.ignoredFields) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
+            
+            // CRITICAL: Ensure form starts clean
+            resetFormToStandard(initialType);
         } catch (e) { console.error('Defaults error:', e); }
         syncTypeButtons();
     };
@@ -509,8 +553,21 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.style.display = 'none';
     };
 
-    compareBtn.addEventListener('click', async (e) => {
+    // --- Action Handlers ---
+    configForm.addEventListener('submit', async (e) => {
         e.preventDefault();
+
+        // JMS INTERCEPTION
+        const type = document.getElementById('testType').value;
+        if (type === 'JMS') {
+            if (typeof JmsModule !== 'undefined') {
+                JmsModule.runAction();
+            } else {
+                 showToast('JMS Module not loaded. Please refresh.', 'error');
+            }
+            return;
+        }
+
         const config = buildConfig();
         const isBaseline = config.comparisonMode === 'BASELINE';
         const isCapture = isBaseline && document.getElementById('baselineOperation').value === 'CAPTURE';
@@ -1234,8 +1291,91 @@ document.addEventListener('DOMContentLoaded', () => {
     const syncTypeButtons = () => {
         const type = document.getElementById('testType').value || 'REST';
         const isRest = (type === 'REST');
+        const isSoap = (type === 'SOAP');
+        const isJms = (type === 'JMS');
+        
         document.getElementById('typeRest').classList.toggle('active', isRest);
-        document.getElementById('typeSoap').classList.toggle('active', !isRest);
+        document.getElementById('typeSoap').classList.toggle('active', isSoap);
+        const jmsBtn = document.getElementById('typeJms');
+        if(jmsBtn) jmsBtn.classList.toggle('active', isJms);
+
+        // Toggle Field Visibility
+    const httpFields = document.getElementById('httpFields');
+    const jmsFields = document.getElementById('jmsFields');
+    
+    if (httpFields) {
+        httpFields.style.display = isJms ? 'none' : 'block';
+    }
+    if (jmsFields) {
+        jmsFields.style.display = isJms ? 'block' : 'none';
+    } else if (isJms) {
+        // If JMS selected but fields not loaded yet, show loading indicator
+        const loading = document.getElementById('jmsLoadingIndicator');
+        if (loading) loading.style.display = 'block';
+    }
+        
+        // JMS Mode hides the "Compare/Baseline" tabs effectively as it's a different beast, 
+        // but for now we just disable the baseline button or hide the tabs?
+        // Let's keep them visible but maybe disable Baseline mode if JMS is active?
+        const modeBaseline = document.getElementById('modeBaseline');
+        if (modeBaseline) {
+            if (isJms) {
+                 modeBaseline.style.opacity = '0.5';
+                 modeBaseline.style.pointerEvents = 'none';
+                 if (document.getElementById('comparisonMode').value === 'BASELINE') {
+                     document.getElementById('modeCompare').click();
+                 }
+            } else {
+                 modeBaseline.style.opacity = '1';
+                 modeBaseline.style.pointerEvents = 'auto';
+            }
+        }
+        
+        // Hide Mode Tabs (Compare/Baseline) in JMS mode
+        const modeTabs = document.getElementById('modeTabsContainer') || document.querySelector('.mode-tabs');
+        if (modeTabs) {
+            modeTabs.style.display = isJms ? 'none' : 'flex';
+        }
+        
+        // JMS Specific UI Sync
+        const compareBtn = document.getElementById('compareBtn');
+        const resultsContainer = document.getElementById('resultsContainer');
+        
+        if (isJms) {
+            if (resultsContainer) resultsContainer.classList.add('jms-mode');
+            const opModeSelect = document.getElementById('jmsOpMode');
+            const mode = opModeSelect ? opModeSelect.value : 'PUBLISH';
+            
+            // Re-sync text just in case syncJmsFields hasn't run yet
+            if (compareBtn) {
+                switch(mode) {
+                    case 'PUBLISH': compareBtn.innerText = '🚀 Publish Message'; break;
+                    case 'LISTEN': compareBtn.innerText = '👂 Start Listener'; break;
+                    case 'CONSUME': compareBtn.innerText = '📥 Consume Once'; break;
+                    default: compareBtn.innerText = 'Run Action';
+                }
+            }
+            
+            // Clear previous REST/SOAP results if present
+            if (resultsContainer && resultsContainer.querySelector('.summary-card')) {
+                resultsContainer.innerHTML = `
+                    <div class="empty-state" style="text-align:center; padding:40px; color:#553c9a;">
+                        <h3 style="font-size:1.5rem; margin-bottom:10px;">🛡️ JMS Console</h3>
+                        <p style="font-weight:600;">Ready for unified operations.</p>
+                    </div>`;
+            }
+        } else {
+             if (resultsContainer) resultsContainer.classList.remove('jms-mode');
+             // Restore standard text
+             if (compareBtn) {
+                 const baselineOp = document.getElementById('baselineOperation').value;
+                 if (document.getElementById('comparisonMode').value === 'BASELINE') {
+                     compareBtn.innerText = (baselineOp === 'CAPTURE') ? '📸 Capture Baseline' : '🔍 Compare Baseline';
+                 } else {
+                     compareBtn.innerText = '▶ Run Comparison';
+                 }
+             }
+        }
     };
 
     const updateTypeToggle = (type) => {
@@ -1245,6 +1385,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('typeRest').addEventListener('click', () => updateTypeToggle('REST'));
     document.getElementById('typeSoap').addEventListener('click', () => updateTypeToggle('SOAP'));
+    // Fixed: Add listener for JMS to ensure UI Sync happens
+    const jmsBtn = document.getElementById('typeJms');
+    if(jmsBtn) jmsBtn.addEventListener('click', () => updateTypeToggle('JMS'));
+
+    // Expose for JMS Module
+    window.syncTypeButtons = syncTypeButtons;
 
     // Export internal logic for mode switches
     window.handleBaselineUI = (mode) => {
@@ -1485,6 +1631,10 @@ document.addEventListener('DOMContentLoaded', () => {
             } else if (resp.ok) {
                 const resData = await resp.json();
                 if (resData.success) {
+                    alert('Mock Test Data Loaded Successfully!');
+                    // User Request: Ensure SOAP/REST is selected by default after loading mock data
+                    document.getElementById('testType').value = 'SOAP'; 
+                    syncTypeButtons();
                     const count = resData.imported ? resData.imported.length : 0;
                     const fileList = resData.imported ? resData.imported.join(', ') : 'Unknown files';
                     
@@ -1519,4 +1669,45 @@ document.addEventListener('DOMContentLoaded', () => {
     initResize();
     initUtilResize();
     loadDefaults();
+    
+    // Lazy Load JMS UI
+    const loadJmsUI = async () => {
+        const loading = document.getElementById('jmsLoadingIndicator');
+        if (loading) loading.style.display = 'block';
+        
+        try {
+            const resp = await fetch('jms.html');
+            if (resp.ok) {
+                const html = await resp.text();
+                const container = document.getElementById('jmsContainer');
+                if (container) {
+                    // Preserve the loading indicator if it exists, or just overwrite it
+                    container.innerHTML = html;
+                    
+                    // Initialize JMS Module if available
+                    if (typeof JmsModule !== 'undefined') {
+                        JmsModule.init();
+                    }
+                    
+                    // Sync UI after injection
+                    if (window.syncTypeButtons) window.syncTypeButtons();
+
+                    // Re-bind accordions for the new content
+                    container.querySelectorAll('.accordion-header').forEach(h => {
+                        h.addEventListener('click', () => {
+                            const content = h.nextElementSibling;
+                            content.classList.toggle('open');
+                            h.querySelector('.icon').innerText = content.classList.contains('open') ? '▼' : '▲';
+                        });
+                    });
+                }
+            }
+        } catch (e) {
+            console.error('Failed to load JMS UI', e);
+        } finally {
+            if (loading) loading.style.display = 'none';
+        }
+    };
+    loadJmsUI();
+
 });

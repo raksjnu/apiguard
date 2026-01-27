@@ -5,10 +5,15 @@ import org.slf4j.LoggerFactory;
 import java.awt.Desktop;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import com.raks.apiforge.jms.EmbeddedBrokerService;
+import com.raks.apiforge.jms.JmsConnectorFactory;
+import com.raks.apiforge.jms.JmsService;
 import static spark.Spark.*;
 public class ApiForgeWeb {
     private static final Logger logger = LoggerFactory.getLogger(ApiForgeWeb.class);
     private static final int DEFAULT_PORT = 4567;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static java.io.File explicitConfigFile;
 
     public static void setConfigFile(java.io.File file) {
@@ -307,6 +312,237 @@ public class ApiForgeWeb {
                 return "{\"error\": \"" + e.getMessage() + "\"}";
             }
         });
+        // --- JMS API Endpoints ---
+
+        // 1. Connect
+        post("/api/jms/connect", (req, res) -> {
+            res.type("application/json");
+            try {
+                ObjectMapper mapper = new ObjectMapper();
+                JmsConnectorFactory.JmsConfig config = mapper.readValue(req.body(), JmsConnectorFactory.JmsConfig.class);
+                JmsService.getInstance().connect(config);
+                return "{\"success\": true, \"message\": \"Connected to " + config.getProvider() + "\"}";
+            } catch (Exception e) {
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        // 2. Disconnect
+        post("/api/jms/disconnect", (req, res) -> {
+            res.type("application/json");
+            JmsService.getInstance().close();
+            return "{\"success\": true}";
+        });
+
+        // 3. Send Message (Single or Batch)
+        post("/api/jms/send", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                String destination = (String) body.get("destination");
+                String destType = (String) body.get("destType");
+                String payload = (String) body.get("payload");
+                List<String> payloads = (List<String>) body.get("payloads");
+                java.util.Map<String, Object> props = (java.util.Map<String, Object>) body.get("properties");
+                int rateLimit = body.containsKey("rateLimit") ? (int) body.get("rateLimit") : 0;
+                
+                if (payloads != null && !payloads.isEmpty()) {
+                    JmsService.getInstance().sendBatch(destination, payloads, rateLimit, destType);
+                } else {
+                    JmsService.getInstance().sendMessage(destination, payload, props, destType);
+                }
+                return "{\"success\": true}";
+            } catch (Exception e) {
+                logger.error("JMS Send failed", e);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+        
+        // 4. Browsing
+        post("/api/jms/browse", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                String destination = (String) body.get("destination");
+                List<java.util.Map<String, Object>> msgs = JmsService.getInstance().browse(destination);
+                return mapper.writeValueAsString(msgs);
+            } catch (Exception e) {
+                 return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+        
+        // 5. Consume (Single or Multiple)
+        post("/api/jms/consume", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                String destination = (String) body.get("destination");
+                String destType = (String) body.get("destType");
+                int count = body.containsKey("count") ? Integer.parseInt(String.valueOf(body.get("count"))) : 1;
+                
+                if (count > 1) {
+                    List<java.util.Map<String, Object>> msgs = JmsService.getInstance().receiveMultiple(destination, destType, count, 2000);
+                    if (msgs.isEmpty()) return "{\"success\": true, \"empty\": true}";
+                    return mapper.writeValueAsString(msgs);
+                } else {
+                    java.util.Map<String, Object> msg = JmsService.getInstance().receiveOnce(destination, destType, 2000);
+                    if (msg == null) return "{\"success\": true, \"empty\": true}";
+                    return mapper.writeValueAsString(msg);
+                }
+            } catch (Exception e) {
+                 return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        // 6. Listen Start/Stop/Stats
+        post("/api/jms/listen/start", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                String dest = (String) body.get("destination");
+                String type = (String) body.get("destType");
+                String count = String.valueOf(body.getOrDefault("consumers", "1"));
+                JmsService.getInstance().startListeners(count, dest, type);
+                return "{\"success\": true}";
+            } catch (Exception e) {
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+        
+        post("/api/jms/listen/stop", (req, res) -> {
+            res.type("application/json");
+            JmsService.getInstance().stopListeners();
+            return "{\"success\": true}";
+        });
+        
+        get("/api/jms/listen/stats", (req, res) -> {
+            res.type("application/json");
+            return mapper.writeValueAsString(JmsService.getInstance().getListenerStats());
+        });
+
+        // 7. Destination Management
+        post("/api/jms/drain", (req, res) -> {
+             res.type("application/json");
+             try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                int count = JmsService.getInstance().drainQueue((String)body.get("destination"), (String)body.get("destType"));
+                return "{\"success\": true, \"count\": " + count + "}";
+             } catch (Exception e) {
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+             }
+        });
+
+        post("/api/jms/create", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                JmsService.getInstance().createDestinationAdmin((String)body.get("destination"), (String)body.get("destType"));
+                return "{\"success\": true}";
+            } catch (Exception e) {
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/jms/delete", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                boolean deleted = JmsService.getInstance().deleteDestination((String)body.get("destination"), (String)body.get("destType"));
+                return "{\"success\": " + deleted + "}";
+            } catch (Exception e) {
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/jms/stats", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                return mapper.writeValueAsString(JmsService.getInstance().getDestinationMetadata((String)body.get("destination"), (String)body.get("destType")));
+            } catch (Exception e) {
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        // 8. Embedded Broker
+        post("/api/jms/embed/start", (req, res) -> {
+            res.type("application/json");
+            try {
+                boolean success = EmbeddedBrokerService.startBroker();
+                if (success) return "{\"success\": true}";
+                return "{\"error\": \"Broker failed to start (check server logs)\"}";
+            } catch (Throwable e) {
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/jms/embed/stop", (req, res) -> {
+            res.type("application/json");
+            EmbeddedBrokerService.stopBroker();
+            return "{\"success\": true}";
+        });
+
+        get("/api/jms/embed/status", (req, res) -> {
+            res.type("application/json");
+            return "{\"running\": " + EmbeddedBrokerService.isRunning() + "}";
+        });
+
+        get("/api/jms/status", (req, res) -> {
+            try {
+                return mapper.writeValueAsString(JmsService.getInstance().getStatus());
+            } catch (Exception e) {
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/jms/browse", (req, res) -> {
+            try {
+                Map<String, Object> body = mapper.readValue(req.body(), Map.class);
+                String destination = (String) body.get("destination");
+                List<Map<String, Object>> messages = JmsService.getInstance().browse(destination);
+                return mapper.writeValueAsString(messages);
+            } catch (Exception e) {
+                logger.error("Failed to browse queue", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/jms/consume", (req, res) -> {
+            try {
+                Map<String, Object> body = mapper.readValue(req.body(), Map.class);
+                String destination = (String) body.get("destination");
+                String destType = (String) body.get("destType");
+                int count = body.containsKey("count") ? Integer.parseInt(String.valueOf(body.get("count"))) : 1;
+                
+                if (count > 1) {
+                    List<Map<String, Object>> msgs = JmsService.getInstance().receiveMultiple(destination, destType, count, 2000);
+                    if (msgs.isEmpty()) return "{\"success\": true, \"empty\": true}";
+                    return mapper.writeValueAsString(msgs);
+                } else {
+                    Map<String, Object> msg = JmsService.getInstance().receiveOnce(destination, destType, 2000);
+                    if (msg == null) return "{\"success\": true, \"empty\": true}";
+                    return mapper.writeValueAsString(msg);
+                }
+            } catch (Exception e) {
+                logger.error("Failed to consume message", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/jms/stats", (req, res) -> {
+            try {
+                Map<String, Object> body = mapper.readValue(req.body(), Map.class);
+                String destination = (String) body.get("destination");
+                String destType = (String) body.get("destType");
+                return mapper.writeValueAsString(JmsService.getInstance().getDestinationMetadata(destination, destType));
+            } catch (Exception e) {
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
         awaitInitialization();
         logger.info("Server started. Access at http://localhost:{}", port);
         try {

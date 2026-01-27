@@ -80,7 +80,6 @@
             <groupId>javax.servlet</groupId>
             <artifactId>javax.servlet-api</artifactId>
             <version>4.0.1</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- HTML Templating -->
@@ -109,6 +108,38 @@
             <artifactId>guava</artifactId>
             <version>33.4.0-jre</version>
             <scope>compile</scope>
+        </dependency>
+
+        <!-- JMS Support (Javax for ActiveMQ 5.x compatibility) -->
+        <dependency>
+            <groupId>javax.jms</groupId>
+            <artifactId>javax.jms-api</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-client</artifactId>
+            <version>5.18.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-broker</artifactId>
+            <version>5.18.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-kahadb-store</artifactId>
+            <version>5.18.3</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>activemq-jaas</artifactId>
+            <version>5.18.3</version>
+        </dependency>
+        <dependency>
+             <groupId>org.apache.activemq</groupId>
+             <artifactId>activemq-openwire-legacy</artifactId>
+             <version>5.18.3</version>
         </dependency>
     </dependencies>
 
