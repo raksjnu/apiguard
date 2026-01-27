@@ -203,8 +203,19 @@
 
         <!-- Custom Rules Input -->
         <div class="optional-section">
-            <label>Optional: Custom Rules File</label>
-            <input type="file" id="customRules" accept=".yaml,.yml">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <label>Optional: Custom Rules</label>
+                <div style="font-size:11px; background:#f0f0f0; padding:2px 8px; border-radius:10px; border:1px solid #ddd;">
+                    <label style="margin-right:8px; cursor:pointer; font-weight:normal;"><input type="radio" name="rulesMode" value="upload" checked onchange="toggleRulesInput()"> Upload</label>
+                    <label id="rulesPathLabel" style="cursor:pointer; font-weight:normal;"><input type="radio" name="rulesMode" value="path" onchange="toggleRulesInput()"> Path</label>
+                </div>
+            </div>
+            <div id="rulesUploadDetail">
+                <input type="file" id="customRules" accept=".yaml,.yml">
+            </div>
+            <div id="rulesPathDetail" style="display:none;">
+                <input type="text" id="customRulesPath" placeholder="e.g. C:\raks\temp\truist\truist_aegis_RK_v1.6.yaml" oninput="saveRulesPath()">
+            </div>
             <small>If not provided, default rules from Aegis JAR will be used</small>
         </div>
 
@@ -265,9 +276,14 @@
                 // Wrapper: Hide Local, Show ZIP/JAR
                 const localLabel = document.getElementById('localLabel');
                 if (localLabel) localLabel.style.display = 'none';
+
+                // Hide 'Path' option for Custom Rules in CloudHub
+                const rulesPathLabel = document.getElementById('rulesPathLabel');
+                if (rulesPathLabel) rulesPathLabel.style.display = 'none';
                 
-                // Default to ZIP
+                // Default modes
                 selectMode('zip');
+                localStorage.setItem('aegis_rules_mode', 'upload');
             } else {
                 // Standalone: Show all (except Git disabled)
                 // Default to Local
@@ -300,26 +316,33 @@
             });
             toggleGitView();
 
-            // Restore persisted mode validation mode
-            try {
-                const savedMode = localStorage.getItem('aegis_validation_mode');
-                console.log('[DEBUG] Restoring saved mode:', savedMode);
-                if (savedMode) {
-                    const radio = document.querySelector(`input[name="mode"][value="${savedMode}"]`);
-                    if (radio) {
-                        radio.checked = true;
+                // Restore persisted mode validation mode
+                try {
+                    const savedMode = localStorage.getItem('aegis_validation_mode');
+                    console.log('[DEBUG] Restoring saved mode:', savedMode);
+                    if (savedMode) {
+                        const radio = document.querySelector(`input[name="mode"][value="${savedMode}"]`);
+                        if (radio) {
+                            radio.checked = true;
+                        }
                     } else {
-                        console.warn('[DEBUG] Saved mode radio not found:', savedMode);
+                         const localRadio = document.querySelector('input[name="mode"][value="local"]');
+                         if(localRadio) localRadio.checked = true;
                     }
-                } else {
-                     // Default to Local if nothing saved
-                     const localRadio = document.querySelector('input[name="mode"][value="local"]');
-                     if(localRadio) localRadio.checked = true;
-                }
-                
-                // Initial toggle based on restored or default
-                handleModeChange(false);
-            } catch (e) {
+                    
+                    // Handle rules mode persistence
+                    const savedRulesMode = localStorage.getItem('aegis_rules_mode') || 'upload';
+                    const rulesRadio = document.querySelector(`input[name="rulesMode"][value="${savedRulesMode}"]`);
+                    if (rulesRadio) rulesRadio.checked = true;
+                    
+                    const savedPath = localStorage.getItem('aegis_custom_rules_path');
+                    if (savedPath) document.getElementById('customRulesPath').value = savedPath;
+                    
+                    toggleRulesInput();
+                    
+                    // Initial toggle based on restored or default
+                    handleModeChange(false);
+                } catch (e) {
                 console.error('[DEBUG] Error restoring session prefs:', e);
                 alert('Aegis UI Error (Restore): ' + e.message);
             }
@@ -540,6 +563,18 @@
              }
         }
 
+        function toggleRulesInput() {
+            const mode = document.querySelector('input[name="rulesMode"]:checked').value;
+            document.getElementById('rulesUploadDetail').style.display = mode === 'upload' ? 'block' : 'none';
+            document.getElementById('rulesPathDetail').style.display = mode === 'path' ? 'block' : 'none';
+            localStorage.setItem('aegis_rules_mode', mode);
+        }
+
+        function saveRulesPath() {
+            const path = document.getElementById('customRulesPath').value;
+            localStorage.setItem('aegis_custom_rules_path', path);
+        }
+
 
 
         function downloadSample(filename) {
@@ -732,9 +767,17 @@
             }
 
             // Custom rules
-            const customRules = document.getElementById('customRules').files[0];
-            if (customRules) {
-                formData.append('customRules', customRules);
+            const rulesMode = document.querySelector('input[name="rulesMode"]:checked').value;
+            if (rulesMode === 'upload') {
+                const customRules = document.getElementById('customRules').files[0];
+                if (customRules) {
+                    formData.append('customRules', customRules);
+                }
+            } else {
+                const customRulesPath = document.getElementById('customRulesPath').value;
+                if (customRulesPath) {
+                    formData.append('customRulesPath', customRulesPath);
+                }
             }
 
             // Email options
@@ -935,6 +978,10 @@
                 showAlert('Please enter a Group or Organization name');
                 return;
             }
+
+            // Reset Select All
+            const selectAll = document.getElementById('selectAllRepos');
+            if (selectAll) selectAll.checked = false;
 
             // Auto-sanitize: If user entered full URL, extract the group part
             // Handles https://gitlab.com/groupname or https://github.com/orgname

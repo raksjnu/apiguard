@@ -218,10 +218,14 @@ public class AegisGUI {
                         args.add(projectPath);
 
                         File customRulesFile = (File) params.get("customRules");
+                        String customRulesPath = (String) params.get("customRulesPath");
 
                         if (customRulesFile != null) {
                             args.add("-c");
                             args.add(customRulesFile.getAbsolutePath());
+                        } else if (customRulesPath != null && !customRulesPath.trim().isEmpty()) {
+                            args.add("-c");
+                            args.add(customRulesPath.trim());
                         }
 
                         Path reportDir = Paths.get(appTempDir, sessionId, "Aegis-reports");

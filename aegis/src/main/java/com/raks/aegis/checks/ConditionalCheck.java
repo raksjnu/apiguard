@@ -57,9 +57,10 @@ public class ConditionalCheck extends AbstractCheck {
             java.util.Set<String> aggregatedItems = new java.util.LinkedHashSet<>(); // Failures (found items)
             java.util.Set<String> aggregatedMatchingItems = new java.util.LinkedHashSet<>(); // Success matches
 
+            boolean disableFiltering = Boolean.parseBoolean(String.valueOf(params.getOrDefault("disableFiltering", "false")));
             for (Check nested : onSuccess) {
-                // Pass the collected matched paths from preconditions as a filter to success checks
-                CheckResult res = evaluateAtomic(projectRoot, nested, preconditionMatchedPaths);
+                // Pass the collected matched paths from preconditions as a filter to success checks, unless disabled
+                CheckResult res = evaluateAtomic(projectRoot, nested, disableFiltering ? null : preconditionMatchedPaths);
                 details.append("- ").append(res.ruleId != null ? res.ruleId : "Check").append(": ").append(res.message).append("\n");
 
                 if (res.checkedFiles != null && !res.checkedFiles.isEmpty()) {
