@@ -113,7 +113,8 @@ output application/java
 ---
 payload ++ {
     "token": (attributes.headers['x-git-token'] default p('gitanalyzer.gitlab.token')),
-    "gitProvider": (attributes.headers['x-git-provider'] default p('gitanalyzer.gitlab.provider'))
+    "gitProvider": (attributes.headers['x-git-provider'] default p('gitanalyzer.gitlab.provider')),
+    "licenseKey": p('license.key')
 }]]></ee:set-payload>
             </ee:message>
         </ee:transform>

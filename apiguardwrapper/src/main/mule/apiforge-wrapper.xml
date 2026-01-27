@@ -117,10 +117,11 @@ payload]]></ee:set-payload>
                  <!-- Extract working directory from payload if provided -->
                  <set-variable variableName="workDir" value="#[if (payload.baseline != null and payload.baseline.storageDir != null and payload.baseline.storageDir != '') payload.baseline.storageDir else p('apiforge.work.dir')]"/>
                  <logger level="INFO" message="#['Using working directory: ' ++ vars.workDir]"/>
-                 <java:invoke-static doc:name="Invoke apiforge" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="compare(java.util.Map, java.lang.String)">
+                 <java:invoke-static doc:name="Invoke apiforge" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="compare(java.util.Map, java.lang.String, java.lang.String)">
                     <java:args><![CDATA[#[{
 						arg0: payload,
-						arg1: vars.workDir
+						arg1: vars.workDir,
+                        arg2: p('license.key')
 					}]]]></java:args>
                  </java:invoke-static>
                  <ee:transform doc:name="Transform Result">

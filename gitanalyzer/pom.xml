@@ -117,6 +117,18 @@
 
     <build>
         <finalName>${project.artifactId}-${project.version}</finalName>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>.</directory>
+                <includes>
+                    <include>LICENSE_MODE_ENABLED</include>
+                    <include>PROTECTED_MODE_ENABLED</include>
+                </includes>
+            </resource>
+        </resources>
         <plugins>
             <!-- Maven Shade Plugin for Executable JAR (Default behavior) -->
             <plugin>
@@ -162,7 +174,19 @@
                 </file>
             </activation>
             <build>
-                <plugins>
+                <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>.</directory>
+                <includes>
+                    <include>LICENSE_MODE_ENABLED</include>
+                    <include>PROTECTED_MODE_ENABLED</include>
+                </includes>
+            </resource>
+        </resources>
+        <plugins>
                     <!-- In protected mode, shade plugin outputs to intermediate shaded JAR -->
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
@@ -241,7 +265,19 @@
                 </file>
             </activation>
             <build>
-                <plugins>
+                <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>.</directory>
+                <includes>
+                    <include>LICENSE_MODE_ENABLED</include>
+                    <include>PROTECTED_MODE_ENABLED</include>
+                </includes>
+            </resource>
+        </resources>
+        <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-antrun-plugin</artifactId>

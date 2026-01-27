@@ -16,6 +16,12 @@ public class GitAnalyzerTool {
     
     public static void main(String[] args) {
         try {
+            com.raks.gitanalyzer.license.LicenseValidator.validate(null);
+        } catch (SecurityException e) {
+            logger.error("{}", e.getMessage());
+            System.exit(1);
+        }
+        try {
             startServer();
         } catch (Exception e) {
             logger.error("Failed to start GitAnalyzer", e);

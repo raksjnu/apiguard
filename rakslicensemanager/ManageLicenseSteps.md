@@ -22,7 +22,7 @@ Follow these simple steps whenever you need to generate a license for a new clie
     -   Enter `2` when prompted for choice.
 
 4.  **Enter Client Details**:
-    -   **Client Name**: Enter the name of the client (e.g., `Truist Bank`).
+    -   **Client Name**: Enter the name of the client (e.g., `Raks Org`).
     -   **Expiry Date**: Enter the date in `YYYY-MM-DD` format (e.g., `2026-12-31`).
 
 5.  **Get the License**:
@@ -30,5 +30,22 @@ Follow these simple steps whenever you need to generate a license for a new clie
     -   **Copy this entire string.**
     -   It is also saved to a file named `generated.license` in the same folder.
 
-6.  **Distribute**:
-    -   Send this string to the client or configure it in the application environment variables as `LICENSE_KEY`.
+6.  **Distribute and Activate**:
+    -   Provide the license string to the client.
+    -   They can activate the application using any of the options below.
+
+## Application Activation Options
+
+Once a client has the license string, they can use it in **any** of these three ways:
+
+### Option A: Local File (Easiest for Users)
+Create a file named `license.key` in the same folder as the application JAR and paste the license string inside. The application will detect it automatically on startup.
+
+### Option B: System Property
+Provide the key as a Java system property when launching:
+```cmd
+java -Draks.license.key=YOUR_LICENSE_STRING -jar aegis-1.0.0.jar
+```
+
+### Option C: Environment Variable (Mule Wrapper)
+For the MuleSoft wrapper, the key (license.key) is typically configured in the `mule-app.properties` file or as an environment variable named `LICENSE_KEY`.

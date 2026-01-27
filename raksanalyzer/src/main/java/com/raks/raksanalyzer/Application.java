@@ -16,6 +16,12 @@ public class Application {
     private static final String DEFAULT_CONTEXT_PATH = "/";
     public static void main(String[] args) {
         try {
+            com.raks.raksanalyzer.license.LicenseValidator.validate(null);
+        } catch (SecurityException e) {
+            logger.error("{}", e.getMessage());
+            System.exit(1);
+        }
+        try {
             ApplicationArguments arguments = ApplicationArguments.parse(args);
             if (arguments.isHelpRequested()) {
                 ApplicationArguments.printHelp();

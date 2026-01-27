@@ -110,8 +110,11 @@ public class ApiForgeInvoker {
         }
     }
 
-    public static List<ComparisonResult> compare(Map<String, Object> configMap, String workDir) {
+    public static List<ComparisonResult> compare(Map<String, Object> configMap, String workDir, String licenseKey) {
         try {
+            // 0. Validate License
+            com.raks.apiforge.license.LicenseValidator.validate(licenseKey);
+
             logger.info("Invoking API Forge calculation with workDir: {}", workDir);
 
             // Convert Map to Config object using Jackson

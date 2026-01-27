@@ -13,23 +13,16 @@ public class AegisInvoker {
     private static final Logger logger = LoggerFactory.getLogger(AegisInvoker.class);
 
     public static Map<String, Object> validate(String projectPath, String customRulesPath, String displayName,
-            String reportDirName) {
+            String reportDirName, String licenseKey) {
         logger.info("Invoking Aegis Validation...");
         logger.info("Project Path: {}", projectPath);
         logger.info("Custom Rules Path: {}", customRulesPath);
         logger.info("Display Name: {}", displayName);
         logger.info("Report Dir Name: {}", reportDirName);
+        logger.info("License Key Provided: {}", (licenseKey != null && !licenseKey.isEmpty()));
 
-        // List files in project path before validation to verify extraction
-        try (Stream<Path> paths = Files.walk(Paths.get(projectPath))) {
-            logger.info("--- File System State (Pre-Validation) ---");
-            paths.forEach(p -> logger.info("File: {}", p.toAbsolutePath()));
-            logger.info("------------------------------------------");
-        } catch (Exception e) {
-            logger.error("Failed to list files in project path: {}", e.getMessage());
-        }
-
-        Map<String, Object> results = AegisMain.validateAndReturnResults(projectPath, customRulesPath, displayName, reportDirName);
+        // ... (skipping some logs)
+        Map<String, Object> results = AegisMain.validateAndReturnResults(projectPath, customRulesPath, displayName, reportDirName, licenseKey);
         
         logger.info("Aegis Validation Result Status: {}", results.get("status"));
         

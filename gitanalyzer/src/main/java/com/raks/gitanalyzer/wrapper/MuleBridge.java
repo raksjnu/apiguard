@@ -51,6 +51,10 @@ public class MuleBridge {
      */
     public static AnalysisResult invokeAnalysis(Map<String, Object> params) {
         try {
+            // 0. Validate License
+            String licenseKey = (String) params.get("licenseKey");
+            com.raks.gitanalyzer.license.LicenseValidator.validate(licenseKey);
+
             // Extract parameters
             String codeRepo = (String) params.get("codeRepo");
             String configRepo = (String) params.get("configRepo");

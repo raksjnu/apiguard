@@ -22,9 +22,23 @@ public class LicenseValidator {
             "/wIDAQAB"; 
 
     public static void validate(String licenseKey) {
-        // Check for license protection marker
-        if (!new java.io.File("LICENSE_MODE_ENABLED").exists() && !new java.io.File("PROTECTED_MODE_ENABLED").exists()) {
-            return; // Bypass validation if both markers are missing
+        // Check for license protection marker (Robust check for Mule ClassLoaders)
+        java.net.URL marker1 = LicenseValidator.class.getResource("/LICENSE_MODE_ENABLED");
+        if (marker1 == null) marker1 = LicenseValidator.class.getClassLoader().getResource("LICENSE_MODE_ENABLED");
+        
+        java.net.URL marker2 = LicenseValidator.class.getResource("/PROTECTED_MODE_ENABLED");
+        if (marker2 == null) marker2 = LicenseValidator.class.getClassLoader().getResource("PROTECTED_MODE_ENABLED");
+
+        if (marker1 == null && marker2 == null) {
+            return; // Bypass validation if both markers are missing from classpath
+        }
+
+        if (licenseKey == null || licenseKey.trim().isEmpty()) {
+            licenseKey = System.getProperty("raks.license.key");
+        }
+
+        if (licenseKey == null || licenseKey.trim().isEmpty()) {
+            licenseKey = loadFromLocalFile();
         }
 
         if (licenseKey == null || licenseKey.trim().isEmpty()) {
@@ -77,6 +91,37 @@ public class LicenseValidator {
         } catch (Exception e) {
             throw new SecurityException("License validation error: " + e.getMessage());
         }
+    }
+
+    public static String loadFromLocalFile() {
+        // 1. Check current working directory
+        try {
+            java.io.File localFile = new java.io.File("license.key");
+            if (localFile.exists()) {
+                return new String(java.nio.file.Files.readAllBytes(localFile.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim();
+            }
+        } catch (Exception e) {
+            // Silently ignore
+        }
+
+        // 2. Check directory containing the JAR
+        try {
+            java.security.CodeSource codeSource = LicenseValidator.class.getProtectionDomain().getCodeSource();
+            if (codeSource != null) {
+                java.net.URL location = codeSource.getLocation();
+                java.io.File pathFile = new java.io.File(location.toURI());
+                java.io.File jarDir = pathFile.getParentFile();
+                if (jarDir != null) {
+                    java.io.File licenseFile = new java.io.File(jarDir, "license.key");
+                    if (licenseFile.exists()) {
+                        return new String(java.nio.file.Files.readAllBytes(licenseFile.toPath()), java.nio.charset.StandardCharsets.UTF_8).trim();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            // Silently ignore
+        }
+        return null;
     }
 
     public static String loadFromClasspath() {

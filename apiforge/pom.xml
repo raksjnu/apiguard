@@ -118,6 +118,13 @@
             <resource>
                 <directory>src/main/resources</directory>
             </resource>
+            <resource>
+                <directory>.</directory>
+                <includes>
+                    <include>LICENSE_MODE_ENABLED</include>
+                    <include>PROTECTED_MODE_ENABLED</include>
+                </includes>
+            </resource>
         </resources>
         <plugins>
             <plugin>

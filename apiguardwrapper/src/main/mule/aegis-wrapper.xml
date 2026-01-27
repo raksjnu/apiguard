@@ -660,12 +660,13 @@ output application/java
 
         
         <!-- Invoke Wrapper Class -->
-        <java:invoke-static class="com.raks.aegis.wrapper.AegisInvoker" method="validate(String, String, String, String)" target="validationResults">
+        <java:invoke-static class="com.raks.aegis.wrapper.AegisInvoker" method="validate(String, String, String, String, String)" target="validationResults">
             <java:args>#[{
                 arg0: vars.targetPath,
                 arg1: vars.customRulesPath,
                 arg2: vars.displayPath,
-                arg3: vars.reportAbsPath
+                arg3: vars.reportAbsPath,
+                arg4: p('license.key')
             }]</java:args>
         </java:invoke-static>
         

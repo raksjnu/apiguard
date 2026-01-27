@@ -82,6 +82,12 @@ public class ApiForgeMain implements Callable<Integer> {
         return 0;
     }
     public static void main(String[] args) {
+        try {
+            com.raks.apiforge.license.LicenseValidator.validate(null);
+        } catch (SecurityException e) {
+            logger.error("{}", e.getMessage());
+            System.exit(1);
+        }
         int exitCode = new CommandLine(new ApiForgeMain()).execute(args);
         
         if (exitCode != 0) {

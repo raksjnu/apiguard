@@ -59,6 +59,7 @@ public class AegisMain implements Callable<Integer> {
 
     public static int execute(String[] args) {
         try {
+            com.raks.aegis.license.LicenseValidator.validate(null);
             return new CommandLine(new AegisMain()).execute(args);
         } catch (AegisConfigurationException e) {
             logger.error("Aegis Configuration Error: {}", e.getMessage());
@@ -266,17 +267,20 @@ public class AegisMain implements Callable<Integer> {
         return 0;
     }
     public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath) {
-        return validateAndReturnResults(projectPath, customRulesPath, null);
+        return validateAndReturnResults(projectPath, customRulesPath, null, null);
     }
-    public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath,
-            String displayName) {
-        return validateAndReturnResults(projectPath, customRulesPath, displayName, "Aegis-reports");
+    public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath, String displayName) {
+        return validateAndReturnResults(projectPath, customRulesPath, displayName, "Aegis-reports", null);
+    }
+    public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath, String displayName, String reportDirName) {
+        return validateAndReturnResults(projectPath, customRulesPath, displayName, reportDirName, null);
     }
     @SuppressWarnings("unchecked")
     public static Map<String, Object> validateAndReturnResults(String projectPath, String customRulesPath,
-            String displayName, String reportDirName) {
+            String displayName, String reportDirName, String licenseKey) {
         Map<String, Object> result = new HashMap<>();
         try {
+            com.raks.aegis.license.LicenseValidator.validate(licenseKey);
             Path parentFolder = Paths.get(projectPath);
             List<ApiResult> results = new ArrayList<>();
             Path reportsRoot = parentFolder.resolve(reportDirName != null && !reportDirName.isEmpty() ? reportDirName : "Aegis-reports");
