@@ -9,7 +9,9 @@
         http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
         http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
         http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
-        http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd">
+        http://www.mulesoft.org/schema/mule/spring http://www.mulesoft.org/schema/mule/spring/current/mule-spring.xsd
+        http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd"
+      xmlns:tls="http://www.mulesoft.org/schema/mule/tls">
 
     <!-- Configuration Properties -->
     <configuration-properties file="mule-app.properties"/>
@@ -26,6 +28,15 @@
     <!-- HTTP Listener Configuration -->
     <http:listener-config name="HTTP_Listener_config">
         <http:listener-connection host="0.0.0.0" port="${http.port}"/>
+    </http:listener-config>
+
+    <http:listener-config name="HTTPS_mTLS_Listener_config">
+        <http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
+            <tls:context>
+                <tls:trust-store path="certs/truststore.jks" password="password" />
+                <tls:key-store path="certs/server-keystore.jks" alias="mule-server" keyPassword="password" password="password" />
+            </tls:context>
+        </http:listener-connection>
     </http:listener-config>
 
     <!-- ========================================== -->
@@ -51,16 +62,67 @@
         </error-handler>
     </flow>
 
-    <!-- REST: GET /api/orders/{orderNumber} (Get Order) -->
-    <flow name="rest-get-order">
-        <http:listener config-ref="HTTP_Listener_config" path="/api/orders/*" allowedMethods="GET">
+    <!-- REST: GET /api/orders (Get Orders with Large Payload Simulation) -->
+    <flow name="rest-get-orders">
+        <http:listener config-ref="HTTP_Listener_config" path="/api/orders" allowedMethods="GET">
             <http:error-response statusCode="#[vars.httpStatus default 500]">
                 <http:body>#[payload]</http:body>
             </http:error-response>
         </http:listener>
         <http:basic-security-filter realm="mule-realm" />
-        <logger level="INFO" message="REST GetOrder called"/>
-        <set-payload value="#[output application/json --- {orderNumber:'ORD-20260118-001',customerName:'John Doe',customerEmail:'john.doe@example.com',orderDate:'2026-01-18',productName:'Widget Pro',quantity:5,totalAmount:249.99,status:'CONFIRMED',timestamp:now()}]" mimeType="application/json"/>
+        <logger level="INFO" message="REST GetOrders called with count: #[attributes.queryParams.count default 1]"/>
+        <set-payload value="#[output application/json
+---
+using (count = (attributes.queryParams.count default 1) as Number)
+1 to count map (item, index) -> {
+    orderNumber: 'ORD-2026-' ++ (1000 + index),
+    customerName: 'Customer ' ++ index,
+    customerEmail: 'customer' ++ index ++ '@example.com',
+    orderDate: now() as String {format: 'yyyy-MM-dd'},
+    productName: 'Widget Pro ' ++ index,
+    quantity: (index mod 10) + 1,
+    totalAmount: (index * 10.5) + 99.99,
+    status: if ((index mod 2) == 0) 'CONFIRMED' else 'SHIPPED',
+    timestamp: now(),
+    details: 'This is a large payload simulation for order number ' ++ (index as String) ++ '. ' ++ ((1 to 10 map 'Extended detail info for order. ') joinBy '')
+}]" mimeType="application/json"/>
+        <error-handler>
+            <on-error-continue type="HTTP:BASIC_AUTHENTICATION" logException="true">
+                <set-variable variableName="httpStatus" value="401"/>
+                <set-payload value="#[output application/json --- {error: 'Authentication Failed', message: error.description}]"/>
+            </on-error-continue>
+        </error-handler>
+    </flow>
+
+    <!-- REST: GET /api/orders/{orderNumber} (Dynamic Echo for Parameter Verification) -->
+    <flow name="rest-get-order-by-id">
+        <http:listener config-ref="HTTP_Listener_config" path="/api/orders/{orderNumber}" allowedMethods="GET">
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+            </http:error-response>
+        </http:listener>
+        <http:basic-security-filter realm="mule-realm" />
+        <logger level="INFO" message="REST GetOrder by ID called for orderNumber: #[attributes.uriParams.orderNumber], source: #[attributes.queryParams.source default 'none'], count: #[attributes.queryParams.count default 1]"/>
+        <set-payload value="#[output application/json
+---
+using (count = (attributes.queryParams.count default 1) as Number)
+(1 to count) map (item, index) -> {
+    orderNumber: attributes.uriParams.orderNumber,
+    echoSource: attributes.queryParams.source default 'none',
+    customerName: 'John Doe ' ++ (if (count &gt; 1) index else ''),
+    customerEmail: 'john.doe' ++ (if (count &gt; 1) index else '') ++ '@example.com',
+    orderDate: now() as String {format: 'yyyy-MM-dd'},
+    productName: 'Widget Pro (Enhanced Echo)',
+    quantity: 5 + index,
+    totalAmount: 249.99 + index,
+    status: if ((index mod 2) == 0) 'CONFIRMED' else 'SHIPPED',
+    timestamp: now(),
+    verification: {
+        uriParam: 'orderNumber=' ++ attributes.uriParams.orderNumber,
+        queryParam: 'source=' ++ (attributes.queryParams.source default 'none') ++ ', count=' ++ count
+    },
+    note: 'Echoed URI, Query parameters and supports large payload simulation via count=' ++ count
+}]" mimeType="application/json"/>
         <error-handler>
             <on-error-continue type="HTTP:BASIC_AUTHENTICATION" logException="true">
                 <set-variable variableName="httpStatus" value="401"/>
@@ -109,6 +171,30 @@
     <flow name="soap-wsdl">
         <http:listener config-ref="HTTP_Listener_config" path="/soap/orderservice" allowedMethods="GET"/>
         <set-payload value="#[output application/xml --- readUrl('classpath://wsdl/OrderService.wsdl', 'text/xml')]" mimeType="text/xml"/>
+    </flow>
+
+    <!-- ========================================== -->
+    <!-- mTLS Wrapper Flows                         -->
+    <!-- ========================================== -->
+
+    <flow name="mtls-rest-wrapper">
+        <http:listener config-ref="HTTPS_mTLS_Listener_config" path="/mtls/api/*" />
+        <logger level="INFO" message="mTLS REST Wrapper hit: #[attributes.requestPath]"/>
+        <set-variable variableName="originalPath" value="#[attributes.requestPath replace '/mtls/api' with '/api']"/>
+        <choice>
+            <when expression="#[attributes.method == 'GET']">
+                <flow-ref name="rest-get-orders" />
+            </when>
+            <when expression="#[attributes.method == 'POST']">
+                <flow-ref name="rest-create-order" />
+            </when>
+        </choice>
+    </flow>
+
+    <flow name="mtls-soap-wrapper">
+        <http:listener config-ref="HTTPS_mTLS_Listener_config" path="/mtls/soap/orderservice" allowedMethods="POST"/>
+        <logger level="INFO" message="mTLS SOAP Wrapper hit"/>
+        <flow-ref name="soap-orderservice-main" />
     </flow>
 
 </mule>

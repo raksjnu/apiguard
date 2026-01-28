@@ -59,4 +59,13 @@ public class ApiCallResult {
     public void setDuration(long duration) {
         this.duration = duration;
     }
+    private Map<String, Object> metadata;
+
+    public Map<String, Object> getMetadata() {
+        return metadata;
+    }
+
+    public void setMetadata(Map<String, Object> metadata) {
+        this.metadata = metadata;
+    }
 }
