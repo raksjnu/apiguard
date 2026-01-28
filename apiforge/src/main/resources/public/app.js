@@ -71,6 +71,15 @@ document.addEventListener('DOMContentLoaded', () => {
             background-color: #faf5ff !important;
             background-image: radial-gradient(circle at 0% 50%, rgba(107, 70, 193, 0.05) 0%, transparent 50%);
         }
+        /* Visual cues for disabled elements */
+        input:disabled, button:disabled, select:disabled {
+            cursor: not-allowed !important;
+            opacity: 0.6;
+        }
+        label.disabled-label {
+            cursor: not-allowed !important;
+            opacity: 0.6;
+        }
     `;
     document.head.appendChild(style);
 
@@ -245,7 +254,87 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('addHeaderBtn').addEventListener('click', () => addRow(headersTable, ['Header Name', 'Value']));
     document.getElementById('addTokenBtn').addEventListener('click', () => addRow(tokensTable, ['Token Name', 'Value']));
-    document.getElementById('addParamBtn').addEventListener('click', () => addRow(paramsTable, ['Parameter Name', 'Value']));
+    document.getElementById('addParamBtn').addEventListener('click', () => {
+        addRow(paramsTable, ['Parameter Name', 'Value']);
+        updateUrlsFromParams();
+    });
+
+    // --- URL and Parameters Synchronization Logic ---
+    const getQueryParamsFromTable = () => {
+        const qp = {};
+        paramsTable.querySelectorAll('tr').forEach(tr => {
+            const k = tr.querySelector('.key-input').value.trim();
+            const v = tr.querySelector('.value-input').value.trim();
+            if (k) qp[k] = v;
+        });
+        return qp;
+    };
+
+    const updateUrlsFromParams = () => {
+        const qp = getQueryParamsFromTable();
+        const searchParams = new URLSearchParams();
+        Object.entries(qp).forEach(([k, v]) => searchParams.append(k, v));
+        const queryString = searchParams.toString();
+
+        const syncUrl = (id) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            let baseUrl = el.value.split('?')[0];
+            el.value = queryString ? `${baseUrl}?${queryString}` : baseUrl;
+        };
+
+        syncUrl('url1');
+        syncUrl('url2');
+        saveState();
+    };
+
+    const updateParamsTableFromUrl = (url) => {
+        if (!url) return;
+        try {
+            const queryString = url.includes('?') ? url.split('?')[1] : '';
+            const searchParams = new URLSearchParams(queryString);
+            paramsTable.innerHTML = '';
+            searchParams.forEach((v, k) => {
+                addRow(paramsTable, ['Parameter Name', 'Value'], [k, v]);
+            });
+            saveState();
+        } catch (e) {
+            console.error('Error parsing URL params:', e);
+        }
+    };
+
+    const handleUrlInput = (e) => {
+        const url = e.target.value;
+        const otherId = e.target.id === 'url1' ? 'url2' : 'url1';
+        const otherEl = document.getElementById(otherId);
+
+        // Update Table
+        updateParamsTableFromUrl(url);
+
+        // Update Other URL
+        if (otherEl) {
+            const otherBase = otherEl.value.split('?')[0];
+            const queryString = url.includes('?') ? url.split('?')[1] : '';
+            otherEl.value = queryString ? `${otherBase}?${queryString}` : otherBase;
+        }
+        saveState();
+    };
+
+    document.getElementById('url1').addEventListener('input', handleUrlInput);
+    document.getElementById('url2').addEventListener('input', handleUrlInput);
+
+    paramsTable.addEventListener('input', (e) => {
+        if (e.target.classList.contains('key-input') || e.target.classList.contains('value-input')) {
+            updateUrlsFromParams();
+        }
+    });
+
+    // Handle row removal
+    paramsTable.addEventListener('click', (e) => {
+        if (e.target.classList.contains('btn-remove')) {
+            setTimeout(updateUrlsFromParams, 10);
+        }
+    });
 
     // --- Navigation (SPA) ---
     document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -1790,18 +1879,25 @@ document.addEventListener('DOMContentLoaded', () => {
         // --- Security Field Disablement in Baseline Compare ---
         const securityFieldIds = [
             'enableAuth', 'clientId', 'clientSecret', 
-            'pfxPath', 'clientCertPath', 'clientKeyPath', 
+            'useMTLS', 'pfxPath', 'clientCertPath', 'clientKeyPath', 
             'passphrase', 'caCertPath', 'validateCertsBtn'
         ];
         securityFieldIds.forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.disabled = isCompareOp;
+            if (el) {
+                el.disabled = isCompareOp;
+                // Also toggle a class for labels if we want specific styling
+                const label = el.closest('label');
+                if (label) {
+                    label.classList.toggle('disabled-label', isCompareOp);
+                }
+            }
         });
 
-        // Disable folder buttons in security section
-        document.querySelectorAll('#securityAccordion .btn-secondary').forEach(btn => {
+        // Disable folder buttons and file inputs in security section
+        document.querySelectorAll('#securityAccordion .btn-secondary, #securityAccordion input[type="file"]').forEach(btn => {
             // Check if it's an upload button (has folder emoji or is validate btn)
-            if (btn.innerText.includes('📂') || btn.id === 'validateCertsBtn') {
+            if (btn.innerText.includes('📂') || btn.id === 'validateCertsBtn' || btn.type === 'file') {
                 btn.disabled = isCompareOp;
                 btn.style.opacity = isCompareOp ? '0.5' : '1';
                 btn.style.cursor = isCompareOp ? 'not-allowed' : 'pointer';
@@ -1818,8 +1914,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Field Toggles ---
     document.getElementById('enableAuth').addEventListener('change', (e) => {
-        document.getElementById('clientId').disabled = !e.target.checked;
-        document.getElementById('clientSecret').disabled = !e.target.checked;
+        const isCompareOp = (document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'COMPARE');
+        const shouldDisable = !e.target.checked || isCompareOp;
+        document.getElementById('clientId').disabled = shouldDisable;
+        document.getElementById('clientSecret').disabled = shouldDisable;
     });
 
     document.getElementById('clearFormBtn').addEventListener('click', () => {
