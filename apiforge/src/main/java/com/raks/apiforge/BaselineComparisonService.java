@@ -8,6 +8,8 @@ import java.util.*;
 public class BaselineComparisonService {
     private static final Logger logger = LoggerFactory.getLogger(BaselineComparisonService.class);
     private final BaselineStorageService storageService;
+    private final com.fasterxml.jackson.databind.ObjectMapper objectMapper = new com.fasterxml.jackson.databind.ObjectMapper();
+
     public BaselineComparisonService(BaselineStorageService storageService) {
         this.storageService = storageService;
     }
@@ -141,8 +143,29 @@ public class BaselineComparisonService {
                 Map<String, String> historicalHeaders = baselineIter.getRequestHeaders();
                 String historicalPayload = baselineIter.getRequestPayload();
                 
+                // SECURITY PERSISTENCE: If baseline has security config and current doesn't have mTLS enabled, use baseline's
+                ApiConfig effectiveApiConfig = apiConfig;
+                Map<String, Object> savedConfig = baseline.getMetadata().getConfigUsed();
+                if (savedConfig != null && savedConfig.containsKey("authentication")) {
+                    Authentication baselineAuth = objectMapper.convertValue(savedConfig.get("authentication"), Authentication.class);
+                    // If baseline auth has certs but current config doesn't, clone and override
+                    if ((baselineAuth.getPfxPath() != null || baselineAuth.getClientCertPath() != null) 
+                            && (apiConfig.getAuthentication() == null || (apiConfig.getAuthentication().getPfxPath() == null && apiConfig.getAuthentication().getClientCertPath() == null))) {
+                        
+                        logger.info("Reusing security context from saved baseline metadata");
+                        // Shallow clone and override auth
+                        ApiConfig cloned = new ApiConfig();
+                        cloned.setBaseUrl(apiConfig.getBaseUrl());
+                        cloned.setOperations(apiConfig.getOperations());
+                        // cloned.setSoapApis(apiConfig.getSoapApis()); // Removed: undefined in ApiConfig
+                        // cloned.setRestApis(apiConfig.getRestApis()); // Removed: undefined in ApiConfig
+                        cloned.setAuthentication(baselineAuth);
+                        effectiveApiConfig = cloned;
+                    }
+                }
+                
                 ComparisonResult result = executeApiCall(
-                        apiConfig, tokens, config.getTestType(), iterNum, iterNum == 1, 
+                        effectiveApiConfig, tokens, config.getTestType(), iterNum, iterNum == 1, 
                         historicalPayload, historicalHeaders);
                 result.setBaselineServiceName(serviceName);
                 result.setBaselineDate(date);
@@ -209,19 +232,54 @@ public class BaselineComparisonService {
             headers = new HashMap<>(headers);
         }
         
+        apiCallResult.setUrl(url);
+        apiCallResult.setMethod(method);
+        apiCallResult.setRequestPayload(payload);
+        
+        // Enrich Metadata BEFORE the call
+        Map<String, Object> metadata = new java.util.LinkedHashMap<>();
+        if (apiConfig.getAuthentication() != null) {
+            Authentication auth = apiConfig.getAuthentication();
+            Map<String, String> authInfo = new java.util.LinkedHashMap<>();
+            if (auth.getPfxPath() != null) authInfo.put("pfxPath", auth.getPfxPath());
+            if (auth.getClientCertPath() != null) authInfo.put("clientCertPath", auth.getClientCertPath());
+            if (auth.getClientKeyPath() != null) authInfo.put("clientKeyPath", auth.getClientKeyPath());
+            if (auth.getCaCertPath() != null) authInfo.put("caCertPath", auth.getCaCertPath());
+            if (auth.getClientId() != null) authInfo.put("clientId", auth.getClientId());
+            if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) {
+                authInfo.put("passphrase", "********");
+            }
+            if (!authInfo.isEmpty()) {
+                metadata.put("authentication", authInfo);
+            }
+        }
+        if (operation.getQueryParams() != null && !operation.getQueryParams().isEmpty()) {
+            metadata.put("queryParams", operation.getQueryParams());
+        }
+        if (payload != null) {
+            metadata.put("requestSize", payload.getBytes().length);
+        }
+        apiCallResult.setMetadata(metadata);
+
         long start = System.currentTimeMillis();
         com.raks.apiforge.http.HttpResponse httpResponse = client.sendRequest(url, method, headers, payload);
         apiCallResult.setDuration(System.currentTimeMillis() - start);
         
-
-        apiCallResult.setUrl(url);
-        apiCallResult.setMethod(method);
         apiCallResult.setRequestHeaders(httpResponse.getRequestHeaders());
-        apiCallResult.setRequestPayload(payload);
-
         apiCallResult.setStatusCode(httpResponse.getStatusCode());
         apiCallResult.setResponsePayload(httpResponse.getBody());
         apiCallResult.setResponseHeaders(httpResponse.getHeaders());
+        
+        // Add Result Metric
+        if (httpResponse.getBody() != null) {
+            metadata.put("responseSize", httpResponse.getBody().getBytes().length);
+        }
+        if (httpResponse.getBody() != null) {
+            metadata.put("responseSize", httpResponse.getBody().getBytes().length);
+        }
+
+        apiCallResult.setMetadata(metadata);
+
         result.setStatus(ComparisonResult.Status.MATCH);
         return result;
     }
@@ -311,46 +369,40 @@ public class BaselineComparisonService {
     }
     private String constructUrl(String baseUrl, String path, Map<String, String> queryParams, String apiType) {
         if (baseUrl == null) baseUrl = "";
-        String url = baseUrl;
+        String url = baseUrl.trim();
 
-        // For SOAP, we typically just return the base URL, but if the user explicitly added query params 
-        // in the UI, we should probably append them. However, standard SOAP usually doesn't use them.
-        // We'll follow the same logic as ComparisonService: if it's SOAP, return baseUrl unless we decide otherwise.
-        // But ComparisonService returns baseUrl immediately for SOAP. Let's stick to that for consistency, 
-        // OR allow query params if they exist. The user asked about SOAP. 
-        // Given SOAP endpoints are usually just the WSDL/Operation URL, query params are rare.
-        // Let's stick to the current logic for SOAP but strictly for path appending.
-        
-        if ("SOAP".equalsIgnoreCase(apiType)) {
-             // For SOAP, usually just BaseURL. If we want to support params, we'd append them below.
-             // But existing ComparisonService returns logic: if (SOAP) return baseUrl;
-             // Let's modify to allow query params even for SOAP if present, or just return.
-             // Safest is to return baseUrl to match existing behavior, but since user asked, 
-             // let's assume if they added params, they want them.
-             // However, ComparisonService lines 207-208: if (SOAP) return baseUrl;
-             // So I will match that for now to avoid breaking SOAP.
-             url = baseUrl; 
-        } else {
-            String normalizedBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+        if (!"SOAP".equalsIgnoreCase(apiType)) {
+            // Remove trailing slash from base if path exists
             if (path != null && !path.trim().isEmpty()) {
-                String normalizedPath = path.startsWith("/") ? path : "/" + path;
-                if (!normalizedBase.endsWith(normalizedPath)) {
-                    url = normalizedBase + normalizedPath;
-                } else {
-                    url = normalizedBase;
+                if (url.endsWith("/")) url = url.substring(0, url.length() - 1);
+                String normalizedPath = path.trim().startsWith("/") ? path.trim() : "/" + path.trim();
+                
+                // Only append path if not already present at the end of baseUrl (before query)
+                String baseNoQuery = url.contains("?") ? url.substring(0, url.indexOf("?")) : url;
+                if (!baseNoQuery.endsWith(normalizedPath)) {
+                    // Inject path BEFORE query string if baseUrl has one
+                    if (url.contains("?")) {
+                        int qIdx = url.indexOf("?");
+                        url = url.substring(0, qIdx) + normalizedPath + url.substring(qIdx);
+                    } else {
+                        url += normalizedPath;
+                    }
                 }
-            } else {
-                url = normalizedBase;
             }
         }
 
         if (queryParams != null && !queryParams.isEmpty()) {
             StringBuilder sb = new StringBuilder(url);
-            boolean first = !url.contains("?");
             for (Map.Entry<String, String> entry : queryParams.entrySet()) {
-                sb.append(first ? "?" : "&");
-                sb.append(entry.getKey()).append("=").append(entry.getValue());
-                first = false;
+                String key = entry.getKey();
+                String val = entry.getValue();
+                if (key == null || key.isEmpty()) continue;
+                
+                // Avoid duplicating if already in URL string
+                if (url.contains(key + "=")) continue;
+
+                sb.append(sb.indexOf("?") == -1 ? "?" : "&");
+                sb.append(key).append("=").append(val != null ? val : "");
             }
             url = sb.toString();
         }

@@ -27,11 +27,11 @@
 
     <!-- HTTP Listener Configuration -->
     <http:listener-config name="HTTP_Listener_config">
-        <http:listener-connection host="0.0.0.0" port="${http.port}"/>
+        <http:listener-connection host="0.0.0.0" port="${mule.http.port}"/>
     </http:listener-config>
 
     <http:listener-config name="HTTPS_mTLS_Listener_config">
-        <http:listener-connection host="0.0.0.0" port="${https.port}" protocol="HTTPS">
+        <http:listener-connection host="0.0.0.0" port="${mule.https.port}" protocol="HTTPS">
             <tls:context>
                 <tls:trust-store path="certs/truststore.jks" password="password" />
                 <tls:key-store path="certs/server-keystore.jks" alias="mule-server" keyPassword="password" password="password" />

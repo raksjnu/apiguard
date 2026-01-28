@@ -302,6 +302,15 @@
                                         </div>
                                     </div>
                                     <div class="accordion-content">
+                                        <div style="margin-bottom: 15px; padding: 12px; background: rgba(235, 248, 255, 0.8); border-radius: 8px; border: 1.5px solid #63b3ed; box-shadow: 0 2px 4px rgba(66, 153, 225, 0.1);">
+                                            <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; user-select: none;">
+                                                <input type="checkbox" id="useMTLS" style="transform: scale(1.2); cursor: pointer;">
+                                                <span style="font-size: 0.9rem; font-weight: 800; color: #2c5282;">🔒 ENABLE SECURITY / mTLS</span>
+                                            </label>
+                                            <div style="font-size: 0.7rem; color: #4a5568; margin-top: 5px; font-style: italic; margin-left: 28px;">
+                                                Must be checked to use the certificates/bundles specified below.
+                                            </div>
+                                        </div>
                                         <div style="margin-bottom: 20px; border-bottom: 1px solid #edf2f7; padding-bottom: 15px;">
                                             <div style="font-size: 0.75rem; color: #718096; margin-bottom: 10px; font-style: italic;">
                                                 ℹ️ Certificates are automatically applied based on the hostnames in your <b>Endpoint URLs</b>.
@@ -380,18 +389,18 @@
                     </section>
                 </div>
 
-                <div class="resize-handle" id="resizeHandle"></div>
+                <div class="resize-handle" id="resizeHandle">
+                    <button id="sidebarToggle" class="sidebar-toggle" title="Toggle Sidebar">◀</button>
+                </div>
 
-                <section class="card results-panel" style="flex: 1; min-height: 0; padding: 0; background: transparent; border: none; box-shadow: none;">
-                    <div class="card" style="margin: 15px; flex: 1; min-height: 0; border-radius: 12px;">
-                        <div class="card-header">
-                            <h2 style="margin: 0;">📊 Results</h2>
-                            <div id="statusIndicator" class="status-badge hidden"></div>
-                        </div>
-                        <div id="resultsContainer" class="results-container">
-                            <div class="empty-state">
-                                <p style="font-size: 1.1rem; color: #999;">Configure and click "Run Comparison" to start</p>
-                            </div>
+                <section id="resultsPanel" class="results-panel card" style="margin: 15px; flex: 1; min-height: 0; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; background: var(--card-bg); border-left: 6px solid var(--primary-color);">
+                    <div class="card-header">
+                        <h2 style="margin: 0;">📊 Results</h2>
+                        <div id="statusIndicator" class="status-badge hidden"></div>
+                    </div>
+                    <div id="resultsContainer" class="results-container" style="flex: 1; overflow-y: auto; padding: 15px;">
+                        <div class="empty-state">
+                            <p style="font-size: 1rem; color: #999;">Configure and click "Run Comparison" to start</p>
                         </div>
                     </div>
                 </section>
@@ -586,8 +595,9 @@
                             </ol>
                         </div>
                     </div>
-                </div>
+                </div> <!-- End help-grid -->
 
+                <div class="feature-grid">
                     <div class="feature-card">
                         <h4>👂 Continuous Listening</h4>
                         <p>Real-time stream monitoring across multiple tabs with automatic backend session re-attachment.</p>

@@ -12,15 +12,15 @@
 
 ### SOAP Service
 
-- **Endpoint**: `http://localhost:8082/soap/orderservice`
-- **WSDL**: `http://localhost:8082/soap/orderservice?wsdl` (GET request)
+- **Endpoint**: `http://localhost:8081/soap/orderservice`
+- **WSDL**: `http://localhost:8081/soap/orderservice?wsdl` (GET request)
 - **Operations**:
   - `CreateOrder`
   - `GetOrder`
 
 ### REST API
 
-- **Base URL**: `http://localhost:8082/api`
+- **Base URL**: `http://localhost:8081/api`
 - **Endpoints**:
   - `POST /api/orders` - Create order
   - `GET /api/orders/{orderNumber}` - Get order details
@@ -47,7 +47,7 @@ $body = @"
   </soap:Body>
 </soap:Envelope>
 "@
-Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice" -Method POST -Headers $headers -Body $body
+Invoke-WebRequest -Uri "http://localhost:8081/soap/orderservice" -Method POST -Headers $headers -Body $body
 ```
 
 ### SOAP GetOrder
@@ -65,7 +65,7 @@ $body = @"
   </soap:Body>
 </soap:Envelope>
 "@
-Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice" -Method POST -Headers $headers -Body $body
+Invoke-WebRequest -Uri "http://localhost:8081/soap/orderservice" -Method POST -Headers $headers -Body $body
 ```
 
 ### REST Create Order
@@ -84,21 +84,21 @@ $body = @"
   "totalAmount": 249.99
 }
 "@
-Invoke-WebRequest -Uri "http://localhost:8082/api/orders" -Method POST -Headers $headers -Body $body
+Invoke-WebRequest -Uri "http://localhost:8081/api/orders" -Method POST -Headers $headers -Body $body
 ```
 
 ### REST Get Order
 
 ```powershell
-Invoke-WebRequest -Uri "http://localhost:8082/api/orders/ORD-20260118-001" -Method GET
+Invoke-WebRequest -Uri "http://localhost:8081/api/orders/ORD-20260118-001" -Method GET
 ```
 
 ## 📋 For API URL Comparison Testing
 
 Use these endpoints in `C:\raks\apiguard\apiurlcomparison`:
 
-1. **SOAP Endpoint**: `http://localhost:8082/soap/orderservice`
-2. **REST Endpoint**: `http://localhost:8082/api/orders`
+1. **SOAP Endpoint**: `http://localhost:8081/soap/orderservice`
+2. **REST Endpoint**: `http://localhost:8081/api/orders`
 
 Both endpoints are now live and ready for testing!
 
@@ -114,7 +114,7 @@ Copy-Item "target\raksmule-1.0.0-mule-application.jar" -Destination "C:\raks\mul
 
 ## ⚠️ Note
 
-- **Port 8082** (not 8081) to avoid conflict with `apiguardwrapper`
+- **Port 8081** for HTTP and **8082** for mTLS
 - Authentication is **not implemented** in this simplified version
 - Responses are **static** for simplicity and reliability
 - Both SOAP and REST work independently in the same JAR
@@ -129,9 +129,9 @@ Copy-Item "target\raksmule-1.0.0-mule-application.jar" -Destination "C:\raks\mul
 
 ### Verified Endpoints
 
-- ✅ REST GET: `http://localhost:8082/api/orders/{orderNumber}` - Working
-- ✅ REST POST: `http://localhost:8082/api/orders` - Working
-- ✅ SOAP WSDL: `http://localhost:8082/soap/orderservice?wsdl` - Working
-- ✅ SOAP Service: `http://localhost:8082/soap/orderservice` - Ready
+- ✅ REST GET: `http://localhost:8081/api/orders/{orderNumber}` - Working
+- ✅ REST POST: `http://localhost:8081/api/orders` - Working
+- ✅ SOAP WSDL: `http://localhost:8081/soap/orderservice?wsdl` - Working
+- ✅ SOAP Service: `http://localhost:8081/soap/orderservice` - Ready
 
 **Ready for API URL Comparison testing!**

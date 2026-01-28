@@ -3,8 +3,9 @@
 ## Quick Reference
 
 **CloudHub URL**: `https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io`
-**Local URL**: `http://localhost:8082` (Standard)
-**Local mTLS URL**: `https://localhost:8443` (Secure)
+**CloudHub mTLS URL**: `https://mule-worker-raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io:8082` (Worker Direct)
+**Local URL**: `http://localhost:8081` (Standard)
+**Local mTLS URL**: `https://localhost:8082` (Secure)
 
 **Standard Authentication**: Basic Authentication (`raks` / `admin`)
 **mTLS Authentication**: Mutual TLS with Client Certificate
@@ -16,7 +17,7 @@
 ### 1. Create Order (POST)
 
 **Endpoint (CloudHub)**: `POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/api/orders`
-**Endpoint (Local)**: `POST http://localhost:8082/api/orders`
+**Endpoint (Local)**: `POST http://localhost:8081/api/orders`
 
 **Headers**:
 ```
@@ -24,6 +25,7 @@ Content-Type: application/json
 ```
 
 **Request Body**:
+
 ```json
 {
   "customerName": "John Doe",
@@ -95,9 +97,10 @@ Invoke-WebRequest -Uri "http://localhost:8082/api/orders/ORD-20260118-001" -Meth
 
 Use the `count` query parameter to simulate large response payloads.
 
-**Endpoint (Local)**: `GET http://localhost:8082/api/orders?count=100`
+**Endpoint (Local)**: `GET http://localhost:8081/api/orders?count=100`
 
 **Behavior**:
+
 - Returns an array of random orders.
 - If `count=500`, the response size will be ~2MB (useful for performance testing).
 
@@ -114,7 +117,7 @@ Invoke-WebRequest -Uri "http://localhost:8082/api/orders?count=100" -Method GET 
 ### WSDL
 
 **Endpoint (CloudHub)**: `GET https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice?wsdl`
-**Endpoint (Local)**: `GET http://localhost:8082/soap/orderservice?wsdl`
+**Endpoint (Local)**: `GET http://localhost:8081/soap/orderservice?wsdl`
 
 **PowerShell Test**:
 ```powershell
@@ -126,7 +129,7 @@ Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice?wsdl" -Method GE
 ### 1. CreateOrder Operation
 
 **Endpoint (CloudHub)**: `POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice`
-**Endpoint (Local)**: `POST http://localhost:8082/soap/orderservice`
+**Endpoint (Local)**: `POST http://localhost:8081/soap/orderservice`
 
 **Headers**:
 ```
@@ -179,7 +182,7 @@ Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice" -Method POST -H
 ### 2. GetOrder Operation
 
 **Endpoint (CloudHub)**: `POST https://raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io/soap/orderservice`
-**Endpoint (Local)**: `POST http://localhost:8082/soap/orderservice`
+**Endpoint (Local)**: `POST http://localhost:8081/soap/orderservice`
 
 **Headers**:
 ```
@@ -223,31 +226,43 @@ Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice" -Method POST -H
 
 This endpoint is specifically designed to verify that `apiforge` correctly replaces URI and Query parameters.
 
-*   **Endpoint**: `http://localhost:8082/api/orders/{orderNumber}?source={source}&count={count}`
-*   **Authentication**: Basic (raks/admin)
-*   **Verification**: The response will echo the `orderNumber` from the path and the `source` from the query string. If `count` is provided (e.g., `count=10`), the API will simulate a large payload by returning 10 order objects in an array.
+- **Endpoint**: `http://localhost:8081/api/orders/{orderNumber}?source={source}&count={count}`
+
+- **Authentication**: Basic (raks/admin)
+
+- **Verification**: The response will echo the `orderNumber` from the path and the `source` from the query string. If `count` is provided (e.g., `count=10`), the API will simulate a large payload by returning 10 order objects in an array.
 
 ### PowerShell Test
 
 ```powershell
 $auth = [Convert]::ToBase64String([System.Text.Encoding]::ASCII.GetBytes("raks:admin"))
 # Test with both URI Param, Query Param, and Large Payload (count=5)
-Invoke-RestMethod -Uri "http://localhost:8082/api/orders/ORD-TEST-999?source=PowerShell&count=5" -Headers @{Authorization=("Basic $auth")}
+Invoke-RestMethod -Uri "http://localhost:8081/api/orders/ORD-TEST-999?source=PowerShell&count=5" -Headers @{Authorization=("Basic $auth")}
 ```
 
 ---
 
 ## mTLS Security Testing
 
-The Mule project is configured with a Mutual TLS (mTLS) listener on port **8443**.
+The Mule project is configured with a Mutual TLS (mTLS) listener on port **8082**.
 
 ### 1. mTLS REST Wrapper
-**Endpoint**: `https://localhost:8443/mtls/api/orders`
+
+- **Local**: `https://localhost:8082/mtls/api/orders`
+- **CloudHub**: `https://mule-worker-raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io:8082/mtls/api/orders`
 
 ### 2. mTLS SOAP Wrapper
-**Endpoint**: `https://localhost:8443/mtls/soap/orderservice`
+
+- **Local**: `https://localhost:8082/mtls/soap/orderservice`
+- **CloudHub**: `https://mule-worker-raksmule-ul5a1j.scqos5-2.usa-w1.cloudhub.io:8082/mtls/soap/orderservice`
+
+> [!IMPORTANT]
+> **CloudHub mTLS Setup**:
+> 1. In **Runtime Manager** -> **Properties**, ensure **`mule.https.port`** is set to **`8082`**.
+> 2. You **must** use the `mule-worker-` prefix and port `:8082` to reach the application directly. The standard CloudHub URL (port 443) does not support Mutual TLS.
 
 ### 3. Testing with API Forge
+
 To test these endpoints in `apiforge`, you must provide the client certificate:
 
 1. **Locate Certificates**:
@@ -265,7 +280,7 @@ To test these endpoints in `apiforge`, you must provide the client certificate:
    - Click **Validate Security Configuration**.
 
 3. **Run Comparison**:
-   - Use the `https://localhost:8443/...` URLs.
+   - Use the `https://localhost:8082/...` URLs.
    - If configured correctly, Mule will accept the connection and the "mTLS REST Wrapper hit" log will appear in the Mule console.
 
 ---
@@ -286,8 +301,8 @@ To test these endpoints in `apiforge`, you must provide the client certificate:
 
 ## Notes
 
-- Standard HTTP runs on port **8082**
-- Secure HTTPS (mTLS) runs on port **8443**
+- Standard HTTP runs on port **8081**
+- Secure HTTPS (mTLS) runs on port **8082**
 - **Basic Authentication required** for standard endpoints (user: `raks`, password: `admin`)
 - Responses are dynamic (Large Payload) or static (Others)
 - SOAP operations require proper XML envelope structure

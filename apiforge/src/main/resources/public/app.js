@@ -443,6 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 v: tr.querySelector('.value-input')?.value
             })),
             enableAuth: document.getElementById('enableAuth').checked,
+            useMTLS: document.getElementById('useMTLS')?.checked,
             clientId: document.getElementById('clientId').value,
             clientSecret: document.getElementById('clientSecret').value,
             caCertPath: document.getElementById('caCertPath').value,
@@ -490,18 +491,18 @@ document.addEventListener('DOMContentLoaded', () => {
             paramsTable.innerHTML = '';
             s.params?.forEach(p => addRow(paramsTable, ['Parameter Name', 'Value'], [p.k, p.v]));
 
-            if (s.caCertPath) document.getElementById('caCertPath').value = s.caCertPath;
-            if (s.pfxPath) document.getElementById('pfxPath').value = s.pfxPath;
-            if (s.clientCertPath) document.getElementById('clientCertPath').value = s.clientCertPath;
-            if (s.clientKeyPath) document.getElementById('clientKeyPath').value = s.clientKeyPath;
-            if (s.passphrase) document.getElementById('passphrase').value = s.passphrase;
+            if (s.useMTLS !== undefined) {
+                document.getElementById('useMTLS').checked = s.useMTLS;
+            } else {
+                document.getElementById('useMTLS').checked = false;
+            }
 
             return true;
         } catch(e) { return false; }
     };
 
     // Attach listeners for auto-save
-    ['method','operationName','url1','url2','payload','ignoredFields','maxIterations','iterationController', 'enableAuth', 'clientId', 'clientSecret', 'caCertPath', 'pfxPath', 'clientCertPath', 'clientKeyPath', 'passphrase'].forEach(id => {
+    ['method','operationName','url1','url2','payload','ignoredFields','maxIterations','iterationController', 'enableAuth', 'useMTLS', 'clientId', 'clientSecret', 'caCertPath', 'pfxPath', 'clientCertPath', 'clientKeyPath', 'passphrase'].forEach(id => {
         const el = document.getElementById(id);
         if (el) {
             el.addEventListener('input', saveState);
@@ -643,14 +644,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let auth = null;
         if (document.getElementById('enableAuth').checked) {
+            const isSecurityEnabled = document.getElementById('useMTLS')?.checked;
             auth = {
                 clientId: document.getElementById('clientId').value.trim(),
                 clientSecret: document.getElementById('clientSecret').value.trim(),
-                caCertPath: document.getElementById('caCertPath').value.trim(),
-                pfxPath: document.getElementById('pfxPath').value.trim(),
-                clientCertPath: document.getElementById('clientCertPath').value.trim(),
-                clientKeyPath: document.getElementById('clientKeyPath').value.trim(),
-                passphrase: document.getElementById('passphrase').value.trim()
+                // Only send cert paths if explicit security toggle is enabled
+                caCertPath: isSecurityEnabled ? document.getElementById('caCertPath').value.trim() : null,
+                pfxPath: isSecurityEnabled ? document.getElementById('pfxPath').value.trim() : null,
+                clientCertPath: isSecurityEnabled ? document.getElementById('clientCertPath').value.trim() : null,
+                clientKeyPath: isSecurityEnabled ? document.getElementById('clientKeyPath').value.trim() : null,
+                passphrase: isSecurityEnabled ? document.getElementById('passphrase').value.trim() : null
             };
         }
 
@@ -820,12 +823,28 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
              logActivity(`BASELINE COMPLETED: ${config.baseline.operation} success for ${config.baseline.serviceName}`, 'success');
              showToast('Baseline operation completed successfully', 'success');
-        }
+             
+             if (config.baseline.operation === 'CAPTURE') {
+                 // Refresh services/dates/runs
+                 await loadBaselineServices();
+                 // Select the service we just started with
+                 if (document.getElementById('baselineServiceSelect')) {
+                     const svcSelect = document.getElementById('baselineServiceSelect');
+                     svcSelect.value = config.baseline.serviceName;
+                     if (svcSelect.value) {
+                        svcSelect.dispatchEvent(new Event('change'));
+                        // Note: Selecting the run automatically is harder because 'change' is async.
+                        // But getting the dates list refreshed is the main fix requested.
+                     }
+                 }
+             }
+         }
         renderResults(data);
     };
 
     // --- Rendering Results ---
-    window.renderResults = (results) => {
+    // --- Rendering Results ---
+    window.renderResults = (results, customTitle = null) => {
         const resultsContainer = document.getElementById('resultsContainer');
         if (!resultsContainer) return;
         resultsContainer.innerHTML = '';
@@ -845,7 +864,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const errors = results.filter(r => r.status === 'ERROR').length;
 
         const isBaselineCapture = document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'CAPTURE';
-        const titleText = isBaselineCapture ? '📊 Baseline Captured Result Summary' : '📊 Comparison Result Summary';
+        const titleText = customTitle || (isBaselineCapture ? '📊 Baseline Captured Result Summary' : '📊 Comparison Result Summary');
+
+        const firstMatch = results[0] || {};
+        let runMetaHtml = '';
+        if (firstMatch.baselineServiceName || firstMatch.baselineRunId) {
+            let authSummary = 'None';
+            if (firstMatch.api1 && firstMatch.api1.metadata && firstMatch.api1.metadata.authentication) {
+                const auth = firstMatch.api1.metadata.authentication;
+                authSummary = auth.clientId ? `Client ID: ${auth.clientId}` : (auth.pfxPath ? 'PFX auth' : 'Basic/Other');
+            }
+
+            runMetaHtml = `
+                <div style="margin-top:20px; padding:15px; background:#fdfbff; border-radius:12px; border:1px solid var(--border-color); font-size:0.85rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+                    <div style="font-weight:800; color:var(--primary-color); margin-bottom:12px; display:flex; align-items:center; gap:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
+                        <span>📋 Run Information</span>
+                        <span style="font-weight:400; font-size:0.75rem; color:#718096; text-transform:uppercase; letter-spacing:0.05em;">Execution Context</span>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px;">
+                        <div>
+                            <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Service & Run</div>
+                            <div style="margin-top:2px;"><strong>Name:</strong> <span style="color:var(--primary-color);">${escapeHtml(firstMatch.baselineServiceName || 'N/A')}</span></div>
+                            <div style="margin-top:1px;"><strong>Run ID:</strong> <span>${escapeHtml(firstMatch.baselineRunId || 'N/A')}</span></div>
+                        </div>
+                        <div>
+                            <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Date & Source</div>
+                            <div style="margin-top:2px;"><strong>Capture:</strong> <span>${escapeHtml(firstMatch.baselineDate || 'N/A')}</span></div>
+                            <div style="margin-top:1px; font-size:0.75rem; color:#a0aec0;">${escapeHtml(firstMatch.baselineCaptureTimestamp || '')}</div>
+                        </div>
+                        <div>
+                            <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Configuration</div>
+                            <div style="margin-top:2px;"><strong>Auth:</strong> <span class="tech-stack-tag" style="padding:2px 8px; margin:0;">${escapeHtml(authSummary)}</span></div>
+                            <div style="margin-top:1px;"><strong>API 1:</strong> <code style="font-size:0.7rem; word-break:break-all;">${escapeHtml(firstMatch.api1 ? firstMatch.api1.url : 'N/A')}</code></div>
+                        </div>
+                    </div>
+                    ${firstMatch.baselineDescription ? `<div style="margin-top:12px; padding-top:8px; border-top:1px solid #f1f1f1;"><strong>Description:</strong> <span style="color:#4a5568;">${escapeHtml(firstMatch.baselineDescription)}</span></div>` : ''}
+                    ${firstMatch.baselineTags && firstMatch.baselineTags.length ? `<div style="margin-top:8px;"><strong>Tags:</strong> ${firstMatch.baselineTags.map(t=>`<span class="tech-stack-tag" style="margin:0 4px 0 0; font-size:0.7rem;">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+                </div>
+            `;
+        }
 
         summary.innerHTML = `
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
@@ -855,7 +912,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <button id="collapseAllBtn" class="btn-secondary" style="padding:4px 8px; font-size:0.7rem;">↑ Collapse All</button>
                 </div>
             </div>
-            <div style="display:flex; gap:30px; align-items:center;">
+            <div style="display:flex; flex-wrap:wrap; gap:30px; align-items:center;">
                 <div style="text-align:center;">
                     <div style="font-size:0.8rem; color:#666; margin-bottom:5px; font-weight:700;">TOTAL</div>
                     <div style="font-size:1.5rem; font-weight:800; color:var(--primary-color);">${results.length}</div>
@@ -874,6 +931,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div style="font-size:1.5rem; font-weight:800; color:#f6ad55;">${errors}</div>
                 </div>
             </div>
+            ${runMetaHtml}
         `;
         resultsContainer.appendChild(summary);
 
@@ -905,8 +963,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="result-header" style="cursor:pointer; padding:12px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <div style="font-weight:700; font-size:0.9rem;">#${i+1} - ${res.operationName}</div>
-                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:1px; font-family:monospace;">1: ${res.api1 ? res.api1.url : ''}</div>
-                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:2px; font-family:monospace;">2: ${res.api2 ? res.api2.url : (document.getElementById('comparisonMode').value === 'BASELINE' ? 'Baseline' : '')}</div>
+                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:1px; font-family:monospace;">1: ${res.api1 ? res.api1.url : (res.url || '')}</div>
+                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:2px; font-family:monospace;">2: ${res.api2 ? res.api2.url : (document.getElementById('comparisonMode').value === 'BASELINE' ? (res.baselineServiceName ? `Baseline: ${res.baselineServiceName}` : 'Baseline') : '')}</div>
                         ${tokens}
                     </div>
                     <span class="${statusClass}" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem; color: #fff; background-color: ${res.status === 'MISMATCH' ? '#fc8181' : (res.status === 'MATCH' ? 'var(--success-color)' : (res.status === 'ERROR' ? 'var(--error-color)' : '#cbd5e0'))};">${res.status}</span>
@@ -926,7 +984,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.querySelector('.result-header').classList.toggle('open', isCurrentlyNone);
                 
                 if (isCurrentlyNone) { 
-                    setupSync(body);
+                    setupSync();
                     // Attach copy events once visible
                     body.querySelectorAll('.copy-btn').forEach(btn => {
                         btn.onclick = (e) => {
@@ -955,35 +1013,74 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const renderPayloadContent = (res, idx) => {
         let contentHtml = '';
+        const a1 = res.api1 || {};
+        const a2 = res.api2 || {};
+        
+        // --- Metadata Rendering Function ---
+        const renderMetadataBlock = (meta, title) => {
+            if (!meta) return '';
+            let metaHtml = '';
+            
+            // Auth / mTLS
+            if (meta.authentication) {
+                const auth = meta.authentication;
+                metaHtml += `<div><strong>🔐 Auth:</strong>`;
+                if (auth.clientId) metaHtml += ` <span class="tech-stack-tag" title="Client ID">ID: ${auth.clientId}</span>`;
+                if (auth.pfxPath) metaHtml += ` <span class="tech-stack-tag" title="PFX Path">PFX: ${auth.pfxPath}</span>`;
+                if (auth.passphrase) metaHtml += ` <span class="tech-stack-tag" title="Passphrase">🔑 *****</span>`;
+                metaHtml += `</div>`;
+            }
+            // Query Params
+            if (meta.queryParams && Object.keys(meta.queryParams).length > 0) {
+                 metaHtml += `<div style="margin-top:4px;"><strong>❓ Query:</strong> <code style="font-size:0.75rem;">${JSON.stringify(meta.queryParams)}</code></div>`;
+            }
+            // Metrics (Time, Size)
+            let metrics = [];
+            // REQUEST SIZE FIRST, THEN RESPONSE PAYLOAD SIZE
+            if (meta.requestSize !== undefined) metrics.push(`📤 Req: <strong>${formatBytes(meta.requestSize)}</strong>`);
+            if (meta.responseSize !== undefined) metrics.push(`📥 Resp: <strong>${formatBytes(meta.responseSize)}</strong>`);
+            
+            if (metrics.length > 0) {
+                 metaHtml += `<div style="margin-top:4px; font-size:0.75rem;"><strong>📊 Metrics:</strong> ${metrics.join(' | ')}</div>`;
+            }
+            
+            if (!metaHtml) return '';
+            const isBaselineMode = document.getElementById('comparisonMode').value === 'BASELINE';
+            const displayTitle = isBaselineMode && title === 'API 1' ? 'Current' : (isBaselineMode && title === 'API 2' ? 'Baseline' : title);
+
+            return `<div style="flex:1; background:#f0f7ff; padding:8px; border-radius:6px; border:1px solid #cce3ff; font-size:0.8rem;">
+                        <div style="font-weight:700; color:#2c5282; margin-bottom:4px; border-bottom:1px solid #dae1e7; padding-bottom:2px;">${displayTitle} Metadata</div>
+                        ${metaHtml}
+                        ${a1.duration !== undefined && title.includes('1') ? `<div style="margin-top:2px;">⏱️ Duration: <strong>${a1.duration}ms</strong></div>` : ''}
+                        ${a2.duration !== undefined && title.includes('2') ? `<div style="margin-top:2px;">⏱️ Duration: <strong>${a2.duration}ms</strong></div>` : ''}
+                    </div>`;
+        };
+
+        const meta1Html = renderMetadataBlock(a1.metadata, 'API 1');
+        const meta2Html = renderMetadataBlock(a2.metadata, 'API 2');
+
+        if (meta1Html || meta2Html) {
+            contentHtml += `<div style="display:flex; gap:10px; margin-bottom:12px;">
+                                ${meta1Html || '<div style="flex:1;"></div>'}
+                                ${meta2Html || '<div style="flex:1;"></div>'}
+                            </div>`;
+        }
+
+        if (res.status === 'MISMATCH' && res.differences && res.differences.length > 0) {
+            contentHtml += `
+                <div style="margin-bottom:15px; padding:12px; background:#fff5f5; border:1.5px solid #feb2b2; border-radius:8px; box-shadow: 0 2px 4px rgba(245, 101, 101, 0.05);">
+                    <div style="font-size:0.75rem; font-weight:800; color:#c53030; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:8px; display:flex; align-items:center; gap:6px;">
+                        <span>⚠️ Mismatch Details:</span>
+                    </div>
+                    <ul style="margin:0; padding-left:20px; font-size:0.85rem; color:#2d3748; line-height:1.5;">
+                        ${res.differences.map(d => `<li style="margin-bottom:4px;">${escapeHtml(d)}</li>`).join('')}
+                    </ul>
+                </div>`;
+        }
+
         if (res.errorMessage) {
             contentHtml += `<div style="color:var(--error-color); font-size:0.85rem; padding:10px; background:#fff5f5; border-radius:6px; border:1px solid #feb2b2; margin-bottom:10px;"><strong>HTTP ERROR DETECTED:</strong> ${res.errorMessage}</div>`;
         }
-        const a1 = res.api1 || {};
-        const a2 = res.api2 || {};
-
-        const areHeadersMatch = (h1, h2) => {
-            if (!h1 || !h2) return h1 === h2;
-            const entries1 = Object.entries(h1).sort();
-            const entries2 = Object.entries(h2).sort();
-            return JSON.stringify(entries1) === JSON.stringify(entries2);
-        };
-
-        const arePayloadsMatch = (p1, p2) => {
-            if (!p1 || !p2) return p1 === p2;
-            try {
-                const j1 = typeof p1 === 'string' ? JSON.parse(p1) : p1;
-                const j2 = typeof p2 === 'string' ? JSON.parse(p2) : p2;
-                return JSON.stringify(j1) === JSON.stringify(j2);
-            } catch (e) {
-                return String(p1).trim() === String(p2).trim();
-            }
-        };
-
-        const renderHeaders = (headers) => {
-            if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
-            // Join with newline for diffing. Escape VALUES but keep our controlled <strong> tags.
-            return Object.entries(headers).sort().map(([k,v])=>`<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`).join('\n');
-        };
 
         const renderComponent = (v1, v2, label, type, isHeader) => {
             const hasAPI2 = !!res.api2;
@@ -995,7 +1092,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Compute line-by-line highlights if mismatch and dual pane
             if (!isMatch && hasAPI2) {
-                // Ensure text is comparable by splitting and standardizing
                 const lines1 = String(c1).split(/\r?\n/);
                 const lines2 = String(c2).split(/\r?\n/);
                 const max = Math.max(lines1.length, lines2.length);
@@ -1004,109 +1100,166 @@ document.addEventListener('DOMContentLoaded', () => {
                 let out2 = '';
                 
                 for (let i = 0; i < max; i++) {
-                    const l1 = lines1[i] || '';
-                    const l2 = lines2[i] || '';
-                    const isDiff = l1.trim() !== l2.trim();
-                    const style = isDiff ? 'background-color:#ffe6e6; font-weight:bold; color:#c53030; display:inline-block; width:100%; border-radius:2px;' : '';
+                    const l1 = (lines1[i] || '').trim();
+                    const l2 = (lines2[i] || '').trim();
+                    const isLineDiff = l1 !== l2;
                     
-                    // If it's a header, l1 already contains safe HTML from renderHeaders.
-                    // If it's a payload, we must escape it now (unless it was already escaped).
-                    // Actually, let's just make l1/l2 reliable before the loop.
-                    const content1 = isHeader ? l1 : escapeHtml(l1).replace(/ /g, '&nbsp;');
-                    const content2 = isHeader ? l2 : escapeHtml(l2).replace(/ /g, '&nbsp;');
+                    const style = isLineDiff ? 'background-color:#fff5f5; color:#c53030; font-weight:700; border-left:3px solid #f56565; padding-left:5px;' : '';
+                    const content1 = isHeader ? (lines1[i] || '') : escapeHtml(lines1[i] || '').replace(/ /g, '&nbsp;');
+                    const content2 = isHeader ? (lines2[i] || '') : escapeHtml(lines2[i] || '').replace(/ /g, '&nbsp;');
                     
-                    out1 += `<div style="${style}">${content1 || '&nbsp;'}</div>`;
-                    out2 += `<div style="${style}">${content2 || '&nbsp;'}</div>`;
+                    out1 += `<div style="${style} min-height:1.2em; white-space:nowrap;">${content1 || '&nbsp;'}</div>`;
+                    out2 += `<div style="${style} min-height:1.2em; white-space:nowrap;">${content2 || '&nbsp;'}</div>`;
                 }
                 c1 = out1;
                 c2 = out2;
-            } else {
-                // If match or single pane, just wrap carefully to preserve existing style
-                 if (!isHeader) {
-                    // formatData returns raw string which we usually put in <pre>. 
-                    // To keep consistent with diff view (divs), we'll split it too, or just use pre.
-                    // Actually, let's keep it simple for matches.
-                 }
             }
 
-            const renderSingleBoxContent = (val, isDiffMode) => {
-               if (isDiffMode) return `<div class="sync-p" style="margin:0; font-family:monospace; white-space:pre-wrap; font-size:0.8rem;">${val}</div>`;
-               // Fallback for match/single
-               return isHeader ? 
-                   `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
-                   `<pre class="sync-p" style="margin:0;">${formatData(val)}</pre>`;
-            };
-
-            // Custom renders for mismatch Diff View
-            const renderDiffBox = (valHtml, title, flex=1) => `
-                <div class="${type}-box" style="flex:${flex}; min-width:0; position:relative;">
-                    <div style="font-size:0.7rem; font-weight:700; color:var(--primary-color); margin-bottom:5px; text-transform:uppercase;">${title}</div>
-                    <div style="position:relative;">
-                        <button type="button" class="copy-btn" title="Copy ${label}">Copy</button>
-                        ${isHeader ? 
-                           `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${valHtml}</div>` : 
-                           `<div class="sync-p" style="margin:0; font-family:monospace; white-space:pre-wrap; font-size:0.8rem; overflow-x:auto;">${valHtml}</div>`
-                        }
-                    </div>
-                </div>
-            `;
-            
-            // Standard render for matches (reusing old logic style)
-            const renderStandardBox = (val, title, flex=1) => `
-                <div class="${type}-box" style="flex:${flex}; min-width:0; position:relative;">
-                    <div style="font-size:0.7rem; font-weight:700; color:var(--primary-color); margin-bottom:5px; text-transform:uppercase;">${title}</div>
-                     <div style="position:relative;">
-                        <button type="button" class="copy-btn" title="Copy ${label}">Copy</button>
-                        ${isHeader ? 
-                            `<div class="sync-h" style="background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:130px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);">${renderHeaders(val)}</div>` :
-                            `<pre class="sync-p" style="margin:0;">${escapeHtml(formatData(val))}</pre>`
-                        }
-                    </div>
-                </div>
-            `;
-
             if (!hasAPI2 || isMatch) {
-                return `<div style="display:flex; margin-bottom:10px;">${renderStandardBox(v1, `${label} ${isMatch && hasAPI2 ? '(Match)' : ''}`)}</div>`;
+                return `<div style="display:flex; margin-bottom:10px;">${renderBox(c1, `${label} ${isMatch && hasAPI2 ? '(Match)' : ''}`, type, label, isHeader, true)}</div>`;
             } else {
                 const isBaseline = document.getElementById('comparisonMode').value === 'BASELINE';
                 const t1 = isBaseline ? `Current ${label}` : `API 1 ${label}`;
                 const t2 = isBaseline ? `Target/Baseline ${label}` : `API 2 ${label}`;
+                
+                const id1 = `content-${Math.random().toString(36).substr(2, 9)}`;
+                const id2 = `content-${Math.random().toString(36).substr(2, 9)}`;
+                const isLarge = (String(c1).match(/<div/g) || []).length > 10 || (String(c2).match(/<div/g) || []).length > 10;
+
                 return `
-                    <div style="display:flex; gap:12px; margin-bottom:10px;">
-                        ${renderDiffBox(c1, t1)}
-                        ${renderDiffBox(c2, t2)}
+                    <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:15px; border:1px solid rgba(0,0,0,0.05); padding:10px; border-radius:8px; background:rgba(0,0,0,0.01);">
+                        <div style="display:flex; gap:12px;">
+                            ${renderBox(c1, t1, type, label, isHeader, false, id1, isLarge)}
+                            ${renderBox(c2, t2, type, label, isHeader, false, id2, isLarge)}
+                        </div>
+                        ${isLarge ? `<button type="button" class="show-more-btn sync-expand-btn" style="width:100%; margin-top:5px; background:var(--bg-color); border:1px solid var(--border-color); color:var(--primary-color); font-weight:700;" onclick="toggleSyncExpand('${id1}', '${id2}', this)">Show More</button>` : ''}
                     </div>
                 `;
             }
         };
 
-        let diffs = '';
-        if (res.status === 'MISMATCH' && res.differences) {
-            diffs = `<div style="background:#fff5f5; border:1px solid #feb2b2; padding:12px; border-radius:8px; margin-bottom:15px; font-size:0.85rem;">
-                        <strong style="color:#c53030;">Mismatch Details:</strong>
-                        <ul style="margin:8px 0 0 0; padding-left:20px; color:#2d3748;">${res.differences.map(d=>`<li>${d}</li>`).join('')}</ul>
-                     </div>`;
-        }
+        const renderBox = (valHtml, title, boxType, boxLabel, boxIsHeader, isMainValue = false, customId = null, forceCollapsed = false) => {
+            const lineCount = (String(valHtml).match(/<div/g) || []).length || (String(valHtml).split('\n').length);
+            const isLarge = forceCollapsed || lineCount > 10;
+            const contentId = customId || `content-${Math.random().toString(36).substr(2, 9)}`;
+            
+            return `
+                <div class="${boxType}-box" style="flex:1; min-width:0; position:relative;">
+                    <div style="font-size:0.7rem; font-weight:700; color:var(--primary-color); margin-bottom:5px; text-transform:uppercase;">${title}</div>
+                    <div style="position:relative;">
+                        <button type="button" class="copy-btn" title="Copy ${boxLabel}" style="z-index: 10;">Copy</button>
+                        <div id="${contentId}" class="${boxIsHeader ? 'sync-h' : 'sync-p'} ${isLarge ? 'content-collapsed' : ''}" 
+                             style="${boxIsHeader ? 'background:rgba(255,255,255,0.7); padding:8px; font-size:0.7rem; max-height:300px; overflow-y:auto; border-radius:4px; border:1px solid rgba(0,0,0,0.05);' : 
+                                               'margin:0; font-family:monospace; white-space:pre-wrap; font-size:0.8rem; overflow-x:auto; background:white; padding:10px; border-radius:4px; border:1px solid #e2e8f0;'}">
+                            ${(isMainValue && !boxIsHeader) ? escapeHtml(valHtml) : valHtml}
+                        </div>
+                        ${(!customId && isLarge) ? `<button type="button" class="show-more-btn" onclick="toggleExpand('${contentId}', this)">Show More</button>` : ''}
+                    </div>
+                </div>
+            `;
+        };
 
-        return `
-            ${diffs}
-            <!-- Request Section -->
-            <div style="padding:10px; background:#f7fafc; border-radius:8px; border:2px solid #cbd5e0; margin-bottom:15px;">
+        contentHtml += `<div style="padding:10px; background:#f7fafc; border-radius:8px; border:2px solid #cbd5e0; margin-bottom:15px;">
                 <div style="font-size:0.75rem; font-weight:800; color:#4a5568; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">Input Request</div>
                 ${renderComponent(a1.requestHeaders || {}, a2.requestHeaders || {}, 'Headers', 'request', true)}
                 ${renderComponent(a1.requestPayload || '', a2.requestPayload || '', 'Payload', 'request', false)}
             </div>
-
-            <!-- Response Section -->
             <div style="padding:10px; background:#f0fff4; border-radius:8px; border:2px solid #5ab078;">
                 <div style="font-size:0.75rem; font-weight:800; color:#22543d; margin-bottom:10px; text-transform:uppercase; letter-spacing:0.05em;">API Responses</div>
                 ${renderComponent(a1.responseHeaders, a2.responseHeaders, 'Headers', 'response', true)}
                 ${renderComponent(a1.responsePayload, a2.responsePayload, 'Payload', 'response', false)}
-            </div>
-        `;
+            </div>`;
+            
+         return contentHtml;
+    };
+
+
+    // Helper for Expand/Collapse
+    const setupSync = () => {
+        // Use a small delay to ensure DOM is updated
+        setTimeout(() => {
+            document.querySelectorAll('.result-item').forEach(item => {
+                const ps = item.querySelectorAll('.sync-p');
+                const hs = item.querySelectorAll('.sync-h');
+                
+                const syncGroup = (els) => {
+                    if (els.length < 2) return;
+                    els.forEach(el => {
+                        // Avoid adding multiple listeners
+                        if (el._syncInit) return;
+                        el._syncInit = true;
+                        
+                        el.addEventListener('scroll', () => {
+                            els.forEach(other => {
+                                if (other !== el) {
+                                    other.scrollTop = el.scrollTop;
+                                    other.scrollLeft = el.scrollLeft;
+                                }
+                            });
+                        });
+                    });
+                };
+                syncGroup(ps);
+                syncGroup(hs);
+            });
+        }, 50);
+    };
+
+    window.toggleExpand = (id, btn) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const collapsed = el.classList.toggle('content-collapsed');
+        btn.innerText = collapsed ? 'Show More' : 'Show Less';
+        if (collapsed) el.scrollTop = 0;
+    };
+
+    window.toggleSyncExpand = (id1, id2, btn) => {
+        const el1 = document.getElementById(id1);
+        const el2 = document.getElementById(id2);
+        if (!el1 || !el2) return;
+        const collapsed = el1.classList.toggle('content-collapsed');
+        el2.classList.toggle('content-collapsed', collapsed);
+        btn.innerText = collapsed ? 'Show More' : 'Show Less';
+        if (collapsed) {
+            el1.scrollTop = 0;
+            el2.scrollTop = 0;
+        }
+    };
+
+    const areHeadersMatch = (h1, h2) => {
+        if (!h1 || !h2) return h1 === h2;
+        const entries1 = Object.entries(h1).sort();
+        const entries2 = Object.entries(h2).sort();
+        return JSON.stringify(entries1) === JSON.stringify(entries2);
+    };
+
+    const arePayloadsMatch = (p1, p2) => {
+        if (!p1 || !p2) return p1 === p2;
+        try {
+            const j1 = typeof p1 === 'string' ? JSON.parse(p1) : p1;
+            const j2 = typeof p2 === 'string' ? JSON.parse(p2) : p2;
+            return JSON.stringify(j1) === JSON.stringify(j2);
+        } catch (e) {
+            return String(p1).trim() === String(p2).trim();
+        }
+    };
+
+    const renderHeaders = (headers) => {
+        if (!headers || Object.keys(headers).length === 0) return '<div style="color:#999; font-style:italic;">[No Headers]</div>';
+        return Object.entries(headers).sort().map(([k,v])=>`<div><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</div>`).join('\n');
+    };
+
+    const formatBytes = (bytes, decimals = 2) => {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024;
+        const dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
     };
 
     const formatData = (d) => {
+
         if (!d) return '[Empty]';
         try { 
             return JSON.stringify(typeof d === 'string' ? JSON.parse(d) : d, null, 2); 
@@ -1180,13 +1333,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    const setupSync = (body) => {
-        const hs = body.querySelectorAll('.sync-h');
-        const ps = body.querySelectorAll('.sync-p');
-        const sync = (els) => els.forEach(e => e.onscroll = () => els.forEach(o => { if(o!==e) o.scrollTop = e.scrollTop; }));
-        if(hs.length > 1) sync(hs);
-        if(ps.length > 1) sync(ps);
-    };
 
     const initResize = () => {
         const handle = document.getElementById('resizeHandle');
@@ -1224,6 +1370,20 @@ document.addEventListener('DOMContentLoaded', () => {
             resizing = false; 
             document.body.style.cursor = 'default';
         });
+    };
+
+    // --- Sidebar Toggle ---
+    const initSidebarToggle = () => {
+        const sidebarToggle = document.getElementById('sidebarToggle');
+        if (sidebarToggle) {
+            sidebarToggle.onclick = () => {
+                const grid = document.querySelector('.main-grid');
+                if (grid) {
+                    grid.classList.toggle('collapsed');
+                    sidebarToggle.textContent = grid.classList.contains('collapsed') ? '▶' : '◀';
+                }
+            };
+        }
     };
 
     // --- Baseline Metadata Loading ---
@@ -1901,6 +2061,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     initResize();
     initUtilResize();
+    initSidebarToggle();
     loadDefaults();
     
     // Lazy Load JMS UI

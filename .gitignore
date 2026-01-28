@@ -9,6 +9,7 @@ target/
 
 # Generated Wrapper Lib JARs
 apiguardwrapper/lib/*.jar
+apiforge/baselines
 
 # IDEs
 .idea/

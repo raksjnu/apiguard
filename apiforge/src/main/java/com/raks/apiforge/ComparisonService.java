@@ -173,14 +173,50 @@ public class ComparisonService {
                 }
                 api2CallResult.setRequestPayload(payload2);
                 
+                api1CallResult.setRequestHeaders(op1.getHeaders());
+                api1CallResult.setRequestPayload(payload1);
+                api2CallResult.setRequestHeaders(op2.getHeaders());
+                api2CallResult.setRequestPayload(payload2);
+
+                // --- Enrich Metadata BEFORE calls ---
+                Map<String, Object> meta1 = new java.util.LinkedHashMap<>();
+                if (api1Config.getAuthentication() != null) {
+                    Authentication auth = api1Config.getAuthentication();
+                    Map<String, String> authInfo = new java.util.LinkedHashMap<>();
+                    if (auth.getClientId() != null) authInfo.put("clientId", auth.getClientId());
+                    if (auth.getPfxPath() != null) authInfo.put("pfxPath", auth.getPfxPath());
+                    if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) authInfo.put("passphrase", "********");
+                    if (!authInfo.isEmpty()) meta1.put("authentication", authInfo);
+                }
+                if (op1.getQueryParams() != null && !op1.getQueryParams().isEmpty()) {
+                    meta1.put("queryParams", op1.getQueryParams());
+                }
+                if (payload1 != null) meta1.put("requestSize", payload1.getBytes().length);
+                api1CallResult.setMetadata(meta1);
+
+                Map<String, Object> meta2 = new java.util.LinkedHashMap<>();
+                if (api2Config.getAuthentication() != null) {
+                    Authentication auth = api2Config.getAuthentication();
+                    Map<String, String> authInfo = new java.util.LinkedHashMap<>();
+                    if (auth.getClientId() != null) authInfo.put("clientId", auth.getClientId());
+                    if (auth.getPfxPath() != null) authInfo.put("pfxPath", auth.getPfxPath());
+                    if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) authInfo.put("passphrase", "********");
+                    if (!authInfo.isEmpty()) meta2.put("authentication", authInfo);
+                }
+                if (op2.getQueryParams() != null && !op2.getQueryParams().isEmpty()) {
+                    meta2.put("queryParams", op2.getQueryParams());
+                }
+                if (payload2 != null) meta2.put("requestSize", payload2.getBytes().length);
+                api2CallResult.setMetadata(meta2);
+
                 long start1 = System.currentTimeMillis();
                 com.raks.apiforge.http.HttpResponse httpResponse1 = client1.sendRequest(url1, method1, op1.getHeaders(), payload1);
                 api1CallResult.setDuration(System.currentTimeMillis() - start1);
                 api1CallResult.setStatusCode(httpResponse1.getStatusCode());
                 api1CallResult.setResponsePayload(httpResponse1.getBody());
                 api1CallResult.setResponseHeaders(httpResponse1.getHeaders());
-
                 api1CallResult.setRequestHeaders(httpResponse1.getRequestHeaders());
+                if (httpResponse1.getBody() != null) meta1.put("responseSize", httpResponse1.getBody().getBytes().length);
                 
                 long start2 = System.currentTimeMillis();
                 com.raks.apiforge.http.HttpResponse httpResponse2 = client2.sendRequest(url2, method2, op2.getHeaders(), payload2);
@@ -188,8 +224,8 @@ public class ComparisonService {
                 api2CallResult.setStatusCode(httpResponse2.getStatusCode());
                 api2CallResult.setResponsePayload(httpResponse2.getBody());
                 api2CallResult.setResponseHeaders(httpResponse2.getHeaders());
-
                 api2CallResult.setRequestHeaders(httpResponse2.getRequestHeaders());
+                if (httpResponse2.getBody() != null) meta2.put("responseSize", httpResponse2.getBody().getBytes().length);
                 
                 logger.info("Comparison - API1 status: {}, API2 status: {}", 
                     httpResponse1.getStatusCode(), httpResponse2.getStatusCode());
@@ -206,29 +242,40 @@ public class ComparisonService {
     }
     private String constructUrl(String baseUrl, String path, Map<String, String> queryParams, String apiType) {
         if (baseUrl == null) baseUrl = "";
-        String url = baseUrl;
+        String url = baseUrl.trim();
 
         if (!"SOAP".equalsIgnoreCase(apiType)) {
-            String normalizedBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+            // Remove trailing slash from base if path exists
             if (path != null && !path.trim().isEmpty()) {
-                String normalizedPath = path.startsWith("/") ? path : "/" + path;
-                if (!normalizedBase.endsWith(normalizedPath)) {
-                    url = normalizedBase + normalizedPath;
-                } else {
-                    url = normalizedBase;
+                if (url.endsWith("/")) url = url.substring(0, url.length() - 1);
+                String normalizedPath = path.trim().startsWith("/") ? path.trim() : "/" + path.trim();
+                
+                // Only append path if not already present at the end of baseUrl (before query)
+                String baseNoQuery = url.contains("?") ? url.substring(0, url.indexOf("?")) : url;
+                if (!baseNoQuery.endsWith(normalizedPath)) {
+                    // Inject path BEFORE query string if baseUrl has one
+                    if (url.contains("?")) {
+                        int qIdx = url.indexOf("?");
+                        url = url.substring(0, qIdx) + normalizedPath + url.substring(qIdx);
+                    } else {
+                        url += normalizedPath;
+                    }
                 }
-            } else {
-                url = normalizedBase;
             }
         }
 
         if (queryParams != null && !queryParams.isEmpty()) {
             StringBuilder sb = new StringBuilder(url);
-            boolean first = !url.contains("?");
             for (Map.Entry<String, String> entry : queryParams.entrySet()) {
-                sb.append(first ? "?" : "&");
-                sb.append(entry.getKey()).append("=").append(entry.getValue());
-                first = false;
+                String key = entry.getKey();
+                String val = entry.getValue();
+                if (key == null || key.isEmpty()) continue;
+                
+                // Avoid duplicating if already in URL string
+                if (url.contains(key + "=")) continue;
+
+                sb.append(sb.indexOf("?") == -1 ? "?" : "&");
+                sb.append(key).append("=").append(val != null ? val : "");
             }
             url = sb.toString();
         }
