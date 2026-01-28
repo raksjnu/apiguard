@@ -90,6 +90,133 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 3000);
     };
 
+    // --- mTLS Certificate Management ---
+    // --- mTLS Certificate Management ---
+    window.uploadCert = async (type) => {
+        const fileInput = document.getElementById(type + 'File');
+        const pathInput = document.getElementById(type + 'Path');
+        if (!fileInput.files.length) return;
+        
+        const file = fileInput.files[0];
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        
+        logActivity(`AUDIT: Initiating certificate upload. File: ${file.name}, Type: ${type}, Size: ${file.size} bytes`, 'info');
+        
+        try {
+            const response = await fetch(`api/certificates/upload?fileName=${encodeURIComponent(file.name)}&workDir=${encodeURIComponent(workDir)}`, {
+                method: 'POST',
+                body: await file.arrayBuffer()
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                pathInput.value = data.path;
+                showToast('Upload successful!', 'success');
+                logActivity(`AUDIT: Certificate uploaded successfully. \n   > File: ${file.name}\n   > Saved Path: ${data.path}`, 'success');
+                saveState();
+            } else {
+                showToast('Upload failed', 'error');
+                logActivity(`AUDIT: Certificate upload failed for ${file.name}`, 'error');
+            }
+        } catch (e) {
+            console.error(e);
+            showToast('Error uploading: ' + e.message, 'error');
+            logActivity(`AUDIT: Exception during upload: ${e.message}`, 'error');
+        }
+    };
+
+    const validateCerts = async () => {
+        const pfxPath = document.getElementById('pfxPath').value.trim();
+        const passphrase = document.getElementById('passphrase').value.trim();
+        const caPath = document.getElementById('caCertPath').value.trim();
+        const resultDiv = document.getElementById('validationResult');
+        const btn = document.getElementById('validateCertsBtn');
+        
+        resultDiv.style.display = 'block';
+        resultDiv.style.background = '#f7fafc';
+        resultDiv.style.borderColor = '#cbd5e0';
+        resultDiv.innerHTML = '⏳ Validating security configuration...';
+        btn.disabled = true;
+
+        logActivity('AUDIT: Starting Security Configuration Validation...', 'info');
+
+        const checks = [];
+        if (pfxPath) checks.push({ path: pfxPath, passphrase, type: pfxPath.toLowerCase().endsWith('.jks') ? 'JKS' : 'PFX' });
+        
+        const clientCertPath = document.getElementById('clientCertPath').value.trim();
+        const clientKeyPath = document.getElementById('clientKeyPath').value.trim();
+        if (clientCertPath && clientKeyPath) {
+            checks.push({ path: clientCertPath, keyPath: clientKeyPath, passphrase, type: 'PEM_PAIR' });
+        } else if (clientCertPath || clientKeyPath) {
+             showToast('Both Certificate and Private Key are required for PEM identity.', 'warning');
+             logActivity('AUDIT: Validation warning - Partial PEM configuration detected.', 'warning');
+        }
+
+        if (caPath) checks.push({ path: caPath, passphrase, type: caPath.toLowerCase().endsWith('.jks') ? 'JKS' : 'PEM' });
+
+        if (checks.length === 0) {
+            resultDiv.innerHTML = '⚠️ No certificate paths provided to validate.';
+            resultDiv.style.background = '#fffaf0';
+            resultDiv.style.borderColor = '#f6ad55';
+            logActivity('AUDIT: Validation skipped - No certificate paths found in configuration.', 'warning');
+            btn.disabled = false;
+            return;
+        }
+
+        try {
+            let allValid = true;
+            let messages = [];
+
+            for (const check of checks) {
+                const resp = await fetch('api/certificates/validate', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(check)
+                });
+                const data = await resp.json();
+                if (!data.valid) {
+                    allValid = false;
+                    messages.push(`❌ ${check.type}: ${data.error}`);
+                    logActivity(`AUDIT: [${check.type}] Validation FAILED. Error: ${data.error} | Path: ${check.path}`, 'error');
+                } else {
+                    messages.push(`✅ ${check.type}: ${data.message}`);
+                    let auditMsg = `AUDIT: [${check.type}] Validation PASSED. Path: ${check.path}`;
+                    if (data.aliases) {
+                        messages.push(`<small style="display:block; margin-left:20px; color:#4a5568;">Entries: ${data.aliases.join(', ')}</small>`);
+                        auditMsg += ` | Entries: ${data.aliases.join(', ')}`;
+                    }
+                    if (data.expiry) {
+                        messages.push(`<small style="display:block; margin-left:20px; color:#4a5568;">Expires: ${data.expiry} ${data.isExpired ? '<b style="color:red">(EXPIRED)</b>' : ''}</small>`);
+                        auditMsg += ` | Expires: ${data.expiry}`;
+                        if (data.isExpired) logActivity(`AUDIT: [${check.type}] Certificate EXPIRED!`, 'error');
+                    }
+                    logActivity(auditMsg, 'success');
+                }
+            }
+
+            resultDiv.innerHTML = messages.join('<br>');
+            resultDiv.style.background = allValid ? '#f0fff4' : '#fff5f5';
+            resultDiv.style.borderColor = allValid ? '#48bb78' : '#f56565';
+            
+            if (allValid) {
+                showToast('Security configuration is valid!', 'success');
+                logActivity('AUDIT: ==> Security Configuration Verified: ALL VALID <==', 'success');
+            } else {
+                showToast('Security configuration has errors.', 'error');
+                logActivity('AUDIT: ==> Security Configuration Verified: ERRORS FOUND <==', 'error');
+            }
+
+        } catch (e) {
+            resultDiv.innerHTML = '❌ Error during validation: ' + e.message;
+            resultDiv.style.background = '#fff5f5';
+            logActivity(`AUDIT: Validation Exception: ${e.message}`, 'error');
+        } finally {
+            btn.disabled = false;
+        }
+    };
+
+    document.getElementById('validateCertsBtn')?.addEventListener('click', validateCerts);
+
     // console.log('[APP] Check statusIndicator removal...'); 
     // User requested removal of "Running..." indicator. We'll ensure it's hidden or removed.
     const statusIndicator = document.getElementById('statusIndicator');
@@ -102,6 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // const statusIndicator = document.getElementById('statusIndicator'); // Moved to top
     const headersTable = document.getElementById('headersTable').querySelector('tbody');
     const tokensTable = document.getElementById('tokensTable').querySelector('tbody');
+    const paramsTable = document.getElementById('paramsTable').querySelector('tbody');
 
     // --- Dynamic Rows ---
     const addRow = (tbody, placeholders, values = []) => {
@@ -117,6 +245,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('addHeaderBtn').addEventListener('click', () => addRow(headersTable, ['Header Name', 'Value']));
     document.getElementById('addTokenBtn').addEventListener('click', () => addRow(tokensTable, ['Token Name', 'Value']));
+    document.getElementById('addParamBtn').addEventListener('click', () => addRow(paramsTable, ['Parameter Name', 'Value']));
 
     // --- Navigation (SPA) ---
     document.querySelectorAll('.nav-tab').forEach(tab => {
@@ -309,9 +438,18 @@ document.addEventListener('DOMContentLoaded', () => {
                 k: tr.querySelector('.key-input')?.value,
                 v: tr.querySelector('.value-input')?.value
             })),
+            params: Array.from(paramsTable.querySelectorAll('tr')).map(tr => ({
+                k: tr.querySelector('.key-input')?.value,
+                v: tr.querySelector('.value-input')?.value
+            })),
             enableAuth: document.getElementById('enableAuth').checked,
             clientId: document.getElementById('clientId').value,
-            clientSecret: document.getElementById('clientSecret').value
+            clientSecret: document.getElementById('clientSecret').value,
+            caCertPath: document.getElementById('caCertPath').value,
+            pfxPath: document.getElementById('pfxPath').value,
+            clientCertPath: document.getElementById('clientCertPath').value,
+            clientKeyPath: document.getElementById('clientKeyPath').value,
+            passphrase: document.getElementById('passphrase').value
         };
         localStorage.setItem(CACHE_KEY, JSON.stringify(state));
     };
@@ -349,17 +487,30 @@ document.addEventListener('DOMContentLoaded', () => {
             tokensTable.innerHTML = '';
             s.tokens?.forEach(t => addRow(tokensTable, ['Token Name', 'Value'], [t.k, t.v]));
 
+            paramsTable.innerHTML = '';
+            s.params?.forEach(p => addRow(paramsTable, ['Parameter Name', 'Value'], [p.k, p.v]));
+
+            if (s.caCertPath) document.getElementById('caCertPath').value = s.caCertPath;
+            if (s.pfxPath) document.getElementById('pfxPath').value = s.pfxPath;
+            if (s.clientCertPath) document.getElementById('clientCertPath').value = s.clientCertPath;
+            if (s.clientKeyPath) document.getElementById('clientKeyPath').value = s.clientKeyPath;
+            if (s.passphrase) document.getElementById('passphrase').value = s.passphrase;
+
             return true;
         } catch(e) { return false; }
     };
 
     // Attach listeners for auto-save
-    ['method','operationName','url1','url2','payload','ignoredFields','maxIterations','iterationController', 'enableAuth', 'clientId', 'clientSecret'].forEach(id => {
-        document.getElementById(id).addEventListener('input', saveState);
-        document.getElementById(id).addEventListener('change', saveState);
+    ['method','operationName','url1','url2','payload','ignoredFields','maxIterations','iterationController', 'enableAuth', 'clientId', 'clientSecret', 'caCertPath', 'pfxPath', 'clientCertPath', 'clientKeyPath', 'passphrase'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', saveState);
+            el.addEventListener('change', saveState);
+        }
     });
     headersTable.addEventListener('input', saveState);
     tokensTable.addEventListener('input', saveState);
+    paramsTable.addEventListener('input', saveState);
 
     // --- Form Population & Defaults ---
     const resetFormToStandard = (type) => {
@@ -369,6 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('payload').value = '';
         headersTable.innerHTML = '';
         tokensTable.innerHTML = ''; 
+        paramsTable.innerHTML = '';
         
         // Add ONLY the default Content-Type as per the standard (REST/SOAP)
         if (type !== 'JMS') {
@@ -482,11 +634,23 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        const qp = {};
+        paramsTable.querySelectorAll('tr').forEach(tr => {
+            const k = tr.querySelector('.key-input').value.trim();
+            const v = tr.querySelector('.value-input').value.trim();
+            if (k) qp[k] = v;
+        });
+
         let auth = null;
         if (document.getElementById('enableAuth').checked) {
             auth = {
                 clientId: document.getElementById('clientId').value.trim(),
-                clientSecret: document.getElementById('clientSecret').value.trim()
+                clientSecret: document.getElementById('clientSecret').value.trim(),
+                caCertPath: document.getElementById('caCertPath').value.trim(),
+                pfxPath: document.getElementById('pfxPath').value.trim(),
+                clientCertPath: document.getElementById('clientCertPath').value.trim(),
+                clientKeyPath: document.getElementById('clientKeyPath').value.trim(),
+                passphrase: document.getElementById('passphrase').value.trim()
             };
         }
 
@@ -494,6 +658,7 @@ document.addEventListener('DOMContentLoaded', () => {
             name: document.getElementById('operationName').value || 'operation',
             methods: [document.getElementById('method').value],
             headers: h,
+            queryParams: qp,
             payloadTemplatePath: document.getElementById('payload').value || null
         };
 
@@ -646,7 +811,16 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (!response.ok) throw new Error(`Baseline op failed: ${response.status}`);
         const data = await response.json();
-        logActivity(`BASELINE COMPLETED: ${config.baseline.operation} success for ${config.baseline.serviceName}`, 'success');
+        
+        const errors = data.filter(r => r.status === 'ERROR');
+        if (errors.length > 0) {
+             logActivity(`BASELINE COMPLETED with ERRORS: ${errors.length} error(s) detected.`, 'error');
+             errors.forEach(err => logActivity(`   > ERROR [${err.operationName}]: ${err.errorMessage}`, 'error'));
+             showToast('Baseline operation completed with errors', 'warning');
+        } else {
+             logActivity(`BASELINE COMPLETED: ${config.baseline.operation} success for ${config.baseline.serviceName}`, 'success');
+             showToast('Baseline operation completed successfully', 'success');
+        }
         renderResults(data);
     };
 
@@ -1218,6 +1392,36 @@ document.addEventListener('DOMContentLoaded', () => {
             if (details.metadata && details.metadata.operation) document.getElementById('operationName').value = details.metadata.operation;
             if (details.payload) document.getElementById('payload').value = details.payload;
             
+            // Populate Security Fields from Baseline Metadata
+            const meta = details.metadata;
+            if (meta && meta.configUsed && meta.configUsed.authentication) {
+                const auth = meta.configUsed.authentication;
+                const enableAuth = document.getElementById('enableAuth');
+                const isAuthEnabled = !!(auth.clientId || auth.pfxPath || auth.clientCertPath || auth.caCertPath);
+                
+                if (enableAuth) {
+                    enableAuth.checked = isAuthEnabled;
+                    // Manually trigger change to update disabled states if not in Baseline mode 
+                    // (though handleBaselineUI will likely handle it anyway)
+                    enableAuth.dispatchEvent(new Event('change'));
+                }
+
+                if (auth.clientId) document.getElementById('clientId').value = auth.clientId;
+                if (auth.clientSecret) document.getElementById('clientSecret').value = auth.clientSecret;
+                if (auth.pfxPath) document.getElementById('pfxPath').value = auth.pfxPath;
+                if (auth.clientCertPath) document.getElementById('clientCertPath').value = auth.clientCertPath;
+                if (auth.clientKeyPath) document.getElementById('clientKeyPath').value = auth.clientKeyPath;
+                if (auth.passphrase) document.getElementById('passphrase').value = auth.passphrase;
+                if (auth.caCertPath) document.getElementById('caCertPath').value = auth.caCertPath;
+            } else {
+                // Reset auth if no info in metadata
+                const enableAuth = document.getElementById('enableAuth');
+                if (enableAuth) {
+                   enableAuth.checked = false;
+                   enableAuth.dispatchEvent(new Event('change'));
+                }
+            }
+
             // DO NOT sync Test Type - preserve user's current selection
             // The baseline metadata testType is informational only
 
@@ -1423,9 +1627,30 @@ document.addEventListener('DOMContentLoaded', () => {
             if (ignoreHeaders) ignoreHeaders.disabled = false;
         }
 
+        // --- Security Field Disablement in Baseline Compare ---
+        const securityFieldIds = [
+            'enableAuth', 'clientId', 'clientSecret', 
+            'pfxPath', 'clientCertPath', 'clientKeyPath', 
+            'passphrase', 'caCertPath', 'validateCertsBtn'
+        ];
+        securityFieldIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = isCompareOp;
+        });
+
+        // Disable folder buttons in security section
+        document.querySelectorAll('#securityAccordion .btn-secondary').forEach(btn => {
+            // Check if it's an upload button (has folder emoji or is validate btn)
+            if (btn.innerText.includes('📂') || btn.id === 'validateCertsBtn') {
+                btn.disabled = isCompareOp;
+                btn.style.opacity = isCompareOp ? '0.5' : '1';
+                btn.style.cursor = isCompareOp ? 'not-allowed' : 'pointer';
+            }
+        });
+
         // Accordion Management: Hide Endpoint, Request, Headers, Tokens during Compare mode
         accordions.forEach((acc, idx) => {
-            if (idx < 4) { // First four accordions
+            if (idx < 5) { // First five accordions: Endpoint, Request, Parameters, Headers, Tokens
                 acc.style.display = isCompareOp ? 'none' : 'block';
             }
         });

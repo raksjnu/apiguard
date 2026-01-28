@@ -18,8 +18,8 @@ public class BaselineComparisonService {
         }
         String serviceName = baselineConfig.getServiceName();
         String date = BaselineStorageService.getTodayDate();
-        String runId = storageService.generateRunId(serviceName, date);
-        logger.info("Capturing baseline for service: {}, date: {}, run: {}", serviceName, date, runId);
+        String runId = storageService.generateRunId(serviceName, date, config.getTestType());
+        logger.info("Capturing baseline for service: {}, date: {}, run: {}, type: {}", serviceName, date, runId, config.getTestType());
         List<Map<String, Object>> iterations = TestDataGenerator.generate(
                 config.getTokens(),
                 config.getMaxIterations(),
@@ -188,7 +188,8 @@ public class BaselineComparisonService {
         ApiCallResult apiCallResult = new ApiCallResult();
         result.setApi1(apiCallResult);
         String path = operation.getPath() != null ? operation.getPath() : "";
-        String url = constructUrl(apiConfig.getBaseUrl(), path, testType);
+        String rawUrl = constructUrl(apiConfig.getBaseUrl(), path, operation.getQueryParams(), testType);
+        String url = interpolate(rawUrl, tokens);
         
         String payload = forcedPayload;
         Map<String, String> headers = forcedHeaders;
@@ -285,6 +286,9 @@ public class BaselineComparisonService {
         configUsed.put("maxIterations", config.getMaxIterations());
         configUsed.put("iterationController", config.getIterationController());
         configUsed.put("testType", config.getTestType());
+        if (apiConfig.getAuthentication() != null) {
+            configUsed.put("authentication", apiConfig.getAuthentication());
+        }
         return new RunMetadata(
                 runId,
                 serviceName,
@@ -305,21 +309,61 @@ public class BaselineComparisonService {
         }
         return result;
     }
-    private String constructUrl(String baseUrl, String path, String apiType) {
+    private String constructUrl(String baseUrl, String path, Map<String, String> queryParams, String apiType) {
+        if (baseUrl == null) baseUrl = "";
+        String url = baseUrl;
+
+        // For SOAP, we typically just return the base URL, but if the user explicitly added query params 
+        // in the UI, we should probably append them. However, standard SOAP usually doesn't use them.
+        // We'll follow the same logic as ComparisonService: if it's SOAP, return baseUrl unless we decide otherwise.
+        // But ComparisonService returns baseUrl immediately for SOAP. Let's stick to that for consistency, 
+        // OR allow query params if they exist. The user asked about SOAP. 
+        // Given SOAP endpoints are usually just the WSDL/Operation URL, query params are rare.
+        // Let's stick to the current logic for SOAP but strictly for path appending.
+        
         if ("SOAP".equalsIgnoreCase(apiType)) {
-            return baseUrl;
+             // For SOAP, usually just BaseURL. If we want to support params, we'd append them below.
+             // But existing ComparisonService returns logic: if (SOAP) return baseUrl;
+             // Let's modify to allow query params even for SOAP if present, or just return.
+             // Safest is to return baseUrl to match existing behavior, but since user asked, 
+             // let's assume if they added params, they want them.
+             // However, ComparisonService lines 207-208: if (SOAP) return baseUrl;
+             // So I will match that for now to avoid breaking SOAP.
+             url = baseUrl; 
+        } else {
+            String normalizedBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+            if (path != null && !path.trim().isEmpty()) {
+                String normalizedPath = path.startsWith("/") ? path : "/" + path;
+                if (!normalizedBase.endsWith(normalizedPath)) {
+                    url = normalizedBase + normalizedPath;
+                } else {
+                    url = normalizedBase;
+                }
+            } else {
+                url = normalizedBase;
+            }
         }
-        if (baseUrl == null)
-            return "";
-        String normalizedBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-        if (path == null || path.trim().isEmpty()) {
-            return normalizedBase;
+
+        if (queryParams != null && !queryParams.isEmpty()) {
+            StringBuilder sb = new StringBuilder(url);
+            boolean first = !url.contains("?");
+            for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+                sb.append(first ? "?" : "&");
+                sb.append(entry.getKey()).append("=").append(entry.getValue());
+                first = false;
+            }
+            url = sb.toString();
         }
-        String normalizedPath = path.startsWith("/") ? path : "/" + path;
-        if (normalizedBase.endsWith(normalizedPath)) {
-            return normalizedBase;
+        return url;
+    }
+
+    private String interpolate(String text, Map<String, Object> tokens) {
+        if (text == null || tokens == null) return text;
+        String result = text;
+        for (Map.Entry<String, Object> entry : tokens.entrySet()) {
+            result = result.replace("{{" + entry.getKey() + "}}", String.valueOf(entry.getValue()));
         }
-        return normalizedBase + normalizedPath;
+        return result;
     }
 
     public List<ComparisonResult> getBaselineAsResults(String serviceName, String date, String runId) throws Exception {

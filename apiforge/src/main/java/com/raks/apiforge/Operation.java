@@ -7,6 +7,9 @@ public class Operation {
     private List<String> methods;
     private Map<String, String> headers;
     private String payloadTemplatePath;
+    @com.fasterxml.jackson.annotation.JsonProperty("queryParams")
+    private Map<String, String> queryParams;
+
     public String getName() {
         return name;
     }
@@ -36,5 +39,13 @@ public class Operation {
     }
     public void setPayloadTemplatePath(String payloadTemplatePath) {
         this.payloadTemplatePath = payloadTemplatePath;
+    }
+
+    public Map<String, String> getQueryParams() {
+        return queryParams;
+    }
+
+    public void setQueryParams(Map<String, String> queryParams) {
+        this.queryParams = queryParams;
     }
 }

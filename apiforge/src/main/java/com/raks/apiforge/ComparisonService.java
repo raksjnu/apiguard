@@ -138,8 +138,12 @@ public class ComparisonService {
             try {
                 String path1 = op1.getPath() != null ? op1.getPath() : "";
                 String path2 = op2.getPath() != null ? op2.getPath() : "";
-                String url1 = constructUrl(api1Config.getBaseUrl(), path1, apiType);
-                String url2 = constructUrl(api2Config.getBaseUrl(), path2, apiType);
+                
+                String rawUrl1 = constructUrl(api1Config.getBaseUrl(), path1, op1.getQueryParams(), apiType);
+                String rawUrl2 = constructUrl(api2Config.getBaseUrl(), path2, op2.getQueryParams(), apiType);
+                
+                String url1 = interpolate(rawUrl1, currentTokens);
+                String url2 = interpolate(rawUrl2, currentTokens);
                 api1CallResult.setUrl(url1);
                 api1CallResult.setMethod(method1);
                 api1CallResult.setRequestHeaders(op1.getHeaders());
@@ -200,21 +204,44 @@ public class ComparisonService {
             allResults.add(result);
         }
     }
-    private String constructUrl(String baseUrl, String path, String apiType) {
-        if ("SOAP".equalsIgnoreCase(apiType)) {
-            return baseUrl;
+    private String constructUrl(String baseUrl, String path, Map<String, String> queryParams, String apiType) {
+        if (baseUrl == null) baseUrl = "";
+        String url = baseUrl;
+
+        if (!"SOAP".equalsIgnoreCase(apiType)) {
+            String normalizedBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+            if (path != null && !path.trim().isEmpty()) {
+                String normalizedPath = path.startsWith("/") ? path : "/" + path;
+                if (!normalizedBase.endsWith(normalizedPath)) {
+                    url = normalizedBase + normalizedPath;
+                } else {
+                    url = normalizedBase;
+                }
+            } else {
+                url = normalizedBase;
+            }
         }
-        if (baseUrl == null)
-            return "";
-        String normalizedBase = baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-        if (path == null || path.trim().isEmpty()) {
-            return normalizedBase;
+
+        if (queryParams != null && !queryParams.isEmpty()) {
+            StringBuilder sb = new StringBuilder(url);
+            boolean first = !url.contains("?");
+            for (Map.Entry<String, String> entry : queryParams.entrySet()) {
+                sb.append(first ? "?" : "&");
+                sb.append(entry.getKey()).append("=").append(entry.getValue());
+                first = false;
+            }
+            url = sb.toString();
         }
-        String normalizedPath = path.startsWith("/") ? path : "/" + path;
-        if (normalizedBase.endsWith(normalizedPath)) {
-            return normalizedBase;
+        return url;
+    }
+
+    private String interpolate(String text, Map<String, Object> tokens) {
+        if (text == null || tokens == null) return text;
+        String result = text;
+        for (Map.Entry<String, Object> entry : tokens.entrySet()) {
+            result = result.replace("{{" + entry.getKey() + "}}", String.valueOf(entry.getValue()));
         }
-        return normalizedBase + normalizedPath;
+        return result;
     }
 
     public static java.util.Set<String> identifyUsedTokens(Config config) {

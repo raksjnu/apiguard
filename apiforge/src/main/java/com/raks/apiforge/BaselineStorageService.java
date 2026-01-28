@@ -124,8 +124,8 @@ public class BaselineStorageService {
         }
         return "";
     }
-    public String generateRunId(String serviceName, String date) {
-        String protocol = detectProtocol(serviceName, date, null);
+    public String generateRunId(String serviceName, String date, String testType) {
+        String protocol = getProtocolFromType(testType);
         Path dateDir = getDateDirectory(protocol, serviceName, date);
         if (!Files.exists(dateDir)) {
             return "run-001";
