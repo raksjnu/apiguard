@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.xmlunit.builder.DiffBuilder;
 import org.xmlunit.diff.Diff;
 
-import java.io.IOException;
 import java.util.*;
 
 public class ComparisonEngine {
@@ -58,6 +57,16 @@ public class ComparisonEngine {
             return;
         }
 
+        String response1 = api1Result.getResponsePayload();
+        String response2 = api2Result.getResponsePayload();
+
+        // --- Auth Failure / Error Detection in Payload ---
+        if (isErrorPayload(response1) || isErrorPayload(response2)) {
+            result.setStatus(ComparisonResult.Status.ERROR);
+            result.setErrorMessage("Invocation failed: Error detected in response payload (likely Auth Failure).");
+            return;
+        }
+
         List<String> differences = new ArrayList<>();
 
 
@@ -66,9 +75,6 @@ public class ComparisonEngine {
         }
 
 
-        String response1 = api1Result.getResponsePayload();
-        String response2 = api2Result.getResponsePayload();
-        
         if (response1 == null && response2 == null) {
 
             if (differences.isEmpty()) {
@@ -155,7 +161,7 @@ public class ComparisonEngine {
         for (String key : allKeys) {
             if (isIgnoredHeader(key)) continue;
 
-            if (ignoredFields != null && ignoredFields.contains(key)) continue;
+            if (isIgnoredField(key, ignoredFields)) continue;
             
             String v1 = h1.get(key) != null ? String.valueOf(h1.get(key)) : null;
             String v2 = h2.get(key) != null ? String.valueOf(h2.get(key)) : null;
@@ -181,7 +187,7 @@ public class ComparisonEngine {
             Iterator<String> fieldNames = obj.fieldNames();
             while (fieldNames.hasNext()) {
                 String name = fieldNames.next();
-                if (ignoredFields.contains(name)) {
+                if (isIgnoredField(name, ignoredFields)) {
                     toRemove.add(name);
                 } else {
                     removeIgnoredFields(obj.get(name), ignoredFields);
@@ -194,6 +200,17 @@ public class ComparisonEngine {
                 removeIgnoredFields(child, ignoredFields);
             }
         }
+    }
+
+    private static boolean isIgnoredField(String key, List<String> ignoredFields) {
+        if (ignoredFields == null || ignoredFields.isEmpty()) return false;
+        String trimmedKey = key.trim();
+        for (String ignored : ignoredFields) {
+            if (ignored != null && ignored.trim().equalsIgnoreCase(trimmedKey)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean safeStringEquals(String s1, String s2) {
@@ -241,8 +258,20 @@ public class ComparisonEngine {
             }
         } else if (!node1.equals(node2)) {
             differences.add(
-                    "Values differ at " + path + ". API 1: " + node1.textValue() + ", API 2: " + node2.textValue());
+                    "Values differ at " + path + ". API 1: " + node1.asText() + ", API 2: " + node2.asText());
         }
         return differences;
+    }
+
+    private static boolean isErrorPayload(String payload) {
+        if (payload == null || payload.trim().isEmpty()) return false;
+        String p = payload.toLowerCase();
+        // Common error patterns in JSON/XML or text
+        return p.contains("\"error\":") || 
+               p.contains("\"errormessage\":") || 
+               p.contains("<error>") || 
+               p.contains("authentication failed") || 
+               p.contains("invalid_client") ||
+               p.contains("access denied");
     }
 }

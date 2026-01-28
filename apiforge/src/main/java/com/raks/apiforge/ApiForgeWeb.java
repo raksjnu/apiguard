@@ -321,124 +321,30 @@ public class ApiForgeWeb {
         
         post("/api/certificates/upload", (req, res) -> {
             res.type("application/json");
-            String fileName = req.queryParams("fileName");
-            String queryWorkDir = req.queryParams("workDir");
-            String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
-            
-            java.io.File certsDir = new java.io.File(storageDir, "certs");
-            if (!certsDir.exists()) certsDir.mkdirs();
-            
-            java.io.File targetFile = new java.io.File(certsDir, fileName);
-            logger.info("Uploading certificate to: {}", targetFile.getAbsolutePath());
-            
-            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(targetFile)) {
-                fos.write(req.bodyAsBytes());
+            try {
+                String fileName = req.queryParams("fileName");
+                String queryWorkDir = req.queryParams("workDir");
+                String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
+                
+                CertificateService certService = new CertificateService();
+                Map<String, Object> result = certService.uploadCertificate(storageDir, fileName, req.bodyAsBytes());
+                return mapper.writeValueAsString(result);
+            } catch (Exception e) {
+                logger.error("Certificate upload failed", e);
+                res.status(500);
+                return mapper.writeValueAsString(Collections.singletonMap("error", e.getMessage()));
             }
-            
-            return "{\"success\": true, \"path\": \"" + targetFile.getAbsolutePath().replace("\\", "/") + "\"}";
         });
 
         post("/api/certificates/validate", (req, res) -> {
             res.type("application/json");
             try {
                 Map<String, Object> body = mapper.readValue(req.body(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
-                String path = (String) body.get("path");
-                String password = (String) body.get("passphrase");
-                String type = (String) body.get("type"); // JKS, PFX, PEM
-                
-                Map<String, Object> result = new HashMap<>();
-                if (path == null || path.isEmpty()) {
-                    result.put("valid", false);
-                    result.put("error", "No path provided");
-                    return mapper.writeValueAsString(result);
-                }
-                
-                java.io.File file = new java.io.File(path);
-                if (!file.exists()) {
-                    result.put("valid", false);
-                    result.put("error", "File not found at: " + path);
-                    return mapper.writeValueAsString(result);
-                }
-
-                if ("JKS".equalsIgnoreCase(type) || "PFX".equalsIgnoreCase(type)) {
-                    try {
-                        KeyStore ks = KeyStore.getInstance("JKS".equalsIgnoreCase(type) ? "JKS" : "PKCS12");
-                        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
-                            ks.load(fis, password != null ? password.toCharArray() : null);
-                        }
-                        result.put("valid", true);
-                        List<String> aliases = new ArrayList<>();
-                        java.util.Enumeration<String> enumeration = ks.aliases();
-                        while (enumeration.hasMoreElements()) {
-                            String alias = enumeration.nextElement();
-                            aliases.add(alias + (ks.isKeyEntry(alias) ? " (Key)" : " (Cert)"));
-                        }
-                        result.put("aliases", aliases);
-                        result.put("message", "Keystore loaded successfully with " + aliases.size() + " entries.");
-                    } catch (Exception e) {
-                        result.put("valid", false);
-                        result.put("error", "Failed to load keystore: " + e.getMessage());
-                    }
-                } else if ("PEM".equalsIgnoreCase(type)) {
-                    try {
-                        java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
-                        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
-                            java.security.cert.X509Certificate cert = (java.security.cert.X509Certificate) cf.generateCertificate(fis);
-                            result.put("valid", true);
-                            result.put("subject", cert.getSubjectX500Principal().getName());
-                            result.put("issuer", cert.getIssuerX500Principal().getName());
-                            result.put("expiry", cert.getNotAfter().toString());
-                            result.put("isExpired", cert.getNotAfter().before(new java.util.Date()));
-                            result.put("message", "Valid X.509 Certificate found.");
-                        }
-                    } catch (Exception e) {
-                        result.put("valid", false);
-                        result.put("error", "Invalid Certificate format: " + e.getMessage());
-                    }
-                } else if ("PEM_PAIR".equalsIgnoreCase(type)) {
-                    try {
-                        String keyPath = (String) body.get("keyPath");
-                        if (keyPath == null || keyPath.isEmpty()) {
-                            result.put("valid", false);
-                            result.put("error", "Private Key path is missing for PEM pair.");
-                            return mapper.writeValueAsString(result);
-                        }
-                        java.io.File keyFile = new java.io.File(keyPath);
-                        if (!keyFile.exists()) {
-                            result.put("valid", false);
-                            result.put("error", "Private Key file not found at: " + keyPath);
-                            return mapper.writeValueAsString(result);
-                        }
-                        
-                        // Validate Cert
-                        java.security.cert.CertificateFactory cf = java.security.cert.CertificateFactory.getInstance("X.509");
-                        java.security.cert.X509Certificate cert;
-                        try (java.io.FileInputStream fis = new java.io.FileInputStream(file)) {
-                           cert = (java.security.cert.X509Certificate) cf.generateCertificate(fis);
-                        }
-                        
-                        // Basic validation that key is readable
-                        String keyContent = java.nio.file.Files.readString(keyFile.toPath());
-                        if (!keyContent.contains("PRIVATE KEY")) {
-                             throw new Exception("Key file does not appear to contain a valid PEM Private Key.");
-                        }
-
-                        result.put("valid", true);
-                        result.put("subject", cert.getSubjectX500Principal().getName());
-                        result.put("expiry", cert.getNotAfter().toString());
-                        result.put("isExpired", cert.getNotAfter().before(new java.util.Date()));
-                        result.put("message", "Valid PEM Certificate and Private Key found.");
-                    } catch (Exception e) {
-                        result.put("valid", false);
-                        result.put("error", "PEM Pair validation failed: " + e.getMessage());
-                    }
-                } else {
-                    result.put("valid", true);
-                    result.put("message", "File exists.");
-                }
-                
+                CertificateService certService = new CertificateService();
+                Map<String, Object> result = certService.validateCertificate(body);
                 return mapper.writeValueAsString(result);
             } catch (Exception e) {
+                logger.error("Certificate validation failed", e);
                 return "{\"valid\": false, \"error\": \"" + e.getMessage() + "\"}";
             }
         });

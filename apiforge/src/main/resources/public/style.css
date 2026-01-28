@@ -830,3 +830,78 @@ button, .nav-tab, .mode-tab, .toggle-btn, .sidebar-toggle, .show-more-btn, .help
     padding: 12px 15px;
     border-radius: 12px 12px 0 0;
 }
+
+/* Result Subsections (Collapsible) */
+.result-subsection {
+    margin-bottom: 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    overflow: hidden;
+    background: white;
+}
+
+.result-subsection-header {
+    background: #f8fafc;
+    padding: 8px 12px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    user-select: none;
+    transition: background 0.2s;
+}
+
+.result-subsection-header:hover {
+    background: #edf2f7;
+}
+
+.result-subsection-header .diff-indicator {
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.65rem;
+    margin-left: 10px;
+}
+
+.result-subsection-header .icon {
+    font-size: 0.7rem;
+    transition: transform 0.2s;
+}
+
+.result-subsection.open .result-subsection-header .icon {
+    transform: rotate(180deg);
+}
+
+.result-subsection-content {
+    display: none;
+    padding: 10px;
+    border-top: 1px solid #edf2f7;
+}
+
+.result-subsection.open .result-subsection-content {
+    display: block;
+}
+
+.diff-badge {
+    background: #fff5f5;
+    color: #c53030;
+    border: 1px solid #feb2b2;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 800;
+}
+
+.match-badge {
+    background: #f0fff4;
+    color: #2f855a;
+    border: 1px solid #c6f6d5;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.65rem;
+    font-weight: 800;
+}

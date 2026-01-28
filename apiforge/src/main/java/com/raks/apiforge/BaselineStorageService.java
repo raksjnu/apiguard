@@ -202,7 +202,7 @@ public class BaselineStorageService {
         for (String p : protocolsToCheck) {
             File pDir = new File(baseDir, p);
             if (pDir.exists() && pDir.isDirectory()) {
-                File[] pFiles = pDir.listFiles(File::isDirectory);
+                File[] pFiles = pDir.listFiles(f -> f.isDirectory() && !f.getName().equalsIgnoreCase("certs"));
                 if (pFiles != null) {
                     for (File f : pFiles) services.add(f.getName());
                 }

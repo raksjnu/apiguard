@@ -26,6 +26,7 @@ public class ComparisonService {
         java.util.Set<String> usedTokens = identifyUsedTokens(config);
         
         int iterationCount = 0;
+        int totalIterations = iterations.size();
         for (Map<String, Object> currentTokens : iterations) {
             iterationCount++;
             boolean isOriginal = (iterationCount == 1);
@@ -52,9 +53,9 @@ public class ComparisonService {
                     isOriginal ? " (Original Input Payload)" : "");
             try {
                 if ("REST".equalsIgnoreCase(config.getTestType())) {
-                    processApis(config.getRestApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields(), config.isIgnoreHeaders());
+                    processApis(config.getRestApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields(), config.isIgnoreHeaders(), iterationCount, totalIterations);
                 } else if ("SOAP".equalsIgnoreCase(config.getTestType())) {
-                    processApis(config.getSoapApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields(), config.isIgnoreHeaders());
+                    processApis(config.getSoapApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields(), config.isIgnoreHeaders(), iterationCount, totalIterations);
                 } else {
                     logger.error("Invalid testType specified in config: {}", config.getTestType());
                 }
@@ -96,7 +97,7 @@ public class ComparisonService {
         }
     }
     private void processApis(Map<String, ApiConfig> apis, Map<String, Object> currentTokens,
-            List<ComparisonResult> allResults, String apiType, boolean isOriginal, List<String> ignoredFields, boolean ignoreHeaders) {
+            List<ComparisonResult> allResults, String apiType, boolean isOriginal, List<String> ignoredFields, boolean ignoreHeaders, int iterationNumber, int totalIterations) {
         if (apis == null || apis.isEmpty()) {
             logger.warn("No {} APIs configured.", apiType);
             return;
@@ -135,6 +136,12 @@ public class ComparisonService {
             ApiCallResult api2CallResult = new ApiCallResult();
             result.setApi1(api1CallResult);
             result.setApi2(api2CallResult);
+            // --- Initialize Metadata and Results ---
+            Map<String, Object> meta1 = new java.util.LinkedHashMap<>();
+            Map<String, Object> meta2 = new java.util.LinkedHashMap<>();
+            api1CallResult.setMetadata(meta1);
+            api2CallResult.setMetadata(meta2);
+
             try {
                 String path1 = op1.getPath() != null ? op1.getPath() : "";
                 String path2 = op2.getPath() != null ? op2.getPath() : "";
@@ -178,36 +185,48 @@ public class ComparisonService {
                 api2CallResult.setRequestHeaders(op2.getHeaders());
                 api2CallResult.setRequestPayload(payload2);
 
-                // --- Enrich Metadata BEFORE calls ---
-                Map<String, Object> meta1 = new java.util.LinkedHashMap<>();
+                // --- Enrich Metadata ---
                 if (api1Config.getAuthentication() != null) {
                     Authentication auth = api1Config.getAuthentication();
                     Map<String, String> authInfo = new java.util.LinkedHashMap<>();
                     if (auth.getClientId() != null) authInfo.put("clientId", auth.getClientId());
                     if (auth.getPfxPath() != null) authInfo.put("pfxPath", auth.getPfxPath());
+                    if (auth.getClientCertPath() != null) authInfo.put("clientCertPath", auth.getClientCertPath());
+                    if (auth.getClientKeyPath() != null) authInfo.put("clientKeyPath", auth.getClientKeyPath());
+                    if (auth.getCaCertPath() != null) authInfo.put("caCertPath", auth.getCaCertPath());
                     if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) authInfo.put("passphrase", "********");
                     if (!authInfo.isEmpty()) meta1.put("authentication", authInfo);
                 }
-                if (op1.getQueryParams() != null && !op1.getQueryParams().isEmpty()) {
-                    meta1.put("queryParams", op1.getQueryParams());
-                }
                 if (payload1 != null) meta1.put("requestSize", payload1.getBytes().length);
-                api1CallResult.setMetadata(meta1);
 
-                Map<String, Object> meta2 = new java.util.LinkedHashMap<>();
                 if (api2Config.getAuthentication() != null) {
                     Authentication auth = api2Config.getAuthentication();
                     Map<String, String> authInfo = new java.util.LinkedHashMap<>();
-                    if (auth.getClientId() != null) authInfo.put("clientId", auth.getClientId());
-                    if (auth.getPfxPath() != null) authInfo.put("pfxPath", auth.getPfxPath());
-                    if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) authInfo.put("passphrase", "********");
+                    if (auth.getClientId() != null && !auth.getClientId().trim().isEmpty()) authInfo.put("clientId", auth.getClientId());
+                    if (auth.getPfxPath() != null && !auth.getPfxPath().trim().isEmpty()) authInfo.put("pfxPath", auth.getPfxPath());
+                    if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authInfo.put("clientCertPath", auth.getClientCertPath());
+                    if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authInfo.put("clientKeyPath", auth.getClientKeyPath());
+                    if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authInfo.put("caCertPath", auth.getCaCertPath());
+                    if (auth.getPassphrase() != null && !auth.getPassphrase().trim().isEmpty()) authInfo.put("passphrase", "********");
                     if (!authInfo.isEmpty()) meta2.put("authentication", authInfo);
                 }
                 if (op2.getQueryParams() != null && !op2.getQueryParams().isEmpty()) {
                     meta2.put("queryParams", op2.getQueryParams());
                 }
                 if (payload2 != null) meta2.put("requestSize", payload2.getBytes().length);
-                api2CallResult.setMetadata(meta2);
+                
+                // --- Add Contextual Metadata ---
+                meta1.put("operation", op1.getName());
+                meta1.put("method", method1);
+                meta1.put("testType", apiType);
+                meta1.put("iterationNumber", iterationNumber);
+                meta1.put("totalIterations", totalIterations);
+
+                meta2.put("operation", op2.getName());
+                meta2.put("method", method2);
+                meta2.put("testType", apiType);
+                meta2.put("iterationNumber", iterationNumber);
+                meta2.put("totalIterations", totalIterations);
 
                 long start1 = System.currentTimeMillis();
                 com.raks.apiforge.http.HttpResponse httpResponse1 = client1.sendRequest(url1, method1, op1.getHeaders(), payload1);
@@ -217,6 +236,7 @@ public class ComparisonService {
                 api1CallResult.setResponseHeaders(httpResponse1.getHeaders());
                 api1CallResult.setRequestHeaders(httpResponse1.getRequestHeaders());
                 if (httpResponse1.getBody() != null) meta1.put("responseSize", httpResponse1.getBody().getBytes().length);
+                meta1.put("statusCode", String.valueOf(httpResponse1.getStatusCode()));
                 
                 long start2 = System.currentTimeMillis();
                 com.raks.apiforge.http.HttpResponse httpResponse2 = client2.sendRequest(url2, method2, op2.getHeaders(), payload2);
@@ -226,6 +246,7 @@ public class ComparisonService {
                 api2CallResult.setResponseHeaders(httpResponse2.getHeaders());
                 api2CallResult.setRequestHeaders(httpResponse2.getRequestHeaders());
                 if (httpResponse2.getBody() != null) meta2.put("responseSize", httpResponse2.getBody().getBytes().length);
+                meta2.put("statusCode", String.valueOf(httpResponse2.getStatusCode()));
                 
                 logger.info("Comparison - API1 status: {}, API2 status: {}", 
                     httpResponse1.getStatusCode(), httpResponse2.getStatusCode());
@@ -234,8 +255,18 @@ public class ComparisonService {
                 
             } catch (Exception e) {
                 logger.error("Error during operation '{}' comparison: {}", op1.getName(), e.getMessage());
-                result.setErrorMessage("Operation failed: " + e.getMessage());
+                result.setErrorMessage("Comparison failed: " + e.getMessage());
                 result.setStatus(ComparisonResult.Status.ERROR);
+                
+                // Ensure some metadata exists even on error
+                if (meta1.isEmpty()) {
+                    meta1.put("operation", op1.getName());
+                    meta1.put("method", method1);
+                }
+                if (meta2.isEmpty()) {
+                    meta2.put("operation", op2.getName());
+                    meta2.put("method", method2);
+                }
             }
             allResults.add(result);
         }

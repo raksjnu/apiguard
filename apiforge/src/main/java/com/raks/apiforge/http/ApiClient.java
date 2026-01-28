@@ -102,7 +102,7 @@ public class ApiClient {
         if (accessToken != null) {
             requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         }
-        else if (authentication != null && authentication.getClientId() != null) {
+        else if (authentication != null && authentication.getClientId() != null && !authentication.getClientId().trim().isEmpty()) {
             String clientSecret = authentication.getClientSecret() != null ? authentication.getClientSecret() : "";
             String auth = authentication.getClientId() + ":" + clientSecret;
             byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
@@ -220,19 +220,97 @@ public class ApiClient {
 
     private PrivateKey loadPrivateKey(File file) throws Exception {
         String content = Files.readString(file.toPath(), StandardCharsets.UTF_8);
-        String b64 = content.replace("-----BEGIN PRIVATE KEY-----", "")
-                            .replace("-----END PRIVATE KEY-----", "")
-                            .replace("-----BEGIN RSA PRIVATE KEY-----", "")
-                            .replace("-----END RSA PRIVATE KEY-----", "")
-                            .replaceAll("\\s+", "");
+        
+        boolean isPkcs1 = content.contains("BEGIN RSA PRIVATE KEY");
+        boolean isEncrypted = content.contains("ENCRYPTED");
+        
+        if (isEncrypted) {
+            throw new IllegalArgumentException("Encrypted PEM private keys are not supported directly. Please convert to PFX/JKS or use an unencrypted PKCS#8 PEM file.");
+        }
+
+        String[] lines = content.split("\\R");
+        StringBuilder sb = new StringBuilder();
+        boolean inKey = false;
+        for (String line : lines) {
+            String trimmed = line.trim();
+            if (trimmed.startsWith("-----BEGIN")) {
+                inKey = true;
+                continue;
+            }
+            if (trimmed.startsWith("-----END")) {
+                inKey = false;
+                break;
+            }
+            if (inKey) {
+                // Skip headers like Proc-Type: 4,ENCRYPTED or DEK-Info: ...
+                if (trimmed.contains(":")) {
+                    continue;
+                }
+                sb.append(trimmed);
+            }
+        }
+        
+        String b64 = sb.toString().replaceAll("\\s+", "");
         byte[] decoded = Base64.getDecoder().decode(b64);
+        
+        if (isPkcs1) {
+            logger.info("Detected PKCS#1 RSA key, wrapping to PKCS#8...");
+            decoded = wrapPkcs1ToPkcs8(decoded);
+        }
+        
         PKCS8EncodedKeySpec spec = new PKCS8EncodedKeySpec(decoded);
-        KeyFactory kf = KeyFactory.getInstance("RSA");
         try {
-            return kf.generatePrivate(spec);
+            return KeyFactory.getInstance("RSA").generatePrivate(spec);
         } catch (Exception e) {
-            // Try EC if RSA fails
-            return KeyFactory.getInstance("EC").generatePrivate(spec);
+            try {
+                return KeyFactory.getInstance("EC").generatePrivate(spec);
+            } catch (Exception e2) {
+                throw new Exception("Failed to load private key as RSA or EC: " + e.getMessage(), e);
+            }
+        }
+    }
+
+    private byte[] wrapPkcs1ToPkcs8(byte[] pkcs1) throws Exception {
+        // PKCS#8 wrapper for RSA: Sequence { Version(0), AlgID(rsaEncryption, null), PrivateKey(OctetString(PKCS#1)) }
+        java.io.ByteArrayOutputStream baos = new java.io.ByteArrayOutputStream();
+        
+        // Version 02 01 00
+        byte[] version = {0x02, 0x01, 0x00};
+        // AlgID 30 0d 06 09 2a 86 48 86 f7 0d 01 01 01 05 00
+        byte[] algId = {0x30, 0x0d, 0x06, 0x09, 0x2a, (byte)0x86, 0x48, (byte)0x86, (byte)0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00};
+        
+        // Inner Octet String
+        java.io.ByteArrayOutputStream inner = new java.io.ByteArrayOutputStream();
+        inner.write(0x04);
+        writeDerLength(inner, pkcs1.length);
+        inner.write(pkcs1);
+        byte[] innerBytes = inner.toByteArray();
+        
+        // Outer Sequence
+        baos.write(0x30);
+        writeDerLength(baos, version.length + algId.length + innerBytes.length);
+        baos.write(version);
+        baos.write(algId);
+        baos.write(innerBytes);
+        
+        return baos.toByteArray();
+    }
+
+    private void writeDerLength(java.io.OutputStream out, int length) throws java.io.IOException {
+        if (length < 128) {
+            out.write(length);
+        } else if (length < 256) {
+            out.write(0x81);
+            out.write(length);
+        } else if (length < 65536) {
+            out.write(0x82);
+            out.write((length >> 8) & 0xff);
+            out.write(length & 0xff);
+        } else {
+            out.write(0x83);
+            out.write((length >> 16) & 0xff);
+            out.write((length >> 8) & 0xff);
+            out.write(length & 0xff);
         }
     }
 
