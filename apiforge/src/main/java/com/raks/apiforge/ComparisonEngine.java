@@ -67,6 +67,8 @@ public class ComparisonEngine {
             compareHeaders(result.getApi1().getResponseHeaders(), result.getApi2().getResponseHeaders(), differences, ignoredFields);
         }
 
+        // --- Metadata Comparison ---
+        compareMetadata(api1Result.getMetadata(), api2Result.getMetadata(), differences, ignoredFields);
 
         if (response1 == null && response2 == null) {
 
@@ -254,5 +256,26 @@ public class ComparisonEngine {
                     "Values differ at " + path + ". API 1: " + node1.asText() + ", API 2: " + node2.asText());
         }
         return differences;
+    }
+
+    private static void compareMetadata(Map<String, Object> m1, Map<String, Object> m2, List<String> diffs, List<String> ignoredFields) {
+        if (m1 == null || m2 == null) return;
+        
+        Set<String> allKeys = new HashSet<>(m1.keySet());
+        allKeys.addAll(m2.keySet());
+        
+        for (String key : allKeys) {
+            if (isIgnoredField(key, ignoredFields)) continue;
+            
+            // Skip contextual fields that are expected to differ
+            if ("iterationNumber".equals(key) || "totalIterations".equals(key) || "timestamp".equals(key) || "testType".equals(key)) continue;
+
+            Object v1 = m1.get(key);
+            Object v2 = m2.get(key);
+            
+            if (!Objects.deepEquals(v1, v2)) {
+                diffs.add("Metadata mismatch [" + key + "]: API1='" + v1 + "' vs API2='" + v2 + "'");
+            }
+        }
     }
 }

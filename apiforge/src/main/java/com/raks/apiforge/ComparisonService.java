@@ -237,6 +237,7 @@ public class ComparisonService {
                 api1CallResult.setRequestHeaders(httpResponse1.getRequestHeaders());
                 if (httpResponse1.getBody() != null) meta1.put("responseSize", httpResponse1.getBody().getBytes().length);
                 meta1.put("statusCode", String.valueOf(httpResponse1.getStatusCode()));
+                meta1.put("duration", api1CallResult.getDuration());
                 
                 long start2 = System.currentTimeMillis();
                 com.raks.apiforge.http.HttpResponse httpResponse2 = client2.sendRequest(url2, method2, op2.getHeaders(), payload2);
@@ -247,6 +248,7 @@ public class ComparisonService {
                 api2CallResult.setRequestHeaders(httpResponse2.getRequestHeaders());
                 if (httpResponse2.getBody() != null) meta2.put("responseSize", httpResponse2.getBody().getBytes().length);
                 meta2.put("statusCode", String.valueOf(httpResponse2.getStatusCode()));
+                meta2.put("duration", api2CallResult.getDuration());
                 
                 logger.info("Comparison - API1 status: {}, API2 status: {}", 
                     httpResponse1.getStatusCode(), httpResponse2.getStatusCode());

@@ -1182,8 +1182,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 return path.split(/[/\\]/).pop();
             };
 
-            const renderField = (label, val1, val2, displayVal) => {
-                const isDiff = shouldDiff && val1 !== val2;
+            const renderField = (field, label, val1, val2, displayVal) => {
+                const isIgnored = document.getElementById('ignoredFields').value.split(',').map(s => s.trim().toLowerCase()).includes(field.toLowerCase());
+                const isDiff = shouldDiff && val1 !== val2 && !isIgnored;
                 const style = isDiff ? 'background:#fff5f5; border:1px solid #feb2b2; padding:1px 4px; border-radius:3px; color:#c53030; font-weight:700;' : '';
                 return `<div style="margin-top:2px;"><strong>${label}:</strong> <span style="${style}">${displayVal || val1 || 'N/A'}</span></div>`;
             };
@@ -1201,32 +1202,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (isMTLS) metaHtml += ` <span class="tech-stack-tag" title="mTLS / Certificate Authentication" style="background:#ebf8ff; color:#2b6cb0; border-color:#bee3f8;">mTLS</span>`;
                 metaHtml += `</div>`;
 
-                if (auth.clientId) metaHtml += renderField('ID', auth.clientId, otherAuth.clientId);
-                if (auth.pfxPath) metaHtml += renderField('PFX', auth.pfxPath, otherAuth.pfxPath, getFileName(auth.pfxPath));
-                if (auth.clientCertPath) metaHtml += renderField('CRT', auth.clientCertPath, otherAuth.clientCertPath, getFileName(auth.clientCertPath));
-                if (auth.clientKeyPath) metaHtml += renderField('KEY', auth.clientKeyPath, otherAuth.clientKeyPath, getFileName(auth.clientKeyPath));
-                if (auth.caCertPath) metaHtml += renderField('CA', auth.caCertPath, otherAuth.caCertPath, getFileName(auth.caCertPath));
+                if (auth.clientId) metaHtml += renderField('clientId', 'ID', auth.clientId, otherAuth.clientId);
+                if (auth.pfxPath) metaHtml += renderField('pfxPath', 'PFX', auth.pfxPath, otherAuth.pfxPath, getFileName(auth.pfxPath));
+                if (auth.clientCertPath) metaHtml += renderField('clientCertPath', 'CRT', auth.clientCertPath, otherAuth.clientCertPath, getFileName(auth.clientCertPath));
+                if (auth.clientKeyPath) metaHtml += renderField('clientKeyPath', 'KEY', auth.clientKeyPath, otherAuth.clientKeyPath, getFileName(auth.clientKeyPath));
+                if (auth.caCertPath) metaHtml += renderField('caCertPath', 'CA', auth.caCertPath, otherAuth.caCertPath, getFileName(auth.caCertPath));
                 if (auth.passphrase) metaHtml += ` <div style="margin-top:2px;"><strong>🔑 Pass:</strong> <span class="tech-stack-tag" style="margin:0;">********</span></div>`;
             } else {
                 metaHtml += `<div><strong>🔐 Auth:</strong> <span>N/A</span></div>`;
             }
 
             if (meta.operation) {
-                metaHtml += renderField('⚙️ Op', meta.operation, otherMeta?.operation);
-                metaHtml += renderField('📡 Method', meta.method, otherMeta?.method);
+                metaHtml += renderField('operation', '⚙️ Op', meta.operation, otherMeta?.operation);
+                metaHtml += renderField('method', '📡 Method', meta.method, otherMeta?.method);
             }
             if (meta.statusCode) {
                 const status = parseInt(meta.statusCode);
                 const badgeStyle = status >= 400 ? 'background:#fff5f5; border:1px solid #feb2b2; color:#c53030; font-weight:700;' : 'background:#f0fff4; border:1px solid #c6f6d5; color:#2f855a;';
-                metaHtml += renderField('🚥 Status', meta.statusCode, otherMeta?.statusCode, `<span style="${badgeStyle} padding:1px 6px; border-radius:4px;">${meta.statusCode}</span>`);
+                metaHtml += renderField('statusCode', '🚥 Status', meta.statusCode, otherMeta?.statusCode, `<span style="${badgeStyle} padding:1px 6px; border-radius:4px;">${meta.statusCode}</span>`);
             }
             if (meta.iterationNumber !== undefined) {
                 metaHtml += `<div style="margin-top:2px;"><strong>🔢 Iteration:</strong> <span>${meta.iterationNumber}${meta.totalIterations ? ' / ' + meta.totalIterations : ''}</span></div>`;
             }
             
             // Stats
-            if (meta.requestSize !== undefined) metaHtml += renderField('📤 Req Size', meta.requestSize, otherMeta?.requestSize, `${meta.requestSize} bytes`);
-            if (meta.responseSize !== undefined) metaHtml += renderField('📦 Res Size', meta.responseSize, otherMeta?.responseSize, `${meta.responseSize} bytes`);
+            if (meta.requestSize !== undefined) metaHtml += renderField('requestSize', '📤 Req Size', meta.requestSize, otherMeta?.requestSize, `${meta.requestSize} bytes`);
+            if (meta.responseSize !== undefined) metaHtml += renderField('responseSize', '📦 Res Size', meta.responseSize, otherMeta?.responseSize, `${meta.responseSize} bytes`);
 
             const isBaselineMode = document.getElementById('comparisonMode').value === 'BASELINE';
             const displayTitle = isBaselineMode && title === 'API 1' ? 'Current' : (isBaselineMode && title === 'API 2' ? 'Baseline' : title);
@@ -1237,21 +1238,29 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<div style="flex:1; background:#f8fafc; padding:10px; border-radius:8px; border:1px solid #e2e8f0; font-size:0.75rem; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
                         <div style="font-weight:700; color:#4a5568; margin-bottom:6px; border-bottom:1px solid #edf2f7; padding-bottom:4px; text-transform:uppercase; letter-spacing:0.025em;">${displayTitle} Context</div>
                         ${metaHtml}
-                        ${duration !== undefined ? `<div style="margin-top:4px; padding-top:4px; border-top:1px dashed #e2e8f0;">⏱️ Duration: <strong style="${shouldDiff && Math.abs(duration - otherDuration) > 500 ? 'color:#c53030;' : 'color:#2d3748;'}">${duration}ms</strong></div>` : ''}
+                        <div style="margin-top:4px; padding-top:4px; border-top:1px dashed #e2e8f0;">
+                            ${duration !== undefined ? renderField('duration', '⏱️ Duration', duration, otherDuration, `${duration}ms`) : ''}
+                        </div>
                     </div>`;
         };
 
         // Metadata Difference Check
         const isMetadataMatch = (m1, m2) => {
             if (!m1 || !m2) return m1 === m2;
-            // Compare key fields: Auth, Operation, Method, Status Code
+            const ignored = document.getElementById('ignoredFields').value.split(',').map(s => s.trim().toLowerCase());
+            
+            const keysToCompare = ['operation', 'method', 'statusCode', 'requestSize', 'responseSize', 'duration'];
+            
+            // Auth check
             const auth1 = JSON.stringify(m1.authentication || {});
             const auth2 = JSON.stringify(m2.authentication || {});
-            return auth1 === auth2 && 
-                   m1.operation === m2.operation && 
-                   m1.method === m2.method &&
-                   m1.statusCode === m2.statusCode;
-                   // Duration is excluded from metadata matching logic
+            if (auth1 !== auth2 && !ignored.includes('authentication')) return false;
+
+            for (const key of keysToCompare) {
+                if (ignored.includes(key.toLowerCase())) continue;
+                if (m1[key] !== m2[key]) return false;
+            }
+            return true;
         };
 
         const metadataDiff = shouldDiff && !isMetadataMatch(a1.metadata, a2.metadata);

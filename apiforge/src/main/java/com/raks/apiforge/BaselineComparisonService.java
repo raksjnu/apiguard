@@ -309,6 +309,7 @@ public class BaselineComparisonService {
             metadata.put("responseSize", httpResponse.getBody().getBytes().length);
         }
         metadata.put("statusCode", String.valueOf(httpResponse.getStatusCode()));
+        metadata.put("duration", apiCallResult.getDuration());
 
         apiCallResult.setMetadata(metadata);
         
