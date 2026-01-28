@@ -61,6 +61,37 @@ public class BaselineStorageService {
             Files.writeString(path, "");
         }
     }
+
+    public String copyReferencedFile(Path runDir, String sourcePath) {
+        if (sourcePath == null || sourcePath.isEmpty()) return null;
+        try {
+            Path src = Paths.get(sourcePath);
+            if (!Files.exists(src)) {
+                logger.warn("Source file not found for copying: {}", sourcePath);
+                return sourcePath;
+            }
+            Path certsDir = runDir.resolve("certs");
+            Files.createDirectories(certsDir);
+            Path dest = certsDir.resolve(src.getFileName());
+            Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            logger.info("Copied certificate/key to baseline: {}", dest);
+            
+            // Return relative path for portability
+            return "certs/" + src.getFileName().toString();
+        } catch (Exception e) {
+            logger.error("Failed to copy referenced file: {}", sourcePath, e);
+            return sourcePath;
+        }
+    }
+
+    public String resolveCertPath(String protocol, String serviceName, String date, String runId, String path) {
+        if (path == null || path.isEmpty()) return null;
+        if (new File(path).isAbsolute()) return path;
+        
+        // If relative, resolve against the run directory
+        Path runDir = getRunDirectory(protocol, serviceName, date, runId);
+        return runDir.resolve(path).toAbsolutePath().toString();
+    }
     private void saveSummary(Path runDir, List<BaselineIteration> iterations) throws IOException {
         Map<String, Object> summary = new HashMap<>();
         summary.put("totalIterations", iterations.size());
@@ -147,7 +178,7 @@ public class BaselineStorageService {
         return String.format("run-%03d", maxRunNum + 1);
     }
     public List<String> listServices(String protocolFilter) {
-        Set<String> services = new TreeSet<>();
+        Set<String> services = new TreeSet<>(Comparator.reverseOrder());
         File baseDir = new File(baseStorageDir);
         if (!baseDir.exists()) return Collections.emptyList();
 

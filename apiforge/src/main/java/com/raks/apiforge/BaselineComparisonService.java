@@ -2,6 +2,7 @@ package com.raks.apiforge;
 import com.raks.apiforge.http.ApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
@@ -100,6 +101,21 @@ public class BaselineComparisonService {
         }
         RunMetadata runMetadata = createRunMetadata(
                 runId, serviceName, date, apiConfig, config, baselineIterations.size());
+        
+        // --- Certificate Persistence Fix ---
+        if (runMetadata.getConfigUsed() != null && runMetadata.getConfigUsed().containsKey("authentication")) {
+            Authentication auth = objectMapper.convertValue(runMetadata.getConfigUsed().get("authentication"), Authentication.class);
+            String protocol = storageService.getProtocolFromType(config.getTestType());
+            Path runDir = storageService.getRunDirectory(protocol, serviceName, date, runId);
+            
+            auth.setPfxPath(storageService.copyReferencedFile(runDir, auth.getPfxPath()));
+            auth.setClientCertPath(storageService.copyReferencedFile(runDir, auth.getClientCertPath()));
+            auth.setClientKeyPath(storageService.copyReferencedFile(runDir, auth.getClientKeyPath()));
+            auth.setCaCertPath(storageService.copyReferencedFile(runDir, auth.getCaCertPath()));
+            
+            runMetadata.getConfigUsed().put("authentication", auth);
+        }
+        
         storageService.saveBaseline(runMetadata, baselineIterations);
         logger.info("Baseline captured successfully: {}/{}/{} with {} iterations",
                 serviceName, date, runId, baselineIterations.size());
@@ -148,6 +164,14 @@ public class BaselineComparisonService {
                 Map<String, Object> savedConfig = baseline.getMetadata().getConfigUsed();
                 if (savedConfig != null && savedConfig.containsKey("authentication")) {
                     Authentication baselineAuth = objectMapper.convertValue(savedConfig.get("authentication"), Authentication.class);
+                    
+                    // Path Portability: Resolve relative certificate paths against baseline run directory
+                    String protocol = storageService.detectProtocol(serviceName, date, runId);
+                    baselineAuth.setPfxPath(storageService.resolveCertPath(protocol, serviceName, date, runId, baselineAuth.getPfxPath()));
+                    baselineAuth.setClientCertPath(storageService.resolveCertPath(protocol, serviceName, date, runId, baselineAuth.getClientCertPath()));
+                    baselineAuth.setClientKeyPath(storageService.resolveCertPath(protocol, serviceName, date, runId, baselineAuth.getClientKeyPath()));
+                    baselineAuth.setCaCertPath(storageService.resolveCertPath(protocol, serviceName, date, runId, baselineAuth.getCaCertPath()));
+
                     // If baseline auth has certs but current config doesn't, clone and override
                     if ((baselineAuth.getPfxPath() != null || baselineAuth.getClientCertPath() != null) 
                             && (apiConfig.getAuthentication() == null || (apiConfig.getAuthentication().getPfxPath() == null && apiConfig.getAuthentication().getClientCertPath() == null))) {
@@ -291,9 +315,16 @@ public class BaselineComparisonService {
         Map<String, String> tokenStrings = new HashMap<>();
         tokens.forEach((k, v) -> tokenStrings.put(k, String.valueOf(v)));
         Map<String, String> authMap = new HashMap<>();
-        if (apiConfig.getAuthentication() != null && apiConfig.getAuthentication().getClientId() != null) {
-            authMap.put("type", "basic");
-            authMap.put("username", apiConfig.getAuthentication().getClientId());
+        Authentication auth = apiConfig.getAuthentication();
+        if (auth != null) {
+            if (auth.getClientId() != null) {
+                authMap.put("type", "basic");
+                authMap.put("username", auth.getClientId());
+            }
+            if (auth.getPfxPath() != null) authMap.put("pfxPath", auth.getPfxPath());
+            if (auth.getClientCertPath() != null) authMap.put("clientCertPath", auth.getClientCertPath());
+            if (auth.getClientKeyPath() != null) authMap.put("clientKeyPath", auth.getClientKeyPath());
+            if (auth.getCaCertPath() != null) authMap.put("caCertPath", auth.getCaCertPath());
         }
         IterationMetadata requestMetadata = new IterationMetadata(
                 iterationNumber,
@@ -462,6 +493,24 @@ public class BaselineComparisonService {
             apiCall.setResponsePayload(iter.getResponsePayload());
             apiCall.setResponseHeaders(iter.getResponseHeaders());
             
+            // --- Metadata Population for History View ---
+            Map<String, Object> callMetadata = new java.util.LinkedHashMap<>();
+            IterationMetadata iterMeta = iter.getRequestMetadata();
+            if (iterMeta.getAuthentication() != null && !iterMeta.getAuthentication().isEmpty()) {
+                Map<String, String> authInfo = new java.util.LinkedHashMap<>(iterMeta.getAuthentication());
+                // Mask sensitive details if they were saved (though usually they are paths or masks)
+                if (authInfo.containsKey("passphrase")) authInfo.put("passphrase", "********");
+                callMetadata.put("authentication", authInfo);
+            }
+            if (iterMeta.getTokensUsed() != null && !iterMeta.getTokensUsed().isEmpty()) {
+                callMetadata.put("iterationTokens", iterMeta.getTokensUsed());
+            }
+            // Add other stats
+            callMetadata.put("requestSize", iter.getRequestPayload() != null ? iter.getRequestPayload().getBytes().length : 0);
+            callMetadata.put("responseSize", iter.getResponsePayload() != null ? iter.getResponsePayload().getBytes().length : 0);
+            
+            apiCall.setMetadata(callMetadata);
+
             Object statusCodeObj = iter.getResponseMetadata().get("statusCode");
             if (statusCodeObj instanceof Integer) apiCall.setStatusCode((Integer) statusCodeObj);
             

@@ -571,6 +571,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (s.clientId) document.getElementById('clientId').value = s.clientId;
             if (s.clientSecret) document.getElementById('clientSecret').value = s.clientSecret;
 
+            if (s.useMTLS !== undefined) {
+                document.getElementById('useMTLS').checked = s.useMTLS;
+            } else {
+                document.getElementById('useMTLS').checked = false;
+            }
+
+            if (s.caCertPath) document.getElementById('caCertPath').value = s.caCertPath;
+            if (s.pfxPath) document.getElementById('pfxPath').value = s.pfxPath;
+            if (s.clientCertPath) document.getElementById('clientCertPath').value = s.clientCertPath;
+            if (s.clientKeyPath) document.getElementById('clientKeyPath').value = s.clientKeyPath;
+            if (s.passphrase) document.getElementById('passphrase').value = s.passphrase;
+
             headersTable.innerHTML = '';
             s.headers?.forEach(h => addRow(headersTable, ['Header Name', 'Value'], [h.k, h.v]));
             
@@ -580,10 +592,9 @@ document.addEventListener('DOMContentLoaded', () => {
             paramsTable.innerHTML = '';
             s.params?.forEach(p => addRow(paramsTable, ['Parameter Name', 'Value'], [p.k, p.v]));
 
-            if (s.useMTLS !== undefined) {
-                document.getElementById('useMTLS').checked = s.useMTLS;
-            } else {
-                document.getElementById('useMTLS').checked = false;
+            // Ensure URLs are updated from restored params
+            if (s.params && s.params.length > 0) {
+                updateUrlsFromParams();
             }
 
             return true;
@@ -622,6 +633,20 @@ document.addEventListener('DOMContentLoaded', () => {
             authCheck.checked = false;
             document.getElementById('clientId').disabled = true;
             document.getElementById('clientSecret').disabled = true;
+            document.getElementById('clientId').value = '';
+            document.getElementById('clientSecret').value = '';
+        }
+
+        const mtlsCheck = document.getElementById('useMTLS');
+        if (mtlsCheck) {
+            mtlsCheck.checked = false;
+            ['pfxPath', 'clientCertPath', 'clientKeyPath', 'caCertPath', 'passphrase'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.value = '';
+                    el.disabled = true;
+                }
+            });
         }
     };
 
@@ -667,15 +692,18 @@ document.addEventListener('DOMContentLoaded', () => {
             loadedConfig = await response.json();
             
             // Priority: Server Config > SOAP (Default) - Ignore localStorage for testType
-            const initialType = loadedConfig.testType || 'SOAP';
+            // Unless state was restored, which we want to prioritize for continuity
+            const initialType = (stateRestored) ? document.getElementById('testType').value : (loadedConfig.testType || 'SOAP');
             document.getElementById('testType').value = initialType;
             
-            if (loadedConfig.maxIterations) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
-            if (loadedConfig.iterationController) document.getElementById('iterationController').value = loadedConfig.iterationController;
-            if (loadedConfig.ignoredFields) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
+            if (loadedConfig.maxIterations && !stateRestored) document.getElementById('maxIterations').value = loadedConfig.maxIterations;
+            if (loadedConfig.iterationController && !stateRestored) document.getElementById('iterationController').value = loadedConfig.iterationController;
+            if (loadedConfig.ignoredFields && !stateRestored) document.getElementById('ignoredFields').value = loadedConfig.ignoredFields.join(', ');
             
-            // CRITICAL: Ensure form starts clean
-            resetFormToStandard(initialType);
+            // If No state restored, apply clean defaults
+            if (!stateRestored) {
+                resetFormToStandard(initialType);
+            }
         } catch (e) { console.error('Defaults error:', e); }
         syncTypeButtons();
     };
@@ -913,20 +941,10 @@ document.addEventListener('DOMContentLoaded', () => {
              logActivity(`BASELINE COMPLETED: ${config.baseline.operation} success for ${config.baseline.serviceName}`, 'success');
              showToast('Baseline operation completed successfully', 'success');
              
-             if (config.baseline.operation === 'CAPTURE') {
-                 // Refresh services/dates/runs
-                 await loadBaselineServices();
-                 // Select the service we just started with
-                 if (document.getElementById('baselineServiceSelect')) {
-                     const svcSelect = document.getElementById('baselineServiceSelect');
-                     svcSelect.value = config.baseline.serviceName;
-                     if (svcSelect.value) {
-                        svcSelect.dispatchEvent(new Event('change'));
-                        // Note: Selecting the run automatically is harder because 'change' is async.
-                        // But getting the dates list refreshed is the main fix requested.
-                     }
-                 }
-             }
+              if (config.baseline.operation === 'CAPTURE') {
+                  // Refresh services/dates/runs and select the captured service
+                  await loadBaselineServices(config.baseline.serviceName);
+              }
          }
         renderResults(data);
     };
@@ -961,7 +979,11 @@ document.addEventListener('DOMContentLoaded', () => {
             let authSummary = 'None';
             if (firstMatch.api1 && firstMatch.api1.metadata && firstMatch.api1.metadata.authentication) {
                 const auth = firstMatch.api1.metadata.authentication;
-                authSummary = auth.clientId ? `Client ID: ${auth.clientId}` : (auth.pfxPath ? 'PFX auth' : 'Basic/Other');
+                let summaries = [];
+                if (auth.clientId) summaries.push(`ID: ${auth.clientId}`);
+                if (auth.pfxPath) summaries.push('PFX cert');
+                if (auth.clientCertPath) summaries.push('mTLS PEM');
+                authSummary = summaries.length > 0 ? summaries.join(' + ') : 'None';
             }
 
             runMetaHtml = `
@@ -979,12 +1001,18 @@ document.addEventListener('DOMContentLoaded', () => {
                         <div>
                             <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Date & Source</div>
                             <div style="margin-top:2px;"><strong>Capture:</strong> <span>${escapeHtml(firstMatch.baselineDate || 'N/A')}</span></div>
-                            <div style="margin-top:1px; font-size:0.75rem; color:#a0aec0;">${escapeHtml(firstMatch.baselineCaptureTimestamp || '')}</div>
+                            <div style="margin-top:1px; font-size:0.75rem; color:#4a5568;">${escapeHtml(firstMatch.baselineCaptureTimestamp || 'N/A')}</div>
+                        </div>
+                        <div>
+                            <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Baseline Context</div>
+                            <div style="margin-top:2px;"><strong>Mode:</strong> <span class="tech-stack-tag" style="padding:2px 8px; margin:0;">${escapeHtml(firstMatch.api1?.metadata?.testType || 'N/A')}</span></div>
+                            <div style="margin-top:1px;"><strong>Op:</strong> <span>${escapeHtml(firstMatch.api1?.metadata?.operation || 'N/A')}</span></div>
+                            <div style="margin-top:1px;"><strong>Total Iter:</strong> <span style="font-weight:700;">${firstMatch.api1?.metadata?.totalIterations ?? 'N/A'}</span></div>
                         </div>
                         <div>
                             <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Configuration</div>
-                            <div style="margin-top:2px;"><strong>Auth:</strong> <span class="tech-stack-tag" style="padding:2px 8px; margin:0;">${escapeHtml(authSummary)}</span></div>
-                            <div style="margin-top:1px;"><strong>API 1:</strong> <code style="font-size:0.7rem; word-break:break-all;">${escapeHtml(firstMatch.api1 ? firstMatch.api1.url : 'N/A')}</code></div>
+                            <div style="margin-top:2px;"><strong>Auth:</strong> <span class="tech-stack-tag" style="padding:2px 8px; margin:0;">${escapeHtml(authSummary || 'None')}</span></div>
+                            <div style="margin-top:1px;"><strong>API 1:</strong> <code style="font-size:0.7rem; word-break:break-all;">${escapeHtml(firstMatch.api1?.url || 'N/A')}</code></div>
                         </div>
                     </div>
                     ${firstMatch.baselineDescription ? `<div style="margin-top:12px; padding-top:8px; border-top:1px solid #f1f1f1;"><strong>Description:</strong> <span style="color:#4a5568;">${escapeHtml(firstMatch.baselineDescription)}</span></div>` : ''}
@@ -1114,15 +1142,32 @@ document.addEventListener('DOMContentLoaded', () => {
             if (meta.authentication) {
                 const auth = meta.authentication;
                 metaHtml += `<div><strong>🔐 Auth:</strong>`;
-                if (auth.clientId) metaHtml += ` <span class="tech-stack-tag" title="Client ID">ID: ${auth.clientId}</span>`;
-                if (auth.pfxPath) metaHtml += ` <span class="tech-stack-tag" title="PFX Path">PFX: ${auth.pfxPath}</span>`;
+                const id = auth.clientId || auth.username;
+                if (id) metaHtml += ` <span class="tech-stack-tag" title="Client ID/Username">ID: ${id}</span>`;
+                if (auth.pfxPath) metaHtml += ` <span class="tech-stack-tag" title="PFX/JKS Path">PFX: ${auth.pfxPath}</span>`;
+                if (auth.clientCertPath) metaHtml += ` <span class="tech-stack-tag" title="Client Cert Path">CRT: ${auth.clientCertPath}</span>`;
+                if (auth.clientKeyPath) metaHtml += ` <span class="tech-stack-tag" title="Client Key Path">KEY: ${auth.clientKeyPath}</span>`;
+                if (auth.caCertPath) metaHtml += ` <span class="tech-stack-tag" title="CA/Trust Cert Path">CA: ${auth.caCertPath}</span>`;
                 if (auth.passphrase) metaHtml += ` <span class="tech-stack-tag" title="Passphrase">🔑 *****</span>`;
                 metaHtml += `</div>`;
+            } else {
+                metaHtml += `<div><strong>🔐 Auth:</strong> <span>N/A</span></div>`;
             }
             // Query Params
             if (meta.queryParams && Object.keys(meta.queryParams).length > 0) {
                  metaHtml += `<div style="margin-top:4px;"><strong>❓ Query:</strong> <code style="font-size:0.75rem;">${JSON.stringify(meta.queryParams)}</code></div>`;
             }
+
+            // Additional Metadata (Operation, Iterations, Type)
+            if (meta.operation) metaHtml += `<div style="margin-top:4px;"><strong>⚙️ Operation:</strong> <span style="color:var(--primary-color); font-weight:700;">${meta.operation}</span></div>`;
+            else metaHtml += `<div style="margin-top:4px;"><strong>⚙️ Operation:</strong> <span>N/A</span></div>`;
+
+            if (meta.totalIterations !== undefined) metaHtml += `<div style="margin-top:4px;"><strong>🔄 Iterations:</strong> <span>${meta.totalIterations}</span></div>`;
+            else metaHtml += `<div style="margin-top:4px;"><strong>🔄 Iterations:</strong> <span>N/A</span></div>`;
+
+            if (meta.testType) metaHtml += `<div style="margin-top:4px;"><strong>🏷️ Type:</strong> <span class="tech-stack-tag">${meta.testType}</span></div>`;
+            else metaHtml += `<div style="margin-top:4px;"><strong>🏷️ Type:</strong> <span class="tech-stack-tag">N/A</span></div>`;
+
             // Metrics (Time, Size)
             let metrics = [];
             // REQUEST SIZE FIRST, THEN RESPONSE PAYLOAD SIZE
@@ -1131,6 +1176,8 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (metrics.length > 0) {
                  metaHtml += `<div style="margin-top:4px; font-size:0.75rem;"><strong>📊 Metrics:</strong> ${metrics.join(' | ')}</div>`;
+            } else {
+                 metaHtml += `<div style="margin-top:4px; font-size:0.75rem;"><strong>📊 Metrics:</strong> <span>N/A</span></div>`;
             }
             
             if (!metaHtml) return '';
@@ -1480,7 +1527,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const baselineDateSelect = document.getElementById('baselineDateSelect');
     const baselineRunSelect = document.getElementById('baselineRunSelect');
 
-    const loadBaselineServices = async () => {
+    const loadBaselineServices = async (preferredService = null) => {
         const workDir = document.getElementById('workingDirectory').value.trim();
         const type = document.getElementById('testType').value; // Get current type
         try {
@@ -1489,6 +1536,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) return;
             const services = await response.json();
             
+            const currentVal = baselineServiceSelect.value;
             baselineServiceSelect.innerHTML = '<option value="">-- Select Service --</option>';
             services.forEach(s => {
                 const opt = document.createElement('option');
@@ -1498,7 +1546,14 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             
             if (services.length > 0) {
-                baselineServiceSelect.value = services[0];
+                // Priority: preferredService > currentVal > services[0]
+                if (preferredService && services.indexOf(preferredService) !== -1) {
+                    baselineServiceSelect.value = preferredService;
+                } else if (currentVal && services.indexOf(currentVal) !== -1) {
+                    baselineServiceSelect.value = currentVal;
+                } else {
+                    baselineServiceSelect.value = services[0];
+                }
                 baselineServiceSelect.dispatchEvent(new Event('change'));
             }
         } catch (e) { console.error('Error loading services:', e); }
@@ -1553,6 +1608,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Let's sort robustly: Extract timestamp or ID.
             // Run format: "run-001" or "run-001 - desc..."
             runs.sort((a,b) => {
+                if (!a.runId || !b.runId) return 0;
                 // Try comparing numeric run IDs first "run-001"
                 const ra = parseInt(a.runId.replace(/run-/,'')) || 0;
                 const rb = parseInt(b.runId.replace(/run-/,'')) || 0;
@@ -1631,6 +1687,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!service || !date || !runId) return;
 
+        // CRITICAL: Only populate form fields if we are in Baseline COMPARE mode.
+        // If we are in CAPTURE mode, we don't want to overwrite user's current paths with baseline relative paths.
+        const isCompareOp = (document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'COMPARE');
+        if (!isCompareOp) return;
+
         try {
             const url = `api/baselines/runs/${encodeURIComponent(service)}/${encodeURIComponent(date)}/${encodeURIComponent(runId)}/endpoint${workDir ? '?workDir=' + encodeURIComponent(workDir) : ''}`;
             const response = await fetch(url);
@@ -1657,6 +1718,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 if (auth.clientId) document.getElementById('clientId').value = auth.clientId;
                 if (auth.clientSecret) document.getElementById('clientSecret').value = auth.clientSecret;
+                
+                const useMTLS = document.getElementById('useMTLS');
+                const isMTLSEnabledFromBaseline = !!(auth.pfxPath || auth.clientCertPath || auth.caCertPath);
+                if (useMTLS) {
+                    useMTLS.checked = isMTLSEnabledFromBaseline;
+                    useMTLS.dispatchEvent(new Event('change'));
+                }
+
                 if (auth.pfxPath) document.getElementById('pfxPath').value = auth.pfxPath;
                 if (auth.clientCertPath) document.getElementById('clientCertPath').value = auth.clientCertPath;
                 if (auth.clientKeyPath) document.getElementById('clientKeyPath').value = auth.clientKeyPath;
@@ -1882,14 +1951,29 @@ document.addEventListener('DOMContentLoaded', () => {
             'useMTLS', 'pfxPath', 'clientCertPath', 'clientKeyPath', 
             'passphrase', 'caCertPath', 'validateCertsBtn'
         ];
+        
+        const isAuthEnabled = document.getElementById('enableAuth').checked;
+        const isMTLSEnabled = document.getElementById('useMTLS')?.checked;
+
         securityFieldIds.forEach(id => {
             const el = document.getElementById(id);
             if (el) {
-                el.disabled = isCompareOp;
-                // Also toggle a class for labels if we want specific styling
+                if (isCompareOp) {
+                    el.disabled = true;
+                } else {
+                    // Respect master toggles when re-enabling
+                    if (id === 'clientId' || id === 'clientSecret') {
+                        el.disabled = !isAuthEnabled;
+                    } else if (['pfxPath', 'clientCertPath', 'clientKeyPath', 'passphrase', 'caCertPath'].includes(id)) {
+                        el.disabled = !isMTLSEnabled;
+                    } else {
+                        el.disabled = false;
+                    }
+                }
+                
                 const label = el.closest('label');
                 if (label) {
-                    label.classList.toggle('disabled-label', isCompareOp);
+                    label.classList.toggle('disabled-label', el.disabled);
                 }
             }
         });
@@ -1918,6 +2002,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const shouldDisable = !e.target.checked || isCompareOp;
         document.getElementById('clientId').disabled = shouldDisable;
         document.getElementById('clientSecret').disabled = shouldDisable;
+
+        // CRITICAL: If auth is disabled, remove Authorization header to ensure synchronization
+        if (!e.target.checked) {
+            headersTable.querySelectorAll('tr').forEach(tr => {
+                const keyInput = tr.querySelector('.key-input');
+                if (keyInput && keyInput.value.trim().toLowerCase() === 'authorization') {
+                    tr.remove();
+                    logActivity('Sync: Removed stale Authorization header after disabling Auth.', 'info');
+                }
+            });
+        } else {
+            // Restore Authorization header if missing and credentials exist
+            let exists = false;
+            headersTable.querySelectorAll('tr').forEach(tr => {
+                const keyInput = tr.querySelector('.key-input');
+                if (keyInput && keyInput.value.trim().toLowerCase() === 'authorization') exists = true;
+            });
+
+            if (!exists) {
+                const cid = document.getElementById('clientId').value.trim();
+                const csec = document.getElementById('clientSecret').value.trim();
+                if (cid && csec) {
+                    const basic = btoa(`${cid}:${csec}`);
+                    addRow(headersTable, ['Header Name', 'Value'], ['Authorization', `Basic ${basic}`]);
+                    logActivity('Sync: Restored Authorization header after enabling Auth.', 'success');
+                } else if (cid) {
+                     addRow(headersTable, ['Header Name', 'Value'], ['Authorization', 'Basic [CREDENTIALS_REQUIRED]']);
+                }
+            }
+        }
+    });
+
+    document.getElementById('useMTLS')?.addEventListener('change', (e) => {
+        const isCompareOp = (document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'COMPARE');
+        const shouldDisable = !e.target.checked || isCompareOp;
+        ['pfxPath', 'clientCertPath', 'clientKeyPath', 'caCertPath', 'passphrase'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.disabled = shouldDisable;
+        });
     });
 
     document.getElementById('clearFormBtn').addEventListener('click', () => {

@@ -20,7 +20,8 @@
 **Endpoint (Local)**: `POST http://localhost:8081/api/orders`
 
 **Headers**:
-```
+
+```http
 Content-Type: application/json
 ```
 
@@ -132,7 +133,8 @@ Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice?wsdl" -Method GE
 **Endpoint (Local)**: `POST http://localhost:8081/soap/orderservice`
 
 **Headers**:
-```
+
+```http
 Content-Type: text/xml
 SOAPAction: http://raks.com/orderservice/CreateOrder
 ```
@@ -185,7 +187,8 @@ Invoke-WebRequest -Uri "http://localhost:8082/soap/orderservice" -Method POST -H
 **Endpoint (Local)**: `POST http://localhost:8081/soap/orderservice`
 
 **Headers**:
-```
+
+```http
 Content-Type: text/xml
 SOAPAction: http://raks.com/orderservice/GetOrder
 ```
