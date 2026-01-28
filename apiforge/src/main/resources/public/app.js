@@ -1095,19 +1095,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
             item.innerHTML = `
                 <div class="result-header" style="cursor:pointer; padding:12px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
+                    <div style="flex:1;">
                         <div style="font-weight:700; font-size:0.9rem;">#${i+1} - ${res.operationName}</div>
-                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:1px; font-family:monospace; display:flex; align-items:center; gap:8px;">
-                            <span>1: ${res.api1 ? res.api1.url : (res.url || '')}</span>
-                            ${res.api1 ? `<span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; font-weight:700; background:${res.api1.statusCode >= 400 ? '#fff5f5' : '#f0fff4'}; color:${res.api1.statusCode >= 400 ? '#c53030' : '#2f855a'}; border:1px solid ${res.api1.statusCode >= 400 ? '#feb2b2' : '#c6f6d5'};">${res.api1.statusCode}</span>` : ''}
-                        </div>
-                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:2px; font-family:monospace; display:flex; align-items:center; gap:8px;">
-                            <span>2: ${res.api2 ? res.api2.url : (document.getElementById('comparisonMode').value === 'BASELINE' ? (res.baselineServiceName ? `Baseline: ${res.baselineServiceName}` : 'Baseline') : '')}</span>
-                            ${res.api2 ? `<span style="font-size:0.7rem; padding:1px 6px; border-radius:10px; font-weight:700; background:${res.api2.statusCode >= 400 ? '#fff5f5' : '#f0fff4'}; color:${res.api2.statusCode >= 400 ? '#c53030' : '#2f855a'}; border:1px solid ${res.api2.statusCode >= 400 ? '#feb2b2' : '#c6f6d5'};">${res.api2.statusCode}</span>` : ''}
-                        </div>
+                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:1px; font-family:monospace;">1: ${res.api1 ? res.api1.url : (res.url || '')}</div>
+                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:2px; font-family:monospace;">2: ${res.api2 ? res.api2.url : (document.getElementById('comparisonMode').value === 'BASELINE' ? (res.baselineServiceName ? `Baseline: ${res.baselineServiceName}` : 'Baseline') : '')}</div>
                         ${tokens}
                     </div>
-                    <span class="${statusClass}" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem; color: #fff; background-color: ${res.status === 'MISMATCH' ? '#fc8181' : (res.status === 'MATCH' ? 'var(--success-color)' : (res.status === 'ERROR' ? 'var(--error-color)' : '#cbd5e0'))};">${res.status}</span>
+                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; margin-right:15px;">
+                        <div style="font-size:0.65rem; color:#718096; font-family:monospace; display:flex; gap:10px;">
+                            <span>1: Status=${res.api1?.statusCode || 'N/A'}</span>
+                            <span>2: Status=${res.api2?.statusCode || 'N/A'}</span>
+                        </div>
+                        <span class="${statusClass}" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem; border:1px solid rgba(0,0,0,0.1); color:#fff; background-color: ${res.status === 'MISMATCH' ? '#fc8181' : (res.status === 'MATCH' ? 'var(--success-color)' : (res.status === 'ERROR' ? 'var(--error-color)' : '#cbd5e0'))};">${res.status}</span>
+                    </div>
                 </div>
                 <div class="result-body" style="display:none; padding:15px; border-top:1px solid #eee; background:#fafafa; border-radius: 0 0 12px 12px;">
                     ${renderPayloadContent(res, i)}
