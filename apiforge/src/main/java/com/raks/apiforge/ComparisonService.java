@@ -189,12 +189,12 @@ public class ComparisonService {
                 if (api1Config.getAuthentication() != null) {
                     Authentication auth = api1Config.getAuthentication();
                     Map<String, String> authInfo = new java.util.LinkedHashMap<>();
-                    if (auth.getClientId() != null) authInfo.put("clientId", auth.getClientId());
-                    if (auth.getPfxPath() != null) authInfo.put("pfxPath", auth.getPfxPath());
-                    if (auth.getClientCertPath() != null) authInfo.put("clientCertPath", auth.getClientCertPath());
-                    if (auth.getClientKeyPath() != null) authInfo.put("clientKeyPath", auth.getClientKeyPath());
-                    if (auth.getCaCertPath() != null) authInfo.put("caCertPath", auth.getCaCertPath());
-                    if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) authInfo.put("passphrase", "********");
+                    if (auth.getClientId() != null && !auth.getClientId().trim().isEmpty()) authInfo.put("clientId", auth.getClientId());
+                    if (auth.getPfxPath() != null && !auth.getPfxPath().trim().isEmpty()) authInfo.put("pfxPath", auth.getPfxPath());
+                    if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authInfo.put("clientCertPath", auth.getClientCertPath());
+                    if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authInfo.put("clientKeyPath", auth.getClientKeyPath());
+                    if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authInfo.put("caCertPath", auth.getCaCertPath());
+                    if (auth.getPassphrase() != null && !auth.getPassphrase().trim().isEmpty()) authInfo.put("passphrase", "********");
                     if (!authInfo.isEmpty()) meta1.put("authentication", authInfo);
                 }
                 if (payload1 != null) meta1.put("requestSize", payload1.getBytes().length);

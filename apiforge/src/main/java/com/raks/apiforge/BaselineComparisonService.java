@@ -337,10 +337,10 @@ public class BaselineComparisonService {
                 authMap.put("type", "basic");
                 authMap.put("username", auth.getClientId());
             }
-            if (auth.getPfxPath() != null) authMap.put("pfxPath", auth.getPfxPath());
-            if (auth.getClientCertPath() != null) authMap.put("clientCertPath", auth.getClientCertPath());
-            if (auth.getClientKeyPath() != null) authMap.put("clientKeyPath", auth.getClientKeyPath());
-            if (auth.getCaCertPath() != null) authMap.put("caCertPath", auth.getCaCertPath());
+            if (auth.getPfxPath() != null && !auth.getPfxPath().trim().isEmpty()) authMap.put("pfxPath", auth.getPfxPath());
+            if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authMap.put("clientCertPath", auth.getClientCertPath());
+            if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authMap.put("clientKeyPath", auth.getClientKeyPath());
+            if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authMap.put("caCertPath", auth.getCaCertPath());
         }
         IterationMetadata requestMetadata = new IterationMetadata(
                 iterationNumber,
@@ -380,6 +380,26 @@ public class BaselineComparisonService {
         if (durationObj instanceof Number) {
             baselineApi.setDuration(((Number) durationObj).longValue());
         }
+        
+        // --- Populate Metadata for API 2 (Baseline) ---
+        Map<String, Object> meta2 = new HashMap<>();
+        if (baseline.getRequestMetadata() != null) {
+            meta2.put("operation", baseline.getRequestMetadata().getSoapAction());
+            meta2.put("method", baseline.getRequestMetadata().getMethod());
+            meta2.put("iterationNumber", baseline.getIterationNumber());
+            if (baseline.getRequestMetadata().getAuthentication() != null) {
+                meta2.put("authentication", baseline.getRequestMetadata().getAuthentication());
+            }
+        }
+        if (baseline.getResponseMetadata() != null) {
+            meta2.put("statusCode", String.valueOf(baseline.getResponseMetadata().get("statusCode")));
+            meta2.put("duration", baseline.getResponseMetadata().get("duration"));
+            if (baseline.getResponsePayload() != null) {
+                meta2.put("responseSize", baseline.getResponsePayload().getBytes().length);
+            }
+        }
+        baselineApi.setMetadata(meta2);
+
         result.setBaselineCaptureTimestamp(baseline.getRequestMetadata().getTimestamp());
         result.setApi2(baselineApi);
 
