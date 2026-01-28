@@ -56,6 +56,35 @@ public class JmsService {
         }
     }
 
+    public synchronized List<String> getDestinations() throws Exception {
+        ensureConnected();
+        List<String> dests = new ArrayList<>();
+        if (EmbeddedBrokerService.isRunning()) {
+             dests.addAll(EmbeddedBrokerService.getDestinations());
+        }
+        
+        // Fallback or external provider logic
+        if (connection instanceof org.apache.activemq.ActiveMQConnection) {
+            try {
+                org.apache.activemq.ActiveMQConnection amqConn = (org.apache.activemq.ActiveMQConnection) connection;
+                org.apache.activemq.advisory.DestinationSource source = amqConn.getDestinationSource();
+                source.start(); // Ensure it's started
+                if (source != null) {
+                    Set<org.apache.activemq.command.ActiveMQQueue> queues = source.getQueues();
+                    if (queues != null) {
+                        for (org.apache.activemq.command.ActiveMQQueue q : queues) {
+                            if (!dests.contains(q.getPhysicalName())) dests.add(q.getPhysicalName());
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to fetch ActiveMQ destinations via Advisory", e);
+            }
+        }
+        
+        return dests;
+    }
+
     public synchronized Map<String, Object> getStatus() {
         Map<String, Object> status = new HashMap<>();
         status.put("connected", connection != null);
@@ -156,7 +185,15 @@ public class JmsService {
             TextMessage msg = session.createTextMessage(payload);
             if (properties != null) {
                 for (Map.Entry<String, Object> entry : properties.entrySet()) {
-                    msg.setObjectProperty(entry.getKey(), entry.getValue());
+                    String key = entry.getKey();
+                    Object value = entry.getValue();
+                    if (key != null && key.startsWith("JMS")) {
+                        if ("JMSCorrelationID".equals(key)) msg.setJMSCorrelationID(value != null ? String.valueOf(value) : null);
+                        else if ("JMSType".equals(key)) msg.setJMSType(value != null ? String.valueOf(value) : null);
+                        // Skip others like JMSExpiration, JMSPriority etc as they are handled by producer
+                        continue;
+                    }
+                    msg.setObjectProperty(key, value);
                 }
             }
             prod.send(msg);

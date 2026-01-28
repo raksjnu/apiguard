@@ -157,8 +157,8 @@ public class ComparisonEngine {
 
             if (ignoredFields != null && ignoredFields.contains(key)) continue;
             
-            String v1 = h1.get(key);
-            String v2 = h2.get(key);
+            String v1 = h1.get(key) != null ? String.valueOf(h1.get(key)) : null;
+            String v2 = h2.get(key) != null ? String.valueOf(h2.get(key)) : null;
             
             if (!Objects.equals(v1, v2)) {
                 diffs.add("Header mismatch [" + key + "]: API1='" + v1 + "' vs API2='" + v2 + "'");

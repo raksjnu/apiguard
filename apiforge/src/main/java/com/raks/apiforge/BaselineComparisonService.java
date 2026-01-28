@@ -77,7 +77,8 @@ public class BaselineComparisonService {
                 result.setBaselineServiceName(serviceName);
                 result.setBaselineDate(date);
                 result.setBaselineRunId(runId);
-                String baselinePath = baselineConfig.getStorageDir() + java.io.File.separator + serviceName + java.io.File.separator + date + java.io.File.separator + runId;
+                String protocol = storageService.getProtocolFromType(config.getTestType());
+                String baselinePath = storageService.getRunDirectory(protocol, serviceName, date, runId).toString();
                 result.setBaselinePath(baselinePath);
                 result.setBaselineDescription("Baseline captured to: " + baselinePath);
                 result.setBaselineTags(baselineConfig.getTags());
@@ -146,7 +147,8 @@ public class BaselineComparisonService {
                 result.setBaselineServiceName(serviceName);
                 result.setBaselineDate(date);
                 result.setBaselineRunId(runId);
-                String baselinePath = baselineConfig.getStorageDir() + java.io.File.separator + serviceName + java.io.File.separator + date + java.io.File.separator + runId;
+                String protocol = storageService.detectProtocol(serviceName, date, runId);
+                String baselinePath = storageService.getRunDirectory(protocol, serviceName, date, runId).toString();
                 result.setBaselinePath(baselinePath);
                 result.setBaselineDescription(baseline.getMetadata().getDescription());
                 result.setBaselineTags(baseline.getMetadata().getTags());
@@ -194,6 +196,9 @@ public class BaselineComparisonService {
         if (payload == null && operation.getPayloadTemplatePath() != null && !operation.getPayloadTemplatePath().isEmpty()) {
             PayloadProcessor processor = new PayloadProcessor(operation.getPayloadTemplatePath(), testType);
             payload = processor.process(tokens);
+            logger.info("Processed payload (template): {}", payload);
+        } else {
+            logger.info("Using forced/existing payload: {}", payload);
         }
         
         if (headers == null) {
@@ -328,7 +333,8 @@ public class BaselineComparisonService {
         List<String> tags = metadata.getTags();
         String captureTime = metadata.getCaptureTimestamp();
 
-        String baselinePath = storageService.getRunDirectory(serviceName, date, runId).toString();
+        String protocol = storageService.detectProtocol(serviceName, date, runId);
+        String baselinePath = storageService.getRunDirectory(protocol, serviceName, date, runId).toString();
 
         for (BaselineStorageService.BaselineIteration iter : baselineIterations) {
             ComparisonResult result = new ComparisonResult();

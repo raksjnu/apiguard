@@ -82,7 +82,7 @@ maxIterations: 100
 
 # Define tokens and the values to iterate over.
 tokens:
-  account:
+  amount:
     - "1729"
     - "2016"
     - "2018"

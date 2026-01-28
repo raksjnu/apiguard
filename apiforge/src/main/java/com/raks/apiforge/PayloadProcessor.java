@@ -33,27 +33,27 @@ public class PayloadProcessor {
     }
     private String loadTemplate(String templatePath) throws IOException {
         try {
-
+            // 1. Try as filesystem path
             Path path = Paths.get(templatePath);
             if (Files.exists(path) && !Files.isDirectory(path)) {
                 return new String(Files.readAllBytes(path));
             }
             
-
+            // 2. Try as classpath resource
             String resourcePath = templatePath.replace('\\', '/');
             if (!resourcePath.startsWith("/")) {
                 resourcePath = "/" + resourcePath;
             }
-            
             try (java.io.InputStream is = getClass().getResourceAsStream(resourcePath)) {
                 if (is != null) {
                     return new String(is.readAllBytes(), java.nio.charset.StandardCharsets.UTF_8);
                 }
             }
 
-
+            // 3. Fallback: Assume it's the raw content itself
             return templatePath;
         } catch (Exception e) {
+            // On invalid path chars or other errors, treat as content
             return templatePath;
         }
     }

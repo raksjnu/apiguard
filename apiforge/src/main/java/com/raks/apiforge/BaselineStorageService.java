@@ -24,24 +24,32 @@ public class BaselineStorageService {
         String serviceName = runMetadata.getServiceName();
         String date = runMetadata.getCaptureDate();
         String runId = runMetadata.getRunId();
-        Path runDir = getRunDirectory(serviceName, date, runId);
+        String protocol = getProtocolFromType(runMetadata.getTestType());
+        
+        Path runDir = getRunDirectory(protocol, serviceName, date, runId);
         Files.createDirectories(runDir);
         mapper.writeValue(runDir.resolve("metadata.json").toFile(), runMetadata);
         logger.info("Saved run metadata to: {}", runDir.resolve("metadata.json"));
         for (BaselineIteration iteration : iterations) {
-            saveIteration(runDir, iteration);
+            saveIteration(runDir, iteration, runMetadata.getTestType());
         }
         saveSummary(runDir, iterations);
-        logger.info("Baseline saved: {}/{}/{} with {} iterations", serviceName, date, runId, iterations.size());
+        logger.info("Baseline saved: {} ({})/{}/{} with {} iterations", serviceName, runMetadata.getTestType(), date, runId, iterations.size());
     }
-    private void saveIteration(Path runDir, BaselineIteration iteration) throws IOException {
+    private void saveIteration(Path runDir, BaselineIteration iteration, String testType) throws IOException {
         int iterNum = iteration.getIterationNumber();
         Path iterDir = runDir.resolve(String.format("iteration-%03d", iterNum));
         Files.createDirectories(iterDir);
-        writePayload(iterDir.resolve("request.xml"), iteration.getRequestPayload());
+        
+        String reqExt = "JMS".equalsIgnoreCase(testType) ? "txt" : "xml";
+        if (iteration.getRequestPayload() != null && iteration.getRequestPayload().trim().startsWith("{")) reqExt = "json";
+        
+        writePayload(iterDir.resolve("request." + reqExt), iteration.getRequestPayload());
         mapper.writeValue(iterDir.resolve("request-headers.json").toFile(), iteration.getRequestHeaders());
         mapper.writeValue(iterDir.resolve("request-metadata.json").toFile(), iteration.getRequestMetadata());
-        writePayload(iterDir.resolve("response.xml"), iteration.getResponsePayload());
+        
+        String resExt = reqExt;
+        writePayload(iterDir.resolve("response." + resExt), iteration.getResponsePayload());
         mapper.writeValue(iterDir.resolve("response-headers.json").toFile(), iteration.getResponseHeaders());
         mapper.writeValue(iterDir.resolve("response-metadata.json").toFile(), iteration.getResponseMetadata());
     }
@@ -69,7 +77,8 @@ public class BaselineStorageService {
         mapper.writeValue(runDir.resolve("summary.json").toFile(), summary);
     }
     public BaselineRun loadBaseline(String serviceName, String date, String runId) throws IOException {
-        Path runDir = getRunDirectory(serviceName, date, runId);
+        String protocol = detectProtocol(serviceName, date, runId);
+        Path runDir = getRunDirectory(protocol, serviceName, date, runId);
         if (!Files.exists(runDir)) {
             throw new IOException("Baseline not found: " + runDir);
         }
@@ -85,18 +94,19 @@ public class BaselineStorageService {
         logger.info("Loaded baseline: {}/{}/{} with {} iterations", serviceName, date, runId, iterations.size());
         return new BaselineRun(runMetadata, iterations);
     }
-    @SuppressWarnings("unchecked")
     private BaselineIteration loadIteration(Path iterDir) throws IOException {
-        String requestPayload = Files.readString(iterDir.resolve("request.xml"));
-        Map<String, String> requestHeaders = mapper.readValue(iterDir.resolve("request-headers.json").toFile(),
+        String requestPayload = findAndReadPayload(iterDir, "request.");
+        Map<String, String> requestHeaders = (Map<String, String>) mapper.readValue(iterDir.resolve("request-headers.json").toFile(),
                 Map.class);
         IterationMetadata requestMetadata = mapper.readValue(iterDir.resolve("request-metadata.json").toFile(),
                 IterationMetadata.class);
-        String responsePayload = Files.readString(iterDir.resolve("response.xml"));
-        Map<String, String> responseHeaders = mapper.readValue(iterDir.resolve("response-headers.json").toFile(),
+        
+        String responsePayload = findAndReadPayload(iterDir, "response.");
+        Map<String, String> responseHeaders = (Map<String, String>) mapper.readValue(iterDir.resolve("response-headers.json").toFile(),
                 Map.class);
-        Map<String, Object> responseMetadata = mapper.readValue(iterDir.resolve("response-metadata.json").toFile(),
+        Map<String, Object> responseMetadata = (Map<String, Object>) mapper.readValue(iterDir.resolve("response-metadata.json").toFile(),
                 Map.class);
+        
         return new BaselineIteration(
                 requestMetadata.getIterationNumber(),
                 requestPayload,
@@ -106,8 +116,17 @@ public class BaselineStorageService {
                 responseHeaders,
                 responseMetadata);
     }
+
+    private String findAndReadPayload(Path iterDir, String prefix) throws IOException {
+        File[] files = iterDir.toFile().listFiles((dir, name) -> name.startsWith(prefix));
+        if (files != null && files.length > 0) {
+            return Files.readString(files[0].toPath());
+        }
+        return "";
+    }
     public String generateRunId(String serviceName, String date) {
-        Path dateDir = getDateDirectory(serviceName, date);
+        String protocol = detectProtocol(serviceName, date, null);
+        Path dateDir = getDateDirectory(protocol, serviceName, date);
         if (!Files.exists(dateDir)) {
             return "run-001";
         }
@@ -127,36 +146,64 @@ public class BaselineStorageService {
         }
         return String.format("run-%03d", maxRunNum + 1);
     }
-    public List<String> listServices() {
+    public List<String> listServices(String protocolFilter) {
+        Set<String> services = new TreeSet<>();
         File baseDir = new File(baseStorageDir);
-        if (!baseDir.exists()) {
-            return Collections.emptyList();
+        if (!baseDir.exists()) return Collections.emptyList();
+
+        List<String> protocolsToCheck = new ArrayList<>();
+        if (protocolFilter != null && !protocolFilter.isEmpty() && !"ALL".equalsIgnoreCase(protocolFilter)) {
+            protocolsToCheck.add(protocolFilter.toLowerCase());
+        } else {
+            protocolsToCheck.addAll(Arrays.asList("rest", "jms", "soap"));
+            // If ALL, also check root for legacy
+            File[] rootFiles = baseDir.listFiles();
+            if (rootFiles != null) {
+                for (File f : rootFiles) {
+                    if (f.isDirectory() && !isProtocolDir(f.getName())) {
+                        services.add(f.getName());
+                    }
+                }
+            }
         }
-        File[] serviceDirs = baseDir.listFiles(File::isDirectory);
-        if (serviceDirs == null) {
-            return Collections.emptyList();
+
+        // Check Protocol Subdirs
+        for (String p : protocolsToCheck) {
+            File pDir = new File(baseDir, p);
+            if (pDir.exists() && pDir.isDirectory()) {
+                File[] pFiles = pDir.listFiles(File::isDirectory);
+                if (pFiles != null) {
+                    for (File f : pFiles) services.add(f.getName());
+                }
+            }
         }
-        return Arrays.stream(serviceDirs)
-                .sorted(Comparator.comparing(File::lastModified).reversed())
-                .map(File::getName)
-                .collect(Collectors.toList());
+        return new ArrayList<>(services);
+    }
+
+    private boolean isProtocolDir(String name) {
+        return Arrays.asList("rest", "jms", "soap").contains(name.toLowerCase());
     }
     public List<String> listDates(String serviceName) {
-        Path serviceDir = Paths.get(baseStorageDir, serviceName);
-        if (!Files.exists(serviceDir)) {
-            return Collections.emptyList();
+        Set<String> dates = new TreeSet<>(Comparator.reverseOrder());
+        // 1. Check Root
+        Path rootServiceDir = Paths.get(baseStorageDir, serviceName);
+        if (Files.exists(rootServiceDir)) {
+             File[] dirs = rootServiceDir.toFile().listFiles(File::isDirectory);
+             if (dirs != null) for (File d : dirs) dates.add(d.getName());
         }
-        File[] dateDirs = serviceDir.toFile().listFiles(File::isDirectory);
-        if (dateDirs == null) {
-            return Collections.emptyList();
+        // 2. Check Protocols
+        for (String p : Arrays.asList("rest", "jms", "soap")) {
+            Path pServiceDir = Paths.get(baseStorageDir, p, serviceName);
+            if (Files.exists(pServiceDir)) {
+                File[] dirs = pServiceDir.toFile().listFiles(File::isDirectory);
+                if (dirs != null) for (File d : dirs) dates.add(d.getName());
+            }
         }
-        return Arrays.stream(dateDirs)
-                .map(File::getName)
-                .sorted(Comparator.reverseOrder())
-                .collect(Collectors.toList());
+        return new ArrayList<>(dates);
     }
     public List<RunInfo> listRuns(String serviceName, String date) throws IOException {
-        Path dateDir = getDateDirectory(serviceName, date);
+        String protocol = detectProtocol(serviceName, date, null); // date-level detect
+        Path dateDir = getDateDirectory(protocol, serviceName, date);
         if (!Files.exists(dateDir)) {
             return Collections.emptyList();
         }
@@ -179,7 +226,8 @@ public class BaselineStorageService {
     }
 
     public String getRunEndpoint(String serviceName, String date, String runId) throws IOException {
-        Path runDir = getRunDirectory(serviceName, date, runId);
+        String protocol = detectProtocol(serviceName, date, runId);
+        Path runDir = getRunDirectory(protocol, serviceName, date, runId);
         
 
         Path iterDir = runDir.resolve("iteration-001");
@@ -207,7 +255,8 @@ public class BaselineStorageService {
     }
 
     public java.util.Map<String, String> getRunRequestHeaders(String serviceName, String date, String runId) throws IOException {
-        Path runDir = getRunDirectory(serviceName, date, runId);
+        String protocol = detectProtocol(serviceName, date, runId);
+        Path runDir = getRunDirectory(protocol, serviceName, date, runId);
         
 
         Path iterDir = runDir.resolve("iteration-001");
@@ -232,7 +281,8 @@ public class BaselineStorageService {
     }
 
     public RunMetadata getRunMetadata(String serviceName, String date, String runId) throws IOException {
-        Path runDir = getRunDirectory(serviceName, date, runId);
+        String protocol = detectProtocol(serviceName, date, runId);
+        Path runDir = getRunDirectory(protocol, serviceName, date, runId);
         if (!Files.exists(runDir)) return null;
         
         Path metadataFile = runDir.resolve("metadata.json");
@@ -243,7 +293,8 @@ public class BaselineStorageService {
     }
 
     public String getRunRequestPayload(String serviceName, String date, String runId) throws IOException {
-        Path runDir = getRunDirectory(serviceName, date, runId);
+        String protocol = detectProtocol(serviceName, date, runId);
+        Path runDir = getRunDirectory(protocol, serviceName, date, runId);
         
 
         Path iterDir = runDir.resolve("iteration-001");
@@ -277,11 +328,35 @@ public class BaselineStorageService {
     public static String getTodayDate() {
         return LocalDate.now().format(DATE_FORMATTER);
     }
-    public Path getRunDirectory(String serviceName, String date, String runId) {
-        return Paths.get(baseStorageDir, serviceName, date, runId);
+    public Path getRunDirectory(String protocol, String serviceName, String date, String runId) {
+        if (protocol == null || protocol.isEmpty()) {
+            return Paths.get(baseStorageDir, serviceName, date, runId); // Fallback to root
+        }
+        return Paths.get(baseStorageDir, protocol, serviceName, date, runId);
     }
-    private Path getDateDirectory(String serviceName, String date) {
-        return Paths.get(baseStorageDir, serviceName, date);
+    private Path getDateDirectory(String protocol, String serviceName, String date) {
+        if (protocol == null || protocol.isEmpty()) {
+             return Paths.get(baseStorageDir, serviceName, date); // Fallback to root
+        }
+        return Paths.get(baseStorageDir, protocol, serviceName, date);
+    }
+
+    public String detectProtocol(String serviceName, String date, String runId) {
+        // If runId is provided, we check for the specific run folder
+        // If runId is null, we check for the service/date folder
+        for (String p : Arrays.asList("rest", "jms", "soap")) {
+            Path path = (runId != null) ? getRunDirectory(p, serviceName, date, runId) : getDateDirectory(p, serviceName, date);
+            if (Files.exists(path)) return p;
+        }
+        return ""; // Fallback to root
+    }
+
+    public String getProtocolFromType(String testType) {
+        if (testType == null) return "rest"; // Default
+        String type = testType.toUpperCase();
+        if (type.contains("JMS")) return "jms";
+        if (type.contains("SOAP")) return "soap"; 
+        return "rest";
     }
     public static class BaselineRun {
         private final RunMetadata metadata;

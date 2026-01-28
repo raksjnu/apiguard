@@ -87,7 +87,7 @@ document.addEventListener('DOMContentLoaded', () => {
             t.style.opacity = '0';
             t.style.transition = 'opacity 0.5s';
             setTimeout(() => t.remove(), 500);
-        }, 5000);
+        }, 3000);
     };
 
     // console.log('[APP] Check statusIndicator removal...'); 
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!log) return;
         const entry = document.createElement('div');
         entry.className = `log-entry log-${type}`;
-        const ts = new Date().toLocaleTimeString();
+        const ts = new Date().toLocaleTimeString('en-US', { hour12: true, timeZoneName: 'short' });
         
         // Escape HTML for safety, especially for XML/WSDL content
         const escapedMsg = msg
@@ -226,8 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
             };
         }
         
-        log.appendChild(entry);
-        log.scrollTop = log.scrollHeight;
+        log.prepend(entry);
+        log.scrollTop = 0; // consistent with top-posting
         
         // Persist
         sessionStorage.setItem(LOG_STORAGE_KEY, log.innerHTML);
@@ -651,7 +651,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // --- Rendering Results ---
-    const renderResults = (results) => {
+    window.renderResults = (results) => {
+        const resultsContainer = document.getElementById('resultsContainer');
+        if (!resultsContainer) return;
         resultsContainer.innerHTML = '';
         if (!results || results.length === 0) {
             resultsContainer.innerHTML = '<div class="empty-state">No results to show.</div>';
@@ -1057,8 +1059,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const loadBaselineServices = async () => {
         const workDir = document.getElementById('workingDirectory').value.trim();
+        const type = document.getElementById('testType').value; // Get current type
         try {
-            const url = `api/baselines/services${workDir ? '?workDir=' + encodeURIComponent(workDir) : ''}`;
+            const url = `api/baselines/services?type=${encodeURIComponent(type)}${workDir ? '&workDir=' + encodeURIComponent(workDir) : ''}`;
             const response = await fetch(url);
             if (!response.ok) return;
             const services = await response.json();
@@ -1296,6 +1299,11 @@ document.addEventListener('DOMContentLoaded', () => {
         
         document.getElementById('typeRest').classList.toggle('active', isRest);
         document.getElementById('typeSoap').classList.toggle('active', isSoap);
+        
+        // Reload baselines if in Baseline mode
+        if (document.getElementById('comparisonMode').value === 'BASELINE') {
+            loadBaselineServices();
+        }
         const jmsBtn = document.getElementById('typeJms');
         if(jmsBtn) jmsBtn.classList.toggle('active', isJms);
 

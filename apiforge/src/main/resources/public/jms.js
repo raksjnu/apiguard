@@ -10,6 +10,7 @@ const JmsModule = (() => {
     let currentProvider = '';
     let isInitialized = false;
     const seenMessageIds = new Set();
+    let selectedMsgCards = []; // Tracks { id, data }
 
     // -- Initialization --
     const init = () => {
@@ -115,43 +116,22 @@ const JmsModule = (() => {
         // Operation Mode Toggle
         const opMode = document.getElementById('jmsOpMode');
         if (opMode) {
-            opMode.addEventListener('change', () => {
-                const mode = opMode.value;
-                const mainBtn = document.getElementById('compareBtn');
-                const configDiv = document.getElementById('jmsConsumerConfig');
-                
-                if (mainBtn) {
-                     // Check if currently running? Maybe unsafe to switch while running.
-                     // For now, just update text.
-                     if (!mainBtn.disabled) {
-                         mainBtn.innerText = (mode === 'CONSUME') ? '📥 Start Listener' : '📤 Send JMS Message';
-                     }
-                }
-                
-                // Toggle Payload vs Consumer Config
-                const payload = document.getElementById('jmsPayload');
-                
-                if (mode === 'CONSUME') {
-                    if(payload) {
-                        payload.parentElement.style.display = 'none'; // Hide Body label too? 
-                        // Actually payload textarea is sibling to label.
-                        // Let's just hide the textarea for now.
-                        payload.style.display = 'none';
-                    }
-                    if(configDiv) configDiv.style.display = 'block';
-                } else {
-                    if(payload) payload.style.display = 'block';
-                    if(configDiv) configDiv.style.display = 'none';
-                }
-            });
+            opMode.addEventListener('change', syncJmsFields);
             // Trigger initial state
-            opMode.dispatchEvent(new Event('change'));
+            syncJmsFields();
         }
 
-        const opSelect = document.getElementById('jmsOpMode');
-        if (opSelect) {
-            opSelect.addEventListener('change', syncJmsFields);
-            syncJmsFields(); // Initial run
+        // Destination Auto-Discovery
+        const jmsDest = document.getElementById('jmsDestination');
+        if (jmsDest) {
+            jmsDest.addEventListener('input', handleDestDiscovery);
+            // Add a dropdown/list for discovery if not exists
+            if (!document.getElementById('jmsDestSuggestions')) {
+                const datalist = document.createElement('datalist');
+                datalist.id = 'jmsDestSuggestions';
+                document.body.appendChild(datalist);
+                jmsDest.setAttribute('list', 'jmsDestSuggestions');
+            }
         }
 
         // Bind Actions
@@ -220,33 +200,79 @@ const JmsModule = (() => {
         const smartOpAccordion = document.getElementById('jmsSmartOptionsAccordion');
         const adminExtra = document.getElementById('jmsAdminExtra');
         const fetchConfig = document.getElementById('jmsFetchConfig');
+        const baselineSec = document.getElementById('jmsBaselineSection');
         
         const isPublish = (mode === 'PUBLISH');
         const isListen = (mode === 'LISTEN');
         const isAdmin = (['CREATE', 'DELETE', 'PURGE'].includes(mode));
         const isFetch = (['BROWSE', 'CONSUME'].includes(mode));
+        const isBaseline = (mode === 'BASELINE');
         
         if (publishSection) publishSection.style.display = isPublish ? 'block' : 'none';
         if (consumerConfig) consumerConfig.style.display = isListen ? 'block' : 'none';
         if (smartOpAccordion) smartOpAccordion.style.display = isPublish ? 'block' : 'none';
-        if (adminExtra) adminExtra.style.display = (mode === 'CREATE') ? 'block' : 'none';
+        if (adminExtra) adminExtra.style.display = (mode === 'CREATE' || mode === 'DELETE') ? 'block' : 'none';
         if (fetchConfig) fetchConfig.style.display = isFetch ? 'block' : 'none';
+        if (baselineSec) {
+            baselineSec.style.display = isBaseline ? 'block' : 'none';
+            if (isBaseline) setupJmsBaselineUI();
+        }
 
         const compareBtn = document.getElementById('compareBtn');
-        if (compareBtn) {
+        if (compareBtn && !compareBtn.disabled) {
             // Reset Button State (Handles the "Stop Listener" glitch)
             resetListenerBtn(); 
             
             switch(mode) {
-                case 'PUBLISH': compareBtn.innerText = '🚀 Publish Message'; break;
+                case 'PUBLISH': compareBtn.innerText = '🚀 Send JMS Message'; break;
                 case 'BROWSE': compareBtn.innerText = '👁️ Browse Destination'; break;
                 case 'CONSUME': compareBtn.innerText = '📥 Consume Message'; break;
                 case 'LISTEN': compareBtn.innerText = '👂 Start Listener'; break;
                 case 'PURGE': compareBtn.innerText = '🗑️ Purge Destination'; break;
                 case 'CREATE': compareBtn.innerText = '➕ Create/Init'; break;
                 case 'DELETE': compareBtn.innerText = '❌ Delete Destination'; break;
+                case 'BASELINE': compareBtn.innerText = '📀 Replay & Compare'; break;
+                default: compareBtn.innerText = '▶️ Process Action';
             }
         }
+    };
+
+    let discoveryTimeout = null;
+    const handleDestDiscovery = () => {
+        if (discoveryTimeout) clearTimeout(discoveryTimeout);
+        discoveryTimeout = setTimeout(fetchDestinations, 500);
+    };
+
+    const fetchDestinations = async () => {
+        try {
+            const resp = await fetch('api/jms/destinations');
+            if (resp.ok) {
+                const dests = await resp.json();
+                const datalist = document.getElementById('jmsDestSuggestions');
+                if (datalist) {
+                    const input = document.getElementById('jmsDestination');
+                    const filter = input ? input.value.toLowerCase() : '';
+                    
+                    datalist.innerHTML = '';
+                    let count = 0;
+                    dests.forEach(d => {
+                        if (!filter || d.toLowerCase().includes(filter)) {
+                            const opt = document.createElement('option');
+                            opt.value = d;
+                            datalist.appendChild(opt);
+                            count++;
+                        }
+                    });
+                    if (count > 0) {
+                         // Only log if explicit request or debug? 
+                         // User requested "fetching the queue log entry".
+                         // We'll log it if it was triggered by the Browse button logic (which calls this).
+                    }
+                }
+                return dests; // Return for caller usage
+            }
+        } catch (e) { /* ignore discovery errors */ }
+        return [];
     };
 
     // -- Actions --
@@ -526,7 +552,63 @@ const JmsModule = (() => {
     const handleBrowse = async () => {
         const destination = document.getElementById('jmsDestination').value;
         const fetchMax = parseInt(document.getElementById('jmsFetchMax').value) || 10;
-        if (!destination) { showToast('Destination name required.', 'warning'); return; }
+        
+        if (!destination) { 
+            // User Request: If no destination, show available ones
+            showToast('Fetching available destinations...', 'info');
+            const foundDests = await fetchDestinations();
+            
+            if (foundDests && foundDests.length > 0) {
+                 if (foundDests.length === 1) {
+                     // Smart Browse: Only one found, so just browse it!
+                     const singleDest = foundDests[0];
+                     logActivity(`Discovery: Found single destination '${singleDest}'. Auto-browsing...`, 'success');
+                     document.getElementById('jmsDestination').value = singleDest;
+                     // Recursive call with value set
+                     return handleBrowse();
+                 } else {
+                     const destStr = foundDests.join(', ');
+                     logActivity(`Discovery: Found ${foundDests.length} destinations: ${destStr}`, 'success', destStr);
+                     
+                     // Render actionable list in Results
+                     const container = document.getElementById('resultsContainer');
+                     const blockId = 'jms_discovery_' + Date.now();
+                     const block = document.createElement('div');
+                     block.className = 'jms-result-block open';
+                     block.id = blockId;
+                     block.style.cssText = `margin-bottom:20px; border:1px solid #e9d8fd; border-radius:12px; overflow:hidden; background:white;`;
+                     
+                     const listHtml = foundDests.map(d => 
+                        `<div style="padding:10px; border-bottom:1px solid #eee; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-weight:bold; color:#553c9a;">${d}</span>
+                            <div style="display:flex; gap:5px;">
+                                <button class="btn-secondary" onclick="navigator.clipboard.writeText('${d}'); showToast('Copied!', 'success')" style="font-size:0.8rem; padding:4px 8px;">📋</button>
+                                <button class="btn-primary" onclick="document.getElementById('jmsDestination').value='${d}'; JmsModule.handleBrowse()" style="font-size:0.8rem; padding:4px 12px;">Browse ➞</button>
+                            </div>
+                        </div>`
+                     ).join('');
+                     
+                     block.innerHTML = `
+                        <div class="jms-block-header" style="background:#f3e8ff; padding:12px 20px; border-bottom:1px solid #e9d8fd;">
+                            <strong style="color:#44337a;">🔎 Discovered Destinations (${foundDests.length})</strong>
+                            <div style="font-size:0.75rem; color:#666;">Select one to browse</div>
+                        </div>
+                        <div class="jms-block-content" style="max-height:400px; overflow-y:auto;">
+                            ${listHtml}
+                        </div>
+                     `;
+                     
+                     if(container.firstChild) container.insertBefore(block, container.firstChild);
+                     else container.appendChild(block);
+                     
+                     showToast(`Found ${foundDests.length} destinations. Select from list below.`, 'success');
+                 }
+            } else {
+                 logActivity('Discovery: No destinations found.', 'warning');
+                 showToast('No destinations found or discovery not supported.', 'warning');
+            }
+            return; 
+        }
         
         logActivity(`Browsing Destination: ${destination} (limit ${fetchMax})`, 'info');
         try {
@@ -571,6 +653,30 @@ const JmsModule = (() => {
         } catch(e) { console.error(e); }
     };
 
+    // Global selection clearing helper
+    const clearSelectionInBlock = (blockId) => {
+        const block = document.getElementById(blockId);
+        if(!block) return;
+        block.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+            cb.checked = false;
+            // manually trigger change event or just update state directly
+            // since we can't easily access the 'm' data here without parsing,
+            // we'll just rebuild 'selectedMsgCards' by filtering out items from this block?
+            // Easier: just simulate click? No, infinite loop risk.
+            // Let's just reset the global array for items in this block.
+            // We need the ID.
+        });
+        // Simplest: Just clear global selection? 
+        // User asked: "whenever user is selecting the messages and closing the event card ... then automatically selected messages should be unselected."
+        // So we should find which messages were in this block and remove them.
+        
+        // This requires we know which IDs are in this block.
+        // We can find them from the DOM.
+        const msgIdsInBlock = Array.from(block.querySelectorAll('.msg-card')).map(card => card.getAttribute('data-msg-id'));
+        selectedMsgCards = selectedMsgCards.filter(m => !msgIdsInBlock.includes(m.JMSMessageID));
+        console.log('[JMS] Cleared selection for block', blockId);
+    };
+
     const renderJmsResults = (messages, title = 'JMS Messages') => {
         const container = document.getElementById('resultsContainer');
         if (!container) return;
@@ -605,6 +711,8 @@ const JmsModule = (() => {
                     <span style="font-size:0.75rem; background:#d6bcfa; color:white; padding:2px 8px; border-radius:10px; font-weight:bold;">${newMessages.length} msgs</span>
                 </div>
                 <div style="display:flex; align-items:center; gap:15px;">
+                    <button class="btn-primary" onclick="event.stopPropagation(); JmsModule.compareSelected()" style="font-size:0.7rem; padding:4px 10px; border-radius:5px; background:#6b46c1;">✨ Compare Selected</button>
+                    <button class="btn-secondary" onclick="event.stopPropagation(); JmsModule.captureJmsBaseline('${blockId}')" style="font-size:0.7rem; padding:4px 10px; border-radius:5px; background:#4c51bf; color:white;">💾 Save as Baseline</button>
                     <input type="text" placeholder="🔍 Filter results..." onclick="event.stopPropagation()" oninput="JmsModule.filterResults('${blockId}', this.value)" style="font-size:0.75rem; padding:4px 8px; border-radius:15px; border:1px solid #d6bcfa; width:150px; outline:none;">
                     <div style="font-size:0.75rem; color:#6b46c1; font-weight:600;">${new Date().toLocaleTimeString()}</div>
                 </div>
@@ -634,8 +742,11 @@ const JmsModule = (() => {
             const customPropsHtml = renderProps(m.customProperties, 'Application Properties', '#805ad5');
 
             return `
-                <div class="msg-card" style="border-left:5px solid var(--primary-color); padding:15px; background:#fdfaff; border-bottom:1px solid #e9d8fd;">
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px dotted #d6bcfa; padding-bottom:5px;">
+                <div class="msg-card" data-msg-id="${m.JMSMessageID || ''}" data-raw='${JSON.stringify(m).replace(/'/g, "&#39;")}' style="border-left:5px solid var(--primary-color); padding:15px; background:#fdfaff; border-bottom:1px solid #e9d8fd; position:relative;">
+                    <div style="position:absolute; right:10px; top:10px; z-index:10;">
+                        <input type="checkbox" style="transform:scale(1.3); cursor:pointer;" onchange="JmsModule.toggleMsgSelection(this, ${JSON.stringify(m).replace(/"/g, '&quot;')})">
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; border-bottom:1px dotted #d6bcfa; padding-right:30px; padding-bottom:5px;">
                         <span style="font-weight:bold; color:#553c9a; font-size:0.85rem;">💎 ID: ${m.JMSMessageID || 'N/A'}</span>
                         <span style="font-size:0.7rem; color:#6b46c1; font-weight:600;">🕒 ${timestamp}</span>
                     </div>
@@ -662,7 +773,12 @@ const JmsModule = (() => {
         `;
 
         block.innerHTML = headerHtml + contentHtml;
-        container.appendChild(block);
+        // Prepend instead of append
+        if(container.firstChild) {
+            container.insertBefore(block, container.firstChild);
+        } else {
+            container.appendChild(block);
+        }
         
         if (newMessages.length > 0) {
             block.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -672,9 +788,74 @@ const JmsModule = (() => {
     const toggleBlock = (id) => {
         const b = document.getElementById(id);
         if (b) {
+            const wasOpen = b.classList.contains('open');
             b.classList.toggle('open');
             const icon = b.querySelector('.icon');
-            if (icon) icon.innerText = b.classList.contains('open') ? '▲' : '▼';
+            if (icon) icon.innerText = !wasOpen ? '▲' : '▼';
+            
+            if (wasOpen) {
+                // If closing, clear selections within this block
+                clearSelectionInBlock(id);
+            }
+        }
+    };
+
+    const toggleMsgSelection = (checkbox, data) => {
+        if (checkbox.checked) {
+            selectedMsgCards.push(data);
+            checkbox.closest('.msg-card').style.background = '#f0fff4';
+            checkbox.closest('.msg-card').style.borderColor = '#48bb78';
+        } else {
+            selectedMsgCards = selectedMsgCards.filter(m => m.JMSMessageID !== data.JMSMessageID);
+            checkbox.closest('.msg-card').style.background = '#fdfaff';
+            checkbox.closest('.msg-card').style.borderColor = 'var(--primary-color)';
+        }
+        console.log('[JMS] Selected:', selectedMsgCards.length);
+    };
+
+    const compareSelected = async () => {
+        if (selectedMsgCards.length !== 2) {
+            showToast('Please select exactly 2 messages to compare.', 'warning');
+            return;
+        }
+
+        const m1 = selectedMsgCards[0];
+        const m2 = selectedMsgCards[1];
+
+        logActivity(`Comparing Message ${m1.JMSMessageID} vs ${m2.JMSMessageID}`, 'info');
+        
+        // Prepare objects for comparison
+        const obj1 = {
+            headers: { ...m1.systemProperties, ...m1.customProperties },
+            payload: m1.body
+        };
+        const obj2 = {
+            headers: { ...m2.systemProperties, ...m2.customProperties },
+            payload: m2.body
+        };
+
+        try {
+            const resp = await fetch('api/jms/compare-selected', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    msg1: { headers: obj1.headers, payload: obj1.payload },
+                    msg2: { headers: obj2.headers, payload: obj2.payload }
+                })
+            });
+            const result = await resp.json();
+            if (result.error) {
+                showToast('Comparison failed: ' + result.error, 'error');
+            } else {
+                showToast('Comparison successful.', 'success');
+                // Switch to Main view if needed, or just show summary
+                // For JMS, we'll append it to the resultsContainer (where renderResults puts things)
+                if (window.renderResults) {
+                    window.renderResults([result]);
+                }
+            }
+        } catch (e) {
+            console.error(e);
         }
     };
 
@@ -682,10 +863,55 @@ const JmsModule = (() => {
         const block = document.getElementById(blockId);
         if (!block) return;
         const q = query.toLowerCase();
+        
         block.querySelectorAll('.msg-card').forEach(card => {
-            // Use textContent to include hidden payload <pre> content
+            const raw = card.getAttribute('data-raw'); // Use raw data to reset content if needed
+            const origContent = card.innerHTML; // Can't easily restore innerHTML without re-rendering or saving state.
+            // Simplified approach: Toggle display, and try to highlight visible text.
+            // Highlighting inside a complex DOM is tricky.
+            // A safer bet is to highlight only in the Payload <pre> or specific fields.
+            
+            // Always clear highlights first
+            card.querySelectorAll('mark.highlight').forEach(m => {
+                m.replaceWith(document.createTextNode(m.textContent)); // Flatten
+                card.normalize(); // Merge text nodes
+            });
+
+            // Let's search in textContent
+            if (!q) {
+                card.style.display = 'block';
+                return; 
+            }
+
             const text = card.textContent.toLowerCase();
-            card.style.display = text.includes(q) ? 'block' : 'none';
+            if (text.includes(q)) {
+                card.style.display = 'block';
+                // Highlight Logic (Basic)
+                // We'll traverse text nodes and wrap matches.
+                // Note: This is expensive and can break HTML if not careful. 
+                // We will only highlight in the Payload Pre and Property Values for safety.
+                highlightInElement(card, query);
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    };
+    
+    const highlightInElement = (root, term) => {
+        // Recursive text node traversal
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null, false);
+        const nodes = [];
+        while(walker.nextNode()) nodes.push(walker.currentNode);
+        
+        const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+        
+        nodes.forEach(node => {
+            if (node.parentNode.nodeName === 'MARK' || node.parentNode.nodeName === 'SCRIPT' || node.parentNode.nodeName === 'STYLE') return;
+            if (node.nodeValue && regex.test(node.nodeValue)) {
+                 const span = document.createElement('span');
+                 span.innerHTML = node.nodeValue.replace(regex, '<mark class="highlight" style="background:#fefcbf; color:#744210; border-radius:3px; padding:0 2px;">$1</mark>');
+                 node.parentNode.replaceChild(span, node);
+            }
         });
     };
     
@@ -735,9 +961,210 @@ const JmsModule = (() => {
                 else handleStartListener();
                 break;
             case 'PURGE': await handleDrainDest(); break;
+            case 'BASELINE': await handleBaselineReplay(); break;
             case 'CREATE': await handleCreateDest(); break;
             case 'DELETE': await handleDeleteDest(); break;
         }
+    };
+
+    const captureJmsBaseline = async (blockId) => {
+        const block = document.getElementById(blockId);
+        if (!block) return;
+        const msgCards = block.querySelectorAll('.msg-card');
+        if (msgCards.length === 0) return;
+        
+        const serviceName = prompt('Enter Service Name for this baseline:', 'JMS-Provider');
+        if (!serviceName) return;
+        const description = prompt('Enter Description:', 'Captured browse session');
+        
+        const messages = [];
+        msgCards.forEach(card => {
+            // Find the checkbox which has the data
+            const cb = card.querySelector('input[type="checkbox"]');
+            if (cb) {
+                // We need to parse the data from the checkbox attribute
+                // but wait, I can just use the data I passed to renderJmsResults
+                // For simplicity, let's assume we can get it from the checkbox's parent logic
+                // Actually, I'll update the checkbox to store the data in an attribute
+            }
+        });
+        
+        // Let's use a simpler approach: get from selected messages if any, 
+        // OR get all from block.
+        // Actually, the easiest is to just grab the bodies and headers from the DOM or data attributes.
+        // I'll update renderJmsResults to store full data in a data-attribute.
+        msgCards.forEach(card => {
+            const raw = card.getAttribute('data-raw');
+            if (raw) messages.push(JSON.parse(raw));
+        });
+
+        if (messages.length === 0) {
+             showToast('No message data found to capture.', 'warning');
+             return;
+        }
+
+        logActivity(`Capturing JMS Baseline: ${serviceName} with ${messages.length} msgs`, 'info');
+        try {
+            const resp = await fetch('api/jms/baselines/capture', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    serviceName, description,
+                    messages: messages.map(m => ({
+                        payload: m.body,
+                        headers: { ...m.systemProperties, ...m.customProperties }
+                    }))
+                })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                showToast(`Baseline Captured! RunID: ${data.runId}`, 'success');
+                // Fill the replay fields automatically
+                document.getElementById('jmsBaselineService').value = serviceName;
+                document.getElementById('jmsBaselineDate').value = new Date().toISOString().split('T')[0];
+                document.getElementById('jmsBaselineRunId').value = data.runId;
+            } else {
+                showToast('Capture failed: ' + data.error, 'error');
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handleBaselineReplay = async () => {
+        const serviceName = document.getElementById('jmsBaselineService').value;
+        const date = document.getElementById('jmsBaselineDate').value;
+        const runId = document.getElementById('jmsBaselineRunId').value;
+        const destination = document.getElementById('jmsDestination').value;
+        const destType = document.getElementById('jmsDestType').value;
+        
+        if (!date || !runId || !destination) {
+            showToast('Date, RunID, and Destination Name are required for replay.', 'warning');
+            return;
+        }
+
+        logActivity(`Replaying JMS Baseline: ${runId} to ${destination}`, 'info');
+        try {
+            const resp = await fetch('api/jms/baselines/replay', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ serviceName, date, runId, destination, destType })
+            });
+            const results = await resp.json();
+            if (results.error) {
+                showToast('Replay failed: ' + results.error, 'error');
+            } else {
+                showToast(`Replayed ${results.length} iterations. Rendering parity...`, 'success');
+                if (window.renderResults) {
+                    window.renderResults(results);
+                }
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    // -- JMS Baseline Auto-Complete Logic --
+    
+    const setupJmsBaselineUI = () => {
+        console.log('[JMS] Setting up Baseline UI...');
+        const svcSelect = document.getElementById('jmsBaselineService');
+        if (!svcSelect) return;
+        
+        // Always re-bind
+        svcSelect.removeEventListener('change', loadJmsDates);
+        svcSelect.addEventListener('change', loadJmsDates);
+
+        const dateSelect = document.getElementById('jmsBaselineDate');
+        if (dateSelect) {
+            dateSelect.removeEventListener('change', loadJmsRuns);
+            dateSelect.addEventListener('change', loadJmsRuns);
+        }
+
+        // Auto-fetch services immediately
+        loadJmsServices();
+    };
+
+    const loadJmsServices = async () => {
+        const workDir = document.getElementById('workingDirectory')?.value || '';
+        const svcSelect = document.getElementById('jmsBaselineService');
+        if (!svcSelect) return;
+
+        try {
+            const url = `api/baselines/services?type=JMS${workDir ? '&workDir=' + encodeURIComponent(workDir) : ''}`;
+            const resp = await fetch(url);
+            if (resp.ok) {
+                const services = await resp.json();
+                svcSelect.innerHTML = '<option value="">-- Select Service --</option>';
+                services.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = opt.textContent = s;
+                    svcSelect.appendChild(opt);
+                });
+                
+                if (services.length > 0) {
+                    svcSelect.value = services[0];
+                    svcSelect.dispatchEvent(new Event('change'));
+                }
+            }
+        } catch (e) { console.error('Failed to load JMS services', e); }
+    };
+
+    const loadJmsDates = async () => {
+        const service = document.getElementById('jmsBaselineService').value;
+        const dateSelect = document.getElementById('jmsBaselineDate');
+        const workDir = document.getElementById('workingDirectory')?.value || '';
+        if (!service || !dateSelect) return;
+
+        try {
+            const url = `api/baselines/dates/${encodeURIComponent(service)}?type=JMS${workDir ? '&workDir=' + encodeURIComponent(workDir) : ''}`;
+            const resp = await fetch(url);
+            if (resp.ok) {
+                const dates = await resp.json();
+                dateSelect.innerHTML = '<option value="">-- Select Date --</option>';
+                dates.forEach(d => {
+                    const opt = document.createElement('option');
+                    opt.value = d;
+                    // Format for display: yyyymmdd -> yyyy-mm-dd
+                    if (d.length === 8) {
+                        opt.textContent = `${d.substring(0,4)}-${d.substring(4,6)}-${d.substring(6,8)}`;
+                    } else {
+                        opt.textContent = d;
+                    }
+                    dateSelect.appendChild(opt);
+                });
+                
+                if (dates.length > 0) {
+                    dateSelect.value = dates[0];
+                    dateSelect.disabled = false;
+                    dateSelect.dispatchEvent(new Event('change'));
+                }
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const loadJmsRuns = async () => {
+        const service = document.getElementById('jmsBaselineService').value;
+        const date = document.getElementById('jmsBaselineDate').value;
+        const runSelect = document.getElementById('jmsBaselineRunId');
+        const workDir = document.getElementById('workingDirectory')?.value || '';
+        if (!service || !date || !runSelect) return;
+
+        try {
+            const url = `api/baselines/runs/${encodeURIComponent(service)}/${encodeURIComponent(date)}?type=JMS${workDir ? '&workDir=' + encodeURIComponent(workDir) : ''}`;
+            const resp = await fetch(url);
+            if (resp.ok) {
+                const runs = await resp.json();
+                runSelect.innerHTML = '<option value="">-- Select Run --</option>';
+                runs.forEach(r => {
+                    const opt = document.createElement('option');
+                    opt.value = r.runId; 
+                    const ts = r.timestamp ? r.timestamp.split('T')[1].substring(0,8) : '';
+                    opt.textContent = `${r.runId} - ${r.description || ''} (${ts})`;
+                    runSelect.appendChild(opt);
+                });
+                if (runs.length > 0) {
+                    runSelect.value = runs[0].runId;
+                    runSelect.disabled = false;
+                }
+            }
+        } catch (e) { console.error(e); }
     };
 
     return {
@@ -745,6 +1172,9 @@ const JmsModule = (() => {
         runAction,
         toggleBlock,
         filterResults,
+        toggleMsgSelection,
+        compareSelected,
+        captureJmsBaseline,
         stopListener: handleStopListener
     };
 })();

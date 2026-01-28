@@ -4,8 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.awt.Desktop;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import com.raks.apiforge.jms.EmbeddedBrokerService;
 import com.raks.apiforge.jms.JmsConnectorFactory;
 import com.raks.apiforge.jms.JmsService;
@@ -99,9 +104,10 @@ public class ApiForgeWeb {
             try {
                 ObjectMapper mapper = new ObjectMapper();
                 String queryWorkDir = req.queryParams("workDir");
+                String type = req.queryParams("type");
                 String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
-                List<String> services = storageService.listServices();
+                List<String> services = storageService.listServices(type);
                 return mapper.writeValueAsString(services);
             } catch (Exception e) {
                 logger.error("Error fetching baseline services", e);
@@ -487,6 +493,48 @@ public class ApiForgeWeb {
             return "{\"running\": " + EmbeddedBrokerService.isRunning() + "}";
         });
 
+
+        post("/api/jms/compare-selected", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                java.util.Map<String, Object> m1 = (java.util.Map<String, Object>) body.get("msg1");
+                java.util.Map<String, Object> m2 = (java.util.Map<String, Object>) body.get("msg2");
+                
+                ComparisonResult result = new ComparisonResult();
+                result.setOperationName("Manual JMS Comparison");
+                result.setTimestamp(java.time.LocalDateTime.now().toString());
+                
+                ApiCallResult r1 = new ApiCallResult();
+                r1.setResponsePayload((String) m1.get("payload"));
+                // Safely convert headers to Map<String, String>
+                Map<String, Object> h1 = (Map<String, Object>) m1.get("headers");
+                Map<String, String> stringHeaders1 = new HashMap<>();
+                if (h1 != null) h1.forEach((k, v) -> stringHeaders1.put(k, String.valueOf(v)));
+                r1.setResponseHeaders(stringHeaders1);
+                r1.setStatusCode(200);
+                
+                ApiCallResult r2 = new ApiCallResult();
+                r2.setResponsePayload((String) m2.get("payload"));
+                // Safely convert headers to Map<String, String>
+                Map<String, Object> h2 = (Map<String, Object>) m2.get("headers");
+                Map<String, String> stringHeaders2 = new HashMap<>();
+                if (h2 != null) h2.forEach((k, v) -> stringHeaders2.put(k, String.valueOf(v)));
+                r2.setResponseHeaders(stringHeaders2);
+                r2.setStatusCode(200);
+                
+                result.setApi1(r1);
+                result.setApi2(r2);
+                
+                ComparisonEngine.compare(result, "JMS", null, false);
+                
+                return mapper.writeValueAsString(result);
+            } catch (Exception e) {
+                logger.error("Manual comparison failed", e);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
         get("/api/jms/status", (req, res) -> {
             try {
                 return mapper.writeValueAsString(JmsService.getInstance().getStatus());
@@ -539,6 +587,130 @@ public class ApiForgeWeb {
                 return mapper.writeValueAsString(JmsService.getInstance().getDestinationMetadata(destination, destType));
             } catch (Exception e) {
                 res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+
+        post("/api/jms/baselines/capture", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                String serviceName = (String) body.get("serviceName");
+                String description = (String) body.get("description");
+                List<java.util.Map<String, Object>> messages = (List<java.util.Map<String, Object>>) body.get("messages");
+                
+                String storageDir = getStorageDir();
+                BaselineStorageService storage = new BaselineStorageService(storageDir);
+                String date = BaselineStorageService.getTodayDate();
+                String runId = storage.generateRunId(serviceName, date);
+                
+                RunMetadata metadata = new RunMetadata();
+                metadata.setRunId(runId);
+                metadata.setServiceName(serviceName);
+                metadata.setCaptureDate(date);
+                metadata.setCaptureTimestamp(java.time.LocalDateTime.now().toString());
+                metadata.setTestType("JMS");
+                metadata.setDescription(description);
+                metadata.setTotalIterations(messages.size());
+                
+                List<BaselineStorageService.BaselineIteration> iterations = new ArrayList<>();
+                for (int i = 0; i < messages.size(); i++) {
+                    java.util.Map<String, Object> msg = messages.get(i);
+                    // In capture mode, we might just be saving "responses" that we browsed
+                    // or a "request" that we sent. Let's assume the body contains the payload.
+                    String payload = (String) msg.get("payload");
+                    Map<String, Object> rawHeaders = (Map<String, Object>) msg.get("headers");
+                    Map<String, String> headers = stringifyHeaders(rawHeaders);
+                    
+                    IterationMetadata iterMeta = new IterationMetadata();
+                    iterMeta.setIterationNumber(i + 1);
+                    iterMeta.setTimestamp(java.time.LocalDateTime.now().toString());
+                    
+                    iterations.add(new BaselineStorageService.BaselineIteration(
+                        i + 1, payload, headers, iterMeta,
+                        payload, headers, new java.util.HashMap<>()
+                    ));
+                }
+                
+                storage.saveBaseline(metadata, iterations);
+                return "{\"success\": true, \"runId\": \"" + runId + "\"}";
+            } catch (Exception e) {
+                logger.error("JMS Baseline capture failed", e);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/jms/baselines/replay", (req, res) -> {
+            res.type("application/json");
+            try {
+                java.util.Map<String, Object> body = mapper.readValue(req.body(), java.util.Map.class);
+                String service = (String) body.get("serviceName");
+                String dateValue = (String) body.get("date");
+                String date = normalizeDate(dateValue);
+                String runId = (String) body.get("runId");
+                String targetDest = (String) body.get("destination");
+                String destType = (String) body.get("destType");
+                
+                BaselineStorageService storage = new BaselineStorageService(getStorageDir());
+                BaselineStorageService.BaselineRun run = storage.loadBaseline(service, date, runId);
+                
+                List<ComparisonResult> results = new ArrayList<>();
+                for (BaselineStorageService.BaselineIteration iter : run.getIterations()) {
+                    // 1. Send (Replay)
+                    JmsService.getInstance().sendMessage(targetDest, iter.getRequestPayload(), (Map)iter.getRequestHeaders(), destType);
+                    
+                    // 2. Wait and Browse (Auto-detect response)
+                    Thread.sleep(1000); 
+                    List<Map<String, Object>> browsed = JmsService.getInstance().browse(targetDest);
+                    
+                    Map<String, Object> latest = browsed.isEmpty() ? null : browsed.get(browsed.size() - 1);
+                    
+                    // 3. Compare
+                    ComparisonResult result = new ComparisonResult();
+                    result.setOperationName("JMS Replay Parity: " + iter.getIterationNumber());
+                    
+                    ApiCallResult r1 = new ApiCallResult(); // Saved Baseline (Golden)
+                    r1.setResponsePayload(iter.getResponsePayload());
+                    r1.setResponseHeaders(stringifyHeaders((Map)iter.getResponseHeaders()));
+                    r1.setStatusCode(200);
+                    
+                    ApiCallResult r2 = new ApiCallResult(); // New browsed message
+                    if (latest != null) {
+                        r2.setResponsePayload((String) latest.get("body"));
+                        
+                        // Merge system and custom properties for a complete view
+                        Map<String, Object> allProps = new LinkedHashMap<>();
+                        Map<String, Object> systemProps = (Map<String, Object>) latest.get("systemProperties");
+                        Map<String, Object> customProps = (Map<String, Object>) latest.get("customProperties");
+                        if (systemProps != null) allProps.putAll(systemProps);
+                        if (customProps != null) allProps.putAll(customProps);
+                        
+                        r2.setResponseHeaders(stringifyHeaders(allProps));
+                        r2.setStatusCode(200);
+                    } else {
+                        r2.setStatusCode(404);
+                        result.setErrorMessage("No message found in destination after replay.");
+                    }
+                    
+                    result.setApi1(r1);
+                    result.setApi2(r2);
+                    ComparisonEngine.compare(result, "JMS", null, false);
+                    results.add(result);
+                }
+                
+                return mapper.writeValueAsString(results);
+            } catch (Exception e) {
+                logger.error("JMS Replay failed", e);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        get("/api/jms/destinations", (d_req, d_res) -> {
+            try {
+                return mapper.writeValueAsString(JmsService.getInstance().getDestinations());
+            } catch (Exception e) {
+                d_res.status(500);
                 return "{\"error\": \"" + e.getMessage() + "\"}";
             }
         });
@@ -608,5 +780,19 @@ public class ApiForgeWeb {
                 }
             }
         }
+    }
+
+    private static Map<String, String> stringifyHeaders(Map<String, Object> props) {
+        if (props == null) return Collections.emptyMap();
+        Map<String, String> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> entry : props.entrySet()) {
+            result.put(entry.getKey(), entry.getValue() == null ? null : String.valueOf(entry.getValue()));
+        }
+        return result;
+    }
+
+    private static String normalizeDate(String date) {
+        if (date == null) return null;
+        return date.replace("-", "").replace("/", "");
     }
 }

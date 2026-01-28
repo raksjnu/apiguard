@@ -24,6 +24,7 @@
                     <option value="CONSUME">📥 Consume (Once)</option>
                     <option value="LISTEN">👂 Listen (Continuous)</option>
                     <option value="PURGE">🗑️ Drain/Purge</option>
+                    <option value="BASELINE">📀 Baseline Replay & Parity</option>
                     <option value="CREATE">➕ Create/Init</option>
                     <option value="DELETE">❌ Delete Destination</option>
                 </select>
@@ -75,6 +76,17 @@
                     <input type="number" id="jmsConcurrent" value="1" min="1" max="100" style="flex:1;">
                     <span style="font-size:0.7rem; color:#2f855a;">threads</span>
                 </div>
+            </div>
+
+            <!-- Dynamic Section: Baseline Replay -->
+            <div id="jmsBaselineSection" style="display:none; margin-bottom: 15px; background: #fff5f5; padding: 10px; border-radius: 8px; border-left: 4px solid #f56565;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: #c53030;">Baseline Context (Service/Date/RunID)</label>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:5px;">
+                    <select id="jmsBaselineService" style="width:100%; font-size:0.75rem;"><option value="">-- Select Service --</option></select>
+                    <select id="jmsBaselineDate" style="width:100%; font-size:0.75rem;"><option value="">-- Select Date --</option></select>
+                    <select id="jmsBaselineRunId" style="width:100%; font-size:0.75rem;"><option value="">-- Select Run --</option></select>
+                </div>
+                <p style="font-size:0.6rem; color:#c53030; margin-top:5px;">* Replays request messages and compares with auto-browsed response.</p>
             </div>
 
             <!-- Dynamic Section: Composer (Publish) -->
