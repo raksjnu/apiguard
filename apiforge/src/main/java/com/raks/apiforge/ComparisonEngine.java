@@ -60,13 +60,6 @@ public class ComparisonEngine {
         String response1 = api1Result.getResponsePayload();
         String response2 = api2Result.getResponsePayload();
 
-        // --- Auth Failure / Error Detection in Payload ---
-        if (isErrorPayload(response1) || isErrorPayload(response2)) {
-            result.setStatus(ComparisonResult.Status.ERROR);
-            result.setErrorMessage("Invocation failed: Error detected in response payload (likely Auth Failure).");
-            return;
-        }
-
         List<String> differences = new ArrayList<>();
 
 
@@ -261,17 +254,5 @@ public class ComparisonEngine {
                     "Values differ at " + path + ". API 1: " + node1.asText() + ", API 2: " + node2.asText());
         }
         return differences;
-    }
-
-    private static boolean isErrorPayload(String payload) {
-        if (payload == null || payload.trim().isEmpty()) return false;
-        String p = payload.toLowerCase();
-        // Common error patterns in JSON/XML or text
-        return p.contains("\"error\":") || 
-               p.contains("\"errormessage\":") || 
-               p.contains("<error>") || 
-               p.contains("authentication failed") || 
-               p.contains("invalid_client") ||
-               p.contains("access denied");
     }
 }
