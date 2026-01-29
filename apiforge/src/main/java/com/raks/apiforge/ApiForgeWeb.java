@@ -604,7 +604,7 @@ public class ApiForgeWeb {
                 result.setApi1(r1);
                 result.setApi2(r2);
                 
-                ComparisonEngine.compare(result, "JMS", null, false);
+                ComparisonEngine.compare(result, "JMS", null, false, false);
                 
                 return mapper.writeValueAsString(result);
             } catch (Exception e) {
@@ -773,7 +773,7 @@ public class ApiForgeWeb {
                     
                     result.setApi1(r1);
                     result.setApi2(r2);
-                    ComparisonEngine.compare(result, "JMS", null, false);
+                    ComparisonEngine.compare(result, "JMS", null, false, false);
                     results.add(result);
                 }
                 

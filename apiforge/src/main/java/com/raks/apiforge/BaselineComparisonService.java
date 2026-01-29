@@ -228,7 +228,7 @@ public class BaselineComparisonService {
                 result.setBaselineDescription(baseline.getMetadata().getDescription());
                 result.setBaselineTags(baseline.getMetadata().getTags());
                 result.setBaselineCaptureTimestamp(baseline.getMetadata().getCaptureTimestamp());
-                compareWithBaselineIteration(result, baselineIter, config.getTestType(), config.getIgnoredFields(), config.isIgnoreHeaders());
+                compareWithBaselineIteration(result, baselineIter, config.getTestType(), config.getIgnoredFields(), config.isIgnoreHeaders(), config.isIgnoreMetadata());
                 results.add(result);
 
             } catch (Exception e) {
@@ -393,9 +393,10 @@ public class BaselineComparisonService {
                 apiCall.getResponseHeaders(),
                 responseMetadata);
     }
+
     private void compareWithBaselineIteration(ComparisonResult result,
             BaselineStorageService.BaselineIteration baseline,
-            String testType, List<String> ignoredFields, boolean ignoreHeaders) {
+            String testType, List<String> ignoredFields, boolean ignoreHeaders, boolean ignoreMetadata) {
         ApiCallResult baselineApi = new ApiCallResult();
         baselineApi.setUrl(baseline.getRequestMetadata().getEndpoint());
         baselineApi.setStatusCode((Integer) baseline.getResponseMetadata().get("statusCode"));
@@ -440,7 +441,7 @@ public class BaselineComparisonService {
         result.setBaselineCaptureTimestamp(baseline.getRequestMetadata().getTimestamp());
         result.setApi2(baselineApi);
 
-        ComparisonEngine.compare(result, testType, ignoredFields, ignoreHeaders);
+        ComparisonEngine.compare(result, testType, ignoredFields, ignoreHeaders, ignoreMetadata);
     }
     private RunMetadata createRunMetadata(String runId, String serviceName, String date,
             ApiConfig apiConfig, Config config, int totalIterations) {

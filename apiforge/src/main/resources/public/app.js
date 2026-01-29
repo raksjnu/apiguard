@@ -947,6 +947,7 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             ignoredFields: document.getElementById('ignoredFields').value.split(',').map(s=>s.trim()).filter(s=>s),
             ignoreHeaders: document.getElementById('ignoreHeaders').checked,
+            ignoreMetadata: document.getElementById('ignoreMetadata').checked,
             comparisonMode: document.getElementById('comparisonMode').value
         };
     };
@@ -2393,6 +2394,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     window.handleBaselineUI = (mode) => {
         const ignoreHeaders = document.getElementById('ignoreHeaders');
+        const ignoreMetadata = document.getElementById('ignoreMetadata');
         const compareBtn = document.getElementById('compareBtn');
         const op = document.getElementById('baselineOperation').value;
         const accordions = document.querySelectorAll('.accordion');
@@ -2422,8 +2424,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     ignoreHeaders.checked = false;
                     ignoreHeaders.disabled = true;
                 }
+                if (ignoreMetadata) {
+                    ignoreMetadata.checked = false;
+                    ignoreMetadata.disabled = true;
+                }
             } else {
                 if (ignoreHeaders) ignoreHeaders.disabled = false;
+                if (ignoreMetadata) ignoreMetadata.disabled = false;
             }
         } else {
             compareBtn.innerText = '▶ Run Comparison';

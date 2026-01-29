@@ -21,7 +21,7 @@ public class ComparisonEngine {
             "X-Request-ID", "Strict-Transport-Security", "Content-Length", "Vary"
     ));
 
-    public static void compare(ComparisonResult result, String apiType, List<String> ignoredFields, boolean ignoreHeaders) {
+    public static void compare(ComparisonResult result, String apiType, List<String> ignoredFields, boolean ignoreHeaders, boolean ignoreMetadata) {
         ApiCallResult api1Result = result.getApi1();
         ApiCallResult api2Result = result.getApi2();
         
@@ -68,7 +68,9 @@ public class ComparisonEngine {
         }
 
         // --- Metadata Comparison ---
-        compareMetadata(api1Result.getMetadata(), api2Result.getMetadata(), differences, ignoredFields);
+        if (!ignoreMetadata) {
+            compareMetadata(api1Result.getMetadata(), api2Result.getMetadata(), differences, ignoredFields);
+        }
 
         if (response1 == null && response2 == null) {
 

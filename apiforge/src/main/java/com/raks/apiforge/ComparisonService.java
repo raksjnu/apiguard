@@ -53,9 +53,9 @@ public class ComparisonService {
                     isOriginal ? " (Original Input Payload)" : "");
             try {
                 if ("REST".equalsIgnoreCase(config.getTestType())) {
-                    processApis(config.getRestApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields(), config.isIgnoreHeaders(), iterationCount, totalIterations);
+                    processApis(config.getRestApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields(), config.isIgnoreHeaders(), config.isIgnoreMetadata(), iterationCount, totalIterations);
                 } else if ("SOAP".equalsIgnoreCase(config.getTestType())) {
-                    processApis(config.getSoapApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields(), config.isIgnoreHeaders(), iterationCount, totalIterations);
+                    processApis(config.getSoapApis(), currentTokens, allResults, config.getTestType(), isOriginal, config.getIgnoredFields(), config.isIgnoreHeaders(), config.isIgnoreMetadata(), iterationCount, totalIterations);
                 } else {
                     logger.error("Invalid testType specified in config: {}", config.getTestType());
                 }
@@ -97,7 +97,7 @@ public class ComparisonService {
         }
     }
     private void processApis(Map<String, ApiConfig> apis, Map<String, Object> currentTokens,
-            List<ComparisonResult> allResults, String apiType, boolean isOriginal, List<String> ignoredFields, boolean ignoreHeaders, int iterationNumber, int totalIterations) {
+            List<ComparisonResult> allResults, String apiType, boolean isOriginal, List<String> ignoredFields, boolean ignoreHeaders, boolean ignoreMetadata, int iterationNumber, int totalIterations) {
         if (apis == null || apis.isEmpty()) {
             logger.warn("No {} APIs configured.", apiType);
             return;
@@ -253,7 +253,7 @@ public class ComparisonService {
                 logger.info("Comparison - API1 status: {}, API2 status: {}", 
                     httpResponse1.getStatusCode(), httpResponse2.getStatusCode());
                 
-                ComparisonEngine.compare(result, apiType, ignoredFields, ignoreHeaders);
+                ComparisonEngine.compare(result, apiType, ignoredFields, ignoreHeaders, ignoreMetadata);
                 
             } catch (Exception e) {
                 logger.error("Error during operation '{}' comparison: {}", op1.getName(), e.getMessage());

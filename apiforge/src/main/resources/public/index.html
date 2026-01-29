@@ -437,10 +437,14 @@
                                         <label style="font-size: 0.7rem; font-weight: 800; color: #4a5568; text-transform: uppercase;">🚫 Ignored Fields</label>
                                         <input type="text" id="ignoredFields" placeholder="e.g., timestamp, id, duration" value="timestamp, duration" style="font-size: 0.8rem; margin-top: 4px;">
                                     </div>
-                                    <div style="padding-top: 15px;">
+                                    <div style="padding-top: 15px; display: flex; gap: 15px;">
                                         <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
                                             <input type="checkbox" id="ignoreHeaders" style="width: auto; transform: scale(1.1);">
                                             <span style="font-size: 0.8rem; font-weight: 700; color: #4a5568;">Header Match Off</span>
+                                        </label>
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none;">
+                                            <input type="checkbox" id="ignoreMetadata" style="width: auto; transform: scale(1.1);">
+                                            <span style="font-size: 0.8rem; font-weight: 700; color: #4a5568;">Metadata Match Off</span>
                                         </label>
                                     </div>
                                 </div>
@@ -678,37 +682,50 @@
                 </div>
 
                 <div class="help-grid">
-                    <!-- Tech Stack -->
-                    <div class="card help-card" id="help-tech-stack">
-                        <div class="card-header" style="background: rgba(94, 39, 139, 0.05);">
-                            <h2 style="font-size: 1.1rem;">💻 Tech Stack</h2>
-                        </div>
-                        <div class="card-body">
-                            <p>Built with enterprise-grade stability and modern web standards:</p>
-                            <div style="margin-top: 15px;">
-                                <span class="tech-stack-tag">Java 17 (LTS)</span>
-                                <span class="tech-stack-tag">Maven 3.8+</span>
-                                <span class="tech-stack-tag">Spark Java</span>
-                                <span class="tech-stack-tag">Apache HttpClient</span>
-                                <span class="tech-stack-tag">Jackson (JSON)</span>
-                                <span class="tech-stack-tag">XMLUnit (SOAP)</span>
-                                <span class="tech-stack-tag">Vanilla JS/CSS</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Usage Guide -->
-                    <div class="card help-card" id="help-usage">
+                    <!-- User Guide & Feature Overview -->
+                    <div class="card help-card" id="help-usage" style="grid-column: 1 / -1;">
                         <div class="card-header" style="background: rgba(0, 86, 179, 0.05);">
-                            <h2 style="font-size: 1.1rem; color: #0056b3;">🚀 How to Use</h2>
+                            <h2 style="font-size: 1.1rem; color: #0056b3;">🚀 User Guide & Feature Overview</h2>
                         </div>
                         <div class="card-body">
-                            <ol style="padding-left: 20px; font-size: 0.9rem;">
-                                <li><strong>Global Setup:</strong> Set your <em>Working Directory</em> in Utilities for baseline storage.</li>
-                                <li><strong>Configure:</strong> Enter your Endpoint URLs and Payload in the Main panel.</li>
-                                <li><strong>Tokens:</strong> Add iteration tokens (e.g., <code>id=100;101</code>) to test multiple scenarios.</li>
-                                <li><strong>Execute:</strong> Click <em>Run Comparison</em> and inspect the highlighted structural diffs.</li>
-                            </ol>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 30px;">
+                                <div>
+                                    <h5 style="color: #2b6cb0; margin-bottom: 12px; border-bottom: 2px solid #ebf8ff; padding-bottom: 5px;">⚡ Core Comparison</h5>
+                                    <ul style="padding-left: 20px; font-size: 0.9rem; line-height: 1.6;">
+                                        <li><strong>Setup:</strong> Enter Endpoint URLs (API 1 & API 2) and select the method (GET/POST).</li>
+                                        <li><strong>Template Mode:</strong> Use <code>{{token}}</code> in payloads/URLs to iterate through scenarios.</li>
+                                        <li><strong>Iteration Tokens:</strong> Define values in the tokens box (e.g., <code>id=100;101</code>) to run bulk tests.</li>
+                                        <li><strong>Analysis:</strong> Click <em>Run Comparison</em>. Differences in JSON/XML structure are highlighted automatically.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h5 style="color: #2b6cb0; margin-bottom: 12px; border-bottom: 2px solid #ebf8ff; padding-bottom: 5px;">🛠️ Advanced Validation</h5>
+                                    <ul style="padding-left: 20px; font-size: 0.9rem; line-height: 1.6;">
+                                        <li><strong>Ignored Fields:</strong> Exclude specific JSON paths (e.g., <code>id</code>, <code>meta.timestamp</code>) in the <em>Config</em> tab.</li>
+                                        <li><strong>Header Match Off:</strong> Toggle this to ignore all HTTP header differences.</li>
+                                        <li><strong>Metadata Match Off:</strong> Ignore ephemeral differences like response time or size to focus purely on business data logic.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h5 style="color: #2b6cb0; margin-bottom: 12px; border-bottom: 2px solid #ebf8ff; padding-bottom: 5px;">📉 Baseline Engineering</h5>
+                                    <ul style="padding-left: 20px; font-size: 0.9rem; line-height: 1.6;">
+                                        <li><strong>Capture:</strong> Save any successful response as a "Golden Result" for future regression testing.</li>
+                                        <li><strong>Replay:</strong> Re-run requests against live environments using the exact security context stored in the baseline.</li>
+                                        <li><strong>Management:</strong> View, Compare, and Delete saved baselines directly from the <em>Baselines</em> tab.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h5 style="color: #2b6cb0; margin-bottom: 12px; border-bottom: 2px solid #ebf8ff; padding-bottom: 5px;">🔐 Security & Utilities</h5>
+                                    <ul style="padding-left: 20px; font-size: 0.9rem; line-height: 1.6;">
+                                        <li><strong>Mutual TLS:</strong> Upload PFX/JKS keystores in the <em>Authentication</em> tab for secure mTLS connections.</li>
+                                        <li><strong>Messaging Bridge:</strong> Switch to JMS mode to Browse queues, Send messages, and diff asynchronous responses.</li>
+                                        <li><strong>Reporting:</strong> Export detailed HTML comparison reports for offline analysis.</li>
+                                    </ul>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div> <!-- End help-grid -->
