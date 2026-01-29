@@ -39,25 +39,36 @@ public class ApiForgeMain implements Callable<Integer> {
 
         if (configFile != null && configFile.exists()) {
              logger.info("Loading config from explicit file: {}", configFile.getAbsolutePath());
-             config = mapper.readValue(configFile, Config.class);
-        } 
+             config = loadConfigWithFallback(configFile, mapper);
+        }
         
         if (config == null) {
             File cwdConfig = new File("config.yaml");
             if (cwdConfig.exists()) {
                 logger.info("Loading config from CWD: {}", cwdConfig.getAbsolutePath());
-                config = mapper.readValue(cwdConfig, Config.class);
+                config = loadConfigWithFallback(cwdConfig, mapper);
+            } else {
+                logger.info("config.yaml not found in CWD. Bootstrapping default configuration...");
+                bootstrapConfig();
+                // usage of newly bootstrapped config
+                if (cwdConfig.exists()) {
+                    config = loadConfigWithFallback(cwdConfig, mapper);
+                }
             }
         }
 
+        // Final fallback to embedded if bootstrap failed or was skipped
         if (config == null) {
-             logger.info("Loading config from classpath resources");
-             try (java.io.InputStream is = getClass().getClassLoader().getResourceAsStream("config.yaml")) {
+             logger.info("Loading config from classpath resources as final fallback");
+             try (java.io.InputStream is = ApiForgeMain.class.getClassLoader().getResourceAsStream("default_config.yaml")) {
                  if (is != null) {
                      config = mapper.readValue(is, Config.class);
                  }
              }
         }
+        
+        // Bootstrap Data Directories
+        bootstrapDataDirectories();
 
         if (config == null) {
             logger.error("No configuration found. Please provide a config file with -c or ensure config.yaml is in the current directory or resources.");
@@ -92,6 +103,46 @@ public class ApiForgeMain implements Callable<Integer> {
         
         if (exitCode != 0) {
             System.exit(exitCode);
+        }
+    }
+
+
+    // Helper to load config with corruption fallback
+    private static Config loadConfigWithFallback(File file, ObjectMapper mapper) {
+        try {
+            return mapper.readValue(file, Config.class);
+        } catch (Exception e) {
+            logger.error("Failed to load configuration from {}: {}. Falling back to default.", file.getAbsolutePath(), e.getMessage());
+            return null; // Triggers fallback to embedded
+        }
+    }
+
+    private static void bootstrapConfig() {
+        try (java.io.InputStream is = ApiForgeMain.class.getClassLoader().getResourceAsStream("default_config.yaml")) {
+            if (is == null) {
+                logger.error("Embedded default_config.yaml not found! Cannot bootstrap.");
+                return;
+            }
+            java.nio.file.Files.copy(is, new File("config.yaml").toPath(), java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            logger.info("Bootstrapped default config.yaml to current Working Directory.");
+        } catch (Exception e) {
+            logger.error("Failed to bootstrap config.yaml: {}", e.getMessage());
+        }
+    }
+
+    private static void bootstrapDataDirectories() {
+        File dataDir = new File("testData");
+        if (!dataDir.exists()) {
+             if (dataDir.mkdirs()) {
+                 logger.info("Created 'testData' directory.");
+             }
+        }
+        
+        File baselineDir = new File("baselines");
+        if (!baselineDir.exists()) {
+             if (baselineDir.mkdirs()) {
+                 logger.info("Created 'baselines' directory.");
+             }
         }
     }
 }

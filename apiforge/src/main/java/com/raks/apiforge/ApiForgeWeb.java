@@ -32,18 +32,30 @@ public class ApiForgeWeb {
             return yamlMapper.readValue(explicitConfigFile, Config.class);
         }
 
-
         java.io.File cwdConfig = new java.io.File("config.yaml");
         if (cwdConfig.exists()) {
             logger.info("Loading config from CWD: {}", cwdConfig.getAbsolutePath());
-            return yamlMapper.readValue(cwdConfig, Config.class);
+            // If explicit file config fails, we let it bubble up, but if CWD config fails, we might want to fallback?
+            // For now, let's keep it simple and assume if it exists, it should be valid or user fixes it.
+            // ApiForgeMain handles the extraction if missing, so checking CWD here is correct.
+            try {
+                return yamlMapper.readValue(cwdConfig, Config.class);
+            } catch (Exception e) {
+                 logger.error("Failed to parse CWD config.yaml: {}. Falling back to default resource.", e.getMessage());
+            }
         }
-
 
         logger.info("Loading config from classpath resources");
         try (java.io.InputStream is = ApiForgeWeb.class.getClassLoader().getResourceAsStream("config.yaml")) {
+             if (is != null) {
+                 return yamlMapper.readValue(is, Config.class);
+             }
+        }
+        
+        // Final fallback to default_config.yaml if config.yaml is not in CWD or resources
+        try (java.io.InputStream is = ApiForgeWeb.class.getClassLoader().getResourceAsStream("default_config.yaml")) {
              if (is == null) {
-                 throw new java.io.FileNotFoundException("config.yaml not found in resources");
+                 throw new java.io.FileNotFoundException("default_config.yaml not found in resources");
              }
              return yamlMapper.readValue(is, Config.class);
         }
