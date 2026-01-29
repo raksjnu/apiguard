@@ -4,12 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.awt.Desktop;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.io.*;
+import java.nio.file.*;
+import java.util.*;
+import java.text.SimpleDateFormat;
+import java.util.concurrent.*;
 import com.raks.apiforge.jms.EmbeddedBrokerService;
 import com.raks.apiforge.jms.JmsConnectorFactory;
 import com.raks.apiforge.jms.JmsService;
@@ -214,6 +213,25 @@ public class ApiForgeWeb {
             }
         });
         
+        get("/api/baselines/search", (req, res) -> {
+            res.type("application/json");
+            try {
+                String token = req.queryParams("token");
+                String queryWorkDir = req.queryParams("workDir");
+                String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
+                
+                boolean exactMatch = "true".equalsIgnoreCase(req.queryParams("exact"));
+                
+                BaselineStorageService storageService = new BaselineStorageService(storageDir);
+                List<BaselineStorageService.SearchResult> results = storageService.searchBaselines(token, storageDir, exactMatch);
+                return mapper.writeValueAsString(results);
+            } catch (Exception e) {
+                logger.error("Error searching baselines", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+        
         get("/api/utils/ping", (req, res) -> {
             res.type("application/json");
             String targetUrl = req.queryParams("url");
@@ -281,7 +299,16 @@ public class ApiForgeWeb {
             String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
             
             UtilityService utilService = new UtilityService();
-            java.io.File zipFile = utilService.exportBaselines(storageDir, service);
+            String pathsRaw = req.queryParams("paths");
+            List<String> paths = (pathsRaw != null && !pathsRaw.isEmpty()) 
+                ? Arrays.asList(pathsRaw.split(",")) 
+                : Collections.singletonList("ALL");
+            
+            if (paths.contains("ALL")) {
+                paths = Arrays.asList("rest", "soap", "jms"); // Legacy fallback / All protocols
+            }
+            
+            java.io.File zipFile = utilService.exportBaselines(storageDir, paths);
             
             res.header("Content-Disposition", "attachment; filename=" + zipFile.getName());
             res.type("application/zip");
@@ -300,32 +327,35 @@ public class ApiForgeWeb {
             return res.raw();
         });
 
-        post("/api/baselines/import", (req, res) -> {
-            boolean overwrite = "true".equalsIgnoreCase(req.queryParams("overwrite"));
+        post("/api/baselines/import/detect", (req, res) -> {
+            res.type("application/json");
             String queryWorkDir = req.queryParams("workDir");
             String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
-
-            UtilityService utilService = new UtilityService();
-            // Using raw input stream for the zip file
-            byte[] bytes = req.bodyAsBytes();
-            try (java.io.ByteArrayInputStream bais = new java.io.ByteArrayInputStream(bytes)) {
-                if (!overwrite) {
-                    List<String> conflicts = utilService.detectConflicts(storageDir, bais);
-                    if (!conflicts.isEmpty()) {
-                        res.status(409); // Conflict
-                        return new ObjectMapper().writeValueAsString(conflicts);
-                    }
-                    // Reset stream if no conflicts
-                    bais.reset(); 
-                }
-                
-                // Re-read or just use the stream if no conflicts
-                try (java.io.ByteArrayInputStream importStream = new java.io.ByteArrayInputStream(bytes)) {
-                    utilService.importBaselines(storageDir, importStream);
-                }
-                return "{\"success\": true}";
+            
+            try (java.io.InputStream is = new java.io.ByteArrayInputStream(req.bodyAsBytes())) {
+                UtilityService utilService = new UtilityService();
+                List<String> conflicts = utilService.detectConflicts(storageDir, is);
+                return mapper.writeValueAsString(conflicts);
             } catch (Exception e) {
-                logger.error("Import failed", e);
+                logger.error("Error detecting conflicts", e);
+                res.status(500);
+                return "{\"error\": \"" + e.getMessage() + "\"}";
+            }
+        });
+
+        post("/api/baselines/import", (req, res) -> {
+            res.type("application/json");
+            String queryWorkDir = req.queryParams("workDir");
+            String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
+            String conflictAction = req.queryParams("conflictAction"); // OVERWRITE or SKIP
+            if (conflictAction == null) conflictAction = "OVERWRITE";
+
+            try (java.io.InputStream is = new java.io.ByteArrayInputStream(req.bodyAsBytes())) {
+                UtilityService utilService = new UtilityService();
+                List<String> imported = utilService.importBaselines(storageDir, is, conflictAction);
+                return mapper.writeValueAsString(imported);
+            } catch (Exception e) {
+                logger.error("Error importing baselines", e);
                 res.status(500);
                 return "{\"error\": \"" + e.getMessage() + "\"}";
             }

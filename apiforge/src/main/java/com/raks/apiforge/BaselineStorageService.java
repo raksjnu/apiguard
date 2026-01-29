@@ -210,7 +210,10 @@ public class BaselineStorageService {
             if (pDir.exists() && pDir.isDirectory()) {
                 File[] pFiles = pDir.listFiles(f -> f.isDirectory() && !f.getName().equalsIgnoreCase("certs"));
                 if (pFiles != null) {
-                    for (File f : pFiles) services.add(f.getName());
+                    for (File f : pFiles) {
+                         // Fix: Return relative path "protocol/service" instead of just "service"
+                         services.add(p + "/" + f.getName());
+                    }
                 }
             }
         }
@@ -478,5 +481,97 @@ public class BaselineStorageService {
         public String getTimestamp() {
             return timestamp;
         }
+    }
+    public List<SearchResult> searchBaselines(String token, String storageDir, boolean exactMatch) {
+        List<SearchResult> allMatches = new ArrayList<>();
+        if (token == null || token.isEmpty()) return allMatches;
+        
+        String lowerToken = token.toLowerCase();
+        java.util.regex.Pattern pattern = null;
+        if (exactMatch) {
+            pattern = java.util.regex.Pattern.compile("\\b" + java.util.regex.Pattern.quote(lowerToken) + "\\b", java.util.regex.Pattern.CASE_INSENSITIVE);
+        }
+
+        File root = new File(storageDir);
+        if (!root.exists()) return allMatches;
+
+        final java.util.regex.Pattern finalPattern = pattern;
+        try (java.util.stream.Stream<Path> stream = Files.walk(root.toPath())) {
+            stream.filter(p -> Files.isRegularFile(p))
+                .filter(p -> p.getFileName().toString().endsWith(".json") || 
+                             p.getFileName().toString().startsWith("request.") || 
+                             p.getFileName().toString().startsWith("response."))
+                .forEach(p -> {
+                    try {
+                        String content = Files.readString(p);
+                        boolean found = false;
+                        if (exactMatch && finalPattern != null) {
+                            found = finalPattern.matcher(content).find();
+                        } else {
+                            found = content.toLowerCase().contains(lowerToken);
+                        }
+                        
+                        if (found) {
+                            SearchResult res = buildSearchResult(p, content, token);
+                            if (res != null) allMatches.add(res);
+                        }
+                    } catch (IOException e) {
+                        logger.warn("Could not read file during search: {}", p, e);
+                    }
+                });
+        } catch (IOException e) {
+            logger.error("Error walking directory for search", e);
+        }
+        return allMatches;
+    }
+
+    private SearchResult buildSearchResult(Path path, String content, String token) {
+        Path rel = Paths.get(baseStorageDir).relativize(path);
+        String[] parts = rel.toString().split(File.separator.equals("\\") ? "\\\\" : File.separator);
+        
+        if (parts.length < 3) return null;
+
+        SearchResult res = new SearchResult();
+        res.setFilePath(rel.toString().replace("\\", "/"));
+        
+        int idx = content.toLowerCase().indexOf(token.toLowerCase());
+        int start = Math.max(0, idx - 40);
+        int end = Math.min(content.length(), idx + token.length() + 40);
+        res.setSnippet("..." + content.substring(start, end).replace("\n", " ").replace("\r", " ") + "...");
+
+        for (String p : parts) {
+            if (p.startsWith("run-")) res.setRunId(p);
+            else if (p.startsWith("iteration-")) res.setIteration(p);
+            else if (p.matches("\\d{8}")) res.setDate(p);
+            else if (isProtocolDir(p)) res.setProtocol(p);
+            else if (res.getServiceName() == null) res.setServiceName(p);
+        }
+        
+        return res;
+    }
+
+    public static class SearchResult {
+        private String serviceName;
+        private String protocol;
+        private String date;
+        private String runId;
+        private String iteration;
+        private String filePath;
+        private String snippet;
+
+        public String getServiceName() { return serviceName; }
+        public void setServiceName(String serviceName) { this.serviceName = serviceName; }
+        public String getProtocol() { return protocol; }
+        public void setProtocol(String protocol) { this.protocol = protocol; }
+        public String getDate() { return date; }
+        public void setDate(String date) { this.date = date; }
+        public String getRunId() { return runId; }
+        public void setRunId(String runId) { this.runId = runId; }
+        public String getIteration() { return iteration; }
+        public void setIteration(String iteration) { this.iteration = iteration; }
+        public String getFilePath() { return filePath; }
+        public void setFilePath(String filePath) { this.filePath = filePath; }
+        public String getSnippet() { return snippet; }
+        public void setSnippet(String snippet) { this.snippet = snippet; }
     }
 }

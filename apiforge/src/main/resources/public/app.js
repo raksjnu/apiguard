@@ -452,18 +452,45 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadExportServices = async () => {
-        const select = document.getElementById('exportService');
+        const listDiv = document.getElementById('exportServiceList');
         const workDir = document.getElementById('workingDirectory').value.trim();
+        if (!listDiv) return;
+        
         try {
             const resp = await fetch(`api/baselines/services?workDir=${encodeURIComponent(workDir)}`);
             if (resp.ok) {
                 const services = await resp.json();
-                select.innerHTML = '<option value="ALL">-- All Services --</option>';
+                listDiv.innerHTML = '';
+                
+                if (services.length === 0) {
+                    listDiv.innerHTML = '<div class="empty-state" style="padding:10px; font-size:0.75rem;">No baselines found.</div>';
+                    return;
+                }
+
+                // Group by protocol
+                const groups = { 'rest': [], 'soap': [], 'jms': [], 'other': [] };
                 services.forEach(s => {
-                    const opt = document.createElement('option');
-                    opt.value = s;
-                    opt.innerText = s;
-                    select.appendChild(opt);
+                    if (s.startsWith('rest/')) groups.rest.push(s);
+                    else if (s.startsWith('soap/')) groups.soap.push(s);
+                    else if (s.startsWith('jms/')) groups.jms.push(s);
+                    else groups.other.push(s);
+                });
+
+                Object.entries(groups).forEach(([protocol, items]) => {
+                    if (items.length === 0) return;
+                    
+                    const groupTitle = document.createElement('div');
+                    groupTitle.style = "font-size:0.65rem; font-weight:700; color:#4a5568; margin-top:10px; border-bottom:1px solid #edf2f7; padding-bottom:4px; display:flex; justify-content:space-between; align-items:center;";
+                    groupTitle.innerHTML = `<span>📂 ${protocol.toUpperCase()}</span> <a href="#" style="font-size:0.55rem; color:var(--primary-color); text-decoration:none;" onclick="event.preventDefault(); window.selectAllExportProtocol('${protocol}', true)">Select All</a>`;
+                    listDiv.appendChild(groupTitle);
+                    
+                    items.forEach(s => {
+                        const label = document.createElement('label');
+                        label.className = `protocol-${protocol}`;
+                        label.style = "display:flex; align-items:center; gap:8px; font-size:0.75rem; padding:4px 0; cursor:pointer;";
+                        label.innerHTML = `<input type="checkbox" name="exportPath" value="${s}" style="width:auto; margin:0;"> ${s.includes('/') ? s.split('/')[1] : s}`;
+                        listDiv.appendChild(label);
+                    });
                 });
             }
         } catch(e) { console.error('Failed to load export services', e); }
@@ -1002,6 +1029,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 if (!response.ok) throw new Error(`Execution failed: ${response.status}`);
                 const data = await response.json();
+                lastResults = data; // Store for search
                 
                 const matches = data.filter(r => r.status === 'MATCH').length;
                 logActivity(`COMPLETED: Received ${data.length} results. Matches: ${matches}, Mismatches: ${data.length - matches}`, 'success');
@@ -1054,6 +1082,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         if (!response.ok) throw new Error(`Baseline op failed: ${response.status}`);
         const data = await response.json();
+        lastResults = data; // Store for search
         
         const errors = data.filter(r => r.status === 'ERROR');
         if (errors.length > 0) {
@@ -1760,6 +1789,186 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     };
 
+    // --- Search Features ---
+    const initSearch = () => {
+        const searchInput = document.getElementById('tokenSearchInput');
+        const deepScanCheck = document.getElementById('searchArchivedBaselines');
+        const clearBtn = document.getElementById('clearSearchBtn');
+
+        if (!searchInput) return;
+
+        searchInput.oninput = (e) => {
+            const token = e.target.value.trim();
+            const exact = document.getElementById('searchExactMatch')?.checked;
+            if (token === '') {
+                if (lastResults.length > 0) window.renderResults(lastResults);
+                return;
+            }
+            if (!deepScanCheck.checked) {
+                filterInMemory(token, exact);
+            }
+        };
+
+        searchInput.onkeypress = (e) => {
+            if (e.key === 'Enter' && deepScanCheck.checked) {
+                runDeepArchiveSearch(searchInput.value.trim());
+            }
+        };
+
+        clearBtn.onclick = () => {
+            searchInput.value = '';
+            document.getElementById('searchExactMatch').checked = false;
+            if (lastResults.length > 0) window.renderResults(lastResults);
+            else resultsContainer.innerHTML = '<div class="empty-state">Search cleared. Restore results by running a comparison.</div>';
+        };
+    };
+
+    const filterInMemory = (token, exact) => {
+        if (!lastResults || !lastResults.length) return;
+        const lowToken = token.toLowerCase();
+        
+        const filtered = lastResults.filter(res => {
+            const check = (str) => {
+                if (!str) return false;
+                const lowStr = str.toLowerCase();
+                if (exact) {
+                    const regex = new RegExp(`\\b${token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i');
+                    return regex.test(str);
+                }
+                return lowStr.includes(lowToken);
+            };
+
+            // Check Operation Name
+            if (check(res.operationName)) return true;
+            
+            // Check URLs
+            if (check(res.api1?.url)) return true;
+            if (check(res.api2?.url)) return true;
+            
+            // Check Payloads
+            if (check(res.api1?.responsePayload)) return true;
+            if (check(res.api2?.responsePayload)) return true;
+            if (check(res.api1?.requestPayload)) return true;
+            
+            // Check Mismatch Details
+            if (res.differences && res.differences.some(d => check(d))) return true;
+            
+            // Check Tokens
+            if (res.iterationTokens && Object.entries(res.iterationTokens).some(([k,v]) => check(k) || check(String(v)))) return true;
+            
+            return false;
+        });
+
+        window.renderResults(filtered, `🔍 Search: "${token}"${exact ? ' (Exact)' : ''} (${filtered.length} found in current results)`);
+    };
+
+    const runDeepArchiveSearch = async (token) => {
+        if (!token) return;
+        const exact = document.getElementById('searchExactMatch')?.checked;
+        showProgressModal(`Deep Scanning Archives for "${token}"${exact ? ' (Exact)' : ''}...`);
+        try {
+            const wd = document.getElementById('workingDirectory').value.trim();
+            const url = `api/baselines/search?token=${encodeURIComponent(token)}${exact ? '&exact=true' : ''}${wd ? '&workDir=' + encodeURIComponent(wd) : ''}`;
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Search failed');
+            const matches = await response.json();
+            
+            renderDeepSearchResults(matches, token, exact);
+            logActivity(`DEEP SEARCH COMPLETED: Found ${matches.length} matches across archives for "${token}"`, 'info');
+        } catch (err) {
+            logActivity(`SEARCH ERROR: ${err.message}`, 'error');
+            showToast('Deep search failed', 'error');
+        } finally {
+            hideProgressModal();
+        }
+    };
+
+    const renderDeepSearchResults = (matches, token) => {
+        const resultsContainer = document.getElementById('resultsContainer');
+        resultsContainer.innerHTML = '';
+        
+        const summary = document.createElement('div');
+        summary.className = 'card';
+        summary.style.margin = '0 0 20px 0';
+        summary.style.borderLeft = '8px solid #805ad5';
+        summary.style.padding = '20px';
+        
+        summary.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <div style="font-weight:800; color:#805ad5; font-size:1.1rem;">📂 Deep Archive Search Results</div>
+            </div>
+            <div style="font-size: 0.9rem; color: #4a5568;">
+                Found <strong>${matches.length}</strong> occurrences of "<strong>${escapeHtml(token)}</strong>" in saved baselines.
+            </div>
+        `;
+        resultsContainer.appendChild(summary);
+
+        if (matches.length === 0) {
+            resultsContainer.innerHTML += '<div class="empty-state">No occurrences found in archived baselines.</div>';
+            return;
+        }
+
+        matches.forEach((m, idx) => {
+            const item = document.createElement('div');
+            item.className = 'result-item';
+            item.style.marginBottom = '12px';
+            item.style.borderLeft = '6px solid #b794f4';
+            item.style.cursor = 'pointer';
+            
+            item.title = "Click to open this baseline run";
+            item.onclick = async () => {
+                // Navigate to this baseline
+                baselineServiceSelect.value = m.serviceName;
+                // Trigger change to load dates
+                const changeEvent = new Event('change');
+                baselineServiceSelect.dispatchEvent(changeEvent);
+                
+                // Wait a bit for dates to load, then select date
+                setTimeout(async () => {
+                    baselineDateSelect.value = m.date;
+                    baselineDateSelect.dispatchEvent(changeEvent);
+                    
+                    // Wait for runs, then select run and click view
+                    setTimeout(async () => {
+                        baselineRunSelect.value = m.runId;
+                        baselineRunSelect.dispatchEvent(changeEvent);
+                        
+                        // Click the view button
+                        const viewBtn = document.getElementById('viewBaselineBtn');
+                        if (viewBtn) viewBtn.click();
+                        
+                        showToast(`Opened ${m.serviceName} run from ${m.date}`, 'success');
+                        // Scroll to results
+                        document.getElementById('resultsPanel').scrollIntoView({behavior: 'smooth'});
+                    }, 300);
+                }, 300);
+            };
+            
+            const highlightedSnippet = m.snippet.replace(new RegExp(token, 'gi'), match => `<mark style="background:#d6bcfa; color:#2d3748; padding:0 2px; border-radius:2px; font-weight:700;">${match}</mark>`);
+            
+            item.innerHTML = `
+                <div class="result-header" style="padding:12px;">
+                    <div style="flex:1;">
+                        <div style="display:flex; align-items:center; gap:10px; margin-bottom:5px;">
+                            <span class="tech-stack-tag" style="background:#f3e8ff; color:#6b46c1; font-weight:800; text-transform:uppercase; font-size:0.65rem;">${escapeHtml(m.protocol || 'N/A')}</span>
+                            <strong style="font-size:0.9rem; color:var(--primary-color);">${escapeHtml(m.serviceName)}</strong>
+                            <span style="color:#718096; font-size:0.75rem;">|</span>
+                            <span style="color:#4a5568; font-weight:600; font-size:0.8rem;">${escapeHtml(m.date)}</span>
+                            <span style="color:#718096; font-size:0.75rem;">|</span>
+                            <span style="color:#4a5568; font-weight:600; font-size:0.8rem;">${escapeHtml(m.runId)}</span>
+                        </div>
+                        <div style="font-size:0.7rem; color:#718096; font-family:monospace; margin-bottom:5px;">File: ${escapeHtml(m.filePath)}</div>
+                        <div style="background:#fffafa; border:1px dashed #e9d8fd; padding:8px; border-radius:6px; font-size:0.75rem; color:#2d3748; line-height:1.4;">
+                            ${highlightedSnippet}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            resultsContainer.appendChild(item);
+        });
+    };
+
     // --- Sidebar Toggle ---
     const initSidebarToggle = () => {
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -1808,6 +2017,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 baselineServiceSelect.dispatchEvent(new Event('change'));
             }
+            
+            // Sync the export list as well
+            loadExportServices();
         } catch (e) { console.error('Error loading services:', e); }
     };
 
@@ -1911,6 +2123,7 @@ document.addEventListener('DOMContentLoaded', () => {
                              const res = await fetch(url);
                              if(res.ok) {
                                  const data = await res.json();
+                                 lastResults = data; // Store for search
                                  logActivity(`HISTORY LOADED: Received ${data.length} results for ${svc} / ${rn}`, 'info');
                                  renderResults(data, 'HISTORY');
                              } else {
@@ -2000,6 +2213,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    let lastResults = []; // Global store for results to support in-memory search
+    
     // --- Initialization ---
     // --- Baseline UI Events ---
     const opCapture = document.getElementById('opCapture');
@@ -2457,109 +2672,6 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(e) { logActivity('Decoding Error: Invalid Base64.', 'error'); } 
     };
 
-    // Baseline Portability
-    document.getElementById('exportBtn').onclick = async () => {
-        const svc = document.getElementById('exportService').value;
-        const workDir = document.getElementById('workingDirectory').value.trim();
-        const url = `api/baselines/export?service=${encodeURIComponent(svc)}&workDir=${encodeURIComponent(workDir)}`;
-        
-        logActivity(`STARTING: Baseline Export for service: ${svc}`, 'debug');
-        showProgressModal(`Zipping Baselines for ${svc}...`);
-        const btn = document.getElementById('exportBtn');
-        const orig = btn.innerText;
-        btn.innerText = '⏳ Zipping...';
-        
-        try {
-            const resp = await fetch(url);
-            if (!resp.ok) throw new Error('Export failed');
-            const blob = await resp.blob();
-            const downloadUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = downloadUrl;
-            a.download = `baselines_export_${svc}_${new Date().toISOString().slice(0,10)}.zip`;
-            document.body.appendChild(a);
-            a.click();
-            a.remove();
-            logActivity(`EXPORT SUCCESS: Baseline package downloaded.`, 'success');
-            btn.innerText = '✅ Exported!';
-            setTimeout(() => btn.innerText = orig, 2000);
-        } catch(e) { 
-            logActivity(`EXPORT ERROR: ${e.message}`, 'error');
-            alert('Export failed: ' + e.message); 
-            btn.innerText = orig;
-        } finally {
-            hideProgressModal();
-        }
-    };
-
-    const handleImport = async (file, overwrite = false) => {
-        const workDir = document.getElementById('workingDirectory').value.trim();
-        const status = document.getElementById('importStatus');
-        if(status) status.innerText = '⏳ Uploading & Importing...';
-        
-        logActivity(`STARTING: Baseline Import. Overwrite=${overwrite}`, 'debug');
-        showProgressModal(`Unzipping & Importing Baselines...`);
-        
-        try {
-            const resp = await fetch(`api/baselines/import?workDir=${encodeURIComponent(workDir)}&overwrite=${overwrite}`, {
-                method: 'POST',
-                body: await file.arrayBuffer()
-            });
-            
-            if (resp.status === 409) {
-                hideProgressModal();
-                const conflicts = await resp.json();
-                logActivity(`IMPORT CONFLICTS: ${conflicts.length} services already exist in working directory.`, 'warning');
-                if (confirm(`Conflicts detected for: ${conflicts.join(', ')}. Overwrite existing data?`)) {
-                    await handleImport(file, true);
-                } else {
-                    logActivity(`IMPORT CANCELLED: User declined overwrite for ${conflicts.length} services.`, 'info');
-                    if(status) status.innerText = 'Import cancelled by user.';
-                }
-                return;
-            } else if (resp.ok) {
-                const resData = await resp.json();
-                if (resData.success) {
-                    alert('Mock Test Data Loaded Successfully!');
-                    // User Request: Ensure SOAP/REST is selected by default after loading mock data
-                    document.getElementById('testType').value = 'SOAP'; 
-                    syncTypeButtons();
-                    const count = resData.imported ? resData.imported.length : 0;
-                    const fileList = resData.imported ? resData.imported.join(', ') : 'Unknown files';
-                    
-                    logActivity(`IMPORT SUCCESS: Restored ${count} files.`, 'success');
-                    logActivity(`IMPORTED FILES: ${fileList}`, 'debug');
-                    
-                    if(status) status.innerText = '✅ Import Successful!';
-                    loadExportServices(); // Refresh list
-                    setTimeout(hideProgressModal, 1000); 
-                } else {
-                     throw new Error(resData.error || 'Unknown error');
-                }
-            } else {
-                const err = await resp.json();
-                logActivity(`IMPORT ERROR: ${err.error || 'Unknown'}`, 'error');
-                if(status) status.innerText = '❌ Import failed: ' + (err.error || 'Unknown error');
-                hideProgressModal();
-            }
-        } catch(e) { 
-            logActivity(`IMPORT ERROR: ${e.message}`, 'error');
-            if(status) status.innerText = '❌ Connection Error'; 
-            hideProgressModal();
-        }
-    };
-
-    document.getElementById('importFile').onchange = (e) => { 
-        const file = e.target.files[0];
-        if (file) handleImport(file);
-    };
-
-
-    initResize();
-    initUtilResize();
-    initSidebarToggle();
-    initUtilSidebarToggle();
-    loadDefaults();
     
     // Lazy Load JMS UI
     const loadJmsUI = async () => {
@@ -2624,5 +2736,116 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         document.body.removeChild(textArea);
     };
+
+
+    const initBaselineSync = () => {
+        const exportBtn = document.getElementById('exportZipBtn');
+        const importBtn = document.getElementById('importBtn');
+        const importFile = document.getElementById('importFile');
+        const conflictModal = document.getElementById('conflictModal');
+        
+        if (!exportBtn) return;
+        
+        exportBtn.onclick = async () => {
+            const checked = Array.from(document.querySelectorAll('input[name="exportPath"]:checked')).map(el => el.value);
+            if (checked.length === 0) {
+                showToast('Please select at least one service to export', 'error');
+                return;
+            }
+            
+            const wd = document.getElementById('workingDirectory').value.trim();
+            const paths = checked.join(',');
+            window.open(`api/baselines/export?paths=${encodeURIComponent(paths)}${wd ? '&workDir=' + encodeURIComponent(wd) : ''}`);
+        };
+
+        window.selectAllExportProtocol = (protocol, checked) => {
+            document.querySelectorAll(`.protocol-${protocol} input`).forEach(el => el.checked = checked);
+        };
+
+        let tempImportBytes = null;
+
+        importFile.onchange = async (e) => {
+            if (!e.target.files.length) return;
+            const file = e.target.files[0];
+            const wd = document.getElementById('workingDirectory').value.trim();
+            
+            showProgressModal(`Analyzing ZIP content...`);
+            try {
+                tempImportBytes = await file.arrayBuffer();
+                const response = await fetch(`api/baselines/import/detect${wd ? '?workDir=' + encodeURIComponent(wd) : ''}`, {
+                    method: 'POST',
+                    body: tempImportBytes
+                });
+                
+                hideProgressModal();
+                if (!response.ok) throw new Error('Collision check failed');
+                const conflicts = await response.json();
+                
+                if (conflicts && conflicts.length > 0) {
+                    showConflictModal(conflicts);
+                } else {
+                    // No conflicts, proceed directly
+                    await executeImport('SKIP');
+                }
+            } catch(err) {
+                hideProgressModal();
+                showToast(`Import pre-check failed: ${err.message}`, 'error');
+            }
+        };
+
+        const showConflictModal = (conflicts) => {
+            const list = document.getElementById('conflictList');
+            list.innerHTML = conflicts.map(c => `• ${c}`).join('<br>');
+            conflictModal.style.display = 'flex';
+        };
+
+        const executeImport = async (action) => {
+            if (!tempImportBytes) return;
+            conflictModal.style.display = 'none';
+            const wd = document.getElementById('workingDirectory').value.trim();
+            
+            showProgressModal(`Importing baselines (${action})...`);
+            try {
+                const response = await fetch(`api/baselines/import?conflictAction=${action}${wd ? '&workDir=' + encodeURIComponent(wd) : ''}`, {
+                    method: 'POST',
+                    body: tempImportBytes
+                });
+                
+                hideProgressModal();
+                if (response.ok) {
+                    const result = await response.json();
+                    showToast(`Successfully imported ${result.length} files`, 'success');
+                    logActivity(`IMPORT: ${result.length} files imported from ZIP. Conflicts handled as: ${action}`, 'success');
+                    loadBaselineServices(); // Refresh list
+                } else {
+                    const errorData = await response.json().catch(() => ({}));
+                    showToast(`Import failed: ${errorData.error || response.status}`, 'error');
+                }
+            } catch(err) {
+                hideProgressModal();
+                showToast(`Import error: ${err.message}`, 'error');
+            }
+            importFile.value = ''; // Reset
+            tempImportBytes = null;
+        };
+
+        document.getElementById('importOverwriteBtn').onclick = () => executeImport('OVERWRITE');
+        document.getElementById('importSkipBtn').onclick = () => executeImport('SKIP');
+        document.getElementById('importCancelBtn').onclick = () => {
+            conflictModal.style.display = 'none';
+            importFile.value = '';
+            tempImportBytes = null;
+        };
+    };
+
+
+
+    initResize();
+    initUtilResize();
+    initSidebarToggle();
+    initUtilSidebarToggle();
+    initSearch();
+    initBaselineSync();
+    loadDefaults();
 
 });

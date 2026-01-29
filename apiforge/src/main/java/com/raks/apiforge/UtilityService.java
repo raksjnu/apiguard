@@ -11,37 +11,45 @@ import java.util.zip.*;
 public class UtilityService {
     private static final Logger logger = LoggerFactory.getLogger(UtilityService.class);
 
-    public File exportBaselines(String storageDir, String serviceName) throws IOException {
+    public File exportBaselines(String storageDir, List<String> relativePaths) throws IOException {
         File zipFile = File.createTempFile("export_", ".zip");
+        Path rootPath = Paths.get(storageDir);
         
         try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile))) {
-            Path sourcePath = Paths.get(storageDir);
-            
-            if (serviceName.equalsIgnoreCase("ALL")) {
-                zipDirectory(sourcePath, sourcePath, zos);
-            } else {
-                Path servicePath = sourcePath.resolve(serviceName);
-                if (Files.exists(servicePath)) {
-                    zipDirectory(servicePath, sourcePath, zos);
-                } else {
-                    throw new FileNotFoundException("Service not found: " + serviceName);
+            for (String rel : relativePaths) {
+                Path sourcePath = rootPath.resolve(rel);
+                if (Files.exists(sourcePath)) {
+                    if (Files.isDirectory(sourcePath)) {
+                        zipDirectory(sourcePath, rootPath, zos);
+                    } else {
+                        zipFile(sourcePath, rootPath, zos);
+                    }
                 }
             }
         }
         return zipFile;
     }
 
+    private void zipFile(Path file, Path base, ZipOutputStream zos) throws IOException {
+        ZipEntry zipEntry = new ZipEntry(base.relativize(file).toString().replace("\\", "/"));
+        zos.putNextEntry(zipEntry);
+        Files.copy(file, zos);
+        zos.closeEntry();
+    }
+
     private void zipDirectory(Path folder, Path base, ZipOutputStream zos) throws IOException {
-        Files.walk(folder).filter(path -> !Files.isDirectory(path)).forEach(path -> {
-            ZipEntry zipEntry = new ZipEntry(base.relativize(path).toString());
-            try {
-                zos.putNextEntry(zipEntry);
-                Files.copy(path, zos);
-                zos.closeEntry();
-            } catch (IOException e) {
-                logger.error("Error zipping file: {}", path, e);
-            }
-        });
+        try (java.util.stream.Stream<Path> stream = Files.walk(folder)) {
+            stream.filter(path -> !Files.isDirectory(path)).forEach(path -> {
+                ZipEntry zipEntry = new ZipEntry(base.relativize(path).toString().replace("\\", "/"));
+                try {
+                    zos.putNextEntry(zipEntry);
+                    Files.copy(path, zos);
+                    zos.closeEntry();
+                } catch (IOException e) {
+                    logger.error("Error zipping file: {}", path, e);
+                }
+            });
+        }
     }
 
     public List<String> detectConflicts(String storageDir, InputStream zipStream) throws IOException {
@@ -51,21 +59,33 @@ public class UtilityService {
 
         try (ZipInputStream zis = new ZipInputStream(new FileInputStream(tempZip))) {
             ZipEntry entry;
-            Set<String> topLevelDirs = new HashSet<>();
+            Set<String> conflictPaths = new HashSet<>();
             while ((entry = zis.getNextEntry()) != null) {
                 String name = entry.getName();
-                int firstSlash = name.indexOf('/');
-                if (firstSlash > 0) {
-                    topLevelDirs.add(name.substring(0, firstSlash));
-                } else if (entry.isDirectory()) {
-                    topLevelDirs.add(name.replace("/", ""));
+                
+                // Logic:
+                // If path starts with rest/, soap/ or jms/, check the NEXT level (the service level).
+                // If valid service level found, check if that specific service exists.
+                // Otherwise fall back to top level check (legacy support).
+                
+                String[] parts = name.split("/");
+                if (parts.length >= 2 && isProtocolDir(parts[0])) {
+                     // Check "protocol/service"
+                     String serviceKey = parts[0] + "/" + parts[1];
+                     conflictPaths.add(serviceKey);
+                } else if (!name.contains("/") && entry.isDirectory()) {
+                     // Root folder
+                     conflictPaths.add(name.replace("/", ""));
+                } else if (name.indexOf('/') > 0) {
+                     // Top level dir (legacy e.g. "service1/")
+                     conflictPaths.add(name.substring(0, name.indexOf('/')));
                 }
                 zis.closeEntry();
             }
 
-            for (String dir : topLevelDirs) {
-                if (Files.exists(Paths.get(storageDir).resolve(dir))) {
-                    conflicts.add(dir);
+            for (String relativePath : conflictPaths) {
+                if (Files.exists(Paths.get(storageDir).resolve(relativePath))) {
+                    conflicts.add(relativePath);
                 }
             }
         } finally {
@@ -74,21 +94,73 @@ public class UtilityService {
         return conflicts;
     }
 
-    public List<String> importBaselines(String storageDir, InputStream zipStream) throws IOException {
+    private boolean isProtocolDir(String name) {
+        return Arrays.asList("rest", "jms", "soap").contains(name.toLowerCase());
+    }
+
+    public List<String> importBaselines(String storageDir, InputStream zipStream, String conflictAction) throws IOException {
         List<String> importedFiles = new ArrayList<>();
-        try (ZipInputStream zis = new ZipInputStream(zipStream)) {
+        File tempZip = File.createTempFile("import_", ".zip");
+        Files.copy(zipStream, tempZip.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+        Set<String> pathsToSkip = new HashSet<>();
+        if ("SKIP".equalsIgnoreCase(conflictAction)) {
+            try (ZipInputStream zis = new ZipInputStream(new FileInputStream(tempZip))) {
+                ZipEntry entry;
+                while ((entry = zis.getNextEntry()) != null) {
+                    String name = entry.getName();
+                    String[] parts = name.split("/");
+                    
+                    if (parts.length >= 2 && isProtocolDir(parts[0])) {
+                         // Check specific service existence
+                         String serviceKey = parts[0] + "/" + parts[1];
+                         if (Files.exists(Paths.get(storageDir).resolve(serviceKey))) {
+                             pathsToSkip.add(serviceKey);
+                         }
+                    } else {
+                         // Fallback legacy
+                         int firstSlash = name.indexOf('/');
+                         if (firstSlash > 0) {
+                            String topDir = name.substring(0, firstSlash);
+                            if (Files.exists(Paths.get(storageDir).resolve(topDir))) {
+                                pathsToSkip.add(topDir);
+                            }
+                         }
+                    }
+                    zis.closeEntry();
+                }
+            }
+        }
+
+        try (ZipInputStream zis = new ZipInputStream(new FileInputStream(tempZip))) {
             ZipEntry entry;
             while ((entry = zis.getNextEntry()) != null) {
-                Path targetPath = Paths.get(storageDir).resolve(entry.getName());
+                String name = entry.getName();
+                // SKIP Check
+                boolean shouldSkip = false;
+                for (String skipPath : pathsToSkip) {
+                    if (name.startsWith(skipPath + "/") || name.equals(skipPath) || name.equals(skipPath + "/")) {
+                        shouldSkip = true;
+                        break;
+                    }
+                }
+                if (shouldSkip) {
+                    zis.closeEntry();
+                    continue;
+                }
+                
+                Path targetPath = Paths.get(storageDir).resolve(name);
                 if (entry.isDirectory()) {
                     Files.createDirectories(targetPath);
                 } else {
                     Files.createDirectories(targetPath.getParent());
                     Files.copy(zis, targetPath, StandardCopyOption.REPLACE_EXISTING);
-                    importedFiles.add(entry.getName());
+                    importedFiles.add(name);
                 }
                 zis.closeEntry();
             }
+        } finally {
+            tempZip.delete();
         }
         return importedFiles;
     }
