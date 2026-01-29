@@ -268,7 +268,7 @@
                                     </div>
                                 </div>
     
-                                <div class="accordion" id="securityAccordion">
+                                <div class="accordion" id="securitySection">
                                     <div class="accordion-header">
                                         <span>🔒 Security & Authentication</span>
                                         <div style="display:flex; align-items:center; gap:10px;">
@@ -278,9 +278,9 @@
                                     </div>
                                     <div class="accordion-content">
                                         <!-- Basic Auth Section -->
-                                        <div style="margin-bottom: 20px; padding: 12px; background: rgba(235, 248, 255, 0.5); border-radius: 8px; border: 1px solid #bee3f8;">
-                                            <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px; user-select: none;">
-                                                <input type="checkbox" id="enableAuth" style="width: auto; transform: scale(1.1);">
+                                        <div style="margin-bottom: 20px; padding: 15px; background: rgba(235, 248, 255, 0.4); border-radius: 8px; border: 1px solid #bee3f8; border-left: 6px solid #4299e1;">
+                                            <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; user-select: none; cursor: pointer; white-space: nowrap;">
+                                                <input type="checkbox" id="enableAuth" style="width: auto; transform: scale(1.1); margin: 0;">
                                                 <span style="font-size: 0.9rem; font-weight: 700; color: #2b6cb0;">Basic Authentication</span>
                                             </label>
                                             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
@@ -296,70 +296,78 @@
                                         </div>
 
                                         <!-- mTLS Section -->
-                                        <div style="margin-bottom: 15px; padding: 12px; background: rgba(235, 248, 255, 0.8); border-radius: 8px; border: 1.5px solid #63b3ed; box-shadow: 0 2px 4px rgba(66, 153, 225, 0.1);">
-                                            <label style="display: flex; align-items: center; gap: 10px; user-select: none;">
-                                                <input type="checkbox" id="useMTLS" style="transform: scale(1.2);">
-                                                <span style="font-size: 0.9rem; font-weight: 800; color: #2c5282;">🔒 ENABLE mTLS / CERTIFICATES</span>
-                                            </label>
-                                            <div style="font-size: 0.7rem; color: #4a5568; margin-top: 5px; font-style: italic; margin-left: 28px;">
-                                                Must be checked to use certificates below.
-                                            </div>
-                                        </div>
-
-                                        <div style="margin-bottom: 20px; border-bottom: 1px solid #edf2f7; padding-bottom: 15px;">
-                                            <label style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 8px;" title="A bundle containing your Client Certificate AND Private Key. Supports .pfx, .p12, and Java Keystore (.jks) formats.">
-                                                Option A: Client Bundle (PFX / JKS) ℹ️
-                                            </label>
-                                            <div style="display: flex; gap: 5px; margin-bottom: 10px;">
-                                                <input type="text" id="pfxPath" placeholder="C:\path\to\cert.p12" style="flex: 1; font-size: 0.8rem;">
-                                                <button type="button" class="btn-secondary" onclick="document.getElementById('pfxFile').click()" style="padding: 5px 10px; font-size: 0.8rem;">📂</button>
-                                                <input type="file" id="pfxFile" style="display: none;" onchange="uploadCert('pfx')">
+                                        <div style="margin-bottom: 15px; padding: 15px; background: #fff; border-radius: 12px; border: 1.5px solid #cbd5e0; border-left: 6px solid #63b3ed; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);">
+                                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0;" id="mtlsHeaderRow">
+                                                <label style="display: flex; align-items: center; gap: 8px; user-select: none; cursor: pointer; white-space: nowrap; margin: 0; padding: 0;">
+                                                    <input type="checkbox" id="useMTLS" style="transform: scale(1.1); margin: 0;">
+                                                    <span style="font-size: 0.9rem; font-weight: 800; color: #2c5282;">🔒 Enable mTLS Certificates</span>
+                                                </label>
+                                                <button type="button" id="clearSecurityBtn" class="btn-secondary" style="font-size: 0.65rem; padding: 4px 8px; color: #e53e3e; border-color: #feb2b2; background: #fff5f5;">🗑️ Clear Config</button>
                                             </div>
 
-                                            <label style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 8px;" title="Individual PEM-formatted files. Commonly used in enterprise environments (.crt, .pem, .key).">
-                                                Option B: Individual PEM Files ℹ️
-                                            </label>
-                                            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px;">
-                                                <div>
-                                                    <label style="font-size: 0.65rem; color: #4a5568; display: block; margin-bottom: 3px;">Certificate (CRT/PEM)</label>
-                                                    <div style="display: flex; gap: 4px;">
-                                                        <input type="text" id="clientCertPath" placeholder="cert.crt" style="flex: 1; font-size: 0.75rem;">
-                                                        <button type="button" class="btn-secondary" onclick="document.getElementById('clientCertFile').click()" style="padding: 2px 8px; font-size: 0.7rem;">📂</button>
-                                                        <input type="file" id="clientCertFile" style="display: none;" onchange="uploadCert('clientCert')">
+                                            <div id="mtlsOptions" style="display: none; padding-top: 15px; margin-top: 15px; border-top: 1px dashed #e2e8f0; transition: all 0.3s ease;">
+                                                <!-- Option A: PEM Files (ON TOP) -->
+                                                <div style="margin-bottom: 15px; padding: 10px 10px 10px 0; background: #f7fafc; border-radius: 8px; border: 1px solid #edf2f7;">
+                                                    <label style="display: flex; align-items: center; justify-content: flex-start; gap: 8px; font-size: 0.75rem; font-weight: 800; color: #4a5568; margin: 0 0 10px 0; padding: 0; cursor: pointer; white-space: nowrap; width: 100%;">
+                                                        <input type="radio" name="mtlsType" id="typePem" value="PEM" checked style="margin: 0; width: auto;"> 
+                                                        <span>Option A: Individual PEM Files ℹ️</span>
+                                                    </label>
+                                                    <div id="pemInputs" style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding-left: 10px;">
+                                                        <div>
+                                                            <label style="font-size: 0.65rem; color: #718096; display: block; margin-bottom: 4px; font-weight: 700;">Certificate (CRT/PEM)</label>
+                                                            <div style="display: flex; gap: 5px;">
+                                                                <input type="text" id="clientCertPath" placeholder="cert.crt" style="flex: 1; font-size: 0.75rem;">
+                                                                <button type="button" class="btn-secondary" onclick="document.getElementById('clientCertFile').click()" style="padding: 4px 8px; font-size: 0.8rem;">📂</button>
+                                                                <input type="file" id="clientCertFile" style="display: none;" onchange="uploadCert('clientCert')">
+                                                            </div>
+                                                        </div>
+                                                        <div>
+                                                            <label style="font-size: 0.65rem; color: #718096; display: block; margin-bottom: 4px; font-weight: 700;">Private Key (KEY)</label>
+                                                            <div style="display: flex; gap: 5px;">
+                                                                <input type="text" id="clientKeyPath" placeholder="cert.key" style="flex: 1; font-size: 0.75rem;">
+                                                                <button type="button" class="btn-secondary" onclick="document.getElementById('clientKeyFile').click()" style="padding: 4px 8px; font-size: 0.8rem;">📂</button>
+                                                                <input type="file" id="clientKeyFile" style="display: none;" onchange="uploadCert('clientKey')">
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                                <div>
-                                                    <label style="font-size: 0.65rem; color: #4a5568; display: block; margin-bottom: 3px;">Private Key (KEY)</label>
-                                                    <div style="display: flex; gap: 4px;">
-                                                        <input type="text" id="clientKeyPath" placeholder="cert.key" style="flex: 1; font-size: 0.75rem;">
-                                                        <button type="button" class="btn-secondary" onclick="document.getElementById('clientKeyFile').click()" style="padding: 2px 8px; font-size: 0.7rem;">📂</button>
-                                                        <input type="file" id="clientKeyFile" style="display: none;" onchange="uploadCert('clientKey')">
+
+                                                <!-- Option B: PFX / JKS Bundle -->
+                                                <div style="margin-bottom: 15px; padding: 10px 10px 10px 0; background: #f7fafc; border-radius: 8px; border: 1px solid #edf2f7;">
+                                                    <label style="display: flex; align-items: center; justify-content: flex-start; gap: 8px; font-size: 0.75rem; font-weight: 800; color: #4a5568; margin: 0 0 10px 0; padding: 0; cursor: pointer; white-space: nowrap; width: 100%;">
+                                                        <input type="radio" name="mtlsType" id="typePfx" value="PFX" style="margin: 0; width: auto;">
+                                                        <span>Option B: Client Bundle (PFX / JKS) ℹ️</span>
+                                                    </label>
+                                                    <div id="pfxInputs" style="opacity: 0.5; pointer-events: none; padding-left: 10px;">
+                                                        <div style="display: flex; gap: 8px;">
+                                                            <input type="text" id="pfxPath" placeholder="C:\path\to\cert.p12" style="flex: 1; font-size: 0.8rem;">
+                                                            <button type="button" class="btn-secondary" onclick="document.getElementById('pfxFile').click()" style="padding: 5px 12px; font-size: 0.8rem;">📂</button>
+                                                            <input type="file" id="pfxFile" style="display: none;" onchange="uploadCert('pfx')">
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        </div>
 
-                                        <div style="margin-bottom: 15px;">
-                                            <label style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 5px;" title="The password required to unlock the PFX/JKS bundle or Individual Private Key.">
-                                                Passphrase / Password ℹ️
-                                            </label>
-                                            <input type="password" id="passphrase" placeholder="Keystore or Key password" style="font-size: 0.8rem;">
-                                        </div>
-
-                                        <div style="margin-bottom: 15px;">
-                                            <label style="font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 5px;" title="The Trusted Root CA certificate (PEM format) or a Java Truststore (.jks) to verify the server.">
-                                                Trust CA / Truststore (PEM / JKS) ℹ️
-                                            </label>
-                                            <div style="display: flex; gap: 5px;">
-                                                <input type="text" id="caCertPath" placeholder="C:\path\to\ca.pem" style="flex: 1; font-size: 0.8rem;">
-                                                <button type="button" class="btn-secondary" onclick="document.getElementById('caCertFile').click()" style="padding: 5px 10px; font-size: 0.8rem;">📂</button>
-                                                <input type="file" id="caCertFile" style="display: none;" onchange="uploadCert('ca')">
+                                                <!-- Shared Configuration (Passphrase & Truststore) -->
+                                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #e2e8f0;">
+                                                    <div>
+                                                        <label style="font-size: 0.72rem; font-weight: 800; color: #4a5568; display: block; margin-bottom: 5px;">Passphrase / Password ℹ️</label>
+                                                        <input type="password" id="passphrase" placeholder="Key or Keystore password" style="font-size: 0.8rem; padding: 8px;">
+                                                    </div>
+                                                    <div>
+                                                        <label style="font-size: 0.72rem; font-weight: 800; color: #4a5568; display: block; margin-bottom: 5px;">Trust CA / Truststore ℹ️</label>
+                                                        <div style="display: flex; gap: 5px;">
+                                                            <input type="text" id="caCertPath" placeholder="ca.pem / truststore.jks" style="flex: 1; font-size: 0.8rem; padding: 8px;">
+                                                            <button type="button" class="btn-secondary" onclick="document.getElementById('caCertFile').click()" style="padding: 5px 10px;">📂</button>
+                                                            <input type="file" id="caCertFile" style="display: none;" onchange="uploadCert('ca')">
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
 
                                         <div id="validationResult" style="display: none; padding: 10px; border-radius: 6px; font-size: 0.75rem; margin-bottom: 12px; border: 1px solid transparent;"></div>
 
-                                        <button type="button" id="validateCertsBtn" class="btn-secondary" style="width: 100%; border-style: dashed; border-color: var(--primary-color); color: var(--primary-color); font-weight: 700; font-size: 0.8rem;">
+                                        <button type="button" id="validateCertsBtn" class="btn-secondary" style="width: 100%; border-style: dashed; border-color: var(--primary-color); color: var(--primary-color); font-weight: 700; font-size: 0.8rem; padding: 10px; border-radius: 8px;">
                                             🔍 Validate Security Configuration
                                         </button>
                                     </div>
@@ -376,7 +384,7 @@
                             </div>
 
                             <!-- Comparison Settings Area -->
-                            <div style="margin: 15px 0; padding: 12px; background: #fff; border-radius: 10px; border: 1px dashed var(--border-color);">
+                            <div style="margin: 15px 0; padding: 12px; background: #fff; border-radius: 10px; border: 1px dashed var(--border-color); border-left: 6px solid #ecc94b;">
                                 <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
                                     <div style="flex: 1; min-width: 150px;">
                                         <label style="font-size: 0.7rem; font-weight: 800; color: #4a5568; text-transform: uppercase;">🚫 Ignored Fields</label>

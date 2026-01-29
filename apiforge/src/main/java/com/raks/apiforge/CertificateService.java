@@ -31,7 +31,7 @@ public class CertificateService {
         
         Map<String, Object> result = new HashMap<>();
         result.put("success", true);
-        result.put("path", targetFile.getAbsolutePath().replace("\\", "/"));
+        result.put("path", "certs/" + fileName);
         return result;
     }
 
@@ -41,6 +41,8 @@ public class CertificateService {
             String path = (String) params.get("path");
             String password = (String) params.get("passphrase");
             String type = (String) params.get("type"); // JKS, PFX, PEM, PEM_PAIR
+            String storageDir = (String) params.get("workDir");
+            logger.info("AUDIT: Certificate validation request. Type: {}, Path: {}, WorkDir: {}", type, path, storageDir);
 
             if (path == null || path.isEmpty()) {
                 result.put("valid", false);
@@ -48,10 +50,16 @@ public class CertificateService {
                 return result;
             }
 
+            // Resolve relative path if storageDir is provided
             File file = new File(path);
+            if (!file.isAbsolute() && storageDir != null && !storageDir.isEmpty()) {
+                file = new File(storageDir, path);
+                logger.info("Resolved relative security path {} to absolute: {}", path, file.getAbsolutePath());
+            }
+
             if (!file.exists()) {
                 result.put("valid", false);
-                result.put("error", "File not found at: " + path);
+                result.put("error", "File not found at: " + file.getAbsolutePath());
                 return result;
             }
 
@@ -60,7 +68,13 @@ public class CertificateService {
             } else if ("PEM".equalsIgnoreCase(type)) {
                 return validatePemCert(file);
             } else if ("PEM_PAIR".equalsIgnoreCase(type)) {
-                return validatePemPair(file, (String) params.get("keyPath"));
+                String keyPath = (String) params.get("keyPath");
+                File keyFile = new File(keyPath);
+                if (!keyFile.isAbsolute() && storageDir != null && !storageDir.isEmpty()) {
+                    keyFile = new File(storageDir, keyPath);
+                    logger.info("AUDIT: Resolved relative private key path {} to absolute: {}", keyPath, keyFile.getAbsolutePath());
+                }
+                return validatePemPair(file, keyFile);
             } else {
                 result.put("valid", true);
                 result.put("message", "File exists.");
@@ -116,18 +130,17 @@ public class CertificateService {
         return result;
     }
 
-    private Map<String, Object> validatePemPair(File certFile, String keyPath) {
+    private Map<String, Object> validatePemPair(File certFile, File keyFile) {
         Map<String, Object> result = new HashMap<>();
         try {
-            if (keyPath == null || keyPath.isEmpty()) {
+            if (keyFile == null) {
                 result.put("valid", false);
                 result.put("error", "Private Key path is missing for PEM pair.");
                 return result;
             }
-            File keyFile = new File(keyPath);
             if (!keyFile.exists()) {
                 result.put("valid", false);
-                result.put("error", "Private Key file not found at: " + keyPath);
+                result.put("error", "Private Key file not found at: " + keyFile.getAbsolutePath());
                 return result;
             }
 

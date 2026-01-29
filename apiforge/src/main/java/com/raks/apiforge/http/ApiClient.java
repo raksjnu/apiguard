@@ -97,12 +97,18 @@ public class ApiClient {
         
         RequestBuilder requestBuilder = RequestBuilder.create(method.toUpperCase()).setUri(url);
         if (headers != null) {
-            headers.forEach(requestBuilder::addHeader);
+            headers.forEach((k, v) -> {
+                // If we have an authentication object, it has exclusive control over the Authorization header
+                if (authentication != null && k.equalsIgnoreCase(HttpHeaders.AUTHORIZATION)) {
+                    return;
+                }
+                requestBuilder.addHeader(k, v);
+            });
         }
         if (accessToken != null) {
             requestBuilder.addHeader(HttpHeaders.AUTHORIZATION, "Bearer " + accessToken);
         }
-        else if (authentication != null && authentication.getClientId() != null && !authentication.getClientId().trim().isEmpty()) {
+        else if (authentication != null && authentication.isEnableAuth() && authentication.getClientId() != null && !authentication.getClientId().trim().isEmpty()) {
             String clientSecret = authentication.getClientSecret() != null ? authentication.getClientSecret() : "";
             String auth = authentication.getClientId() + ":" + clientSecret;
             byte[] encodedAuth = Base64.getEncoder().encode(auth.getBytes(StandardCharsets.UTF_8));
@@ -120,7 +126,7 @@ public class ApiClient {
         
         HttpClientBuilder clientBuilder = HttpClients.custom();
         
-        if (authentication != null && (authentication.getPfxPath() != null || authentication.getClientCertPath() != null || authentication.getCaCertPath() != null)) {
+        if (authentication != null && authentication.isUseMTLS() && (authentication.getPfxPath() != null || authentication.getClientCertPath() != null || authentication.getCaCertPath() != null)) {
             try {
                 SSLContext sslContext = createSslContext(authentication);
                 SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(

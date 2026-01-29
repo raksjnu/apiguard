@@ -152,8 +152,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const validateCerts = async () => {
         const pfxPath = document.getElementById('pfxPath').value.trim();
+        const clientCertPath = document.getElementById('clientCertPath').value.trim();
+        const clientKeyPath = document.getElementById('clientKeyPath').value.trim();
         const passphrase = document.getElementById('passphrase').value.trim();
         const caPath = document.getElementById('caCertPath').value.trim();
+        const workDir = document.getElementById('workingDirectory').value.trim();
+        const mtlsType = document.querySelector('input[name="mtlsType"]:checked')?.value || 'PEM';
+        
         const resultDiv = document.getElementById('validationResult');
         const btn = document.getElementById('validateCertsBtn');
         
@@ -163,21 +168,24 @@ document.addEventListener('DOMContentLoaded', () => {
         resultDiv.innerHTML = '⏳ Validating security configuration...';
         btn.disabled = true;
 
-        logActivity('AUDIT: Starting Security Configuration Validation...', 'info');
-
         const checks = [];
-        if (pfxPath) checks.push({ path: pfxPath, passphrase, type: pfxPath.toLowerCase().endsWith('.jks') ? 'JKS' : 'PFX' });
         
-        const clientCertPath = document.getElementById('clientCertPath').value.trim();
-        const clientKeyPath = document.getElementById('clientKeyPath').value.trim();
-        if (clientCertPath && clientKeyPath) {
-            checks.push({ path: clientCertPath, keyPath: clientKeyPath, passphrase, type: 'PEM_PAIR' });
-        } else if (clientCertPath || clientKeyPath) {
-             showToast('Both Certificate and Private Key are required for PEM identity.', 'warning');
-             logActivity('AUDIT: Validation warning - Partial PEM configuration detected.', 'warning');
+        // --- Selective Validation Fix ---
+        // Only validate the mTLS option currently active in the UI
+        if (mtlsType === 'PFX' || mtlsType === 'JKS') {
+            if (pfxPath) {
+                checks.push({ path: pfxPath, passphrase, type: pfxPath.toLowerCase().endsWith('.jks') ? 'JKS' : 'PFX', workDir });
+            }
+        } else if (mtlsType === 'PEM') {
+            if (clientCertPath && clientKeyPath) {
+                checks.push({ path: clientCertPath, keyPath: clientKeyPath, passphrase, type: 'PEM_PAIR', workDir });
+            } else if (clientCertPath || clientKeyPath) {
+                 showToast('Both Certificate and Private Key are required for PEM identity.', 'warning');
+                 logActivity('AUDIT: Validation warning - Partial PEM configuration detected.', 'warning');
+            }
         }
 
-        if (caPath) checks.push({ path: caPath, passphrase, type: caPath.toLowerCase().endsWith('.jks') ? 'JKS' : 'PEM' });
+        if (caPath) checks.push({ path: caPath, passphrase, type: caPath.toLowerCase().endsWith('.jks') ? 'JKS' : 'PEM', workDir });
 
         if (checks.length === 0) {
             resultDiv.innerHTML = '⚠️ No certificate paths provided to validate.';
@@ -243,10 +251,55 @@ document.addEventListener('DOMContentLoaded', () => {
 
     document.getElementById('validateCertsBtn')?.addEventListener('click', validateCerts);
 
-    // console.log('[APP] Check statusIndicator removal...'); 
-    // User requested removal of "Running..." indicator. We'll ensure it's hidden or removed.
-    const statusIndicator = document.getElementById('statusIndicator');
-    if(statusIndicator) statusIndicator.style.display = 'none'; // Force hide globally
+    // --- UI Layout Updates ---
+    const updateMTLSVisibility = () => {
+        const isMTLSEnabled = document.getElementById('useMTLS').checked;
+        const container = document.getElementById('mtlsOptions');
+        const headerRow = document.getElementById('mtlsHeaderRow');
+        
+        if (container) {
+            container.style.display = isMTLSEnabled ? 'block' : 'none';
+            if (headerRow) {
+                headerRow.style.borderBottom = isMTLSEnabled ? '1px dashed #e2e8f0' : 'none';
+                headerRow.style.paddingBottom = isMTLSEnabled ? '10px' : '0';
+                headerRow.style.marginBottom = isMTLSEnabled ? '15px' : '0';
+            }
+        }
+    };
+
+    const updateMTLSTypeVisibility = () => {
+        const isPemSelected = document.getElementById('typePem').checked;
+        const pemInputs = document.getElementById('pemInputs');
+        const pfxInputs = document.getElementById('pfxInputs');
+        
+        if (pemInputs) {
+            pemInputs.style.opacity = isPemSelected ? '1' : '0.5';
+            pemInputs.style.pointerEvents = isPemSelected ? 'all' : 'none';
+        }
+        if (pfxInputs) {
+            pfxInputs.style.opacity = !isPemSelected ? '1' : '0.5';
+            pfxInputs.style.pointerEvents = !isPemSelected ? 'all' : 'none';
+        }
+    };
+
+    document.getElementById('useMTLS')?.addEventListener('change', updateMTLSVisibility);
+    document.getElementsByName('mtlsType').forEach(el => el.addEventListener('change', updateMTLSTypeVisibility));
+
+    document.getElementById('clearSecurityBtn')?.addEventListener('click', () => {
+        // ONLY clear mTLS fields as requested
+        ['pfxPath', 'clientCertPath', 'clientKeyPath', 'passphrase', 'caCertPath']
+            .forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+        document.getElementById('useMTLS').checked = false;
+        updateMTLSVisibility();
+        saveState();
+        showToast('mTLS configuration cleared. (Basic Auth preserved)', 'info');
+    });
+
+    updateMTLSVisibility();
+    updateMTLSTypeVisibility();
     
     // --- State & Core Elements ---
     let loadedConfig = null;
@@ -524,8 +577,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Browser State Persistence ---
     const CACHE_KEY = 'api_forge_form_state';
-    const saveState = () => {
-        const state = {
+    const getFormState = () => {
+        return {
             testType: document.getElementById('testType').value,
             wd: document.getElementById('workingDirectory').value,
             method: document.getElementById('method').value,
@@ -556,8 +609,72 @@ document.addEventListener('DOMContentLoaded', () => {
             pfxPath: document.getElementById('pfxPath').value,
             clientCertPath: document.getElementById('clientCertPath').value,
             clientKeyPath: document.getElementById('clientKeyPath').value,
-            passphrase: document.getElementById('passphrase').value
+            passphrase: document.getElementById('passphrase').value,
+            mtlsType: document.querySelector('input[name="mtlsType"]:checked')?.value || 'PEM'
         };
+    };
+
+    const applyFormState = (s) => {
+        if (!s) return;
+        if (s.testType) {
+            document.getElementById('testType').value = s.testType;
+            syncTypeButtons();
+        }
+        if (s.wd) document.getElementById('workingDirectory').value = s.wd;
+        document.getElementById('operationName').value = s.opName || '';
+        document.getElementById('url1').value = s.url1 || '';
+        document.getElementById('url2').value = s.url2 || '';
+        document.getElementById('payload').value = s.payload || '';
+        document.getElementById('ignoredFields').value = s.ignoredFields || 'timestamp';
+        document.getElementById('maxIterations').value = s.maxIter || '100';
+        document.getElementById('method').value = s.method || 'POST';
+        document.getElementById('iterationController').value = s.strategy || 'ONE_BY_ONE';
+
+        if (s.enableAuth !== undefined) {
+            document.getElementById('enableAuth').checked = s.enableAuth;
+            document.getElementById('clientId').disabled = !s.enableAuth;
+            document.getElementById('clientSecret').disabled = !s.enableAuth;
+        }
+        if (s.useMTLS !== undefined) {
+            document.getElementById('useMTLS').checked = s.useMTLS;
+            if (typeof updateMTLSVisibility === 'function') updateMTLSVisibility();
+        } else {
+            document.getElementById('useMTLS').checked = false;
+        }
+
+        if (s.caCertPath) document.getElementById('caCertPath').value = s.caCertPath;
+        if (s.pfxPath) document.getElementById('pfxPath').value = s.pfxPath;
+        if (s.clientCertPath) document.getElementById('clientCertPath').value = s.clientCertPath;
+        if (s.clientKeyPath) document.getElementById('clientKeyPath').value = s.clientKeyPath;
+        if (s.mtlsType) {
+            const radio = document.querySelector(`input[name="mtlsType"][value="${s.mtlsType}"]`);
+            if (radio) radio.checked = true;
+            if (typeof updateMTLSTypeVisibility === 'function') updateMTLSTypeVisibility();
+        }
+        if (s.passphrase) document.getElementById('passphrase').value = s.passphrase;
+
+        headersTable.innerHTML = '';
+        s.headers?.forEach(h => addRow(headersTable, ['Header Name', 'Value'], [h.k, h.v]));
+        
+        tokensTable.innerHTML = '';
+        s.tokens?.forEach(t => addRow(tokensTable, ['Token Name', 'Value'], [t.k, t.v]));
+
+        paramsTable.innerHTML = '';
+        s.params?.forEach(p => addRow(paramsTable, ['Parameter Name', 'Value'], [p.k, p.v]));
+
+        // Ensure URLs are updated from restored params
+        if (s.params && s.params.length > 0) {
+            updateUrlsFromParams();
+        }
+    };
+
+    const saveState = () => {
+        // --- Glitch Fix: Don't save state when in Baseline Replay (Compare) mode ---
+        // This prevents baseline-specific paths from "sticking" in the browser's persistent cache.
+        const isCompareOp = (document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'COMPARE');
+        if (isCompareOp) return;
+
+        const state = getFormState();
         localStorage.setItem(CACHE_KEY, JSON.stringify(state));
     };
 
@@ -566,54 +683,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!saved) return false;
         try {
             const s = JSON.parse(saved);
-            if (s.testType) {
-                document.getElementById('testType').value = s.testType;
-                syncTypeButtons();
-            }
-            if (s.wd) document.getElementById('workingDirectory').value = s.wd;
-            document.getElementById('operationName').value = s.opName || '';
-            document.getElementById('url1').value = s.url1 || '';
-            document.getElementById('url2').value = s.url2 || '';
-            document.getElementById('payload').value = s.payload || '';
-            document.getElementById('ignoredFields').value = s.ignoredFields || 'timestamp';
-            document.getElementById('maxIterations').value = s.maxIter || '100';
-            document.getElementById('method').value = s.method || 'POST';
-            document.getElementById('iterationController').value = s.strategy || 'ONE_BY_ONE';
-
-            if (s.enableAuth !== undefined) {
-                document.getElementById('enableAuth').checked = s.enableAuth;
-                document.getElementById('clientId').disabled = !s.enableAuth;
-                document.getElementById('clientSecret').disabled = !s.enableAuth;
-            }
-            if (s.clientId) document.getElementById('clientId').value = s.clientId;
-            if (s.clientSecret) document.getElementById('clientSecret').value = s.clientSecret;
-
-            if (s.useMTLS !== undefined) {
-                document.getElementById('useMTLS').checked = s.useMTLS;
-            } else {
-                document.getElementById('useMTLS').checked = false;
-            }
-
-            if (s.caCertPath) document.getElementById('caCertPath').value = s.caCertPath;
-            if (s.pfxPath) document.getElementById('pfxPath').value = s.pfxPath;
-            if (s.clientCertPath) document.getElementById('clientCertPath').value = s.clientCertPath;
-            if (s.clientKeyPath) document.getElementById('clientKeyPath').value = s.clientKeyPath;
-            if (s.passphrase) document.getElementById('passphrase').value = s.passphrase;
-
-            headersTable.innerHTML = '';
-            s.headers?.forEach(h => addRow(headersTable, ['Header Name', 'Value'], [h.k, h.v]));
-            
-            tokensTable.innerHTML = '';
-            s.tokens?.forEach(t => addRow(tokensTable, ['Token Name', 'Value'], [t.k, t.v]));
-
-            paramsTable.innerHTML = '';
-            s.params?.forEach(p => addRow(paramsTable, ['Parameter Name', 'Value'], [p.k, p.v]));
-
-            // Ensure URLs are updated from restored params
-            if (s.params && s.params.length > 0) {
-                updateUrlsFromParams();
-            }
-
+            applyFormState(s);
             return true;
         } catch(e) { return false; }
     };
@@ -776,20 +846,21 @@ document.addEventListener('DOMContentLoaded', () => {
             if (k) qp[k] = v;
         });
 
-        let auth = null;
-        if (document.getElementById('enableAuth').checked) {
-            const isSecurityEnabled = document.getElementById('useMTLS')?.checked;
-            auth = {
-                clientId: document.getElementById('clientId').value.trim(),
-                clientSecret: document.getElementById('clientSecret').value.trim(),
-                // Only send cert paths if explicit security toggle is enabled
-                caCertPath: isSecurityEnabled ? document.getElementById('caCertPath').value.trim() : null,
-                pfxPath: isSecurityEnabled ? document.getElementById('pfxPath').value.trim() : null,
-                clientCertPath: isSecurityEnabled ? document.getElementById('clientCertPath').value.trim() : null,
-                clientKeyPath: isSecurityEnabled ? document.getElementById('clientKeyPath').value.trim() : null,
-                passphrase: isSecurityEnabled ? document.getElementById('passphrase').value.trim() : null
-            };
-        }
+        const enableAuth = document.getElementById('enableAuth').checked;
+        const useMTLS = document.getElementById('useMTLS')?.checked || false;
+        
+        const auth = {
+            enableAuth: enableAuth,
+            useMTLS: useMTLS,
+            clientId: document.getElementById('clientId').value.trim(),
+            clientSecret: document.getElementById('clientSecret').value.trim(),
+            mtlsType: document.querySelector('input[name="mtlsType"]:checked')?.value || 'PEM',
+            caCertPath: document.getElementById('caCertPath')?.value.trim() || null,
+            pfxPath: document.getElementById('pfxPath')?.value.trim() || null,
+            clientCertPath: document.getElementById('clientCertPath')?.value.trim() || null,
+            clientKeyPath: document.getElementById('clientKeyPath')?.value.trim() || null,
+            passphrase: document.getElementById('passphrase')?.value.trim() || null
+        };
 
         const op = {
             name: document.getElementById('operationName').value || 'operation',
@@ -1093,21 +1164,25 @@ document.addEventListener('DOMContentLoaded', () => {
                 tokens = `<div style="font-size:0.7rem; color:#666;">Tokens: N/A</div>`;
             }
 
+            const borderCol = res.status === 'MISMATCH' ? '#fc8181' : (res.status === 'MATCH' ? 'var(--success-color)' : (res.status === 'ERROR' ? 'var(--error-color)' : '#cbd5e0'));
             item.innerHTML = `
-                <div class="result-header" style="cursor:pointer; padding:12px; display:flex; justify-content:space-between; align-items:center;">
-                    <div style="flex:1;">
-                        <div style="font-weight:700; font-size:0.9rem;">#${i+1} - ${res.operationName}</div>
-                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:1px; font-family:monospace;">1: ${res.api1 ? res.api1.url : (res.url || '')}</div>
-                        <div style="font-size:0.75rem; color:#0056b3; margin-bottom:2px; font-family:monospace;">2: ${res.api2 ? res.api2.url : (document.getElementById('comparisonMode').value === 'BASELINE' ? (res.baselineServiceName ? `Baseline: ${res.baselineServiceName}` : 'Baseline') : '')}</div>
+                <div class="result-header" style="cursor:pointer; padding:12px; display:flex; justify-content:space-between; align-items:center; border-left: 6px solid ${borderCol};">
+                    <div style="flex:1; margin-right: 20px;">
+                        <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">#${i+1} - ${res.operationName}</div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; font-family:monospace; margin-bottom:1px;">
+                            <span style="color:#0056b3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">1: ${res.api1 ? res.api1.url : (res.url || '')}</span>
+                            <span style="color:${(res.api1?.statusCode >= 400) ? '#e53e3e' : '#4a5568'}; font-weight:700; margin-left:10px; background:#edf2f7; padding:1px 6px; border-radius:4px; font-size:0.65rem; white-space:nowrap;">Status=${res.api1?.statusCode || 'N/A'}</span>
+                        </div>
+                        
+                        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; font-family:monospace; margin-bottom:2px;">
+                            <span style="color:#0056b3; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">2: ${res.api2 ? res.api2.url : (document.getElementById('comparisonMode').value === 'BASELINE' ? (res.baselineServiceName ? `Baseline: ${res.baselineServiceName}` : 'Baseline') : '')}</span>
+                            <span style="color:${(res.api2?.statusCode >= 400) ? '#e53e3e' : '#4a5568'}; font-weight:700; margin-left:10px; background:#edf2f7; padding:1px 6px; border-radius:4px; font-size:0.65rem; white-space:nowrap;">Status=${res.api2?.statusCode || 'N/A'}</span>
+                        </div>
+                        
                         ${tokens}
                     </div>
-                    <div style="display:flex; flex-direction:column; align-items:flex-end; gap:4px; margin-right:15px;">
-                        <div style="font-size:0.65rem; color:#718096; font-family:monospace; display:flex; gap:10px;">
-                            <span>1: Status=${res.api1?.statusCode || 'N/A'}</span>
-                            <span>2: Status=${res.api2?.statusCode || 'N/A'}</span>
-                        </div>
-                        <span class="${statusClass}" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem; border:1px solid rgba(0,0,0,0.1); color:#fff; background-color: ${res.status === 'MISMATCH' ? '#fc8181' : (res.status === 'MATCH' ? 'var(--success-color)' : (res.status === 'ERROR' ? 'var(--error-color)' : '#cbd5e0'))};">${res.status}</span>
-                    </div>
+                    <span class="${statusClass}" style="padding:4px 12px; border-radius:12px; font-weight:700; font-size:0.75rem; border:1px solid rgba(0,0,0,0.1); color:#fff; background-color: ${borderCol}; min-width:80px; text-align:center;">${res.status}</span>
                 </div>
                 <div class="result-body" style="display:none; padding:15px; border-top:1px solid #eee; background:#fafafa; border-radius: 0 0 12px 12px;">
                     ${renderPayloadContent(res, i)}
@@ -1834,6 +1909,7 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('captureFields').style.display = 'block';
             document.getElementById('compareFields').style.display = 'none';
             handleBaselineUI('BASELINE');
+            saveState();
             // Ensure UI buttons stay in sync with hidden value
             syncTypeButtons();
         };
@@ -1993,12 +2069,31 @@ document.addEventListener('DOMContentLoaded', () => {
     window.syncTypeButtons = syncTypeButtons;
 
     // Export internal logic for mode switches
+    let userStateBackup = null;
+
     window.handleBaselineUI = (mode) => {
         const ignoreHeaders = document.getElementById('ignoreHeaders');
         const compareBtn = document.getElementById('compareBtn');
         const op = document.getElementById('baselineOperation').value;
         const accordions = document.querySelectorAll('.accordion');
         const isCompareOp = (mode === 'BASELINE' && op === 'COMPARE');
+
+        // --- Glitch Fix: Manual State Partitioning ---
+        if (isCompareOp) {
+             // We are ENTERING Baseline-Compare mode. Backup the user's manual configuration.
+             if (!userStateBackup) {
+                 userStateBackup = getFormState();
+                 logActivity('UX: Backed up user configuration before Baseline Replay.', 'info');
+             }
+        } else {
+             // We are LEAVING Baseline-Compare mode (back to Live or Capture).
+             // Restore the user configuration to clear baseline-specific paths.
+             if (userStateBackup) {
+                 applyFormState(userStateBackup);
+                 userStateBackup = null;
+                 logActivity('UX: Restored user configuration after Baseline Replay.', 'info');
+             }
+        }
         
         if (mode === 'BASELINE') {
             compareBtn.innerText = (op === 'CAPTURE') ? '📸 Capture Baseline' : '🔍 Compare Baseline';
@@ -2049,7 +2144,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         // Disable folder buttons and file inputs in security section
-        document.querySelectorAll('#securityAccordion .btn-secondary, #securityAccordion input[type="file"]').forEach(btn => {
+        document.querySelectorAll('#securitySection .btn-secondary, #securitySection input[type="file"]').forEach(btn => {
             // Check if it's an upload button (has folder emoji or is validate btn)
             if (btn.innerText.includes('📂') || btn.id === 'validateCertsBtn' || btn.type === 'file') {
                 btn.disabled = isCompareOp;
@@ -2058,9 +2153,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // Accordion Management: Hide Endpoint, Request, Headers, Tokens during Compare mode
+        // Global Clear Button Disablement
+        const clearFormBtn = document.getElementById('clearFormBtn');
+        if (clearFormBtn) {
+            clearFormBtn.disabled = isCompareOp;
+            clearFormBtn.style.opacity = isCompareOp ? '0.5' : '1';
+        }
+
+        // Accordion Management: Hide Endpoint, Request, Headers, Tokens, AND Security during Compare mode
         accordions.forEach((acc, idx) => {
-            if (idx < 5) { // First five accordions: Endpoint, Request, Parameters, Headers, Tokens
+            if (idx < 6) { // First six accordions now include Security
                 acc.style.display = isCompareOp ? 'none' : 'block';
             }
         });

@@ -1,0 +1,131 @@
+<div id="jmsFields" style="display:none; border-left: 4px solid var(--primary-color); padding-left: 8px;">
+    <div class="accordion" style="border-left-color: var(--primary-color);">
+        <div class="accordion-header" style="background: rgba(94, 39, 139, 0.05); color: var(--primary-color);">
+            <span>🔌 JMS Connection (Profile)</span>
+            <span class="icon">▲</span>
+        </div>
+        <div class="accordion-content open">
+            <div style="font-size: 0.8rem; color: #666; margin-bottom: 10px;">Active Profile: <strong id="jmsActiveProfile">Not Connected</strong></div>
+            <button type="button" class="btn-secondary" onclick="document.querySelector('[data-view=\'utilitiesView\']').click()" style="width:100%; font-size: 0.75rem;">Manage Connections in Utilities</button>
+        </div>
+    </div>
+
+    <div class="accordion" style="border-left-color: var(--primary-color);">
+        <div class="accordion-header" style="background: rgba(94, 39, 139, 0.05); color: var(--primary-color);">
+            <span>🚀 JMS Operation</span>
+            <span class="icon">▲</span>
+        </div>
+        <div class="accordion-content open">
+            <div style="margin-bottom: 15px;">
+                <label style="font-size: 0.75rem; font-weight: 700;">Select Operation</label>
+                <select id="jmsOpMode" style="width:100%; border-color: var(--primary-color); font-weight: bold;">
+                    <option value="PUBLISH">🚀 Publish Message (Default)</option>
+                    <option value="BROWSE">👁️ Browse (Peek)</option>
+                    <option value="CONSUME">📥 Consume (Once)</option>
+                    <option value="LISTEN">👂 Listen (Continuous)</option>
+                    <option value="PURGE">🗑️ Drain/Purge</option>
+                    <option value="BASELINE">📀 Baseline Replay & Parity</option>
+                    <option value="CREATE">➕ Create/Init</option>
+                    <option value="DELETE">❌ Delete Destination</option>
+                </select>
+            </div>
+
+            <!-- Destination Properties (Admin) -->
+            <div id="jmsAdminExtra" style="display:none; margin-bottom: 15px;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: #553c9a;">Destination Options (Admin Only)</label>
+                <div style="background: #faf5ff; padding: 10px; border-radius: 8px; border: 1px dashed #d6bcfa;">
+                    <table id="jmsAdminPropsTable" class="input-table" style="font-size: 0.75rem;">
+                        <thead><tr style="color:#553c9a;"><th>Option</th><th>Value</th><th></th></tr></thead>
+                        <tbody>
+                            <tr>
+                                <td><input type="text" class="key-input" placeholder="e.g. exclusive" value="exclusive"></td>
+                                <td><input type="text" class="value-input" placeholder="value" value="true"></td>
+                                <td><button type="button" class="btn-remove" onclick="this.closest('tr').remove()">×</button></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <button type="button" class="btn-secondary" id="addAdminPropBtn" style="width:100%; margin-top:5px; font-size:0.7rem;">+ Add Option</button>
+                </div>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-bottom: 15px; padding: 10px; background: #faf5ff; border-radius: 8px;">
+                <div style="flex:1;">
+                    <label style="font-size: 0.75rem; font-weight: 700;">Type</label>
+                    <select id="jmsDestType" style="width:100%;"><option value="QUEUE">Queue</option><option value="TOPIC">Topic</option></select>
+                </div>
+                <div style="flex:2;">
+                    <label style="font-size: 0.75rem; font-weight: 700;">Destination Name</label>
+                    <input type="text" id="jmsDestination" placeholder="e.g. MyQueue" style="width:100%;">
+                </div>
+            </div>
+
+            <div id="jmsFetchConfig" style="display:none; margin-bottom: 15px; background: #ebf8ff; padding: 10px; border-radius: 8px; border-left: 4px solid #4299e1;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <label style="font-size: 0.75rem; font-weight: 700; color: #2b6cb0;">Fetch Limit</label>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <input type="number" id="jmsFetchMax" value="10" min="1" max="1000" style="width:70px;">
+                        <span style="font-size:0.7rem; color:#2b6cb0;">msgs</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Dynamic Section: Listener Config -->
+            <div id="jmsConsumerConfig" style="display:none; margin-bottom: 15px; background: #f0fff4; padding: 10px; border-radius: 6px; border-left: 4px solid #48bb78;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: #2f855a;">Concurrent Consumers (Scale)</label>
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <input type="number" id="jmsConcurrent" value="1" min="1" max="100" style="flex:1;">
+                    <span style="font-size:0.7rem; color:#2f855a;">threads</span>
+                </div>
+            </div>
+
+            <!-- Dynamic Section: Baseline Replay -->
+            <div id="jmsBaselineSection" style="display:none; margin-bottom: 15px; background: #fff5f5; padding: 10px; border-radius: 8px; border-left: 4px solid #f56565;">
+                <label style="font-size: 0.75rem; font-weight: 700; color: #c53030;">Baseline Context (Service/Date/RunID)</label>
+                <div style="display:flex; flex-direction:column; gap:8px; margin-top:5px;">
+                    <select id="jmsBaselineService" style="width:100%; font-size:0.75rem;"><option value="">-- Select Service --</option></select>
+                    <select id="jmsBaselineDate" style="width:100%; font-size:0.75rem;"><option value="">-- Select Date --</option></select>
+                    <select id="jmsBaselineRunId" style="width:100%; font-size:0.75rem;"><option value="">-- Select Run --</option></select>
+                </div>
+                <p style="font-size:0.6rem; color:#c53030; margin-top:5px;">* Replays request messages and compares with auto-browsed response.</p>
+            </div>
+
+            <!-- Dynamic Section: Composer (Publish) -->
+            <div id="jmsPublishSection">
+                <label style="font-size: 0.75rem; font-weight: 700;">Message Body</label>
+                <textarea id="jmsPayload" style="min-height: 120px;" placeholder="Text/JSON message..."></textarea>
+                
+                <div style="margin-top: 10px;">
+                    <label style="font-size: 0.75rem; font-weight: 700;">JMS Properties</label>
+                    <table id="jmsPropsTable" class="input-table" style="font-size: 0.8rem;"><tbody></tbody></table>
+                    <button type="button" class="btn-secondary" id="addJmsPropBtn" style="width:100%; margin-top:5px;">+ Add Property</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Destination Manager moved to Utilities -->
+
+    <div class="accordion" id="jmsSmartOptionsAccordion" style="border-left-color: var(--primary-color);">
+        <div class="accordion-header" style="background: rgba(94, 39, 139, 0.05); color: var(--primary-color);">
+            <span>🚀 Smart Options</span>
+            <span class="icon">▼</span>
+        </div>
+        <div class="accordion-content">
+            <div style="display:flex; align-items:center; gap:8px;">
+                <input type="number" id="jmsRateLimit" placeholder="0 (Unlimited)" style="flex:1;">
+                <select id="jmsRateUnit" style="width:100px; font-size:0.75rem;">
+                    <option value="sec">msgs/sec</option>
+                    <option value="min" selected>msgs/min</option>
+                    <option value="hour">msgs/hr</option>
+                    <option value="day">msgs/day</option>
+                </select>
+            </div>
+            
+            <div style="margin-top:12px; padding:10px; background:#f7fafc; border-radius:6px;">
+                <label style="font-size: 0.75rem; font-weight: 700; display:block; margin-bottom:5px;">Batch Injection (CSV)</label>
+                <input type="file" id="jmsBatchFile" accept=".csv" style="font-size:0.75rem;">
+                <p style="font-size:0.65rem; color:#666; margin-top:2px;">Format: header,body (Header mapped to properties)</p>
+            </div>
+        </div>
+    </div>
+</div>

@@ -21,6 +21,12 @@ public class Authentication {
     private String pfxAlias;
     @JsonProperty("passphrase")
     private String passphrase;
+    @JsonProperty("enableAuth")
+    private boolean enableAuth;
+    @JsonProperty("useMTLS")
+    private boolean useMTLS;
+    @JsonProperty("mtlsType")
+    private String mtlsType; // PEM or PFX
 
     public String getTokenUrl() {
         return tokenUrl;
@@ -75,5 +81,23 @@ public class Authentication {
     }
     public void setPassphrase(String passphrase) {
         this.passphrase = passphrase;
+    }
+    public boolean isEnableAuth() {
+        return enableAuth;
+    }
+    public void setEnableAuth(boolean enableAuth) {
+        this.enableAuth = enableAuth;
+    }
+    public boolean isUseMTLS() {
+        return useMTLS;
+    }
+    public void setUseMTLS(boolean useMTLS) {
+        this.useMTLS = useMTLS;
+    }
+    public String getMtlsType() {
+        return mtlsType;
+    }
+    public void setMtlsType(String mtlsType) {
+        this.mtlsType = mtlsType;
     }
 }

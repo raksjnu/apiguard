@@ -165,32 +165,17 @@ public class BaselineComparisonService {
                     resolveRelativeCertPaths(apiConfig.getAuthentication(), serviceName, date, runId);
                 }
 
-                // 2. If current config has no certs but baseline does, fallback to baseline's security context
+                // 2. STRICT FIDELITY: Always use baseline's saved security context if available
                 ApiConfig effectiveApiConfig = apiConfig;
                 Map<String, Object> savedConfig = baseline.getMetadata().getConfigUsed();
                 if (savedConfig != null && savedConfig.containsKey("authentication")) {
                     Authentication baselineAuth = objectMapper.convertValue(savedConfig.get("authentication"), Authentication.class);
                     resolveRelativeCertPaths(baselineAuth, serviceName, date, runId);
 
-                    // If current apiConfig auth is totally missing OR lacks certs while baseline HAS them, override cert-related fields
-                    if (apiConfig.getAuthentication() == null) {
-                        ApiConfig cloned = cloneApiConfig(apiConfig);
-                        cloned.setAuthentication(baselineAuth);
-                        effectiveApiConfig = cloned;
-                    } else {
-                        Authentication currentAuth = apiConfig.getAuthentication();
-                        // If current has no certs, but baseline does, inject baseline certs into current auth (preserving Basic Auth if present)
-                        if (currentAuth.getPfxPath() == null && currentAuth.getClientCertPath() == null && 
-                            (baselineAuth.getPfxPath() != null || baselineAuth.getClientCertPath() != null)) {
-                            
-                            logger.info("Enriching current auth with security context from saved baseline metadata");
-                            currentAuth.setPfxPath(baselineAuth.getPfxPath());
-                            currentAuth.setPassphrase(baselineAuth.getPassphrase());
-                            currentAuth.setClientCertPath(baselineAuth.getClientCertPath());
-                            currentAuth.setClientKeyPath(baselineAuth.getClientKeyPath());
-                            currentAuth.setCaCertPath(baselineAuth.getCaCertPath());
-                        }
-                    }
+                    logger.info("Using strict security context from saved baseline metadata for replay");
+                    ApiConfig cloned = cloneApiConfig(apiConfig);
+                    cloned.setAuthentication(baselineAuth);
+                    effectiveApiConfig = cloned;
                 }
                 
                 ComparisonResult result = executeApiCall(
@@ -268,16 +253,17 @@ public class BaselineComparisonService {
         if (apiConfig.getAuthentication() != null) {
             Authentication auth = apiConfig.getAuthentication();
             Map<String, String> authInfo = new java.util.LinkedHashMap<>();
-            if (auth.getPfxPath() != null && !auth.getPfxPath().trim().isEmpty()) authInfo.put("pfxPath", auth.getPfxPath());
-            if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authInfo.put("clientCertPath", auth.getClientCertPath());
-            if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authInfo.put("clientKeyPath", auth.getClientKeyPath());
-            if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authInfo.put("caCertPath", auth.getCaCertPath());
-            if (auth.getClientId() != null) authInfo.put("clientId", auth.getClientId());
-            if (auth.getPfxPath() != null && !auth.getPfxPath().trim().isEmpty()) authInfo.put("pfxPath", auth.getPfxPath());
-            if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authInfo.put("clientCertPath", auth.getClientCertPath());
-            if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authInfo.put("clientKeyPath", auth.getClientKeyPath());
-            if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authInfo.put("caCertPath", auth.getCaCertPath());
-            if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) authInfo.put("passphrase", "********");
+            if (auth.isEnableAuth() && auth.getClientId() != null) {
+                authInfo.put("type", "basic");
+                authInfo.put("clientId", auth.getClientId());
+            }
+            if (auth.isUseMTLS()) {
+                if (auth.getPfxPath() != null && !auth.getPfxPath().trim().isEmpty()) authInfo.put("pfxPath", auth.getPfxPath());
+                if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authInfo.put("clientCertPath", auth.getClientCertPath());
+                if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authInfo.put("clientKeyPath", auth.getClientKeyPath());
+                if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authInfo.put("caCertPath", auth.getCaCertPath());
+                if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) authInfo.put("passphrase", "********");
+            }
             if (!authInfo.isEmpty()) metadata.put("authentication", authInfo);
         }
         if (operation.getQueryParams() != null && !operation.getQueryParams().isEmpty()) {
@@ -333,14 +319,16 @@ public class BaselineComparisonService {
         Map<String, String> authMap = new HashMap<>();
         Authentication auth = apiConfig.getAuthentication();
         if (auth != null) {
-            if (auth.getClientId() != null && !auth.getClientId().trim().isEmpty()) {
+            if (auth.isEnableAuth() && auth.getClientId() != null && !auth.getClientId().trim().isEmpty()) {
                 authMap.put("type", "basic");
-                authMap.put("username", auth.getClientId());
+                authMap.put("clientId", auth.getClientId());
             }
-            if (auth.getPfxPath() != null && !auth.getPfxPath().trim().isEmpty()) authMap.put("pfxPath", auth.getPfxPath());
-            if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authMap.put("clientCertPath", auth.getClientCertPath());
-            if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authMap.put("clientKeyPath", auth.getClientKeyPath());
-            if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authMap.put("caCertPath", auth.getCaCertPath());
+            if (auth.isUseMTLS()) {
+                if (auth.getPfxPath() != null && !auth.getPfxPath().trim().isEmpty()) authMap.put("pfxPath", auth.getPfxPath());
+                if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authMap.put("clientCertPath", auth.getClientCertPath());
+                if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authMap.put("clientKeyPath", auth.getClientKeyPath());
+                if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authMap.put("caCertPath", auth.getCaCertPath());
+            }
         }
         IterationMetadata requestMetadata = new IterationMetadata(
                 iterationNumber,
@@ -348,7 +336,7 @@ public class BaselineComparisonService {
                 tokenStrings,
                 apiCall.getUrl(),
                 apiCall.getMethod(),
-                operation.getHeaders().get("SOAPAction"),
+                operation.getName(),
                 authMap);
         Map<String, Object> responseMetadata = new HashMap<>();
         responseMetadata.put("statusCode", apiCall.getStatusCode());
@@ -382,11 +370,13 @@ public class BaselineComparisonService {
         }
         
         // --- Populate Metadata for API 2 (Baseline) ---
-        Map<String, Object> meta2 = new HashMap<>();
+        Map<String, Object> meta2 = new java.util.LinkedHashMap<>();
         if (baseline.getRequestMetadata() != null) {
             meta2.put("operation", baseline.getRequestMetadata().getSoapAction());
             meta2.put("method", baseline.getRequestMetadata().getMethod());
             meta2.put("iterationNumber", baseline.getIterationNumber());
+            meta2.put("totalIterations", result.getApi1().getMetadata().get("totalIterations")); // Pull from result for symmetry
+            
             if (baseline.getRequestMetadata().getAuthentication() != null) {
                 meta2.put("authentication", baseline.getRequestMetadata().getAuthentication());
             }

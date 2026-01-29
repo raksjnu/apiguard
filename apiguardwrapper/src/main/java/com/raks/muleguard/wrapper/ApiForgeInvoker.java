@@ -157,7 +157,7 @@ public class ApiForgeInvoker {
         try {
             if (workDir == null) return Collections.emptyList();
             com.raks.apiforge.BaselineStorageService storage = new com.raks.apiforge.BaselineStorageService(workDir);
-            return storage.listServices();
+            return storage.listServices("ALL");
         } catch (Exception e) {
             logger.error("Error listing services", e);
             return Collections.emptyList();
@@ -324,6 +324,29 @@ public class ApiForgeInvoker {
         } catch (Exception e) {
             logger.error("Error invoking fetchWsdl", e);
             return "Error fetching WSDL: " + e.getMessage();
+        }
+    }
+
+    public static String uploadCertificate(String workDir, String fileName, byte[] content) {
+        try {
+            com.raks.apiforge.CertificateService service = new com.raks.apiforge.CertificateService();
+            Map<String, Object> result = service.uploadCertificate(workDir, fileName, content);
+            return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            logger.error("Error uploading certificate", e);
+            return "{\"success\": false, \"error\": \"" + e.getMessage() + "\"}";
+        }
+    }
+
+    public static String validateCertificate(String bodyJson) {
+        try {
+            Map<String, Object> params = objectMapper.readValue(bodyJson, Map.class);
+            com.raks.apiforge.CertificateService service = new com.raks.apiforge.CertificateService();
+            Map<String, Object> result = service.validateCertificate(params);
+            return objectMapper.writeValueAsString(result);
+        } catch (Exception e) {
+            logger.error("Error validating certificate", e);
+            return "{\"valid\": false, \"error\": \"" + e.getMessage() + "\"}";
         }
     }
 

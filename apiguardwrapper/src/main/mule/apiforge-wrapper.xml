@@ -235,7 +235,25 @@ payload]]></ee:set-payload></ee:message></ee:transform>
                  <set-payload value="#[payload]" mimeType="application/json"/>
             </when>
             
-            <!-- UTILITY ENDPOINTS -->
+             <!-- UTILITY ENDPOINTS -->
+            <!-- /api/certificates/upload -->
+            <when expression="#[(vars.apiPath == 'certificates/upload') and attributes.method == 'POST']">
+                <set-variable variableName="fileName" value="#[attributes.queryParams.fileName]"/>
+                <set-variable variableName="workDir" value="#[if (isEmpty(attributes.queryParams.workDir)) p('apiforge.work.dir') else attributes.queryParams.workDir]"/>
+                <java:invoke-static doc:name="Upload Certificate" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="uploadCertificate(java.lang.String, java.lang.String, byte[])">
+                    <java:args><![CDATA[#[{ arg0: vars.workDir, arg1: vars.fileName, arg2: payload }]]]></java:args>
+                </java:invoke-static>
+                <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+
+            <!-- /api/certificates/validate -->
+            <when expression="#[(vars.apiPath == 'certificates/validate') and attributes.method == 'POST']">
+                <java:invoke-static doc:name="Validate Certificate" class="com.raks.muleguard.wrapper.ApiForgeInvoker" method="validateCertificate(java.lang.String)">
+                    <java:args><![CDATA[#[{ arg0: payload }]]]></java:args>
+                </java:invoke-static>
+                <set-payload value="#[payload]" mimeType="application/json"/>
+            </when>
+
             <!-- /api/utils/ping -->
             <when expression="#[(vars.apiPath startsWith 'utils/ping') and attributes.method == 'GET']">
                  <set-variable variableName="url" value="#[attributes.queryParams.url]"/>

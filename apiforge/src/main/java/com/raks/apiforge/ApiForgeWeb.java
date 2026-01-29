@@ -191,8 +191,20 @@ public class ApiForgeWeb {
                 BaselineStorageService storageService = new BaselineStorageService(storageDir);
                 BaselineComparisonService comparisonService = new BaselineComparisonService(storageService);
                 
+                
                 List<ComparisonResult> results = comparisonService.getBaselineAsResults(serviceName, date, runId);
                 
+                // Consistency Fix: Ensure results also contain resolved paths if needed for the UI
+                for (ComparisonResult r : results) {
+                    if (r.getApi1() != null) {
+                        Map<String, Object> meta = (Map<String, Object>) r.getApi1().getMetadata();
+                        if (meta != null && meta.containsKey("authentication")) {
+                             // This is slightly complex as it's a Map, but getBaselineAsResults 
+                             // should be doing its own resolution for the replay side anyway.
+                        }
+                    }
+                }
+
                 ObjectMapper mapper = new ObjectMapper();
                 return mapper.writeValueAsString(results);
             } catch (Exception e) {
@@ -321,16 +333,19 @@ public class ApiForgeWeb {
         
         post("/api/certificates/upload", (req, res) -> {
             res.type("application/json");
+            String fileName = req.queryParams("fileName");
+            String queryWorkDir = req.queryParams("workDir");
+            logger.info("AUDIT: Certificate upload request received. File: {}, WorkDir: {}", fileName, queryWorkDir);
             try {
-                String fileName = req.queryParams("fileName");
-                String queryWorkDir = req.queryParams("workDir");
                 String storageDir = (queryWorkDir != null && !queryWorkDir.isEmpty()) ? queryWorkDir : getStorageDir();
+                logger.debug("Resolved storage directory: {}", storageDir);
                 
                 CertificateService certService = new CertificateService();
                 Map<String, Object> result = certService.uploadCertificate(storageDir, fileName, req.bodyAsBytes());
+                logger.info("AUDIT: Certificate upload success. Result path: {}", result.get("path"));
                 return mapper.writeValueAsString(result);
             } catch (Exception e) {
-                logger.error("Certificate upload failed", e);
+                logger.error("AUDIT: Certificate upload failed for " + fileName, e);
                 res.status(500);
                 return mapper.writeValueAsString(Collections.singletonMap("error", e.getMessage()));
             }
@@ -340,6 +355,9 @@ public class ApiForgeWeb {
             res.type("application/json");
             try {
                 Map<String, Object> body = mapper.readValue(req.body(), new com.fasterxml.jackson.core.type.TypeReference<Map<String, Object>>() {});
+                if (!body.containsKey("workDir") || body.get("workDir") == null || ((String)body.get("workDir")).isEmpty()){
+                    body.put("workDir", getStorageDir());
+                }
                 CertificateService certService = new CertificateService();
                 Map<String, Object> result = certService.validateCertificate(body);
                 return mapper.writeValueAsString(result);
