@@ -2,6 +2,8 @@ package com.raks.apiforge;
 import com.raks.apiforge.http.ApiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
@@ -22,7 +24,45 @@ public class BaselineComparisonService {
         String serviceName = baselineConfig.getServiceName();
         String date = BaselineStorageService.getTodayDate();
         String runId = storageService.generateRunId(serviceName, date, config.getTestType());
+        String protocol = storageService.getProtocolFromType(config.getTestType());
+        Path runDir = storageService.getRunDirectory(protocol, serviceName, date, runId);
+        Files.createDirectories(runDir);
+
         logger.info("Capturing baseline for service: {}, date: {}, run: {}, type: {}", serviceName, date, runId, config.getTestType());
+
+        Map<String, ApiConfig> apis = "SOAP".equalsIgnoreCase(config.getTestType())
+                ? config.getSoapApis()
+                : config.getRestApis();
+        if (apis == null || apis.get("api1") == null) {
+            throw new IllegalArgumentException("api1 configuration is required for baseline capture");
+        }
+        
+        // Clone and resolve security before iterations
+        ApiConfig apiConfig = cloneApiConfig(apis.get("api1"));
+        if (apiConfig.getAuthentication() != null) {
+            Authentication auth = apiConfig.getAuthentication();
+            String mtlsType = auth.getMtlsType(); // PEM or PFX
+            
+            // 1. Copy relevant certs to run folder and get relative paths
+            if (auth.isUseMTLS()) {
+                if ("PEM".equalsIgnoreCase(mtlsType)) {
+                    auth.setClientCertPath(storageService.copyReferencedFile(runDir, auth.getClientCertPath()));
+                    auth.setClientKeyPath(storageService.copyReferencedFile(runDir, auth.getClientKeyPath()));
+                    auth.setPfxPath(null); // Clean up unused
+                } else if ("PFX".equalsIgnoreCase(mtlsType)) {
+                    auth.setPfxPath(storageService.copyReferencedFile(runDir, auth.getPfxPath()));
+                    auth.setClientCertPath(null); // Clean up unused
+                    auth.setClientKeyPath(null);
+                }
+            }
+            
+            // CA cert applies to both
+            auth.setCaCertPath(storageService.copyReferencedFile(runDir, auth.getCaCertPath()));
+            
+            // 2. Resolve to absolute paths for the actual capture calls (important for ApiClient)
+            resolveRelativeCertPaths(auth, serviceName, date, runId);
+        }
+
         List<Map<String, Object>> iterations = TestDataGenerator.generate(
                 config.getTokens(),
                 config.getMaxIterations(),
@@ -31,24 +71,15 @@ public class BaselineComparisonService {
             iterations.add(0, new HashMap<>());
         }
         
-        // Identify used tokens using the shared utility from ComparisonService
         java.util.Set<String> usedTokens = ComparisonService.identifyUsedTokens(config);
-
-        Map<String, ApiConfig> apis = "SOAP".equalsIgnoreCase(config.getTestType())
-                ? config.getSoapApis()
-                : config.getRestApis();
-        if (apis == null || apis.get("api1") == null) {
-            throw new IllegalArgumentException("api1 configuration is required for baseline capture");
-        }
-        ApiConfig apiConfig = apis.get("api1");
         List<ComparisonResult> results = new ArrayList<>();
         List<BaselineStorageService.BaselineIteration> baselineIterations = new ArrayList<>();
         int iterationNumber = 0;
+        
         for (Map<String, Object> currentTokens : iterations) {
             iterationNumber++;
             boolean isOriginal = (iterationNumber == 1);
             
-            // Smart Iteration Check (Shared Logic)
             if (!isOriginal && !currentTokens.isEmpty()) {
                 boolean isRelevent = false;
                 for (String tokenKey : currentTokens.keySet()) {
@@ -58,19 +89,16 @@ public class BaselineComparisonService {
                     }
                 }
                 if (!isRelevent) {
-                    logger.info("Skipping iteration {}: Tokens {} do not appear to be used (explicitly or implicitly) in the current API configuration.", iterationNumber, currentTokens.keySet());
+                    logger.info("Skipping iteration {}: Tokens {} do not appear to be used.", iterationNumber, currentTokens.keySet());
                     continue;
                 }
             }
 
-            logger.info("Capturing iteration {}: {}{}", iterationNumber, currentTokens,
-                    isOriginal ? " (Original Input Payload)" : "");
+            logger.info("Capturing iteration {}: {}", iterationNumber, currentTokens);
             try {
-                // CAPTURE mode: No forced data, process templates normally
                 ComparisonResult result = executeApiCall(
                         apiConfig, currentTokens, config.getTestType(), iterationNumber, iterations.size(), isOriginal, null, null);
                 
-                // USER REQUEST CHECK: If status code is error, mark as ERROR
                 if (result.getApi1().getStatusCode() >= 400) {
                      result.setStatus(ComparisonResult.Status.ERROR);
                      result.setErrorMessage("HTTP Error " + result.getApi1().getStatusCode());
@@ -80,13 +108,12 @@ public class BaselineComparisonService {
                 result.setBaselineServiceName(serviceName);
                 result.setBaselineDate(date);
                 result.setBaselineRunId(runId);
-                String protocol = storageService.getProtocolFromType(config.getTestType());
-                String baselinePath = storageService.getRunDirectory(protocol, serviceName, date, runId).toString();
-                result.setBaselinePath(baselinePath);
+                result.setBaselinePath(runDir.toString());
                 result.setBaselineDescription(baselineConfig.getDescription());
                 result.setBaselineTags(baselineConfig.getTags());
                 result.setBaselineCaptureTimestamp(ZonedDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME));
                 results.add(result);
+                
                 BaselineStorageService.BaselineIteration baselineIter = convertToBaselineIteration(
                         result, iterationNumber, currentTokens, apiConfig, config.getTestType());
                 baselineIterations.add(baselineIter);
@@ -99,22 +126,33 @@ public class BaselineComparisonService {
                 results.add(errorResult);
             }
         }
-        RunMetadata runMetadata = createRunMetadata(
-                runId, serviceName, date, apiConfig, config, baselineIterations.size());
         
-        // --- Certificate Persistence Fix ---
-        if (runMetadata.getConfigUsed() != null && runMetadata.getConfigUsed().containsKey("authentication")) {
-            Authentication auth = objectMapper.convertValue(runMetadata.getConfigUsed().get("authentication"), Authentication.class);
-            String protocol = storageService.getProtocolFromType(config.getTestType());
-            Path runDir = storageService.getRunDirectory(protocol, serviceName, date, runId);
+        // Final metadata should use relative paths for portability
+        ApiConfig persistentConfig = cloneApiConfig(apiConfig);
+        if (persistentConfig.getAuthentication() != null) {
+            Authentication auth = persistentConfig.getAuthentication();
+            String mtlsType = auth.getMtlsType();
             
-            auth.setPfxPath(storageService.copyReferencedFile(runDir, auth.getPfxPath()));
-            auth.setClientCertPath(storageService.copyReferencedFile(runDir, auth.getClientCertPath()));
-            auth.setClientKeyPath(storageService.copyReferencedFile(runDir, auth.getClientKeyPath()));
-            auth.setCaCertPath(storageService.copyReferencedFile(runDir, auth.getCaCertPath()));
-            
-            runMetadata.getConfigUsed().put("authentication", auth);
+            if (auth.isUseMTLS()) {
+                if ("PEM".equalsIgnoreCase(mtlsType)) {
+                    auth.setClientCertPath(toRelative(auth.getClientCertPath()));
+                    auth.setClientKeyPath(toRelative(auth.getClientKeyPath()));
+                    auth.setPfxPath(null);
+                } else if ("PFX".equalsIgnoreCase(mtlsType)) {
+                    auth.setPfxPath(toRelative(auth.getPfxPath()));
+                    auth.setClientCertPath(null);
+                    auth.setClientKeyPath(null);
+                }
+            } else {
+                auth.setPfxPath(null);
+                auth.setClientCertPath(null);
+                auth.setClientKeyPath(null);
+            }
+            auth.setCaCertPath(toRelative(auth.getCaCertPath()));
         }
+
+        RunMetadata runMetadata = createRunMetadata(
+                runId, serviceName, date, persistentConfig, config, baselineIterations.size());
         
         storageService.saveBaseline(runMetadata, baselineIterations);
         logger.info("Baseline captured successfully: {}/{}/{} with {} iterations",
@@ -253,7 +291,7 @@ public class BaselineComparisonService {
         if (apiConfig.getAuthentication() != null) {
             Authentication auth = apiConfig.getAuthentication();
             Map<String, String> authInfo = new java.util.LinkedHashMap<>();
-            if (auth.isEnableAuth() && auth.getClientId() != null) {
+            if (auth.isEnableAuth() && auth.getClientId() != null && !auth.getClientId().trim().isEmpty()) {
                 authInfo.put("type", "basic");
                 authInfo.put("clientId", auth.getClientId());
             }
@@ -316,7 +354,7 @@ public class BaselineComparisonService {
         Operation operation = apiConfig.getOperations().get(0);
         Map<String, String> tokenStrings = new HashMap<>();
         tokens.forEach((k, v) -> tokenStrings.put(k, String.valueOf(v)));
-        Map<String, String> authMap = new HashMap<>();
+        Map<String, String> authMap = new java.util.LinkedHashMap<>();
         Authentication auth = apiConfig.getAuthentication();
         if (auth != null) {
             if (auth.isEnableAuth() && auth.getClientId() != null && !auth.getClientId().trim().isEmpty()) {
@@ -328,16 +366,18 @@ public class BaselineComparisonService {
                 if (auth.getClientCertPath() != null && !auth.getClientCertPath().trim().isEmpty()) authMap.put("clientCertPath", auth.getClientCertPath());
                 if (auth.getClientKeyPath() != null && !auth.getClientKeyPath().trim().isEmpty()) authMap.put("clientKeyPath", auth.getClientKeyPath());
                 if (auth.getCaCertPath() != null && !auth.getCaCertPath().trim().isEmpty()) authMap.put("caCertPath", auth.getCaCertPath());
+                if (auth.getPassphrase() != null && !auth.getPassphrase().isEmpty()) authMap.put("passphrase", "********");
             }
         }
         IterationMetadata requestMetadata = new IterationMetadata(
                 iterationNumber,
                 result.getTimestamp(),
-                tokenStrings,
+                tokens,
                 apiCall.getUrl(),
                 apiCall.getMethod(),
                 operation.getName(),
-                authMap);
+                authMap,
+                (Integer) apiCall.getMetadata().get("requestSize"));
         Map<String, Object> responseMetadata = new HashMap<>();
         responseMetadata.put("statusCode", apiCall.getStatusCode());
         responseMetadata.put("duration", apiCall.getDuration());
@@ -372,13 +412,20 @@ public class BaselineComparisonService {
         // --- Populate Metadata for API 2 (Baseline) ---
         Map<String, Object> meta2 = new java.util.LinkedHashMap<>();
         if (baseline.getRequestMetadata() != null) {
-            meta2.put("operation", baseline.getRequestMetadata().getSoapAction());
-            meta2.put("method", baseline.getRequestMetadata().getMethod());
+            IterationMetadata reqMeta = baseline.getRequestMetadata();
+            meta2.put("operation", reqMeta.getSoapAction());
+            meta2.put("method", reqMeta.getMethod());
             meta2.put("iterationNumber", baseline.getIterationNumber());
-            meta2.put("totalIterations", result.getApi1().getMetadata().get("totalIterations")); // Pull from result for symmetry
+            meta2.put("totalIterations", result.getApi1().getMetadata().get("totalIterations")); 
             
-            if (baseline.getRequestMetadata().getAuthentication() != null) {
-                meta2.put("authentication", baseline.getRequestMetadata().getAuthentication());
+            if (reqMeta.getAuthentication() != null) {
+                meta2.put("authentication", reqMeta.getAuthentication());
+            }
+            
+            if (reqMeta.getRequestSize() != null) {
+                meta2.put("requestSize", reqMeta.getRequestSize());
+            } else if (baseline.getRequestPayload() != null) {
+                meta2.put("requestSize", baseline.getRequestPayload().getBytes().length);
             }
         }
         if (baseline.getResponseMetadata() != null) {
@@ -425,6 +472,14 @@ public class BaselineComparisonService {
         return result;
     }
 
+    private String toRelative(String path) {
+        if (path == null) return null;
+        File f = new File(path);
+        if (f.isAbsolute()) {
+            return "certs/" + f.getName();
+        }
+        return path;
+    }
     private void resolveRelativeCertPaths(Authentication auth, String serviceName, String date, String runId) {
         if (auth == null) return;
         String protocol = storageService.detectProtocol(serviceName, date, runId);
@@ -438,7 +493,23 @@ public class BaselineComparisonService {
         ApiConfig cloned = new ApiConfig();
         cloned.setBaseUrl(original.getBaseUrl());
         cloned.setOperations(original.getOperations());
-        cloned.setAuthentication(original.getAuthentication());
+        if (original.getAuthentication() != null) {
+            Authentication auth = original.getAuthentication();
+            Authentication clonedAuth = new Authentication();
+            clonedAuth.setTokenUrl(auth.getTokenUrl());
+            clonedAuth.setClientId(auth.getClientId());
+            clonedAuth.setClientSecret(auth.getClientSecret());
+            clonedAuth.setCaCertPath(auth.getCaCertPath());
+            clonedAuth.setClientCertPath(auth.getClientCertPath());
+            clonedAuth.setClientKeyPath(auth.getClientKeyPath());
+            clonedAuth.setPfxPath(auth.getPfxPath());
+            clonedAuth.setPfxAlias(auth.getPfxAlias());
+            clonedAuth.setPassphrase(auth.getPassphrase());
+            clonedAuth.setEnableAuth(auth.isEnableAuth());
+            clonedAuth.setUseMTLS(auth.isUseMTLS());
+            clonedAuth.setMtlsType(auth.getMtlsType());
+            cloned.setAuthentication(clonedAuth);
+        }
         return cloned;
     }
     private String constructUrl(String baseUrl, String path, Map<String, String> queryParams, String apiType) {

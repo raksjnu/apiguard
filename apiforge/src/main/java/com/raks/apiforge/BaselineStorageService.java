@@ -67,8 +67,14 @@ public class BaselineStorageService {
         try {
             Path src = Paths.get(sourcePath);
             if (!Files.exists(src)) {
-                logger.warn("Source file not found for copying: {}", sourcePath);
-                return sourcePath;
+                // Try resolving against baseStorageDir if relative
+                Path resolved = Paths.get(baseStorageDir).resolve(sourcePath);
+                if (Files.exists(resolved)) {
+                    src = resolved;
+                } else {
+                    logger.warn("Source file not found for copying: {} (checked absolute and relative to {})", sourcePath, baseStorageDir);
+                    return sourcePath;
+                }
             }
             Path certsDir = runDir.resolve("certs");
             Files.createDirectories(certsDir);
@@ -76,7 +82,7 @@ public class BaselineStorageService {
             Files.copy(src, dest, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
             logger.info("Copied certificate/key to baseline: {}", dest);
             
-            // Return relative path for portability
+            // Return relative path for portability within the run folder
             return "certs/" + src.getFileName().toString();
         } catch (Exception e) {
             logger.error("Failed to copy referenced file: {}", sourcePath, e);

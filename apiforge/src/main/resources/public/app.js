@@ -531,6 +531,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    document.getElementById('copyAllLogsBtn').onclick = () => {
+        const logContent = document.getElementById('activityLog').innerText;
+        if (!logContent || logContent.trim() === '') {
+            showToast('No logs to copy', 'info');
+            return;
+        }
+        
+        navigator.clipboard.writeText(logContent).then(() => {
+            const btn = document.getElementById('copyAllLogsBtn');
+            const orig = btn.innerText;
+            btn.innerText = '✅ Copied!';
+            setTimeout(() => btn.innerText = orig, 1000);
+            logActivity('UX: All activity logs copied to clipboard.', 'success');
+        }).catch(err => {
+            console.error('Copy failed', err);
+            // Fallback for non-secure contexts (already implemented in copyToClipboard function, but navigator.clipboard is preferred)
+            showToast('Failed to copy logs', 'error');
+        });
+    };
+
     // --- Settings Persistence ---
     const wdInput = document.getElementById('workingDirectory');
     if (wdInput) {
@@ -819,6 +839,21 @@ document.addEventListener('DOMContentLoaded', () => {
             document.body.removeChild(textArea);
         });
     };
+    
+    // --- UI Helpers ---
+    const formatCstTimestamp = (dateInput) => {
+        if (!dateInput) return 'N/A';
+        const d = new Date(dateInput);
+        if (isNaN(d.getTime())) return String(dateInput);
+        
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        const seconds = String(d.getSeconds()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}:${seconds} CST`;
+    };
 
     // --- Comparison Logic ---
     const buildConfig = () => {
@@ -1058,8 +1093,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const mismatches = results.filter(r => r.status === 'MISMATCH').length;
         const errors = results.filter(r => r.status === 'ERROR').length;
 
-        const isBaselineCapture = document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'CAPTURE';
-        const titleText = customTitle || (isBaselineCapture ? '📊 Baseline Captured Result Summary' : '📊 Comparison Result Summary');
+        const summaryMode = (document.getElementById('comparisonMode').value === 'BASELINE' && document.getElementById('baselineOperation').value === 'CAPTURE') ? 'CAPTURE' : (customTitle === 'HISTORY' ? 'HISTORY' : 'COMPARE');
+        const titleText = (summaryMode === 'CAPTURE' || summaryMode === 'HISTORY') ? '📊 Baseline Captured Result Summary' : '📊 Comparison Result Summary';
 
         const firstMatch = results[0] || {};
         let runMetaHtml = '';
@@ -1067,44 +1102,86 @@ document.addEventListener('DOMContentLoaded', () => {
             let authSummary = 'None';
             if (firstMatch.api1 && firstMatch.api1.metadata && firstMatch.api1.metadata.authentication) {
                 const auth = firstMatch.api1.metadata.authentication;
+                const mtlsType = auth.mtlsType || 'PEM';
                 let summaries = [];
                 if (auth.clientId) summaries.push(`ID: ${auth.clientId}`);
-                if (auth.pfxPath) summaries.push('PFX cert');
-                if (auth.clientCertPath) summaries.push('mTLS PEM');
+                
+                if (mtlsType === 'PFX' || auth.pfxPath) {
+                    summaries.push('mTLS PFX');
+                } else if (mtlsType === 'PEM' && (auth.clientCertPath || auth.clientKeyPath)) {
+                    summaries.push('mTLS PEM');
+                } else if (auth.clientCertPath) {
+                    summaries.push('mTLS PEM');
+                }
+
+                if (auth.caCertPath) {
+                    const caLabel = auth.caCertPath.toLowerCase().endsWith('.jks') ? 'Truststore' : 'CA';
+                    summaries.push(caLabel);
+                }
+                
                 authSummary = summaries.length > 0 ? summaries.join(' + ') : 'None';
             }
 
             runMetaHtml = `
-                <div style="margin-top:20px; padding:15px; background:#fdfbff; border-radius:12px; border:1px solid var(--border-color); font-size:0.85rem; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
-                    <div style="font-weight:800; color:var(--primary-color); margin-bottom:12px; display:flex; align-items:center; gap:8px; border-bottom:1px solid #eee; padding-bottom:8px;">
-                        <span>📋 Run Information</span>
-                        <span style="font-weight:400; font-size:0.75rem; color:#718096; text-transform:uppercase; letter-spacing:0.05em;">Execution Context</span>
+                <div style="margin-top:15px; padding:12px; background:#fdfbff; border-radius:12px; border:1px solid var(--border-color); font-size:0.8rem; box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);">
+                    <!-- Line 1: Identity & Description -->
+                    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:8px; border-bottom:1px solid #f1f1f1; padding-bottom:8px;">
+                        <span style="display:flex; align-items:center; gap:5px; font-size:0.75rem;">
+                            <strong style="color:#718096; text-transform:uppercase;">Service:</strong>
+                            <span style="font-weight:800; color:var(--primary-color);"> ${escapeHtml(firstMatch.baselineServiceName || 'N/A')}</span>
+                        </span>
+                        <span style="color:#718096; font-size:0.75rem;">|</span>
+                        <span style="display:flex; align-items:center; gap:5px; font-size:0.75rem;">
+                            <strong style="color:#718096; text-transform:uppercase;">Run ID:</strong>
+                            <span style="font-weight:600; color:#4a5568;"> ${escapeHtml(firstMatch.baselineRunId || 'N/A')}</span>
+                        </span>
+                        ${firstMatch.baselineDescription ? `
+                            <span style="color:#718096; font-size:0.75rem;">|</span>
+                            <span style="display:flex; align-items:center; gap:5px; font-size:0.75rem;">
+                                <strong style="color:#718096; text-transform:uppercase;">Description:</strong>
+                                <span style="color:#4a5568; font-style:italic;"> ${escapeHtml(firstMatch.baselineDescription)}</span>
+                            </span>
+                        ` : ''}
+                        ${firstMatch.baselineTags && firstMatch.baselineTags.length ? `
+                            <span style="color:#718096; font-size:0.75rem;">|</span>
+                            <span style="display:flex; align-items:center; gap:5px; font-size:0.75rem;">
+                                <strong style="color:#718096; text-transform:uppercase;">Tag:</strong>
+                                <div style="display:flex; gap:4px;">
+                                    ${firstMatch.baselineTags.map(t=>`<span class="tech-stack-tag" style="margin:0; font-size:0.65rem; padding:1px 6px; background:#ebf8ff; color:#2b6cb0;">${escapeHtml(t)}</span>`).join('')}
+                                </div>
+                            </span>
+                        ` : ''}
                     </div>
-                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:15px;">
-                        <div>
-                            <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Service & Run</div>
-                            <div style="margin-top:2px;"><strong>Name:</strong> <span style="color:var(--primary-color);">${escapeHtml(firstMatch.baselineServiceName || 'N/A')}</span></div>
-                            <div style="margin-top:1px;"><strong>Run ID:</strong> <span>${escapeHtml(firstMatch.baselineRunId || 'N/A')}</span></div>
+
+                    <!-- Line 2: Endpoint -->
+                    <div style="margin-bottom:8px; display:flex; align-items:center; gap:8px;">
+                        <span style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase; min-width:60px;">Endpoint:</span>
+                        <code style="font-size:0.75rem; word-break:break-all; background:#f7fafc; padding:4px 8px; border-radius:6px; border:1px solid #edf2f7; color:#2d3748; flex:1;">${escapeHtml(firstMatch.api1?.url || 'N/A')}</code>
+                    </div>
+
+                    <!-- Line 3: Execution Context Metadata -->
+                    <div style="display:flex; flex-wrap:wrap; gap:15px; align-items:center; font-size:0.75rem; color:#4a5568;">
+                        <div style="display:flex; gap:5px;">
+                            <span style="color:#718096; font-weight:700;">Captured:</span>
+                            <span>${escapeHtml(formatCstTimestamp(firstMatch.baselineCaptureTimestamp))}</span>
                         </div>
-                        <div>
-                            <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Date & Source</div>
-                            <div style="margin-top:2px;"><strong>Capture:</strong> <span>${escapeHtml(firstMatch.baselineDate || 'N/A')}</span></div>
-                            <div style="margin-top:1px; font-size:0.75rem; color:#4a5568;">${escapeHtml(firstMatch.baselineCaptureTimestamp || 'N/A')}</div>
+                        <div style="display:flex; gap:5px;">
+                            <span style="color:#718096; font-weight:700;">Mode:</span>
+                            <span class="tech-stack-tag" style="padding:0 6px; margin:0; font-size:0.65rem;">${escapeHtml(firstMatch.api1?.metadata?.testType || 'N/A')}</span>
                         </div>
-                        <div>
-                            <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Baseline Context</div>
-                            <div style="margin-top:2px;"><strong>Mode:</strong> <span class="tech-stack-tag" style="padding:2px 8px; margin:0;">${escapeHtml(firstMatch.api1?.metadata?.testType || 'N/A')}</span></div>
-                            <div style="margin-top:1px;"><strong>Op:</strong> <span>${escapeHtml(firstMatch.api1?.metadata?.operation || 'N/A')}</span></div>
-                            <div style="margin-top:1px;"><strong>Total Iter:</strong> <span style="font-weight:700;">${firstMatch.api1?.metadata?.totalIterations ?? 'N/A'}</span></div>
+                        <div style="display:flex; gap:5px;">
+                            <span style="color:#718096; font-weight:700;">Op:</span>
+                            <span style="font-weight:600;">${escapeHtml(firstMatch.api1?.metadata?.operation || 'N/A')}</span>
                         </div>
-                        <div>
-                            <div style="color:#718096; font-size:0.7rem; font-weight:700; text-transform:uppercase;">Configuration</div>
-                            <div style="margin-top:2px;"><strong>Auth:</strong> <span class="tech-stack-tag" style="padding:2px 8px; margin:0;">${escapeHtml(authSummary || 'None')}</span></div>
-                            <div style="margin-top:1px;"><strong>API 1:</strong> <code style="font-size:0.7rem; word-break:break-all;">${escapeHtml(firstMatch.api1?.url || 'N/A')}</code></div>
+                        <div style="display:flex; gap:5px;">
+                            <span style="color:#718096; font-weight:700;">Iter:</span>
+                            <span style="font-weight:600;">${firstMatch.api1?.metadata?.totalIterations ?? 'N/A'}</span>
+                        </div>
+                        <div style="display:flex; gap:5px;">
+                            <span style="color:#718096; font-weight:700;">Auth:</span>
+                            <span class="tech-stack-tag" style="padding:0 6px; margin:0; font-size:0.65rem; background:#e6fffa; color:#2c7a7b;">${escapeHtml(authSummary || 'None')}</span>
                         </div>
                     </div>
-                    ${firstMatch.baselineDescription ? `<div style="margin-top:12px; padding-top:8px; border-top:1px solid #f1f1f1;"><strong>Description:</strong> <span style="color:#4a5568;">${escapeHtml(firstMatch.baselineDescription)}</span></div>` : ''}
-                    ${firstMatch.baselineTags && firstMatch.baselineTags.length ? `<div style="margin-top:8px;"><strong>Tags:</strong> ${firstMatch.baselineTags.map(t=>`<span class="tech-stack-tag" style="margin:0 4px 0 0; font-size:0.7rem;">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
                 </div>
             `;
         }
@@ -1278,16 +1355,36 @@ document.addEventListener('DOMContentLoaded', () => {
                 const isBasic = auth.type === 'basic' || auth.clientId || auth.username || auth.clientSecret;
                 const isMTLS = auth.pfxPath || auth.clientCertPath || auth.clientKeyPath || auth.caCertPath;
                 
+                const mtlsType = auth.mtlsType || (auth.pfxPath ? 'PFX' : 'PEM');
                 metaHtml += `<div style="margin-bottom:4px;"><strong>🔐 Auth Type:</strong>`;
                 if (isBasic) metaHtml += ` <span class="tech-stack-tag" title="Basic Authentication" style="background:#e6fffa; color:#2c7a7b; border-color:#81e6d9;">Basic</span>`;
-                if (isMTLS) metaHtml += ` <span class="tech-stack-tag" title="mTLS / Certificate Authentication" style="background:#ebf8ff; color:#2b6cb0; border-color:#bee3f8;">mTLS</span>`;
+                if (isMTLS) {
+                    let mtlsBadges = [];
+                    if (mtlsType === 'PFX' || auth.pfxPath) {
+                         mtlsBadges.push('mTLS PFX');
+                    } else if (auth.clientCertPath || auth.clientKeyPath) {
+                         mtlsBadges.push('mTLS PEM');
+                    }
+                    
+                    if (auth.caCertPath) {
+                        const caLabel = auth.caCertPath.toLowerCase().endsWith('.jks') ? 'Truststore' : 'CA';
+                        mtlsBadges.push(caLabel);
+                    }
+                    
+                    mtlsBadges.forEach(label => {
+                        metaHtml += ` <span class="tech-stack-tag" title="Certificate Authentication" style="background:#ebf8ff; color:#2b6cb0; border-color:#bee3f8;">${label}</span>`;
+                    });
+                }
                 metaHtml += `</div>`;
 
                 if (auth.clientId) metaHtml += renderField('clientId', 'ID', auth.clientId, otherAuth.clientId);
                 if (auth.pfxPath) metaHtml += renderField('pfxPath', 'PFX', auth.pfxPath, otherAuth.pfxPath, getFileName(auth.pfxPath));
                 if (auth.clientCertPath) metaHtml += renderField('clientCertPath', 'CRT', auth.clientCertPath, otherAuth.clientCertPath, getFileName(auth.clientCertPath));
                 if (auth.clientKeyPath) metaHtml += renderField('clientKeyPath', 'KEY', auth.clientKeyPath, otherAuth.clientKeyPath, getFileName(auth.clientKeyPath));
-                if (auth.caCertPath) metaHtml += renderField('caCertPath', 'CA', auth.caCertPath, otherAuth.caCertPath, getFileName(auth.caCertPath));
+                if (auth.caCertPath) {
+                    const caLabel = auth.caCertPath.toLowerCase().endsWith('.jks') ? 'Truststore' : 'CA';
+                    metaHtml += renderField('caCertPath', caLabel, auth.caCertPath, otherAuth.caCertPath, getFileName(auth.caCertPath));
+                }
                 if (auth.passphrase) metaHtml += ` <div style="margin-top:2px;"><strong>🔑 Pass:</strong> <span class="tech-stack-tag" style="margin:0;">********</span></div>`;
             } else {
                 metaHtml += `<div><strong>🔐 Auth:</strong> <span>N/A</span></div>`;
@@ -1355,8 +1452,8 @@ document.addEventListener('DOMContentLoaded', () => {
                                 ${meta1Html || '<div style="flex:1;"></div>'}
                                 ${meta2Html || '<div style="flex:1;"></div>'}
                             </div>`;
-        contentHtml += wrapInSubSection('📋 Metadata', metadataSectionContent, metadataDiff);
 
+        // REORDER: Mismatch Details should be ABOVE Metadata
         if (res.status === 'MISMATCH' && res.differences && res.differences.length > 0) {
             contentHtml += `
                 <div style="margin-bottom:15px; padding:12px; background:#fff5f5; border:1.5px solid #feb2b2; border-radius:8px;">
@@ -1366,6 +1463,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     </ul>
                 </div>`;
         }
+
+        contentHtml += wrapInSubSection('📋 Metadata', metadataSectionContent, metadataDiff);
 
         if (res.errorMessage) {
             contentHtml += `<div style="color:var(--error-color); font-size:0.85rem; padding:10px; background:#fff5f5; border-radius:6px; border:1px solid #feb2b2; margin-bottom:10px;"><strong>HTTP ERROR:</strong> ${res.errorMessage}</div>`;
@@ -1648,6 +1747,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const initUtilSidebarToggle = () => {
+        const toggle = document.getElementById('utilSidebarToggle');
+        const container = document.querySelector('.util-flex-container');
+        if (!toggle || !container) return;
+        
+        toggle.onclick = (e) => {
+            e.stopPropagation();
+            const isCollapsed = container.classList.toggle('collapsed');
+            toggle.textContent = isCollapsed ? '▶' : '◀';
+            logActivity(`UX: Utilities toolkit ${isCollapsed ? 'collapsed' : 'expanded'}.`, 'debug');
+        };
+    };
+
     // --- Sidebar Toggle ---
     const initSidebarToggle = () => {
         const sidebarToggle = document.getElementById('sidebarToggle');
@@ -1762,15 +1874,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const desc = r.description ? ` - ${r.description}` : '';
                 const tags = (r.tags && r.tags.length > 0) ? ` [${r.tags.join(', ')}]` : '';
                 
-                 // Format timestamp manually to YYYY-MM-DDTHH:mm:ss CST
-                const dateObj = new Date(r.timestamp);
-                const year = dateObj.getFullYear();
-                const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-                const day = String(dateObj.getDate()).padStart(2, '0');
-                const hours = String(dateObj.getHours()).padStart(2, '0');
-                const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-                const seconds = String(dateObj.getSeconds()).padStart(2, '0');
-                const ts = `${year}-${month}-${day}T${hours}:${minutes}:${seconds} CST`;
+                const ts = formatCstTimestamp(r.timestamp);
                 
                 opt.textContent = `${r.runId}${desc}${tags} (${ts})`;
                 baselineRunSelect.appendChild(opt);
@@ -1806,8 +1910,9 @@ document.addEventListener('DOMContentLoaded', () => {
                              const url = `api/baselines/runs/${encodeURIComponent(svc)}/${encodeURIComponent(dt)}/${encodeURIComponent(rn)}/details${wd ? '?workDir=' + encodeURIComponent(wd) : ''}`;
                              const res = await fetch(url);
                              if(res.ok) {
-                                 const results = await res.json();
-                                 renderResults(results);
+                                 const data = await res.json();
+                                 logActivity(`HISTORY LOADED: Received ${data.length} results for ${svc} / ${rn}`, 'info');
+                                 renderResults(data, 'HISTORY');
                              } else {
                                  alert('Could not load saved results.');
                              }
@@ -2453,6 +2558,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initResize();
     initUtilResize();
     initSidebarToggle();
+    initUtilSidebarToggle();
     loadDefaults();
     
     // Lazy Load JMS UI

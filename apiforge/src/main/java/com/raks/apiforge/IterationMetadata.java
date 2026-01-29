@@ -1,6 +1,7 @@
 package com.raks.apiforge;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
+import java.util.HashMap;
 public class IterationMetadata {
     @JsonProperty("iterationNumber")
     private int iterationNumber;
@@ -16,17 +17,21 @@ public class IterationMetadata {
     private String soapAction; 
     @JsonProperty("authentication")
     private Map<String, String> authentication;
+    @JsonProperty("requestSize")
+    private Integer requestSize;
     public IterationMetadata() {
     }
-    public IterationMetadata(int iterationNumber, String timestamp, Map<String, String> tokensUsed,
-            String endpoint, String method, String soapAction, Map<String, String> authentication) {
+    public IterationMetadata(int iterationNumber, String timestamp, Map<String, Object> tokensUsed,
+            String endpoint, String method, String soapAction, Map<String, String> authentication, Integer requestSize) {
         this.iterationNumber = iterationNumber;
         this.timestamp = timestamp;
-        this.tokensUsed = tokensUsed;
+        this.tokensUsed = new HashMap<>();
+        if (tokensUsed != null) tokensUsed.forEach((k,v) -> this.tokensUsed.put(k, String.valueOf(v)));
         this.endpoint = endpoint;
         this.method = method;
         this.soapAction = soapAction;
         this.authentication = authentication;
+        this.requestSize = requestSize;
     }
     public int getIterationNumber() {
         return iterationNumber;
@@ -69,5 +74,11 @@ public class IterationMetadata {
     }
     public void setAuthentication(Map<String, String> authentication) {
         this.authentication = authentication;
+    }
+    public Integer getRequestSize() {
+        return requestSize;
+    }
+    public void setRequestSize(Integer requestSize) {
+        this.requestSize = requestSize;
     }
 }

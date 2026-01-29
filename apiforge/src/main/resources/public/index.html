@@ -91,6 +91,53 @@
             background: var(--primary-color);
             color: white;
         }
+        
+        /* Utility Hub Transitions */
+        .util-flex-container {
+            transition: all 0.3s ease;
+        }
+        .util-flex-container.collapsed .util-toolkit-panel {
+            flex: 0;
+            min-width: 0;
+            width: 0;
+            padding-right: 0;
+            overflow: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .util-flex-container.collapsed .util-resize-handle {
+            background: var(--primary-color);
+            opacity: 0.1;
+        }
+        
+        .util-sidebar-toggle {
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 1001;
+            background: white;
+            color: var(--primary-color);
+            border: 1px solid var(--border-color);
+            border-left: none;
+            border-radius: 0 12px 12px 0;
+            padding: 15px 4px;
+            cursor: pointer;
+            box-shadow: 4px 0 6px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            width: 18px;
+            transition: all 0.2s;
+        }
+        .util-sidebar-toggle:hover {
+            background: #f1e6f9;
+            color: var(--accent-color);
+        }
+        .util-flex-container.collapsed .util-sidebar-toggle {
+            padding-left: 6px;
+        }
     </style>
 </head>
 <body>
@@ -318,7 +365,7 @@
                                                             <div style="display: flex; gap: 5px;">
                                                                 <input type="text" id="clientCertPath" placeholder="cert.crt" style="flex: 1; font-size: 0.75rem;">
                                                                 <button type="button" class="btn-secondary" onclick="document.getElementById('clientCertFile').click()" style="padding: 4px 8px; font-size: 0.8rem;">📂</button>
-                                                                <input type="file" id="clientCertFile" style="display: none;" onchange="uploadCert('clientCert')">
+                                                                <input type="file" id="clientCertFile" style="display: none;" accept=".crt,.pem,.cer" onchange="uploadCert('clientCert')">
                                                             </div>
                                                         </div>
                                                         <div>
@@ -326,7 +373,7 @@
                                                             <div style="display: flex; gap: 5px;">
                                                                 <input type="text" id="clientKeyPath" placeholder="cert.key" style="flex: 1; font-size: 0.75rem;">
                                                                 <button type="button" class="btn-secondary" onclick="document.getElementById('clientKeyFile').click()" style="padding: 4px 8px; font-size: 0.8rem;">📂</button>
-                                                                <input type="file" id="clientKeyFile" style="display: none;" onchange="uploadCert('clientKey')">
+                                                                <input type="file" id="clientKeyFile" style="display: none;" accept=".key,.pem" onchange="uploadCert('clientKey')">
                                                             </div>
                                                         </div>
                                                     </div>
@@ -342,7 +389,7 @@
                                                         <div style="display: flex; gap: 8px;">
                                                             <input type="text" id="pfxPath" placeholder="C:\path\to\cert.p12" style="flex: 1; font-size: 0.8rem;">
                                                             <button type="button" class="btn-secondary" onclick="document.getElementById('pfxFile').click()" style="padding: 5px 12px; font-size: 0.8rem;">📂</button>
-                                                            <input type="file" id="pfxFile" style="display: none;" onchange="uploadCert('pfx')">
+                                                            <input type="file" id="pfxFile" style="display: none;" accept=".p12,.jks,.pfx" onchange="uploadCert('pfx')">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -358,7 +405,7 @@
                                                         <div style="display: flex; gap: 5px;">
                                                             <input type="text" id="caCertPath" placeholder="ca.pem / truststore.jks" style="flex: 1; font-size: 0.8rem; padding: 8px;">
                                                             <button type="button" class="btn-secondary" onclick="document.getElementById('caCertFile').click()" style="padding: 5px 10px;">📂</button>
-                                                            <input type="file" id="caCertFile" style="display: none;" onchange="uploadCert('ca')">
+                                                            <input type="file" id="caCertFile" style="display: none;" accept=".crt,.pem,.cer,.jks" onchange="uploadCert('ca')">
                                                         </div>
                                                     </div>
                                                 </div>
@@ -548,13 +595,18 @@
                 </div>
 
                 <!-- Resize Handle -->
-                <div class="util-resize-handle" id="utilResizeHandle"></div>
+                <div class="util-resize-handle" id="utilResizeHandle" style="position: relative;">
+                    <button id="utilSidebarToggle" class="util-sidebar-toggle" title="Toggle Sidebar">◀</button>
+                </div>
 
                 <!-- Right Column: Activity Log -->
                 <div class="util-log-panel" id="utilLogPanel">
                     <div class="util-log-header">
                         <h2 style="font-size: 0.9rem; color: #475569; display:flex; align-items:center; gap:8px;">📜 Activity Logs</h2>
-                        <button id="clearLogBtn" class="btn-secondary" style="font-size: 0.65rem; padding: 3px 8px; border-color: #cbd5e1;">Clear Console</button>
+                        <div style="display: flex; gap: 8px;">
+                            <button id="copyAllLogsBtn" class="btn-secondary" style="font-size: 0.65rem; padding: 3px 8px; border-color: #cbd5e1; font-weight:700;">📋 Copy All</button>
+                            <button id="clearLogBtn" class="btn-secondary" style="font-size: 0.65rem; padding: 3px 8px; border-color: #cbd5e1;">Clear Console</button>
+                        </div>
                     </div>
                     <div id="activityLog">
 [System Ready]
